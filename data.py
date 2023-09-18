@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-import pysam
-import requests, os, itertools, ast, io
 import matplotlib.pyplot as plt
+import requests, os, itertools, ast, io, pysam, pickle, gzip, h5py, datetime
 
 class GET_DATA(object):
     def __init__(self):
@@ -15,9 +14,18 @@ class GET_DATA(object):
         self.select_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3", "H3K27me3", "H3K4me1", "ATAC-seq", "CTCF"]
 
         self.expression_data = ["RNA-seq", "CAGE"]
+        
+        self.target_file_format = {
+            "ChIP-seq": "bam", 
+            "CAGE": "bam",
+            "ChIA-PET": "bam",
+            "ATAC-seq": "bam", 
+            "RNA-seq": "bam",
+            "DNase-seq": "bam"}
 
         self.headers = {'accept': 'application/json'}
-        self.exp_tsv_url = """https://www.encodeproject.org/report.tsv?type=Experiment&assay_title=TF+ChIP-seq&assay_title=Histone+ChIP-seq&assay_title=DNase-seq&assay_title=ATAC-seq&assay_title=total+RNA-seq&assay_title=CAGE&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&status=released&assay_title=ChIA-PET"""
+        # report_url= https://www.encodeproject.org/report/?type=Experiment&control_type!=*&perturbed=false&assay_title=TF+ChIP-seq&assay_title=Histone+ChIP-seq&assay_title=DNase-seq&assay_title=ATAC-seq&assay_title=ChIA-PET&assay_title=CAGE&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&assay_title=total+RNA-seq&status=released
+        self.exp_tsv_url = """https://www.encodeproject.org/report.tsv?type=Experiment&control_type!=*&perturbed=false&assay_title=TF+ChIP-seq&assay_title=Histone+ChIP-seq&assay_title=DNase-seq&assay_title=ATAC-seq&assay_title=ChIA-PET&assay_title=CAGE&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&assay_title=total+RNA-seq&status=released"""
         self.biosample_tsv_url = """https://www.encodeproject.org/report.tsv?type=Biosample&organism.scientific_name=Homo+sapiens"""
 
         self.experiment_url = """https://www.encodeproject.org/experiments/"""
@@ -135,20 +143,118 @@ class GET_DATA(object):
         # filter DF1 based on availability of data (remove biosamples that dont have anything but expression data)
         self.DF1 = self.DF1[self.DF1['num_nonexp_available'] != 0]
 
-        # for each biosample in DF1, mkdir in data/
-            # for each available experiment for that biosample, mkdir data/{biosample_acc}/{experiment_name}
-                # download relevant file for that experiment in data/{biosample_acc}/{experiment_name}
-            # in each biosample directory, write a metadata file containing accessions of files, 
-            # experiments, reference genome, and metadata of downloaded files 
+        # print(self.DF1)
+
+        self.DF1 = self.DF1.iloc[:2,:]
+        print(self.DF1)
+
+        for i in range(len(self.DF1)):
+            bios = self.DF1["Accession"][i]
+            if os.path.exists(metadata_file_path + "/" + bios) == False:
+                os.mkdir(metadata_file_path + "/" + bios)
+
+            for exp in self.DF1.columns:
+                if exp not in ["Accession", "num_nonexp_available", "num_available"]:
+                    if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
+                        os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
+                    
+                    if pd.notnull(self.DF1[exp][i]):
+                        experiment_accession = self.DF1[exp][i]
+                    else:
+                        continue
+                    
+                    print(f"downloading assay: {exp} | biosample: {bios}")
+                    exp_url = self.experiment_url + experiment_accession
+                    
+                    exp_respond = requests.get(exp_url, headers=self.headers)
+                    exp_results = exp_respond.json()
+                    
+                    e_fileslist = list(exp_results['original_files'])
+                    e_files_navigation = []
+
+                    for ef in e_fileslist:
+                        efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                        efile_results = efile_respond.json()
+
+                        if efile_results['file_format'] == "bam":
+                            try: #ignore files without sufficient info or metadata
+
+                                if ',' not in str(efile_results['origin_batches']):
+                                    if efile_results['status'] == "released": 
+                                        #ignore old and depricated versions
+
+                                        e_file_biosample = str(efile_results['origin_batches'])
+                                        e_file_biosample = e_file_biosample.replace('/', '')
+                                        e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                                        
+                                        # ignore files that contain both replicates 
+                                        if e_file_biosample == bios:
+                                            e_files_navigation.append(
+                                                [exp, efile_results['accession'], e_file_biosample,
+                                                efile_results['file_format'], efile_results['output_type'], 
+                                                efile_results['dataset'], efile_results['biological_replicates'], 
+                                                efile_results['file_size'], efile_results['assembly'], 
+                                                "https://www.encodeproject.org{}".format(efile_results['href']), 
+                                                efile_results['date_created'], efile_results['status']])
+                            except:
+                                pass
+
+                    e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 'status'])
+
+                    # select one file from e_files_navigation to download
+                    e_files_navigation.to_csv(metadata_file_path + "/" + bios + "/" + exp + "/all_files.csv")
+                    
+                    # Convert 'date_created' to datetime
+                    e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+
+                    # Filter rows where 'output_type' is 'alignments'
+                    filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+
+                    # Find the row with the newest 'date_created'
+                    newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
+
+                    # Print the newest row
+                    with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
+                        for c in newest_row.columns:
+                            f.write(f"{c}\t{newest_row[c].values[0]}\n")
+                    
+                    save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
+                    if os.path.exists(save_dir_name) ==  False:
+                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True)
+                        open(save_dir_name, 'wb').write(download_response.content)
+
+                        os.system(f"samtools index {save_dir_name}")
 
 class BAM_TO_SIGNAL(object):
-    def __init__(self, bam_file, chr_sizes, resolution):
+    def __init__(self):
         """
-        Initialize the object with the BAM file, chromosome sizes, and resolution.
+        Initialize the object
         """
-        self.bam_file = bam_file
-        self.chr_sizes = chr_sizes
-        self.resolution = resolution
+        pass
+
+    def read_chr_sizes(self):
+        """
+        Read a file with chromosome sizes and return a dictionary where keys are 
+        chromosome names and values are chromosome sizes.
+        
+        Parameters:
+        file_path (str): The path to the file with chromosome sizes.
+
+        Returns:
+        dict: A dictionary where keys are chromosome names and values are chromosome sizes.
+        """
+
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        
+        self.chr_sizes = {}
+        with open(self.chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
 
     def load_bam(self):
         """
@@ -166,30 +272,80 @@ class BAM_TO_SIGNAL(object):
         """
         Calculate the coverage for each bin.
         """
+        self.bins = {chr: [0] * (self.chr_sizes[chr] // self.resolution + 1) for chr in self.chr_sizes}
+        self.coverage = {
+            'chr': [],
+            'start': [],
+            'end': [],
+            'read_count': []
+        }
+
         for chr in self.chr_sizes:
+            # print(f"getting {chr} coverage...")
             for read in self.bam.fetch(chr):
                 start_bin = read.reference_start // self.resolution
                 end_bin = read.reference_end // self.resolution
-                for i in range(start_bin, end_bin + 1):
+                for i in range(start_bin, end_bin+1):
                     self.bins[chr][i] += 1
 
-    def to_dataframe(self):
-        """
-        Convert the coverage data to a pandas DataFrame.
-        """
-        data = []
-        for chr in self.bins:
             for i, count in enumerate(self.bins[chr]):
                 start = i * self.resolution
                 end = start + self.resolution
-                data.append([chr, start, end, count])
+                self.coverage["chr"].append(chr)
+                self.coverage["start"].append(start)
+                self.coverage["end"].append(end)
+                self.coverage["read_count"].append(count)
+
+    def save_coverage(self):
+        """
+        Save the coverage data to a pickle file.
+
+        Parameters:
+        file_path (str): The path to the pickle file.
+        """
+        file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.pkl")
+
+        with open(file_path, 'wb') as f:
+            pickle.dump(self.coverage, f)
         
-        df = pd.DataFrame(data, columns=['chr', 'start', 'end', 'read_count'])
+        os.system(f"gzip {file_path}")
+
+    def get_coverage(self, bam_file, chr_sizes_file, resolution):
+        t0 = datetime.datetime.now()
+        self.bam_file = bam_file
+        self.chr_sizes_file = chr_sizes_file
+        self.resolution = resolution
+
+        self.read_chr_sizes()
+        self.load_bam()
+        self.initialize_empty_bins()
+        self.calculate_coverage()
+        self.save_coverage()
+        t1 = datetime.datetime.now()
+        print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
+
+    def load_coverage(self, file_path):
+        """
+        Load the coverage data from a pickle file.
+
+        Parameters:
+        file_path (str): The path to the pickle file.
+        """
+        with gzip.open(file_path, 'rb') as f:
+            self.coverage = pickle.load(f)
         
-        return df
+        return self.coverage
 
 if __name__ == "__main__":
+
     d = GET_DATA()
-    # d.search_ENCODE()
-    # d.save_metadata()
+    d.search_ENCODE()
+    d.save_metadata()
     d.download_from_metadata()
+
+    preprocessor = BAM_TO_SIGNAL()
+    preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=25)
+    new = preprocessor.load_coverage("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg25bp.pkl.gz")
+
+    preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
+    new = preprocessor.load_coverage("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.pkl.gz")
