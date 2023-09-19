@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import requests, os, itertools, ast, io, pysam, pickle, gzip, h5py, datetime
+import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig
 
 class GET_DATA(object):
     def __init__(self):
@@ -291,12 +291,12 @@ class BAM_TO_SIGNAL(object):
             for i, count in enumerate(self.bins[chr]):
                 start = i * self.resolution
                 end = start + self.resolution
-                self.coverage["chr"].append(chr)
-                self.coverage["start"].append(start)
-                self.coverage["end"].append(end)
-                self.coverage["read_count"].append(count)
+                self.coverage["chr"].append(str(chr))
+                self.coverage["start"].append(int(start))
+                self.coverage["end"].append(int(end))
+                self.coverage["read_count"].append(float(count))
 
-    def save_coverage(self):
+    def save_coverage_pkl(self):
         """
         Save the coverage data to a pickle file.
 
@@ -309,6 +309,56 @@ class BAM_TO_SIGNAL(object):
             pickle.dump(self.coverage, f)
         
         os.system(f"gzip {file_path}")
+    
+    def save_coverage_bigwig(self):
+        """
+        Save the coverage data to a BigWig file.
+
+        Parameters:
+        file_path (str): The path to the BigWig file.
+        """
+        file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.bw")
+        bw = pyBigWig.open(file_path, 'w')
+        bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
+
+        bw.addEntries(
+            self.coverage["chr"], 
+            self.coverage["start"], 
+            ends=self.coverage["end"], 
+            values=self.coverage["read_count"])
+
+        bw.close()
+    
+    def load_coverage_bigwig(self, file_path, chr_sizes_file):
+        """
+        Load the coverage data from a BigWig file.
+
+        Parameters:
+        file_path (str): The path to the BigWig file.
+        """
+
+        self.chr_sizes_file = chr_sizes_file
+        self.read_chr_sizes()
+
+        self.bw = pyBigWig.open(file_path)
+        self.coverage = {
+            'chr': [],
+            'start': [],
+            'end': [],
+            'read_count': []
+        }
+
+        for chr in self.chr_sizes:
+            intervals = self.bw.intervals(chr)
+            for interval in intervals:
+                start, end, count = interval
+                self.coverage["chr"].append(str(chr))
+                self.coverage["start"].append(int(start))
+                self.coverage["end"].append(int(end))
+                self.coverage["read_count"].append(float(count))
+        
+        self.bw.close()
+        return self.coverage
 
     def get_coverage(self, bam_file, chr_sizes_file, resolution):
         t0 = datetime.datetime.now()
@@ -320,11 +370,13 @@ class BAM_TO_SIGNAL(object):
         self.load_bam()
         self.initialize_empty_bins()
         self.calculate_coverage()
-        self.save_coverage()
+        # self.save_coverage_pkl()
+        self.save_coverage_bigwig()
+
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
 
-    def load_coverage(self, file_path):
+    def load_coverage_pkl(self, file_path):
         """
         Load the coverage data from a pickle file.
 
@@ -344,8 +396,12 @@ if __name__ == "__main__":
     d.download_from_metadata()
 
     preprocessor = BAM_TO_SIGNAL()
-    preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=25)
-    new = preprocessor.load_coverage("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg25bp.pkl.gz")
-
     preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
-    new = preprocessor.load_coverage("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.pkl.gz")
+
+    preprocessor = BAM_TO_SIGNAL()
+    new = preprocessor.load_coverage_bigwig("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.bw", chr_sizes_file="data/hg38.chrom.sizes")
+
+    # new = preprocessor.load_coverage_pkl("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg25bp.pkl.gz")
+
+    # preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
+    # new = preprocessor.load_coverage_pkl("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.pkl.gz")
