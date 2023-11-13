@@ -73,7 +73,7 @@ class GET_DATA(object):
 
         # for each experiment, look up the biosample and connect the experiment and biosample data
         for i in range(len(exp_search_report)):
-            if i%100 == 0:
+            if i%1000 == 0:
                 print(f"{i}/{len(exp_search_report)}")
 
             exp = exp_search_report["Accession"][i]
@@ -115,8 +115,10 @@ class GET_DATA(object):
                         except:
                             pass
         
-        self.DF1 = pd.DataFrame.from_dict(self.DF1, orient='index')
-        self.DF2 = pd.DataFrame.from_dict(self.DF2, orient='index')
+        self.DF1 = pd.DataFrame.from_dict(self.DF1, orient='index').sort_index(axis=1)
+        self.DF2 = pd.DataFrame.from_dict(self.DF2, orient='index').sort_index(axis=1)
+        print(self.DF1)
+        print(self.DF2)
 
     def save_metadata(self, metadata_file_path="data/"):
         """
@@ -177,7 +179,7 @@ class GET_DATA(object):
                         efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                         efile_results = efile_respond.json()
 
-                        if efile_results['file_format'] == "bam":
+                        if efile_results['file_format'] == "bam" or "tsv":
                             try: #ignore files without sufficient info or metadata
 
                                 if ',' not in str(efile_results['origin_batches']):
@@ -210,9 +212,13 @@ class GET_DATA(object):
                     
                     # Convert 'date_created' to datetime
                     e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-
-                    # Filter rows where 'output_type' is 'alignments'
-                    filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+                    
+                    if exp == "RNA-seq":
+                        # Filter rows where 'output_type' is 'gene quantification'
+                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
+                    else:
+                        # Filter rows where 'output_type' is 'alignments'
+                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
 
                     # Find the row with the newest 'date_created'
                     newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
@@ -222,8 +228,12 @@ class GET_DATA(object):
                         for c in newest_row.columns:
                             f.write(f"{c}\t{newest_row[c].values[0]}\n")
                     
-                    save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
-
+                    if exp == "RNA-seq":
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
+                    else:
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
+                    
+                    
                     if os.path.exists(save_dir_name) ==  False:
                         download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True, stream=True)
                         file_size = int(download_response.headers.get('Content-Length', 0))
@@ -399,8 +409,8 @@ class BAM_TO_SIGNAL(object):
 if __name__ == "__main__":
 
     d = GET_DATA()
-    d.search_ENCODE()
-    d.save_metadata()
+    # d.search_ENCODE()
+    # d.save_metadata()
     d.download_from_metadata()
 
     # df1 =pd.read_csv("data/DF1.csv")
