@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig
+from tqdm import tqdm
 
 class GET_DATA(object):
     def __init__(self):
@@ -163,7 +164,7 @@ class GET_DATA(object):
                     else:
                         continue
                     
-                    print(f"downloading assay: {exp} | biosample: {bios}")
+                    # print(f"downloading assay: {exp} | biosample: {bios}")
                     exp_url = self.experiment_url + experiment_accession
                     
                     exp_respond = requests.get(exp_url, headers=self.headers)
@@ -222,11 +223,18 @@ class GET_DATA(object):
                             f.write(f"{c}\t{newest_row[c].values[0]}\n")
                     
                     save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
-                    if os.path.exists(save_dir_name) ==  False:
-                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True)
-                        open(save_dir_name, 'wb').write(download_response.content)
 
+                    if os.path.exists(save_dir_name) ==  False:
+                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True, stream=True)
+                        file_size = int(download_response.headers.get('Content-Length', 0))
+                        progress = tqdm(
+                            download_response.iter_content(1024), 
+                            f'downloading assay: {exp} | biosample: {bios}', 
+                            total=file_size, unit='B', unit_scale=True, unit_divisor=1024)
+
+                        open(save_dir_name, 'wb').write(download_response.content)
                         os.system(f"samtools index {save_dir_name}")
+                    print(f"downloading assay: {exp} | biosample: {bios} |-> downloaded completely")
 
 class BAM_TO_SIGNAL(object):
     def __init__(self):
@@ -395,11 +403,19 @@ if __name__ == "__main__":
     d.save_metadata()
     d.download_from_metadata()
 
-    preprocessor = BAM_TO_SIGNAL()
-    preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
+    # df1 =pd.read_csv("data/DF1.csv")
+    # df2 =pd.read_csv("data/DF2.csv")
 
-    preprocessor = BAM_TO_SIGNAL()
-    new = preprocessor.load_coverage_bigwig("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.bw", chr_sizes_file="data/hg38.chrom.sizes")
+    # print(df1)
+    # print(df2)
+
+    # print(len(df2["Biosample term name"].unique()))
+
+    # preprocessor = BAM_TO_SIGNAL()
+    # preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
+
+    # preprocessor = BAM_TO_SIGNAL()
+    # new = preprocessor.load_coverage_bigwig("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.bw", chr_sizes_file="data/hg38.chrom.sizes")
 
     # new = preprocessor.load_coverage_pkl("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg25bp.pkl.gz")
 
