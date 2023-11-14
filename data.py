@@ -16,7 +16,7 @@ def single_download(dl_dict):
             return False
 
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
-    
+
     if os.path.exists(save_dir_name) ==  False:
         print(f"downloading assay: {exp} | biosample: {bios}")
         attempt = 0
@@ -459,7 +459,7 @@ if __name__ == "__main__":
     d = GET_DATA()
     # d.search_ENCODE()
     # d.save_metadata()
-    d.download_from_metadata(parallel=False)
+    d.download_from_metadata(parallel=True)
 
     # df1 =pd.read_csv("data/DF1.csv")
     # df2 =pd.read_csv("data/DF2.csv")
