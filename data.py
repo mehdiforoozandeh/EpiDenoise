@@ -166,7 +166,7 @@ class GET_DATA(object):
                     else:
                         continue
                     
-                    # print(f"downloading assay: {exp} | biosample: {bios}")
+                    print(f"downloading assay: {exp} | biosample: {bios}")
                     exp_url = self.experiment_url + experiment_accession
                     
                     exp_respond = requests.get(exp_url, headers=self.headers)
@@ -235,16 +235,11 @@ class GET_DATA(object):
                     
                     
                     if os.path.exists(save_dir_name) ==  False:
-                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True, stream=True)
-                        file_size = int(download_response.headers.get('Content-Length', 0))
-                        progress = tqdm(
-                            download_response.iter_content(1024), 
-                            f'downloading assay: {exp} | biosample: {bios}', 
-                            total=file_size, unit='B', unit_scale=True, unit_divisor=1024)
-
+                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True)
                         open(save_dir_name, 'wb').write(download_response.content)
                         os.system(f"samtools index {save_dir_name}")
-                    print(f"downloading assay: {exp} | biosample: {bios} |-> downloaded completely")
+
+                    # print(f"downloading assay: {exp} | biosample: {bios} |-> downloaded completely")
 
 class BAM_TO_SIGNAL(object):
     def __init__(self):
