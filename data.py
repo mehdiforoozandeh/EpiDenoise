@@ -163,8 +163,8 @@ class GET_DATA(object):
 
         # print(self.DF1)
 
-        self.DF1 = self.DF1.iloc[:2,:]
-        print(self.DF1)
+        # self.DF1 = self.DF1.iloc[:2,:]
+        # print(self.DF1)
 
         to_download = []
         for i in range(len(self.DF1)):
@@ -422,8 +422,8 @@ class BAM_TO_SIGNAL(object):
 if __name__ == "__main__":
 
     d = GET_DATA()
-    # d.search_ENCODE()
-    # d.save_metadata()
+    d.search_ENCODE()
+    d.save_metadata()
     d.download_from_metadata()
 
     # df1 =pd.read_csv("data/DF1.csv")
