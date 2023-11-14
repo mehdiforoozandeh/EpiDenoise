@@ -247,7 +247,11 @@ class GET_DATA(object):
                         filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
                     else:
                         # Filter rows where 'output_type' is 'alignments'
-                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+                        if "alignments" in e_files_navigation['output_type'].unique():
+                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+
+                        elif "redacted alignments" in e_files_navigation['output_type'].unique():
+                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'redacted alignments']
 
                     try:
                         # Find the row with the newest 'date_created'
