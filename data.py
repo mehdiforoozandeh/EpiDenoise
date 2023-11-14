@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig
 from tqdm import tqdm
 
@@ -127,7 +128,7 @@ class GET_DATA(object):
         self.DF1.to_csv(metadata_file_path + "DF1.csv")
         self.DF2.to_csv(metadata_file_path + "DF2.csv")
 
-    def download_from_metadata(self, metadata_file_path="data/"):
+    def download_from_metadata(self, metadata_file_path="data/", parallel=True, n_p=10):
         """
         read DF1 and DF2 metadata files and run download_search_results on them
         """
@@ -151,6 +152,18 @@ class GET_DATA(object):
         self.DF1 = self.DF1.iloc[:2,:]
         print(self.DF1)
 
+        def single_download(dl_dict):
+            url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
+            if os.path.exists(save_dir_name) ==  False:
+                print(f"downloading assay: {exp} | biosample: {bios}")
+                download_response = requests.get(url, allow_redirects=True)
+                open(save_dir_name, 'wb').write(download_response.content)
+                os.system(f"samtools index {save_dir_name}")
+
+            else:
+                print(f"assay: {exp} | biosample: {bios} already exists!")
+
+        to_download = []
         for i in range(len(self.DF1)):
             bios = self.DF1["Accession"][i]
             if os.path.exists(metadata_file_path + "/" + bios) == False:
@@ -166,7 +179,6 @@ class GET_DATA(object):
                     else:
                         continue
                     
-                    print(f"downloading assay: {exp} | biosample: {bios}")
                     exp_url = self.experiment_url + experiment_accession
                     
                     exp_respond = requests.get(exp_url, headers=self.headers)
@@ -233,13 +245,16 @@ class GET_DATA(object):
                     else:
                         save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
                     
-                    
-                    if os.path.exists(save_dir_name) ==  False:
-                        download_response = requests.get(newest_row["download_url"].values[0], allow_redirects=True)
-                        open(save_dir_name, 'wb').write(download_response.content)
-                        os.system(f"samtools index {save_dir_name}")
+                    url = newest_row["download_url"].values[0]
 
-                    # print(f"downloading assay: {exp} | biosample: {bios} |-> downloaded completely")
+                    to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
+        
+        if parallel:
+            with mp.Pool(n_p) as pool:
+                pool.map(single_download, to_download)
+        else:
+            for d in to_download:
+                single_download(d)
 
 class BAM_TO_SIGNAL(object):
     def __init__(self):
@@ -404,8 +419,8 @@ class BAM_TO_SIGNAL(object):
 if __name__ == "__main__":
 
     d = GET_DATA()
-    d.search_ENCODE()
-    d.save_metadata()
+    # d.search_ENCODE()
+    # d.save_metadata()
     d.download_from_metadata()
 
     # df1 =pd.read_csv("data/DF1.csv")
