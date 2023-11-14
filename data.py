@@ -12,9 +12,10 @@ def single_download(dl_dict):
             print(f"downloading assay: {exp} | biosample: {bios}")
             download_response = requests.get(url, allow_redirects=True)
             open(save_dir_name, 'wb').write(download_response.content)
-        except:
+        except Exception as e:
             with open("data/" + bios  + f"/failed_{exp}", "w") as f:
-                f.write(f"failed to download {bios}_{exp}\n{newest_row}")
+                f.write(f"failed to download {bios}_{exp}\n {e}")
+            print(e)
 
         if "bam" in save_dir_name:
             os.system(f"samtools index {save_dir_name}")
@@ -265,9 +266,10 @@ class GET_DATA(object):
 
                         to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
 
-                    except:
+                    except Exception as e:
                         with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
-                            f.write(f"failed to download {bios}_{exp}")
+                            f.write(f"failed to download {bios}_{exp}\n {e}")
+                        print(e)
         
         if parallel:
             with mp.Pool(n_p) as pool:
