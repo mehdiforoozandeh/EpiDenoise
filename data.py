@@ -8,9 +8,13 @@ from tqdm import tqdm
 def single_download(dl_dict):
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
     if os.path.exists(save_dir_name) ==  False:
-        print(f"downloading assay: {exp} | biosample: {bios}")
-        download_response = requests.get(url, allow_redirects=True)
-        open(save_dir_name, 'wb').write(download_response.content)
+        try:
+            print(f"downloading assay: {exp} | biosample: {bios}")
+            download_response = requests.get(url, allow_redirects=True)
+            open(save_dir_name, 'wb').write(download_response.content)
+        except:
+            with open("data/" + bios  + f"/failed_{exp}", "w") as f:
+                f.write(f"failed to download {bios}_{exp}\n{newest_row}")
 
         if "bam" in save_dir_name:
             os.system(f"samtools index {save_dir_name}")
@@ -263,7 +267,7 @@ class GET_DATA(object):
 
                     except:
                         with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
-                            f.write(f"failed to download {bios}_{exp}\n{newest_row}")
+                            f.write(f"failed to download {bios}_{exp}")
         
         if parallel:
             with mp.Pool(n_p) as pool:

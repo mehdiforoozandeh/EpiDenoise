@@ -61,3 +61,6 @@ class TransformerEncoderModel(torch.nn.Module):
        path: The path from where to load the pre-trained model.
        """
        pass
+    
+    def predict(self, test_data, path):
+        pass
