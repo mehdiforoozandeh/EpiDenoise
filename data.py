@@ -12,7 +12,9 @@ def single_download(dl_dict):
         print(f"downloading assay: {exp} | biosample: {bios}")
         download_response = requests.get(url, allow_redirects=True)
         open(save_dir_name, 'wb').write(download_response.content)
-        os.system(f"samtools index {save_dir_name}")
+
+        if "bam" in save_dir_name:
+            os.system(f"samtools index {save_dir_name}")
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
