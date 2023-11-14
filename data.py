@@ -5,6 +5,18 @@ import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig
 from tqdm import tqdm
 
+
+def single_download(dl_dict):
+    url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
+    if os.path.exists(save_dir_name) ==  False:
+        print(f"downloading assay: {exp} | biosample: {bios}")
+        download_response = requests.get(url, allow_redirects=True)
+        open(save_dir_name, 'wb').write(download_response.content)
+        os.system(f"samtools index {save_dir_name}")
+
+    else:
+        print(f"assay: {exp} | biosample: {bios} already exists!")
+
 class GET_DATA(object):
     def __init__(self):
         self.encode_imputation_challenge_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3",
@@ -151,17 +163,6 @@ class GET_DATA(object):
 
         self.DF1 = self.DF1.iloc[:2,:]
         print(self.DF1)
-
-        def single_download(dl_dict):
-            url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
-            if os.path.exists(save_dir_name) ==  False:
-                print(f"downloading assay: {exp} | biosample: {bios}")
-                download_response = requests.get(url, allow_redirects=True)
-                open(save_dir_name, 'wb').write(download_response.content)
-                os.system(f"samtools index {save_dir_name}")
-
-            else:
-                print(f"assay: {exp} | biosample: {bios} already exists!")
 
         to_download = []
         for i in range(len(self.DF1)):
