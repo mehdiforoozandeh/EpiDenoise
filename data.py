@@ -259,7 +259,7 @@ class GET_DATA(object):
                                 f.write(f"{c}\t{newest_row[c].values[0]}\n")
                     
                     except:
-                        print(newest_row)
+                        print(exp, bios)
                         print(filtered_df)
                         print(e_files_navigation)
                         exit()
