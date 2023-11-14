@@ -380,7 +380,7 @@ class BAM_TO_SIGNAL(object):
                 pickle.dump(self.coverage[chr], f)
         
             os.system(f"gzip {file_path}")
-            
+
         # else:
         #     file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.pkl")
 
