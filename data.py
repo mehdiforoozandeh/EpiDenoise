@@ -20,6 +20,8 @@ def single_download(dl_dict):
             preprocessor.get_coverage(
                 bam_file=save_dir_name, 
                 chr_sizes_file="data/hg38.chrom.sizes")
+            
+            os.system(f"rm {save_dir_name}")
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
