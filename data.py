@@ -5,7 +5,6 @@ import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig
 from tqdm import tqdm
 
-
 def single_download(dl_dict):
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
     if os.path.exists(save_dir_name) ==  False:
@@ -16,9 +15,15 @@ def single_download(dl_dict):
         if "bam" in save_dir_name:
             os.system(f"samtools index {save_dir_name}")
 
+            print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
+            preprocessor = BAM_TO_SIGNAL()
+            preprocessor.get_coverage(
+                bam_file=save_dir_name, 
+                chr_sizes_file="data/hg38.chrom.sizes")
+
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
-
+    
 class GET_DATA(object):
     def __init__(self):
         self.encode_imputation_challenge_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3",
@@ -142,7 +147,7 @@ class GET_DATA(object):
         self.DF1.to_csv(metadata_file_path + "DF1.csv")
         self.DF2.to_csv(metadata_file_path + "DF2.csv")
 
-    def download_from_metadata(self, metadata_file_path="data/", parallel=True, n_p=10):
+    def download_from_metadata(self, metadata_file_path="data/", parallel=True, n_p=15):
         """
         read DF1 and DF2 metadata files and run download_search_results on them
         """
@@ -153,7 +158,7 @@ class GET_DATA(object):
         self.DF2.rename(columns={'Unnamed: 0': 'Accession'}, inplace=True)
         
         self.DF1['num_available'] = self.DF1.count(axis=1) - 1
-        self.DF1['num_nonexp_available'] = self.DF1.drop(columns=['Accession', 'RNA-seq', 'CAGE', "num_available"]).count(axis=1)
+        self.DF1['num_nonexp_available'] = self.DF1.drop(columns=['Accession', "CTCF", 'RNA-seq', 'CAGE', "num_available"]).count(axis=1)
 
         self.DF1 = self.DF1.sort_values(by='num_nonexp_available', ascending=False)
         self.DF1 = self.DF1.reset_index(drop=True)
@@ -161,6 +166,7 @@ class GET_DATA(object):
         # filter DF1 based on availability of data (remove biosamples that dont have anything but expression data)
         self.DF1 = self.DF1[self.DF1['num_nonexp_available'] != 0]
 
+        self.DF1 = self.DF1[self.DF1['num_nonexp_available'] >= 5]
         # print(self.DF1)
 
         # self.DF1 = self.DF1.iloc[:2,:]
@@ -391,7 +397,7 @@ class BAM_TO_SIGNAL(object):
         self.bw.close()
         return self.coverage
 
-    def get_coverage(self, bam_file, chr_sizes_file, resolution):
+    def get_coverage(self, bam_file, chr_sizes_file, resolution=25):
         t0 = datetime.datetime.now()
         self.bam_file = bam_file
         self.chr_sizes_file = chr_sizes_file
@@ -401,8 +407,8 @@ class BAM_TO_SIGNAL(object):
         self.load_bam()
         self.initialize_empty_bins()
         self.calculate_coverage()
-        # self.save_coverage_pkl()
-        self.save_coverage_bigwig()
+        self.save_coverage_pkl()
+        # self.save_coverage_bigwig()
 
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
@@ -422,8 +428,8 @@ class BAM_TO_SIGNAL(object):
 if __name__ == "__main__":
 
     d = GET_DATA()
-    d.search_ENCODE()
-    d.save_metadata()
+    # d.search_ENCODE()
+    # d.save_metadata()
     d.download_from_metadata()
 
     # df1 =pd.read_csv("data/DF1.csv")
@@ -435,7 +441,10 @@ if __name__ == "__main__":
     # print(len(df2["Biosample term name"].unique()))
 
     # preprocessor = BAM_TO_SIGNAL()
-    # preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
+    # preprocessor.get_coverage(
+    #     bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", 
+    #     chr_sizes_file="data/hg38.chrom.sizes", 
+    #     resolution=1000)
 
     # preprocessor = BAM_TO_SIGNAL()
     # new = preprocessor.load_coverage_bigwig("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.bw", chr_sizes_file="data/hg38.chrom.sizes")
