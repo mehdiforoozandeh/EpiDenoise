@@ -24,7 +24,7 @@ def single_download(dl_dict):
         while is_done==False and attempt < num_attempts:
             if attempt > 0:
                 time.sleep(10)
-                
+
             print(f"attemp number {attempt}")
             is_done = download_save(url, save_dir_name)
             attempt += 1
@@ -342,14 +342,15 @@ class BAM_TO_SIGNAL(object):
         Calculate the coverage for each bin.
         """
         self.bins = {chr: [0] * (self.chr_sizes[chr] // self.resolution + 1) for chr in self.chr_sizes}
-        self.coverage = {
-            'chr': [],
-            'start': [],
-            'end': [],
-            'read_count': []
-        }
+        self.coverage = {}
 
         for chr in self.chr_sizes:
+            self.coverage[chr] = {
+                'chr': [],
+                'start': [],
+                'end': [],
+                'read_count': []}
+
             # print(f"getting {chr} coverage...")
             for read in self.bam.fetch(chr):
                 start_bin = read.reference_start // self.resolution
@@ -360,10 +361,10 @@ class BAM_TO_SIGNAL(object):
             for i, count in enumerate(self.bins[chr]):
                 start = i * self.resolution
                 end = start + self.resolution
-                self.coverage["chr"].append(str(chr))
-                self.coverage["start"].append(int(start))
-                self.coverage["end"].append(int(end))
-                self.coverage["read_count"].append(float(count))
+                self.coverage[chr]["chr"].append(str(chr))
+                self.coverage[chr]["start"].append(int(start))
+                self.coverage[chr]["end"].append(int(end))
+                self.coverage[chr]["read_count"].append(float(count))
 
     def save_coverage_pkl(self):
         """
@@ -372,12 +373,21 @@ class BAM_TO_SIGNAL(object):
         Parameters:
         file_path (str): The path to the pickle file.
         """
-        file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.pkl")
 
-        with open(file_path, 'wb') as f:
-            pickle.dump(self.coverage, f)
+        for chr in self.coverage.keys():
+            file_path = self.bam_file.replace(".bam", f"_{chr}_cvrg{self.resolution}bp.pkl")
+            with open(file_path, 'wb') as f:
+                pickle.dump(self.coverage[chr], f)
         
-        os.system(f"gzip {file_path}")
+            os.system(f"gzip {file_path}")
+            
+        # else:
+        #     file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.pkl")
+
+        #     with open(file_path, 'wb') as f:
+        #         pickle.dump(self.coverage, f)
+            
+        #     os.system(f"gzip {file_path}")
     
     def save_coverage_bigwig(self):
         """
@@ -390,12 +400,12 @@ class BAM_TO_SIGNAL(object):
         bw = pyBigWig.open(file_path, 'w')
         bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
 
-        bw.addEntries(
-            self.coverage["chr"], 
-            self.coverage["start"], 
-            ends=self.coverage["end"], 
-            values=self.coverage["read_count"])
-
+        for chr in self.coverage.keys():
+            bw.addEntries(
+                self.coverage[chr]["chr"], 
+                self.coverage[chr]["start"], 
+                ends=self.coverage[chr]["end"], 
+                values=self.coverage[chr]["read_count"])
         bw.close()
     
     def load_coverage_bigwig(self, file_path, chr_sizes_file):
