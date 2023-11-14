@@ -187,89 +187,89 @@ class GET_DATA(object):
 
             for exp in self.DF1.columns:
                 if exp not in ["Accession", "num_nonexp_available", "num_available"]:
-                    try:
-                        if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
-                            os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
-                        
-                        if pd.notnull(self.DF1[exp][i]):
-                            experiment_accession = self.DF1[exp][i]
-                        else:
-                            continue
-                        
-                        exp_url = self.experiment_url + experiment_accession
-                        
-                        exp_respond = requests.get(exp_url, headers=self.headers)
-                        exp_results = exp_respond.json()
-                        
-                        e_fileslist = list(exp_results['original_files'])
-                        e_files_navigation = []
+                    # try:
+                    if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
+                        os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
+                    
+                    if pd.notnull(self.DF1[exp][i]):
+                        experiment_accession = self.DF1[exp][i]
+                    else:
+                        continue
+                    
+                    exp_url = self.experiment_url + experiment_accession
+                    
+                    exp_respond = requests.get(exp_url, headers=self.headers)
+                    exp_results = exp_respond.json()
+                    
+                    e_fileslist = list(exp_results['original_files'])
+                    e_files_navigation = []
 
-                        for ef in e_fileslist:
-                            efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                            efile_results = efile_respond.json()
+                    for ef in e_fileslist:
+                        efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                        efile_results = efile_respond.json()
 
-                            if efile_results['file_format'] == "bam" or "tsv":
-                                try: #ignore files without sufficient info or metadata
+                        if efile_results['file_format'] == "bam" or "tsv":
+                            try: #ignore files without sufficient info or metadata
 
-                                    if ',' not in str(efile_results['origin_batches']):
-                                        if efile_results['status'] == "released": 
-                                            #ignore old and depricated versions
+                                if ',' not in str(efile_results['origin_batches']):
+                                    if efile_results['status'] == "released": 
+                                        #ignore old and depricated versions
 
-                                            e_file_biosample = str(efile_results['origin_batches'])
-                                            e_file_biosample = e_file_biosample.replace('/', '')
-                                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                                            
-                                            # ignore files that contain both replicates 
-                                            if e_file_biosample == bios:
-                                                e_files_navigation.append(
-                                                    [exp, efile_results['accession'], e_file_biosample,
-                                                    efile_results['file_format'], efile_results['output_type'], 
-                                                    efile_results['dataset'], efile_results['biological_replicates'], 
-                                                    efile_results['file_size'], efile_results['assembly'], 
-                                                    "https://www.encodeproject.org{}".format(efile_results['href']), 
-                                                    efile_results['date_created'], efile_results['status']])
-                                except:
-                                    pass
+                                        e_file_biosample = str(efile_results['origin_batches'])
+                                        e_file_biosample = e_file_biosample.replace('/', '')
+                                        e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                                        
+                                        # ignore files that contain both replicates 
+                                        if e_file_biosample == bios:
+                                            e_files_navigation.append(
+                                                [exp, efile_results['accession'], e_file_biosample,
+                                                efile_results['file_format'], efile_results['output_type'], 
+                                                efile_results['dataset'], efile_results['biological_replicates'], 
+                                                efile_results['file_size'], efile_results['assembly'], 
+                                                "https://www.encodeproject.org{}".format(efile_results['href']), 
+                                                efile_results['date_created'], efile_results['status']])
+                            except:
+                                pass
 
-                        e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                            'assay', 'accession', 'biosample', 'file_format', 
-                            'output_type', 'experiment', 'bio_replicate_number', 
-                            'file_size', 'assembly', 'download_url', 'date_created', 'status'])
+                    e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 'status'])
 
-                        # select one file from e_files_navigation to download
-                        e_files_navigation.to_csv(metadata_file_path + "/" + bios + "/" + exp + "/all_files.csv")
-                        
-                        # Convert 'date_created' to datetime
-                        e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-                        
-                        if exp == "RNA-seq":
-                            # Filter rows where 'output_type' is 'gene quantification'
-                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
-                        else:
-                            # Filter rows where 'output_type' is 'alignments'
-                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+                    # select one file from e_files_navigation to download
+                    e_files_navigation.to_csv(metadata_file_path + "/" + bios + "/" + exp + "/all_files.csv")
+                    
+                    # Convert 'date_created' to datetime
+                    e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                    
+                    if exp == "RNA-seq":
+                        # Filter rows where 'output_type' is 'gene quantification'
+                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
+                    else:
+                        # Filter rows where 'output_type' is 'alignments'
+                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
 
-                        # Find the row with the newest 'date_created'
-                        newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
+                    # Find the row with the newest 'date_created'
+                    newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
 
-                        # Print the newest row
-                        with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
-                            for c in newest_row.columns:
-                                f.write(f"{c}\t{newest_row[c].values[0]}\n")
-                        
-                        if exp == "RNA-seq":
-                            save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
-                        else:
-                            save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
-                        
-                        url = newest_row["download_url"].values[0]
+                    # Print the newest row
+                    with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
+                        for c in newest_row.columns:
+                            f.write(f"{c}\t{newest_row[c].values[0]}\n")
+                    
+                    if exp == "RNA-seq":
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
+                    else:
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
+                    
+                    url = newest_row["download_url"].values[0]
 
-                        to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
+                    to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
 
-                    except Exception as e:
-                        with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
-                            f.write(f"failed to download {bios}_{exp}\n {e}")
-                        print(e)
+                    # except Exception as e:
+                    #     with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
+                    #         f.write(f"failed to download {bios}_{exp}\n {e}")
+                    #     print(e)
         
         if parallel:
             with mp.Pool(n_p) as pool:
@@ -443,7 +443,7 @@ if __name__ == "__main__":
     d = GET_DATA()
     # d.search_ENCODE()
     # d.save_metadata()
-    d.download_from_metadata()
+    d.download_from_metadata(parallel=False)
 
     # df1 =pd.read_csv("data/DF1.csv")
     # df2 =pd.read_csv("data/DF2.csv")
