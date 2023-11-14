@@ -249,13 +249,20 @@ class GET_DATA(object):
                         # Filter rows where 'output_type' is 'alignments'
                         filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
 
-                    # Find the row with the newest 'date_created'
-                    newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
+                    try:
+                        # Find the row with the newest 'date_created'
+                        newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
 
-                    # Print the newest row
-                    with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
-                        for c in newest_row.columns:
-                            f.write(f"{c}\t{newest_row[c].values[0]}\n")
+                        # Print the newest row
+                        with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
+                            for c in newest_row.columns:
+                                f.write(f"{c}\t{newest_row[c].values[0]}\n")
+                    
+                    except:
+                        print(newest_row)
+                        print(filtered_df)
+                        print(e_files_navigation)
+                        exit()
                     
                     if exp == "RNA-seq":
                         save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
