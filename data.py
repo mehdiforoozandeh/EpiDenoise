@@ -22,6 +22,9 @@ def single_download(dl_dict):
         attempt = 0
         is_done = False
         while is_done==False and attempt < num_attempts:
+            if attempt > 0:
+                time.sleep(10)
+                
             print(f"attemp number {attempt}")
             is_done = download_save(url, save_dir_name)
             attempt += 1
