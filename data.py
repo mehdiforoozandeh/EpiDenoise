@@ -202,11 +202,11 @@ class GET_DATA(object):
             for exp in self.DF1.columns:
                 if exp not in ["Accession", "num_nonexp_available", "num_available"]:
                     try:
-                        if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
-                            os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
-                        
                         if pd.notnull(self.DF1[exp][i]):
                             experiment_accession = self.DF1[exp][i]
+                            if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
+                                os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
+                                
                         else:
                             continue
                         
