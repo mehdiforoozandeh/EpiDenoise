@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 def single_download(dl_dict):
     num_attempts = 10
+
     def download_save(url, save_dir_name):
         try:
             download_response = requests.get(url, allow_redirects=True)
