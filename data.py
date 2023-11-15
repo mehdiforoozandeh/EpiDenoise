@@ -187,7 +187,7 @@ class GET_DATA(object):
         # filter DF1 based on availability of data (remove biosamples that dont have anything but expression data)
         self.DF1 = self.DF1[self.DF1['num_nonexp_available'] != 0]
 
-        self.DF1 = self.DF1[self.DF1['num_nonexp_available'] >= 5]
+        self.DF1 = self.DF1[self.DF1['num_nonexp_available'] >= 6]
         # print(self.DF1)
 
         # self.DF1 = self.DF1.iloc[:2,:]
@@ -206,7 +206,7 @@ class GET_DATA(object):
                             experiment_accession = self.DF1[exp][i]
                             if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
                                 os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
-                                
+
                         else:
                             continue
                         
@@ -292,6 +292,9 @@ class GET_DATA(object):
                             f.write(f"failed to download {bios}_{exp}\n {e}")
                         print(e)
         
+        df3 = pd.DataFrame(to_download, columns=["url","save_dir_name", "experiment", "biosample"])
+        df3.to_csv(metadata_file_path + "/DF3.csv")
+
         if parallel:
             with mp.Pool(n_p) as pool:
                 pool.map(single_download, to_download)
@@ -389,7 +392,7 @@ class BAM_TO_SIGNAL(object):
                 pvalue = 1 - poisson.cdf(count, mean_coverage)
 
                 # Convert the p-value to -log10(p-value)
-                pvalue = -np.log10(pvalue)
+                pvalue = -np.log10(pvalue + 1e-19)
 
                 self.pvalues[chr]["chr"].append(str(chr))
                 self.pvalues[chr]["start"].append(self.coverage[chr]["start"][i])
