@@ -53,12 +53,12 @@ class WRAPPER(object):
             f"#SBATCH --output={outname} \n conda activate ssl \n"]
         self.header = "\n".join(self.header)
 
-    def write_bash(command, file_address):
+    def write_bash(self, command, file_address):
         with open(file_address, "w") as f:
             f.write(f"{self.header}\n{command}")
         self.bashfile = file_address
 
-    def submit():
+    def submit(self):
         os.system(f"sbatch {self.bashfile}")
 
 class GET_DATA(object):
@@ -325,10 +325,13 @@ class GET_DATA(object):
                 mem = int(
                     (l["size"] / (1024 * 1024 * 1024)) * 1.3
                 ) 
+
                 wrp = WRAPPER(f"{bios}_{exp}", subjobdir+f"{bios}_{exp}.out", mem = f"{mem}G")
+
                 wrp.write_bash(
-                    f'''python download_job_wrapper.py {l["url"]} {l["save_dir_name"]} {l["exp"]} {l["bios"]}''', 
+                    f"python download_job_wrapper.py {l['url']} {l['save_dir_name']} {l['exp']} {l['bios']}", 
                     subjobdir+f"{bios}_{exp}.sh")
+
                 wrp.submit()
                 time.sleep(1)
 
