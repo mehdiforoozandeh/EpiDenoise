@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
-import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig, time
+import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig, time, gzip
 from tqdm import tqdm
 
 def single_download(dl_dict):
@@ -44,7 +44,23 @@ def single_download(dl_dict):
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
-    
+
+class WRAPPER(object):
+    def __init__(self, jobname, outname, mem="10G", time="0-12:00", n_cpu="1", account="def-maxwl"):
+        self.header = [
+            "#!/bin/bash", f"#SBATCH --job-name={jobname}", f"#SBATCH --account={account}",
+            f"#SBATCH --cpus-per-task={n_cpu}", f"#SBATCH --mem={mem}", f"#SBATCH --time={time}",
+            f"#SBATCH --output={outname} \n conda activate ssl \n"]
+        self.header = "\n".join(self.header)
+
+    def write_bash(command, file_address):
+        with open(file_address, "w") as f:
+            f.write(f"{self.header}\n{command}")
+        self.bashfile = file_address
+
+    def submit():
+        os.system(f"sbatch {self.bashfile}")
+
 class GET_DATA(object):
     def __init__(self):
         self.encode_imputation_challenge_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3",
@@ -168,7 +184,7 @@ class GET_DATA(object):
         self.DF1.to_csv(metadata_file_path + "DF1.csv")
         self.DF2.to_csv(metadata_file_path + "DF2.csv")
 
-    def download_from_metadata(self, metadata_file_path="data/", parallel=True, n_p=15, assembly="GRCh38"):
+    def download_from_metadata(self, metadata_file_path="data/", mode="parallel", n_p=15, assembly="GRCh38"):
         """
         read DF1 and DF2 metadata files and run download_search_results on them
         """
@@ -284,20 +300,38 @@ class GET_DATA(object):
                             save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
                         
                         url = newest_row["download_url"].values[0]
+                        file_size = newest_row["file_size"].values[0]
 
-                        to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
+                        to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios, "size":file_size})
 
                     except Exception as e:
                         with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
                             f.write(f"failed to download {bios}_{exp}\n {e}")
-                        print(e)
+                        print(e, bios, exp)
         
-        df3 = pd.DataFrame(to_download, columns=["url","save_dir_name", "experiment", "biosample"])
+        df3 = pd.DataFrame(to_download, columns=["url","save_dir_name", "experiment", "biosample", "file_size"])
         df3.to_csv(metadata_file_path + "/DF3.csv")
 
-        if parallel:
+        if mode == "parallel":
             with mp.Pool(n_p) as pool:
                 pool.map(single_download, to_download)
+
+        elif mode == "wrapper":
+            subjobdir = "subjobs/"
+            if os.path.exists(subjobdir) == False:
+                os.mkdir(subjobdir) 
+                
+            for l in to_download:
+                mem = int(
+                    (l["size"] / (1024 * 1024 * 1024)) * 1.3
+                ) 
+                wrp = WRAPPER(f"{bios}_{exp}", subjobdir+f"{bios}_{exp}.out", mem = f"{mem}G")
+                wrp.write_bash(
+                    f'''python download_job_wrapper.py {l["url"]} {l["save_dir_name"]} {l["exp"]} {l["bios"]}''', 
+                    subjobdir+f"{bios}_{exp}.sh")
+                wrp.submit()
+                time.sleep(1)
+
         else:
             for d in to_download:
                 single_download(d)
@@ -480,7 +514,7 @@ class BAM_TO_SIGNAL(object):
         self.calculate_coverage()
         self.calculate_signal_pvalues()
         self.save_coverage_pkl()
-        self.save_signal_bigwig()
+        self.save_signal_pkl()
         # self.save_coverage_bigwig()
 
         t1 = datetime.datetime.now()
@@ -561,7 +595,7 @@ if __name__ == "__main__":
     d = GET_DATA()
     d.search_ENCODE()
     d.save_metadata()
-    d.download_from_metadata(parallel=True)
+    d.download_from_metadata()
 
     # df1 =pd.read_csv("data/DF1.csv")
     # df2 =pd.read_csv("data/DF2.csv")
