@@ -340,9 +340,10 @@ class GET_DATA(object):
                 os.mkdir(subjobdir) 
                 
             for l in to_download:
-                mem = int((l["size"] / (1024 * 1024 * 1024))) + 2
+                mem = int( (l["size"] / (1024 * 1024 * 1024)) * 2 ) + 1
+                time = int( (l["size"] / (1024 * 1024 * 1024)) / 2 ) + 12
 
-                wrp = WRAPPER(f"{l['bios']}_{l['exp']}", subjobdir+f"{l['bios']}_{l['exp']}.out", mem = f"{mem}G")
+                wrp = WRAPPER(f"{l['bios']}_{l['exp']}", subjobdir+f"{l['bios']}_{l['exp']}.out", mem = f"{mem}G", time=f"0-{time}:00")
 
                 wrp.write_bash(
                     f"python download_job_wrapper.py {l['url']} {l['save_dir_name']} {l['exp']} {l['bios']}", 
