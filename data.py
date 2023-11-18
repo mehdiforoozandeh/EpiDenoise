@@ -611,8 +611,8 @@ class LOAD_DATA():
 
 if __name__ == "__main__":
     d = GET_DATA()
-    # d.search_ENCODE()
-    # d.save_metadata()
+    d.search_ENCODE()
+    d.save_metadata()
     d.download_from_metadata(mode="wrapper")
 
     # df1 =pd.read_csv("data/DF1.csv")
