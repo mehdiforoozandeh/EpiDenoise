@@ -212,7 +212,7 @@ class GET_DATA(object):
         if os.path.exists(metadata_file_path + "DF3.csv"):
             # parse to_download from DF3
             to_download = []
-            df3 = pd.read_csv(metadata_file_path + "DF3.csv").drop("Unnamed: 0", axis=1)
+            df = pd.read_csv(metadata_file_path + "DF3.csv").drop("Unnamed: 0", axis=1)
             for i in range(len(df3)):
                 to_download.append(
                     {
