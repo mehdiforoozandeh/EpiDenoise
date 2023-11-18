@@ -213,7 +213,7 @@ class GET_DATA(object):
             # parse to_download from DF3
             to_download = []
             df = pd.read_csv(metadata_file_path + "DF3.csv").drop("Unnamed: 0", axis=1)
-            for i in range(len(df3)):
+            for i in range(len(df)):
                 to_download.append(
                     {
                         "url":df["url"][i], "save_dir_name":df["save_dir_name"][i], 
