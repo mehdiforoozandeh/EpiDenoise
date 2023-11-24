@@ -72,6 +72,21 @@ class MaskedConv1d(nn.Module):
         x = x.permute(0,2,1)
         return x
 
+class MaskPostConv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1):
+        super(MaskPostConv1d, self).__init__()
+        padding = (kernel_size - 1) // 2 #same
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        
+    def forward(self, x, mask):
+        x = x.permute(0,2,1)
+        x = self.conv(x)
+        x = x.permute(0,2,1)
+        not_mask = mask.clone()
+        not_mask = ~mask
+        x = x * not_mask
+        return x
+
 class DualConv1d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
         super(DualConv1d, self).__init__()
@@ -98,6 +113,22 @@ class MaskedConvEncoder(nn.Module):
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, num_filters, kernel_size=5):
         super(MaskedConvEncoder, self).__init__()
         self.masked_conv = MaskedConv1d(in_channels=input_dim, out_channels=num_filters, kernel_size=kernel_size, stride=1)
+        self.pos_encoder = PositionalEncoding(input_dim)  # or RelativePositionEncoding(input_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(input_dim, output_dim)
+        
+    def forward(self, src, src_mask):
+        src = self.masked_conv(src, src_mask)
+        src = self.pos_encoder(src)
+        src = self.transformer_encoder(src)
+        src = self.decoder(src)
+        return src
+
+class MaskPostConvEncoder(nn.Module):
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, num_filters, kernel_size=5):
+        super(MaskPostConvEncoder, self).__init__()
+        self.masked_conv = MaskPostConv1d(in_channels=input_dim, out_channels=num_filters, kernel_size=kernel_size, stride=1)
         self.pos_encoder = PositionalEncoding(input_dim)  # or RelativePositionEncoding(input_dim)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -214,12 +245,13 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
 
         # Combining the two masks
         combined_mask = mask | pad
-        
+
         # Getting the output of the model
         output = model(masked_data, combined_mask)
 
         # Computing the loss only on the masked subset of the input data
         loss = criterion(output[mask], data[mask])
+        print(f"epoch:{epoch} | loss: {loss}")
 
         # Backpropagating the gradients
         loss.backward()
@@ -243,8 +275,10 @@ def main():
     n_chunks = 2
 
     # Creating an instance of the TransformerEncoder model
+
     # model = MaskedConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-    model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
+    # model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
+    model = MaskPostConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
 
     # Generating some random data
     data = torch.abs(torch.randn(n_samples, seq_len, input_dim))
