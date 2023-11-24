@@ -5,6 +5,7 @@ from scipy.stats import poisson
 import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, pickle, datetime, pyBigWig, time, gzip
 from tqdm import tqdm
+import pybedtools
 
 def single_download(dl_dict):
     num_attempts = 10
@@ -340,17 +341,23 @@ class GET_DATA(object):
                 os.mkdir(subjobdir) 
                 
             for l in to_download:
-                mem = int( (l["size"] / (1024 * 1024 * 1024)) * 2 ) + 1
-                t = int( (l["size"] / (1024 * 1024 * 1024)) / 2 ) + 12
 
-                wrp = WRAPPER(f"{l['bios']}_{l['exp']}", subjobdir+f"{l['bios']}_{l['exp']}.out", mem = f"{mem}G", time=f"0-{t}:00")
+                if (
+                    os.path.exists({l['save_dir_name']}) == False) or (
+                        os.path.exists({l['save_dir_name']}) == True and 
+                        os.path.exists({l['save_dir_name']+".bai"}) == False):
 
-                wrp.write_bash(
-                    f"python download_job_wrapper.py {l['url']} {l['save_dir_name']} {l['exp']} {l['bios']}", 
-                    subjobdir+f"{l['bios']}_{l['exp']}.sh")
+                    mem = int( (l["size"] / (1024 * 1024 * 1024)) * 2 ) + 5
+                    t = int( (l["size"] / (1024 * 1024 * 1024)) / 2 ) + 16
 
-                wrp.submit()
-                time.sleep(1)
+                    wrp = WRAPPER(f"{l['bios']}_{l['exp']}", subjobdir+f"{l['bios']}_{l['exp']}.out", mem = f"{mem}G", time=f"0-{t}:00")
+
+                    wrp.write_bash(
+                        f"python download_job_wrapper.py {l['url']} {l['save_dir_name']} {l['exp']} {l['bios']}", 
+                        subjobdir+f"{l['bios']}_{l['exp']}.sh")
+
+                    wrp.submit()
+                    time.sleep(1)
 
         else:
             for d in to_download:
@@ -610,11 +617,87 @@ class LOAD_DATA():
         
         return loaded_file
 
-if __name__ == "__main__":
-    d = GET_DATA()
-    d.search_ENCODE()
-    d.save_metadata()
-    d.download_from_metadata(mode="wrapper")
+class COORD(object):
+    def __init__(self, Meuleman_file="data/Meuleman.tsv", cCRE_file="data/GRCh38-cCREs.bed", 
+                resolution=1000, chr_sizes_file="data/hg38.chrom.sizes", outdir="data/"):
+        
+        self.resolution = resolution
+        self.cCRE_file = cCRE_file
+        self.Meuleman_file = Meuleman_file
+        self.outdir = outdir
+        self.chr_sizes_file = chr_sizes_file        
+    
+    def init_bins(self):
+        if os.path.exists(f"{self.outdir}/bins_{self.resolution}bp.csv"):
+            self.bins = pd.read_csv(f"{self.outdir}/bins_{self.resolution}bp.csv").drop("Unnamed: 0", axis=1)
+        else:
+            main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+            chr_sizes = {}
+
+            with open(self.chr_sizes_file, 'r') as f:
+                for line in f:
+                    chr_name, chr_size = line.strip().split('\t')
+                    if chr_name in main_chrs:
+                        chr_sizes[chr_name] = int(chr_size)
+
+            # Create bins
+            self.bins = []
+            for chr, size in chr_sizes.items():
+                start_coords = range(0, size, self.resolution)
+                end_coords = range(self.resolution, size + self.resolution, self.resolution)
+                self.bins.extend([[chr, start, end] for start, end in zip(start_coords, end_coords)][:-1])
+
+            self.bins = pd.DataFrame(self.bins, columns =["chrom", "start", "end"])
+            self.bins = self.bins.sort_values(["chrom", "start"]).reset_index(drop=True)
+        self.bins.to_csv(f"{self.outdir}/bins_{self.resolution}bp.csv")
+
+    def get_foreground(self):
+        if os.path.exists(f'{self.outdir}/foreground_nobin.csv'):
+            self.foreground = pd.read_csv(f'{self.outdir}/foreground_nobin.csv').drop("Unnamed: 0", axis=1)
+        else:
+            ccre = pybedtools.BedTool(self.cCRE_file)
+            if self.Meuleman_file == "_":
+                self.foreground = ccre.to_dataframe()
+
+            else:
+                Meuleman = pd.read_csv(self.Meuleman_file, sep="\t")
+                Meuleman.columns = ["chr", "start", "end", "identifier", "mean_signal", "numsamples", "summit", "core_start", "core_end", "component"]
+                Meuleman = pybedtools.BedTool.from_dataframe(Meuleman)
+
+                # get the union of ccre and Meuleman
+                self.foreground = ccre.cat(Meuleman, postmerge=False)
+                self.foreground = self.foreground.to_dataframe()
+
+            self.foreground = self.foreground[["chrom", "start", "end"]]
+            self.foreground = self.foreground.sort_values(["chrom", "start"]).reset_index(drop=True)
+            self.foreground.to_csv(f'{self.outdir}/foreground_nobin.csv')
+
+    def bin_fg_bg(self):
+        self.bins = pybedtools.BedTool.from_dataframe(self.bins)
+        self.foreground = pybedtools.BedTool.from_dataframe(self.foreground)
+
+        # Get the subset of bins that overlap with the foreground
+        fg_bins = self.bins.intersect(self.foreground, u=True)
+        fg_bins = fg_bins.to_dataframe()
+        fg_bins.to_csv(f"{self.outdir}/foreground_bins_{self.resolution}bp.csv")
+
+        # Get the subset of bins that do not overlap with the foreground
+        bg_bins = self.bins.intersect(self.foreground, v=True)
+        bg_bins = bg_bins.to_dataframe()
+        bg_bins.to_csv(f"{self.outdir}/background_bins_{self.resolution}bp.csv")
+
+        print(f"number of foreground bins: {len(fg_bins)} | number of background bins: {len(bg_bins)}")
+
+if __name__ == "__main__": 
+    c = COORD(resolution=25, Meuleman_file="_")
+    c.init_bins()
+    c.get_foreground()
+    c.bin_fg_bg()
+
+    # d = GET_DATA()
+    # d.search_ENCODE()
+    # d.save_metadata()
+    # d.download_from_metadata(mode="wrapper")
 
     # df1 =pd.read_csv("data/DF1.csv")
     # df2 =pd.read_csv("data/DF2.csv")

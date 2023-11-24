@@ -1,2 +1,7 @@
 data/*/
 .DS_store
+data/GRCh38-cCREs.bed
+data/Meuleman.tsv
+data/background_*
+data/foreground_*
+data/bins*
