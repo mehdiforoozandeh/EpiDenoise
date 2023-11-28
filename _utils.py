@@ -126,7 +126,7 @@ class PROCESS_EIC_DATA(object):
                     
                 self.biosamples[f[:3]][f[3:6]] = pyBigWig.open(self.path + "/" + f)
 
-    def generate_m_samples(self, m, multi_p=True, n_p=15): # m per biosample           
+    def generate_m_samples(self, m, multi_p=True, n_p=20): # m per biosample           
         if self.stratified:
             self.util.get_foreground()
             df = self.util.foreground
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     # solar_path = "data/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=5000, multi_p=True)
+    eic.generate_m_samples(m=2000, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
 
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     # solar_path = "data/validation_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=5000, multi_p=True)
+    eic.generate_m_samples(m=2000, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
 
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     # solar_path = "data/blind_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=5000, multi_p=True)
+    eic.generate_m_samples(m=2000, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     exit()

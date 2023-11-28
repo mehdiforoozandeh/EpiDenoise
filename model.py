@@ -133,9 +133,9 @@ class FeedForward(torch.nn.Module):
 class DoubleMaskEncoderLayer(torch.nn.Module):
     def __init__(
         self, 
-        d_model=768,
-        heads=12, 
-        feed_forward_hidden=768 * 4, 
+        d_model=35,
+        heads=5, 
+        feed_forward_hidden=35 * 4, 
         dropout=0.1
         ):
         super(DoubleMaskEncoderLayer, self).__init__()
