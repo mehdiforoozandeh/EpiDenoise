@@ -258,8 +258,6 @@ class augment(object):
 if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
-    print(eic.biosamples)
-    exit()
     t0 = datetime.datetime.now()
     eic.generate_m_samples(m=2000, multi_p=True)
     t1 = datetime.datetime.now()
