@@ -126,7 +126,7 @@ class PROCESS_EIC_DATA(object):
                     
                 self.biosamples[f[:3]][f[3:6]] = pyBigWig.open(self.path + "/" + f)
 
-    def generate_m_samples(self, m, multi_p=True, n_p=5): # m per biosample           
+    def generate_m_samples(self, m, multi_p=True, n_p=15): # m per biosample           
         if self.stratified:
             self.util.get_foreground()
             df = self.util.foreground
