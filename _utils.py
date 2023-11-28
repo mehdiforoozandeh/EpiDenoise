@@ -255,24 +255,24 @@ class augment(object):
         pass
 
 if __name__ == "__main__":
-    # solar_path = "/project/compbio-lab/EIC/training_data/"
-    solar_path = "data/training_data/"
+    solar_path = "/project/compbio-lab/EIC/training_data/"
+    # solar_path = "data/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
     eic.generate_m_samples(m=5000, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
 
-    # solar_path = "/project/compbio-lab/EIC/validation_data/"
-    solar_path = "data/validation_data/"
+    solar_path = "/project/compbio-lab/EIC/validation_data/"
+    # solar_path = "data/validation_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
     eic.generate_m_samples(m=5000, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
 
-    # solar_path = "/project/compbio-lab/EIC/blind_data/"
-    solar_path = "data/blind_data/"
+    solar_path = "/project/compbio-lab/EIC/blind_data/"
+    # solar_path = "data/blind_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
     eic.generate_m_samples(m=5000, multi_p=True)
