@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.optim as optim
+from data import ENCODE_IMPUTATION_DATASET
 
 class RelativePositionEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
@@ -10,10 +11,10 @@ class RelativePositionEncoding(nn.Module):
         self.rel_pos_emb = nn.Embedding(self.max_len*2, self.d_model)
 
     def forward(self, x):
-        seq_len = x.size(1)
-        pos = torch.arange(-seq_len+1, seq_len, device=x.device).unsqueeze(-1)
+        batch_size, seq_len, _ = x.size()
+        pos = torch.arange(seq_len, device=x.device).unsqueeze(0).repeat(batch_size, 1)
         pos_emb = self.rel_pos_emb(pos + self.max_len)
-        return pos_emb
+        return x + pos_emb
 
 class AttentionPooling(nn.Module):
     def __init__(self, input_dim):
@@ -29,10 +30,13 @@ class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
         super(PositionalEncoding, self).__init__()
 
+        self.d_model = d_model
+        d_model_pad = d_model if d_model % 2 == 0 else d_model + 1  # Ensure d_model is even
+
         # Create a long enough `pe` matrix
-        pe = torch.zeros(max_len, d_model)
+        pe = torch.zeros(max_len, d_model_pad)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(torch.log(torch.tensor(10000.0)) / d_model))
+        div_term = torch.exp(torch.arange(0, d_model_pad, 2).float() * -(torch.log(torch.tensor(10000.0)) / d_model_pad))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0).transpose(0, 1)
@@ -41,8 +45,11 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + self.pe[:x.size(0), :]
-        return x
+        pe = self.pe.squeeze(1)
+        pe = pe[:,:self.d_model]
+
+        return x + pe.unsqueeze(0)
+
 
 class MaskedMSELoss(nn.Module):
     def __init__(self):
@@ -107,7 +114,52 @@ class DualConv1d(nn.Module):
         x = x.permute(0,2,1)
         return x
 
+class TripleConv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, seq_len, stride=1):
+        super(TripleConv1d, self).__init__()
+        padding = (kernel_size - 1) // 2 #same
+
+        # in_channel: num_features, out_channel: num_filters
+        # output shape: (batch_size, num_filters, seq_len)
+        self.data_conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding) 
+
+        # in_channel: num_features, out_channel: num_filters
+        # output shape: (batch_size, num_filters, seq_len)
+        self.position_mask_conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+
+        # in_channel: seq_len, out_channel: num_features
+        # output shape: (batch_size, 1, num_features)
+        self.feature_mask_conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        
+
+    def forward(self, x, mask):
+        mask = mask.clone()
+        # x = x.permute(0,2,1)
+        mask = mask.permute(0,2,1)
+
+        # x = self.data_conv(x)
+        # mask = self.mask_conv(mask.float()).permute(0,2,1)  # transpose the mask convolutions back to original shape
+
+        x = x * mask
+        x = x.permute(0,2,1)
+        return x
+
 #________________________________________________________________________________________________________________________#
+class TransformerEncoder(nn.Module):
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim):
+        super(TransformerEncoder, self).__init__()
+
+        self.pos_encoder = PositionalEncoding(input_dim, max_len=500)  # or RelativePositionEncoding(input_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(input_dim, output_dim)
+        
+    def forward(self, src, src_mask):
+        src = self.pos_encoder(src)
+        src = self.transformer_encoder(src)
+        src = self.decoder(src)
+        return src
+
 
 class MaskedConvEncoder(nn.Module):
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, num_filters, kernel_size=5):
@@ -146,6 +198,23 @@ class DualConvEncoder(nn.Module):
         super(DualConvEncoder, self).__init__()
         
         self.dualconv = DualConv1d(in_channels=input_dim, out_channels=num_filters, kernel_size=kernel_size, stride=1)
+        self.pos_encoder = PositionalEncoding(input_dim, max_len=500)  # or RelativePositionEncoding(input_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(input_dim, output_dim)
+
+    def forward(self, src, src_mask):
+        src = self.dualconv(src, src_mask)
+        src = self.pos_encoder(src)
+        src = self.transformer_encoder(src)
+        src = self.decoder(src)
+        return src
+
+class TripleConvEncoder(nn.Module):
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, num_filters, seq_len, kernel_size=5):
+        super(DualConvEncoder_T, self).__init__()
+        
+        self.dualconv = DualConv1d_T(in_channels=input_dim, out_channels=num_filters, kernel_size=kernel_size, seq_len=seq_len, stride=1)
         self.pos_encoder = PositionalEncoding(input_dim)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -159,6 +228,9 @@ class DualConvEncoder(nn.Module):
         return src
 
 #________________________________________________________________________________________________________________________#
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 # Function to mask a certain percentage of the data
 def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
@@ -215,8 +287,23 @@ def mask_missing(data, missing_features_ind, mask_value=-1):
     # Return the masked data and the mask
     return masked_data, mask
 
+def sequence_pad(data, max_length, pad_value=-1):
+    # Get the original dimensions of the data
+    original_size = data.size()
+    
+    # Create a tensor filled with the pad value with the desired size
+    padded_data = torch.full((original_size[0], max_length, original_size[2]), pad_value)
+    
+    # Copy the original data into the padded data tensor
+    padded_data[:, :original_size[1], :] = data
+    
+    # Create a boolean mask indicating whether each value is padded or not
+    pad_mask = padded_data == pad_value
+    
+    return padded_data, pad_mask
+
 # Function to train the model
-def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_percentage=0.15, chunk=False, n_chunks=1):
+def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=8000):
     # Initializing the loss function
     criterion = nn.MSELoss()
     # Initializing the optimizer
@@ -229,22 +316,25 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
 
         # If missing_features_ind is not empty, create a mask for the missing data
         if len(missing_features_ind) > 0: 
-            padded_data, pad = mask_missing(data, missing_features_ind)
+            fmasked_data, feat_mask = mask_missing(data, missing_features_ind)
 
         # If missing_features_ind is empty, create a mask of False values with the same shape as the data
         else:
             # Creating a mask of False values with the same shape as the data
-            padded_data = data.clone()
-            pad = torch.zeros_like(data, dtype=torch.bool)
+            fmasked_data = data.clone()
+            feat_mask = torch.zeros_like(data, dtype=torch.bool)
 
         # Masking a subset of the input data
-        masked_data, mask = mask_data(padded_data, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+        masked_data, mask = mask_data(fmasked_data, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
 
-        # Update mask variable such that if for an entry in pad, pad == True, mask should be False
-        mask = mask & ~pad
+        if data.shape[1] < context_length:
+            padded_data, pad_mask = sequence_pad(masked_data, max_length=context_length)
+
+        # Update mask variable such that if for an entry in fmask, fmask == True, mask should be False
+        mask = mask & ~feat_mask & ~pad_mask
 
         # Combining the two masks
-        combined_mask = mask | pad
+        combined_mask = mask | feat_mask
 
         # Getting the output of the model
         output = model(masked_data, combined_mask)
@@ -258,18 +348,56 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         # Updating the model parameters
         optimizer.step()
 
+def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}, # model_parameters: {count_parameters(model)}")
+    model = model.to(device)
+
+    for epoch in range(num_epochs):
+        print('-' * 10)
+        print(f'Epoch {epoch+1}/{num_epochs}')
+
+        epoch_loss = 0.0
+        bb=0
+        for bios, f in dataset.biosamples.items():
+            bb+=1
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            x, missing_mask = dataset.get_biosample(f)
+            x, missing_mask = x[:,:500,:], missing_mask[:,:500,:]
+            print(x.shape)
+            # x = x.to(device)
+
+            # Masking a subset of the input data
+            x, cloze_mask = mask_data(x, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+
+            cloze_mask = cloze_mask & ~missing_mask
+
+            # Combining the two masks
+            combined_mask = cloze_mask | missing_mask
+
+            outputs = model(x, combined_mask)
+            loss = criterion(outputs[cloze_mask], x[cloze_mask])
+            print(f'Epoch {epoch+1}/{num_epochs} | BiosBatch {bb}/{len(dataset.biosamples)} | Loss: {loss:.4f}')
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss
+
+        # print(f'Loss: {epoch_loss:.4f}')
+
+    return model
+
 # The main function
 def main():
     # Defining the hyperparameters
-    input_dim = output_dim = 10
+    input_dim = output_dim = 35
     nhead = 5
     hidden_dim = 16
     nlayers = 2
-    epochs = 500
-    seq_len = 100
-    n_samples = 80
-    mask_percentage = 0.20
-    out_channel = 10
+    epochs = 50
+    mask_percentage = 0.15
+    out_channel = 35
     kernel_size = 5
     chunk = True
     n_chunks = 2
@@ -277,14 +405,24 @@ def main():
     # Creating an instance of the TransformerEncoder model
 
     # model = MaskedConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-    # model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-    model = MaskPostConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
+    # model = TripleConv1d(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, seq_len, kernel_size=kernel_size)
+    # model = MaskPostConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
 
     # Generating some random data
-    data = torch.abs(torch.randn(n_samples, seq_len, input_dim))
+    # data = torch.abs(torch.randn(n_samples, seq_len/2, input_dim))
+
 
     # Training the model
-    train(model, data, epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
+    # train(model, data, epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
+
+    model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
+    # model = TransformerEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim)
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET("data/test/")
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    train_model(model, dataset, criterion, optimizer, num_epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
+
 
 # Calling the main function
 if __name__ == "__main__":
