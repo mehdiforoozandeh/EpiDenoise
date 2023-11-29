@@ -653,11 +653,12 @@ class ENCODE_IMPUTATION_DATASET(object):
         L = len(loaded_file[list(loaded_file.keys())[0]][0][1])
         D = len(self.all_assays)
 
+        missing_f_i = []
         # Initialize an empty list to hold all samples
         all_samples = []
         
         # Iterate over all assays
-        for assay in self.all_assays:
+        for i, assay in enumerate(self.all_assays):
             if assay_availability[assay]:
                 # If assay is available, append its signal arrays to all_samples
                 assay_samples = []
@@ -665,6 +666,7 @@ class ENCODE_IMPUTATION_DATASET(object):
                     assay_samples.append(loaded_file[assay][i][1])
 
             else:
+                missing_f_i.append(i)
                 # If assay is not available, append -1 of appropriate shape
                 assay_samples = []
                 for i in range(M):
@@ -682,7 +684,7 @@ class ENCODE_IMPUTATION_DATASET(object):
         # Create a mask tensor
         mask = (all_samples_tensor == -1)
 
-        return all_samples_tensor, mask
+        return all_samples_tensor, mask, missing_f_i
             
 if __name__ == "__main__": 
     eic = ENCODE_IMPUTATION_DATASET("data/test/")

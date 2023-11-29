@@ -2,6 +2,8 @@ import torch, math
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
+import torch.nn.functional as F
+
 
 class RelativePositionEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
@@ -77,11 +79,20 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         self.value = torch.nn.Linear(d_model, d_model)
         self.output_linear = torch.nn.Linear(d_model, d_model)
         
-    def forward(self, query, key, value, mask):
+    def forward(self, query, key, value, pmask, fmask):
         """
         query, key, value of shape: (batch_size, max_len, d_model)
         mask of shape: (batch_size, 1, 1, max_words)
         """
+
+        # fmask should be of size d_model*d_model 
+        # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
+
+        # Element-wise multiplication with the weight matrices
+        self.query.weight.data *= fmask
+        self.key.weight.data *= fmask
+        self.value.weight.data *= fmask
+
         # (batch_size, max_len, d_model)
         query = self.query(query)
         key = self.key(key)        
@@ -97,7 +108,7 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
 
         # fill 0 mask with super small number so it wont affect the softmax weight
         # (batch_size, h, max_len, max_len)
-        scores = scores.masked_fill(mask == 0, -1e9)    
+        scores = scores.masked_fill(pmask == 0, -1e9)    
 
         # (batch_size, h, max_len, max_len)
         # softmax to put attention weight for all non-pad tokens
@@ -144,11 +155,11 @@ class DoubleMaskEncoderLayer(torch.nn.Module):
         self.feed_forward = FeedForward(d_model, middle_dim=feed_forward_hidden)
         self.dropout = torch.nn.Dropout(dropout)
 
-    def forward(self, embeddings, mask):
+    def forward(self, embeddings, pmask, fmask):
         # embeddings: (batch_size, max_len, d_model)
         # encoder mask: (batch_size, 1, 1, max_len)
         # result: (batch_size, max_len, d_model)
-        interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
+        interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, pmask, fmask))
         # residual layer
         interacted = self.layernorm(interacted + embeddings)
         # bottleneck
@@ -323,6 +334,23 @@ class TripleConvEncoder(nn.Module):
 
 #________________________________________________________________________________________________________________________#
 
+class EpiDenoise(nn.Module): 
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1):
+        super(EpiDenoise, self).__init__()
+
+        self.pos_encoder = PositionalEncoding(input_dim, max_len=500)  # or RelativePositionEncoding(input_dim)
+        self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(input_dim, output_dim)
+        
+    def forward(self, src, pmask, fmask):
+        src = self.pos_encoder(src)
+        src = self.masked_encoder(src, pmask, fmask)
+        src = self.transformer_encoder(src)
+        src = self.decoder(src)
+        return src
+
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
@@ -458,7 +486,15 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            x, missing_mask = dataset.get_biosample(f)
+            x, missing_mask, missing_f_i = dataset.get_biosample(f)
+
+            # fmask is used to mask QKV of transformer
+            d_model = x.shape[2]
+            fmask = torch.ones(d_model, d_model)
+
+            for i in missing_f_i:
+                fmask[i,:] = 0
+
             x, missing_mask = x[:,:500,:], missing_mask[:,:500,:]
             print(x.shape)
             # x = x.to(device)
@@ -468,10 +504,16 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
             cloze_mask = cloze_mask & ~missing_mask
 
-            # Combining the two masks
-            combined_mask = cloze_mask | missing_mask
+            pmask = cloze_mask.any(dim=-1)
+            pmask = pmask.unsqueeze(1).unsqueeze(2)
+            # Convert the boolean values to float and switch the masked and non-masked values
+            pmask = 1 - pmask.float()
 
-            outputs = model(x, combined_mask)
+
+            # Combining the two masks
+            # combined_mask = cloze_mask | missing_mask
+
+            outputs = model(x, pmask, fmask)
             loss = criterion(outputs[cloze_mask], x[cloze_mask])
             print(f'Epoch {epoch+1}/{num_epochs} | BiosBatch {bb}/{len(dataset.biosamples)} | Loss: {loss:.4f}')
             loss.backward()
@@ -479,13 +521,13 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             epoch_loss += loss
 
         # print(f'Loss: {epoch_loss:.4f}')
-
     return model
 
 # The main function
 def main():
     # Defining the hyperparameters
     input_dim = output_dim = 35
+    dropout=0.1
     nhead = 5
     hidden_dim = 16
     nlayers = 2
@@ -509,14 +551,15 @@ def main():
     # Training the model
     # train(model, data, epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
 
-    model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
+    # model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
     # model = TransformerEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim)
+    model = EpiDenoise(input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, output_dim=output_dim, dropout=dropout)
+
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET("data/test/")
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     train_model(model, dataset, criterion, optimizer, num_epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
-
 
 def test():
     input_dim = output_dim = 35
@@ -535,6 +578,6 @@ def test():
 
 # Calling the main function
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()
     
