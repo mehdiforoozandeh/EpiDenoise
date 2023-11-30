@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle
-from tqdm import tqdm
 from torch.utils.data import Dataset
 import torch
 import pybedtools
