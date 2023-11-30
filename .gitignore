@@ -1,5 +1,5 @@
 data/*/
-models/
+models/*
 .DS_store
 data/GRCh38-cCREs.bed
 data/Meuleman.tsv
