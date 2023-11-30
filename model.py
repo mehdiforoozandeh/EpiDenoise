@@ -480,6 +480,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     #     model = torch.nn.DataParallel(model)
 
     # model.to(device)
+    logfile = open("models/log.txt", "w")
 
     # Define your batch size
     for epoch in range(num_epochs):
@@ -531,12 +532,15 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 outputs = model(x_batch, pmask, fmask)
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
-                print(
-                    f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}')
+                log_str = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
+                print(log_str)
+                logfile.write(log_str)
+
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss
-
+                
+    logfile.close()
     return model
 
 def train_epidenoise(hyper_parameters):
@@ -600,7 +604,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 7,
             "hidden_dim": 16,
-            "nlayers": 4,
+            "nlayers": 2,
             "epochs": 100,
             "mask_percentage": 0.30,
             "chunk": True,
