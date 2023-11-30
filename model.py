@@ -629,7 +629,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 7,
             "hidden_dim": 16,
-            "nlayers": 1,
+            "nlayers": 2,
             "epochs": 50,
             "mask_percentage": 0.30,
             "chunk": True,
