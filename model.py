@@ -479,9 +479,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     model = model.to(device)
     print(device)
 
-    if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
-        model = torch.nn.DataParallel(model)
+    # if torch.cuda.device_count() > 1:
+    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
+    #     model = torch.nn.DataParallel(model)
 
     # model.to(device)
     log_strs.append(str(device))
@@ -634,7 +634,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.30,
             "chunk": True,
             "context_length": 2000,
-            "batch_size": 100,
+            "batch_size": 50,
             "learning_rate": 0.005
         }
     # try:
