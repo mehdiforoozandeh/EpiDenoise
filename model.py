@@ -546,7 +546,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss):
-                    loss.backward()
+                    # loss.backward()
                     print("\n\nisnan gradients")
                     for name, param in model.named_parameters():
                         if param.grad is not None:
