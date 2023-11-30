@@ -524,18 +524,21 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
                     # print(x_batch.shape)
 
-                x_batch = x_batch.to(device)
-                missing_mask_batch = missing_mask_batch.to(device)
 
                 # Masking a subset of the input data
                 x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
 
                 cloze_mask = cloze_mask & ~missing_mask_batch
 
+                # cloze_mask = cloze_mask.to(device)
+
                 pmask = cloze_mask.any(dim=-1)
                 pmask = pmask.unsqueeze(1).unsqueeze(2)
                 # Convert the boolean values to float and switch the masked and non-masked values
                 pmask = 1 - pmask.float()
+
+                x_batch = x_batch.to(device)
+                pmask = pmask.to(device)
 
                 # Combining the two masks
                 # combined_mask = cloze_mask | missing_mask_batch
@@ -544,7 +547,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 del x_batch
-                del missing_mask_batch
+                del pmask
                 del outputs
 
                 # Clear GPU memory again
