@@ -555,6 +555,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     print("\n\nisnan parameters")
                     for name, param in model.named_parameters():
                         print(name, torch.isnan(param).sum())
+                    
+                    exit()
 
                 del x_batch
                 del pmask
