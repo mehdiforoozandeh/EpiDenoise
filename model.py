@@ -643,9 +643,9 @@ if __name__ == "__main__":
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 25,
-            "mask_percentage": 0.50 ,
+            "mask_percentage": 0.15 ,
             "chunk": True,
-            "context_length": 500,
+            "context_length": 1000,
             "batch_size": 25,
             "learning_rate": 0.005
         }
