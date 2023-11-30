@@ -623,8 +623,8 @@ def train_epidenoise(hyper_parameters):
 # Calling the main function
 if __name__ == "__main__":
     hyper_parameters = {
-            # "data_path": "/project/compbio-lab/EIC/training_data/",
-            "data_path": "data/test",
+            "data_path": "/project/compbio-lab/EIC/training_data/",
+            # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 5,
