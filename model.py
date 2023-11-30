@@ -5,7 +5,7 @@ import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "caching_allocator"
 
 
 class RelativePositionEncoding(nn.Module):
@@ -514,7 +514,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
-                # torch.cuda.empty_cache()
+                torch.cuda.empty_cache()
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
 
