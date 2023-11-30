@@ -692,6 +692,8 @@ class ENCODE_IMPUTATION_DATASET(object):
         all_samples_tensor = np.array(all_samples).transpose(1, 2, 0)
 
         # Convert numpy array to PyTorch tensor
+        print(type(all_samples_tensor), all_samples_tensor.dtype)
+        exit()
         all_samples_tensor = torch.from_numpy(all_samples_tensor)
         all_samples_tensor = all_samples_tensor.float() 
 
