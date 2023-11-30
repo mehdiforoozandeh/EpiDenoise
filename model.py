@@ -480,8 +480,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     #     model = torch.nn.DataParallel(model)
 
     # model.to(device)
-    logfile = open("models/log.txt", "w")
-
+    log_strs = []
     # Define your batch size
     for epoch in range(num_epochs):
         print('-' * 10)
@@ -532,15 +531,21 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 outputs = model(x_batch, pmask, fmask)
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
-                log_str = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
+
+                logfile = open("models/log.txt", "w")
+                logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
+                log_strs.append(logstr)
+                logfile.write("\n".join(log_strs[:5]))
+                logfile.close()
+
                 print(log_str)
                 logfile.write(log_str)
 
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss
-                
-    logfile.close()
+
+    
     return model
 
 def train_epidenoise(hyper_parameters):
