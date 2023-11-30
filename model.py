@@ -338,7 +338,7 @@ class EpiDenoise(nn.Module):
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1):
         super(EpiDenoise, self).__init__()
 
-        self.pos_encoder = PositionalEncoding(input_dim, max_len=500)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = PositionalEncoding(input_dim, max_len=20)  # or RelativePositionEncoding(input_dim)
         self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -472,8 +472,13 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
 
 def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}, # model_parameters: {count_parameters(model)}")
     model = model.to(device)
+
+    # if torch.cuda.device_count() > 1:
+    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
+    #     model = torch.nn.DataParallel(model)
+
+    # model.to(device)
 
     for epoch in range(num_epochs):
         print('-' * 10)
@@ -495,9 +500,10 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             for i in missing_f_i:
                 fmask[i,:] = 0
 
-            x, missing_mask = x[:,:500,:], missing_mask[:,:500,:]
+            x, missing_mask = x[:,:20,:], missing_mask[:,:20,:]
             print(x.shape)
-            # x = x.to(device)
+            
+            x = x.to(device)
 
             # Masking a subset of the input data
             x, cloze_mask = mask_data(x, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
@@ -533,26 +539,9 @@ def main():
     nlayers = 2
     epochs = 50
     mask_percentage = 0.15
-    out_channel = 35
-    kernel_size = 5
     chunk = True
     n_chunks = 2
 
-    # Creating an instance of the TransformerEncoder model
-
-    # model = MaskedConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-    # model = TripleConv1d(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, seq_len, kernel_size=kernel_size)
-    # model = MaskPostConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-
-    # Generating some random data
-    # data = torch.abs(torch.randn(n_samples, seq_len/2, input_dim))
-
-
-    # Training the model
-    # train(model, data, epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
-
-    # model = DualConvEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim, out_channel, kernel_size=kernel_size)
-    # model = TransformerEncoder(input_dim, nhead, hidden_dim, nlayers, output_dim)
     model = EpiDenoise(input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, output_dim=output_dim, dropout=dropout)
 
     print(f"# model_parameters: {count_parameters(model)}")
@@ -561,20 +550,6 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     train_model(model, dataset, criterion, optimizer, num_epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
 
-def test():
-    input_dim = output_dim = 35
-    nhead = 5
-    hidden_dim = 16
-    nlayers = 2
-    epochs = 50
-    n_samples= 20
-    seq_len = 100
-
-    data = torch.abs(torch.randn(n_samples, seq_len, input_dim))
-    data, mask = mask_data(data, mask_value=-1, chunk=True, n_chunks=5, mask_percentage=0.60)
-
-    model = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=4*input_dim, dropout=0.1)
-    output = model(data, mask.float())
 
 # Calling the main function
 if __name__ == "__main__":

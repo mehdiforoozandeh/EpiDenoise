@@ -637,10 +637,25 @@ class ENCODE_IMPUTATION_DATASET(object):
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
         self.all_ct = ['C{:02d}'.format(i) for i in range(1, 52)]
 
+        availability = {}
+        for f in os.listdir(self.path):
+            if ".bigwig" in f: 
+                if f[:3] not in availability.keys():
+                    availability[f[:3]] = 0
+                availability[f[:3]] += 1
+                
+
         self.biosamples = {}
         for f in os.listdir(self.path):
             if ".pkl.gz" in f: 
                 self.biosamples[f[:3]] = f"{self.path}/{f}"
+        
+        # Sort the keys in availability in descending order
+        sorted_keys = sorted(availability, key=availability.get, reverse=True)
+
+        # Create a new dictionary with sorted keys
+        self.biosamples = {key: self.biosamples[key] for key in sorted_keys if key in self.biosamples}
+        
 
     def get_biosample(self, pkl_path):
         with gzip.open(pkl_path, 'rb') as f:
