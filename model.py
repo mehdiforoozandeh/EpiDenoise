@@ -543,12 +543,18 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # combined_mask = cloze_mask | missing_mask_batch
 
                 outputs = model(x_batch, pmask, fmask)
-                print(torch.isnan(outputs).sum())
-                print(torch.isnan(x_batch).sum())
-                # print(outputs[cloze_mask])
-                # print(x_batch[cloze_mask])
-                
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+                if torch.isnan(loss):
+                    loss.backward()
+                    print("\n\nisnan gradients")
+                    for name, param in model.named_parameters():
+                        if param.grad is not None:
+                            print(name, torch.isnan(param.grad).sum())
+
+                    print("\n\nisnan parameters")
+                    for name, param in model.named_parameters():
+                        print(name, torch.isnan(param).sum())
 
                 del x_batch
                 del pmask
@@ -558,7 +564,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 torch.cuda.empty_cache()
 
                 logfile = open("models/log.txt", "w")
-                logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
+                logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss.item():.4f}'
                 log_strs.append(logstr)
                 logfile.write("\n".join(log_strs))
                 logfile.close()
@@ -637,7 +643,7 @@ if __name__ == "__main__":
             "epochs": 25,
             "mask_percentage": 0.50 ,
             "chunk": True,
-            "context_length": 200,
+            "context_length": 500,
             "batch_size": 25,
             "learning_rate": 0.005
         }
