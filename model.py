@@ -55,7 +55,8 @@ class PositionalEncoding(nn.Module):
 
         return x + pe.unsqueeze(0)
 
-class WeightedMSELoss(nn.Module):
+class WeightedMSELoss(nn.Module): 
+    # gives more weight to predicting larger signal values rather than depletions
     def __init__(self):
         super(WeightedMSELoss, self).__init__()
 
@@ -640,17 +641,17 @@ def train_epidenoise(hyper_parameters):
 # Calling the main function
 if __name__ == "__main__":
     hyper_parameters = {
-            # "data_path": "/project/compbio-lab/EIC/training_data/",
-            "data_path": "data/test",
+            "data_path": "/project/compbio-lab/EIC/training_data/",
+            # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 5,
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 25,
-            "mask_percentage": 0.15 ,
+            "mask_percentage": 0.20 ,
             "chunk": True,
-            "context_length": 200,
+            "context_length": 1000,
             "batch_size": 25,
             "learning_rate": 0.005
         }
