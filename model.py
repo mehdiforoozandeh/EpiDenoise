@@ -349,7 +349,7 @@ class EpiDenoise(nn.Module):
         
     def forward(self, src, pmask, fmask):
         src = self.pos_encoder(src)
-        src = self.masked_encoder(src, pmask, fmask)
+        # src = self.masked_encoder(src, pmask, fmask)
         src = self.transformer_encoder(src)
         src = self.decoder(src)
         return src
@@ -499,6 +499,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         for bios, f in dataset.biosamples.items():
             bb+=1
 
+            optimizer.zero_grad()
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
             # fmask is used to mask QKV of transformer
@@ -512,7 +513,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
-                optimizer.zero_grad()
+                
 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
@@ -558,11 +559,12 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 logfile.write("\n".join(log_strs))
                 logfile.close()
 
-                if ((i//batch_size))+1 % 10 == 0:
+                if (((i//batch_size))+1) % 10 == 0:
                     print(logstr)
 
                 loss.backward()
-                optimizer.step()
+                
+            optimizer.step()
 
     return model
 
@@ -621,15 +623,15 @@ def train_epidenoise(hyper_parameters):
 # Calling the main function
 if __name__ == "__main__":
     hyper_parameters = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
-            # "data_path": "data/test",
+            # "data_path": "/project/compbio-lab/EIC/training_data/",
+            "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 5,
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 25,
-            "mask_percentage": 0.50,
+            "mask_percentage": 0.50 ,
             "chunk": True,
             "context_length": 1000,
             "batch_size": 25,
