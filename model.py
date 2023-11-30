@@ -511,10 +511,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             fmask = fmask.to(device)
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
+                torch.cuda.empty_cache()
                 # zero the parameter gradients
+
                 optimizer.zero_grad()
 
-                torch.cuda.empty_cache()
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
 
@@ -524,7 +525,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                     x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
                     # print(x_batch.shape)
-
 
                 # Masking a subset of the input data
                 x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
