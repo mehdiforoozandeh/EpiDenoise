@@ -503,7 +503,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         bb=0
         for bios, f in dataset.biosamples.items():
             bb+=1
-
+            print('-' * 10)
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
             # fmask is used to mask QKV of transformer
@@ -551,19 +551,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss).sum() > 0:
-                    print("encounter nan loss! skipping batch")
+                    print("Encountered nan loss! Skipping batch...")
                     continue
-                    # # loss.backward()
-                    # print("\n\nisnan gradients")
-                    # for name, param in model.named_parameters():
-                    #     if param.grad is not None:
-                    #         print(name, torch.isnan(param.grad).sum())
-
-                    # print("\n\nisnan parameters")
-                    # for name, param in model.named_parameters():
-                    #     print(name, torch.isnan(param).sum())
-                    
-                    # exit()
 
                 del x_batch
                 del pmask
@@ -646,7 +635,7 @@ if __name__ == "__main__":
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 5,
+            "nhead": 7,
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 25,
