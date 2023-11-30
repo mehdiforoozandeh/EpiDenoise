@@ -475,7 +475,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     print(device)
-    exit()
 
     # if torch.cuda.device_count() > 1:
     #     print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -611,7 +610,7 @@ if __name__ == "__main__":
             "nhead": 7,
             "hidden_dim": 16,
             "nlayers": 2,
-            "epochs": 100,
+            "epochs": 20,
             "mask_percentage": 0.30,
             "chunk": True,
             "context_length": 2000,
