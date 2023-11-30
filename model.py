@@ -55,15 +55,19 @@ class PositionalEncoding(nn.Module):
 
         return x + pe.unsqueeze(0)
 
-class MaskedMSELoss(nn.Module):
+class WeightedMSELoss(nn.Module):
     def __init__(self):
-        super(MaskedMSELoss, self).__init__()
-        self.mse = nn.MSELoss(reduction='none')  # We will handle reduction ourselves
+        super(WeightedMSELoss, self).__init__()
 
-    def forward(self, pred, target, mask):
-        loss = self.mse(pred, target)
-        masked_loss = loss * mask
-        return masked_loss.sum() / mask.sum()  # Only consider non-masked values
+    def forward(self, input, target):
+        weights = target.clone().detach()  # Create a copy of target for weights
+        max_val = weights.max()
+        if max_val != 0:
+            weights = weights / max_val  # Normalize weights to be between 0 and 1
+            return torch.sum(weights * (input - target) ** 2)
+        else:
+            return torch.sum((input - target) ** 2)
+
 
 #________________________________________________________________________________________________________________________#
 ### attention layers
@@ -603,7 +607,8 @@ def train_epidenoise(hyper_parameters):
 
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
-    criterion = nn.MSELoss()
+    criterion = WeightedMSELoss()
+    # criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     start_time = time.time()
@@ -635,8 +640,8 @@ def train_epidenoise(hyper_parameters):
 # Calling the main function
 if __name__ == "__main__":
     hyper_parameters = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
-            # "data_path": "data/test",
+            # "data_path": "/project/compbio-lab/EIC/training_data/",
+            "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 5,
@@ -645,7 +650,7 @@ if __name__ == "__main__":
             "epochs": 25,
             "mask_percentage": 0.15 ,
             "chunk": True,
-            "context_length": 1000,
+            "context_length": 200,
             "batch_size": 25,
             "learning_rate": 0.005
         }
