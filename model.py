@@ -5,7 +5,7 @@ import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "caching_allocator"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
 
 class RelativePositionEncoding(nn.Module):
