@@ -1,4 +1,5 @@
-import torch, math
+import torch, math, random, time, json, os
+from datetime import datetime
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
@@ -335,10 +336,10 @@ class TripleConvEncoder(nn.Module):
 #________________________________________________________________________________________________________________________#
 
 class EpiDenoise(nn.Module): 
-    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1):
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
 
-        self.pos_encoder = PositionalEncoding(input_dim, max_len=20)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = PositionalEncoding(input_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
         self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -470,7 +471,7 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         # Updating the model parameters
         optimizer.step()
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1):
+def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
@@ -480,6 +481,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
     # model.to(device)
 
+    # Define your batch size
     for epoch in range(num_epochs):
         print('-' * 10)
         print(f'Epoch {epoch+1}/{num_epochs}')
@@ -500,59 +502,115 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             for i in missing_f_i:
                 fmask[i,:] = 0
 
-            x, missing_mask = x[:,:20,:], missing_mask[:,:20,:]
-            print(x.shape)
-            
-            x = x.to(device)
+            # Break down x into smaller batches
+            for i in range(0, len(x), batch_size):
+                x_batch = x[i:i+batch_size]
+                missing_mask_batch = missing_mask[i:i+batch_size]
 
-            # Masking a subset of the input data
-            x, cloze_mask = mask_data(x, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                if context_length < 8000:
+                    rand_start = random.randint(0, 8000 - (context_length+1))
+                    rand_end = rand_start + context_length
 
-            cloze_mask = cloze_mask & ~missing_mask
+                    x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
+                    # print(x_batch.shape)
 
-            pmask = cloze_mask.any(dim=-1)
-            pmask = pmask.unsqueeze(1).unsqueeze(2)
-            # Convert the boolean values to float and switch the masked and non-masked values
-            pmask = 1 - pmask.float()
+                x_batch = x_batch.to(device)
 
+                # Masking a subset of the input data
+                x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
 
-            # Combining the two masks
-            # combined_mask = cloze_mask | missing_mask
+                cloze_mask = cloze_mask & ~missing_mask_batch
 
-            outputs = model(x, pmask, fmask)
-            loss = criterion(outputs[cloze_mask], x[cloze_mask])
-            print(f'Epoch {epoch+1}/{num_epochs} | BiosBatch {bb}/{len(dataset.biosamples)} | Loss: {loss:.4f}')
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss
+                pmask = cloze_mask.any(dim=-1)
+                pmask = pmask.unsqueeze(1).unsqueeze(2)
+                # Convert the boolean values to float and switch the masked and non-masked values
+                pmask = 1 - pmask.float()
 
-        # print(f'Loss: {epoch_loss:.4f}')
+                # Combining the two masks
+                # combined_mask = cloze_mask | missing_mask_batch
+
+                outputs = model(x_batch, pmask, fmask)
+                loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+                print(
+                    f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}')
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss
+
     return model
 
-# The main function
-def main():
+def train_epidenoise(hyper_parameters):
     # Defining the hyperparameters
-    input_dim = output_dim = 35
-    dropout=0.1
-    nhead = 5
-    hidden_dim = 16
-    nlayers = 2
-    epochs = 50
-    mask_percentage = 0.15
-    chunk = True
-    n_chunks = 2
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    hidden_dim = hyper_parameters["hidden_dim"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    chunk = hyper_parameters["chunk"]
+    n_chunks = mask_percentage // 0.05
+    context_length = hyper_parameters["context_length"]
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
 
-    model = EpiDenoise(input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, output_dim=output_dim, dropout=dropout)
+    model = EpiDenoise(
+        input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     print(f"# model_parameters: {count_parameters(model)}")
-    dataset = ENCODE_IMPUTATION_DATASET("data/test/")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
-    train_model(model, dataset, criterion, optimizer, num_epochs=epochs, mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    start_time = time.time()
+    model = train_model(
+        model, dataset, criterion, optimizer, num_epochs=epochs, 
+        mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+        context_length=context_length, batch_size=batch_size)
+    end_time = time.time()
 
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
+
+    return model
 
 # Calling the main function
 if __name__ == "__main__":
-    main()
-    # test()
-    
+    hyper_parameters = {
+            "data_path": "/project/compbio-lab/EIC/training_data/",
+            # "data_path": "data/test",
+            "input_dim": 35,
+            "dropout": 0.1,
+            "nhead": 7,
+            "hidden_dim": 16,
+            "nlayers": 4,
+            "epochs": 100,
+            "mask_percentage": 0.30,
+            "chunk": True,
+            "context_length": 2000,
+            "batch_size": 200,
+            "learning_rate": 0.005
+        }
+    try:
+        train_epidenoise(hyper_parameters)
+    except:
+        hyper_parameters["context_length"] = 1000
+        train_epidenoise(hyper_parameters)
+
