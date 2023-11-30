@@ -627,13 +627,13 @@ if __name__ == "__main__":
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 7,
+            "nhead": 5,
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 50,
             "mask_percentage": 0.30,
             "chunk": True,
-            "context_length": 2000,
+            "context_length": 1000,
             "batch_size": 25,
             "learning_rate": 0.005
         }
