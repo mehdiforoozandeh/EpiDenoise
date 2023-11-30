@@ -552,7 +552,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 del outputs
 
                 # Clear GPU memory again
-                # torch.cuda.empty_cache()
+                torch.cuda.empty_cache()
 
                 logfile = open("models/log.txt", "w")
                 logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
@@ -629,7 +629,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 7,
             "hidden_dim": 16,
-            "nlayers": 2,
+            "nlayers": 1,
             "epochs": 50,
             "mask_percentage": 0.30,
             "chunk": True,
