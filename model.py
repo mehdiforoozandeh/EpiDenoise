@@ -539,7 +539,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 logfile.close()
 
                 print(logstr)
-                logfile.write(log_str)
 
                 loss.backward()
                 optimizer.step()
