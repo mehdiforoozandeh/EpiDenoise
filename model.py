@@ -544,6 +544,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 outputs = model(x_batch, pmask, fmask)
                 print(torch.isnan(outputs).sum())
+                print(torch.isnan(x_batch).sum())
                 # print(outputs[cloze_mask])
                 # print(x_batch[cloze_mask])
                 
