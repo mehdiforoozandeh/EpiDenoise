@@ -479,9 +479,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     model = model.to(device)
     print(device)
 
-    # if torch.cuda.device_count() > 1:
-    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
-    #     model = torch.nn.DataParallel(model)
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
 
     # model.to(device)
     log_strs.append(str(device))
@@ -512,8 +512,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
-                # zero the parameter gradients
 
+                # zero the parameter gradients
                 optimizer.zero_grad()
 
                 x_batch = x[i:i+batch_size]
