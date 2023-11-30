@@ -502,7 +502,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
             for i in missing_f_i:
                 fmask[i,:] = 0
-
+            
+            fmask = fmask.to(device)
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 x_batch = x[i:i+batch_size]
