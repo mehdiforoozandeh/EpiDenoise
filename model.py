@@ -349,7 +349,7 @@ class EpiDenoise(nn.Module):
         
     def forward(self, src, pmask, fmask):
         src = self.pos_encoder(src)
-        # src = self.masked_encoder(src, pmask, fmask)
+        src = self.masked_encoder(src, pmask, fmask)
         src = self.transformer_encoder(src)
         src = self.decoder(src)
         return src
@@ -514,7 +514,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
                 
-
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
 
@@ -544,6 +543,10 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # combined_mask = cloze_mask | missing_mask_batch
 
                 outputs = model(x_batch, pmask, fmask)
+                print(torch.isnan(outputs))
+                print(outputs[cloze_mask])
+                print(x_batch[cloze_mask])
+                
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 del x_batch
