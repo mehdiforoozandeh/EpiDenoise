@@ -543,9 +543,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # combined_mask = cloze_mask | missing_mask_batch
 
                 outputs = model(x_batch, pmask, fmask)
-                print(torch.isnan(outputs))
-                print(outputs[cloze_mask])
-                print(x_batch[cloze_mask])
+                print(torch.isnan(outputs).sum())
+                # print(outputs[cloze_mask])
+                # print(x_batch[cloze_mask])
                 
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
@@ -636,7 +636,7 @@ if __name__ == "__main__":
             "epochs": 25,
             "mask_percentage": 0.50 ,
             "chunk": True,
-            "context_length": 1000,
+            "context_length": 200,
             "batch_size": 25,
             "learning_rate": 0.005
         }
