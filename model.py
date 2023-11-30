@@ -516,6 +516,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     # print(x_batch.shape)
 
                 x_batch = x_batch.to(device)
+                missing_mask_batch = missing_mask_batch.to(device)
 
                 # Masking a subset of the input data
                 x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
