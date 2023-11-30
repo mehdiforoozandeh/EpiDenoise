@@ -693,6 +693,7 @@ class ENCODE_IMPUTATION_DATASET(object):
 
         # Convert numpy array to PyTorch tensor
         print(type(all_samples_tensor), all_samples_tensor.dtype)
+        print(all_samples_tensor)
         exit()
         all_samples_tensor = torch.from_numpy(all_samples_tensor)
         all_samples_tensor = all_samples_tensor.float() 
