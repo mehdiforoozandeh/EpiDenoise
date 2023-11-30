@@ -498,7 +498,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         bb=0
         for bios, f in dataset.biosamples.items():
             bb+=1
-            optimizer.zero_grad()
 
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
@@ -513,6 +512,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
+                optimizer.zero_grad()
 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
@@ -559,8 +559,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 logfile.close()
 
                 loss.backward()
-
-            optimizer.step()
+                optimizer.step()
 
     return model
 
