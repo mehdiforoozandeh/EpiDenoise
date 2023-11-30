@@ -472,6 +472,7 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         optimizer.step()
 
 def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100):
+    log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     print(device)
@@ -481,7 +482,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     #     model = torch.nn.DataParallel(model)
 
     # model.to(device)
-    log_strs = []
+    log_strs.append(str(device))
+    logfile = open("models/log.txt", "w")
+    logfile.write("\n".join(log_strs[:5]))
+    logfile.close()
+
     # Define your batch size
     for epoch in range(num_epochs):
         print('-' * 10)
