@@ -636,13 +636,13 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 7,
-            "hidden_dim": 32,
+            "hidden_dim": 35,
             "nlayers": 7,
             "epochs": 25,
-            "mask_percentage": 0.20 ,
+            "mask_percentage": 0.20,
             "chunk": True,
-            "context_length": 1500,
-            "batch_size": 25,
+            "context_length": 2000,
+            "batch_size": 20,
             "learning_rate": 0.005
         }
     # try:
