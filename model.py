@@ -637,7 +637,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 7,
             "hidden_dim": 32,
-            "nlayers": 5,
+            "nlayers": 7,
             "epochs": 25,
             "mask_percentage": 0.20 ,
             "chunk": True,
