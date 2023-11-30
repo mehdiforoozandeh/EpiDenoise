@@ -511,6 +511,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             fmask = fmask.to(device)
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
+                torch.cuda.empty_cache()
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
 
@@ -621,12 +622,14 @@ if __name__ == "__main__":
             "mask_percentage": 0.30,
             "chunk": True,
             "context_length": 2000,
-            "batch_size": 200,
+            "batch_size": 100,
             "learning_rate": 0.005
         }
     try:
+        torch.cuda.empty_cache()
         train_epidenoise(hyper_parameters)
     except:
+        torch.cuda.empty_cache()
         print("running with context length 1000")
         hyper_parameters["context_length"] = 1000
         train_epidenoise(hyper_parameters)
