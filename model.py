@@ -620,6 +620,7 @@ if __name__ == "__main__":
     try:
         train_epidenoise(hyper_parameters)
     except:
+        print("running with context length 1000")
         hyper_parameters["context_length"] = 1000
         train_epidenoise(hyper_parameters)
 
