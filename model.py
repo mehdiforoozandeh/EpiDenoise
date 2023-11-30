@@ -5,7 +5,7 @@ import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
 class RelativePositionEncoding(nn.Module):
@@ -486,7 +486,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     # model.to(device)
     log_strs.append(str(device))
     logfile = open("models/log.txt", "w")
-    logfile.write("\n".join(log_strs[:5]))
+    logfile.write("\n".join(log_strs))
     logfile.close()
 
     # Define your batch size
@@ -553,7 +553,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 logfile = open("models/log.txt", "w")
                 logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss:.4f}'
                 log_strs.append(logstr)
-                logfile.write("\n".join(log_strs[:5]))
+                logfile.write("\n".join(log_strs))
                 logfile.close()
 
                 print(logstr)
