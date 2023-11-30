@@ -558,6 +558,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 logfile.write("\n".join(log_strs))
                 logfile.close()
 
+                if ((i//batch_size))+1 % 10 == 0:
+                    print(logstr)
+
                 loss.backward()
                 optimizer.step()
 
@@ -626,7 +629,7 @@ if __name__ == "__main__":
             "hidden_dim": 16,
             "nlayers": 2,
             "epochs": 25,
-            "mask_percentage": 0.15,
+            "mask_percentage": 0.50,
             "chunk": True,
             "context_length": 1000,
             "batch_size": 25,
