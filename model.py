@@ -474,6 +474,8 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
 def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
+    print(device)
+    exit()
 
     # if torch.cuda.device_count() > 1:
     #     print("Let's use", torch.cuda.device_count(), "GPUs!")
