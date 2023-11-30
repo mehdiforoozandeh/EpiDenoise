@@ -689,12 +689,10 @@ class ENCODE_IMPUTATION_DATASET(object):
             all_samples.append(assay_samples)
 
         # Convert all_samples to a numpy array and transpose to get shape (M, L, D)
-        all_samples_tensor = np.array(all_samples).transpose(1, 2, 0)
+        all_samples_tensor = np.array(all_samples, dtype=np.float32).transpose(1, 2, 0)
 
         # Convert numpy array to PyTorch tensor
         print(type(all_samples_tensor), all_samples_tensor.dtype)
-        print(all_samples_tensor)
-        exit()
         all_samples_tensor = torch.from_numpy(all_samples_tensor)
         all_samples_tensor = all_samples_tensor.float() 
 
