@@ -572,6 +572,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 loss.backward()
                 optimizer.step()
+        
+        # Save the model after each epoch
+        torch.save(model.state_dict(), f'models/model_checkpoint_epoch_{epoch+1}.pth')
 
     return model
 
