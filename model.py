@@ -630,7 +630,7 @@ if __name__ == "__main__":
             "nhead": 5,
             "hidden_dim": 16,
             "nlayers": 2,
-            "epochs": 50,
+            "epochs": 25,
             "mask_percentage": 0.30,
             "chunk": True,
             "context_length": 1000,
