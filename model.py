@@ -497,7 +497,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     logfile.close()
 
     # Define your batch size
-    for epoch in range(start_checkpoint, num_epochs):
+    for epoch in range(start_epoch, num_epochs):
         print('-' * 10)
         print(f'Epoch {epoch+1}/{num_epochs}')
 
