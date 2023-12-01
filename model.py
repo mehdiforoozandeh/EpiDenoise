@@ -732,7 +732,7 @@ if __name__ == "__main__":
     train_epidenoise(
         hyper_parameters, 
         checkpoint_path="models/model_checkpoint_epoch_16.pth", 
-        start_checkpoint=17)
+        start_epoch=17)
 
     # except:
     #     torch.cuda.empty_cache()
