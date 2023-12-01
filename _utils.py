@@ -230,6 +230,68 @@ class PROCESS_EIC_DATA(object):
             with open(file_path, 'wb') as f:
                 pickle.dump(bios_data, f)
             os.system(f"gzip {file_path}")
+        
+    def load_m_regions(self, file_path):
+        # Open the gzip file
+        with gzip.open(file_path, 'rb') as f:
+            # Load the data using pickle
+            bios_data = pickle.load(f)
+
+        # Initialize an empty list to store the m_regions
+        m_regions = []
+
+        # Iterate over each biosample and assay
+        for sample in bios_data[list(bios_data.keys())[0]]:
+
+            # Append the regions to the m_regions list
+            if sample[0] not in m_regions:
+                m_regions.append(sample[0])
+            
+        return m_regions
+    
+    def generate_m_samples_from_predefined_regions(self, m_regions, multi_p=True, n_p=20):
+        m = len(m_regions)
+        if multi_p:
+            bw_obj = False
+            # rewrite biosample-assay dirs instead of obj
+            self.biosamples = {}
+            for f in os.listdir(self.path):
+                if ".bigwig" in f: 
+                    if f[:3] not in self.biosamples.keys():
+                        self.biosamples[f[:3]] = {}
+                        
+                    self.biosamples[f[:3]][f[3:6]] = self.path + "/" + f
+        else:
+            bw_obj = True
+
+        for bios in self.biosamples.keys():
+            bios_data = {}
+            for assay in self.biosamples[bios].keys():
+                bios_data[assay] = []
+
+                bw = self.biosamples[bios][assay]
+                bw_query_dicts = []
+                for i in range(len(m_regions)):
+                    r = m_regions[i]
+                    bw_query_dicts.append({"bw":bw, "chr":r[0], "start":r[1], "end":r[2], "resolution": self.resolution, "bw_obj":bw_obj})
+
+                if multi_p:
+                    with mp.Pool(n_p) as p:
+                        m_signals = p.map(get_bin_value, bw_query_dicts)
+                    
+                    for i in range(len(m_signals)):
+                        bios_data[assay].append((
+                            [bw_query_dicts[i]["chr"], bw_query_dicts[i]["start"], bw_query_dicts[i]["end"]], m_signals[i]))
+                else:
+                    for i in range(len(bw_query_dicts)):
+                        signals = get_bin_value(bw_query_dicts[i])
+                        bios_data[assay].append((
+                            [bw_query_dicts[i]["chr"], bw_query_dicts[i]["start"], bw_query_dicts[i]["end"]], signals))
+                    
+            file_path = f"{self.path}/{bios}_m{m}_{self.resolution}bp.pkl"
+            with open(file_path, 'wb') as f:
+                pickle.dump(bios_data, f)
+            os.system(f"gzip {file_path}")
                 
     def generate_wg_samples(self):
         for bios in self.biosamples.keys():
@@ -255,13 +317,28 @@ class augment(object):
         pass
 
 if __name__ == "__main__":
+    solar_path = "/project/compbio-lab/EIC/"
+    sample = "/project/compbio-lab/EIC/training_data/C01_m2000_25bp.pkl.gz"
+    traineic = PROCESS_EIC_DATA(solar_path+"training_data/", stratified=True)
+    m_regions = traineic.load_m_regions(sample)
+
+    valeic = PROCESS_EIC_DATA(solar_path+"validation_data/", stratified=True)
+    blindeic = PROCESS_EIC_DATA(solar_path+"blind_data/", stratified=True)
+
+    valeic.generate_m_samples_from_predefined_regions(m_regions=m_regions, multi_p=True, n_p=20)
+    blindeic.generate_m_samples_from_predefined_regions(m_regions=m_regions, multi_p=True, n_p=20)
+
+    exit()
     solar_path = "/project/compbio-lab/EIC/training_data/"
-    # solar_path = "data/training_data/"
+    # solar_path = "data/test/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
+    # m_regions = eic.load_m_regions("data/test/C02_m500_25bp.pkl.gz")
+    # print(len(m_regions))
     eic.generate_m_samples(m=2000, multi_p=True)
     t1 = datetime.datetime.now()
-    print("generated training datasets in :", t1-t0)
+    # print("generated training datasets in :", t1-t0)
+    exit()
 
     solar_path = "/project/compbio-lab/EIC/validation_data/"
     # solar_path = "data/validation_data/"

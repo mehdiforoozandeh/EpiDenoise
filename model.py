@@ -582,7 +582,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     return model
 
 def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
-    with open('hyper_parameters.pkl', 'wb') as f:
+    with open('models/hyper_parameters.pkl', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     # Defining the hyperparameters
@@ -645,7 +645,6 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
 
     return model
 
-
 def load_epidenoise(model_path, hyper_parameters):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     input_dim = output_dim = hyper_parameters["input_dim"]
@@ -693,7 +692,7 @@ def evaluate(imputation, observation):
     metrics['MSE1imp'] = mse1imp(observation, imputation)
     return metrics
 
-def evaluate_epidenoise():
+def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_path):
     """
     load the trained model
     for each celltype c in validation set or blind set:
@@ -708,6 +707,25 @@ def evaluate_epidenoise():
     * the output assay that corresponds to the one available in the input is "denoised"
     ** the output assay that was not available in the input is "imputed"
     """
+    model = load_epidenoise(model_path, hyper_parameters)
+    print(f"# model_parameters: {count_parameters(model)}")
+
+    train_data = ENCODE_IMPUTATION_DATASET(traindata_path)
+    eval_data = ENCODE_IMPUTATION_DATASET(evaldata_path)
+
+    for b_e in eval_data.biosamples.keys():
+        for b_t in train_data.biosamples.keys():
+            if b_e == b_t:
+                # train_biosample 
+                f_t = train_data[b_t]
+                f_e = eval_data[b_e]
+                
+                x_t, missing_mask_t, missing_f_ind_t = train_data.get_biosample(f_t)
+                y_e, missing_mask_e, missing_f_ind_e = eval_data.get_biosample(f_e)
+                del missing_mask_t 
+                del missing_mask_e 
+                
+
     pass
 
 # Calling the main function
