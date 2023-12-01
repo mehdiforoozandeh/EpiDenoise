@@ -1,9 +1,11 @@
-import torch, math, random, time, json, os
+import torch, math, random, time, json, os, pickle
 from datetime import datetime
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import mean_squared_error
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
@@ -551,7 +553,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss).sum() > 0:
-                    print("Encountered nan loss! Skipping batch...")
+                    skipmessage = "Encountered nan loss! Skipping batch..."
+                    log_strs.append(skipmessage)
+                    print(skipmessage)
                     continue
 
                 del x_batch
@@ -561,13 +565,12 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # Clear GPU memory again
                 torch.cuda.empty_cache()
 
-                logfile = open("models/log.txt", "w")
-                logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss.item():.4f}'
-                log_strs.append(logstr)
-                logfile.write("\n".join(log_strs))
-                logfile.close()
-
                 if (((i//batch_size))+1) % 10 == 0:
+                    logfile = open("models/log.txt", "w")
+                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss.item():.4f}'
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
                     print(logstr)
 
                 loss.backward()
@@ -579,6 +582,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     return model
 
 def train_epidenoise(hyper_parameters):
+    with open('hyper_parameters.pkl', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
     # Defining the hyperparameters
     data_path = hyper_parameters["data_path"]
     input_dim = output_dim = hyper_parameters["input_dim"]
@@ -617,6 +623,7 @@ def train_epidenoise(hyper_parameters):
     os.makedirs(model_dir, exist_ok=True)
     model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
     torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    os.system(f"mv hyper_parameters.pkl hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
 
     # Write a description text file
     description = {
@@ -630,6 +637,56 @@ def train_epidenoise(hyper_parameters):
         f.write(json.dumps(description, indent=4))
 
     return model
+
+def load_epidenoise(model_path, hyper_parameters):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    hidden_dim = hyper_parameters["hidden_dim"]
+    nlayers = hyper_parameters["nlayers"]
+    context_length = hyper_parameters["context_length"]
+    
+    # Assuming model is an instance of the correct class
+    model = EpiDenoise(
+        input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    model.load_state_dict(torch.load(model_path))
+    model = model.to(device)
+        
+    return model
+
+def predict(model, data, fmask, pmask):
+    model.eval()  # set the model to evaluation mode
+    
+    with torch.no_grad():
+        input_data = input_data.to(device)
+        predictions = model(input_data, fmask, pmask)
+        
+    return predictions
+
+def evaluate(imputation, observation):
+    def mse1obs(y_true, y_pred):
+        top_1_percent = int(0.01 * len(y_true))
+        top_1_percent_indices = np.argsort(y_true)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
+
+    def mse1imp(y_true, y_pred):
+        top_1_percent = int(0.01 * len(y_pred))
+        top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
+
+    metrics = {}
+    metrics['pearson_correlation_coefficient'] = pearsonr(imputation, observation)[0]
+    metrics['spearman_rho'] = spearmanr(imputation, observation)[0]
+    metrics['MSE'] = mean_squared_error(imputation, observation)
+    metrics['mse1obs'] = mse1obs(observation, imputation)
+    metrics['mse1imp'] = mse1imp(observation, imputation)
+    return metrics
+
+def evaluate_epidenoise():
+    pass
 
 # Calling the main function
 if __name__ == "__main__":
