@@ -510,7 +510,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None):
     if checkpoint_path is not None:
         model.load_state_dict(torch.load(checkpoint_path))
 
-    model = model.to(device)
+    # model = model.to(device)
 
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
