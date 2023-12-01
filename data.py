@@ -676,14 +676,14 @@ class ENCODE_IMPUTATION_DATASET(object):
             if assay_availability[assay]:
                 # If assay is available, append its signal arrays to all_samples
                 assay_samples = []
-                for i in range(len(loaded_file[assay])):
-                    assay_samples.append(loaded_file[assay][i][1])
+                for j in range(len(loaded_file[assay])):
+                    assay_samples.append(loaded_file[assay][j][1])
 
             else:
                 missing_f_i.append(i)
                 # If assay is not available, append -1 of appropriate shape
                 assay_samples = []
-                for i in range(M):
+                for j in range(M):
                     assay_samples.append([-1 for _ in range(L)])
             
             all_samples.append(assay_samples)

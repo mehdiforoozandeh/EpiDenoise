@@ -581,7 +581,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
     return model
 
-def train_epidenoise(hyper_parameters):
+def train_epidenoise(hyper_parameters, checkpoint_path=None):
     with open('hyper_parameters.pkl', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
@@ -605,12 +605,24 @@ def train_epidenoise(hyper_parameters):
         input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    start_epoch = 0
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch']
+
+    model = model.to(device)
+
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
     criterion = WeightedMSELoss()
     # criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    
+
     start_time = time.time()
     model = train_model(
         model, dataset, criterion, optimizer, num_epochs=epochs, 
@@ -637,6 +649,63 @@ def train_epidenoise(hyper_parameters):
         f.write(json.dumps(description, indent=4))
 
     return model
+
+# def train_epidenoise(hyper_parameters):
+#     with open('hyper_parameters.pkl', 'wb') as f:
+#         pickle.dump(hyper_parameters, f)
+
+#     # Defining the hyperparameters
+#     data_path = hyper_parameters["data_path"]
+#     input_dim = output_dim = hyper_parameters["input_dim"]
+#     dropout = hyper_parameters["dropout"]
+#     nhead = hyper_parameters["nhead"]
+#     hidden_dim = hyper_parameters["hidden_dim"]
+#     nlayers = hyper_parameters["nlayers"]
+#     epochs = hyper_parameters["epochs"]
+#     mask_percentage = hyper_parameters["mask_percentage"]
+#     chunk = hyper_parameters["chunk"]
+#     n_chunks = mask_percentage // 0.05
+#     context_length = hyper_parameters["context_length"]
+#     batch_size = hyper_parameters["batch_size"]
+#     learning_rate = hyper_parameters["learning_rate"]
+#     # end of hyperparameters
+
+#     model = EpiDenoise(
+#         input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+#         output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+#     print(f"# model_parameters: {count_parameters(model)}")
+#     dataset = ENCODE_IMPUTATION_DATASET(data_path)
+#     criterion = WeightedMSELoss()
+#     # criterion = nn.MSELoss()
+#     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+#     start_time = time.time()
+#     model = train_model(
+#         model, dataset, criterion, optimizer, num_epochs=epochs, 
+#         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+#         context_length=context_length, batch_size=batch_size)
+#     end_time = time.time()
+
+#     # Save the trained model
+#     model_dir = "models/"
+#     os.makedirs(model_dir, exist_ok=True)
+#     model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
+#     torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+#     os.system(f"mv hyper_parameters.pkl hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+
+#     # Write a description text file
+#     description = {
+#         "hyper_parameters": hyper_parameters,
+#         "model_architecture": str(model),
+#         "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+#         "number_of_model_parameters": count_parameters(model),
+#         "training_duration": int(end_time - start_time)
+#     }
+#     with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+#         f.write(json.dumps(description, indent=4))
+
+#     return model
 
 def load_epidenoise(model_path, hyper_parameters):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -678,14 +747,28 @@ def evaluate(imputation, observation):
         return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
 
     metrics = {}
-    metrics['pearson_correlation_coefficient'] = pearsonr(imputation, observation)[0]
+    metrics['PCC'] = pearsonr(imputation, observation)[0]
     metrics['spearman_rho'] = spearmanr(imputation, observation)[0]
     metrics['MSE'] = mean_squared_error(imputation, observation)
-    metrics['mse1obs'] = mse1obs(observation, imputation)
-    metrics['mse1imp'] = mse1imp(observation, imputation)
+    metrics['MSE1obs'] = mse1obs(observation, imputation)
+    metrics['MSE1imp'] = mse1imp(observation, imputation)
     return metrics
 
 def evaluate_epidenoise():
+    """
+    load the trained model
+    for each celltype c in validation set or blind set:
+        the input to the train model: is pkl.gz file corresponding to c in training set
+            create fmask for this file and pmask should be empty (no position masking)
+            define context_length and batch_size according to memory constraints (preferably same as training)
+
+        the output of the model should be of size (batch_size, context_length, 35)
+        for available assays of celltype c in validation set pkl.gz file, 
+            find corresponding prediction and run evaluate() on pred vs target 
+    
+    * the output assay that corresponds to the one available in the input is "denoised"
+    ** the output assay that was not available in the input is "imputed"
+    """
     pass
 
 # Calling the main function
@@ -706,7 +789,7 @@ if __name__ == "__main__":
             "learning_rate": 0.005
         }
     # try:
-    train_epidenoise(hyper_parameters)
+    train_epidenoise(hyper_parameters, checkpoint_path="models/model_checkpoint_epoch_16.pth")
     # except:
     #     torch.cuda.empty_cache()
     #     print("running with context length 1000")
