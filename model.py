@@ -612,6 +612,8 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None):
     # Load from checkpoint if provided
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path)
+        print(checkpoint.keys())
+        exit()
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch']
