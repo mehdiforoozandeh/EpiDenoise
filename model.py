@@ -480,106 +480,70 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         # Updating the model parameters
         optimizer.step()
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100):
-    log_strs = []
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+def train_epidenoise(hyper_parameters, checkpoint_path=None):
+    with open('hyper_parameters.pkl', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    hidden_dim = hyper_parameters["hidden_dim"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    chunk = hyper_parameters["chunk"]
+    n_chunks = mask_percentage // 0.05
+    context_length = hyper_parameters["context_length"]
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
+
+    model = EpiDenoise(
+        input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        model.load_state_dict(torch.load(checkpoint_path))
+
     model = model.to(device)
-    print(device)
 
-    # if torch.cuda.device_count() > 1:
-    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
-    #     model = torch.nn.DataParallel(model)
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
+    criterion = WeightedMSELoss()
+    # criterion = nn.MSELoss()
 
-    # model.to(device)
-    log_strs.append(str(device))
-    logfile = open("models/log.txt", "w")
-    logfile.write("\n".join(log_strs))
-    logfile.close()
+    start_time = time.time()
+    model = train_model(
+        model, dataset, criterion, optimizer, num_epochs=epochs, 
+        mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+        context_length=context_length, batch_size=batch_size)
+    end_time = time.time()
 
-    # Define your batch size
-    for epoch in range(num_epochs):
-        print('-' * 10)
-        print(f'Epoch {epoch+1}/{num_epochs}')
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    os.system(f"mv hyper_parameters.pkl hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
 
-        epoch_loss = 0.0
-        bb=0
-        for bios, f in dataset.biosamples.items():
-            bb+=1
-            print('-' * 10)
-            x, missing_mask, missing_f_i = dataset.get_biosample(f)
-
-            # fmask is used to mask QKV of transformer
-            d_model = x.shape[2]
-            fmask = torch.ones(d_model, d_model)
-
-            for i in missing_f_i:
-                fmask[i,:] = 0
-            
-            fmask = fmask.to(device)
-            # Break down x into smaller batches
-            for i in range(0, len(x), batch_size):
-                torch.cuda.empty_cache()
-                optimizer.zero_grad()
-                
-                x_batch = x[i:i+batch_size]
-                missing_mask_batch = missing_mask[i:i+batch_size]
-
-                if context_length < 8000:
-                    rand_start = random.randint(0, 8000 - (context_length+1))
-                    rand_end = rand_start + context_length
-
-                    x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
-                    # print(x_batch.shape)
-
-                # Masking a subset of the input data
-                x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-
-                cloze_mask = cloze_mask & ~missing_mask_batch
-
-                # cloze_mask = cloze_mask.to(device)
-
-                pmask = cloze_mask.any(dim=-1)
-                pmask = pmask.unsqueeze(1).unsqueeze(2)
-                # Convert the boolean values to float and switch the masked and non-masked values
-                pmask = 1 - pmask.float()
-
-                x_batch = x_batch.to(device)
-                pmask = pmask.to(device)
-
-                # Combining the two masks
-                # combined_mask = cloze_mask | missing_mask_batch
-
-                outputs = model(x_batch, pmask, fmask)
-                loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
-
-                if torch.isnan(loss).sum() > 0:
-                    skipmessage = "Encountered nan loss! Skipping batch..."
-                    log_strs.append(skipmessage)
-                    print(skipmessage)
-                    continue
-
-                del x_batch
-                del pmask
-                del outputs
-
-                # Clear GPU memory again
-                torch.cuda.empty_cache()
-
-                if (((i//batch_size))+1) % 10 == 0:
-                    logfile = open("models/log.txt", "w")
-                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss.item():.4f}'
-                    log_strs.append(logstr)
-                    logfile.write("\n".join(log_strs))
-                    logfile.close()
-                    print(logstr)
-
-                loss.backward()
-                optimizer.step()
-        
-        # Save the model after each epoch
-        torch.save(model.state_dict(), f'models/model_checkpoint_epoch_{epoch+1}.pth')
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
 
     return model
+
 
 def train_epidenoise(hyper_parameters, checkpoint_path=None):
     with open('hyper_parameters.pkl', 'wb') as f:
@@ -613,7 +577,6 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None):
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path)
         print(checkpoint.keys())
-        exit()
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch']
