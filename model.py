@@ -480,7 +480,7 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         # Updating the model parameters
         optimizer.step()
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_checkpoint=0):
+def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -497,7 +497,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     logfile.close()
 
     # Define your batch size
-    for epoch in range(num_epochs):
+    for epoch in range(start_checkpoint, num_epochs):
         print('-' * 10)
         print(f'Epoch {epoch+1}/{num_epochs}')
 
@@ -581,7 +581,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
     return model
 
-def train_epidenoise(hyper_parameters, checkpoint_path=None, start_checkpoint=0):
+def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
     with open('hyper_parameters.pkl', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
@@ -622,7 +622,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_checkpoint=0)
     model = train_model(
         model, dataset, criterion, optimizer, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
-        context_length=context_length, batch_size=batch_size, start_checkpoint=start_checkpoint)
+        context_length=context_length, batch_size=batch_size, start_epoch=start_epoch)
     end_time = time.time()
 
     # Save the trained model
