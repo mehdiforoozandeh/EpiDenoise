@@ -480,7 +480,7 @@ def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_perce
         # Updating the model parameters
         optimizer.step()
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100):
+def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_checkpoint=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -581,7 +581,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
     return model
 
-def train_epidenoise(hyper_parameters, checkpoint_path=None):
+def train_epidenoise(hyper_parameters, checkpoint_path=None, start_checkpoint=0):
     with open('hyper_parameters.pkl', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
@@ -622,7 +622,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None):
     model = train_model(
         model, dataset, criterion, optimizer, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
-        context_length=context_length, batch_size=batch_size)
+        context_length=context_length, batch_size=batch_size, start_checkpoint=start_checkpoint)
     end_time = time.time()
 
     # Save the trained model
@@ -645,63 +645,6 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None):
 
     return model
 
-
-# def train_epidenoise(hyper_parameters):
-#     with open('hyper_parameters.pkl', 'wb') as f:
-#         pickle.dump(hyper_parameters, f)
-
-#     # Defining the hyperparameters
-#     data_path = hyper_parameters["data_path"]
-#     input_dim = output_dim = hyper_parameters["input_dim"]
-#     dropout = hyper_parameters["dropout"]
-#     nhead = hyper_parameters["nhead"]
-#     hidden_dim = hyper_parameters["hidden_dim"]
-#     nlayers = hyper_parameters["nlayers"]
-#     epochs = hyper_parameters["epochs"]
-#     mask_percentage = hyper_parameters["mask_percentage"]
-#     chunk = hyper_parameters["chunk"]
-#     n_chunks = mask_percentage // 0.05
-#     context_length = hyper_parameters["context_length"]
-#     batch_size = hyper_parameters["batch_size"]
-#     learning_rate = hyper_parameters["learning_rate"]
-#     # end of hyperparameters
-
-#     model = EpiDenoise(
-#         input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
-#         output_dim=output_dim, dropout=dropout, context_length=context_length)
-
-#     print(f"# model_parameters: {count_parameters(model)}")
-#     dataset = ENCODE_IMPUTATION_DATASET(data_path)
-#     criterion = WeightedMSELoss()
-#     # criterion = nn.MSELoss()
-#     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    
-#     start_time = time.time()
-#     model = train_model(
-#         model, dataset, criterion, optimizer, num_epochs=epochs, 
-#         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
-#         context_length=context_length, batch_size=batch_size)
-#     end_time = time.time()
-
-#     # Save the trained model
-#     model_dir = "models/"
-#     os.makedirs(model_dir, exist_ok=True)
-#     model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
-#     torch.save(model.state_dict(), os.path.join(model_dir, model_name))
-#     os.system(f"mv hyper_parameters.pkl hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
-
-#     # Write a description text file
-#     description = {
-#         "hyper_parameters": hyper_parameters,
-#         "model_architecture": str(model),
-#         "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-#         "number_of_model_parameters": count_parameters(model),
-#         "training_duration": int(end_time - start_time)
-#     }
-#     with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
-#         f.write(json.dumps(description, indent=4))
-
-#     return model
 
 def load_epidenoise(model_path, hyper_parameters):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -785,7 +728,12 @@ if __name__ == "__main__":
             "learning_rate": 0.005
         }
     # try:
-    train_epidenoise(hyper_parameters, checkpoint_path="models/model_checkpoint_epoch_16.pth")
+
+    train_epidenoise(
+        hyper_parameters, 
+        checkpoint_path="models/model_checkpoint_epoch_16.pth", 
+        start_checkpoint=17)
+
     # except:
     #     torch.cuda.empty_cache()
     #     print("running with context length 1000")
