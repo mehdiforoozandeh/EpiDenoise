@@ -655,7 +655,6 @@ class ENCODE_IMPUTATION_DATASET(object):
         # Create a new dictionary with sorted keys
         self.biosamples = {key: self.biosamples[key] for key in sorted_keys if key in self.biosamples}
         
-
     def get_biosample(self, pkl_path):
         with gzip.open(pkl_path, 'rb') as f:
             loaded_file = pickle.load(f)

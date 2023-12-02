@@ -100,14 +100,15 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # fmask should be of size d_model*d_model 
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
-        print(self.query.weight.data)
-        
         # Element-wise multiplication with the weight matrices
         self.query.weight.data *= fmask
         self.key.weight.data *= fmask
         self.value.weight.data *= fmask
 
-        print(self.query.weight.data)
+        # Element-wise multiplication with the bias matrices
+        self.query.bias.data *= fmask
+        self.key.bias.data *= fmask
+        self.value.bias.data *= fmask
 
         # (batch_size, max_len, d_model)
         query = self.query(query)
