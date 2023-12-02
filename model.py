@@ -6,6 +6,8 @@ from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error
+import scipy.stats
+
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
@@ -98,10 +100,14 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # fmask should be of size d_model*d_model 
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
+        print(self.query.weight.data)
+        
         # Element-wise multiplication with the weight matrices
         self.query.weight.data *= fmask
         self.key.weight.data *= fmask
         self.value.weight.data *= fmask
+
+        print(self.query.weight.data)
 
         # (batch_size, max_len, d_model)
         query = self.query(query)
@@ -647,6 +653,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
 
 def load_epidenoise(model_path, hyper_parameters):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     input_dim = output_dim = hyper_parameters["input_dim"]
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
@@ -692,42 +699,6 @@ def evaluate(imputation, observation):
     metrics['MSE1imp'] = mse1imp(observation, imputation)
     return metrics
 
-def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_path):
-    """
-    load the trained model
-    for each celltype c in validation set or blind set:
-        the input to the train model: is pkl.gz file corresponding to c in training set
-            create fmask for this file and pmask should be empty (no position masking)
-            define context_length and batch_size according to memory constraints (preferably same as training)
-
-        the output of the model should be of size (batch_size, context_length, 35)
-        for available assays of celltype c in validation set pkl.gz file, 
-            find corresponding prediction and run evaluate() on pred vs target 
-    
-    * the output assay that corresponds to the one available in the input is "denoised"
-    ** the output assay that was not available in the input is "imputed"
-    """
-    model = load_epidenoise(model_path, hyper_parameters)
-    print(f"# model_parameters: {count_parameters(model)}")
-
-    train_data = ENCODE_IMPUTATION_DATASET(traindata_path)
-    eval_data = ENCODE_IMPUTATION_DATASET(evaldata_path)
-
-    for b_e in eval_data.biosamples.keys():
-        for b_t in train_data.biosamples.keys():
-            if b_e == b_t:
-                # train_biosample 
-                f_t = train_data[b_t]
-                f_e = eval_data[b_e]
-                
-                x_t, missing_mask_t, missing_f_ind_t = train_data.get_biosample(f_t)
-                y_e, missing_mask_e, missing_f_ind_e = eval_data.get_biosample(f_e)
-                del missing_mask_t 
-                del missing_mask_e 
-                
-
-    pass
-
 # Calling the main function
 if __name__ == "__main__":
     hyper_parameters = {
@@ -750,7 +721,7 @@ if __name__ == "__main__":
     train_epidenoise(
         hyper_parameters, 
         checkpoint_path="models/model_checkpoint_epoch_16.pth", 
-        start_epoch=17)
+        start_epoch=16)
 
     # except:
     #     torch.cuda.empty_cache()
