@@ -105,10 +105,11 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         self.key.weight.data *= fmask
         self.value.weight.data *= fmask
 
-        # Element-wise multiplication with the bias matrices
-        self.query.bias.data *= fmask
-        self.key.bias.data *= fmask
-        self.value.bias.data *= fmask
+        # Element-wise multiplication of mask with the bias terms
+        bias_fmask = fmask.diag()
+        self.query.bias.data *= bias_fmask
+        self.key.bias.data *= bias_fmask
+        self.value.bias.data *= bias_fmask
 
         # (batch_size, max_len, d_model)
         query = self.query(query)
