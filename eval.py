@@ -27,7 +27,7 @@ class Evaluation: # on chr21
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
         self.chr_sizes = {}
 
-        with open(self.chr_sizes_file, 'r') as f:
+        with open(chr_sizes_file, 'r') as f:
             for line in f:
                 chr_name, chr_size = line.strip().split('\t')
                 if chr_name in main_chrs:
