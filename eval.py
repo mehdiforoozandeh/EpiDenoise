@@ -112,10 +112,14 @@ class Evaluation: # on chr21
             
                 all_samples.append(signals)
 
-            all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32))
+            all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32)).transpose_(0, 1)
             print(all_samples.shape)
-            print(all_samples.sum(dim=0))
-            print(all_samples.sum(dim=1))
+
+            nan_count = torch.isnan(all_samples).sum().item()
+            minus_one_count = (all_samples == -1).sum().item()
+
+            print("Number of NaNs: ", nan_count)
+            print("Number of -1s: ", minus_one_count)
 
             torch.save(all_samples, savepath)
             
