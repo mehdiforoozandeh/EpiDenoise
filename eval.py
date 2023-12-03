@@ -88,11 +88,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
     model.eval()  # set the model to evaluation mode
 
     # Initialize a DataFrame to store the results
-    results = pd.DataFrame(
-        columns=
-        ['celltype', 'feature', 'comparison', 'PCC_mean', 'PCC_stderr', 
-        'spearman_rho_mean', 'spearman_rho_stderr', 'MSE_mean', 'MSE_stderr', 
-        'MSE1obs_mean', 'MSE1obs_stderr', 'MSE1imp_mean', 'MSE1imp_stderr'])
+    results = []
 
     for b_e in eval_data.biosamples.keys():
         for b_t in train_data.biosamples.keys():
@@ -127,7 +123,8 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                 # make predictions in batches
                 for i in range(0, len(x_t), batch_size):
                     torch.cuda.empty_cache()
-                    print(f"getting batches... {i/len(x_t):.2f}", )
+                    if i/len(x_t) % 20 ==0:
+                        print(f"getting batches... {i/len(x_t):.2f}", )
                     
                     x_batch = x_t[i:i+batch_size]
 
@@ -139,8 +136,6 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 
                     # Store the predictions in the large tensor
                     p[i:i+batch_size, :, :] = outputs.cpu()
-
-                print("p shape", p.shape)
                 # Evaluate the model's performance on the entire tensor
                 for j in range(y_e.shape[2]):  # for each feature i.e. assay
                     pred = p[:, :, j].numpy()
@@ -157,9 +152,6 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     else:
                         continue
 
-                    print("pred shape", pred.shape)
-                    print("target shape", target.shape)
-
                     for i in range(target.shape[0]): # for each sample
                         metrics = evaluate(pred[i], target[i])
                         metrics_list.append(metrics)
@@ -168,7 +160,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     metrics_stderr = {k: scipy.stats.sem([dic[k] for dic in metrics_list]) for k in metrics_list[0]}
 
                     # Add the results to the DataFrame
-                    results = results.append({
+                    results.append({
                         'celltype': b_e,
                         'feature': all_assays[j],
                         'comparison': comparison,
@@ -182,8 +174,12 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                         'MSE1obs_stderr': metrics_stderr['MSE1obs'],
                         'MSE1imp_mean': metrics_mean['MSE1imp'],
                         'MSE1imp_stderr': metrics_stderr['MSE1imp']
-                    }, ignore_index=True)
-
+                    })
+    
+    results = pd.DataFrame(results, columns=['celltype', 'feature', 'comparison', 'PCC_mean', 'PCC_stderr', 
+        'spearman_rho_mean', 'spearman_rho_stderr', 'MSE_mean', 'MSE_stderr', 
+        'MSE1obs_mean', 'MSE1obs_stderr', 'MSE1imp_mean', 'MSE1imp_stderr'])
+        
     # Save the DataFrame to a CSV file
     results.to_csv(outdir, index=False)
 
