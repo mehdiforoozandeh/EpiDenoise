@@ -299,7 +299,7 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    bios = list(e.train_data.keys())[0]
+    bios = "C50"
     e.load_biosample(bios)
     print("___________")
     e.load_biosample(bios, mode="eval")
