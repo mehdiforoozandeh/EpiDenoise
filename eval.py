@@ -132,10 +132,11 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     
                     x_batch = x_t[i:i+batch_size]
 
-                    x_batch = x_batch.to(device)
-                    # all one pmask (no position is masked)
-                    pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
-                    outputs = model(x_batch, pmask, fmask)
+                    with torch.no_grad():
+                        # all one pmask (no position is masked)
+                        pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
+                        x_batch = x_batch.to(device)
+                        outputs = model(x_batch, pmask, fmask)
 
                     # Store the predictions in the large tensor
                     p[i:i+batch_size, :, :] = outputs.cpu()
