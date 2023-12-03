@@ -117,13 +117,43 @@ class Evaluation: # on chr21
         num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
 
-        print(X.shape)
-        print(Y.shape)
-
         X = X.view(-1, context_length, X.shape[-1])
         Y = Y.view(-1, context_length, Y.shape[-1])
-        print(X.shape)
+
+        d_model = X.shape[-1]
+        fmask = torch.ones(d_model, d_model)
+
+        for i in missing_x_i: # input fmask
+            fmask[i,:] = 0
+        
+        fmask = fmask.to(self.device)
+        # Initialize a tensor to store all predictions
+        P = torch.empty_like(X, device="cpu")
+
+        # make predictions in batches
+        for i in range(0, len(X), batch_size):
+            torch.cuda.empty_cache()
+
+            if i/len(X) % 20 ==0:
+                print(f"getting batches... {i/len(X):.2f}", )
+            
+            x_batch = X[i:i+batch_size]
+
+            with torch.no_grad():
+                # all one pmask (no position is masked)
+                pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=self.device)
+                x_batch = x_batch.to(self.device)
+                outputs = self.model(x_batch, pmask, fmask)
+
+            # Store the predictions in the large tensor
+            P[i:i+batch_size, :, :] = outputs.cpu()
+        
+        P = P.view((P.shape[0] * context_length), P.shape[-1])
+        Y = Y.view((X.shape[0] * context_length), Y.shape[-1])
+
+        print(P.shape)
         print(Y.shape)
+        
 
     def mse(self, y_true, y_pred):
         """
