@@ -114,7 +114,7 @@ class Evaluation: # on chr21
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
-        num_rows = (tensor.shape[0] // context_length) * context_length
+        num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
 
         print(X.shape)
