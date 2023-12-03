@@ -112,7 +112,6 @@ class Evaluation: # on chr21
             return all_samples, missing_ind
       
     def evaluate_biosample(self, bios_name, batch_size=20, context_length=1600):
-
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
@@ -165,10 +164,6 @@ class Evaluation: # on chr21
 
             else:
                 continue
-
-            
-            print(pred.mean(), pred.max(), pred.min())
-            print(target.mean(), target.max(), target.min())
             
             metrics = {
                 'celltype': bios_name,
@@ -178,11 +173,19 @@ class Evaluation: # on chr21
                 'spearman_rho_mean': self.spearman_correlation(target, pred),
                 'MSE_mean': self.mse(target, pred),
                 'MSE1obs_mean': self.mse1obs(target, pred),
-                'MSE1imp_mean': self.mse1imp(target, pred)
+                'MSE1imp_mean': self.mse1imp(target, pred), 
+                'pred_mean_min_max': (pred.mean(), pred.max(), pred.min()),
+                'target_mean_min_max': (target.mean(), target.max(), target.min())
             }
             # print(metrics)
             # Add the results to the DataFrame
             self.results.append(metrics)
+
+    def evalualte_model(self, outdir):
+        for bios in self.eval_data.keys():
+            evaluate_biosample(bios)
+
+        self.results.to_csv(outdir, index=False)
 
     def mse(self, y_true, y_pred):
         """

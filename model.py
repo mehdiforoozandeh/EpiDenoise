@@ -557,6 +557,10 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # combined_mask = cloze_mask | missing_mask_batch
 
                 outputs = model(x_batch, pmask, fmask)
+                print(x_batch[cloze_mask].mean(), x_batch[cloze_mask].min(), x_batch[cloze_mask].max())
+                print(outputs[cloze_mask].mean(), outputs[cloze_mask].min(), outputs[cloze_mask].max())
+
+                exit()
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss).sum() > 0:
@@ -680,8 +684,6 @@ def predict(model, data, fmask, pmask):
         predictions = model(input_data, fmask, pmask)
         
     return predictions
-
-
 
 # Calling the main function
 if __name__ == "__main__":
