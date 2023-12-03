@@ -113,6 +113,12 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                 
                 fmask = fmask.to(device)
 
+                if context_length < 8000:
+                    x_t = x_t[:, :context_length, :]
+                    y_e = y_e[:, :context_length, :]
+                
+                print(f"shape of inputs {x_t.shape}, shape of targets {y_e.shape}")
+
                 # Initialize a tensor to store all predictions
                 p = torch.empty_like(x_t)
 
@@ -123,19 +129,16 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     
                     x_batch = x_t[i:i+batch_size]
 
-                    if context_length < 8000:
-                        rand_start = random.randint(0, 8000 - (context_length+1))
-                        rand_end = rand_start + context_length
+                    # if context_length < 8000:
+                    #     rand_start = random.randint(0, 8000 - (context_length+1))
+                    #     rand_end = rand_start + context_length
 
-                        x_batch = x_batch[:, rand_start:rand_end, :]
+                    #     x_batch = x_batch[:, rand_start:rand_end, :]
 
                     x_batch = x_batch.to(device)
                     # all one pmask (no position is masked)
                     pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
                     outputs = model(x_batch, pmask, fmask)
-
-                    print("output shape",outputs.shape)
-                    exit()
 
                     # Store the predictions in the large tensor
                     p[i:i+batch_size, :, :] = outputs.cpu()
