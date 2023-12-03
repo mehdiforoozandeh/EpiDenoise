@@ -4,7 +4,6 @@ from sklearn.metrics import mean_squared_error
 import scipy.stats
 import pyBigWig
 
-
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
 class Evaluation: # on chr21
@@ -58,26 +57,6 @@ class Evaluation: # on chr21
                             self.train_data[t[:3]][t[3:6]] = traindata_path + "/" + t
                             self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
 
-        # chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
-
-        # for t in self.train_data.keys():
-        #     for t_a in self.train_data[t].keys():
-        #         f = self.train_data[t][t_a]
-        #         bw = pyBigWig.open(f)
-                
-        #         # read and bin chr21 in resolution-sized bins
-        #         signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-        #         self.train_data[t][t_a] = signals
-
-        # for e in self.eval_data.keys():
-        #     for e_a in self.eval_data[e].keys():
-        #         f = self.eval_data[e][e_a]
-        #         bw = pyBigWig.open(f)
-                
-        #         # read and bin chr21 in resolution-sized bins
-        #         signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-        #         self.eval_data[e][e_a] = signals
-
         print(self.eval_data.keys())
         print(self.train_data.keys())
 
@@ -94,7 +73,14 @@ class Evaluation: # on chr21
             savepath = self.evaldata_path + f"/{bios_name}_chr21_{self.resolution}.pt"
         
         if os.path.exists(savepath):
-            return torch.load(savepath)
+            all_samples = torch.load(savepath)
+            # fill-in missing_ind
+            for i in range(all_samples.shape[1]):
+                if (all_samples[:, i] == -1).all():
+                    missing_ind.append(i)
+            print(all_samples.shape)
+            print(missing_ind)
+            return all_samples, missing_ind
 
         else:
             for i in range(len(self.all_assays)):
@@ -126,8 +112,8 @@ class Evaluation: # on chr21
 
             torch.save(all_samples, savepath)
             
-            return all_samples
-            
+            return all_samples, missing_ind
+      
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
