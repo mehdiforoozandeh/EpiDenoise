@@ -1,5 +1,4 @@
 from model import *
-import pandas as pd
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
@@ -154,7 +153,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     elif j not in missing_f_ind_t:
                         target = x_t[:, :, j].numpy()
                         comparison = 'denoised'
-                        
+
                     else:
                         continue
 
