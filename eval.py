@@ -70,7 +70,10 @@ class Evaluation:
         """
         pass
 
-def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):
+def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):
+    with open(hyper_parameters_path, 'rb') as f:
+        hyper_parameters = pickle.load(f)
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = load_epidenoise(model_path, hyper_parameters)
@@ -90,7 +93,9 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
 
     for b_e in eval_data.biosamples.keys():
         for b_t in train_data.biosamples.keys():
-            if b_e == b_t:
+            if b_e == b_t: # id biosamples that are present at both training and eval files
+
+                # file path
                 f_t = train_data[b_t]
                 f_e = eval_data[b_e]
                 
@@ -102,7 +107,7 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
                 d_model = x_t.shape[2]
                 fmask = torch.ones(d_model, d_model)
 
-                for i in missing_f_ind_t:
+                for i in missing_f_ind_t: # input fmask
                     fmask[i,:] = 0
                 
                 fmask = fmask.to(device)
@@ -110,6 +115,7 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
                 # Initialize a tensor to store all predictions
                 p = torch.empty_like(x_t)
 
+                # make predictions in batches
                 for i in range(0, len(x_t), batch_size):
                     torch.cuda.empty_cache()
                     
@@ -121,14 +127,16 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
 
                         x_batch = x_batch[:, rand_start:rand_end, :]
 
+                    # all one pmask (no position is masked)
                     pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
                     outputs = model(x_batch, pmask, fmask)
 
                     # Store the predictions in the large tensor
                     p[i:i+batch_size, :, :] = outputs.cpu()
 
+                print("p shape", p.shape)
                 # Evaluate the model's performance on the entire tensor
-                for j in range(y_e.shape[2]):  # for each feature
+                for j in range(y_e.shape[2]):  # for each feature i.e. assay
                     pred = p[:, :, j].numpy()
                     metrics_list = []
 
@@ -139,6 +147,9 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
                     elif j not in missing_f_ind_t:
                         target = x_t[:, :, j].numpy()
                         comparison = 'denoised'
+
+                    print("pred shape", pred.shape)
+                    print("target shape", target.shape)
 
                     for i in range(target.shape[0]): # for each sample
                         metrics = evaluate(pred[i], target[i])
@@ -168,3 +179,13 @@ def evaluate_epidenoise(model_path, hyper_parameters, traindata_path, evaldata_p
     results.to_csv(outdir, index=False)
 
     return results
+
+if __name__=="__main__":
+
+    evaluate_epidenoise(
+        model_path= "models/model_checkpoint_epoch_18.pth", 
+        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        outdir="eval_results_E18.csv", 
+        batch_size=20, context_length=1600)
