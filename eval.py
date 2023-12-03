@@ -165,6 +165,10 @@ class Evaluation: # on chr21
 
             else:
                 continue
+
+            
+            print(pred.mean(), pred.max(), pred.min())
+            print(target.mean(), target.max(), target.min())
             
             metrics = {
                 'celltype': bios_name,
@@ -176,7 +180,7 @@ class Evaluation: # on chr21
                 'MSE1obs_mean': self.mse1obs(target, pred),
                 'MSE1imp_mean': self.mse1imp(target, pred)
             }
-            print(metrics)
+            # print(metrics)
             # Add the results to the DataFrame
             self.results.append(metrics)
 
