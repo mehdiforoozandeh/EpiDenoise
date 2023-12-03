@@ -154,6 +154,9 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     elif j not in missing_f_ind_t:
                         target = x_t[:, :, j].numpy()
                         comparison = 'denoised'
+                        
+                    else:
+                        continue
 
                     print("pred shape", pred.shape)
                     print("target shape", target.shape)
