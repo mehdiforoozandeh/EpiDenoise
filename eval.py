@@ -1,11 +1,75 @@
 from model import *
+import pyBigWig
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
+class Evaluation: # on chr21
+    def __init__(
+        self, model_path, hyper_parameters_path, 
+        traindata_path, evaldata_path, 
+        resolution=25, chr_sizes_file="data/hg38.chrom.sizes"):
 
-class Evaluation:
-    def __init__(self):
-        pass
+        with open(hyper_parameters_path, 'rb') as f:
+            self.hyper_parameters = pickle.load(f)
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.model = load_epidenoise(model_path, self.hyper_parameters)
+        print(f"# model_parameters: {count_parameters(self.model)}")
+
+        self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
+        self.model.eval()  # set the model to evaluation mode
+
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        self.chr_sizes = {}
+
+        with open(self.chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+
+        self.train_data = {}
+        self.eval_data = {}
+
+        # load and bin chr21 of all bigwig files 
+        for t in os.listdir(traindata_path):
+            if ".bigwig" in t:
+
+                for e in os.listdir(evaldata_path):
+                    if ".bigwig" in e:
+                        
+                        if t[:3] == e[:3]:
+
+                            if t[:3] not in self.train_data:
+                                self.train_data[t[:3]] = {}
+
+                            if e[:3] not in self.eval_data:
+                                self.eval_data[e[:3]] = {}
+
+                            self.train_data[t[:3]][t[3:6]] = traindata_path + "/" + t
+                            self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
+
+        chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
+
+        for t in self.train_data.keys():
+            for t_a in self.train_data[t].keys():
+                f = self.train_data[t][t_a]
+                bw = pyBigWig.open(f)
+                
+                # read and bin chr21 in resolution-sized bins
+                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+                self.train_data[t][t_a] = signals
+
+        for e in self.eval_data.keys():
+            for e_a in self.eval_data[e].keys():
+                f = self.eval_data[e][e_a]
+                bw = pyBigWig.open(f)
+                
+                # read and bin chr21 in resolution-sized bins
+                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+                self.eval_data[e][e_a] = signals
+
 
     def mse(self, y_true, y_pred):
         """
@@ -73,7 +137,15 @@ class Evaluation:
         """
         pass
 
-def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):
+"""
+for biosamples that are present at both eval path and training path
+    load and bin chr21 of both
+    stride the model on context_length chunks of the input chr21 and store the outputs
+    at the end, predictions should be of shape (1, chr21_length, 35)
+"""
+
+
+def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):  
     with open(hyper_parameters_path, 'rb') as f:
         hyper_parameters = pickle.load(f)
 
@@ -179,7 +251,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
     results = pd.DataFrame(results, columns=['celltype', 'feature', 'comparison', 'PCC_mean', 'PCC_stderr', 
         'spearman_rho_mean', 'spearman_rho_stderr', 'MSE_mean', 'MSE_stderr', 
         'MSE1obs_mean', 'MSE1obs_stderr', 'MSE1imp_mean', 'MSE1imp_stderr'])
-        
+
     # Save the DataFrame to a CSV file
     results.to_csv(outdir, index=False)
 
