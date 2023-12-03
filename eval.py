@@ -116,6 +116,8 @@ class Evaluation: # on chr21
             print(all_samples.shape)
             print(all_samples.sum(dim=0))
             print(all_samples.sum(dim=1))
+
+            torch.save(all_samples, savepath)
             
             return all_samples
             
