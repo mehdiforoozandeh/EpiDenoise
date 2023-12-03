@@ -1,4 +1,5 @@
 from model import *
+import pandas as pd
 
 class Evaluation:
     def __init__(self):
