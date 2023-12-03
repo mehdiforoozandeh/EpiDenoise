@@ -539,11 +539,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
 
+                cloze_mask = cloze_mask & ~missing_mask_batch
+
                 print(x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
                 print(masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
                 exit()
-
-                cloze_mask = cloze_mask & ~missing_mask_batch
 
                 # cloze_mask = cloze_mask.to(device)
 
