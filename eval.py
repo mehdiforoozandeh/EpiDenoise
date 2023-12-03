@@ -114,18 +114,16 @@ class Evaluation: # on chr21
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
+        num_rows = (tensor.shape[0] // context_length) * context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
         print(X.shape)
         print(Y.shape)
 
-        exit()
-
         X = X.view(-1, context_length, X.shape[-1])
-        Y = Y.view(-1, context_length, X.shape[-1])
-        print(X)
-        print(Y)
-
-        print(X[-1, :, :])
-        print(Y[-1, :, :])
+        Y = Y.view(-1, context_length, Y.shape[-1])
+        print(X.shape)
+        print(Y.shape)
 
     def mse(self, y_true, y_pred):
         """
