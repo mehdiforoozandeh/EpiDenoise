@@ -26,6 +26,7 @@ class Evaluation: # on chr21
 
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
         self.chr_sizes = {}
+        self.resolution = resolution
 
         with open(chr_sizes_file, 'r') as f:
             for line in f:
@@ -54,29 +55,59 @@ class Evaluation: # on chr21
                             self.train_data[t[:3]][t[3:6]] = traindata_path + "/" + t
                             self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
 
-        chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
+        # chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
 
-        for t in self.train_data.keys():
-            for t_a in self.train_data[t].keys():
-                f = self.train_data[t][t_a]
-                bw = pyBigWig.open(f)
+        # for t in self.train_data.keys():
+        #     for t_a in self.train_data[t].keys():
+        #         f = self.train_data[t][t_a]
+        #         bw = pyBigWig.open(f)
                 
-                # read and bin chr21 in resolution-sized bins
-                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-                self.train_data[t][t_a] = signals
+        #         # read and bin chr21 in resolution-sized bins
+        #         signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+        #         self.train_data[t][t_a] = signals
 
-        for e in self.eval_data.keys():
-            for e_a in self.eval_data[e].keys():
-                f = self.eval_data[e][e_a]
-                bw = pyBigWig.open(f)
+        # for e in self.eval_data.keys():
+        #     for e_a in self.eval_data[e].keys():
+        #         f = self.eval_data[e][e_a]
+        #         bw = pyBigWig.open(f)
                 
-                # read and bin chr21 in resolution-sized bins
-                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-                self.eval_data[e][e_a] = signals
+        #         # read and bin chr21 in resolution-sized bins
+        #         signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+        #         self.eval_data[e][e_a] = signals
 
         print(self.eval_data.keys())
         print(self.train_data.keys())
 
+    def load_biosample(self, bios_name, mode="train"):
+        chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
+        all_samples = []
+        missing_ind = []
+
+        if mode  == "train": 
+            source = self.train_data
+        elif mode == "eval":
+            source = self.eval_data
+
+        for i in range(len(self.all_assays)):
+            assay = self.all_assays[i]
+            if assay in source[bios_name].keys():
+                bw = pyBigWig.open(source[bios_name][assay])
+                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // self.resolution)
+            
+            else:
+                signals = [-1 for _ in range((end - start) // self.resolution)]
+                missing_ind.append(i)
+
+        
+            all_samples.append(signals)
+
+        all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32))
+        print(all_samples.shape)
+        print(all_samples.sum(dim=0))
+        print(all_samples.sum(dim=1))
+        
+        return all_samples
+            
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
@@ -146,14 +177,6 @@ class Evaluation: # on chr21
         top_1_percent = int(0.01 * len(y_pred))
         top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
         return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
-
-"""
-for biosamples that are present at both eval path and training path
-    load and bin chr21 of both
-    stride the model on context_length chunks of the input chr21 and store the outputs
-    at the end, predictions should be of shape (1, chr21_length, 35)
-"""
-
 
 def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):  
     with open(hyper_parameters_path, 'rb') as f:
@@ -274,6 +297,12 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
+    bios = list(self.train_data.keys())[0]
+    e.load_biosample(bios)
+    print("___________")
+    e.load_biosample(bios, mode="eval")
+
+
 
     # evaluate_epidenoise(
     #     model_path= "models/model_checkpoint_epoch_18.pth", 
