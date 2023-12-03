@@ -91,10 +91,12 @@ class Evaluation: # on chr21
         for i in range(len(self.all_assays)):
             assay = self.all_assays[i]
             if assay in source[bios_name].keys():
+                print("loading ", assay)
                 bw = pyBigWig.open(source[bios_name][assay])
                 signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // self.resolution)
             
             else:
+                print(assay, "missing")
                 signals = [-1 for _ in range((end - start) // self.resolution)]
                 missing_ind.append(i)
 
