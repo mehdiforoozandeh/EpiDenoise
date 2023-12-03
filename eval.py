@@ -78,8 +78,7 @@ class Evaluation: # on chr21
             for i in range(all_samples.shape[1]):
                 if (all_samples[:, i] == -1).all():
                     missing_ind.append(i)
-            print(all_samples.shape)
-            print(missing_ind)
+                    
             return all_samples, missing_ind
 
         else:
@@ -99,7 +98,6 @@ class Evaluation: # on chr21
                 all_samples.append(signals)
 
             all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32)).transpose_(0, 1)
-            print(all_samples.shape)
 
             # replace NaN with zero
             all_samples = torch.where(torch.isnan(all_samples), torch.zeros_like(all_samples), all_samples)
@@ -107,13 +105,23 @@ class Evaluation: # on chr21
             nan_count = torch.isnan(all_samples).sum().item()
             minus_one_count = (all_samples == -1).sum().item()
 
-            print("Number of NaNs: ", nan_count)
-            print("Number of -1s: ", minus_one_count)
-
             torch.save(all_samples, savepath)
             
             return all_samples, missing_ind
       
+    def evaluate_biosample(self, bios_name, batch_size=20, context_length=1600):
+
+        X, missing_x_i = self.load_biosample(bios_name, mode="train")
+        Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
+
+        X = X.view(-1, context_length, X.shape[-1])
+        Y = Y.view(-1, context_length, X.shape[-1])
+        print(X)
+        print(Y)
+
+        print(X[-1, :, :])
+        print(Y[-1, :, :])
+
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
@@ -304,9 +312,10 @@ if __name__=="__main__":
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
     bios = "C50"
-    e.load_biosample(bios)
-    print("___________")
-    e.load_biosample(bios, mode="eval")
+    e.evaluate_biosample(bios)
+    # e.load_biosample(bios)
+    # print("___________")
+    # e.load_biosample(bios, mode="eval")
 
 
 
