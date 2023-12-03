@@ -119,6 +119,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                 # make predictions in batches
                 for i in range(0, len(x_t), batch_size):
                     torch.cuda.empty_cache()
+                    print(f"getting batches... {i/len(x_t):.2f}", )
                     
                     x_batch = x_t[i:i+batch_size]
 
@@ -128,6 +129,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 
                         x_batch = x_batch[:, rand_start:rand_end, :]
 
+                    x_batch = x_batch.to(device)
                     # all one pmask (no position is masked)
                     pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
                     outputs = model(x_batch, pmask, fmask)
