@@ -407,7 +407,7 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
     masked_data[mask] = mask_value
     # Return the masked data and the mask
 
-    return masked_data, mask[:,:,0]
+    return masked_data, mask#[:,:,0]
 
 def mask_missing(data, missing_features_ind, mask_value=-1):
     mask = torch.zeros_like(data, dtype=torch.bool)
@@ -521,7 +521,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 fmask[i,:] = 0
             
             fmask = fmask.to(device)
-            print("fmask:   ", fmask)
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
@@ -538,23 +537,22 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     # print(x_batch.shape)
 
                 # Masking a subset of the input data
-                x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
 
-                # cloze_mask = cloze_mask & ~missing_mask_batch
+                print(x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
+                print(masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
+                exit()
+
+                cloze_mask = cloze_mask & ~missing_mask_batch
 
                 # cloze_mask = cloze_mask.to(device)
 
                 # pmask = cloze_mask.any(dim=-1)
 
-                print("cloze_mask:   ", cloze_mask.shape, cloze_mask.sum())
                 pmask = cloze_mask.unsqueeze(1).unsqueeze(1)
-                print("pmask:   ", pmask.shape, pmask.sum())
 
                 # Convert the boolean values to float and switch the masked and non-masked values
                 pmask = 1 - pmask.float()
-                print("pmask:   ", pmask.shape, pmask.sum())
-
-                exit()
 
                 x_batch = x_batch.to(device)
                 pmask = pmask.to(device)
