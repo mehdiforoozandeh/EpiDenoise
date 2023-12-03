@@ -152,7 +152,7 @@ class Evaluation: # on chr21
         X = X.view((X.shape[0] * context_length), X.shape[-1]) # train data
 
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
-            pred = p[:, j].numpy()
+            pred = P[:, j].numpy()
             metrics_list = []
 
             if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
