@@ -13,6 +13,9 @@ class Evaluation: # on chr21
         traindata_path, evaldata_path, 
         resolution=25, chr_sizes_file="data/hg38.chrom.sizes"):
 
+        self.traindata_path = traindata_path
+        self.evaldata_path = evaldata_path
+
         with open(hyper_parameters_path, 'rb') as f:
             self.hyper_parameters = pickle.load(f)
 
@@ -85,30 +88,36 @@ class Evaluation: # on chr21
 
         if mode  == "train": 
             source = self.train_data
+            savepath = self.traindata_path + f"/{bios_name}_chr21_{self.resolution}.pt"
         elif mode == "eval":
             source = self.eval_data
+            savepath = self.evaldata_path + f"/{bios_name}_chr21_{self.resolution}.pt"
+        
+        if os.path.exists(savepath):
+            return torch.load(savepath)
 
-        for i in range(len(self.all_assays)):
-            assay = self.all_assays[i]
-            if assay in source[bios_name].keys():
-                print("loading ", assay)
-                bw = pyBigWig.open(source[bios_name][assay])
-                signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // self.resolution)
+        else:
+            for i in range(len(self.all_assays)):
+                assay = self.all_assays[i]
+                if assay in source[bios_name].keys():
+                    print("loading ", assay)
+                    bw = pyBigWig.open(source[bios_name][assay])
+                    signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // self.resolution)
+                
+                else:
+                    print(assay, "missing")
+                    signals = [-1 for _ in range((end - start) // self.resolution)]
+                    missing_ind.append(i)
+
             
-            else:
-                print(assay, "missing")
-                signals = [-1 for _ in range((end - start) // self.resolution)]
-                missing_ind.append(i)
+                all_samples.append(signals)
 
-        
-            all_samples.append(signals)
-
-        all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32))
-        print(all_samples.shape)
-        print(all_samples.sum(dim=0))
-        print(all_samples.sum(dim=1))
-        
-        return all_samples
+            all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32))
+            print(all_samples.shape)
+            print(all_samples.sum(dim=0))
+            print(all_samples.sum(dim=1))
+            
+            return all_samples
             
     def mse(self, y_true, y_pred):
         """
