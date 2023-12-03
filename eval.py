@@ -97,8 +97,8 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
             if b_e == b_t: # id biosamples that are present at both training and eval files
 
                 # file path
-                f_t = train_data[b_t]
-                f_e = eval_data[b_e]
+                f_t = train_data.biosamples[b_t]
+                f_e = eval_data.biosamples[b_e]
                 
                 x_t, missing_mask, missing_f_ind_t = train_data.get_biosample(f_t)
                 y_e, missing_mask, missing_f_ind_e = eval_data.get_biosample(f_e)
