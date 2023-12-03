@@ -557,11 +557,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # combined_mask = cloze_mask | missing_mask_batch
 
                 outputs = model(x_batch, pmask, fmask)
-                print(x_batch[cloze_mask].shape.item(), x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
-                print(outputs[cloze_mask].shape.item(), outputs[cloze_mask].mean().item(), outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item())
+                print(x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
+                print(outputs[cloze_mask].shape, outputs[cloze_mask].mean().item(), outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item())
 
-                print(x_batch[~cloze_mask].shape.item(), x_batch[~cloze_mask].mean().item(), x_batch[~cloze_mask].min().item(), x_batch[~cloze_mask].max().item())
-                print(outputs[~cloze_mask].shape.item(), outputs[~cloze_mask].mean().item(), outputs[~cloze_mask].min().item(), outputs[~cloze_mask].max().item())
+                print(x_batch[~cloze_mask].shape, x_batch[~cloze_mask].mean().item(), x_batch[~cloze_mask].min().item(), x_batch[~cloze_mask].max().item())
+                print(outputs[~cloze_mask].shape, outputs[~cloze_mask].mean().item(), outputs[~cloze_mask].min().item(), outputs[~cloze_mask].max().item())
                 exit()
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
