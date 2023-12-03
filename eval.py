@@ -114,6 +114,11 @@ class Evaluation: # on chr21
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
+        print(X.shape)
+        print(Y.shape)
+
+        exit()
+
         X = X.view(-1, context_length, X.shape[-1])
         Y = Y.view(-1, context_length, X.shape[-1])
         print(X)
