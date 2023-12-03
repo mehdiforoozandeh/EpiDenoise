@@ -1,5 +1,9 @@
 from model import *
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import mean_squared_error
+import scipy.stats
 import pyBigWig
+
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
@@ -70,27 +74,29 @@ class Evaluation: # on chr21
                 signals = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
                 self.eval_data[e][e_a] = signals
 
+        print(self.eval_data.keys())
+        print(self.train_data.keys())
 
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
         between the true and predicted values across the entire genome at a resolution of 25bp.
         """
-        pass
+        return mean_squared_error(y_pred, y_true)
 
     def pearson_correlation(self, y_true, y_pred):
         """
         Calculate the genome-wide Pearson Correlation. This measures the linear relationship between the true 
         and predicted values across the entire genome at a resolution of 25bp.
         """
-        pass
+        return pearsonr(y_pred, y_true)[0]
 
     def spearman_correlation(self, y_true, y_pred):
         """
         Calculate the genome-wide Spearman Correlation. This measures the monotonic relationship between the true 
         and predicted values across the entire genome at a resolution of 25bp.
         """
-        pass
+        return spearmanr(y_pred, y_true)[0]
 
     def mse_prom(self, y_true, y_pred):
         """
@@ -127,7 +133,9 @@ class Evaluation: # on chr21
         This is a measure of how well predictions match observations at positions with high experimental signal. 
         It's similar to recall.
         """
-        pass
+        top_1_percent = int(0.01 * len(y_true))
+        top_1_percent_indices = np.argsort(y_true)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
 
     def mse1imp(self, y_true, y_pred):
         """
@@ -135,7 +143,9 @@ class Evaluation: # on chr21
         This is a measure of how well predictions match observations at positions with high predicted signal. 
         It's similar to precision.
         """
-        pass
+        top_1_percent = int(0.01 * len(y_pred))
+        top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
 
 """
 for biosamples that are present at both eval path and training path
@@ -258,11 +268,17 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
     return results
 
 if __name__=="__main__":
-
-    evaluate_epidenoise(
+    e = Evaluation(
         model_path= "models/model_checkpoint_epoch_18.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        outdir="eval_results_E18.csv", 
-        batch_size=20, context_length=1600)
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    )
+
+    # evaluate_epidenoise(
+    #     model_path= "models/model_checkpoint_epoch_18.pth", 
+    #     hyper_parameters_path= "models/hyper_parameters.pkl", 
+    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+    #     outdir="eval_results_E18.csv", 
+    #     batch_size=20, context_length=1600)

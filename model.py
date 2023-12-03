@@ -4,9 +4,6 @@ from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import mean_squared_error
-import scipy.stats
 import pandas as pd
 import numpy as np
 
@@ -684,24 +681,7 @@ def predict(model, data, fmask, pmask):
         
     return predictions
 
-def evaluate(imputation, observation):
-    def mse1obs(y_true, y_pred):
-        top_1_percent = int(0.01 * len(y_true))
-        top_1_percent_indices = np.argsort(y_true)[-top_1_percent:]
-        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
 
-    def mse1imp(y_true, y_pred):
-        top_1_percent = int(0.01 * len(y_pred))
-        top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
-        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
-
-    metrics = {}
-    metrics['PCC'] = pearsonr(imputation, observation)[0]
-    metrics['spearman_rho'] = spearmanr(imputation, observation)[0]
-    metrics['MSE'] = mean_squared_error(imputation, observation)
-    metrics['MSE1obs'] = mse1obs(observation, imputation)
-    metrics['MSE1imp'] = mse1imp(observation, imputation)
-    return metrics
 
 # Calling the main function
 if __name__ == "__main__":
