@@ -541,14 +541,12 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 cloze_mask = cloze_mask & ~missing_mask_batch
 
-                print(x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
-                print(masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
-                exit()
-
                 # cloze_mask = cloze_mask.to(device)
 
-                # pmask = cloze_mask.any(dim=-1)
-
+                pmask = cloze_mask.any(dim=-1)
+                print(cloze_mask.shape, cloze_mask.sum())
+                print(pmask.shape, pmask.sum())
+                exit()
                 pmask = cloze_mask.unsqueeze(1).unsqueeze(1)
 
                 # Convert the boolean values to float and switch the masked and non-masked values
