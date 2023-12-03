@@ -115,6 +115,9 @@ class Evaluation: # on chr21
             all_samples = torch.from_numpy(np.array(all_samples, dtype=np.float32)).transpose_(0, 1)
             print(all_samples.shape)
 
+            # replace NaN with zero
+            all_samples = torch.where(torch.isnan(all_samples), torch.zeros_like(all_samples), all_samples)
+
             nan_count = torch.isnan(all_samples).sum().item()
             minus_one_count = (all_samples == -1).sum().item()
 
