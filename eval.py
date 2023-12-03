@@ -36,6 +36,8 @@ class Evaluation: # on chr21
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)
 
+        self.results = []
+
         self.train_data = {}
         self.eval_data = {}
 
@@ -133,8 +135,6 @@ class Evaluation: # on chr21
         # make predictions in batches
         for i in range(0, len(X), batch_size):
             torch.cuda.empty_cache()
-
-            print(f"getting batches... {i/len(X):.2f}", )
             
             x_batch = X[i:i+batch_size]
 
@@ -147,12 +147,38 @@ class Evaluation: # on chr21
             # Store the predictions in the large tensor
             P[i:i+batch_size, :, :] = outputs.cpu()
         
-        P = P.view((P.shape[0] * context_length), P.shape[-1])
-        Y = Y.view((X.shape[0] * context_length), Y.shape[-1])
+        P = P.view((P.shape[0] * context_length), P.shape[-1]) # preds
+        Y = Y.view((Y.shape[0] * context_length), Y.shape[-1]) # eval data
+        X = X.view((X.shape[0] * context_length), X.shape[-1]) # train data
 
-        print(P.shape)
-        print(Y.shape)
+        for j in range(Y.shape[-1]):  # for each feature i.e. assay
+            pred = p[:, j].numpy()
+            metrics_list = []
 
+            if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
+                target = Y[:, j].numpy()
+                comparison = 'imputed'
+            
+            elif j not in missing_x_i:
+                target = X[:, j].numpy()
+                comparison = 'denoised'
+
+            else:
+                continue
+            
+            metrics = {
+                'celltype': bios_name,
+                'feature': self.all_assays[j],
+                'comparison': comparison,
+                'PCC_mean': self.pearson_correlation(target, pred),
+                'spearman_rho_mean': self.spearman_correlation(target, pred),
+                'MSE_mean': self.mse(target, pred),
+                'MSE1obs_mean': self.mse1obs(target, pred),
+                'MSE1imp_mean': self.mse1imp(target, pred)
+            }
+            print(metrics)
+            # Add the results to the DataFrame
+            self.results.append(metrics)
 
     def mse(self, y_true, y_pred):
         """
