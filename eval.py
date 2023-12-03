@@ -134,8 +134,7 @@ class Evaluation: # on chr21
         for i in range(0, len(X), batch_size):
             torch.cuda.empty_cache()
 
-            if i/len(X) % 20 ==0:
-                print(f"getting batches... {i/len(X):.2f}", )
+            print(f"getting batches... {i/len(X):.2f}", )
             
             x_batch = X[i:i+batch_size]
 
@@ -153,7 +152,7 @@ class Evaluation: # on chr21
 
         print(P.shape)
         print(Y.shape)
-        
+
 
     def mse(self, y_true, y_pred):
         """
