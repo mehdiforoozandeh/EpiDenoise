@@ -1,6 +1,9 @@
 from model import *
 import pandas as pd
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+
+
 class Evaluation:
     def __init__(self):
         pass
@@ -120,7 +123,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                 print(f"shape of inputs {x_t.shape}, shape of targets {y_e.shape}")
 
                 # Initialize a tensor to store all predictions
-                p = torch.empty_like(x_t)
+                p = torch.empty_like(x_t, device="cpu")
 
                 # make predictions in batches
                 for i in range(0, len(x_t), batch_size):
@@ -128,12 +131,6 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     print(f"getting batches... {i/len(x_t):.2f}", )
                     
                     x_batch = x_t[i:i+batch_size]
-
-                    # if context_length < 8000:
-                    #     rand_start = random.randint(0, 8000 - (context_length+1))
-                    #     rand_end = rand_start + context_length
-
-                    #     x_batch = x_batch[:, rand_start:rand_end, :]
 
                     x_batch = x_batch.to(device)
                     # all one pmask (no position is masked)
