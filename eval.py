@@ -134,6 +134,9 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
                     pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
                     outputs = model(x_batch, pmask, fmask)
 
+                    print("output shape",outputs.shape)
+                    exit()
+
                     # Store the predictions in the large tensor
                     p[i:i+batch_size, :, :] = outputs.cpu()
 
