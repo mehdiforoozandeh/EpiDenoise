@@ -570,9 +570,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 loss.backward()
 
                 for name, param in model.named_parameters():
-                    print(name, param)
+                    print(name, param.shape)
                     
-                exit()
                 optimizer.step()
         
         # Save the model after each epoch
