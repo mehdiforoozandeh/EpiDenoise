@@ -371,13 +371,13 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 
 if __name__=="__main__":
     e = Evaluation(
-        model_path= "models/model_checkpoint_epoch_18.pth", 
+        model_path= "models/model_checkpoint_epoch_13.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    bios = "C50"
-    e.evaluate_biosample(bios)
+
+    e.evalualte_model("eval_Ep13.csv")
     # e.load_biosample(bios)
     # print("___________")
     # e.load_biosample(bios, mode="eval")
