@@ -528,8 +528,10 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 cloze_mask = cloze_mask.to(device)
 
                 outputs = model(masked_x_batch, pmask, fmask)
-
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+
+                sum_pred, sum_target = outputs[cloze_mask].sum().item(), x_batch[cloze_mask].sum().item()
 
                 if torch.isnan(loss).sum() > 0:
                     skipmessage = "Encountered nan loss! Skipping batch..."
@@ -547,7 +549,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 if (((i//batch_size))+1) % 10 == 0 or i==0:
                     logfile = open("models/log.txt", "w")
-                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)} | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1} | Loss: {loss.item():.4f}'
+                    
+                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)}\
+                         | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}\
+                             | Loss: {loss.item():.4f} | Sum_Pred: {sum_pred:.2f} | Sum_Target: {sum_target:.2f}'
+
                     log_strs.append(logstr)
                     logfile.write("\n".join(log_strs))
                     logfile.close()
