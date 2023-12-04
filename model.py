@@ -513,6 +513,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             print('-' * 10)
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
+
             # fmask is used to mask QKV of transformer
             d_model = x.shape[2]
             fmask = torch.ones(d_model, d_model)
@@ -528,6 +529,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
+                print(missing_mask_batch.shape, missing_mask_batch.sum())
 
                 if context_length < 8000:
                     rand_start = random.randint(0, 8000 - (context_length+1))
@@ -538,7 +540,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-                pmask = cloze_mask[:,:,0]
+                pmask = cloze_mask[:,:,0].unsqueeze(1).unsqueeze(1)
+
                 print(cloze_mask.shape, cloze_mask.sum())
                 cloze_mask = cloze_mask & ~missing_mask_batch
 
