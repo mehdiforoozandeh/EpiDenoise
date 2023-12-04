@@ -181,9 +181,9 @@ class Evaluation: # on chr21
             # Add the results to the DataFrame
             self.results.append(metrics)
 
-    def evalualte_model(self, outdir):
+    def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
-            evaluate_biosample(bios)
+            self.evaluate_biosample(bios)
 
         self.results.to_csv(outdir, index=False)
 
@@ -377,7 +377,7 @@ if __name__=="__main__":
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
 
-    e.evalualte_model("eval_Ep13.csv")
+    e.evaluate_model("eval_Ep13.csv")
     # e.load_biosample(bios)
     # print("___________")
     # e.load_biosample(bios, mode="eval")
