@@ -536,33 +536,26 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                     x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
 
-                print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
+                # print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
 
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                 pmask = cloze_mask[:,:,0].unsqueeze(1).unsqueeze(1)
-                print("pmask1    ", pmask.shape, pmask.sum())
+                # print("pmask1    ", pmask.shape, pmask.sum())
 
-                print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
+                # print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
                 cloze_mask = cloze_mask & ~missing_mask_batch
-                print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
+                # print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
 
                 # Convert the boolean values to float and switch the masked and non-masked values
                 pmask = 1 - pmask.float()
-                print("pmask2    ", pmask.shape, pmask.sum())
+                # print("pmask2    ", pmask.shape, pmask.sum())
                 
 
-                print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
-                print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
+                # print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
+                # print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
 
 
-                # print("~x_batch  ", x_batch[~cloze_mask].shape, x_batch[~cloze_mask].mean().item(), x_batch[~cloze_mask].min().item(), x_batch[~cloze_mask].max().item())
-                # print(
-                #     "~masked_x_batch   ", 
-                #     masked_x_batch[~cloze_mask].shape, masked_x_batch[~cloze_mask].mean().item(), 
-                #     masked_x_batch[~cloze_mask].min().item(), masked_x_batch[~cloze_mask].max().item())
-
-                exit()
                 x_batch = x_batch.to(device)
                 masked_x_batch = masked_x_batch.to(device)
                 pmask = pmask.to(device)
@@ -580,6 +573,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 del x_batch
                 del pmask
+                del masked_x_batch
                 del outputs
 
                 # Clear GPU memory again
@@ -715,8 +709,12 @@ if __name__ == "__main__":
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path="models/model_checkpoint_epoch_25.pth", 
-        start_epoch=20)
+        checkpoint_path=None, 
+        start_epoch=0)
+    # train_epidenoise(
+    #     hyper_parameters, 
+    #     checkpoint_path="models/model_checkpoint_epoch_25.pth", 
+    #     start_epoch=20)
 
     # except:
     #     torch.cuda.empty_cache()
