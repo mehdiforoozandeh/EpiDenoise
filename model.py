@@ -527,6 +527,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 for name, param in model.named_parameters():
                     print(name, params.sum().item())
 
+                exit()
+
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss).sum() > 0:
