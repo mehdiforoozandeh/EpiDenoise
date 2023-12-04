@@ -518,7 +518,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 cloze_mask = cloze_mask.to(device)
 
                 for name, param in model.named_parameters():
-                    print(name, params.sum().item())
+                    print(name, param.sum().item())
 
                 outputs = model(masked_x_batch, pmask, fmask)
 
