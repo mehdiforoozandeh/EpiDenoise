@@ -71,7 +71,6 @@ class WeightedMSELoss(nn.Module):
         else:
             return torch.sum((input - target) ** 2)
 
-
 #________________________________________________________________________________________________________________________#
 ### attention layers
 class DoubleMaskMultiHeadedAttention(torch.nn.Module):
@@ -98,47 +97,25 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # fmask should be of size d_model * d_model 
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
-        # # Element-wise multiplication with the weight matrices
-        # print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
+        # Element-wise multiplication with the weight matrices
+        print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
 
-        # self.query.weight.data *= fmask
-        # self.key.weight.data *= fmask
-        # self.value.weight.data *= fmask
+        self.query.weight.data *= fmask
+        self.key.weight.data *= fmask
+        self.value.weight.data *= fmask
 
-        # print("2", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
+        print("2", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
 
-        # # Element-wise multiplication of mask with the bias terms
+        # Element-wise multiplication of mask with the bias terms
         # bias_fmask = fmask.diag()
         # self.query.bias.data *= bias_fmask
         # self.key.bias.data *= bias_fmask
         # self.value.bias.data *= bias_fmask
 
-        # # (batch_size, max_len, d_model)
-        # query = self.query(query)
-        # key = self.key(key)        
-        # value = self.value(value)   
-
-        # Create temporary variables for the weights
-        temp_query_weight = self.query.weight.data * fmask
-        temp_key_weight = self.key.weight.data * fmask
-        temp_value_weight = self.value.weight.data * fmask
-
-        print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
-        print("2", torch.sum(temp_query_weight == 0).item(), temp_query_weight.sum().item())
-
-        # Apply the mask to the bias
-        # bias_fmask = fmask.diag()
-        temp_query_bias = self.query.bias.data #* bias_fmask
-        temp_key_bias = self.key.bias.data #* bias_fmask
-        temp_value_bias = self.value.bias.data #* bias_fmask
-        
-        # print("3", torch.sum(self.query.bias.data == 0).item(), self.query.bias.data.sum().item())
-        # print("4", torch.sum(temp_query_bias == 0).item(), temp_query_bias.sum().item())
-        
         # (batch_size, max_len, d_model)
-        query = torch.matmul(query, temp_query_weight) + temp_query_bias #F.linear(query, temp_query_weight, temp_query_bias)
-        key = torch.matmul(key, temp_query_weight) + temp_key_bias  # F.linear(key, temp_key_weight, temp_key_bias)
-        value = torch.matmul(value, temp_value_weight) + temp_value_bias  # F.linear(value, temp_value_weight, temp_value_bias)
+        query = self.query(query)
+        key = self.key(key)        
+        value = self.value(value)   
         
         # (batch_size, max_len, d_model) --> (batch_size, max_len, h, d_k) --> (batch_size, h, max_len, d_k)
         query = query.view(query.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)   
