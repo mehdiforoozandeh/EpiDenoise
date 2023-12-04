@@ -650,7 +650,7 @@ class ENCODE_IMPUTATION_DATASET(object):
                 self.biosamples[f[:3]] = f"{self.path}/{f}"
         
         # Sort the keys in availability in descending order
-        sorted_keys = sorted(availability, key=availability.get, reverse=False)
+        sorted_keys = sorted(availability, key=availability.get, reverse=True)
 
         # Create a new dictionary with sorted keys
         self.biosamples = {key: self.biosamples[key] for key in sorted_keys if key in self.biosamples}
