@@ -67,7 +67,7 @@ class WeightedMSELoss(nn.Module):
         max_val = weights.max()
         if max_val != 0:
             weights = weights / max_val  # Normalize weights to be between 0 and 1
-            return torch.sum(weights * (input - target) ** 2)
+            return torch.sum(weights * ((input - target) ** 2))
         else:
             return torch.sum((input - target) ** 2)
 
@@ -475,8 +475,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         epoch_loss = 0.0
         bb=0
         for bios, f in dataset.biosamples.items():
-            if bb > 2:
-                exit() 
             bb+=1
             print('-' * 10)
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
