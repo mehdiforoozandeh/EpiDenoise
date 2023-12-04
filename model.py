@@ -472,7 +472,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             print('-' * 10)
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
-
             # fmask is used to mask QKV of transformer
             d_model = x.shape[2]
             fmask = torch.ones(d_model, d_model)
@@ -514,13 +513,15 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
                 # print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
 
-
                 x_batch = x_batch.to(device)
                 masked_x_batch = masked_x_batch.to(device)
                 pmask = pmask.to(device)
                 cloze_mask = cloze_mask.to(device)
 
-                outputs = model(masked_x_batch, pmask, fmask)
+                if epoch == 0 and i == 0 and bb==1:
+                    outputs = model(masked_x_batch, pmask, torch.ones(d_model, d_model, device=device))
+                else:
+                    outputs = model(masked_x_batch, pmask, fmask)
 
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
