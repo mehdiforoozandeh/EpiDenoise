@@ -549,10 +549,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 if (((i//batch_size))+1) % 10 == 0 or i==0:
                     logfile = open("models/log.txt", "w")
-                    
-                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)}\
-                         | Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}\
-                             | Loss: {loss.item():.4f} | Sum_Pred: {sum_pred:.2f} | Sum_Target: {sum_target:.2f}'
+
+                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)}| Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}\
+                        | Loss: {loss.item():.4f} | S_P: {sum_pred:.1f} | S_T: {sum_target:.1f}'
 
                     log_strs.append(logstr)
                     logfile.write("\n".join(log_strs))
@@ -601,8 +600,8 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
 
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
-    criterion = WeightedMSELoss()
-    # criterion = nn.MSELoss()
+    # criterion = WeightedMSELoss()
+    criterion = nn.MSELoss()
 
     start_time = time.time()
     model = train_model(
