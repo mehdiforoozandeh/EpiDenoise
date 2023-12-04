@@ -525,7 +525,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 print("/n/n/n")
 
                 for name, param in model.named_parameters():
-                    print(name, params.sum().item())
+                    print(name, param.sum().item())
 
                 exit()
 
