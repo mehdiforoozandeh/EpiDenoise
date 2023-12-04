@@ -527,17 +527,14 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 pmask = pmask.to(device)
                 cloze_mask = cloze_mask.to(device)
 
-                for name, param in model.named_parameters():
-                    print(name, param.sum().item())
+                # for name, param in model.named_parameters():
+                #     print(name, param.sum().item())
 
                 outputs = model(masked_x_batch, pmask, fmask)
 
-                print("/n/n/n")
+                # print("/n/n/n")
 
-                for name, param in model.named_parameters():
-                    print(name, param.sum().item())
-
-                exit()
+                # exit()
 
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
@@ -564,6 +561,10 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     print(logstr)
 
                 loss.backward()
+
+                for name, param in model.named_parameters():
+                    if str(name) == "masked_encoder.self_multihead.query.weights":
+                        print(name, param.grad)
                     
                 optimizer.step()
         
