@@ -80,6 +80,10 @@ class MaskedLinear(nn.Module):
         self.bias = nn.Parameter(torch.randn(output_dim))
 
     def forward(self, x, mask):
+        print(x.shape)
+        print(self.weights.shape)
+        print(mask.shape)
+        masked_weight = self.weights * mask
         return torch.mm(x, (self.weights * mask)) + self.bias
 
 class DoubleMaskMultiHeadedAttention(torch.nn.Module):
