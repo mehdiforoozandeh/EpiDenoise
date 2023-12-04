@@ -100,9 +100,13 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
         # Element-wise multiplication with the weight matrices
+        print("1", self.query.weight.data.sum().item())
+
         self.query.weight.data *= fmask
         self.key.weight.data *= fmask
         self.value.weight.data *= fmask
+
+        print("2", self.query.weight.data.sum().item())
 
         # Element-wise multiplication of mask with the bias terms
         bias_fmask = fmask.diag()
@@ -439,57 +443,12 @@ def sequence_pad(data, max_length, pad_value=-1):
     
     return padded_data, pad_mask
 
-# Function to train the model
-def train(model, data, missing_features_ind=[0, 3, 5, 6], epochs=100, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=8000):
-    # Initializing the loss function
-    criterion = nn.MSELoss()
-    # Initializing the optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.05)
-    
-    # Looping over the number of epochs
-    for epoch in range(epochs):
-        # Resetting the gradients of the model parameters
-        optimizer.zero_grad()
-
-        # If missing_features_ind is not empty, create a mask for the missing data
-        if len(missing_features_ind) > 0: 
-            fmasked_data, feat_mask = mask_missing(data, missing_features_ind)
-
-        # If missing_features_ind is empty, create a mask of False values with the same shape as the data
-        else:
-            # Creating a mask of False values with the same shape as the data
-            fmasked_data = data.clone()
-            feat_mask = torch.zeros_like(data, dtype=torch.bool)
-
-        # Masking a subset of the input data
-        masked_data, mask = mask_data(fmasked_data, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-
-        if data.shape[1] < context_length:
-            padded_data, pad_mask = sequence_pad(masked_data, max_length=context_length)
-
-        # Update mask variable such that if for an entry in fmask, fmask == True, mask should be False
-        mask = mask & ~feat_mask & ~pad_mask
-
-        # Combining the two masks
-        combined_mask = mask | feat_mask
-
-        # Getting the output of the model
-        output = model(masked_data, combined_mask)
-
-        # Computing the loss only on the masked subset of the input data
-        loss = criterion(output[mask], data[mask])
-        print(f"epoch:{epoch} | loss: {loss}")
-
-        # Backpropagating the gradients
-        loss.backward()
-        # Updating the model parameters
-        optimizer.step()
-
 def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     print(device)
+
 
     # if torch.cuda.device_count() > 1:
     #     print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -644,7 +603,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
     os.makedirs(model_dir, exist_ok=True)
     model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
     torch.save(model.state_dict(), os.path.join(model_dir, model_name))
-    os.system(f"mv hyper_parameters.pkl hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+    os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
 
     # Write a description text file
     description = {
@@ -699,11 +658,11 @@ if __name__ == "__main__":
             "hidden_dim": 35,
             "nlayers": 7,
             "epochs": 25,
-            "mask_percentage": 0.20,
+            "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 1600,
             "batch_size": 20,
-            "learning_rate": 0.005
+            "learning_rate": 0.001
         }
     # try:
 
