@@ -130,9 +130,9 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
 
         # Apply the mask to the bias
         # bias_fmask = fmask.diag()
-        # temp_query_bias = self.query.bias.data.clone() * bias_fmask
-        # temp_key_bias = self.key.bias.data.clone() * bias_fmask
-        # temp_value_bias = self.value.bias.data.clone() * bias_fmask
+        temp_query_bias = self.query.bias.data #* bias_fmask
+        temp_key_bias = self.key.bias.data #* bias_fmask
+        temp_value_bias = self.value.bias.data #* bias_fmask
         
         # print("3", torch.sum(self.query.bias.data == 0).item(), self.query.bias.data.sum().item())
         # print("4", torch.sum(temp_query_bias == 0).item(), temp_query_bias.sum().item())
