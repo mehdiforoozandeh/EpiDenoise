@@ -73,6 +73,15 @@ class WeightedMSELoss(nn.Module):
 
 #________________________________________________________________________________________________________________________#
 ### attention layers
+class MaskedLinear(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(MaskedLinear, self).__init__()
+        self.weights = nn.Parameter(torch.randn(input_dim, output_dim))
+        self.bias = nn.Parameter(torch.randn(output_dim))
+
+    def forward(self, x, mask):
+        return torch.mm(x, (self.weights * mask)) + self.bias
+
 class DoubleMaskMultiHeadedAttention(torch.nn.Module):
     
     def __init__(self, heads, d_model, dropout=0.1):
@@ -83,9 +92,9 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         self.heads = heads
         self.dropout = torch.nn.Dropout(dropout)
 
-        self.query = torch.nn.Linear(d_model, d_model)
-        self.key = torch.nn.Linear(d_model, d_model)
-        self.value = torch.nn.Linear(d_model, d_model)
+        self.query = MaskedLinear(d_model, d_model)
+        self.key = MaskedLinear(d_model, d_model)
+        self.value = MaskedLinear(d_model, d_model)
         self.output_linear = torch.nn.Linear(d_model, d_model)
         
     def forward(self, query, key, value, pmask, fmask):
@@ -98,13 +107,13 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
         # Element-wise multiplication with the weight matrices
-        print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
+        # print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
 
-        self.query.weight.data *= fmask
-        self.key.weight.data *= fmask
-        self.value.weight.data *= fmask
+        # self.query.weight.data *= fmask
+        # self.key.weight.data *= fmask
+        # self.value.weight.data *= fmask
 
-        print("2", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
+        # print("2", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
 
         # Element-wise multiplication of mask with the bias terms
         # bias_fmask = fmask.diag()
@@ -113,9 +122,9 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # self.value.bias.data *= bias_fmask
 
         # (batch_size, max_len, d_model)
-        query = self.query(query)
-        key = self.key(key)        
-        value = self.value(value)   
+        query = self.query(query, fmask)
+        key = self.key(key, fmask)        
+        value = self.value(value, fmask)   
         
         # (batch_size, max_len, d_model) --> (batch_size, max_len, h, d_k) --> (batch_size, h, max_len, d_k)
         query = query.view(query.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)   
