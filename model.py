@@ -121,19 +121,22 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
 
 
         # Create temporary variables for the weights
-        temp_query_weight = self.query.weight.data * fmask
-        temp_key_weight = self.key.weight.data * fmask
-        temp_value_weight = self.value.weight.data * fmask
+        temp_query_weight = self.query.weight.data.clone() * fmask
+        temp_key_weight = self.key.weight.data.clone() * fmask
+        temp_value_weight = self.value.weight.data.clone() * fmask
 
-        print(torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
-        print(torch.sum(temp_query_weight == 0).item(), temp_query_weight.sum().item())
+        print("1", torch.sum(self.query.weight.data == 0).item(), self.query.weight.data.sum().item())
+        print("2", torch.sum(temp_query_weight == 0).item(), temp_query_weight.sum().item())
 
         # Apply the mask to the bias
         bias_fmask = fmask.diag()
-        temp_query_bias = self.query.bias.data * bias_fmask
-        temp_key_bias = self.key.bias.data * bias_fmask
-        temp_value_bias = self.value.bias.data * bias_fmask
-
+        temp_query_bias = self.query.bias.data.clone() * bias_fmask
+        temp_key_bias = self.key.bias.data.clone() * bias_fmask
+        temp_value_bias = self.value.bias.data.clone() * bias_fmask
+        
+        print("3", torch.sum(self.query.bias.data == 0).item(), self.query.bias.data.sum().item())
+        print("4", torch.sum(temp_query_bias == 0).item(), temp_query_bias.sum().item())
+        
         # (batch_size, max_len, d_model)
         query = F.linear(query, temp_query_weight, temp_query_bias)
         key = F.linear(key, temp_key_weight, temp_key_bias)
@@ -569,8 +572,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 loss.backward()
 
-                for name, param in model.named_parameters():
-                    print(name, param.shape)
+                # for name, param in model.named_parameters():
+                #     print(name, param.shape)
                     
                 optimizer.step()
         
