@@ -10,7 +10,6 @@ import numpy as np
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
-
 class RelativePositionEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
         super(RelativePositionEncoding, self).__init__()
@@ -96,7 +95,7 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         mask of shape: (batch_size, 1, 1, max_words)
         """
 
-        # fmask should be of size d_model*d_model 
+        # fmask should be of size d_model * d_model 
         # for each feature index i, if i-th feature is missing fmask[i,:]=0 ; otherwise, fmask[i,:]=1
 
         # # Element-wise multiplication with the weight matrices
@@ -119,7 +118,6 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # key = self.key(key)        
         # value = self.value(value)   
 
-
         # Create temporary variables for the weights
         temp_query_weight = self.query.weight.data * fmask
         temp_key_weight = self.key.weight.data * fmask
@@ -138,14 +136,14 @@ class DoubleMaskMultiHeadedAttention(torch.nn.Module):
         # print("4", torch.sum(temp_query_bias == 0).item(), temp_query_bias.sum().item())
         
         # (batch_size, max_len, d_model)
-        query = F.linear(query, temp_query_weight, temp_query_bias)
-        key = F.linear(key, temp_key_weight, temp_key_bias)
-        value = F.linear(value, temp_value_weight, temp_value_bias)
+        query = torch.matmul(query, temp_query_weight) + temp_query_bias #F.linear(query, temp_query_weight, temp_query_bias)
+        key = torch.matmul(key, temp_query_weight) + temp_key_bias  # F.linear(key, temp_key_weight, temp_key_bias)
+        value = torch.matmul(value, temp_value_weight) + temp_value_bias  # F.linear(value, temp_value_weight, temp_value_bias)
         
         # (batch_size, max_len, d_model) --> (batch_size, max_len, h, d_k) --> (batch_size, h, max_len, d_k)
         query = query.view(query.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)   
-        key = key.view(key.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)  
-        value = value.view(value.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)  
+        key = key.view(key.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)
+        value = value.view(value.shape[0], -1, self.heads, self.d_k).permute(0, 2, 1, 3)
         
         # (batch_size, h, max_len, d_k) matmul (batch_size, h, d_k, max_len) --> (batch_size, h, max_len, max_len)
         scores = torch.matmul(query, key.permute(0, 1, 3, 2)) / math.sqrt(query.size(-1))
@@ -472,7 +470,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
     model = model.to(device)
     print(device)
 
-
     # if torch.cuda.device_count() > 1:
     #     print("Let's use", torch.cuda.device_count(), "GPUs!")
     #     model = torch.nn.DataParallel(model)
@@ -543,10 +540,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 pmask = pmask.to(device)
                 cloze_mask = cloze_mask.to(device)
 
-                if epoch == 0 and i == 0 and bb==1:
-                    outputs = model(masked_x_batch, pmask, torch.ones(d_model, d_model, device=device))
-                else:
-                    outputs = model(masked_x_batch, pmask, fmask)
+                outputs = model(masked_x_batch, pmask, fmask)
 
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
