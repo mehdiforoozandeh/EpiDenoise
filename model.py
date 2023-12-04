@@ -529,43 +529,47 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
-                print(missing_mask_batch.shape, missing_mask_batch.sum())
 
                 if context_length < 8000:
                     rand_start = random.randint(0, 8000 - (context_length+1))
                     rand_end = rand_start + context_length
 
                     x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
-                    # print(x_batch.shape)
+
+                print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
 
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                 pmask = cloze_mask[:,:,0].unsqueeze(1).unsqueeze(1)
+                print("pmask1    ", pmask.shape, pmask.sum())
 
-                print(cloze_mask.shape, cloze_mask.sum())
+                print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
                 cloze_mask = cloze_mask & ~missing_mask_batch
+                print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
 
-                # cloze_mask = cloze_mask.to(device)
-
-                print(cloze_mask.shape, cloze_mask.sum())
-                print(pmask.shape, pmask.sum())
-                exit()
                 # Convert the boolean values to float and switch the masked and non-masked values
                 pmask = 1 - pmask.float()
+                print("pmask2    ", pmask.shape, pmask.sum())
+                
 
-                x_batch = x_batch.to(device)
-                pmask = pmask.to(device)
+                print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
+                print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
 
-                # Combining the two masks
-                # combined_mask = cloze_mask | missing_mask_batch
 
-                outputs = model(x_batch, pmask, fmask)
-                print(x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
-                print(outputs[cloze_mask].shape, outputs[cloze_mask].mean().item(), outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item())
+                # print("~x_batch  ", x_batch[~cloze_mask].shape, x_batch[~cloze_mask].mean().item(), x_batch[~cloze_mask].min().item(), x_batch[~cloze_mask].max().item())
+                # print(
+                #     "~masked_x_batch   ", 
+                #     masked_x_batch[~cloze_mask].shape, masked_x_batch[~cloze_mask].mean().item(), 
+                #     masked_x_batch[~cloze_mask].min().item(), masked_x_batch[~cloze_mask].max().item())
 
-                print(x_batch[~cloze_mask].shape, x_batch[~cloze_mask].mean().item(), x_batch[~cloze_mask].min().item(), x_batch[~cloze_mask].max().item())
-                print(outputs[~cloze_mask].shape, outputs[~cloze_mask].mean().item(), outputs[~cloze_mask].min().item(), outputs[~cloze_mask].max().item())
                 exit()
+                x_batch = x_batch.to(device)
+                masked_x_batch = masked_x_batch.to(device)
+                pmask = pmask.to(device)
+                cloze_mask = cloze_mask.to(device)
+
+                outputs = model(masked_x_batch, pmask, fmask)
+
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                 if torch.isnan(loss).sum() > 0:
