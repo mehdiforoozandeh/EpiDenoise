@@ -451,7 +451,7 @@ def sequence_pad(data, max_length, pad_value=-1):
     
     return padded_data, pad_mask
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
+def _train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -472,7 +472,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         print('-' * 10)
         print(f'Epoch {epoch+1}/{num_epochs}')
 
-        epoch_loss = 0.0
         bb=0
         for bios, f in dataset.biosamples.items():
             bb+=1
@@ -561,6 +560,119 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         
         # Save the model after each epoch
         torch.save(model.state_dict(), f'models/model_checkpoint_epoch_{epoch+1}.pth')
+
+    return model
+
+def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
+    log_strs = []
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    print(device)
+
+    # if torch.cuda.device_count() > 1:
+    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
+    #     model = torch.nn.DataParallel(model)
+
+    # model.to(device)
+    log_strs.append(str(device))
+    logfile = open("models/log.txt", "w")
+    logfile.write("\n".join(log_strs))
+    logfile.close()
+
+    bb=0
+    # Define your batch size
+    for bios, f in dataset.biosamples.items():
+        bb+=1
+        print('-' * 10)
+        x, missing_mask, missing_f_i = dataset.get_biosample(f)
+
+        # fmask is used to mask QKV of transformer
+        d_model = x.shape[2]
+        fmask = torch.ones(d_model, d_model)
+
+        for i in missing_f_i:
+            fmask[i,:] = 0
+        
+        fmask = fmask.to(device)
+        for epoch in range(start_epoch, num_epochs):
+            print('-' * 10)
+            print(f'Epoch {epoch+1}/{num_epochs}')
+
+            
+            # Break down x into smaller batches
+            for i in range(0, len(x), batch_size):
+                torch.cuda.empty_cache()
+                optimizer.zero_grad()
+                
+                x_batch = x[i:i+batch_size]
+                missing_mask_batch = missing_mask[i:i+batch_size]
+
+                if context_length < 8000:
+                    rand_start = random.randint(0, 8000 - (context_length+1))
+                    rand_end = rand_start + context_length
+
+                    x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
+
+                # print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
+
+                # Masking a subset of the input data
+                masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                pmask = cloze_mask[:,:,0].unsqueeze(1).unsqueeze(1)
+                # print("pmask1    ", pmask.shape, pmask.sum())
+
+                # print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
+                cloze_mask = cloze_mask & ~missing_mask_batch
+                # print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
+
+                # Convert the boolean values to float and switch the masked and non-masked values
+                pmask = 1 - pmask.float()
+                # print("pmask2    ", pmask.shape, pmask.sum())
+                
+
+                # print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
+                # print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
+
+                x_batch = x_batch.to(device)
+                masked_x_batch = masked_x_batch.to(device)
+                pmask = pmask.to(device)
+                cloze_mask = cloze_mask.to(device)
+
+                outputs = model(masked_x_batch, pmask, fmask)
+                loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+
+                sum_pred, sum_target = outputs[cloze_mask].sum().item(), x_batch[cloze_mask].sum().item()
+
+                if torch.isnan(loss).sum() > 0:
+                    skipmessage = "Encountered nan loss! Skipping batch..."
+                    log_strs.append(skipmessage)
+                    print(skipmessage)
+                    continue
+
+                del x_batch
+                del pmask
+                del masked_x_batch
+                del outputs
+
+                # Clear GPU memory again
+                torch.cuda.empty_cache()
+
+                if (((i//batch_size))+1) % 10 == 0 or i==0:
+                    logfile = open("models/log.txt", "w")
+
+                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)}| Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}\
+                        | Loss: {loss.item():.4f} | S_P: {sum_pred:.1f} | S_T: {sum_target:.1f}'
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+
+                loss.backward()                    
+                optimizer.step()
+        
+        # Save the model after each epoch
+        torch.save(model.state_dict(), f'models/model_checkpoint_epoch_{epoch+1}_bios_{bb}.pth')
 
     return model
 
