@@ -711,7 +711,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                     print(logstr)
 
                 loss.backward()     
-                               
+
             optimizer.step()
         
         # Save the model after each epoch
@@ -835,15 +835,15 @@ if __name__ == "__main__":
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 8,
-            "hidden_dim": 256,
+            "nhead": 16,
+            "hidden_dim": 128,
             "nlayers": 4,
-            "epochs": 100,
+            "epochs": 150,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 50,
-            "learning_rate": 0.001
+            "batch_size": 100,
+            "learning_rate": 0.005
         }
 
     train_epidenoise(
