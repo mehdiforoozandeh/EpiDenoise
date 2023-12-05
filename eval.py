@@ -111,7 +111,8 @@ class Evaluation: # on chr21
             
             return all_samples, missing_ind
       
-    def evaluate_biosample(self, bios_name, batch_size=20, context_length=1600):
+    def evaluate_biosample(self, bios_name):
+        context_length, batch_size = self.hyper_parameters["context_length"], self.hyper_parameters["batch_size"]
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
