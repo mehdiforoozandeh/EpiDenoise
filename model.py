@@ -732,7 +732,10 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
             optimizer.step()
         
         # Save the model after each epoch
-        torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
+        try:
+            torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
+        except:
+            pass
 
     return model
 
