@@ -638,7 +638,9 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-                pmask = cloze_mask[:,:,0].unsqueeze(1).unsqueeze(1)
+                pmask = cloze_mask[:,:,0].squeeze()
+                print(pmask.shape)
+                #.unsqueeze(1).unsqueeze(1)
                 # print("pmask1    ", pmask.shape, pmask.sum())
 
                 # print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
@@ -646,7 +648,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 # print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
 
                 # Convert the boolean values to float and switch the masked and non-masked values
-                pmask = 1 - pmask.float()
+                # pmask = 1 - pmask.float()
                 # print("pmask2    ", pmask.shape, pmask.sum())
                 
 
