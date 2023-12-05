@@ -647,7 +647,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
         bb+=1
         if bb < start_bios:
             continue
-        
+
         print('-' * 10)
         x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
@@ -869,7 +869,12 @@ if __name__ == "__main__":
             "learning_rate": 0.001
         }
 
+    # train_epidenoise(
+    #     hyper_parameters, 
+    #     checkpoint_path=None, 
+    #     start_bios=5)
+
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path=None, 
+        checkpoint_path="models/model_checkpoint_bios_4.pth", 
         start_bios=5)
