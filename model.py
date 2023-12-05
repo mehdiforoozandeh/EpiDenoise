@@ -737,7 +737,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
 
     start_time = time.time()
     model = train_model(
-        model, dataset, criterion, optimizer, num_epochs=epochs, 
+        model, dataset, criterion, optimizer,hidden_dim=hidden_dim, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
         context_length=context_length, batch_size=batch_size, start_epoch=start_epoch)
     end_time = time.time()
