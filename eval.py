@@ -370,24 +370,26 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
     return results
 
 if __name__=="__main__":
+    # e = Evaluation(
+    #     model_path= "models/model_checkpoint_epoch_5.pth", 
+    #     hyper_parameters_path= "models/hyper_parameters.pkl", 
+    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    # )
+    # e.evaluate_model("eval_Ep5.csv")
+
     e = Evaluation(
-        model_path= "models/model_checkpoint_epoch_13.pth", 
+        model_path= "models/model_checkpoint_epoch_11.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
+    e.evaluate_model("eval_Ep11.csv")
 
-    e.evaluate_model("eval_Ep13.csv")
-    # e.load_biosample(bios)
-    # print("___________")
-    # e.load_biosample(bios, mode="eval")
-
-
-
-    # evaluate_epidenoise(
-    #     model_path= "models/model_checkpoint_epoch_18.pth", 
+    # e = Evaluation(
+    #     model_path= "models/model_checkpoint_epoch_1.pth", 
     #     hyper_parameters_path= "models/hyper_parameters.pkl", 
     #     traindata_path="/project/compbio-lab/EIC/training_data/", 
-    #     evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-    #     outdir="eval_results_E18.csv", 
-    #     batch_size=20, context_length=1600)
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    # )
+    # e.evaluate_model("eval_Ep1.csv")
