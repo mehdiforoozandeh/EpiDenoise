@@ -657,6 +657,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                     skipmessage = "Encountered nan loss! Skipping batch..."
                     log_strs.append(skipmessage)
                     print(skipmessage)
+                    del x_batch
+                    del pmask
+                    del masked_x_batch
+                    del outputs
+                    torch.cuda.empty_cache()
                     continue
 
                 del x_batch
