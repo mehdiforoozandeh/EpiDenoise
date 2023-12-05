@@ -742,7 +742,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
 
     return model
 
-def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
+def train_epidenoise(hyper_parameters, checkpoint_path=None, start_bios=0):
     with open('models/hyper_parameters.pkl', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
@@ -783,7 +783,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
     model = train_model(
         model, dataset, criterion, optimizer,hidden_dim=hidden_dim, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
-        context_length=context_length, batch_size=batch_size, start_epoch=start_epoch)
+        context_length=context_length, batch_size=batch_size, start_bios=start_bios)
     end_time = time.time()
 
     # Save the trained model
