@@ -183,14 +183,13 @@ class Evaluation: # on chr21
             # print(metrics)
             # Add the results to the DataFrame
             self.results.append(metrics)
-        
-        self.results = pd.DataFrame(self.results)
 
     def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
             print("evaluating ", bios)
             self.evaluate_biosample(bios)
 
+        self.results = pd.DataFrame(self.results)
         self.results.to_csv(outdir, index=False)
 
     def mse(self, y_true, y_pred):
