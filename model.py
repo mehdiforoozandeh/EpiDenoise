@@ -783,7 +783,7 @@ if __name__ == "__main__":
             "chunk": False,
             "context_length": 1600,
             "batch_size": 20,
-            "learning_rate": 0.001
+            "learning_rate": 0.01
         }
     # try:
 
