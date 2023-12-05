@@ -819,7 +819,7 @@ if __name__ == "__main__":
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
-            "chunk": True,
+            "chunk": False,
             "context_length": 400,
             "batch_size": 50,
             "learning_rate": 0.01
