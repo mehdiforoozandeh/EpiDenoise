@@ -72,7 +72,6 @@ class WeightedMSELoss(nn.Module):
             return torch.sum((input - target) ** 2)
 
 #________________________________________________________________________________________________________________________#
-### attention layers
 class MaskedLinear(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MaskedLinear, self).__init__()
@@ -383,7 +382,8 @@ class TripleConvEncoder(nn.Module):
 class EpiDenoise(nn.Module): 
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
-
+        
+        self.masked_linear = MaskedLinear(input_dim, input_dim)
         self.pos_encoder = PositionalEncoding(input_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
         self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
@@ -391,9 +391,10 @@ class EpiDenoise(nn.Module):
         self.decoder = nn.Linear(input_dim, output_dim)
         
     def forward(self, src, pmask, fmask):
+        src = self.masked_linear(src, fmask)
         src = self.pos_encoder(src)
-        src = self.masked_encoder(src, pmask, fmask)
-        src = self.transformer_encoder(src, pmask.squeeze())
+        # src = self.masked_encoder(src, pmask, fmask)
+        # src = self.transformer_encoder(src, pmask.squeeze())
         src = self.decoder(src)
         return src
 
