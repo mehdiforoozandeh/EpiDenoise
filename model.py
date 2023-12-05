@@ -770,35 +770,39 @@ def predict(model, data, fmask, pmask):
 
 # Calling the main function
 if __name__ == "__main__":
+    # hyper_parameters = {
+    #         "data_path": "/project/compbio-lab/EIC/training_data/",
+    #         # "data_path": "data/test",
+    #         "input_dim": 35,
+    #         "dropout": 0.1,
+    #         "nhead": 7,
+    #         "hidden_dim": 35,
+    #         "nlayers": 7,
+    #         "epochs": 25,
+    #         "mask_percentage": 0.01,
+    #         "chunk": True,
+    #         "context_length": 1600,
+    #         "batch_size": 20,
+    #         "learning_rate": 0.001
+    #     }
+
     hyper_parameters = {
             "data_path": "/project/compbio-lab/EIC/training_data/",
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 7,
-            "hidden_dim": 35,
-            "nlayers": 7,
+            "hidden_dim": 256,
+            "nlayers": 8,
             "epochs": 25,
             "mask_percentage": 0.01,
-            "chunk": False,
-            "context_length": 1600,
-            "batch_size": 20,
-            "learning_rate": 0.01
+            "chunk": True,
+            "context_length": 400,
+            "batch_size": 100,
+            "learning_rate": 0.001
         }
-    # try:
 
     train_epidenoise(
         hyper_parameters, 
         checkpoint_path=None, 
         start_epoch=0)
-    # train_epidenoise(
-    #     hyper_parameters, 
-    #     checkpoint_path="models/model_checkpoint_epoch_25.pth", 
-    #     start_epoch=20)
-
-    # except:
-    #     torch.cuda.empty_cache()
-    #     print("running with context length 1000")
-    #     hyper_parameters["context_length"] = 1000
-    #     train_epidenoise(hyper_parameters)
-
