@@ -363,7 +363,7 @@ class TripleConvEncoder(nn.Module):
 
 #________________________________________________________________________________________________________________________#
 
-class EpiDenoise(nn.Module): 
+class _EpiDenoise(nn.Module): 
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
 
@@ -377,6 +377,23 @@ class EpiDenoise(nn.Module):
         src = self.pos_encoder(src)
         src = self.masked_encoder(src, pmask, fmask)
         src = self.transformer_encoder(src)
+        src = self.decoder(src)
+        return src
+
+class EpiDenoise(nn.Module): 
+    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
+        super(EpiDenoise, self).__init__()
+
+        self.lin_mask = MaskedLinear(input_dim, hidden_dim)
+        self.pos_encoder = PositionalEncoding(hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(hidden_dim, output_dim)
+        
+    def forward(self, src, pmask, fmask):
+        src = self.lin_mask(src, fmask)
+        src = self.pos_encoder(src)
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask)
         src = self.decoder(src)
         return src
 
