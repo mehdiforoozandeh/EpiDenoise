@@ -587,7 +587,7 @@ def _train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perce
 
     return model
 
-def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
+def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -612,7 +612,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
         # fmask is used to mask QKV of transformer
         d_model = x.shape[2]
-        fmask = torch.ones(d_model, 256)
+        fmask = torch.ones(d_model, hidden_dim)
 
         for i in missing_f_i:
             fmask[i,:] = 0
@@ -651,7 +651,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 outputs = model(masked_x_batch, pmask, fmask)
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
-                sum_pred, sum_target = outputs[cloze_mask].sum().item(), x_batch[cloze_mask].sum().item()
+                mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
+                mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
 
                 if torch.isnan(loss).sum() > 0:
                     skipmessage = "Encountered nan loss! Skipping batch..."
@@ -675,8 +676,14 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 if (((i//batch_size))+1) % 10 == 0 or i==0:
                     logfile = open("models/log.txt", "w")
 
-                    logstr = f'Epoch {epoch+1}/{num_epochs} | Bios {bb}/{len(dataset.biosamples)}| Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}\
-                        | Loss: {loss.item():.4f} | S_P: {sum_pred:.1f} | S_T: {sum_target:.1f}'
+                    logstr = [
+                        f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
+                        f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}"
+                        f"Loss: {loss.item():.4f}", 
+                        f"Mean_P: {mean_pred:.1f}", f"Std_P: {std_pred:.1f}",
+                        f"Mean_T: {mean_target:.1f}", f"Std_T: {std_target:.1f}"
+                        ]
+                    logstr = " | ".join(logstr)
 
                     log_strs.append(logstr)
                     logfile.write("\n".join(log_strs))
@@ -815,7 +822,7 @@ if __name__ == "__main__":
             "chunk": True,
             "context_length": 400,
             "batch_size": 50,
-            "learning_rate": 0.001
+            "learning_rate": 0.01
         }
 
     train_epidenoise(
