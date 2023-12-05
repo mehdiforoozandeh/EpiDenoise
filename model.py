@@ -397,9 +397,9 @@ class EpiDenoise(nn.Module):
         
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
-        src = torch.permute(src, (1, 0, 2))
         src = self.pos_encoder(src)
-        src = self.transformer_encoder(src, src_key_padding_mask=pmask) #how should I give it the attention mask? what is the dimension of the attention mask?
+        src = torch.permute(src, (1, 0, 2))
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
         return src
