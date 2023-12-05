@@ -809,7 +809,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 8,
             "hidden_dim": 256,
-            "nlayers": 8,
+            "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
