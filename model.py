@@ -625,7 +625,7 @@ def _train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perce
 
     return model
 
-def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
+def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -645,6 +645,9 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
     # Define your batch size
     for bios, f in dataset.biosamples.items():
         bb+=1
+        if bb < start_bios:
+            continue
+        
         print('-' * 10)
         x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
@@ -656,7 +659,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
             fmask[i,:] = 0
         
         fmask = fmask.to(device)
-        for epoch in range(start_epoch, num_epochs):
+        for epoch in range(0, num_epochs):
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
             optimizer.zero_grad()
@@ -869,4 +872,4 @@ if __name__ == "__main__":
     train_epidenoise(
         hyper_parameters, 
         checkpoint_path=None, 
-        start_epoch=0)
+        start_bios=5)
