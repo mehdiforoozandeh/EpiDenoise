@@ -398,7 +398,7 @@ class EpiDenoise(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = self.pos_encoder(src)
-        src = self.transformer_encoder(src, src_key_padding_mask=pmask.squeeze()) #how should I give it the attention mask? what is the dimension of the attention mask?
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask) #how should I give it the attention mask? what is the dimension of the attention mask?
         src = self.decoder(src)
         return src
 
@@ -640,21 +640,8 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                 pmask = cloze_mask[:,:,0].squeeze()
                 print(pmask.shape)
-                #.unsqueeze(1).unsqueeze(1)
-                # print("pmask1    ", pmask.shape, pmask.sum())
 
-                # print("cloze_mask1    ", cloze_mask.shape, cloze_mask.sum())
                 cloze_mask = cloze_mask & ~missing_mask_batch
-                # print("cloze_mask2    ", cloze_mask.shape, cloze_mask.sum())
-
-                # Convert the boolean values to float and switch the masked and non-masked values
-                # pmask = 1 - pmask.float()
-                # print("pmask2    ", pmask.shape, pmask.sum())
-                
-
-                # print("x_batch  ", x_batch[cloze_mask].shape, x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item())
-                # print("masked_x_batch   ", masked_x_batch[cloze_mask].shape, masked_x_batch[cloze_mask].mean().item(), masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item())
-
                 x_batch = x_batch.to(device)
                 masked_x_batch = masked_x_batch.to(device)
                 pmask = pmask.to(device)
