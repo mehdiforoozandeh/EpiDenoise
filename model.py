@@ -389,19 +389,19 @@ class EpiDenoise(nn.Module):
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
         
-        self.masked_linear = MaskedLinear(input_dim, hidden_dim)
-        self.pos_encoder = PositionalEncoding(hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        # self.masked_linear = MaskedLinear(input_dim, hidden_dim)
+        # self.pos_encoder = PositionalEncoding(hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
         
     def forward(self, src, pmask, fmask):
-        src = self.masked_linear(src, fmask)
-        src = self.pos_encoder(src)
-        src = torch.permute(src, (1, 0, 2))
-        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
+        # src = self.masked_linear(src, fmask)
+        # src = self.pos_encoder(src)
+        # src = torch.permute(src, (1, 0, 2))
+        # src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
-        src = torch.permute(src, (1, 0, 2))
+        # src = torch.permute(src, (1, 0, 2))
         return src
 
 def count_parameters(model):
@@ -678,10 +678,10 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
 
                     logstr = [
                         f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
-                        f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}"
+                        f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
                         f"Loss: {loss.item():.4f}", 
-                        f"Mean_P: {mean_pred:.1f}", f"Std_P: {std_pred:.1f}",
-                        f"Mean_T: {mean_target:.1f}", f"Std_T: {std_target:.1f}"
+                        f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                        f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
                         ]
                     logstr = " | ".join(logstr)
 
