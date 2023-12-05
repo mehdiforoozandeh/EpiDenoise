@@ -33,29 +33,50 @@ class AttentionPooling(nn.Module):
         attention_weights = self.softmax(self.attention(x))
         return (attention_weights * x).sum(dim=1)
 
+# class _PositionalEncoding(nn.Module):
+#     def __init__(self, d_model, max_len=8000):
+#         super(_PositionalEncoding, self).__init__()
+
+#         self.d_model = d_model
+#         d_model_pad = d_model if d_model % 2 == 0 else d_model + 1  # Ensure d_model is even
+
+#         # Create a long enough `pe` matrix
+#         pe = torch.zeros(max_len, d_model_pad)
+#         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+#         div_term = torch.exp(torch.arange(0, d_model_pad, 2).float() * -(torch.log(torch.tensor(10000.0)) / d_model_pad))
+#         pe[:, 0::2] = torch.sin(position * div_term)
+#         pe[:, 1::2] = torch.cos(position * div_term)
+#         pe = pe.unsqueeze(0).transpose(0, 1)
+
+#         # Register `pe` as a buffer
+#         self.register_buffer('pe', pe)
+
+#     def forward(self, x):
+#         pe = self.pe.squeeze(1)
+#         pe = pe[:,:self.d_model]
+
+#         return x + pe.unsqueeze(0)
+
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=8000):
-        super(PositionalEncoding, self).__init__()
 
-        self.d_model = d_model
-        d_model_pad = d_model if d_model % 2 == 0 else d_model + 1  # Ensure d_model is even
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
 
-        # Create a long enough `pe` matrix
-        pe = torch.zeros(max_len, d_model_pad)
-        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model_pad, 2).float() * -(torch.log(torch.tensor(10000.0)) / d_model_pad))
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
-
-        # Register `pe` as a buffer
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
         self.register_buffer('pe', pe)
 
-    def forward(self, x):
-        pe = self.pe.squeeze(1)
-        pe = pe[:,:self.d_model]
-
-        return x + pe.unsqueeze(0)
+    def forward(self, x: Tensor) -> Tensor:
+        """
+        Arguments:
+            x: Tensor, shape ``[seq_len, batch_size, embedding_dim]``
+        """
+        x = x + self.pe[:x.size(0)]
+        return self.dropout(x)
 
 class WeightedMSELoss(nn.Module): 
     # gives more weight to predicting larger signal values rather than depletions
@@ -389,19 +410,19 @@ class EpiDenoise(nn.Module):
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
         
-        # self.masked_linear = MaskedLinear(input_dim, hidden_dim)
-        # self.pos_encoder = PositionalEncoding(hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
-        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-        self.decoder = nn.Linear(input_dim, output_dim)
+        self.masked_linear = MaskedLinear(input_dim, hidden_dim)
+        self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(hidden_dim, output_dim)
         
     def forward(self, src, pmask, fmask):
-        # src = self.masked_linear(src, fmask)
-        # src = self.pos_encoder(src)
-        # src = torch.permute(src, (1, 0, 2))
-        # src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
+        src = self.masked_linear(src, fmask)
+        src = self.pos_encoder(src)
+        src = torch.permute(src, (1, 0, 2))
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
-        # src = torch.permute(src, (1, 0, 2))
+        src = torch.permute(src, (1, 0, 2))
         return src
 
 def count_parameters(model):
