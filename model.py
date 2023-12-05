@@ -10,18 +10,35 @@ import numpy as np
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
-class RelativePositionEncoding(nn.Module):
-    def __init__(self, d_model, max_len=8000):
-        super(RelativePositionEncoding, self).__init__()
-        self.d_model = d_model
-        self.max_len = max_len
-        self.rel_pos_emb = nn.Embedding(self.max_len*2, self.d_model)
+class RelativePositionalEncoder(nn.Module):
+    def __init__(self, emb_dim, max_position=512):
+        super(RelativePositionalEncoder, self).__init__()
+        self.max_position = max_position
+        self.embeddings_table = nn.Parameter(torch.Tensor(max_position * 2 + 1, emb_dim))
+        nn.init.xavier_uniform_(self.embeddings_table)
 
-    def forward(self, x):
-        batch_size, seq_len, _ = x.size()
-        pos = torch.arange(seq_len, device=x.device).unsqueeze(0).repeat(batch_size, 1)
-        pos_emb = self.rel_pos_emb(pos + self.max_len)
-        return x + pos_emb
+    def forward(self, seq_len_q, seq_len_k):
+        range_vec_q = torch.arange(seq_len_q)
+        range_vec_k = torch.arange(seq_len_k)
+        relative_matrix = range_vec_k[None, :] - range_vec_q[:, None]
+        clipped_relative_matrix = torch.clamp(relative_matrix, -self.max_position, self.max_position)
+        relative_position_matrix = clipped_relative_matrix + self.max_position
+        embeddings = self.embeddings_table[relative_position_matrix]
+
+        return embeddings
+
+# class RelativePositionEncoding(nn.Module):
+#     def __init__(self, d_model, max_len=8000):
+#         super(RelativePositionEncoding, self).__init__()
+#         self.d_model = d_model
+#         self.max_len = max_len
+#         self.rel_pos_emb = nn.Embedding(self.max_len*2, self.d_model)
+
+#     def forward(self, x):
+#         batch_size, seq_len, _ = x.size()
+#         pos = torch.arange(seq_len, device=x.device).unsqueeze(0).repeat(batch_size, 1)
+#         pos_emb = self.rel_pos_emb(pos + self.max_len)
+#         return x + pos_emb
 
 class AttentionPooling(nn.Module):
     def __init__(self, input_dim):
@@ -411,7 +428,7 @@ class EpiDenoise(nn.Module):
         super(EpiDenoise, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, hidden_dim)
-        self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = RelativePositionalEncoder(emb_dim=hidden_dim, max_position=context_length) #PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
