@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
 class RelativePositionEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
@@ -621,11 +621,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         for epoch in range(start_epoch, num_epochs):
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
-            optimizer.zero_grad()
 
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
+                optimizer.zero_grad()
                 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
@@ -809,8 +809,8 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 80,
-            "learning_rate": 0.005
+            "batch_size": 50,
+            "learning_rate": 0.001
         }
 
     train_epidenoise(
