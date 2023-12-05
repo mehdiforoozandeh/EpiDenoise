@@ -642,11 +642,10 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
         for epoch in range(start_epoch, num_epochs):
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
-
+            optimizer.zero_grad()
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
-                optimizer.zero_grad()
                 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
@@ -711,8 +710,9 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                     logfile.close()
                     print(logstr)
 
-                loss.backward()                    
-                optimizer.step()
+                loss.backward()     
+                               
+            optimizer.step()
         
         # Save the model after each epoch
         torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
@@ -840,10 +840,10 @@ if __name__ == "__main__":
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
-            "chunk": False,
+            "chunk": True,
             "context_length": 400,
             "batch_size": 50,
-            "learning_rate": 0.01
+            "learning_rate": 0.001
         }
 
     train_epidenoise(
