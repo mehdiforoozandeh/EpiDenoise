@@ -605,7 +605,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
 
         # fmask is used to mask QKV of transformer
         d_model = x.shape[2]
-        fmask = torch.ones(d_model, 512)
+        fmask = torch.ones(d_model, d_model)
 
         for i in missing_f_i:
             fmask[i,:] = 0
