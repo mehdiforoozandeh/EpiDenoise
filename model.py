@@ -803,7 +803,7 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 7,
-            "hidden_dim": 512,
+            "hidden_dim": 256,
             "nlayers": 8,
             "epochs": 100,
             "mask_percentage": 0.15,
