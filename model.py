@@ -854,7 +854,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 8,
             "hidden_dim": 128,
-            "nlayers": 6,
+            "nlayers": 4,
             "epochs": 200,
             "mask_percentage": 0.15,
             "chunk": True,
