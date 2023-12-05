@@ -183,6 +183,7 @@ class Evaluation: # on chr21
 
     def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
+            print("evaluating ", bios)
             self.evaluate_biosample(bios)
 
         self.results.to_csv(outdir, index=False)
@@ -371,7 +372,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 
 if __name__=="__main__":
     # e = Evaluation(
-    #     model_path= "models/model_checkpoint_epoch_5.pth", 
+    #     model_path= "models/model_checkpoint_bios_5.pth", 
     #     hyper_parameters_path= "models/hyper_parameters.pkl", 
     #     traindata_path="/project/compbio-lab/EIC/training_data/", 
     #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
@@ -379,7 +380,7 @@ if __name__=="__main__":
     # e.evaluate_model("eval_Ep5.csv")
 
     e = Evaluation(
-        model_path= "models/model_checkpoint_epoch_11.pth", 
+        model_path= "models/model_checkpoint_bios_11.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
@@ -387,7 +388,7 @@ if __name__=="__main__":
     e.evaluate_model("eval_Ep11.csv")
 
     # e = Evaluation(
-    #     model_path= "models/model_checkpoint_epoch_1.pth", 
+    #     model_path= "models/model_checkpoint_bios_1.pth", 
     #     hyper_parameters_path= "models/hyper_parameters.pkl", 
     #     traindata_path="/project/compbio-lab/EIC/training_data/", 
     #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
