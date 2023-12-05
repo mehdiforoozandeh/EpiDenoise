@@ -75,17 +75,18 @@ class WeightedMSELoss(nn.Module):
 class MaskedLinear(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MaskedLinear, self).__init__()
-        self.weights = nn.Parameter(torch.randn(input_dim, output_dim))
-        self.bias = nn.Parameter(torch.randn(output_dim))
+        self.weights = nn.Parameter(torch.Tensor(input_dim, output_dim))
+        self.bias = nn.Parameter(torch.Tensor(output_dim))
+
+        # Xavier initialization
+        nn.init.xavier_uniform_(self.weights)
+        nn.init.zeros_(self.bias)
+
 
     def forward(self, x, mask):
-        print(mask.shape)
         print(self.weights.shape)
-        print(x.shape)
         masked_weight = self.weights * mask
-        output = F.linear(x, masked_weight, self.bias)
-        print(output.shape)
-        exit()
+        output = torch.matmul(x, masked_weight) + self.bias
         return output
 
 class DoubleMaskMultiHeadedAttention(torch.nn.Module):
