@@ -393,7 +393,7 @@ class EpiDenoise(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.pos_encoder(src)
         src = self.masked_encoder(src, pmask, fmask)
-        src = self.transformer_encoder(src, pmask)
+        src = self.transformer_encoder(src, pmask.squeeze())
         src = self.decoder(src)
         return src
 
