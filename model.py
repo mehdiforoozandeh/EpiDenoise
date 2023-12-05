@@ -597,11 +597,11 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
         for epoch in range(start_epoch, num_epochs):
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
+            optimizer.zero_grad()
 
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
-                optimizer.zero_grad()
                 
                 x_batch = x[i:i+batch_size]
                 missing_mask_batch = missing_mask[i:i+batch_size]
