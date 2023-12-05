@@ -170,6 +170,8 @@ class Evaluation: # on chr21
                 'celltype': bios_name,
                 'feature': self.all_assays[j],
                 'comparison': comparison,
+                'available train assays':len(self.all_assays) - len(missing_x_i),
+                'available eval assays':len(self.all_assays) - len(missing_y_i),
                 'PCC_mean': self.pearson_correlation(target, pred),
                 'spearman_rho_mean': self.spearman_correlation(target, pred),
                 'MSE_mean': self.mse(target, pred),
@@ -181,6 +183,8 @@ class Evaluation: # on chr21
             # print(metrics)
             # Add the results to the DataFrame
             self.results.append(metrics)
+        
+        self.results = pd.DataFrame(self.results)
 
     def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
@@ -372,13 +376,37 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
     return results
 
 if __name__=="__main__":
-    # e = Evaluation(
-    #     model_path= "models/model_checkpoint_bios_5.pth", 
-    #     hyper_parameters_path= "models/hyper_parameters.pkl", 
-    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
-    #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
-    # )
-    # e.evaluate_model("eval_Ep5.csv")
+    e = Evaluation(
+        model_path= "models/model_checkpoint_bios_40.pth", 
+        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    )
+    e.evaluate_model("eval_bios11.csv")
+
+    e = Evaluation(
+        model_path= "models/model_checkpoint_bios_30.pth", 
+        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    )
+    e.evaluate_model("eval_bios11.csv")
+
+    e = Evaluation(
+        model_path= "models/model_checkpoint_bios_20.pth", 
+        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    )
+    e.evaluate_model("eval_bios11.csv")
+
+    e = Evaluation(
+        model_path= "models/model_checkpoint_bios_15.pth", 
+        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+    )
+    e.evaluate_model("eval_bios11.csv")
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_11.pth", 
@@ -386,12 +414,4 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    e.evaluate_model("eval_Ep11.csv")
-
-    # e = Evaluation(
-    #     model_path= "models/model_checkpoint_bios_1.pth", 
-    #     hyper_parameters_path= "models/hyper_parameters.pkl", 
-    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
-    #     evaldata_path="/project/compbio-lab/EIC/validation_data/"
-    # )
-    # e.evaluate_model("eval_Ep1.csv")
+    e.evaluate_model("eval_bios11.csv")
