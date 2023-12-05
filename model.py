@@ -598,7 +598,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
 
-            
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
                 torch.cuda.empty_cache()
@@ -672,7 +671,7 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 optimizer.step()
         
         # Save the model after each epoch
-        torch.save(model.state_dict(), f'models/model_checkpoint_epoch_{epoch+1}_bios_{bb}.pth')
+        torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
 
     return model
 
@@ -690,7 +689,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_epoch=0):
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
     chunk = hyper_parameters["chunk"]
-    n_chunks = mask_percentage // 0.05
+    n_chunks = mask_percentage // 0.01
     context_length = hyper_parameters["context_length"]
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
@@ -781,7 +780,7 @@ if __name__ == "__main__":
             "nlayers": 7,
             "epochs": 25,
             "mask_percentage": 0.15,
-            "chunk": True,
+            "chunk": False,
             "context_length": 1600,
             "batch_size": 20,
             "learning_rate": 0.001
