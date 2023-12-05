@@ -140,7 +140,7 @@ class Evaluation: # on chr21
 
             with torch.no_grad():
                 # all one pmask (no position is masked)
-                pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=self.device)
+                pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
                 x_batch = x_batch.to(self.device)
                 outputs = self.model(x_batch, pmask, fmask)
 
