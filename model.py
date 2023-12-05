@@ -807,7 +807,7 @@ if __name__ == "__main__":
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 16,
+            "nhead": 8,
             "hidden_dim": 512,
             "nlayers": 8,
             "epochs": 100,
