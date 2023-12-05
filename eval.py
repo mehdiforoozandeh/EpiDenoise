@@ -381,7 +381,7 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    e.evaluate_model("eval_bios11.csv")
+    e.evaluate_model("eval_bios40.csv")
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_30.pth", 
@@ -389,7 +389,7 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    e.evaluate_model("eval_bios11.csv")
+    e.evaluate_model("eval_bios30.csv")
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_20.pth", 
@@ -397,7 +397,7 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    e.evaluate_model("eval_bios11.csv")
+    e.evaluate_model("eval_bios20.csv")
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_15.pth", 
@@ -405,7 +405,7 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/"
     )
-    e.evaluate_model("eval_bios11.csv")
+    e.evaluate_model("eval_bios15.csv")
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_11.pth", 
