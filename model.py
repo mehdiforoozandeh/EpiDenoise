@@ -792,14 +792,14 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 7,
-            "hidden_dim": 256,
-            "nlayers": 8,
-            "epochs": 25,
-            "mask_percentage": 0.01,
+            "hidden_dim": 512,
+            "nlayers": 12,
+            "epochs": 100,
+            "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
             "batch_size": 100,
-            "learning_rate": 0.001
+            "learning_rate": 0.005
         }
 
     train_epidenoise(
