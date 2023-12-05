@@ -84,7 +84,6 @@ class MaskedLinear(nn.Module):
 
 
     def forward(self, x, mask):
-        print(self.weights.shape)
         masked_weight = self.weights * mask
         output = torch.matmul(x, masked_weight) + self.bias
         return output
@@ -392,16 +391,14 @@ class EpiDenoise(nn.Module):
         
         self.masked_linear = MaskedLinear(input_dim, input_dim)
         self.pos_encoder = PositionalEncoding(input_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        # self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
-        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
-        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(input_dim, output_dim)
         
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = self.pos_encoder(src)
-        # src = self.masked_encoder(src, pmask, fmask)
-        # src = self.transformer_encoder(src, pmask.squeeze())
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask.squeeze()) #how should I give it the attention mask? what is the dimension of the attention mask?
         src = self.decoder(src)
         return src
 
