@@ -639,7 +639,6 @@ def train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percen
                 outputs = model(masked_x_batch, pmask, fmask)
                 loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
-
                 sum_pred, sum_target = outputs[cloze_mask].sum().item(), x_batch[cloze_mask].sum().item()
 
                 if torch.isnan(loss).sum() > 0:
@@ -793,7 +792,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 7,
             "hidden_dim": 512,
-            "nlayers": 12,
+            "nlayers": 8,
             "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
