@@ -779,7 +779,7 @@ if __name__ == "__main__":
             "hidden_dim": 35,
             "nlayers": 7,
             "epochs": 25,
-            "mask_percentage": 0.15,
+            "mask_percentage": 0.01,
             "chunk": False,
             "context_length": 1600,
             "batch_size": 20,
