@@ -382,7 +382,7 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 if __name__=="__main__":
     e = Evaluation(
         model_path= "models/XX_model_checkpoint_bios_1.pth", 
-        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231206141153_params1997091_time3494s.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         is_arcsin=False
@@ -391,7 +391,7 @@ if __name__=="__main__":
 
     e = Evaluation(
         model_path= "models/model_checkpoint_bios_1.pth", 
-        hyper_parameters_path= "models/hyper_parameters.pkl", 
+        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231206141153_params1997091_time3494s.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/",
         is_arcsin=True
