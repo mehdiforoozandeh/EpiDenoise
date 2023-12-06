@@ -678,6 +678,8 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
 
                 # print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
 
+                x_batch = torch.arcsinh_(x_batch)
+
                 # Masking a subset of the input data
                 masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                 pmask = cloze_mask[:,:,0].squeeze()
