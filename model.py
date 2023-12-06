@@ -733,13 +733,14 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                 loss.backward()     
 
             optimizer.step()
-        exit()
-        
+
         # Save the model after each epoch
         try:
             torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
         except:
             pass
+            
+        break
 
     return model
 
@@ -862,7 +863,7 @@ if __name__ == "__main__":
             "nhead": 8,
             "hidden_dim": 256,
             "nlayers": 4,
-            "epochs": 400,
+            "epochs": 600,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
