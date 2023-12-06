@@ -10,10 +10,11 @@ class Evaluation: # on chr21
     def __init__(
         self, model_path, hyper_parameters_path, 
         traindata_path, evaldata_path, 
-        resolution=25, chr_sizes_file="data/hg38.chrom.sizes"):
+        resolution=25, chr_sizes_file="data/hg38.chrom.sizes", is_arcsin=True):
 
         self.traindata_path = traindata_path
         self.evaldata_path = evaldata_path
+        self.is_arcsin = is_arcsin
 
         with open(hyper_parameters_path, 'rb') as f:
             self.hyper_parameters = pickle.load(f)
@@ -118,6 +119,10 @@ class Evaluation: # on chr21
 
         num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
+        
+        if self.is_arcsin:
+            X = torch.arcsinh_(X)
+            Y = torch.arcsinh_(Y)
 
         X = X.view(-1, context_length, X.shape[-1])
         Y = Y.view(-1, context_length, Y.shape[-1])
@@ -376,41 +381,19 @@ def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evald
 
 if __name__=="__main__":
     e = Evaluation(
-        model_path= "models/model_checkpoint_bios_40.pth", 
+        model_path= "models/XX_model_checkpoint_bios_1.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=False
     )
-    e.evaluate_model("eval_bios40.csv")
+    e.evaluate_model("eval_bios1_def.csv")
 
     e = Evaluation(
-        model_path= "models/model_checkpoint_bios_30.pth", 
+        model_path= "models/model_checkpoint_bios_1.pth", 
         hyper_parameters_path= "models/hyper_parameters.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"
+        evaldata_path="/project/compbio-lab/EIC/validation_data/",
+        is_arcsin=True
     )
-    e.evaluate_model("eval_bios30.csv")
-
-    e = Evaluation(
-        model_path= "models/model_checkpoint_bios_20.pth", 
-        hyper_parameters_path= "models/hyper_parameters.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"
-    )
-    e.evaluate_model("eval_bios20.csv")
-
-    e = Evaluation(
-        model_path= "models/model_checkpoint_bios_15.pth", 
-        hyper_parameters_path= "models/hyper_parameters.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"
-    )
-    e.evaluate_model("eval_bios15.csv")
-
-    e = Evaluation(
-        model_path= "models/model_checkpoint_bios_11.pth", 
-        hyper_parameters_path= "models/hyper_parameters.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"
-    )
-    e.evaluate_model("eval_bios11.csv")
+    e.evaluate_model("eval_bios1_arcsinh.csv")
