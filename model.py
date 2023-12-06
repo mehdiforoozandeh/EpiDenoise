@@ -877,5 +877,5 @@ if __name__ == "__main__":
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path="models/model_checkpoint_bios_4.pth", 
-        start_bios=5)
+        checkpoint_path=None, 
+        start_bios=0)
