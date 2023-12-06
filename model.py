@@ -733,6 +733,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                 loss.backward()     
 
             optimizer.step()
+        exit()
         
         # Save the model after each epoch
         try:
@@ -859,13 +860,13 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 8,
-            "hidden_dim": 128,
+            "hidden_dim": 256,
             "nlayers": 4,
-            "epochs": 150,
+            "epochs": 400,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 80,
+            "batch_size": 40,
             "learning_rate": 0.001
         }
 
