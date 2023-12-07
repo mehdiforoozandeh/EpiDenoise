@@ -263,7 +263,7 @@ class PROCESS_EIC_DATA(object):
             df = df.sort_values(['chrom', 'start'])
 
             # Select m/2 regions from the DataFrame
-            for _ in range(m // 2):
+            while len(m_regions) < (m // 2):
                 while True:
                     # Select a random row from the DataFrame
                     row = df.sample(1).iloc[0]
