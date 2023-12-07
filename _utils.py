@@ -393,9 +393,9 @@ class PROCESS_EIC_DATA(object):
             # Reshape the tensor
             all_samples_tensor = all_samples_tensor.reshape(new_shape)
             
-            print(all_samples_tensor)
-            # file_path = f"{self.path}/mixed_dataset{ds_number}_{m//n_datasets}samples_{self.resolution}bp.pt"
-            # torch.save(all_samples_tensor, file_path)
+            file_path = f"{self.path}/mixed_dataset{ds_number}_{m//n_datasets}samples_{self.resolution}bp.pt"
+            torch.save(all_samples_tensor, file_path)
+            print(f"saved DS # {ds_number}, with shape {all_samples_tensor.shape}")
 
     def load_m_regions(self, file_path):
         # Open the gzip file
@@ -509,7 +509,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=16, n_datasets=2, multi_p=True)
+    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=20)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
