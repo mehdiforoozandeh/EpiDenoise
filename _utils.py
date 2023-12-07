@@ -1,6 +1,7 @@
 import os, pyBigWig, pybedtools, random, datetime, gzip, pickle
 from torch.utils.data import Dataset
 import pandas as pd
+import numpy as np
 import multiprocessing as mp
 import torch
 
