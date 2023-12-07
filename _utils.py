@@ -513,7 +513,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=10)
+    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=20)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
