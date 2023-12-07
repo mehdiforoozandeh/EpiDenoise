@@ -30,6 +30,8 @@ def get_bin_value_dict(input_dict):
 
     if input_dict["bw_obj"] == False:
         bw.close()
+        del input_dict["bw"]
+        
 
     return input_dict
 
