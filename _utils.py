@@ -328,19 +328,23 @@ class PROCESS_EIC_DATA(object):
             bw_obj = True
 
         ds_number = 0  
+        print("m2:   ", len(m_regions))
         samples_per_ds = len(m_regions) // n_datasets
         for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
-
+            print("ds:   ", ds_number)
+            
             ds_i_regions = m_regions[ds_i : (ds_i + samples_per_ds)]
             ds_i_regions.sort(key=lambda x: x[1]) # sorted based on start coord
             
             all_samples_tensor = []
 
             for bios in self.biosamples.keys():
+                print("     ct:   ", bios)
                 bios_data = {}
 
                 for assay in self.all_assays:
+                    print("         assay:   ", bios)
                     bios_data[assay] = []
 
                     if assay in self.biosamples[bios].keys(): # if available
