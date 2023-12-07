@@ -24,7 +24,10 @@ def get_bin_value_dict(input_dict):
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
 
     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+    t0 = datetime.datetime.now()
     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+    t1 = datetime.datetime.now()
+    print("took:", t1-t0)
 
     input_dict["signals"] = bin_value
 
@@ -327,7 +330,6 @@ class PROCESS_EIC_DATA(object):
         else:
             bw_obj = True
 
-        print(len(m_regions))
         ds_number = 0  
         samples_per_ds = m // n_datasets
         for ds_i in range(0, m, samples_per_ds):
@@ -500,7 +502,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=60, n_datasets=2, multi_p=True)
+    eic.generate_m_samples(m=20, n_datasets=2, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
