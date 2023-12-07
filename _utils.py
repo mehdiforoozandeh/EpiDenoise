@@ -24,10 +24,7 @@ def get_bin_value_dict(input_dict):
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
 
     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
-    t0 = datetime.datetime.now()
     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-    t1 = datetime.datetime.now()
-    print("took:", t1-t0)
 
     input_dict["signals"] = bin_value
 
@@ -341,9 +338,11 @@ class PROCESS_EIC_DATA(object):
             all_samples_tensor = []
 
             for bios in self.biosamples.keys():
+                print(bios)
                 bios_data = {}
 
                 for assay in self.all_assays:
+                    print(assay)
                     bios_data[assay] = []
 
                     if assay in self.biosamples[bios].keys(): # if available
