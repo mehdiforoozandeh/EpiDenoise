@@ -325,7 +325,8 @@ class PROCESS_EIC_DATA(object):
         else:
             bw_obj = True
 
-        ds_number = 0
+        print(len(m_regions))
+        ds_number = 0  
         samples_per_ds = m // n_datasets
         for ds_i in range(0, m, samples_per_ds):
             ds_number += 1
@@ -367,7 +368,7 @@ class PROCESS_EIC_DATA(object):
                             bios_data[assay].append([-1 for _ in range(self.max_len // self.resolution)])
                 
                 # Convert bios_data to a numpy array
-                bios_data_array = np.array([bios_data[assay] for assay in self.all_assays])
+                bios_data_array = [bios_data[assay] for assay in self.all_assays]
 
                 # Add bios_data_array to all_samples
                 all_samples_tensor.append(bios_data_array)
@@ -381,6 +382,8 @@ class PROCESS_EIC_DATA(object):
             # Ensure the tensor is of type float
             all_samples_tensor = all_samples_tensor.float()
 
+            print(all_samples_tensor.shape)
+            all_samples_tensor = torch.permute(all_samples_tensor, (2, 0, 3, 1))
             print(all_samples_tensor.shape)
 
     def load_m_regions(self, file_path):
@@ -495,7 +498,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=10, n_datasets=2, multi_p=False)
+    eic.generate_m_samples(m=30, n_datasets=3, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
