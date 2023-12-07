@@ -344,7 +344,7 @@ class PROCESS_EIC_DATA(object):
                 bios_data = {}
 
                 for assay in self.all_assays:
-                    print("         assay:   ", bios)
+                    print("         assay:   ", assay)
                     bios_data[assay] = []
 
                     if assay in self.biosamples[bios].keys(): # if available
@@ -513,7 +513,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=5)
+    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=10)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
