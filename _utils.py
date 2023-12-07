@@ -353,7 +353,7 @@ class PROCESS_EIC_DATA(object):
                         else:
                             outs = []
                             for ii in range(len(bw_query_dicts)):
-                                outs.append(get_bin_value(bw_query_dicts[ii]))
+                                outs.append(get_bin_value_dict(bw_query_dicts[ii]))
 
                         outs.sort(key=lambda x: x['start']) # assert is sorted based on start coord
                         m_signals = [o["signals"] for o in outs]
