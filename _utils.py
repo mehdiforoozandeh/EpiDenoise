@@ -333,7 +333,7 @@ class PROCESS_EIC_DATA(object):
         for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
             print("ds:   ", ds_number)
-            
+
             ds_i_regions = m_regions[ds_i : (ds_i + samples_per_ds)]
             ds_i_regions.sort(key=lambda x: x[1]) # sorted based on start coord
             
@@ -513,7 +513,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=False, n_p=20)
+    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=5)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
