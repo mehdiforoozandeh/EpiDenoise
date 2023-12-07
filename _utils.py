@@ -363,7 +363,7 @@ class PROCESS_EIC_DATA(object):
 
                     else: # if missing
                         for r in ds_i_regions:
-                            bios_data[assay].append([-1 for _ in range(L)])
+                            bios_data[assay].append([-1 for _ in range(self.max_len // self.resolution)])
                 
                 # Convert bios_data to a numpy array
                 bios_data_array = np.array([bios_data[assay] for assay in self.all_assays])
