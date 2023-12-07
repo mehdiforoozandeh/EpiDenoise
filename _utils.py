@@ -328,8 +328,8 @@ class PROCESS_EIC_DATA(object):
             bw_obj = True
 
         ds_number = 0  
-        samples_per_ds = m // n_datasets
-        for ds_i in range(0, m, samples_per_ds):
+        samples_per_ds = len(m_regions) // n_datasets
+        for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
 
             ds_i_regions = m_regions[ds_i : (ds_i + samples_per_ds)]
@@ -337,7 +337,7 @@ class PROCESS_EIC_DATA(object):
             
             all_samples_tensor = []
 
-            for bios in list(self.biosamples.keys())[:5]:
+            for bios in self.biosamples.keys():
                 bios_data = {}
 
                 for assay in self.all_assays:
@@ -383,9 +383,19 @@ class PROCESS_EIC_DATA(object):
             # Ensure the tensor is of type float
             all_samples_tensor = all_samples_tensor.float()
 
-            print(all_samples_tensor.shape)
             all_samples_tensor = torch.permute(all_samples_tensor, (2, 0, 3, 1))
-            print(all_samples_tensor.shape)
+            # Get the shape of the current tensor
+            shape = all_samples_tensor.shape
+
+            # Calculate the new dimensions
+            new_shape = [shape[0]*shape[1]] + list(shape[2:])
+
+            # Reshape the tensor
+            all_samples_tensor = all_samples_tensor.reshape(new_shape)
+            
+            print(all_samples_tensor)
+            # file_path = f"{self.path}/mixed_dataset{ds_number}_{m//n_datasets}samples_{self.resolution}bp.pt"
+            # torch.save(all_samples_tensor, file_path)
 
     def load_m_regions(self, file_path):
         # Open the gzip file
@@ -499,7 +509,7 @@ if __name__ == "__main__":
     solar_path = "/project/compbio-lab/EIC/training_data/"
     eic = PROCESS_EIC_DATA(solar_path, stratified=True)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=79, n_datasets=2, multi_p=True)
+    eic.generate_m_samples(m=16, n_datasets=2, multi_p=True)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
     
