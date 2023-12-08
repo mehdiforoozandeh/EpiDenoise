@@ -654,8 +654,13 @@ class ENCODE_IMPUTATION_DATASET(object):
 
         # Create a new dictionary with sorted keys
         self.biosamples = {key: self.biosamples[key] for key in sorted_keys if key in self.biosamples}
+
+        self.preprocessed_datasets = []
+        for f in os.listdir(self.path):
+            if ".pt" in f and "mixed_dataset" in f: 
+                self.preprocessed_datasets.append(f"{self.path}/{f}")
         
-    def get_biosample(self, pkl_path):
+    def get_biosample_pkl(self, pkl_path):
         with gzip.open(pkl_path, 'rb') as f:
             loaded_file = pickle.load(f)
 
@@ -698,12 +703,27 @@ class ENCODE_IMPUTATION_DATASET(object):
         mask = (all_samples_tensor == -1)
 
         return all_samples_tensor, mask, missing_f_i
+    
+    def get_dataset_pt(self, pt_path):
+        ds = torch.load(pt_path)
+        mask = (ds == -1)
+        mask_2 = (ds.sum(dim=1) < 0) # missing assay pattern per sample
+
+        indices = [torch.nonzero(mask_2[i, :], as_tuple=True)[0].tolist() for i in range(mask_2.shape[0])]
+
+        unique_indices = [list(x) for x in set(tuple(x) for x in indices)]
+        pattern_dict = {tuple(pattern): [] for pattern in unique_indices}
+
+        for i, pattern in enumerate(indices):
+            pattern_dict[tuple(pattern)].append(i)
+
+        print(len(pattern_dict))
+
             
 if __name__ == "__main__": 
-    eic = ENCODE_IMPUTATION_DATASET("data/test/")
-    for b, f in eic.biosamples.items():
-        d, m = eic.get_biosample(f)
-        print(d.shape)
+    eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
+    for ds_path in preprocessed_datasets:
+        eic.get_dataset_pt(ds_path)
 
     # d = GET_DATA()
     # d.search_ENCODE()
