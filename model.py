@@ -406,23 +406,6 @@ class TripleConvEncoder(nn.Module):
 
 #________________________________________________________________________________________________________________________#
 
-# class _EpiDenoise(nn.Module): 
-#     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
-#         super(EpiDenoise, self).__init__()
-
-#         self.pos_encoder = PositionalEncoding(input_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-#         self.masked_encoder = DoubleMaskEncoderLayer(d_model=input_dim, heads=nhead, feed_forward_hidden=hidden_dim, dropout=dropout)
-#         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_dim, nhead=nhead, dim_feedforward=hidden_dim)
-#         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-#         self.decoder = nn.Linear(input_dim, output_dim)
-        
-#     def forward(self, src, pmask, fmask):
-#         src = self.pos_encoder(src)
-#         src = self.masked_encoder(src, pmask, fmask)
-#         src = self.transformer_encoder(src)
-#         src = self.decoder(src)
-#         return src
-
 class EpiDenoise(nn.Module): 
     def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
@@ -444,6 +427,23 @@ class EpiDenoise(nn.Module):
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+def reshape_tensor(tensor, context_length_factor):
+    # Get the original size of the tensor
+    samples, seq_length, features = tensor.size()
+
+    # Calculate the new sequence length and number of samples
+    new_seq_length = int(seq_length * context_length_factor)
+    new_samples = int(samples / context_length_factor)
+
+    # Check if the new sequence length is valid
+    if seq_length % new_seq_length != 0:
+        raise ValueError("The context_length_factor does not evenly divide the sequence length")
+
+    # Reshape the tensor
+    reshaped_tensor = tensor.view(new_samples, new_seq_length, features)
+
+    return reshaped_tensor
 
 # Function to mask a certain percentage of the data
 def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
@@ -744,7 +744,11 @@ def _train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25
 
     return model
 
-def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_ds=0):
+def train_model(
+    model, dataset, criterion, optimizer, hidden_dim, arcsinh_transform=True,
+    num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
+    context_length=2000, batch_size=100, start_ds=0):
+    
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -767,32 +771,103 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
         print('-_-' * 10)
         x, missing_mask, missing_f_pattern = dataset.get_dataset_pt(ds_path)
         d_model = x.shape[2]
+
+        if arcsinh_transform:
+            x = torch.arcsinh_(x)
         
         for epoch in range(0, num_epochs):
             print('-' * 10)
             print(f'Epoch {epoch+1}/{num_epochs}')
 
+            # zero grads before going over all batches and all patterns of missing data
             optimizer.zero_grad()
 
             for pattern, indices in missing_f_pattern.items():
                 
                 pattern_batch = x[indices]
+                missing_mask_patten_batch = missing_mask[indices]
                 fmask = torch.ones(d_model, hidden_dim)
 
                 for i in pattern:
                     fmask[i,:] = 0
 
-                print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
-                continue
-            exit()
+                # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
-            # Break down x into smaller batches
-            for i in range(0, len(x), batch_size):
-                torch.cuda.empty_cache()
-                
-                x_batch = x[i:i+batch_size]
-                missing_mask_batch = missing_mask[i:i+batch_size]
+                if context_length < pattern_batch.shape[1]:
+                    context_length_factor = context_length / pattern_batch.shape[1]
+                    pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
 
+                # Break down x into smaller batches
+                for i in range(0, len(pattern_batch), batch_size):
+                    torch.cuda.empty_cache()
+                    
+                    x_batch = pattern_batch[i:i+batch_size]
+                    missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+
+                    # Masking a subset of the input data
+                    masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                    pmask = cloze_mask[:,:,0].squeeze()
+
+                    cloze_mask = cloze_mask & ~missing_mask_batch
+                    x_batch = x_batch.to(device)
+                    masked_x_batch = masked_x_batch.to(device)
+                    pmask = pmask.to(device)
+                    cloze_mask = cloze_mask.to(device)
+
+                    outputs = model(masked_x_batch, pmask, fmask)
+                    loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+                    mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
+                    mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
+
+                    if torch.isnan(loss).sum() > 0:
+                        skipmessage = "Encountered nan loss! Skipping batch..."
+                        log_strs.append(skipmessage)
+                        print(skipmessage)
+                        del x_batch
+                        del pmask
+                        del masked_x_batch
+                        del outputs
+                        torch.cuda.empty_cache()
+                        continue
+
+                    del x_batch
+                    del pmask
+                    del masked_x_batch
+                    del outputs
+
+                    # Clear GPU memory again
+                    torch.cuda.empty_cache()
+
+                    if (((i//batch_size))+1) % 10 == 0 or i==0:
+                        logfile = open("models/log.txt", "w")
+
+                        logstr = [
+                            f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
+                            f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
+                            f"Loss: {loss.item():.4f}", 
+                            f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                            f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                            ]
+                        logstr = " | ".join(logstr)
+
+                        log_strs.append(logstr)
+                        logfile.write("\n".join(log_strs))
+                        logfile.close()
+                        print(logstr)
+
+                    loss.backward()  
+            
+            # update parameters over all batches and all patterns of missing data
+            optimizer.step()
+
+        # Save the model after each dataset
+        try:
+            torch.save(model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
+        except:
+            pass
+
+    return model
 
 
 
@@ -898,8 +973,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
             torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
         except:
             pass
-            
-        break
+
 
     return model
 
