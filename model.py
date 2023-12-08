@@ -782,13 +782,9 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                 for i in pattern:
                     fmask[i,:] = 0
 
-                print(pattern_batch.shape)
-                print(fmask.sum(dim=1))
-                print(pattern)
-                exit()
-
-
-
+                print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
+                continue
+            exit()
 
             # Break down x into smaller batches
             for i in range(0, len(x), batch_size):
