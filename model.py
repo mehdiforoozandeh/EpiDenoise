@@ -783,7 +783,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
                     fmask[i,:] = 0
 
                 print(pattern_batch.shape)
-                print(fmask.sum(dim=0))
+                print(fmask.sum(dim=1))
                 print(pattern)
                 exit()
 
