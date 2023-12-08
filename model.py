@@ -758,7 +758,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
 
     ds=0
     # Define your batch size
-    for ds_path in len(dataset.preprocessed_datasets):
+    for ds_path in dataset.preprocessed_datasets:
         ds+=1
         
         if ds < start_ds:
