@@ -795,7 +795,9 @@ def train_model(
 
                 if context_length < pattern_batch.shape[1]:
                     context_length_factor = context_length / pattern_batch.shape[1]
+
                     pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
+                    missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
 
                 # Break down x into smaller batches
                 for i in range(0, len(pattern_batch), batch_size):
@@ -866,114 +868,6 @@ def train_model(
             torch.save(model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
         except:
             pass
-
-    return model
-
-
-
-
-
-
-
-    for bios, f in dataset.biosamples.items():
-        bb+=1
-        if bb < start_bios:
-            continue
-
-        print('-' * 10)
-        x, missing_mask, missing_f_i = dataset.get_biosample(f)
-
-        # fmask is used to mask QKV of transformer
-        d_model = x.shape[2]
-        fmask = torch.ones(d_model, hidden_dim)
-
-        for i in missing_f_i:
-            fmask[i,:] = 0
-        
-        fmask = fmask.to(device)
-        for epoch in range(0, num_epochs):
-            print('-' * 10)
-            print(f'Epoch {epoch+1}/{num_epochs}')
-            optimizer.zero_grad()
-            # Break down x into smaller batches
-            for i in range(0, len(x), batch_size):
-                torch.cuda.empty_cache()
-                
-                x_batch = x[i:i+batch_size]
-                missing_mask_batch = missing_mask[i:i+batch_size]
-
-                if context_length < 8000:
-                    rand_start = random.randint(0, 8000 - (context_length+1))
-                    rand_end = rand_start + context_length
-
-                    x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
-
-                # print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
-
-                x_batch = torch.arcsinh_(x_batch)
-
-                # Masking a subset of the input data
-                masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-                pmask = cloze_mask[:,:,0].squeeze()
-
-                cloze_mask = cloze_mask & ~missing_mask_batch
-                x_batch = x_batch.to(device)
-                masked_x_batch = masked_x_batch.to(device)
-                pmask = pmask.to(device)
-                cloze_mask = cloze_mask.to(device)
-
-                outputs = model(masked_x_batch, pmask, fmask)
-                loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
-
-                mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
-                mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
-
-                if torch.isnan(loss).sum() > 0:
-                    skipmessage = "Encountered nan loss! Skipping batch..."
-                    log_strs.append(skipmessage)
-                    print(skipmessage)
-                    del x_batch
-                    del pmask
-                    del masked_x_batch
-                    del outputs
-                    torch.cuda.empty_cache()
-                    continue
-
-                del x_batch
-                del pmask
-                del masked_x_batch
-                del outputs
-
-                # Clear GPU memory again
-                torch.cuda.empty_cache()
-
-                if (((i//batch_size))+1) % 10 == 0 or i==0:
-                    logfile = open("models/log.txt", "w")
-
-                    logstr = [
-                        f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
-                        f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
-                        f"Loss: {loss.item():.4f}", 
-                        f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
-                        f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
-                        ]
-                    logstr = " | ".join(logstr)
-
-                    log_strs.append(logstr)
-                    logfile.write("\n".join(log_strs))
-                    logfile.close()
-                    print(logstr)
-
-                loss.backward()     
-
-            optimizer.step()
-
-        # Save the model after each epoch
-        try:
-            torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
-        except:
-            pass
-
 
     return model
 
