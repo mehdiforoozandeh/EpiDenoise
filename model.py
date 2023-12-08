@@ -756,8 +756,6 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
     logfile.write("\n".join(log_strs))
     logfile.close()
 
-    d_model = x.shape[2]
-
     ds=0
     # Define your batch size
     for ds_path in len(dataset.preprocessed_datasets):
@@ -768,6 +766,7 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
         
         print('-_-' * 10)
         x, missing_mask, missing_f_pattern = dataset.get_dataset_pt(ds_path)
+        d_model = x.shape[2]
         
         for epoch in range(0, num_epochs):
             print('-' * 10)
