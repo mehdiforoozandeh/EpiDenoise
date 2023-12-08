@@ -791,6 +791,8 @@ def train_model(
                 for i in pattern:
                     fmask[i,:] = 0
 
+                fmask = fmask.to(device)
+
                 # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
                 if context_length < pattern_batch.shape[1]:
