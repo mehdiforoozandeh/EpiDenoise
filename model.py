@@ -781,9 +781,12 @@ def train_model(
 
             # zero grads before going over all batches and all patterns of missing data
             optimizer.zero_grad()
-
+            epoch_loss = []
+            
+            p = 0
             for pattern, indices in missing_f_pattern.items():
-                
+                p += 1
+
                 pattern_batch = x[indices]
                 missing_mask_patten_batch = missing_mask[indices]
                 fmask = torch.ones(d_model, hidden_dim)
@@ -841,15 +844,17 @@ def train_model(
                     del pmask
                     del masked_x_batch
                     del outputs
+                    epoch_loss.append(loss.item())
 
                     # Clear GPU memory again
                     torch.cuda.empty_cache()
-
-                    if (((i//batch_size))+1) % 10 == 0 or i==0:
+                    
+                    if (((i//batch_size))+1) % 100 == 0 or i==0:
                         logfile = open("models/log.txt", "w")
 
                         logstr = [
-                            f'Epoch {epoch+1}/{num_epochs}', f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
+                            f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
+                            f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
                             f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
                             f"Loss: {loss.item():.4f}", 
                             f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
@@ -866,6 +871,20 @@ def train_model(
             
             # update parameters over all batches and all patterns of missing data
             optimizer.step()
+            logfile = open("models/log.txt", "w")
+
+            logstr = [
+                f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
+                f'Epoch {epoch+1}/{num_epochs}', 
+                f"Epoch Loss Mean: {np.mean(epoch_loss)}", f"Epoch Loss std: {np.std(epoch_loss)}"
+                ]
+            logstr = " | ".join(logstr)
+
+            log_strs.append(logstr)
+            logfile.write("\n".join(log_strs))
+            logfile.close()
+            print(logstr)
+
 
         # Save the model after each dataset
         try:
@@ -998,7 +1017,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 40,
+            "batch_size": 1,
             "learning_rate": 0.001
         }
 
