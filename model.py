@@ -847,7 +847,7 @@ def train_model(
                         logfile = open("models/log.txt", "w")
 
                         logstr = [
-                            f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
+                            f'Epoch {epoch+1}/{num_epochs}', f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
                             f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
                             f"Loss: {loss.item():.4f}", 
                             f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
