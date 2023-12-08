@@ -513,7 +513,7 @@ def sequence_pad(data, max_length, pad_value=-1):
     
     return padded_data, pad_mask
 
-def _train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
+def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -625,7 +625,7 @@ def _train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perce
 
     return model
 
-def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
+def _train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -643,6 +643,168 @@ def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25,
 
     bb=0
     # Define your batch size
+    for bios, f in dataset.biosamples.items():
+        bb+=1
+        if bb < start_bios:
+            continue
+
+        print('-' * 10)
+        x, missing_mask, missing_f_i = dataset.get_biosample(f)
+
+        # fmask is used to mask QKV of transformer
+        d_model = x.shape[2]
+        fmask = torch.ones(d_model, hidden_dim)
+
+        for i in missing_f_i:
+            fmask[i,:] = 0
+        
+        fmask = fmask.to(device)
+        for epoch in range(0, num_epochs):
+            print('-' * 10)
+            print(f'Epoch {epoch+1}/{num_epochs}')
+            optimizer.zero_grad()
+            # Break down x into smaller batches
+            for i in range(0, len(x), batch_size):
+                torch.cuda.empty_cache()
+                
+                x_batch = x[i:i+batch_size]
+                missing_mask_batch = missing_mask[i:i+batch_size]
+
+                if context_length < 8000:
+                    rand_start = random.randint(0, 8000 - (context_length+1))
+                    rand_end = rand_start + context_length
+
+                    x_batch, missing_mask_batch = x_batch[:, rand_start:rand_end, :], missing_mask_batch[:, rand_start:rand_end, :]
+
+                # print("missing_mask_batch   ", missing_mask_batch.shape, missing_mask_batch.sum(), len(missing_f_i))
+
+                x_batch = torch.arcsinh_(x_batch)
+
+                # Masking a subset of the input data
+                masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                pmask = cloze_mask[:,:,0].squeeze()
+
+                cloze_mask = cloze_mask & ~missing_mask_batch
+                x_batch = x_batch.to(device)
+                masked_x_batch = masked_x_batch.to(device)
+                pmask = pmask.to(device)
+                cloze_mask = cloze_mask.to(device)
+
+                outputs = model(masked_x_batch, pmask, fmask)
+                loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+                mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
+                mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
+
+                if torch.isnan(loss).sum() > 0:
+                    skipmessage = "Encountered nan loss! Skipping batch..."
+                    log_strs.append(skipmessage)
+                    print(skipmessage)
+                    del x_batch
+                    del pmask
+                    del masked_x_batch
+                    del outputs
+                    torch.cuda.empty_cache()
+                    continue
+
+                del x_batch
+                del pmask
+                del masked_x_batch
+                del outputs
+
+                # Clear GPU memory again
+                torch.cuda.empty_cache()
+
+                if (((i//batch_size))+1) % 10 == 0 or i==0:
+                    logfile = open("models/log.txt", "w")
+
+                    logstr = [
+                        f'Epoch {epoch+1}/{num_epochs}', f"Bios {bb}/{len(dataset.biosamples)}", 
+                        f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
+                        f"Loss: {loss.item():.4f}", 
+                        f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                        f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                        ]
+                    logstr = " | ".join(logstr)
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+
+                loss.backward()     
+
+            optimizer.step()
+
+        # Save the model after each epoch
+        try:
+            torch.save(model.state_dict(), f'models/model_checkpoint_bios_{bb}.pth')
+        except:
+            pass
+
+    return model
+
+def train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_ds=0):
+    log_strs = []
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    print(device)
+
+    # model.to(device)
+    log_strs.append(str(device))
+    logfile = open("models/log.txt", "w")
+    logfile.write("\n".join(log_strs))
+    logfile.close()
+
+    d_model = x.shape[2]
+
+    ds=0
+    # Define your batch size
+    for ds_path in len(dataset.preprocessed_datasets):
+        ds+=1
+        
+        if ds < start_ds:
+            continue
+        
+        print('-_-' * 10)
+        x, missing_mask, missing_f_pattern = dataset.get_dataset_pt(ds_path)
+        
+        for epoch in range(0, num_epochs):
+            print('-' * 10)
+            print(f'Epoch {epoch+1}/{num_epochs}')
+
+            optimizer.zero_grad()
+
+            for pattern, indices in missing_f_pattern.items():
+                
+                pattern_batch = x[indices]
+                fmask = torch.ones(d_model, hidden_dim)
+
+                for i in pattern:
+                    fmask[i,:] = 0
+
+                print(pattern_batch.shape)
+                print(fmask.sum(dim=0))
+                print(pattern)
+                exit()
+
+
+
+
+            # Break down x into smaller batches
+            for i in range(0, len(x), batch_size):
+                torch.cuda.empty_cache()
+                
+                x_batch = x[i:i+batch_size]
+                missing_mask_batch = missing_mask[i:i+batch_size]
+
+
+
+
+
+
+
+
     for bios, f in dataset.biosamples.items():
         bb+=1
         if bb < start_bios:

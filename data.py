@@ -717,7 +717,7 @@ class ENCODE_IMPUTATION_DATASET(object):
         for i, pattern in enumerate(indices):
             pattern_dict[tuple(pattern)].append(i)
 
-        print(len(pattern_dict))
+        return ds, mask, pattern_dict
 
             
 if __name__ == "__main__": 
