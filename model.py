@@ -1035,12 +1035,8 @@ if __name__ == "__main__":
             "learning_rate": 0.001
         }
 
-    # train_epidenoise(
-    #     hyper_parameters, 
-    #     checkpoint_path=None, 
-    #     start_bios=5)
 
     train_epidenoise(
         hyper_parameters, 
         checkpoint_path=None, 
-        start_bios=0)
+        start_ds=0)
