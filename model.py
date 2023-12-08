@@ -801,6 +801,8 @@ def train_model(
                     pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
                     missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
 
+                print(pattern_batch.shape)
+                exit()
                 # Break down x into smaller batches
                 for i in range(0, len(pattern_batch), batch_size):
                     torch.cuda.empty_cache()
