@@ -722,7 +722,7 @@ class ENCODE_IMPUTATION_DATASET(object):
             
 if __name__ == "__main__": 
     eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
-    for ds_path in preprocessed_datasets:
+    for ds_path in eic.preprocessed_datasets:
         eic.get_dataset_pt(ds_path)
 
     # d = GET_DATA()
