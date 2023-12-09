@@ -782,6 +782,8 @@ def train_model(
             # zero grads before going over all batches and all patterns of missing data
             optimizer.zero_grad()
             epoch_loss = []
+            t0 = datetime.datetime.now()
+
             
             p = 0
             for pattern, indices in missing_f_pattern.items():
@@ -849,30 +851,34 @@ def train_model(
 
                     loss.backward()  
                 
-                logfile = open("models/log.txt", "w")
+                if p%8 == 0:
+                    logfile = open("models/log.txt", "w")
 
-                logstr = [
-                    f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
-                    f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                    f"Loss: {loss.item():.4f}", 
-                    f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
-                    f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
-                    ]
-                logstr = " | ".join(logstr)
+                    logstr = [
+                        f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
+                        f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
+                        f"Loss: {loss.item():.4f}", 
+                        f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                        f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                        ]
+                    logstr = " | ".join(logstr)
 
-                log_strs.append(logstr)
-                logfile.write("\n".join(log_strs))
-                logfile.close()
-                print(logstr)
-            
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+                
             # update parameters over all batches and all patterns of missing data
             optimizer.step()
+            t1 = datetime.datetime.now()
             logfile = open("models/log.txt", "w")
 
             logstr = [
                 f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
                 f'Epoch {epoch+1}/{num_epochs}', 
-                f"Epoch Loss Mean: {np.mean(epoch_loss)}", f"Epoch Loss std: {np.std(epoch_loss)}"
+                f"Epoch Loss Mean: {np.mean(epoch_loss)}", 
+                f"Epoch Loss std: {np.std(epoch_loss)}",
+                f"Epoch took: {t1 - t0}"
                 ]
             logstr = " | ".join(logstr)
 
