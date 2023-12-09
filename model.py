@@ -425,8 +425,11 @@ class EpiDenoise(nn.Module):
         src = torch.permute(src, (1, 0, 2))
         src = self.pos_encoder(src)
 
+        src = torch.permute(src, (1, 2, 0)) # to N,F,L
         src = self.conv1(src)
         src = self.pool(src)
+
+        src = torch.permute(src, (2, 0, 1)) # to L, N, F
 
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
