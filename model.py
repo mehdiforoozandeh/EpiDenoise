@@ -407,15 +407,15 @@ class TripleConvEncoder(nn.Module):
 #________________________________________________________________________________________________________________________#
 
 class EpiDenoise(nn.Module): 
-    def __init__(self, input_dim, nhead, hidden_dim, nlayers, output_dim, dropout=0.1, context_length=2000):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
         
-        self.masked_linear = MaskedLinear(input_dim, hidden_dim)
-        self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.masked_linear = MaskedLinear(input_dim, d_model)
+        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
 
-        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=4*hidden_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-        self.decoder = nn.Linear(hidden_dim, output_dim)
+        self.decoder = nn.Linear(d_model, output_dim)
         
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
@@ -627,7 +627,7 @@ def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perc
 
     return model
 
-def _train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
+def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -655,7 +655,7 @@ def _train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25
 
         # fmask is used to mask QKV of transformer
         d_model = x.shape[2]
-        fmask = torch.ones(d_model, hidden_dim)
+        fmask = torch.ones(d_model, d_model)
 
         for i in missing_f_i:
             fmask[i,:] = 0
@@ -747,7 +747,7 @@ def _train_model(model, dataset, criterion, optimizer, hidden_dim, num_epochs=25
     return model
 
 def train_model(
-    model, dataset, criterion, optimizer, hidden_dim, arcsinh_transform=True,
+    model, dataset, criterion, optimizer, d_model, arcsinh_transform=True,
     num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
     context_length=2000, batch_size=100, start_ds=0):
     
@@ -793,7 +793,7 @@ def train_model(
 
                 pattern_batch = x[indices]
                 missing_mask_patten_batch = missing_mask[indices]
-                fmask = torch.ones(d_model, hidden_dim)
+                fmask = torch.ones(d_model, d_model)
 
                 for i in pattern:
                     fmask[i,:] = 0
@@ -904,7 +904,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     input_dim = output_dim = hyper_parameters["input_dim"]
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
-    hidden_dim = hyper_parameters["hidden_dim"]
+    d_model = hyper_parameters["d_model"]
     nlayers = hyper_parameters["nlayers"]
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
@@ -916,7 +916,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     # end of hyperparameters
 
     model = EpiDenoise(
-        input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -939,7 +939,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     start_time = time.time()
     model = train_model(
-        model, dataset, criterion, optimizer,hidden_dim=hidden_dim, num_epochs=epochs, 
+        model, dataset, criterion, optimizer,d_model=d_model, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
         context_length=context_length, batch_size=batch_size, start_ds=start_ds)
     end_time = time.time()
@@ -969,13 +969,13 @@ def load_epidenoise(model_path, hyper_parameters):
     input_dim = output_dim = hyper_parameters["input_dim"]
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
-    hidden_dim = hyper_parameters["hidden_dim"]
+    d_model = hyper_parameters["d_model"]
     nlayers = hyper_parameters["nlayers"]
     context_length = hyper_parameters["context_length"]
     
     # Assuming model is an instance of the correct class
     model = EpiDenoise(
-        input_dim=input_dim, nhead=nhead, hidden_dim=hidden_dim, nlayers=nlayers, 
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     model.load_state_dict(torch.load(model_path))
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
     #         "input_dim": 35,
     #         "dropout": 0.1,
     #         "nhead": 7,
-    #         "hidden_dim": 35,
+    #         "d_model": 35,
     #         "nlayers": 7,
     #         "epochs": 25,
     #         "mask_percentage": 0.15,
@@ -1016,13 +1016,13 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 16,
-            "hidden_dim": 128,
+            "d_model": 128,
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
-            "context_length": 800,
-            "batch_size": 20,
+            "context_length": 400,
+            "batch_size": 80,
             "learning_rate": 0.001
         }
 

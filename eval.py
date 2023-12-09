@@ -128,7 +128,7 @@ class Evaluation: # on chr21
         Y = Y.view(-1, context_length, Y.shape[-1])
 
         d_model = X.shape[-1]
-        fmask = torch.ones(d_model, self.hyper_parameters["hidden_dim"])
+        fmask = torch.ones(d_model, self.hyper_parameters["d_model"])
 
         for i in missing_x_i: # input fmask
             fmask[i,:] = 0
