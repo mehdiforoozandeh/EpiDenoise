@@ -413,7 +413,7 @@ class EpiDenoise(nn.Module):
         self.masked_linear = MaskedLinear(input_dim, hidden_dim)
         self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
 
-        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=4*hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
         
@@ -1015,14 +1015,14 @@ if __name__ == "__main__":
             # "data_path": "data/test",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 8,
-            "hidden_dim": 256,
+            "nhead": 16,
+            "hidden_dim": 128,
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
-            "context_length": 1600,
-            "batch_size": 5,
+            "context_length": 800,
+            "batch_size": 20,
             "learning_rate": 0.001
         }
 
