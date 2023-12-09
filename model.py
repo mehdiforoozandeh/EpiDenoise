@@ -846,26 +846,24 @@ def train_model(
 
                     # Clear GPU memory again
                     torch.cuda.empty_cache()
-                    
-                    if (((i//batch_size))+1) % 100 == 0 or i==0:
-                        logfile = open("models/log.txt", "w")
-
-                        logstr = [
-                            f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
-                            f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                            f"Batch {((i//batch_size))+1}/{(len(x)//batch_size)+1}",
-                            f"Loss: {loss.item():.4f}", 
-                            f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
-                            f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
-                            ]
-                        logstr = " | ".join(logstr)
-
-                        log_strs.append(logstr)
-                        logfile.write("\n".join(log_strs))
-                        logfile.close()
-                        print(logstr)
 
                     loss.backward()  
+                
+                logfile = open("models/log.txt", "w")
+
+                logstr = [
+                    f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
+                    f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
+                    f"Loss: {loss.item():.4f}", 
+                    f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                    f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                    ]
+                logstr = " | ".join(logstr)
+
+                log_strs.append(logstr)
+                logfile.write("\n".join(log_strs))
+                logfile.close()
+                print(logstr)
             
             # update parameters over all batches and all patterns of missing data
             optimizer.step()
@@ -1015,7 +1013,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 10,
+            "batch_size": 20,
             "learning_rate": 0.001
         }
 
