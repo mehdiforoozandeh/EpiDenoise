@@ -919,7 +919,9 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
+    optimizer = optim.lr_scheduler.StepLR(
+        optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True), 
+        step_size=25, gamma=0.9)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -1003,12 +1005,12 @@ if __name__ == "__main__":
             "nhead": 8,
             "d_model": 128,
             "nlayers": 6,
-            "epochs": 100,
+            "epochs": 50,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
             "batch_size": 80,
-            "learning_rate": 0.001
+            "learning_rate": 0.005
         }
 
     train_epidenoise(
