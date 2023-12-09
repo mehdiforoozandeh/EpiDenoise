@@ -1,4 +1,4 @@
-import torch, math, random, time, json, os, pickle, datetime
+import torch, math, random, time, json, os, pickle
 from datetime import datetime
 from torch import nn
 import torch.optim as optim
@@ -782,7 +782,7 @@ def train_model(
             # zero grads before going over all batches and all patterns of missing data
             optimizer.zero_grad()
             epoch_loss = []
-            t0 = datetime.datetime.now()
+            t0 = datetime.now()
 
             
             p = 0
@@ -870,7 +870,7 @@ def train_model(
                 
             # update parameters over all batches and all patterns of missing data
             optimizer.step()
-            t1 = datetime.datetime.now()
+            t1 = datetime.now()
             logfile = open("models/log.txt", "w")
 
             logstr = [
