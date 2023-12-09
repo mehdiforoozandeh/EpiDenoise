@@ -543,8 +543,8 @@ def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perc
             x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
             # fmask is used to mask QKV of transformer
-            d_model = x.shape[2]
-            fmask = torch.ones(d_model, d_model)
+            num_features = x.shape[2]
+            fmask = torch.ones(num_features, num_features)
 
             for i in missing_f_i:
                 fmask[i,:] = 0
@@ -654,8 +654,8 @@ def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, m
         x, missing_mask, missing_f_i = dataset.get_biosample(f)
 
         # fmask is used to mask QKV of transformer
-        d_model = x.shape[2]
-        fmask = torch.ones(d_model, d_model)
+        num_features = x.shape[2]
+        fmask = torch.ones(num_features, d_model)
 
         for i in missing_f_i:
             fmask[i,:] = 0
@@ -772,7 +772,7 @@ def train_model(
         
         print('-_-' * 10)
         x, missing_mask, missing_f_pattern = dataset.get_dataset_pt(ds_path)
-        d_model = x.shape[2]
+        num_features = x.shape[2]
 
         if arcsinh_transform:
             x = torch.arcsinh_(x)
@@ -793,7 +793,7 @@ def train_model(
 
                 pattern_batch = x[indices]
                 missing_mask_patten_batch = missing_mask[indices]
-                fmask = torch.ones(d_model, d_model)
+                fmask = torch.ones(num_features, d_model)
 
                 for i in pattern:
                     fmask[i,:] = 0
