@@ -627,7 +627,7 @@ def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perc
 
     return model
 
-def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
+def _train_model(model, dataset, criterion, optimizer, d_model, scheduler, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -872,6 +872,8 @@ def train_model(
                 
             # update parameters over all batches and all patterns of missing data
             optimizer.step()
+            scheduler.step()
+
             t1 = datetime.now()
             logfile = open("models/log.txt", "w")
 
@@ -919,9 +921,8 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.lr_scheduler.StepLR(
-        optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True), 
-        step_size=25, gamma=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.9)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -941,7 +942,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     start_time = time.time()
     model = train_model(
-        model, dataset, criterion, optimizer,d_model=d_model, num_epochs=epochs, 
+        model, dataset, criterion, optimizer, scheduler=scheduler, d_model=d_model, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
         context_length=context_length, batch_size=batch_size, start_ds=start_ds)
     end_time = time.time()
