@@ -412,6 +412,10 @@ class EpiDenoise(nn.Module):
         
         self.masked_linear = MaskedLinear(input_dim, hidden_dim)
         self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+
+        self.conv1 = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool1d(2)
+
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
@@ -420,6 +424,10 @@ class EpiDenoise(nn.Module):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2))
         src = self.pos_encoder(src)
+
+        src = self.conv1(src)
+        src = self.pool(src)
+
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
@@ -1021,7 +1029,6 @@ if __name__ == "__main__":
             "batch_size": 80,
             "learning_rate": 0.001
         }
-
 
     train_epidenoise(
         hyper_parameters, 
