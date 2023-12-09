@@ -416,6 +416,9 @@ class EpiDenoise(nn.Module):
         self.conv1 = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=6, padding="same")#, padding=3, dilation=2)
         self.pool = nn.MaxPool1d(2)
 
+        self.conv2 = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=6, padding="same")#, padding=3, dilation=2)
+        self.pool2 = nn.MaxPool1d(2)
+
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
@@ -427,13 +430,15 @@ class EpiDenoise(nn.Module):
 
         src = torch.permute(src, (1, 2, 0)) # to N, F, L
 
-        print(src.shape)
         src = self.conv1(src)
-        print(src.shape)
+        src = self.pool(src)
+
+        src = self.conv2(src)
+        src = self.pool2(src)
 
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
 
-        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
+        src = self.transformer_encoder(src)#, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
         return src
