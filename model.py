@@ -994,21 +994,6 @@ def predict(model, data, fmask, pmask):
 
 # Calling the main function
 if __name__ == "__main__":
-    # hyper_parameters = {
-    #         "data_path": "/project/compbio-lab/EIC/training_data/",
-    #         # "data_path": "data/test",
-    #         "input_dim": 35,
-    #         "dropout": 0.1,
-    #         "nhead": 7,
-    #         "d_model": 35,
-    #         "nlayers": 7,
-    #         "epochs": 25,
-    #         "mask_percentage": 0.15,
-    #         "chunk": True,
-    #         "context_length": 1600,
-    #         "batch_size": 20,
-    #         "learning_rate": 0.001
-    #     }
 
     hyper_parameters = {
             "data_path": "/project/compbio-lab/EIC/training_data/",
@@ -1016,7 +1001,7 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 16,
-            "d_model": 128,
+            "d_model": 256,
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
