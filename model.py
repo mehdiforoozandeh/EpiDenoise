@@ -412,7 +412,7 @@ class EpiDenoise(nn.Module):
         
         self.masked_linear = MaskedLinear(input_dim, hidden_dim)
         self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        
+
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(hidden_dim, output_dim)
@@ -898,8 +898,6 @@ def train_model(
     return model
 
 def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
-    with open('models/hyper_parameters.pkl', 'wb') as f:
-        pickle.dump(hyper_parameters, f)
 
     # Defining the hyperparameters
     data_path = hyper_parameters["data_path"]
@@ -931,6 +929,11 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
+
+    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
+    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
     # criterion = WeightedMSELoss()
     criterion = nn.MSELoss()
 
@@ -944,9 +947,8 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     # Save the trained model
     model_dir = "models/"
     os.makedirs(model_dir, exist_ok=True)
-    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
     torch.save(model.state_dict(), os.path.join(model_dir, model_name))
-    os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+    # os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
 
     # Write a description text file
     description = {
@@ -1014,13 +1016,13 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 8,
-            "hidden_dim": 128,
+            "hidden_dim": 256,
             "nlayers": 4,
             "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
-            "context_length": 400,
-            "batch_size": 80,
+            "context_length": 1600,
+            "batch_size": 20,
             "learning_rate": 0.001
         }
 
