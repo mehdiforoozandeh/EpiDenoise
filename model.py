@@ -627,7 +627,7 @@ def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_perc
 
     return model
 
-def _train_model(model, dataset, criterion, optimizer, d_model, scheduler, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
+def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_bios=0):
     log_strs = []
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -747,7 +747,7 @@ def _train_model(model, dataset, criterion, optimizer, d_model, scheduler, num_e
     return model
 
 def train_model(
-    model, dataset, criterion, optimizer, d_model, arcsinh_transform=True,
+    model, dataset, criterion, optimizer, d_model, scheduler, arcsinh_transform=True,
     num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
     context_length=2000, batch_size=100, start_ds=0):
     
