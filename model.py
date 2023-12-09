@@ -413,7 +413,7 @@ class EpiDenoise(nn.Module):
         self.masked_linear = MaskedLinear(input_dim, hidden_dim)
         self.pos_encoder = PositionalEncoding(d_model=hidden_dim, max_len=context_length)  # or RelativePositionEncoding(input_dim)
 
-        self.conv1 = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=6, padding=4)#, padding=3, dilation=2)
+        self.conv1 = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=6, padding=2)#, padding=3, dilation=2)
         self.pool = nn.MaxPool1d(2)
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=nhead, dim_feedforward=hidden_dim)
