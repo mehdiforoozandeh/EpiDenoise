@@ -887,7 +887,6 @@ def train_model(
             logfile.close()
             print(logstr)
 
-
         # Save the model after each dataset
         try:
             torch.save(model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
@@ -1013,13 +1012,13 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 8,
-            "hidden_dim": 256,
+            "hidden_dim": 128,
             "nlayers": 4,
-            "epochs": 600,
+            "epochs": 100,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 20,
+            "batch_size": 80,
             "learning_rate": 0.001
         }
 
