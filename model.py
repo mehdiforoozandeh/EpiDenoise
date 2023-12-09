@@ -930,7 +930,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
 
-    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}_time{int(end_time-start_time)}s.pt"
+    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
