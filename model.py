@@ -912,8 +912,13 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
     chunk = hyper_parameters["chunk"]
-    n_chunks = mask_percentage // 0.01
     context_length = hyper_parameters["context_length"]
+
+    # one nucleosome is around 150bp -> 6bins
+    # each chuck ~ 1 nucleosome
+
+    n_chunks = (mask_percentage * context_length) // 6
+
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
     # end of hyperparameters
@@ -1026,7 +1031,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 4000,
-            "batch_size": 4,
+            "batch_size": 6,
             "learning_rate": 0.01
         }
 
