@@ -214,7 +214,7 @@ class Evaluation: # on chr21
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
                               names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
 
-        chrom_subset = gene_df[gene_df['chrom'] == chrom]
+        chrom_subset = gene_df[gene_df['chrom'] == chrom].copy()
 
         print(chrom_subset)
         chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
