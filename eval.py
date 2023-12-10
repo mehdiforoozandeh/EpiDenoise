@@ -219,7 +219,7 @@ class Evaluation: # on chr21
         chrom_subset = gene_df[gene_df['chrom'] == chrom]
 
         chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
-        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s)))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
         return chrom_subset
 
     def get_prom_positions(self, chrom, bin_size):
