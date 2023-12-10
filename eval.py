@@ -213,13 +213,15 @@ class Evaluation: # on chr21
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
                               names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
-        
-        print(gene_df)
-        exit()
+
         chrom_subset = gene_df[gene_df['chrom'] == chrom]
 
+        print(chrom_subset)
         chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        print(chrom_subset)
         chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+        print(chrom_subset)
+        exit()
         return chrom_subset
 
     def get_prom_positions(self, chrom, bin_size):
