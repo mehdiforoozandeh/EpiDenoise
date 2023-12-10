@@ -182,8 +182,8 @@ class Evaluation: # on chr21
                 'available eval assays': len(self.all_assays) - len(missing_y_i),
 
                 'MSE-GW': self.mse(target, pred),
-                'Pearson-GW': self.pearson_correlation(target, pred),
-                'Spearman-GW': self.spearman_correlation(target, pred),
+                'Pearson-GW': self.pearson(target, pred),
+                'Spearman-GW': self.spearman(target, pred),
 
                 'MSE-1obs': self.mse1obs(target, pred),
                 'Pearson_1obs': self.pearson1_obs(target, pred),
@@ -243,7 +243,7 @@ class Evaluation: # on chr21
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
         between the true and predicted values across the entire genome at a resolution of 25bp.
         """
-        return mean_squared_error(y_pred, y_true)
+        return np.mean((np.array(y_true) - np.array(y_pred))**2)
 
     def mse_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
@@ -272,14 +272,14 @@ class Evaluation: # on chr21
 
         return self.spearman(y_true=gt_vals, y_pred=pred_vals)
 
-    def pearson_correlation(self, y_true, y_pred):
+    def pearson(self, y_true, y_pred):
         """
         Calculate the genome-wide Pearson Correlation. This measures the linear relationship between the true 
         and predicted values across the entire genome at a resolution of 25bp.
         """
         return pearsonr(y_pred, y_true)[0]
 
-    def spearman_correlation(self, y_true, y_pred):
+    def spearman(self, y_true, y_pred):
         """
         Calculate the genome-wide Spearman Correlation. This measures the monotonic relationship between the true 
         and predicted values across the entire genome at a resolution of 25bp.
