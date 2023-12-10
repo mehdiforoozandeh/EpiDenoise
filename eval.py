@@ -173,8 +173,6 @@ class Evaluation: # on chr21
             else:
                 continue
             
-            target, pred = np.array(list(target)) , np.array(list(pred))
-            print(target.shape, pred.shape)
             metrics = {
                 'celltype': bios_name,
                 'feature': self.all_assays[j],
@@ -303,6 +301,11 @@ class Evaluation: # on chr21
         prom_df = self.get_prom_positions(chrom, bin_size)
         gt_vals = self.get_signals(array=y_true, df=prom_df)
         pred_vals = self.get_signals(array=y_pred, df=prom_df)
+
+        print(prom_df)
+        print(gt_vals)
+        print(pred_vals)
+        exit()
 
         return self.pearson(y_true=gt_vals, y_pred=pred_vals)
 
