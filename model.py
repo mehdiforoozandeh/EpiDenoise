@@ -1016,7 +1016,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 20,
+            "batch_size": 80,
             "learning_rate": 0.01
         }
 
