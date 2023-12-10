@@ -1011,10 +1011,10 @@ if __name__ == "__main__":
             "chunk": True,
             "context_length": 400,
             "batch_size": 40,
-            "learning_rate": 0.015
+            "learning_rate": 0.001
         }
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path=None, 
-        start_ds=0)
+        checkpoint_path='models/model_checkpoint_ds_8.pth', 
+        start_ds=8)
