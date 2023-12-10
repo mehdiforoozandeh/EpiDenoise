@@ -173,7 +173,7 @@ class Evaluation: # on chr21
             else:
                 continue
             
-            target, pred = np.reshape(target,(-1)), np.reshape(pred,(-1))
+            target, pred = target.flatten(), pred.flatten()
             print(target.shape, pred.shape)
             metrics = {
                 'celltype': bios_name,
