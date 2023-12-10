@@ -758,6 +758,7 @@ def train_model(
 
     # model.to(device)
     log_strs.append(str(device))
+    log_strs.append(f"# model_parameters: {count_parameters(model)}")
     logfile = open("models/log.txt", "w")
     logfile.write("\n".join(log_strs))
     logfile.close()
