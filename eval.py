@@ -5,6 +5,9 @@ import scipy.stats
 import pyBigWig
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
+PROC_PROM_BED_PATH = "data/tss.bed"
+
 
 class Evaluation: # on chr21
     def __init__(
@@ -175,18 +178,29 @@ class Evaluation: # on chr21
                 'celltype': bios_name,
                 'feature': self.all_assays[j],
                 'comparison': comparison,
-                'available train assays':len(self.all_assays) - len(missing_x_i),
-                'available eval assays':len(self.all_assays) - len(missing_y_i),
-                'PCC_mean': self.pearson_correlation(target, pred),
-                'spearman_rho_mean': self.spearman_correlation(target, pred),
-                'MSE_mean': self.mse(target, pred),
-                'MSE1obs_mean': self.mse1obs(target, pred),
-                'MSE1imp_mean': self.mse1imp(target, pred), 
-                'pred_mean_min_max': (pred.mean(), pred.max(), pred.min()),
-                'target_mean_min_max': (target.mean(), target.max(), target.min())
+                'available train assays': len(self.all_assays) - len(missing_x_i),
+                'available eval assays': len(self.all_assays) - len(missing_y_i),
+
+                'MSE-GW': self.mse(target, pred),
+                'Pearson-GW': self.pearson_correlation(target, pred),
+                'Spearman-GW': self.spearman_correlation(target, pred),
+
+                'MSE-1obs': self.mse1obs(target, pred),
+                'Pearson_1obs': self.pearson1_obs(target, pred),
+                'Spearman_1obs': self.spearman1_obs(target, pred),
+
+                'MSE-1imp': self.mse1imp(target, pred),
+                'Pearson_1imp': self.pearson1_imp(target, pred),
+                'Spearman_1imp': self.spearman1_imp(target, pred),
+
+                'MSE-gene': self.mse_gene(target, pred),
+                'Pearson_gene': self.pearson_gene(target, pred),
+                'Spearman_gene': self.spearman_gene(target, pred),
+
+                'MSE-prom': self.mse_prom(target, pred),
+                'Pearson_prom': self.pearson_prom(target, pred),
+                'Spearman_prom': self.spearman_prom(target, pred),
             }
-            # print(metrics)
-            # Add the results to the DataFrame
             self.results.append(metrics)
 
     def evaluate_model(self, outdir):
@@ -197,12 +211,66 @@ class Evaluation: # on chr21
         self.results = pd.DataFrame(self.results)
         self.results.to_csv(outdir, index=False)
 
+    def get_gene_positions(self, chrom, bin_size):
+        gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
+                              names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = gene_df[gene_df['chrom'] == chrom]
+
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+
+        return chrom_subset
+
+    def get_prom_positions(self, chrom, bin_size):
+        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = prom_df[prom_df['chrom'] == chrom]
+
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+
+        return chrom_subset
+
+    def get_signals(self, array, df):
+        signals = []
+        for idx, row in df.iterrows():
+            gene_bins = slice(row['start'], row['end'])
+            signals += array[gene_bins].tolist()
+
+        return signals
+
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
         between the true and predicted values across the entire genome at a resolution of 25bp.
         """
         return mean_squared_error(y_pred, y_true)
+
+    def mse_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+
+        return self.mse(y_true=gt_vals, y_pred=pred_vals)
+
+    def pearson_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+
+        return self.pearson(y_true=gt_vals, y_pred=pred_vals)
+
+    def spearman_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+
+        return self.spearman(y_true=gt_vals, y_pred=pred_vals)
 
     def pearson_correlation(self, y_true, y_pred):
         """
@@ -218,34 +286,32 @@ class Evaluation: # on chr21
         """
         return spearmanr(y_pred, y_true)[0]
 
-    def mse_prom(self, y_true, y_pred):
-        """
-        Calculate the Mean Squared Error in promoter regions (MSEProm). This is a measure of the average squared 
-        difference between the true and predicted values in promoter regions defined as ±2kb from the start of GENCODEv38 annotated genes.
-        """
-        pass
+    def mse_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
-    def mse_gene(self, y_true, y_pred):
-        """
-        Calculate the Mean Squared Error in gene bodies (MSEGene). This is a measure of the average squared difference
-         between the true and predicted values in gene bodies from GENCODEv38 annotated genes.
-        """
-        pass
+        prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=prom_df)
 
-    def mse_enh(self, y_true, y_pred):
-        """
-        Calculate the Mean Squared Error in enhancer regions (MSEEnh). This is a measure of the average squared difference
-        between the true and predicted values in enhancer regions as defined by FANTOM5 annotated permissive enhancers.
-        """
-        pass
+        return self.mse(y_true=gt_vals, y_pred=pred_vals)
 
-    def weighted_mse(self, y_true, y_pred):
-        """
-        Calculate the Mean Squared Error weighted at each position by the variance of the experimental signal (Weighted MSE).
-        This is a measure of the average squared difference between the true and predicted values, where each position is 
-        weighted by its variance across experiments.
-        """
-        pass
+    def pearson_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=prom_df)
+
+        return self.pearson(y_true=gt_vals, y_pred=pred_vals)
+
+    def spearman_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=prom_df)
+
+        return self.spearman(y_true=gt_vals, y_pred=pred_vals)
 
     def mse1obs(self, y_true, y_pred):
         """
@@ -267,117 +333,29 @@ class Evaluation: # on chr21
         top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
         return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
 
-def evaluate_epidenoise(model_path, hyper_parameters_path, traindata_path, evaldata_path, outdir, batch_size=20, context_length=1600):  
-    with open(hyper_parameters_path, 'rb') as f:
-        hyper_parameters = pickle.load(f)
+    def pearson1_obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
 
-    model = load_epidenoise(model_path, hyper_parameters)
-    print(f"# model_parameters: {count_parameters(model)}")
+    def spearman1_obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
 
-    train_data = ENCODE_IMPUTATION_DATASET(traindata_path)
-    eval_data = ENCODE_IMPUTATION_DATASET(evaldata_path)
-    all_assays = train_data.all_assays
-    model.eval()  # set the model to evaluation mode
+        return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
-    # Initialize a DataFrame to store the results
-    results = []
+    def pearson1_imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
 
-    for b_e in eval_data.biosamples.keys():
-        for b_t in train_data.biosamples.keys():
-            if b_e == b_t: # id biosamples that are present at both training and eval files
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
 
-                # file path
-                f_t = train_data.biosamples[b_t]
-                f_e = eval_data.biosamples[b_e]
-                
-                x_t, missing_mask, missing_f_ind_t = train_data.get_biosample(f_t)
-                y_e, missing_mask, missing_f_ind_e = eval_data.get_biosample(f_e)
+    def spearman1_imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
 
-                del missing_mask
-
-                d_model = x_t.shape[2]
-                fmask = torch.ones(d_model, d_model)
-
-                for i in missing_f_ind_t: # input fmask
-                    fmask[i,:] = 0
-                
-                fmask = fmask.to(device)
-
-                if context_length < 8000:
-                    x_t = x_t[:, :context_length, :]
-                    y_e = y_e[:, :context_length, :]
-                
-                print(f"shape of inputs {x_t.shape}, shape of targets {y_e.shape}")
-
-                # Initialize a tensor to store all predictions
-                p = torch.empty_like(x_t, device="cpu")
-
-                # make predictions in batches
-                for i in range(0, len(x_t), batch_size):
-                    torch.cuda.empty_cache()
-                    if i/len(x_t) % 20 ==0:
-                        print(f"getting batches... {i/len(x_t):.2f}", )
-                    
-                    x_batch = x_t[i:i+batch_size]
-
-                    with torch.no_grad():
-                        # all one pmask (no position is masked)
-                        pmask = torch.ones((x_batch.shape[0], 1, 1, x_batch.shape[1]), device=device)
-                        x_batch = x_batch.to(device)
-                        outputs = model(x_batch, pmask, fmask)
-
-                    # Store the predictions in the large tensor
-                    p[i:i+batch_size, :, :] = outputs.cpu()
-                # Evaluate the model's performance on the entire tensor
-                for j in range(y_e.shape[2]):  # for each feature i.e. assay
-                    pred = p[:, :, j].numpy()
-                    metrics_list = []
-
-                    if j in missing_f_ind_t and j not in missing_f_ind_e:  # if the feature is missing in the input
-                        target = y_e[:, :, j].numpy()
-                        comparison = 'imputed'
-                    
-                    elif j not in missing_f_ind_t:
-                        target = x_t[:, :, j].numpy()
-                        comparison = 'denoised'
-
-                    else:
-                        continue
-
-                    for i in range(target.shape[0]): # for each sample
-                        metrics = evaluate(pred[i], target[i])
-                        metrics_list.append(metrics)
-
-                    metrics_mean = {k: np.mean([dic[k] for dic in metrics_list]) for k in metrics_list[0]}
-                    metrics_stderr = {k: scipy.stats.sem([dic[k] for dic in metrics_list]) for k in metrics_list[0]}
-
-                    # Add the results to the DataFrame
-                    results.append({
-                        'celltype': b_e,
-                        'feature': all_assays[j],
-                        'comparison': comparison,
-                        'PCC_mean': metrics_mean['PCC'],
-                        'PCC_stderr': metrics_stderr['PCC'],
-                        'spearman_rho_mean': metrics_mean['spearman_rho'],
-                        'spearman_rho_stderr': metrics_stderr['spearman_rho'],
-                        'MSE_mean': metrics_mean['MSE'],
-                        'MSE_stderr': metrics_stderr['MSE'],
-                        'MSE1obs_mean': metrics_mean['MSE1obs'],
-                        'MSE1obs_stderr': metrics_stderr['MSE1obs'],
-                        'MSE1imp_mean': metrics_mean['MSE1imp'],
-                        'MSE1imp_stderr': metrics_stderr['MSE1imp']
-                    })
-    
-    results = pd.DataFrame(results, columns=['celltype', 'feature', 'comparison', 'PCC_mean', 'PCC_stderr', 
-        'spearman_rho_mean', 'spearman_rho_stderr', 'MSE_mean', 'MSE_stderr', 
-        'MSE1obs_mean', 'MSE1obs_stderr', 'MSE1imp_mean', 'MSE1imp_stderr'])
-
-    # Save the DataFrame to a CSV file
-    results.to_csv(outdir, index=False)
-
-    return results
+        return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
 if __name__=="__main__":
     e = Evaluation(
