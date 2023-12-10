@@ -917,7 +917,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
 
-    n_chunks = (mask_percentage * context_length) // 6
+    n_chunks = (mask_percentage * context_length) // 4 # change it to 6 later
 
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
