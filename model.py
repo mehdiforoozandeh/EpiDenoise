@@ -922,7 +922,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.9)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -1004,17 +1004,17 @@ if __name__ == "__main__":
             "input_dim": 35,
             "dropout": 0.1,
             "nhead": 8,
-            "d_model": 128,
+            "d_model": 256,
             "nlayers": 8,
-            "epochs": 50,
+            "epochs": 20,
             "mask_percentage": 0.15,
             "chunk": True,
             "context_length": 400,
-            "batch_size": 40,
+            "batch_size": 20,
             "learning_rate": 0.001
         }
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path='models/model_checkpoint_ds_8.pth', 
-        start_ds=8)
+        checkpoint_path=None, 
+        start_ds=0)
