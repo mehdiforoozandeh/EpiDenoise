@@ -8,7 +8,6 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
-
 class Evaluation: # on chr21
     def __init__(
         self, model_path, hyper_parameters_path, 
@@ -213,20 +212,21 @@ class Evaluation: # on chr21
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
-                              names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
-        chrom_subset = gene_df[gene_df['chrom'] == chrom]
+                            names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = gene_df[gene_df['chrom'] == chrom].copy()
 
-        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
-        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset.loc[:, 'start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset.loc[:, 'end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
 
         return chrom_subset
 
     def get_prom_positions(self, chrom, bin_size):
-        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
-        chrom_subset = prom_df[prom_df['chrom'] == chrom]
+        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=None,
+                            names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = prom_df[prom_df['chrom'] == chrom].copy()
 
-        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
-        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset.loc[:, 'start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset.loc[:, 'end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
 
         return chrom_subset
 
