@@ -212,23 +212,25 @@ class Evaluation: # on chr21
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
-                            names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
-        chrom_subset = gene_df[gene_df['chrom'] == chrom].copy()
+                              names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        
+        print(gene_df)
+        exit()
+        chrom_subset = gene_df[gene_df['chrom'] == chrom]
 
-        chrom_subset.loc[:, 'start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
-        chrom_subset.loc[:, 'end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
-
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s)))
         return chrom_subset
 
     def get_prom_positions(self, chrom, bin_size):
-        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=None,
-                            names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
-        chrom_subset = prom_df[prom_df['chrom'] == chrom].copy()
+        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = prom_df[prom_df['chrom'] == chrom]
 
-        chrom_subset.loc[:, 'start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
-        chrom_subset.loc[:, 'end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
 
         return chrom_subset
+
 
     def get_signals(self, array, df):
         signals = []
@@ -301,11 +303,6 @@ class Evaluation: # on chr21
         prom_df = self.get_prom_positions(chrom, bin_size)
         gt_vals = self.get_signals(array=y_true, df=prom_df)
         pred_vals = self.get_signals(array=y_pred, df=prom_df)
-
-        print(prom_df)
-        print(gt_vals)
-        print(pred_vals)
-        exit()
 
         return self.pearson(y_true=gt_vals, y_pred=pred_vals)
 
