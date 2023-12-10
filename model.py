@@ -1004,38 +1004,41 @@ def predict(model, data, fmask, pmask):
 # Calling the main function
 if __name__ == "__main__":
 
-    # hyper_parameters = {
-        #     "data_path": "/project/compbio-lab/EIC/training_data/",
-        #     # "data_path": "data/test",
-        #     "input_dim": 35,
-        #     "dropout": 0.1,
-        #     "nhead": 8,
-        #     "d_model": 128,
-        #     "nlayers": 8,
-        #     "epochs": 20,
-        #     "mask_percentage": 0.15,
-        #     "chunk": True,
-        #     "context_length": 400,
-        #     "batch_size": 40,
-        #     "learning_rate": 0.001
-        # }
-
-        hyper_parameters = {
+    # EPIDENOISE-LARGE
+    hyper_parameters = {
             "data_path": "/project/compbio-lab/EIC/training_data/",
             "input_dim": 35,
             "dropout": 0.1,
-            "nhead": 4,
-            "d_model": 64,
-            "nlayers": 2,
+            "nhead": 16,
+            "d_model": 256,
+            "nlayers": 8,
             "epochs": 20,
             "mask_percentage": 0.15,
             "chunk": True,
-            "context_length": 1600,
-            "batch_size": 30,
+            "context_length": 400,
+            "batch_size": 20,
             "learning_rate": 0.01
         }
 
-        train_epidenoise(
-            hyper_parameters, 
-            checkpoint_path=None, 
-            start_ds=0)
+
+    # EPIDENOISE-SMALL
+
+    # hyper_parameters = {
+    #     "data_path": "/project/compbio-lab/EIC/training_data/",
+    #     "input_dim": 35,
+    #     "dropout": 0.1,
+    #     "nhead": 4,
+    #     "d_model": 64,
+    #     "nlayers": 2,
+    #     "epochs": 20,
+    #     "mask_percentage": 0.15,
+    #     "chunk": True,
+    #     "context_length": 1600,
+    #     "batch_size": 30,
+    #     "learning_rate": 0.01
+    # }
+
+    train_epidenoise(
+        hyper_parameters, 
+        checkpoint_path=None, 
+        start_ds=0)
