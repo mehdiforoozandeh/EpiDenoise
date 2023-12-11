@@ -1033,7 +1033,7 @@ if __name__ == "__main__":
         "epochs": 20,
         "mask_percentage": 0.15,
         "chunk": True,
-        "context_length": 1200,
+        "context_length": 800,
         "batch_size": 40,
         "learning_rate": 0.05
     }
