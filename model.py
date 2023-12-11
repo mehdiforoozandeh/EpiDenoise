@@ -1033,9 +1033,9 @@ if __name__ == "__main__":
         "epochs": 20,
         "mask_percentage": 0.15,
         "chunk": True,
-        "context_length": 1600,
-        "batch_size": 30,
-        "learning_rate": 0.01
+        "context_length": 1200,
+        "batch_size": 40,
+        "learning_rate": 0.05
     }
 
     train_epidenoise(
