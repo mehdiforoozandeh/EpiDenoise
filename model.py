@@ -1030,12 +1030,12 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 2,
-        "epochs": 20,
+        "epochs": 25,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 800,
-        "batch_size": 40,
-        "learning_rate": 0.05
+        "batch_size": 50,
+        "learning_rate": 0.01
     }
 
     train_epidenoise(
