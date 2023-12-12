@@ -124,7 +124,6 @@ class Evaluation: # on chr21
         
         if self.is_arcsin:
             X = torch.arcsinh_(X)
-            Y = torch.arcsinh_(Y)
 
         X = X.view(-1, context_length, X.shape[-1])
         Y = Y.view(-1, context_length, Y.shape[-1])
@@ -157,6 +156,10 @@ class Evaluation: # on chr21
         P = P.view((P.shape[0] * context_length), P.shape[-1]) # preds
         Y = Y.view((Y.shape[0] * context_length), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * context_length), X.shape[-1]) # train data
+
+        if self.is_arcsin:
+            P = torch.sinh_(P)
+            X = torch.sinh_(X)
 
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
