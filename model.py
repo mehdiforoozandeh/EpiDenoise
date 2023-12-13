@@ -1004,39 +1004,39 @@ def predict(model, data, fmask, pmask):
 if __name__ == "__main__":
 
     # EPIDENOISE-LARGE
-    hyper_parameters = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
-            "input_dim": 35,
-            "dropout": 0.1,
-            "nhead": 8,
-            "d_model": 128,
-            "nlayers": 4,
-            "epochs": 20,
-            "mask_percentage": 0.15,
-            "chunk": True,
-            "context_length": 400,
-            "batch_size": 80,
-            "learning_rate": 0.01
-        }
-
-
-    # EPIDENOISE-SMALL
     # hyper_parameters = {
-    #     "data_path": "/project/compbio-lab/EIC/training_data/",
-    #     "input_dim": 35,
-    #     "dropout": 0.1,
-    #     "nhead": 4,
-    #     "d_model": 64,
-    #     "nlayers": 2,
-    #     "epochs": 25,
-    #     "mask_percentage": 0.15,
-    #     "chunk": True,
-    #     "context_length": 800,
-    #     "batch_size": 50,
-    #     "learning_rate": 0.01
-    # }
+    #         "data_path": "/project/compbio-lab/EIC/training_data/",
+    #         "input_dim": 35,
+    #         "dropout": 0.1,
+    #         "nhead": 8,
+    #         "d_model": 128,
+    #         "nlayers": 4,
+    #         "epochs": 20,
+    #         "mask_percentage": 0.15,
+    #         "chunk": True,
+    #         "context_length": 400,
+    #         "batch_size": 80,
+    #         "learning_rate": 0.01
+    #     }
+
+
+    EPIDENOISE-SMALL
+    hyper_parameters = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.1,
+        "nhead": 4,
+        "d_model": 64,
+        "nlayers": 2,
+        "epochs": 25,
+        "mask_percentage": 0.15,
+        "chunk": True,
+        "context_length": 800,
+        "batch_size": 50,
+        "learning_rate": 0.005
+    }
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path="models/EpiDenoise_20231212003938_params1000483.pt", 
+        checkpoint_path="models/EpiDenoise_20231211135823_params154531.pt", 
         start_ds=0)
