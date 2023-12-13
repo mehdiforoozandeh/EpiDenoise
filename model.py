@@ -1020,7 +1020,7 @@ if __name__ == "__main__":
     #     }
 
 
-    EPIDENOISE-SMALL
+    # EPIDENOISE-SMALL
     hyper_parameters = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
