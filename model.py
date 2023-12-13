@@ -1028,7 +1028,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 2,
-        "epochs": 25,
+        "epochs": 30,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
@@ -1038,5 +1038,5 @@ if __name__ == "__main__":
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path="models/EpiDenoise_20231211135823_params154531.pt", 
+        checkpoint_path="models/EpiDenoise_20231210014829_params154531.pt", 
         start_ds=0)
