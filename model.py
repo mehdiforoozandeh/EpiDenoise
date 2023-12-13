@@ -1038,5 +1038,5 @@ if __name__ == "__main__":
 
     train_epidenoise(
         hyper_parameters, 
-        checkpoint_path=None, 
+        checkpoint_path="models/EpiDenoise_20231212003938_params1000483.pt", 
         start_ds=0)
