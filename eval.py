@@ -369,15 +369,16 @@ def eDICE_eval():
         name = pf.replace(".pkl","")
         assay = name[3:]
         ct = name[:3]
+        print(ct, assay)
 
         with open(preds_dir + pf, 'rb') as pf_file:
             pred = pickle.load(pf_file)
         
-        if pf in os.listdir(obs_dir1):
+        if pf.replace(".pkl", ".bigwig") in os.listdir(obs_dir1):
             target = torch.load(obs_dir1 + f"/{ct}_chr21_25.pt")
             target = target[:, int(assay.replace("M", "")) - 1].numpy()
 
-        elif pf in os.listdir(obs_dir2):
+        elif pf.replace(".pkl", ".bigwig") in os.listdir(obs_dir2):
             target = torch.load(obs_dir2 + f"/{ct}_chr21_25.pt")
             target = target[:, int(assay.replace("M", "")) - 1].numpy()
 
