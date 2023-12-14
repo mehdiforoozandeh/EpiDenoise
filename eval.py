@@ -383,6 +383,7 @@ def eDICE_eval():
 
         with open(preds_dir + pf, 'rb') as pf_file:
             pred = pickle.load(pf_file)
+            pred = np.sinh(pred)
         
         if pf.replace(".pkl", ".bigwig") in os.listdir(obs_dir1):
             target = torch.load(obs_dir1 + f"/{ct}_chr21_25.pt")
