@@ -361,9 +361,19 @@ class Evaluation: # on chr21
 
 
 def eDICE_eval():
+    e = Evaluation(
+        model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
+        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=True
+    )
+
     preds_dir = "/project/compbio-lab/EIC/mehdi_preds/scratch/"
     obs_dir1 = "/project/compbio-lab/EIC/validation_data/"
     obs_dir2 = "/project/compbio-lab/EIC/blind_data/"
+
+    results = []
 
     for pf in os.listdir(preds_dir):
         name = pf.replace(".pkl","")
@@ -383,7 +393,34 @@ def eDICE_eval():
             target = target[:, int(assay.replace("M", "")) - 1].numpy()
 
         print(pf, target.sum(), pred.sum())
+        metrics = {
+                'celltype': ct,
+                'feature': assay,
+
+                'MSE-GW': e.mse(target, pred),
+                'Pearson-GW': e.pearson(target, pred),
+                'Spearman-GW': e.spearman(target, pred),
+
+                'MSE-1obs': e.mse1obs(target, pred),
+                'Pearson_1obs': e.pearson1_obs(target, pred),
+                'Spearman_1obs': e.spearman1_obs(target, pred),
+
+                'MSE-1imp': e.mse1imp(target, pred),
+                'Pearson_1imp': e.pearson1_imp(target, pred),
+                'Spearman_1imp': e.spearman1_imp(target, pred),
+
+                'MSE-gene': e.mse_gene(target, pred),
+                'Pearson_gene': e.pearson_gene(target, pred),
+                'Spearman_gene': e.spearman_gene(target, pred),
+
+                'MSE-prom': e.mse_prom(target, pred),
+                'Pearson_prom': e.pearson_prom(target, pred),
+                'Spearman_prom': e.spearman_prom(target, pred),
+            }
         
+        results.append(metrics)
+        results.to_csv("eDICE.results", index=False)
+    
 
 if __name__=="__main__":
     eDICE_eval()
