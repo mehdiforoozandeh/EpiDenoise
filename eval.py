@@ -370,7 +370,7 @@ def eDICE_eval():
         assay = name[3:]
         ct = name[:3]
 
-        with open(pf, 'rb') as pf_file:
+        with open(preds_dir + pf, 'rb') as pf_file:
             pred = pickle.load(pf_file)
         
         if pf in os.listdir(obs_dir1):
