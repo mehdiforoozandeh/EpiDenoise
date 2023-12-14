@@ -360,20 +360,38 @@ class Evaluation: # on chr21
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
 if __name__=="__main__":
+    # e = Evaluation(
+    #     model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
+    #     hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
+    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+    #     is_arcsin=False
+    # )
+    # e.evaluate_model("eval_small_model_L400.csv")
+
+    # e = Evaluation(
+    #     model_path= "models/EpiDenoise_20231212191632_params154531.pt", 
+    #     hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231212191632_params154531.pkl", 
+    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/",
+    #     is_arcsin=True
+    # )
+    # e.evaluate_model("eval_small_model_L800.csv")
+
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
         hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        evaldata_path="/project/compbio-lab/EIC/blind_data/", 
         is_arcsin=False
     )
-    e.evaluate_model("eval_small_model_L400.csv")
+    e.evaluate_model("eval_small_model_L400_blind.csv")
 
     e = Evaluation(
         model_path= "models/EpiDenoise_20231212191632_params154531.pt", 
         hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231212191632_params154531.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/",
+        evaldata_path="/project/compbio-lab/EIC/blind_data/",
         is_arcsin=True
     )
-    e.evaluate_model("eval_small_model_L800.csv")
+    e.evaluate_model("eval_small_model_L800_blind.csv")
