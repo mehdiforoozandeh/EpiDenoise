@@ -359,7 +359,34 @@ class Evaluation: # on chr21
 
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
+
+def eDICE_eval():
+    preds_dir = "/project/compbio-lab/EIC/mehdi_preds/scratch/"
+    obs_dir1 = "/project/compbio-lab/EIC/validation_data/"
+    obs_dir2 = "/project/compbio-lab/EIC/blind_data/"
+
+    for pf in os.listdir(preds_dir):
+        name = pf.replace(".pkl","")
+        assay = name[3:]
+        ct = name[:3]
+
+        with open(pf, 'rb') as pf_file:
+            pred = pickle.load(pf_file)
+        
+        if pf in os.listdir(obs_dir1):
+            target = torch.load(obs_dir1 + f"/{ct}_chr21_25.pt")
+            target = target[:, int(assay.replace("M", "")) - 1].numpy()
+
+        elif pf in os.listdir(obs_dir2):
+            target = torch.load(obs_dir2 + f"/{ct}_chr21_25.pt")
+            target = target[:, int(assay.replace("M", "")) - 1].numpy()
+
+        print(pf, target.sum(), pred.sum())
+        
+
 if __name__=="__main__":
+    eDICE_eval()
+    exit()
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
         hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
