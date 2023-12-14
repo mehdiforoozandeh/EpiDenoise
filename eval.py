@@ -418,8 +418,11 @@ def eDICE_eval():
                 'Spearman_prom': e.spearman_prom(target, pred),
             }
         
+
         results.append(metrics)
-        results.to_csv("eDICE.results", index=False)
+
+    results = pd.DataFrame(results)
+    results.to_csv("eDICE_results.csv", index=False)
     
 
 if __name__=="__main__":
