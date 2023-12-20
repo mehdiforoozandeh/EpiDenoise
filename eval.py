@@ -359,7 +359,6 @@ class Evaluation: # on chr21
 
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
-
 def eDICE_eval():
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
