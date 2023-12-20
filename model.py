@@ -74,7 +74,7 @@ class EpiDenoise(nn.Module):
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-        # self.decoder = nn.Linear(d_model, output_dim)
+        self.decoder = nn.Linear(d_model, output_dim)
         
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
@@ -83,7 +83,7 @@ class EpiDenoise(nn.Module):
 
         print(src.shape)
         src = self.transformer_encoder(src)#, src_key_padding_mask=pmask) 
-        # src = self.decoder(src)
+        src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
         print(src.shape)
         return src
