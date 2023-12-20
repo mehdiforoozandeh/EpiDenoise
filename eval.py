@@ -426,8 +426,8 @@ def eDICE_eval():
     results.to_csv("eDICE_results.csv", index=False)
     
 if __name__=="__main__":
-    eDICE_eval()
-    exit()
+    # eDICE_eval()
+    # exit()
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
         hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
