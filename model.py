@@ -72,7 +72,7 @@ class MaskedLinear(nn.Module):
 
 class EpiDenoise10(nn.Module): 
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
-        super(EpiDenoise, self).__init__()
+        super(EpiDenoise10, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
         self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
@@ -101,7 +101,7 @@ class EpiDenoise15(nn.Module):
     """
 
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
-        super(EpiDenoise, self).__init__()
+        super(EpiDenoise15, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
         self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
