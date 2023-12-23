@@ -23,7 +23,8 @@ class Evaluation: # on chr21
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        self.model = load_epidenoise(model_path, self.hyper_parameters)
+        loader = MODEL_LOADER(model_path, self.hyper_parameters)
+        self.model = loader.load_epidenoise10()
         print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]

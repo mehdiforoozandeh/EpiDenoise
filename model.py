@@ -6,8 +6,12 @@ from data import ENCODE_IMPUTATION_DATASET
 import torch.nn.functional as F
 import pandas as pd
 import numpy as np
-
+from _utils import *
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
+#========================================================================================================#
+#===========================================building blocks==============================================#
+#========================================================================================================#
 
 class RelativePositionalEncoder(nn.Module):
     def __init__(self, emb_dim, max_position=512):
@@ -47,7 +51,6 @@ class PositionalEncoding(nn.Module):
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
-#________________________________________________________________________________________________________________________#
 class MaskedLinear(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MaskedLinear, self).__init__()
@@ -63,9 +66,11 @@ class MaskedLinear(nn.Module):
         output = torch.matmul(x, masked_weight) + self.bias
         return output
 
-#________________________________________________________________________________________________________________________#
+#========================================================================================================#
+#=======================================EpiDenoise Versions==============================================#
+#========================================================================================================#
 
-class EpiDenoise(nn.Module): 
+class EpiDenoise10(nn.Module): 
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise, self).__init__()
         
@@ -80,204 +85,191 @@ class EpiDenoise(nn.Module):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         src = self.pos_encoder(src)
-
-        print(src.shape)
-        src = self.transformer_encoder(src)#, src_key_padding_mask=pmask) 
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
-        print(src.shape)
         return src
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+class EpiDenoise15(nn.Module):
+    """
+    updates since EpiDenoise1.0:
+        1. add CLS and SEP tokens
+        2. segment adjacency:
+            - add segment encodings
+            - custom loss function (masking + segment adjacency)
+        3. dynamic masking chunks (gradually increasing)
+    """
 
-def reshape_tensor(tensor, context_length_factor):
-    # Get the original size of the tensor
-    samples, seq_length, features = tensor.size()
-
-    # Calculate the new sequence length and number of samples
-    new_seq_length = int(seq_length * context_length_factor)
-    new_samples = int(samples / context_length_factor)
-
-    # Check if the new sequence length is valid
-    if seq_length % new_seq_length != 0:
-        raise ValueError("The context_length_factor does not evenly divide the sequence length")
-
-    # Reshape the tensor
-    reshaped_tensor = tensor.view(new_samples, new_seq_length, features)
-
-    return reshaped_tensor
-
-# Function to mask a certain percentage of the data
-def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
-    # Initialize a mask tensor with the same shape as the data tensor, filled with False
-    mask = torch.zeros_like(data, dtype=torch.bool)
-    seq_len = data.size(1)
-    
-    if chunk:
-        # Calculate the size of each chunk
-        chunk_size = int(mask_percentage * seq_len / n_chunks)
-    else: 
-        chunk_size = 1
-        n_chunks =  int(mask_percentage * seq_len)
-
-    # Initialize an empty list to store the start indices
-    start_indices = []
-    while len(start_indices) < n_chunks:
-        # Generate a random start index
-        start = torch.randint(0, seq_len - chunk_size, (1,))
-        # Check if the chunk overlaps with any existing chunks
-        if not any(start <= idx + chunk_size and start + chunk_size >= idx for idx in start_indices):
-            # If not, add the start index to the list
-            start_indices.append(start.item())
-
-    # Loop over the start indices
-    for start in start_indices:
-        # Calculate the end index for the current chunk
-        end = start + chunk_size
-        # Set the mask values for the current chunk to True
-        mask[:, start:end, :] = True
-
-    # Create a copy of the data tensor
-    masked_data = data.clone()
-    # Set the masked data values to the mask_value
-    masked_data[mask] = mask_value
-    # Return the masked data and the mask
-
-    return masked_data, mask#[:,:,0]
-
-def sequence_pad(data, max_length, pad_value=-1):
-    # Get the original dimensions of the data
-    original_size = data.size()
-    
-    # Create a tensor filled with the pad value with the desired size
-    padded_data = torch.full((original_size[0], max_length, original_size[2]), pad_value)
-    
-    # Copy the original data into the padded data tensor
-    padded_data[:, :original_size[1], :] = data
-    
-    # Create a boolean mask indicating whether each value is padded or not
-    pad_mask = padded_data == pad_value
-    
-    return padded_data, pad_mask
-
-def train_model(
-    model, dataset, criterion, optimizer, d_model, scheduler, arcsinh_transform=True,
-    num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
-    context_length=2000, batch_size=100, start_ds=0):
-    
-    log_strs = []
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    print(device)
-
-    # model.to(device)
-    log_strs.append(str(device))
-    log_strs.append(f"# model_parameters: {count_parameters(model)}")
-    logfile = open("models/log.txt", "w")
-    logfile.write("\n".join(log_strs))
-    logfile.close()
-
-    ds=0
-    # Define your batch size
-    for ds_path in dataset.preprocessed_datasets:
-        ds+=1
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
+        super(EpiDenoise, self).__init__()
         
-        if ds < start_ds:
-            continue
+        self.masked_linear = MaskedLinear(input_dim, d_model)
+        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.decoder = nn.Linear(d_model, output_dim)
         
-        print('-_-' * 10)
-        x, missing_mask, missing_f_pattern = dataset.get_dataset_pt(ds_path)
-        num_features = x.shape[2]
+    def forward(self, src, pmask, fmask):
+        src = self.masked_linear(src, fmask)
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = self.pos_encoder(src)
+        src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
+        src = self.decoder(src)
+        src = torch.permute(src, (1, 0, 2))
+        return src
 
-        if arcsinh_transform:
-            x = torch.arcsinh_(x)
+#========================================================================================================#
+#=========================================Pretraining====================================================#
+#========================================================================================================#
+
+class PRE_TRAINER(object):
+    def __init__(self, model, dataset, criterion, optimizer, scheduler):
         
-        for epoch in range(0, num_epochs):
-            print('-' * 10)
-            print(f'Epoch {epoch+1}/{num_epochs}')
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print(self.device)
 
-            # zero grads before going over all batches and all patterns of missing data
-            optimizer.zero_grad()
-            epoch_loss = []
-            t0 = datetime.now()
+        self.model = model.to(self.device)
+        self.dataset = dataset
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+    
+    def pretrain_epidenoise_10(self, 
+        d_model, outer_loop_epochs=1, arcsinh_transform=True,
+        num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
+        context_length=2000, batch_size=100, start_ds=0):
 
-            
-            p = 0
-            for pattern, indices in missing_f_pattern.items():
-                p += 1
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
+        logfile = open("models/log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
 
-                pattern_batch = x[indices]
-                missing_mask_patten_batch = missing_mask[indices]
-                fmask = torch.ones(num_features, d_model)
+        for ole in range(outer_loop_epochs):
+            ds=0
 
-                for i in pattern:
-                    fmask[i,:] = 0
-
-                fmask = fmask.to(device)
-
-                # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
-
-                if context_length < pattern_batch.shape[1]:
-                    context_length_factor = context_length / pattern_batch.shape[1]
-
-                    pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
-                    missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
-
-                # Break down x into smaller batches
-                for i in range(0, len(pattern_batch), batch_size):
-                    torch.cuda.empty_cache()
-                    
-                    x_batch = pattern_batch[i:i+batch_size]
-                    missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
-
-                    # Masking a subset of the input data
-                    masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-                    pmask = cloze_mask[:,:,0].squeeze()
-
-                    cloze_mask = cloze_mask & ~missing_mask_batch
-                    x_batch = x_batch.to(device)
-                    masked_x_batch = masked_x_batch.to(device)
-                    pmask = pmask.to(device)
-                    cloze_mask = cloze_mask.to(device)
-
-                    outputs = model(masked_x_batch, pmask, fmask)
-                    loss = criterion(outputs[cloze_mask], x_batch[cloze_mask])
-
-                    mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
-                    mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
-
-                    if torch.isnan(loss).sum() > 0:
-                        skipmessage = "Encountered nan loss! Skipping batch..."
-                        log_strs.append(skipmessage)
-                        print(skipmessage)
-                        del x_batch
-                        del pmask
-                        del masked_x_batch
-                        del outputs
-                        torch.cuda.empty_cache()
-                        continue
-
-                    del x_batch
-                    del pmask
-                    del masked_x_batch
-                    del outputs
-                    epoch_loss.append(loss.item())
-
-                    # Clear GPU memory again
-                    torch.cuda.empty_cache()
-
-                    loss.backward()  
+            for ds_path in self.dataset.preprocessed_datasets:
+                ds+=1
                 
-                if p%8 == 0:
+                if ds < start_ds:
+                    continue
+                
+                print('-_-' * 10)
+                x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
+                num_features = x.shape[2]
+
+                if arcsinh_transform:
+                    x = torch.arcsinh_(x)
+                
+                for epoch in range(0, num_epochs):
+                    print('-' * 10)
+                    print(f'Epoch {epoch+1}/{num_epochs}')
+
+                    # zero grads before going over all batches and all patterns of missing data
+                    self.optimizer.zero_grad()
+                    epoch_loss = []
+                    t0 = datetime.now()
+
+                    p = 0
+                    for pattern, indices in missing_f_pattern.items():
+                        p += 1
+
+                        pattern_batch = x[indices]
+                        missing_mask_patten_batch = missing_mask[indices]
+                        fmask = torch.ones(num_features, d_model)
+
+                        for i in pattern:
+                            fmask[i,:] = 0
+
+                        fmask = fmask.to(device)
+
+                        # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
+
+                        if context_length < pattern_batch.shape[1]:
+                            context_length_factor = context_length / pattern_batch.shape[1]
+
+                            pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
+                            missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
+
+                        # Break down x into smaller batches
+                        for i in range(0, len(pattern_batch), batch_size):
+                            torch.cuda.empty_cache()
+                            
+                            x_batch = pattern_batch[i:i+batch_size]
+                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+
+                            # Masking a subset of the input data
+                            masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                            
+                            pmask = cloze_mask[:,:,0].squeeze()
+                            pmask = pmask.to(device)
+
+                            cloze_mask = cloze_mask & ~missing_mask_batch
+                            x_batch = x_batch.to(device)
+
+                            masked_x_batch = masked_x_batch.to(device)
+                            cloze_mask = cloze_mask.to(device)
+
+                            outputs = self.model(masked_x_batch, pmask, fmask)
+                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask])
+
+                            mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
+                            mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
+
+                            if torch.isnan(loss).sum() > 0:
+                                skipmessage = "Encountered nan loss! Skipping batch..."
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
+                                del x_batch
+                                del pmask
+                                del masked_x_batch
+                                del outputs
+                                torch.cuda.empty_cache()
+                                continue
+
+                            del x_batch
+                            del pmask
+                            del masked_x_batch
+                            del outputs
+                            epoch_loss.append(loss.item())
+
+                            # Clear GPU memory again
+                            torch.cuda.empty_cache()
+
+                            loss.backward()  
+                        
+                        if p%8 == 0:
+                            logfile = open("models/log.txt", "w")
+
+                            logstr = [
+                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                                f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
+                                f"Loss: {loss.item():.4f}", 
+                                f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                                f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                                ]
+                            logstr = " | ".join(logstr)
+
+                            log_strs.append(logstr)
+                            logfile.write("\n".join(log_strs))
+                            logfile.close()
+                            print(logstr)
+                        
+                    # update parameters over all batches and all patterns of missing data
+                    self.optimizer.step()
+                    self.scheduler.step()
+
+                    t1 = datetime.now()
                     logfile = open("models/log.txt", "w")
 
                     logstr = [
-                        f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
-                        f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                        f"Loss: {loss.item():.4f}", 
-                        f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
-                        f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        f'Epoch {epoch+1}/{num_epochs}', 
+                        f"Epoch Loss Mean: {np.mean(epoch_loss)}", 
+                        f"Epoch Loss std: {np.std(epoch_loss)}",
+                        f"Epoch took: {t1 - t0}"
                         ]
                     logstr = " | ".join(logstr)
 
@@ -285,37 +277,39 @@ def train_model(
                     logfile.write("\n".join(log_strs))
                     logfile.close()
                     print(logstr)
-                
-            # update parameters over all batches and all patterns of missing data
-            optimizer.step()
-            scheduler.step()
 
-            t1 = datetime.now()
-            logfile = open("models/log.txt", "w")
+                # Save the model after each dataset
+                try:
+                    torch.save(self.model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
+                except:
+                    pass
 
-            logstr = [
-                f"DataSet #{ds}/{len(dataset.preprocessed_datasets)}", 
-                f'Epoch {epoch+1}/{num_epochs}', 
-                f"Epoch Loss Mean: {np.mean(epoch_loss)}", 
-                f"Epoch Loss std: {np.std(epoch_loss)}",
-                f"Epoch took: {t1 - t0}"
-                ]
-            logstr = " | ".join(logstr)
+        return self.model
 
-            log_strs.append(logstr)
-            logfile.write("\n".join(log_strs))
-            logfile.close()
-            print(logstr)
+class MODEL_LOADER(object):
+    def __init__(self, model_path, hyper_parameters):
+        self.model_path = model_path
+        self.hyper_parameters = hyper_parameters
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        # Save the model after each dataset
-        try:
-            torch.save(model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
-        except:
-            pass
+    def load_epidenoise10(self):
+        input_dim = output_dim = self.hyper_parameters["input_dim"]
+        dropout = self.hyper_parameters["dropout"]
+        nhead = self.hyper_parameters["nhead"]
+        d_model = self.hyper_parameters["d_model"]
+        nlayers = self.hyper_parameters["nlayers"]
+        context_length = self.hyper_parameters["context_length"]
+        
+        # Assuming model is an instance of the correct class
+        model = EpiDenoise10(
+            input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+            output_dim=output_dim, dropout=dropout, context_length=context_length)
 
-    return model
+        model.load_state_dict(torch.load(self.model_path))
+        model = model.to(self.device)
+        return model
 
-def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
+def train_epidenoise10(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     # Defining the hyperparameters
     data_path = hyper_parameters["data_path"]
@@ -338,7 +332,7 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     learning_rate = hyper_parameters["learning_rate"]
     # end of hyperparameters
 
-    model = EpiDenoise(
+    model = EpiDenoise10(
         input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
@@ -362,10 +356,12 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
     criterion = nn.MSELoss()
 
     start_time = time.time()
-    model = train_model(
-        model, dataset, criterion, optimizer, scheduler=scheduler, d_model=d_model, num_epochs=epochs, 
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epidenoise_10(d_model=d_model, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
         context_length=context_length, batch_size=batch_size, start_ds=start_ds)
+
     end_time = time.time()
 
     # Save the trained model
@@ -387,38 +383,8 @@ def train_epidenoise(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     return model
 
-def load_epidenoise(model_path, hyper_parameters):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    input_dim = output_dim = hyper_parameters["input_dim"]
-    dropout = hyper_parameters["dropout"]
-    nhead = hyper_parameters["nhead"]
-    d_model = hyper_parameters["d_model"]
-    nlayers = hyper_parameters["nlayers"]
-    context_length = hyper_parameters["context_length"]
-    
-    # Assuming model is an instance of the correct class
-    model = EpiDenoise(
-        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
-        output_dim=output_dim, dropout=dropout, context_length=context_length)
-
-    model.load_state_dict(torch.load(model_path))
-    model = model.to(device)
-        
-    return model
-
-def predict(model, data, fmask, pmask):
-    model.eval()  # set the model to evaluation mode
-    
-    with torch.no_grad():
-        input_data = input_data.to(device)
-        predictions = model(input_data, fmask, pmask)
-        
-    return predictions
-
-# Calling the main function
 if __name__ == "__main__":
-    # EPIDENOISE-LARGE
+    # EPIDENOISE_1.0-LARGE
     hyper_parameters_large = {
             "data_path": "/project/compbio-lab/EIC/training_data/",
             "input_dim": 35,
@@ -434,7 +400,7 @@ if __name__ == "__main__":
             "learning_rate": 0.01
         }
 
-    # EPIDENOISE-SMALL
+    # EPIDENOISE_1.0-SMALL
     hyper_parameters_small = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
@@ -450,7 +416,7 @@ if __name__ == "__main__":
         "learning_rate": 0.005
     }
 
-    train_epidenoise(
+    train_epidenoise10(
         hyper_parameters_small, 
         checkpoint_path=None, 
         start_ds=0)

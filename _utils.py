@@ -7,6 +7,80 @@ import torch
 
 random.seed(73)
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+def reshape_tensor(tensor, context_length_factor):
+    # Get the original size of the tensor
+    samples, seq_length, features = tensor.size()
+
+    # Calculate the new sequence length and number of samples
+    new_seq_length = int(seq_length * context_length_factor)
+    new_samples = int(samples / context_length_factor)
+
+    # Check if the new sequence length is valid
+    if seq_length % new_seq_length != 0:
+        raise ValueError("The context_length_factor does not evenly divide the sequence length")
+
+    # Reshape the tensor
+    reshaped_tensor = tensor.view(new_samples, new_seq_length, features)
+
+    return reshaped_tensor
+
+# Function to mask a certain percentage of the data
+def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    seq_len = data.size(1)
+    
+    if chunk:
+        # Calculate the size of each chunk
+        chunk_size = int(mask_percentage * seq_len / n_chunks)
+    else: 
+        chunk_size = 1
+        n_chunks =  int(mask_percentage * seq_len)
+
+    # Initialize an empty list to store the start indices
+    start_indices = []
+    while len(start_indices) < n_chunks:
+        # Generate a random start index
+        start = torch.randint(0, seq_len - chunk_size, (1,))
+        # Check if the chunk overlaps with any existing chunks
+        if not any(start <= idx + chunk_size and start + chunk_size >= idx for idx in start_indices):
+            # If not, add the start index to the list
+            start_indices.append(start.item())
+
+    # Loop over the start indices
+    for start in start_indices:
+        # Calculate the end index for the current chunk
+        end = start + chunk_size
+        # Set the mask values for the current chunk to True
+        mask[:, start:end, :] = True
+
+    # Create a copy of the data tensor
+    masked_data = data.clone()
+    # Set the masked data values to the mask_value
+    masked_data[mask] = mask_value
+    # Return the masked data and the mask
+
+    return masked_data, mask#[:,:,0]
+
+def sequence_pad(data, max_length, pad_value=-1):
+    # Get the original dimensions of the data
+    original_size = data.size()
+    
+    # Create a tensor filled with the pad value with the desired size
+    padded_data = torch.full((original_size[0], max_length, original_size[2]), pad_value)
+    
+    # Copy the original data into the padded data tensor
+    padded_data[:, :original_size[1], :] = data
+    
+    # Create a boolean mask indicating whether each value is padded or not
+    pad_mask = padded_data == pad_value
+    
+    return padded_data, pad_mask
+
+
 def get_bin_value(input_dict):
     if input_dict["bw_obj"] == False:
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
@@ -485,6 +559,8 @@ class augment(object):
 
     def random_gaussian(self):
         pass
+
+
 
 if __name__ == "__main__":
     # solar_path = "/project/compbio-lab/EIC/"
