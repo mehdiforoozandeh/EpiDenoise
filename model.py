@@ -184,7 +184,7 @@ class PRE_TRAINER(object):
                         for i in pattern:
                             fmask[i,:] = 0
 
-                        fmask = fmask.to(device)
+                        fmask = fmask.to(self.device)
 
                         # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
@@ -205,13 +205,13 @@ class PRE_TRAINER(object):
                             masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
                             pmask = cloze_mask[:,:,0].squeeze()
-                            pmask = pmask.to(device)
+                            pmask = pmask.to(self.device)
 
                             cloze_mask = cloze_mask & ~missing_mask_batch
-                            x_batch = x_batch.to(device)
+                            x_batch = x_batch.to(self.device)
 
-                            masked_x_batch = masked_x_batch.to(device)
-                            cloze_mask = cloze_mask.to(device)
+                            masked_x_batch = masked_x_batch.to(self.device)
+                            cloze_mask = cloze_mask.to(self.device)
 
                             outputs = self.model(masked_x_batch, pmask, fmask)
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask])
