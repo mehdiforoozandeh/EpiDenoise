@@ -1,5 +1,4 @@
 import torch, math, random, time, json, os, pickle
-from datetime import datetime
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
@@ -7,6 +6,8 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 from _utils import *
+from datetime import datetime
+
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
 #========================================================================================================#
