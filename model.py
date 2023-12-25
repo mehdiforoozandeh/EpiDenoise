@@ -52,8 +52,22 @@ class PositionalEncoding(nn.Module):
          x = x + self.pe[:x.size(0)]
          return self.dropout(x)
 
+class MaskedLinear(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(MaskedLinear, self).__init__()
+        self.weights = nn.Parameter(torch.Tensor(input_dim, output_dim))
+        self.bias = nn.Parameter(torch.Tensor(output_dim))
 
-# class PositionalEncoding(nn.Module):
+        # Xavier initialization
+        nn.init.xavier_uniform_(self.weights)
+        nn.init.zeros_(self.bias)
+
+    def forward(self, x, mask):
+        masked_weight = self.weights * mask
+        output = torch.matmul(x, masked_weight) + self.bias
+        return output
+
+# class PositionalEmbedding(nn.Module):
 
 #     def __init__(self, d_model, max_len=128):
 #         super().__init__()
@@ -77,23 +91,8 @@ class PositionalEncoding(nn.Module):
 #     def forward(self, x):
 #         return self.pe
 
-class MaskedLinear(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        super(MaskedLinear, self).__init__()
-        self.weights = nn.Parameter(torch.Tensor(input_dim, output_dim))
-        self.bias = nn.Parameter(torch.Tensor(output_dim))
-
-        # Xavier initialization
-        nn.init.xavier_uniform_(self.weights)
-        nn.init.zeros_(self.bias)
-
-    def forward(self, x, mask):
-        masked_weight = self.weights * mask
-        output = torch.matmul(x, masked_weight) + self.bias
-        return output
-
-# class BERTEmbedding():
-#     pass
+class ComboEmbedding():
+    pass
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -104,7 +103,8 @@ class EpiDenoise10(nn.Module):
         super(EpiDenoise10, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        # self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = RelativePositionalEncoder(d_model=d_model, max_position=context_length)  # or RelativePositionEncoding(input_dim)
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -113,9 +113,7 @@ class EpiDenoise10(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        print(src.shape)
-        src = self.pos_encoder(src)
-        print(src.shape)
+        src += self.pos_encoder(src)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
