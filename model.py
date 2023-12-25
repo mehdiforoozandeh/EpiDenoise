@@ -39,8 +39,6 @@ class PositionalEncoding(nn.Module):
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model).float()
         pe.require_grad = False
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.pe = pe.to(device)
 
         for pos in range(max_len):   
             # for each dimension of the each position
@@ -50,6 +48,8 @@ class PositionalEncoding(nn.Module):
 
         # include the batch size
         self.pe = pe.unsqueeze(0)   
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.pe = pe.to(device)
         # self.register_buffer('pe', pe)
 
     def forward(self, x):
