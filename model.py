@@ -50,32 +50,53 @@ class MaskedLinear(nn.Module):
         output = torch.matmul(x, masked_weight) + self.bias
         return output
 
-# class PositionalEmbedding(nn.Module):
+class AbsPositionalEmbedding(nn.Module):
+    def __init__(self, d_model, max_len=128):
+        super().__init__()
 
-#     def __init__(self, d_model, max_len=128):
-#         super().__init__()
+        # Compute the positional encodings once in log space.
+        pe = torch.zeros(max_len, d_model).float()
+        pe.require_grad = False
 
-#         # Compute the positional encodings once in log space.
-#         pe = torch.zeros(max_len, d_model).float()
-#         pe.require_grad = False
+        for pos in range(max_len):   
+            # for each dimension of the each position
+            for i in range(0, d_model, 2):   
+                pe[pos, i] = math.sin(pos / (10000 ** ((2 * i)/d_model)))
+                pe[pos, i + 1] = math.cos(pos / (10000 ** ((2 * (i + 1))/d_model)))
 
-#         for pos in range(max_len):   
-#             # for each dimension of the each position
-#             for i in range(0, d_model, 2):   
-#                 pe[pos, i] = math.sin(pos / (10000 ** ((2 * i)/d_model)))
-#                 pe[pos, i + 1] = math.cos(pos / (10000 ** ((2 * (i + 1))/d_model)))
+        # include the batch size
+        self.pe = pe.unsqueeze(0)   
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.pe = pe.to(device)
+        # self.register_buffer('pe', pe)
 
-#         # include the batch size
-#         self.pe = pe.unsqueeze(0)   
-#         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#         self.pe = pe.to(device)
-#         # self.register_buffer('pe', pe)
+    def forward(self, x):
+        return self.pe
 
-#     def forward(self, x):
-#         return self.pe
+class ComboEmbedding(torch.nn.Module):
+    """
+    Combo Embedding which is consisted with under features
+        1. AbsPositionalEmbedding : adding positional information using sin, cos
+        2. SegmentEmbedding : adding segment info, (seg_A:1, seg_B:2)
+        sum of all these features are output of ComboEmbedding
+    """
 
-class ComboEmbedding():
-    pass
+    def __init__(self, d_model, seq_len=64, dropout=0.1):
+        """
+        :param d_model: embedding size of token embedding
+        :param dropout: dropout rate
+        """
+
+        super().__init__()
+        # (m, seq_len) --> (m, seq_len, embed_size)
+        # padding_idx is not updated during training, remains as fixed pad (0)
+        self.segment = torch.nn.Embedding(3, d_model, padding_idx=0)
+        self.position = AbsPositionalEmbedding(d_model=d_model, max_len=seq_len)
+        self.dropout = torch.nn.Dropout(p=dropout)
+       
+    def forward(self, sequence, segment_label):
+        x = self.position(sequence) + self.segment(segment_label)
+        return self.dropout(x)
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -216,6 +237,8 @@ class PRE_TRAINER(object):
                             
                             pmask = cloze_mask[:,:,0].squeeze()
                             pmask = pmask.to(self.device)
+                            print(pmask.shape)
+                            print(pmask.sum().item())
 
                             cloze_mask = cloze_mask & ~missing_mask_batch
                             x_batch = x_batch.to(self.device)
