@@ -33,24 +33,25 @@ class RelativePositionalEncoder(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+    def __init__(self, d_model, max_len=128):
         super().__init__()
-        self.dropout = nn.Dropout(p=dropout)
 
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
+        # Compute the positional encodings once in log space.
+        pe = torch.zeros(max_len, d_model).float()
+        pe.require_grad = False
+
+        for pos in range(max_len):   
+            # for each dimension of the each position
+            for i in range(0, d_model, 2):   
+                pe[pos, i] = math.sin(pos / (10000 ** ((2 * i)/d_model)))
+                pe[pos, i + 1] = math.cos(pos / (10000 ** ((2 * (i + 1))/d_model)))
+
+        # include the batch size
+        self.pe = pe.unsqueeze(0)   
+        # self.register_buffer('pe', pe)
 
     def forward(self, x):
-        """
-        Arguments:
-            x: Tensor, shape ``[seq_len, batch_size, embedding_dim]``
-        """
-        x = x + self.pe[:x.size(0)]
-        return self.dropout(x)
+        return self.pe
 
 class MaskedLinear(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -192,7 +193,6 @@ class PRE_TRAINER(object):
                             context_length_factor = context_length / pattern_batch.shape[1]
 
                             pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
-                            print(pattern_batch.shape)
                             missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
 
                         # Break down x into smaller batches
