@@ -160,7 +160,6 @@ class PRE_TRAINER(object):
                 print('-_-' * 10)
                 x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
                 num_features = x.shape[2]
-                print(x.shape)
 
                 if arcsinh_transform:
                     x = torch.arcsinh_(x)
@@ -181,8 +180,7 @@ class PRE_TRAINER(object):
                         pattern_batch = x[indices]
                         missing_mask_patten_batch = missing_mask[indices]
                         fmask = torch.ones(num_features, d_model)
-                        print(pattern_batch.shape)
-                        exit()
+
                         for i in pattern:
                             fmask[i,:] = 0
 
@@ -194,6 +192,7 @@ class PRE_TRAINER(object):
                             context_length_factor = context_length / pattern_batch.shape[1]
 
                             pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
+                            print(pattern_batch.shape)
                             missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
 
                         # Break down x into smaller batches
