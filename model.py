@@ -39,6 +39,8 @@ class PositionalEncoding(nn.Module):
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model).float()
         pe.require_grad = False
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.pe = pe.to(device)
 
         for pos in range(max_len):   
             # for each dimension of the each position
@@ -86,7 +88,7 @@ class EpiDenoise10(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        # src = self.pos_encoder(src)
+        src = self.pos_encoder(src)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
