@@ -228,6 +228,10 @@ class PRE_TRAINER(object):
                         # Break down x into smaller batches
                         for i in range(0, len(pattern_batch), batch_size):
                             torch.cuda.empty_cache()
+                            x_batch = pattern_batch[i:i+batch_size]
+                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+
+
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
