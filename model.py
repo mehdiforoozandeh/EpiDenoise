@@ -601,7 +601,7 @@ if __name__ == "__main__":
         "d_model": 64,
         "nlayers": 2,
         "epochs": 30,
-        "mask_percentage": 0.15,
+        "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
