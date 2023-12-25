@@ -14,23 +14,6 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 #===========================================building blocks==============================================#
 #========================================================================================================#
 
-class RelativePositionalEncoder(nn.Module):
-    def __init__(self, emb_dim, max_position=512):
-        super(RelativePositionalEncoder, self).__init__()
-        self.max_position = max_position
-        self.embeddings_table = nn.Parameter(torch.Tensor(max_position * 2 + 1, emb_dim))
-        nn.init.xavier_uniform_(self.embeddings_table)
-
-    def forward(self, seq_len_q, seq_len_k):
-        range_vec_q = torch.arange(seq_len_q)
-        range_vec_k = torch.arange(seq_len_k)
-        relative_matrix = range_vec_k[None, :] - range_vec_q[:, None]
-        clipped_relative_matrix = torch.clamp(relative_matrix, -self.max_position, self.max_position)
-        relative_position_matrix = clipped_relative_matrix + self.max_position
-        embeddings = self.embeddings_table[relative_position_matrix]
-
-        return embeddings
-
 class PositionalEncoding(nn.Module):
 
      def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
@@ -103,8 +86,7 @@ class EpiDenoise10(nn.Module):
         super(EpiDenoise10, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        # self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        self.pos_encoder = RelativePositionalEncoder(emb_dim=d_model, max_position=context_length)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length) 
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -113,7 +95,7 @@ class EpiDenoise10(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        src += self.pos_encoder(src)
+        src = self.pos_encoder(src)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
