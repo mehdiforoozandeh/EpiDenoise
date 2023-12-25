@@ -104,7 +104,7 @@ class EpiDenoise10(nn.Module):
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
         # self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
-        self.pos_encoder = RelativePositionalEncoder(d_model=d_model, max_position=context_length)  # or RelativePositionEncoding(input_dim)
+        self.pos_encoder = RelativePositionalEncoder(emb_dim=d_model, max_position=context_length)  # or RelativePositionEncoding(input_dim)
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
