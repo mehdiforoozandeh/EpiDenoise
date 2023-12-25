@@ -88,7 +88,9 @@ class EpiDenoise10(nn.Module):
     def forward(self, src, pmask, fmask):
         src = self.masked_linear(src, fmask)
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        print(src.shape)
         src = self.pos_encoder(src)
+        print(src.shape)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))
