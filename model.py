@@ -377,21 +377,31 @@ class PRE_TRAINER(object):
 
                         # Break down x into smaller batches
                         for i in range(0, len(pattern_batch), batch_size):
+                            
                             torch.cuda.empty_cache()
-
+                            seg_length = context_length // 2
                             is_adjacent = random.choice([True, False])
 
-                            if is_adjacent:
-                                x_batch = pattern_batch[i:i+batch_size, :, :]
-                                missing_mask_batch = missing_mask_patten_batch[i:i+batch_size, :, :]
-
-                            else:
-                                context_length / 2
-                                seg_1 = 0
-
+                            seg_1 = pattern_batch[i:i+batch_size, :seg_length, :]
+                            seg1m = missing_mask_patten_batch[i:i+batch_size, :seg_length, :]
                             
-                            x_batch = pattern_batch[i:i+batch_size]
-                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+                            if is_adjacent:
+                                seg_2 = pattern_batch[i:i+batch_size, seg_length:, :]
+                                seg2m = missing_mask_patten_batch[i:i+batch_size, seg_length:, :]
+                                
+                            else:
+                                # Randomly select a start index
+                                start = random.randint(0, len(pattern_batch) - batch_size)
+                                
+                                # If the start index overlaps with the range i:i+batch_size, choose again
+                                while i <= start < i + batch_size:
+                                    start = random.randint(0, len(pattern_batch) - batch_size)
+                                
+                                seg_2 = pattern_batch[start:start+batch_size, :seg_length, :]
+                                seg2m = missing_mask_patten_batch[start:start+batch_size, :seg_length, :]
+
+                            x_batch = torch.cat((seg_1, seg_2), dim=1)
+                            missing_mask_batch = torch.cat((seg1m, seg2m), dim=1)
 
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
