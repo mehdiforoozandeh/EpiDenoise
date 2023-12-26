@@ -377,7 +377,7 @@ class PRE_TRAINER(object):
 
                         # Break down x into smaller batches
                         for i in range(0, len(pattern_batch), batch_size):
-                            
+
                             torch.cuda.empty_cache()
                             seg_length = context_length // 2
                             is_adjacent = random.choice([True, False])
@@ -400,6 +400,9 @@ class PRE_TRAINER(object):
                                 seg_2 = pattern_batch[start:start+batch_size, :seg_length, :]
                                 seg2m = missing_mask_patten_batch[start:start+batch_size, :seg_length, :]
 
+                            print(seg_1.shape, seg_2.shape)
+                            print(seg1m.shape, seg2m.shape)
+                            exit()
                             x_batch = torch.cat((seg_1, seg_2), dim=1)
                             missing_mask_batch = torch.cat((seg1m, seg2m), dim=1)
 
