@@ -400,11 +400,8 @@ class PRE_TRAINER(object):
                                 seg_2 = pattern_batch[start:start+batch_size, :seg_length, :]
                                 seg2m = missing_mask_patten_batch[start:start+batch_size, :seg_length, :]
 
-                            print(seg_1.shape, seg_2.shape)
-                            print(seg1m.shape, seg2m.shape)
-                            exit()
-                            x_batch = torch.cat((seg_1, seg_2), dim=1)
-                            missing_mask_batch = torch.cat((seg1m, seg2m), dim=1)
+                            x_batch = torch.cat((seg_1, seg_2), 1)
+                            missing_mask_batch = torch.cat((seg1m, seg2m), 1)
 
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
