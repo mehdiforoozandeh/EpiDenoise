@@ -390,15 +390,16 @@ class PRE_TRAINER(object):
                                 seg2m = missing_mask_patten_batch[i:i+batch_size, seg_length:, :]
                                 
                             else:
+                                seg_1.shape[0]
                                 # Randomly select a start index
                                 start = random.randint(0, len(pattern_batch) - batch_size)
                                 
                                 # If the start index overlaps with the range i:i+batch_size, choose again
-                                while i <= start < i + batch_size:
+                                while i <= start < i + seg_1.shape[0]:
                                     start = random.randint(0, len(pattern_batch) - batch_size)
                                 
-                                seg_2 = pattern_batch[start:start+batch_size, :seg_length, :]
-                                seg2m = missing_mask_patten_batch[start:start+batch_size, :seg_length, :]
+                                seg_2 = pattern_batch[start:start+seg_1.shape[0], :seg_length, :]
+                                seg2m = missing_mask_patten_batch[start:start+seg_1.shape[0], :seg_length, :]
 
                             try:
                                 x_batch = torch.cat((seg_1, seg_2), 1)
