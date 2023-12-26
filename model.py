@@ -231,7 +231,6 @@ class PRE_TRAINER(object):
                             x_batch = pattern_batch[i:i+batch_size]
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
 
-
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
@@ -480,7 +479,6 @@ class PRE_TRAINER(object):
 
         return self.model
 
-
 class MODEL_LOADER(object):
     def __init__(self, model_path, hyper_parameters):
         self.model_path = model_path
@@ -578,6 +576,79 @@ def train_epidenoise10(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     return model
 
+def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
+
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    d_model = hyper_parameters["d_model"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    chunk = hyper_parameters["chunk"]
+    context_length = hyper_parameters["context_length"]
+
+    # one nucleosome is around 150bp -> 6bins
+    # each chuck ~ 1 nucleosome
+
+    n_chunks = (mask_percentage * context_length) // 4 # change it to 6 later
+
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
+
+    model = EpiDenoise15(
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.97)
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        model.load_state_dict(torch.load(checkpoint_path))
+
+    # model = model.to(device)
+
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
+
+    model_name = f"EpiDenoise_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
+    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
+    # criterion = WeightedMSELoss()
+    criterion = nn.MSELoss()
+
+    start_time = time.time()
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epidenoise_15(d_model=d_model, num_epochs=epochs, 
+        mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+        context_length=context_length, batch_size=batch_size, start_ds=start_ds)
+
+    end_time = time.time()
+
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    # os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
+
+    return model
 
 #========================================================================================================#
 #================================================main====================================================#
@@ -585,6 +656,44 @@ def train_epidenoise10(hyper_parameters, checkpoint_path=None, start_ds=0):
 
 if __name__ == "__main__":
 
+    # EPIDENOISE_1.5-LARGE
+    hyper_parameters_large = {
+            "data_path": "/project/compbio-lab/EIC/training_data/",
+            "input_dim": 35,
+            "dropout": 0.1,
+            "nhead": 8,
+            "d_model": 128,
+            "nlayers": 4,
+            "epochs": 20,
+            "mask_percentage": 0.15,
+            "chunk": True,
+            "context_length": 400,
+            "batch_size": 80,
+            "learning_rate": 0.01
+        }
+
+    # EPIDENOISE_1.5-SMALL
+    hyper_parameters_small = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.1,
+        "nhead": 4,
+        "d_model": 64,
+        "nlayers": 2,
+        "epochs": 30,
+        "mask_percentage": 0.15,
+        "chunk": True,
+        "context_length": 400,
+        "batch_size": 50,
+        "learning_rate": 0.005
+    }
+
+    train_epidenoise15(
+        hyper_parameters_small, 
+        checkpoint_path=None, 
+        start_ds=0)
+
+    exit()
     # EPIDENOISE_1.0-LARGE
     hyper_parameters_large = {
             "data_path": "/project/compbio-lab/EIC/training_data/",
