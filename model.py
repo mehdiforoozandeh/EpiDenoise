@@ -169,7 +169,6 @@ class EpiDenoise15(nn.Module):
 
         cls_token = src[0, :, :].unsqueeze(0)
         SAP = self.softmax(self.SAP(cls_token))
-        print(SAP.shape)
 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
