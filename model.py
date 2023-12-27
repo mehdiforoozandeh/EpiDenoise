@@ -169,9 +169,9 @@ class EpiDenoise15(nn.Module):
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
         print(src.shape)
 
-        cls_token = src[0, :, :]
+        cls_token = src[0, :, :].unsqueeze(0)
         print(cls_token.shape)
-        src = src[1:, :, :]
+        # src = src[1:, :, :]
         print(src.shape)
 
         src = self.decoder(src)
