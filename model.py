@@ -444,11 +444,12 @@ class PRE_TRAINER(object):
                             print(SEP.shape)
                             print(seg_1.shape)
                             print(seg_2.shape)
-                            print(seg1m.shape, seg2m.shape)
+                            print( seg1m[:,0,:].shape)
+                            print( seg1m[:,0,:].unsqueeze(1).shape)
                             exit()
 
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
-                            missing_mask_batch = torch.cat((seg1m[:,0,:], seg1m, seg1m[:,0,:], seg2m, seg2m[:,0,:]), 1)
+                            missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
