@@ -95,9 +95,7 @@ class ComboEmbedding(nn.Module):
         self.dropout = torch.nn.Dropout(p=dropout)
        
     def forward(self, sequence, segment_label):
-        print(sequence.shape, self.position(sequence).shape, self.segment(segment_label).shape)
-        exit()
-        x = sequence + self.position(sequence) + self.segment(segment_label)
+        x = sequence + self.position(sequence).unsqueeze(1) + self.segment(segment_label).unsqueeze(1) 
         return self.dropout(x)
 
 class ComboLoss15(nn.Module):
@@ -149,7 +147,7 @@ class EpiDenoise15(nn.Module):
         super(EpiDenoise15, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        self.embeddings = ComboEmbedding(d_model=d_model, seq_len=context_length, dropout=dropout) # segment + positional
+        self.embeddings = ComboEmbedding(d_model=d_model, seq_len=context_length+3, dropout=dropout) # segment + positional
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
