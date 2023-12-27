@@ -440,14 +440,6 @@ class PRE_TRAINER(object):
                             CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
                             SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
 
-                            print(CLS.shape)
-                            print(SEP.shape)
-                            print(seg_1.shape)
-                            print(seg_2.shape)
-                            print( seg1m[:,0,:].shape)
-                            print( seg1m[:,0,:].unsqueeze(1).shape)
-                            exit()
-
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
