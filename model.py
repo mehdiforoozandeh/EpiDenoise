@@ -461,7 +461,7 @@ class PRE_TRAINER(object):
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, cls_token = self.model(masked_x_batch, pmask, fmask)
+                            outputs, cls_token = self.model(masked_x_batch, pmask, fmask, segment_label)
 
                             """
                             figure out custom loss function
