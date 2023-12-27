@@ -178,7 +178,7 @@ class EpiDenoise15(nn.Module):
         print(src.shape)
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
         print(src.shape)
-        
+
         return src, cls_token   
 
 #========================================================================================================#
@@ -439,6 +439,13 @@ class PRE_TRAINER(object):
 
                             CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
                             SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
+
+                            print(CLS.shape)
+                            print(SEP.shape)
+                            print(seg_1.shape)
+                            print(seg_2.shape)
+                            print(seg1m.shape, seg2m.shape)
+                            exit()
 
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:], seg1m, seg1m[:,0,:], seg2m, seg2m[:,0,:]), 1)
