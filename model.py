@@ -14,7 +14,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 #===========================================building blocks==============================================#
 #========================================================================================================#
 
-class PositionalEncoding(nn.Module):
+class PositionalEncoding10(nn.Module):
 
      def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
          super().__init__()
@@ -120,7 +120,7 @@ class EpiDenoise10(nn.Module):
         super(EpiDenoise10, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length) 
+        self.pos_encoder = PositionalEncoding10(d_model=d_model, max_len=context_length) 
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -524,8 +524,8 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Epoch Loss Mean: {np.mean(epoch_loss)}", 
-                        f"Epoch Loss std: {np.std(epoch_loss)}",
+                        f"Epoch Loss Mean: {np.mean(epoch_loss):.4f}", 
+                        f"Epoch Loss std: {np.std(epoch_loss):.4f}",
                         f"Epoch took: {t1 - t0}"
                         ]
                     logstr = " | ".join(logstr)
@@ -751,7 +751,7 @@ if __name__ == "__main__":
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.0001,
+        "learning_rate": 0.01,
         "alpha":0
     }
 
