@@ -170,7 +170,6 @@ class EpiDenoise15(nn.Module):
         cls_token = src[0, :, :].unsqueeze(0)
         SAP = self.softmax(self.SAP(cls_token))
         print(SAP.shape)
-        exit()
 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
@@ -435,6 +434,7 @@ class PRE_TRAINER(object):
 
                             CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
                             SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
+                            
 
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
@@ -444,6 +444,9 @@ class PRE_TRAINER(object):
 
                             segment_label = torch.from_numpy(np.array(segment_label))
                             segment_label = segment_label.to(self.device)
+
+                            target_SAP = torch.full((1, x_batch.shape[0], 2), float(0))
+                            target_SAP[:,:,int(is_adjacent)] = 1 
 
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
@@ -465,7 +468,7 @@ class PRE_TRAINER(object):
                             start training
                             """
 
-                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, is_adjacent)
+                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
 
                             mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
                             mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
