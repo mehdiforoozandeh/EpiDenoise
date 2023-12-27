@@ -107,7 +107,8 @@ class ComboLoss15(nn.Module):
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
         mse_loss = self.mse_loss(pred_signals, true_signals)
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
-        return mse_loss + bce_loss
+        return bce_loss
+        # return mse_loss + bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -153,7 +154,7 @@ class EpiDenoise15(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(d_model, output_dim)
 
-        self.SAP = nn.Linear(d_model, 2)
+        self.SAP = nn.Linear(d_model, 2) # segment adjacency prediction head
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, src, pmask, fmask, segment_label):
