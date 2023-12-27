@@ -95,6 +95,8 @@ class ComboEmbedding(nn.Module):
         self.dropout = torch.nn.Dropout(p=dropout)
        
     def forward(self, sequence, segment_label):
+        print(sequence.shape, self.position(sequence).shape, self.segment(segment_label).shape)
+        exit()
         x = sequence + self.position(sequence) + self.segment(segment_label)
         return self.dropout(x)
 
