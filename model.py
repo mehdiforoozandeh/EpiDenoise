@@ -102,11 +102,11 @@ class ComboLoss15(nn.Module):
     def __init__(self):
         super(ComboLoss15, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
-        self.bce_loss = nn.BCEWithLogitsLoss(reduction='mean')
+        self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, outputs, targets, next_sentence_labels):
+    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
         mse_loss = self.mse_loss(outputs, targets)
-        bce_loss = self.bce_loss(next_sentence_labels)
+        bce_loss = self.bce_loss(pred_adjac, true_adjac)
         return mse_loss + bce_loss
 
 #========================================================================================================#
@@ -137,7 +137,7 @@ class EpiDenoise15(nn.Module):
     """
     updates since EpiDenoise1.0:
         1. add CLS and SEP tokens
-        2. segment adjacency:
+        2. segment adjacency prediction (SAP):
             - add segment encodings
             - custom loss function (masking + segment adjacency)
         3. dynamic masking chunks (gradually increasing)
@@ -152,7 +152,10 @@ class EpiDenoise15(nn.Module):
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(d_model, output_dim)
-        
+
+        self.SAP = nn.Linear(d_model, 2)
+        self.softmax = torch.nn.Softmax(dim=-1)
+
     def forward(self, src, pmask, fmask, segment_label):
         """
         check tensor shapes at each step.
@@ -165,10 +168,11 @@ class EpiDenoise15(nn.Module):
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
 
         cls_token = src[0, :, :].unsqueeze(0)
+        SAP = self.SAP(cls_token)
 
         src = self.decoder(src)
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        return src, cls_token   
+        return src, SAP   
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -450,7 +454,7 @@ class PRE_TRAINER(object):
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, cls_token = self.model(masked_x_batch, pmask, fmask, segment_label)
+                            outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
                             """
                             figure out custom loss function
@@ -458,7 +462,7 @@ class PRE_TRAINER(object):
                             start training
                             """
 
-                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask])
+                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, is_adjacent)
 
                             mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
                             mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
@@ -672,7 +676,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
-    criterion = nn.MSELoss()
+    criterion = ComboLoss15()
 
     start_time = time.time()
 
