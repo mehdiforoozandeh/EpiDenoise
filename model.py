@@ -441,12 +441,13 @@ class PRE_TRAINER(object):
 
                             # 0 are for special tokens, 1 for segment1 and 2 for segment2
                             segment_label = [0] + [1 for i in range(seg_1.shape[1])] + [0] + [2 for i in range(seg_2.shape[1])] + [0]
-
                             segment_label = torch.from_numpy(np.array(segment_label))
                             segment_label = segment_label.to(self.device)
 
+                            # create segment adjacency prediction labels based on is_adjacent
                             target_SAP = torch.full((1, x_batch.shape[0], 2), float(0))
                             target_SAP[:,:,int(is_adjacent)] = 1 
+                            target_SAP = target_SAP.to(self.device)
 
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
