@@ -171,7 +171,6 @@ class EpiDenoise15(nn.Module):
 
         cls_token = src[0, :, :].unsqueeze(0)
         print(cls_token.shape)
-        # src = src[1:, :, :]
         print(src.shape)
 
         src = self.decoder(src)
