@@ -65,6 +65,45 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
 
     return masked_data, mask#[:,:,0]
 
+# Function to mask a certain percentage of the data
+def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    seq_len = data.size(1)
+    cls_sep_indices = [0, seq_len, seq_len+1]
+    
+    if chunk:
+        # Calculate the size of each chunk
+        chunk_size = int(mask_percentage * seq_len / n_chunks)
+    else: 
+        chunk_size = 1
+        n_chunks =  int(mask_percentage * seq_len)
+
+    # Initialize an empty list to store the start indices
+    start_indices = []
+    while len(start_indices) < n_chunks:
+        # Generate a random start index
+        start = torch.randint(0, seq_len - chunk_size, (1,))
+        # Check if the chunk overlaps with any existing chunks
+        if not any(start <= idx + chunk_size and start + chunk_size >= idx for idx in start_indices + cls_sep_indices):
+            # If not, add the start index to the list
+            start_indices.append(start.item())
+
+    # Loop over the start indices
+    for start in start_indices:
+        # Calculate the end index for the current chunk
+        end = start + chunk_size
+        # Set the mask values for the current chunk to True
+        mask[:, start:end, :] = True
+
+    # Create a copy of the data tensor
+    masked_data = data.clone()
+    # Set the masked data values to the mask_value
+    masked_data[mask] = mask_value
+    # Return the masked data and the mask
+
+    return masked_data, mask#[:,:,0]
+
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()

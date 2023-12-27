@@ -73,7 +73,7 @@ class AbsPositionalEmbedding(nn.Module):
     def forward(self, x):
         return self.pe
 
-class ComboEmbedding(torch.nn.Module):
+class ComboEmbedding(nn.Module):
     """
     Combo Embedding which is consisted with under features
         1. AbsPositionalEmbedding : adding positional information using sin, cos
@@ -95,8 +95,19 @@ class ComboEmbedding(torch.nn.Module):
         self.dropout = torch.nn.Dropout(p=dropout)
        
     def forward(self, sequence, segment_label):
-        x = self.position(sequence) + self.segment(segment_label)
+        x = sequence + self.position(sequence) + self.segment(segment_label)
         return self.dropout(x)
+
+class ComboLoss15(nn.Module):
+    def __init__(self):
+        super(ComboLoss15, self).__init__()
+        self.mse_loss = nn.MSELoss(reduction='mean')
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction='mean')
+
+    def forward(self, outputs, targets, next_sentence_labels):
+        mse_loss = self.mse_loss(outputs, targets)
+        bce_loss = self.bce_loss(next_sentence_labels)
+        return mse_loss + bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -136,20 +147,39 @@ class EpiDenoise15(nn.Module):
         super(EpiDenoise15, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        self.pos_encoder = PositionalEncoding(d_model=d_model, max_len=context_length)  # or RelativePositionEncoding(input_dim)
+        self.embeddings = ComboEmbedding(d_model=d_model, seq_len=context_length, dropout=dropout) # segment + positional
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
         self.decoder = nn.Linear(d_model, output_dim)
         
-    def forward(self, src, pmask, fmask):
+    def forward(self, src, pmask, fmask, segment_label):
+        """
+        check tensor shapes at each step.
+        try adding and removing sequence from ComboEmbedding forward pass
+        """
+        print(src.shape)
         src = self.masked_linear(src, fmask)
+        print(src.shape)
+
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        src = self.pos_encoder(src)
+        print(src.shape)
+        src = self.embeddings(src, segment_label)
+        print(src.shape)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
+        print(src.shape)
+
+        cls_token = src[0, :, :]
+        print(cls_token.shape)
+        src = src[1:, :, :]
+        print(src.shape)
+
         src = self.decoder(src)
-        src = torch.permute(src, (1, 0, 2))
-        return src
+        print(src.shape)
+        src = torch.permute(src, (1, 0, 2))  # to N, L, F
+        print(src.shape)
+        
+        return src, cls_token   
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -400,16 +430,21 @@ class PRE_TRAINER(object):
                                 
                                 seg_2 = pattern_batch[start:start+seg_1.shape[0], :seg_length, :]
                                 seg2m = missing_mask_patten_batch[start:start+seg_1.shape[0], :seg_length, :]
+                            
+                            """
+                            add cls token to the beginning (before seg_1)
+                            add sep token between seg_1 and seg_2 and after seg_2
+                            make sure that cls and sep tokens are not masked in mask_data()
+                            """
 
-                            try:
-                                x_batch = torch.cat((seg_1, seg_2), 1)
-                                missing_mask_batch = torch.cat((seg1m, seg2m), 1)
-                            except:
-                                print(seg_1.shape, seg_2.shape)
-                                print(seg1m.shape, seg2m.shape)
+                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
+                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
+
+                            x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
+                            missing_mask_batch = torch.cat((seg1m[:,0,:], seg1m, seg1m[:,0,:], seg2m, seg2m[:,0,:]), 1)
 
                             # Masking a subset of the input data
-                            masked_x_batch, cloze_mask = mask_data(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                            masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
                             pmask = cloze_mask[:,:,0].squeeze()
                             pmask = pmask.to(self.device)
@@ -420,7 +455,14 @@ class PRE_TRAINER(object):
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs = self.model(masked_x_batch, pmask, fmask)
+                            outputs, cls_token = self.model(masked_x_batch, pmask, fmask)
+
+                            """
+                            figure out custom loss function
+                            figure out segment embedding values/tokens/embeddings/whatever
+                            start training
+                            """
+
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask])
 
                             mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
