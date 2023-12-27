@@ -50,7 +50,7 @@ class MaskedLinear(nn.Module):
         output = torch.matmul(x, masked_weight) + self.bias
         return output
 
-class AbsPositionalEmbedding(nn.Module):
+class AbsPositionalEmbedding15(nn.Module):
     def __init__(self, d_model, max_len=128):
         super().__init__()
 
@@ -73,7 +73,7 @@ class AbsPositionalEmbedding(nn.Module):
     def forward(self, x):
         return self.pe
 
-class ComboEmbedding(nn.Module):
+class ComboEmbedding15(nn.Module):
     """
     Combo Embedding which is consisted with under features
         1. AbsPositionalEmbedding : adding positional information using sin, cos
@@ -91,7 +91,7 @@ class ComboEmbedding(nn.Module):
         # (m, seq_len) --> (m, seq_len, embed_size)
         # padding_idx is not updated during training, remains as fixed pad (0)
         self.segment = torch.nn.Embedding(3, d_model, padding_idx=0)
-        self.position = AbsPositionalEmbedding(d_model=d_model, max_len=seq_len)
+        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=seq_len)
         self.dropout = torch.nn.Dropout(p=dropout)
        
     def forward(self, sequence, segment_label):
@@ -147,7 +147,7 @@ class EpiDenoise15(nn.Module):
         super(EpiDenoise15, self).__init__()
         
         self.masked_linear = MaskedLinear(input_dim, d_model)
-        self.embeddings = ComboEmbedding(d_model=d_model, seq_len=context_length+3, dropout=dropout) # segment + positional
+        self.embeddings = ComboEmbedding15(d_model=d_model, seq_len=context_length+3, dropout=dropout) # segment + positional
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -158,26 +158,16 @@ class EpiDenoise15(nn.Module):
         check tensor shapes at each step.
         try adding and removing sequence from ComboEmbedding forward pass
         """
-        print(src.shape)
         src = self.masked_linear(src, fmask)
-        print(src.shape)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        print(src.shape)
         src = self.embeddings(src, segment_label)
-        print(src.shape)
         src = self.transformer_encoder(src, src_key_padding_mask=pmask) 
-        print(src.shape)
 
         cls_token = src[0, :, :].unsqueeze(0)
-        print(cls_token.shape)
-        print(src.shape)
 
         src = self.decoder(src)
-        print(src.shape)
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        print(src.shape)
-
         return src, cls_token   
 
 #========================================================================================================#
