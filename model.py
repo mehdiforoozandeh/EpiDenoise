@@ -443,6 +443,12 @@ class PRE_TRAINER(object):
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
+                            # 0 are for special tokens, 1 for segment1 and 2 for segment2
+                            segment_label = [0] + [1 for i in range(seg_1.shape[1])] + [0] + [2 for i in range(seg_2.shape[1])] + [0]
+
+                            segment_label = torch.from_numpy(np.array(segment_label))
+                            segment_label = segment_label.to(self.device)
+
                             # Masking a subset of the input data
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
