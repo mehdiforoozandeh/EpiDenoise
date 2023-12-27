@@ -99,16 +99,17 @@ class ComboEmbedding15(nn.Module):
         return self.dropout(x)
 
 class ComboLoss15(nn.Module):
-    def __init__(self):
+    def __init__(self, alpha=0.5):
         super(ComboLoss15, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
+        self.alpha = alpha
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
         mse_loss = self.mse_loss(pred_signals, true_signals)
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
-        return bce_loss
-        # return mse_loss + bce_loss
+        return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
+
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -432,8 +433,8 @@ class PRE_TRAINER(object):
                             make sure that cls and sep tokens are not masked in mask_data()
                             """
 
-                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
-                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
+                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -0.5)
+                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -1.5)
                             
 
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
@@ -652,6 +653,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
     mask_percentage = hyper_parameters["mask_percentage"]
     chunk = hyper_parameters["chunk"]
     context_length = hyper_parameters["context_length"]
+    alpha = hyper_parameters["alpha"]
 
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
@@ -683,7 +685,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
-    criterion = ComboLoss15()
+    criterion = ComboLoss15(alpha=alpha)
 
     start_time = time.time()
 
@@ -732,7 +734,8 @@ if __name__ == "__main__":
             "chunk": True,
             "context_length": 400,
             "batch_size": 80,
-            "learning_rate": 0.01
+            "learning_rate": 0.01,
+            "alpha":0.5
         }
 
     # EPIDENOISE_1.5-SMALL
@@ -748,7 +751,8 @@ if __name__ == "__main__":
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005
+        "learning_rate": 0.0001,
+        "alpha":0
     }
 
     train_epidenoise15(
