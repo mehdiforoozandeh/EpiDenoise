@@ -107,12 +107,13 @@ class ComboLoss15(nn.Module):
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
 
-        print(pred_signals.shape)
-        print(true_signals.shape)
-        print(pred_adjac.shape)
-        print(true_adjac.shape)
-
         mse_loss = self.mse_loss(pred_signals, true_signals)
+
+        # Check for out-of-range values in pred_adjac
+        if torch.any(pred_adjac < 0) or torch.any(pred_adjac > 1):
+            print("Out-of-range value encountered in pred_adjac.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
+
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
         if torch.isnan(mse_loss) or torch.isnan(bce_loss):
