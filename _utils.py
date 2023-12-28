@@ -89,6 +89,9 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
             # If not, add the start index to the list
             start_indices.append(start.item())
 
+    # Create a copy of the data tensor
+    masked_data = data.clone()
+
     # Loop over the start indices
     for start in start_indices:
         # Calculate the end index for the current chunk
@@ -96,13 +99,21 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
         # Set the mask values for the current chunk to True
         mask[:, start:end, :] = True
 
-    # Create a copy of the data tensor
-    masked_data = data.clone()
-    # Set the masked data values to the mask_value
-    masked_data[mask] = mask_value
-    # Return the masked data and the mask
+        # For each position in the chunk, decide how to mask it
+        for pos in range(start, end):
+            rand_num = random.random()
+            if rand_num < 0.8:
+                # 80% of the time, replace with mask_value
+                masked_data[:, pos, :] = mask_value
+            elif rand_num < 0.9:
+                # 10% of the time, replace with a random value in the range of the data
+                data_min = torch.min(data)
+                data_max = torch.max(data)
+                random_value = data_min + torch.rand(1) * (data_max - data_min)
+                masked_data[:, pos, :] = random_value
 
-    return masked_data, mask#[:,:,0]
+    # Return the masked data and the mask
+    return masked_data, mask
 
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data

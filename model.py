@@ -113,7 +113,7 @@ class ComboLoss15(nn.Module):
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
-            print("NaN value encountered in pred_adjac or true_adjac.")
+            # print("NaN value encountered in pred_adjac or true_adjac.")
             return torch.tensor(float('nan')).to(pred_signals.device)
 
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
@@ -357,7 +357,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_15(self, 
-        d_model, outer_loop_epochs=3, arcsinh_transform=True,
+        d_model, outer_loop_epochs=5, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -439,20 +439,9 @@ class PRE_TRAINER(object):
                                 
                                 seg_2 = pattern_batch[start:start+seg_1.shape[0], :seg_length, :]
                                 seg2m = missing_mask_patten_batch[start:start+seg_1.shape[0], :seg_length, :]
-                            
-                            """
-                            add cls token to the beginning (before seg_1)
-                            add sep token between seg_1 and seg_2 and after seg_2
-                            make sure that cls and sep tokens are not masked in mask_data()
-                            """
 
-                            """
-                            check for nan values in two components of the loss function
-                            maybe nan + nan is causing error. return nan if that's the case
-                            """
-
-                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -0.5)
-                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -1.5)
+                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
+                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
                             
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
@@ -481,18 +470,7 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            # try:
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
-                            # except:
-                            #     skipmessage = "Encountered combo_loss error! Skipping batch..."
-                            #     log_strs.append(skipmessage)
-                            #     print(skipmessage)
-                            #     del x_batch
-                            #     del pmask
-                            #     del masked_x_batch
-                            #     del outputs
-                            #     torch.cuda.empty_cache()
-                            #     continue
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -691,7 +669,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.97)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -765,22 +743,22 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 4,
-        "d_model": 64,
-        "nlayers": 2,
+        "nhead": 8,
+        "d_model": 128,
+        "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.0001,
+        "learning_rate": 0.1,
         "alpha":0.75
     }
 
     train_epidenoise15(
         hyper_parameters_small, 
-        checkpoint_path="models/model_checkpoint_ds_11.pth", 
-        start_ds=12)
+        checkpoint_path=None, 
+        start_ds=0)
 
     exit()
     # EPIDENOISE_1.0-LARGE
