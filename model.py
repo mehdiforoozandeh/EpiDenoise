@@ -348,7 +348,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_15(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True,
+        d_model, outer_loop_epochs=3, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -752,13 +752,13 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 2,
-        "epochs": 20,
+        "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
         "learning_rate": 0.01,
-        "alpha":0.5
+        "alpha":0.75
     }
 
     train_epidenoise15(
@@ -791,7 +791,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 2,
-        "epochs": 30,
+        "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,

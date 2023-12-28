@@ -119,7 +119,6 @@ def sequence_pad(data, max_length, pad_value=-1):
     
     return padded_data, pad_mask
 
-
 def get_bin_value(input_dict):
     if input_dict["bw_obj"] == False:
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
