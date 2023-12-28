@@ -106,6 +106,12 @@ class ComboLoss15(nn.Module):
         self.alpha = alpha
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
+
+        print(pred_signals.shape)
+        print(true_signals.shape)
+        print(pred_adjac.shape)
+        print(true_adjac.shape)
+
         mse_loss = self.mse_loss(pred_signals, true_signals)
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
