@@ -9,6 +9,8 @@ from _utils import *
 from datetime import datetime
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 
 #========================================================================================================#
 #===========================================building blocks==============================================#
