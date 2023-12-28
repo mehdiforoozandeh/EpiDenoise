@@ -757,7 +757,7 @@ if __name__ == "__main__":
     }
 
     train_epidenoise15(
-        hyper_parameters_large, 
+        hyper_parameters_small, 
         checkpoint_path=None, 
         start_ds=0)
 
