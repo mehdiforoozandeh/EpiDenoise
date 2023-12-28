@@ -751,7 +751,7 @@ if __name__ == "__main__":
         "chunk": True,
         "context_length": 400,
         "batch_size": 100,
-        "learning_rate": 0.1,
+        "learning_rate": 0.01,
         "alpha":0.75
     }
 
