@@ -111,10 +111,8 @@ class ComboLoss15(nn.Module):
 
         mse_loss = self.mse_loss(pred_signals, true_signals)
 
-        # Check for out-of-range values in pred_adjac
-        if torch.any(pred_adjac < 0) or torch.any(pred_adjac > 1):
-            print("Out-of-range value encountered in pred_adjac.")
-            return torch.tensor(float('nan')).to(pred_signals.device)
+        # Print min and max of pred_adjac
+        print(f"Min of pred_adjac: {torch.min(pred_adjac)}, Max of pred_adjac: {torch.max(pred_adjac)}")
 
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
