@@ -763,8 +763,8 @@ if __name__ == "__main__":
 
     train_epidenoise15(
         hyper_parameters_small, 
-        checkpoint_path="models/model_checkpoint_ds_10.pth", 
-        start_ds=11)
+        checkpoint_path="models/model_checkpoint_ds_11.pth", 
+        start_ds=12)
 
     exit()
     # EPIDENOISE_1.0-LARGE
