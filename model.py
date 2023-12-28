@@ -745,12 +745,12 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 8,
         "d_model": 128,
-        "nlayers": 4,
+        "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 50,
+        "batch_size": 100,
         "learning_rate": 0.1,
         "alpha":0.75
     }
