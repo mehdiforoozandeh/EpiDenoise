@@ -111,8 +111,10 @@ class ComboLoss15(nn.Module):
 
         mse_loss = self.mse_loss(pred_signals, true_signals)
 
-        # Print min and max of pred_adjac
-        print(f"Min of pred_adjac: {torch.min(pred_adjac)}, Max of pred_adjac: {torch.max(pred_adjac)}")
+        # Check for nan values in pred_adjac and true_adjac
+        if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
+            print("NaN value encountered in pred_adjac or true_adjac.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
 
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
