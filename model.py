@@ -757,14 +757,14 @@ if __name__ == "__main__":
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.01,
+        "learning_rate": 0.0001,
         "alpha":0.75
     }
 
     train_epidenoise15(
         hyper_parameters_small, 
-        checkpoint_path=None, 
-        start_ds=0)
+        checkpoint_path="models/model_checkpoint_ds_10.pth", 
+        start_ds=11)
 
     exit()
     # EPIDENOISE_1.0-LARGE
