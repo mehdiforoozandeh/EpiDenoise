@@ -463,16 +463,7 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            """
-                            figure out custom loss function
-                            figure out segment embedding values/tokens/embeddings/whatever
-                            start training
-                            """
-
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
-
-                            mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
-                            mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -484,6 +475,9 @@ class PRE_TRAINER(object):
                                 del outputs
                                 torch.cuda.empty_cache()
                                 continue
+                            
+                            mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
+                            mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
 
                             del x_batch
                             del pmask
@@ -745,7 +739,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 2,
-        "epochs": 10,
+        "epochs": 20,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
