@@ -66,7 +66,7 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
     return masked_data, mask#[:,:,0]
 
 # Function to mask a certain percentage of the data
-def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+def mask_data15(data, mask_value=-1, chunk_size=6, mask_percentage=0.15):
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)

@@ -108,6 +108,11 @@ class ComboLoss15(nn.Module):
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
         mse_loss = self.mse_loss(pred_signals, true_signals)
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
+
+        if torch.isnan(mse_loss) or torch.isnan(bce_loss):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
+        
         return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
 
 #========================================================================================================#
@@ -432,10 +437,14 @@ class PRE_TRAINER(object):
                             make sure that cls and sep tokens are not masked in mask_data()
                             """
 
+                            """
+                            check for nan values in two components of the loss function
+                            maybe nan + nan is causing error. return nan if that's the case
+                            """
+
                             CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -0.5)
                             SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -1.5)
                             
-
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
@@ -463,7 +472,11 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
+                            try:
+                                loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
+                            except:
+                                print("Encountered combo_loss error! Skipping batch...")
+                                continue
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
