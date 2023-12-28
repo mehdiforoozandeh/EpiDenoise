@@ -472,18 +472,18 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            try:
-                                loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
-                            except:
-                                skipmessage = "Encountered combo_loss error! Skipping batch..."
-                                log_strs.append(skipmessage)
-                                print(skipmessage)
-                                del x_batch
-                                del pmask
-                                del masked_x_batch
-                                del outputs
-                                torch.cuda.empty_cache()
-                                continue
+                            # try:
+                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
+                            # except:
+                            #     skipmessage = "Encountered combo_loss error! Skipping batch..."
+                            #     log_strs.append(skipmessage)
+                            #     print(skipmessage)
+                            #     del x_batch
+                            #     del pmask
+                            #     del masked_x_batch
+                            #     del outputs
+                            #     torch.cuda.empty_cache()
+                            #     continue
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
