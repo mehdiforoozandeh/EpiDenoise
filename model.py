@@ -495,8 +495,6 @@ class PRE_TRAINER(object):
                             torch.cuda.empty_cache()
 
                             loss.backward()  
-                            self.optimizer.step()
-                            self.scheduler.step()
                         
                         if p%8 == 0:
                             logfile = open("models/log.txt", "w")
@@ -516,8 +514,8 @@ class PRE_TRAINER(object):
                             print(logstr)
                         
                     # update parameters over all batches and all patterns of missing data
-                    # self.optimizer.step()
-                    # self.scheduler.step()
+                    self.optimizer.step()
+                    self.scheduler.step()
 
                     t1 = datetime.now()
                     logfile = open("models/log.txt", "w")
@@ -735,8 +733,8 @@ if __name__ == "__main__":
             "chunk": True,
             "context_length": 400,
             "batch_size": 80,
-            "learning_rate": 0.005,
-            "alpha":0
+            "learning_rate": 0.01,
+            "alpha":0.5
         }
 
     # EPIDENOISE_1.5-SMALL
@@ -746,14 +744,14 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 4,
         "d_model": 64,
-        "nlayers": 4,
-        "epochs": 30,
+        "nlayers": 2,
+        "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005,
-        "alpha":0
+        "learning_rate": 0.01,
+        "alpha":0.5
     }
 
     train_epidenoise15(
