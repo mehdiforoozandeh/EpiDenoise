@@ -733,8 +733,8 @@ if __name__ == "__main__":
             "chunk": True,
             "context_length": 400,
             "batch_size": 80,
-            "learning_rate": 0.01,
-            "alpha":0.5
+            "learning_rate": 0.005,
+            "alpha":0
         }
 
     # EPIDENOISE_1.5-SMALL
@@ -744,18 +744,18 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 4,
         "d_model": 64,
-        "nlayers": 2,
+        "nlayers": 4,
         "epochs": 30,
         "mask_percentage": 0.15,
         "chunk": True,
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.01,
+        "learning_rate": 0.005,
         "alpha":0
     }
 
     train_epidenoise15(
-        hyper_parameters_small, 
+        hyper_parameters_large, 
         checkpoint_path=None, 
         start_ds=0)
 
