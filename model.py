@@ -107,10 +107,12 @@ class ComboLoss15(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
         self.alpha = alpha
 
-    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
+    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, masked, not_masked):
 
-        mse_loss_masked = self.mse_loss(pred_signals, true_signals)
-        # mse_loss_not_masked = self.mse_loss()
+        mse_loss_masked = self.mse_loss(pred_signals[masked], true_signals[masked])
+        mse_loss_not_masked = self.mse_loss(pred_signals[not_masked], true_signals[not_masked])
+
+        mse_loss = (mse_loss_masked + mse_loss_not_masked) / 2
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -119,11 +121,11 @@ class ComboLoss15(nn.Module):
 
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
-        if torch.isnan(mse_loss_masked) or torch.isnan(bce_loss):
+        if torch.isnan(mse_loss) or torch.isnan(bce_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return self.alpha * mse_loss_masked + (1 - self.alpha) * bce_loss
+        return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -463,20 +465,9 @@ class PRE_TRAINER(object):
                             pmask = cloze_mask[:,:,0].squeeze()
                             pmask = pmask.to(self.device)
 
-                            print(cloze_mask.shape)
-                            print(cloze_mask[0].sum(dim=0))
-
                             not_cloze_mask = ~cloze_mask & ~missing_mask_batch 
 
                             cloze_mask = cloze_mask & ~missing_mask_batch
-                            print(cloze_mask.shape)
-                            print(cloze_mask[0].sum(dim=0))
-
-                            print(not_cloze_mask.shape)
-                            print(not_cloze_mask[0].sum(dim=0))
-
-                            exit()
-                            
 
                             x_batch = x_batch.to(self.device)
 
@@ -485,7 +476,7 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
+                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, cloze_mask, not_cloze_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
