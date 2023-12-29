@@ -456,9 +456,9 @@ class PRE_TRAINER(object):
                             if num_features - len(pattern) > 1:
                                 for feat_ind in range(num_features):
                                     if feat_ind in pattern:
-                                        print("fmasked", x_batch[:,:,feat_ind].sum().item())
+                                        print("fmasked", x_batch[:,:,feat_ind].min().item(), x_batch[:,:,feat_ind].max().item())
                                     else:
-                                        print("not fmasked", x_batch[:,:,feat_ind].sum().item())
+                                        print("not fmasked",  x_batch[:,:,feat_ind].min().item(), x_batch[:,:,feat_ind].max().item())
                             exit()
 
 
