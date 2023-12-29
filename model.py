@@ -467,13 +467,17 @@ class PRE_TRAINER(object):
                             print(cloze_mask[0].sum(dim=0))
 
                             not_cloze_mask = ~cloze_mask & ~missing_mask_batch 
-                            print(not_cloze_mask.shape)
-                            print(not_cloze_mask[0].sum(dim=0))
-                            print(len(pattern))
-
-                            exit()
 
                             cloze_mask = cloze_mask & ~missing_mask_batch
+                            print(cloze_mask.shape)
+                            print(cloze_mask[0].sum(dim=0))
+
+                            print(not_cloze_mask.shape)
+                            print(not_cloze_mask[0].sum(dim=0))
+
+                            exit()
+                            
+
                             x_batch = x_batch.to(self.device)
 
                             masked_x_batch = masked_x_batch.to(self.device)
