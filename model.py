@@ -109,7 +109,8 @@ class ComboLoss15(nn.Module):
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
 
-        mse_loss = self.mse_loss(pred_signals, true_signals)
+        mse_loss_masked = self.mse_loss(pred_signals, true_signals)
+        # mse_loss_not_masked = self.mse_loss()
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -118,11 +119,11 @@ class ComboLoss15(nn.Module):
 
         bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
-        if torch.isnan(mse_loss) or torch.isnan(bce_loss):
+        if torch.isnan(mse_loss_masked) or torch.isnan(bce_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
+        return self.alpha * mse_loss_masked + (1 - self.alpha) * bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -461,6 +462,9 @@ class PRE_TRAINER(object):
                             
                             pmask = cloze_mask[:,:,0].squeeze()
                             pmask = pmask.to(self.device)
+
+                            print(cloze_mask.shape)
+                            exit()
 
                             cloze_mask = cloze_mask & ~missing_mask_batch
                             x_batch = x_batch.to(self.device)
