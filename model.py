@@ -478,7 +478,7 @@ class PRE_TRAINER(object):
                                 assaymask_ind = random.choice(available_assays_ind)
                                 x_batch[:,:,available_assays_ind] = -1
                                 fmask[assaymask_ind, :] = 0
-                                cloze_mask = 
+                                cloze_mask[:,:,available_assays_ind] = True
 
                             # move to GPU
                             fmask = fmask.to(self.device)
