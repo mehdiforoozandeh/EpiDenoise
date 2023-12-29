@@ -474,7 +474,7 @@ class PRE_TRAINER(object):
 
                             if len(available_assays_ind) > 1:
                                 assaymask_ind = random.choice(available_assays_ind)
-                                x_batch[:,:,available_assays_ind] = -1
+                                masked_x_batch[:,:,available_assays_ind] = -1
                                 fmask[assaymask_ind, :] = 0
                                 cloze_mask[:,:,available_assays_ind] = True
 
