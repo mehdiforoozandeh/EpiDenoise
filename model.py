@@ -107,12 +107,9 @@ class ComboLoss15(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
         self.alpha = alpha
 
-    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, masked, not_masked):
+    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
 
-        mse_loss_masked = self.mse_loss(pred_signals[masked], true_signals[masked])
-        mse_loss_not_masked = self.mse_loss(pred_signals[not_masked], true_signals[not_masked])
-
-        mse_loss = (mse_loss_masked + mse_loss_not_masked) / 2
+        mse_loss = self.mse_loss(pred_signals, true_signals)
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -465,8 +462,6 @@ class PRE_TRAINER(object):
                             pmask = cloze_mask[:,:,0].squeeze()
                             pmask = pmask.to(self.device)
 
-                            not_cloze_mask = ~cloze_mask & ~missing_mask_batch 
-
                             cloze_mask = cloze_mask & ~missing_mask_batch
 
                             x_batch = x_batch.to(self.device)
@@ -476,7 +471,7 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, pmask, fmask, segment_label)
 
-                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, cloze_mask, not_cloze_mask)
+                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -675,7 +670,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.75)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -749,14 +744,14 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 128,
+        "nhead": 4,
+        "d_model": 64,
         "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 100,
+        "batch_size": 200,
         "learning_rate": 0.05,
         "alpha":0.75
     }

@@ -32,7 +32,7 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
-    
+
     if chunk:
         # Calculate the size of each chunk
         chunk_size = int(mask_percentage * seq_len / n_chunks)
@@ -63,10 +63,15 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
     masked_data[mask] = mask_value
     # Return the masked data and the mask
 
-    return masked_data, mask#[:,:,0]
+    return masked_data, mask
 
 # Function to mask a certain percentage of the data
 def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+
+    """
+    find indices of data where all of the values of last dimension are -1.
+    with some probability, mask a random subset of available features and task to predict
+    """
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
