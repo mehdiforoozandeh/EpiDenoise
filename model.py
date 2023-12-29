@@ -750,8 +750,8 @@ if __name__ == "__main__":
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
-        "context_length": 400,
-        "batch_size": 200,
+        "context_length": 200,
+        "batch_size": 400,
         "learning_rate": 0.05,
         "alpha":0.75
     }
