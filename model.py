@@ -357,7 +357,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_15(self, 
-        d_model, outer_loop_epochs=5, arcsinh_transform=False,
+        d_model, outer_loop_epochs=5, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -382,8 +382,9 @@ class PRE_TRAINER(object):
                 num_features = x.shape[2]
 
                 if arcsinh_transform:
-                    x = torch.arcsinh_(x)
-                
+                    arcmask = (x != -1)
+                    x[arcmask] = torch.arcsinh_(x[arcmask])
+                                
                 for epoch in range(0, num_epochs):
                     print('-' * 10)
                     print(f'Epoch {epoch+1}/{num_epochs}')
