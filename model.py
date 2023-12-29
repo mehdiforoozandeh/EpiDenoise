@@ -446,6 +446,22 @@ class PRE_TRAINER(object):
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
+                            """
+                            if num_available features > 1, 
+                                in each batch, randomly mask one of the available features
+                                update the fmask
+                                get the model to predict the whole track based on input
+                            """
+
+                            if num_features - len(pattern) > 1:
+                                for feat_ind in range(num_features):
+                                    if feat_ind in pattern:
+                                        print("fmasked", x_batch[:,:,feat_ind].sum().item())
+                                    else:
+                                        print("not fmasked", x_batch[:,:,feat_ind].sum().item())
+                            exit()
+
+
                             # 0 are for special tokens, 1 for segment1 and 2 for segment2
                             segment_label = [0] + [1 for i in range(seg_1.shape[1])] + [0] + [2 for i in range(seg_2.shape[1])] + [0]
                             segment_label = torch.from_numpy(np.array(segment_label))
