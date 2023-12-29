@@ -401,7 +401,7 @@ class PRE_TRAINER(object):
                         pattern_batch = x[indices]
                         missing_mask_patten_batch = missing_mask[indices]
 
-                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind in pattern]
+                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
 
                         # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
