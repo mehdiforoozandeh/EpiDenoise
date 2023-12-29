@@ -459,8 +459,6 @@ class PRE_TRAINER(object):
                             pmask = cloze_mask[:,:,0].squeeze()
                             
                             cloze_mask = cloze_mask & ~missing_mask_batch
-                            print(missing_mask_batch)
-                            exit()
 
                             """
                             if num_available features > 1, 
