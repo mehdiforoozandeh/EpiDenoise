@@ -464,11 +464,11 @@ class PRE_TRAINER(object):
                             pmask = pmask.to(self.device)
 
                             print(cloze_mask.shape)
-                            print(cloze_mask[0].sum(dim=1))
+                            print(cloze_mask[0].sum(dim=0))
 
                             not_cloze_mask = ~cloze_mask & ~missing_mask_batch 
                             print(not_cloze_mask.shape)
-                            print(not_cloze_mask[0].sum(dim=1))
+                            print(not_cloze_mask[0].sum(dim=0))
                             print(len(pattern))
 
                             exit()
