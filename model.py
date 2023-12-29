@@ -400,12 +400,8 @@ class PRE_TRAINER(object):
 
                         pattern_batch = x[indices]
                         missing_mask_patten_batch = missing_mask[indices]
-                        fmask = torch.ones(num_features, d_model)
 
-                        for i in pattern:
-                            fmask[i,:] = 0
-
-                        fmask = fmask.to(self.device)
+                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind in pattern]
 
                         # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
@@ -447,22 +443,6 @@ class PRE_TRAINER(object):
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
-                            """
-                            if num_available features > 1, 
-                                in each batch, randomly mask one of the available features
-                                update the fmask
-                                get the model to predict the whole track based on input
-                            """
-
-                            if num_features - len(pattern) > 1:
-                                for feat_ind in range(num_features):
-                                    if feat_ind in pattern:
-                                        print("fmasked", x_batch[:,:,feat_ind].min().item(), x_batch[:,:,feat_ind].max().item())
-                                    else:
-                                        print("not fmasked",  x_batch[:,:,feat_ind].min().item(), x_batch[:,:,feat_ind].max().item())
-                            exit()
-
-
                             # 0 are for special tokens, 1 for segment1 and 2 for segment2
                             segment_label = [0] + [1 for i in range(seg_1.shape[1])] + [0] + [2 for i in range(seg_2.shape[1])] + [0]
                             segment_label = torch.from_numpy(np.array(segment_label))
@@ -473,16 +453,37 @@ class PRE_TRAINER(object):
                             target_SAP[:,:,int(is_adjacent)] = 1 
                             target_SAP = target_SAP.to(self.device)
 
-                            # Masking a subset of the input data
+                            # Masking a subset of the input data -- genomic position mask
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
                             pmask = cloze_mask[:,:,0].squeeze()
-                            pmask = pmask.to(self.device)
-
+                            
                             cloze_mask = cloze_mask & ~missing_mask_batch
+                            print(missing_mask_batch)
+                            exit()
 
+                            """
+                            if num_available features > 1, 
+                                in each batch, randomly mask one of the available features
+                                update the fmask
+                                get the model to predict the whole track based on input
+                            """
+
+                            fmask = torch.ones(num_features, d_model)
+
+                            for i in pattern:
+                                fmask[i,:] = 0
+
+                            if len(available_assays_ind) > 1:
+                                assaymask_ind = random.choice(available_assays_ind)
+                                x_batch[:,:,available_assays_ind] = -1
+                                fmask[assaymask_ind, :] = 0
+                                cloze_mask = 
+
+                            # move to GPU
+                            fmask = fmask.to(self.device)
+                            pmask = pmask.to(self.device)
                             x_batch = x_batch.to(self.device)
-
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
