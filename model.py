@@ -761,13 +761,13 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 64,
-        "nlayers": 2,
+        "d_model": 256,
+        "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
-        "context_length": 200,
-        "batch_size": 500,
+        "context_length": 400,
+        "batch_size": 100,
         "learning_rate": 0.05,
         "alpha":0.75
     }
