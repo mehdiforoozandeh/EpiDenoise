@@ -443,6 +443,8 @@ class PRE_TRAINER(object):
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
 
+                            special_token_indices = [0, seg_length, (2*seg_length)+1]
+
                             # 0 are for special tokens, 1 for segment1 and 2 for segment2
                             segment_label = [0] + [1 for i in range(seg_1.shape[1])] + [0] + [2 for i in range(seg_2.shape[1])] + [0]
                             segment_label = torch.from_numpy(np.array(segment_label))
@@ -476,7 +478,8 @@ class PRE_TRAINER(object):
                                 assaymask_ind = random.choice(available_assays_ind)
                                 masked_x_batch[:,:,available_assays_ind] = -1
                                 fmask[assaymask_ind, :] = 0
-                                cloze_mask[:,:,available_assays_ind] = True
+                                cloze_mask[:, :, available_assays_ind] = True
+                                cloze_mask[:, special_token_indices, :] = False
 
                             # move to GPU
                             fmask = fmask.to(self.device)
@@ -760,7 +763,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 4,
+        "nhead": 8,
         "d_model": 256,
         "nlayers": 4,
         "epochs": 10,

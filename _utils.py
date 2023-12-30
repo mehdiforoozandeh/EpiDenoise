@@ -75,7 +75,7 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
-    cls_sep_indices = [0, seq_len, seq_len+1]
+    cls_sep_indices = [0, seq_len/2, seq_len+1]
     
     if chunk:
         # Calculate the size of each chunk
