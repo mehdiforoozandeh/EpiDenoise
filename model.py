@@ -357,7 +357,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_15(self, 
-        d_model, outer_loop_epochs=5, arcsinh_transform=True,
+        d_model, outer_loop_epochs=6, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -741,32 +741,15 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
 
 if __name__ == "__main__":
 
-    # EPIDENOISE_1.5-LARGE
-    hyper_parameters_large = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
-            "input_dim": 35,
-            "dropout": 0.1,
-            "nhead": 8,
-            "d_model": 128,
-            "nlayers": 4,
-            "epochs": 20,
-            "mask_percentage": 0.15,
-            "chunk": True,
-            "context_length": 400,
-            "batch_size": 80,
-            "learning_rate": 0.01,
-            "alpha":0.5
-        }
-
-    # EPIDENOISE_1.5-SMALL
-    hyper_parameters_small = {
+    # EPIDENOISE_1.5
+    hyper_parameters = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
         "d_model": 256,
         "nlayers": 4,
-        "epochs": 10,
+        "epochs": 15,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
@@ -776,7 +759,7 @@ if __name__ == "__main__":
     }
 
     train_epidenoise15(
-        hyper_parameters_small, 
+        hyper_parameters, 
         checkpoint_path=None, 
         start_ds=0)
 
