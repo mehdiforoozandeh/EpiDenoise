@@ -159,11 +159,10 @@ class ComboLoss16(nn.Module):
         return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
 
 class ComboLoss17(nn.Module):
-    def __init__(self, alpha=0.5):
-        super(ComboLoss16, self).__init__()
+    def __init__(self):
+        super(ComboLoss17, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
-        self.alpha = alpha
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, obs_mask):
 
@@ -1095,7 +1094,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
-    criterion = ComboLoss17(alpha=alpha)
+    criterion = ComboLoss17()
 
     start_time = time.time()
 
