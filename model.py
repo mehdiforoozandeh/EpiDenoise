@@ -778,6 +778,11 @@ class PRE_TRAINER(object):
                             
                             union_mask = cloze_mask | missing_mask_batch
 
+                            print(union_mask.shape)
+                            print(union_mask.sum(0))
+                            print(union_mask.sum(1))
+                            print(union_mask.sum(2))
+
                             """
                             if num_available features > 1, 
                                 in each batch, randomly mask one of the available features
