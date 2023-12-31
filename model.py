@@ -786,12 +786,8 @@ class PRE_TRAINER(object):
 
                             # Masking a subset of the input data -- genomic position mask
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
-                            print(cloze_mask.sum())
                             union_mask = cloze_mask | missing_mask_batch
-                            print(union_mask.sum())
                             pred_mask = cloze_mask & ~missing_mask_batch
-                            print(pred_mask.sum())
-                            exit()
 
                             if len(available_assays_ind) > 1:
                                 assaymask_ind = random.choice(available_assays_ind)
@@ -819,8 +815,8 @@ class PRE_TRAINER(object):
                                 torch.cuda.empty_cache()
                                 continue
                             
-                            mean_pred, std_pred = outputs[cloze_mask].mean().item(), outputs[cloze_mask].std().item()
-                            mean_target, std_target = x_batch[cloze_mask].mean().item(), x_batch[cloze_mask].std().item()
+                            mean_pred, std_pred = outputs[pred_mask].mean().item(), outputs[pred_mask].std().item()
+                            mean_target, std_target = x_batch[pred_mask].mean().item(), x_batch[pred_mask].std().item()
 
                             del x_batch
                             del masked_x_batch
