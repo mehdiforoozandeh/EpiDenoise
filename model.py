@@ -286,7 +286,7 @@ class EpiDenoise17(nn.Module):
     
 
     def forward(self, src, mask, segment_label):
-        src = torch.cat([src, mask], dim=2)
+        src = torch.cat([src, mask.float()], dim=2)
         src = self.embedding_linear(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -778,11 +778,6 @@ class PRE_TRAINER(object):
                             
                             union_mask = cloze_mask | missing_mask_batch
 
-                            print(union_mask.shape)
-                            print(union_mask.sum(0))
-                            print(union_mask.sum(1))
-                            print(union_mask.sum(2))
-
                             """
                             if num_available features > 1, 
                                 in each batch, randomly mask one of the available features
@@ -802,7 +797,7 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
                             union_mask = union_mask.to(self.device)
 
-                            outputs, SAP = self.model(masked_x_batch, union_mask, segment_label)
+                            outputs, SAP = self.model(masked_x_batch, ~union_mask, segment_label)
 
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
 
