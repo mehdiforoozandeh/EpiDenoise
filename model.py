@@ -838,8 +838,8 @@ class PRE_TRAINER(object):
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
                                 f"Loss: {loss.item():.4f}", 
-                                f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
-                                f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
+                                # f"Mean_P: {mean_pred:.3f}", f"Mean_T: {mean_target:.3f}", 
+                                # f"Std_P: {std_pred:.2f}", f"Std_T: {std_target:.2f}"
                                 ]
                             logstr = " | ".join(logstr)
 
