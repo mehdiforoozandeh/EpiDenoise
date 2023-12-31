@@ -1077,7 +1077,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.75)
 
     # Load from checkpoint if provided
