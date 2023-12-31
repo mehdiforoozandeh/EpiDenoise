@@ -742,6 +742,7 @@ class PRE_TRAINER(object):
 
                         # Break down x into smaller batches
                         for i in range(0, len(pattern_batch), batch_size):
+                            self.optimizer.zero_grad()
 
                             torch.cuda.empty_cache()
                             seg_length = context_length // 2
@@ -846,8 +847,8 @@ class PRE_TRAINER(object):
                             print(logstr)
                         
                     # update parameters over all batches and all patterns of missing data
-                    self.optimizer.step()
-                    self.scheduler.step()
+                            self.optimizer.step()
+                            self.scheduler.step()
 
                     t1 = datetime.now()
                     logfile = open("models/log.txt", "w")
@@ -1046,7 +1047,6 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     return model
 
-
 def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     # Defining the hyperparameters
@@ -1076,7 +1076,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, amsgrad=True)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.75)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.75)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
