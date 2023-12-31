@@ -1092,7 +1092,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
-    model = trainer.pretrain_epidenoise_15(d_model=d_model, num_epochs=epochs, 
+    model = trainer.pretrain_epidenoise_17(d_model=d_model, num_epochs=epochs, 
         mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
         context_length=context_length, batch_size=batch_size, start_ds=start_ds)
 
