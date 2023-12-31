@@ -165,9 +165,10 @@ class ComboLoss17(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
         self.alpha = alpha
 
-    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac):
+    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, obs_mask):
 
-        mse_loss = self.mse_loss(pred_signals, true_signals)
+        mse_obs_loss = self.mse_loss(pred_signals[obs_mask], true_signals[obs_mask])
+        mse_pred_loss = self.mse_loss(pred_signals[pred_mask], true_signals[pred_mask])
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -180,7 +181,7 @@ class ComboLoss17(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return self.alpha * mse_loss + (1 - self.alpha) * bce_loss
+        return mse_obs_loss + mse_pred_loss + bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -804,7 +805,7 @@ class PRE_TRAINER(object):
 
                             outputs, SAP = self.model(masked_x_batch, ~union_mask, segment_label)
 
-                            loss = self.criterion(outputs[pred_mask], x_batch[pred_mask], SAP, target_SAP)
+                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, pred_mask, ~union_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -816,8 +817,8 @@ class PRE_TRAINER(object):
                                 torch.cuda.empty_cache()
                                 continue
                             
-                            mean_pred, std_pred = outputs[pred_mask].mean().item(), outputs[pred_mask].std().item()
-                            mean_target, std_target = x_batch[pred_mask].mean().item(), x_batch[pred_mask].std().item()
+                            # mean_pred, std_pred = outputs[pred_mask].mean().item(), outputs[pred_mask].std().item()
+                            # mean_target, std_target = x_batch[pred_mask].mean().item(), x_batch[pred_mask].std().item()
 
                             del x_batch
                             del masked_x_batch
@@ -1094,7 +1095,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
-    criterion = ComboLoss15(alpha=alpha)
+    criterion = ComboLoss17(alpha=alpha)
 
     start_time = time.time()
 
