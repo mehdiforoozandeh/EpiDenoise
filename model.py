@@ -776,7 +776,7 @@ class PRE_TRAINER(object):
                             # Masking a subset of the input data -- genomic position mask
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
-                            cloze_mask = cloze_mask & ~missing_mask_batch
+                            union_mask = cloze_mask | missing_mask_batch
 
                             """
                             if num_available features > 1, 
@@ -796,7 +796,7 @@ class PRE_TRAINER(object):
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, SAP = self.model(masked_x_batch, mask, segment_label)
+                            outputs, SAP = self.model(masked_x_batch, union, segment_label)
 
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
 
@@ -1129,8 +1129,8 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
-        "d_model": 256,
-        "nlayers": 4,
+        "d_model": 64,
+        "nlayers": 2,
         "epochs": 15,
         "mask_percentage": 0.15,
         "chunk": True,
