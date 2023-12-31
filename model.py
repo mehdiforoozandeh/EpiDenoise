@@ -795,6 +795,7 @@ class PRE_TRAINER(object):
                             x_batch = x_batch.to(self.device)
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
+                            union_mask = union_mask.to(self.device)
 
                             outputs, SAP = self.model(masked_x_batch, union_mask, segment_label)
 
