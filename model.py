@@ -11,6 +11,17 @@ from datetime import datetime
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
+# # Set the seed value
+# seed_value = 42
+# # Set the seed for Python's built-in random module
+# random.seed(seed_value)
+# # Set the seed for NumPy
+# np.random.seed(seed_value)
+# # Set the seed for PyTorch
+# torch.manual_seed(seed_value)
+# torch.cuda.manual_seed(seed_value)
+# torch.cuda.manual_seed_all(seed_value)
+
 #========================================================================================================#
 #===========================================building blocks==============================================#
 #========================================================================================================#
@@ -777,6 +788,7 @@ class PRE_TRAINER(object):
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             
                             union_mask = cloze_mask | missing_mask_batch
+                            pred_mask = cloze_mask & ~missing_mask_batch
 
                             """
                             if num_available features > 1, 
@@ -788,18 +800,18 @@ class PRE_TRAINER(object):
                             if len(available_assays_ind) > 1:
                                 assaymask_ind = random.choice(available_assays_ind)
                                 masked_x_batch[:,:,available_assays_ind] = -1
-                                cloze_mask[:, :, available_assays_ind] = True
-                                cloze_mask[:, special_token_indices, :] = False
+                                pred_mask[:, :, available_assays_ind] = True
+                                pred_mask[:, special_token_indices, :] = False
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
                             masked_x_batch = masked_x_batch.to(self.device)
-                            cloze_mask = cloze_mask.to(self.device)
                             union_mask = union_mask.to(self.device)
+                            pred_mask = pred_mask.to(self.device)
 
                             outputs, SAP = self.model(masked_x_batch, ~union_mask, segment_label)
 
-                            loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
+                            loss = self.criterion(outputs[pred_mask], x_batch[pred_mask], SAP, target_SAP)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
