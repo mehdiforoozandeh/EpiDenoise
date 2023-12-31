@@ -796,7 +796,7 @@ class PRE_TRAINER(object):
                             masked_x_batch = masked_x_batch.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, SAP = self.model(masked_x_batch, union, segment_label)
+                            outputs, SAP = self.model(masked_x_batch, union_mask, segment_label)
 
                             loss = self.criterion(outputs[cloze_mask], x_batch[cloze_mask], SAP, target_SAP)
 
