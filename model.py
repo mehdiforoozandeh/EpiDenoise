@@ -788,9 +788,9 @@ class PRE_TRAINER(object):
                             masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             print(cloze_mask.sum())
                             union_mask = cloze_mask | missing_mask_batch
-                            print(cloze_mask.sum())
+                            print(union_mask.sum())
                             pred_mask = cloze_mask & ~missing_mask_batch
-                            print(cloze_mask.sum())
+                            print(pred_mask.sum())
                             exit()
 
                             if len(available_assays_ind) > 1:
