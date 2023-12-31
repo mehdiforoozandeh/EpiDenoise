@@ -790,13 +790,6 @@ class PRE_TRAINER(object):
                             union_mask = cloze_mask | missing_mask_batch
                             pred_mask = cloze_mask & ~missing_mask_batch
 
-                            """
-                            if num_available features > 1, 
-                                in each batch, randomly mask one of the available features
-                                update the fmask
-                                get the model to predict the whole track based on input
-                            """
-
                             if len(available_assays_ind) > 1:
                                 assaymask_ind = random.choice(available_assays_ind)
                                 masked_x_batch[:,:,available_assays_ind] = -1
