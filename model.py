@@ -140,11 +140,11 @@ class ComboLoss16(nn.Module):
         self.mse_loss = nn.MSELoss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, cloze_mask, obs_mask):
+    def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, cloze_mask, union_mask):
 
-        mse_obs_loss = self.mse_loss(pred_signals[obs_mask], true_signals[obs_mask])
+        mse_obs_loss = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-        bce_mask_loss = self.bce_loss(pred_mask, ~obs_mask)
+        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -804,7 +804,7 @@ class PRE_TRAINER(object):
                             outputs, pred_mask, SAP = self.model(masked_x_batch, segment_label)
 
                             #pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, obs_mask
-                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, pred_mask, cloze_mask, ~union_mask)
+                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, pred_mask, cloze_mask, union_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
