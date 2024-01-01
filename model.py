@@ -1403,6 +1403,29 @@ if __name__ == "__main__":
         start_ds=0)
 
     exit()
+
+    # EPIDENOISE_1.6
+    hyper_parameters = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.1,
+        "nhead": 8,
+        "d_model": 256,
+        "nlayers": 4,
+        "epochs": 10,
+        "mask_percentage": 0.15,
+        "chunk": True,
+        "context_length": 400,
+        "batch_size": 50,
+        "learning_rate": 0.01,
+    }
+
+    train_epidenoise16(
+        hyper_parameters, 
+        checkpoint_path=None, 
+        start_ds=0)
+
+    exit()
     # EPIDENOISE_1.5
     hyper_parameters = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
