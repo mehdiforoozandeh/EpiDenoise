@@ -142,7 +142,6 @@ class ComboLoss16(nn.Module):
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, cloze_mask, union_mask):
         print(pred_mask.min(), pred_mask.max())
-        exit()
 
         mse_obs_loss = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
