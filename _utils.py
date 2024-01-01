@@ -77,7 +77,9 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
-    cls_sep_indices = [0, seq_len/2, seq_len+1]
+    seglength = (seq_len - 3)/2
+
+    cls_sep_indices = [0, seglength+1, 2*seglength + 2]
     
     if chunk:
         # Calculate the size of each chunk
@@ -136,7 +138,9 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
-    special_tokens = [0, seq_len/2, seq_len+1]
+    seglength = (seq_len - 3)/2
+
+    special_tokens = [0, seglength+1, 2*seglength + 2]
 
     # Calculate total number of signals and number of chunks to be masked
     num_all_signals = data.size(1) * len(available_features)
@@ -151,8 +155,9 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
 
             # Check if the chunk overlaps with any special tokens
             if not any(length_start <= idx + chunk_size and length_start + chunk_size >= idx for idx in special_tokens):
-                print(length_start, set(range(length_start, length_start + chunk_size)).intersection(special_tokens))
                 break
+            else:
+                print(length_start, set(range(length_start, length_start + chunk_size)).intersection(special_tokens))
 
         # Apply the masking to the selected chunk
         mask[:, length_start:length_start+chunk_size, feature_start] = True
