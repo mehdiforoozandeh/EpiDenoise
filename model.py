@@ -700,7 +700,7 @@ class PRE_TRAINER(object):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
-        logfile = open("models/log.txt", "w")
+        logfile = open("models/EPD16_log.txt", "w")
         logfile.write("\n".join(log_strs))
         logfile.close()
 
@@ -830,7 +830,7 @@ class PRE_TRAINER(object):
                             self.scheduler.step()
                         
                         if p%8 == 0:
-                            logfile = open("models/log.txt", "w")
+                            logfile = open("models/EPD16_log.txt", "w")
 
                             logstr = [
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
@@ -851,7 +851,7 @@ class PRE_TRAINER(object):
                     # self.scheduler.step()
 
                     t1 = datetime.now()
-                    logfile = open("models/log.txt", "w")
+                    logfile = open("models/EPD16_log.txt", "w")
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
@@ -869,7 +869,7 @@ class PRE_TRAINER(object):
 
                 # Save the model after each dataset
                 try:
-                    torch.save(self.model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
+                    torch.save(self.model.state_dict(), f'models/EPD16_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
@@ -883,7 +883,7 @@ class PRE_TRAINER(object):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
-        logfile = open("models/log.txt", "w")
+        logfile = open("models/EPD17_log.txt", "w")
         logfile.write("\n".join(log_strs))
         logfile.close()
 
@@ -1012,7 +1012,7 @@ class PRE_TRAINER(object):
                             self.scheduler.step()
                         
                         if p%8 == 0:
-                            logfile = open("models/log.txt", "w")
+                            logfile = open("models/EPD17_log.txt", "w")
 
                             logstr = [
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
@@ -1033,7 +1033,7 @@ class PRE_TRAINER(object):
                     # self.scheduler.step()
 
                     t1 = datetime.now()
-                    logfile = open("models/log.txt", "w")
+                    logfile = open("models/EPD17_log.txt", "w")
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
@@ -1051,7 +1051,7 @@ class PRE_TRAINER(object):
 
                 # Save the model after each dataset
                 try:
-                    torch.save(self.model.state_dict(), f'models/model_checkpoint_ds_{ds}.pth')
+                    torch.save(self.model.state_dict(), f'models/EPD17_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
@@ -1387,14 +1387,14 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
-        "d_model": 64,
-        "nlayers": 2,
-        "epochs": 15,
+        "d_model": 256,
+        "nlayers": 4,
+        "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005,
+        "learning_rate": 0.01,
     }
 
     train_epidenoise16(
