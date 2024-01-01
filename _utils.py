@@ -122,7 +122,7 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Return the masked data and the mask
     return masked_data, mask
 
-def mask_data16(data, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
+def mask_data16(data, available_assays, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
     """
     dimensions of the data: (batch_size, context_length, features)
     in this version, we make the following changes
@@ -134,7 +134,7 @@ def mask_data16(data, mask_value=-1, chunk_size=6, mask_percentage=0.15):
         feature: random.choice(available_features)
     """
     # Identify available features
-    available_features = (data != mask_value).any(dim=0).nonzero(as_tuple=True)[0]
+    available_features = available_assays
     print(available_features)
     exit()
 
