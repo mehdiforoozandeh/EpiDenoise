@@ -153,7 +153,7 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
             if not any(length_start <= idx + chunk_size and length_start + chunk_size >= idx for idx in special_tokens):
                 break
             else:
-                print(length_start)
+                print(length_start, set(range(length_start, length_start + chunk_size)).intersection(special_tokens))
 
         # Apply the masking to the selected chunk
         mask[:, length_start:length_start+chunk_size, feature_start] = True
