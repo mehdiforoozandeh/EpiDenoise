@@ -1393,7 +1393,7 @@ if __name__ == "__main__":
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005,
+        "learning_rate": 0.0005,
     }
 
     train_epidenoise16(
