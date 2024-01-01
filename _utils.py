@@ -27,8 +27,7 @@ def reshape_tensor(tensor, context_length_factor):
 
     return reshaped_tensor
 
-# Function to mask a certain percentage of the data
-def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15): # used for epidenoise 1.0
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
@@ -65,8 +64,7 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
 
     return masked_data, mask
 
-# Function to mask a certain percentage of the data
-def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
+def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15): # used for epidenoise 1.5
     """
     in this version, we added special tokens and made sure not to mask them
     similar to BERT, using 3 different maskings:
@@ -124,7 +122,7 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Return the masked data and the mask
     return masked_data, mask
 
-def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
+def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_percentage=0.15): # used for epidenoise 1.6 and 1.7
     """
     dimensions of the data: (batch_size, context_length, features)
     in this version, we make the following changes
@@ -153,7 +151,6 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
             # Randomly select start coordinates for the chunk
             length_start = torch.randint(0, seq_len - chunk_size, (1,))
             feature_start = available_features[torch.randint(0, len(available_features), (1,))]
-            print(feature_start)
 
             # Check if the chunk overlaps with any special tokens
             if not any(length_start <= idx < length_start+chunk_size for idx in special_tokens):
@@ -658,8 +655,6 @@ class augment(object):
 
     def random_gaussian(self):
         pass
-
-
 
 if __name__ == "__main__":
     # solar_path = "/project/compbio-lab/EIC/"

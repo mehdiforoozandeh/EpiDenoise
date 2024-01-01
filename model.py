@@ -686,7 +686,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_17(self, 
-        d_model, outer_loop_epochs=6, arcsinh_transform=True,
+        d_model, outer_loop_epochs=3, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -767,8 +767,8 @@ class PRE_TRAINER(object):
                                 seg_2 = pattern_batch[start:start+seg_1.shape[0], :seg_length, :]
                                 seg2m = missing_mask_patten_batch[start:start+seg_1.shape[0], :seg_length, :]
 
-                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
-                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -4)
+                            CLS = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -2)
+                            SEP = torch.full((seg_1.shape[0], 1, seg_1.shape[2]), -3)
                             
                             x_batch = torch.cat((CLS, seg_1, SEP, seg_2, SEP), 1)
                             missing_mask_batch = torch.cat((seg1m[:,0,:].unsqueeze(1), seg1m, seg1m[:,0,:].unsqueeze(1), seg2m, seg2m[:,0,:].unsqueeze(1)), 1)
@@ -786,26 +786,18 @@ class PRE_TRAINER(object):
                             target_SAP = target_SAP.to(self.device)
 
                             # Masking a subset of the input data -- genomic position mask
-                            # masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
                             masked_x_batch, cloze_mask = mask_data16(x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                             union_mask = cloze_mask | missing_mask_batch
-                            pred_mask = cloze_mask & ~missing_mask_batch
-
-                            # if len(available_assays_ind) > 1:
-                            #     assaymask_ind = random.choice(available_assays_ind)
-                            #     masked_x_batch[:,:,available_assays_ind] = -1
-                            #     pred_mask[:, :, available_assays_ind] = True
-                            #     pred_mask[:, special_token_indices, :] = False
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
                             masked_x_batch = masked_x_batch.to(self.device)
                             union_mask = union_mask.to(self.device)
-                            pred_mask = pred_mask.to(self.device)
+                            cloze_mask = cloze_mask.to(self.device)
 
                             outputs, SAP = self.model(masked_x_batch, ~union_mask, segment_label)
 
-                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, pred_mask, ~union_mask)
+                            loss = self.criterion(outputs, x_batch, SAP, target_SAP, cloze_mask, ~union_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -816,9 +808,6 @@ class PRE_TRAINER(object):
                                 del outputs
                                 torch.cuda.empty_cache()
                                 continue
-                            
-                            # mean_pred, std_pred = outputs[pred_mask].mean().item(), outputs[pred_mask].std().item()
-                            # mean_target, std_target = x_batch[pred_mask].mean().item(), x_batch[pred_mask].std().item()
 
                             del x_batch
                             del masked_x_batch
@@ -941,7 +930,7 @@ def train_epidenoise10(hyper_parameters, checkpoint_path=None, start_ds=0):
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
 
     model_name = f"EpiDenoise10_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    with open(f'models/hyper_parameters10_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
@@ -1016,7 +1005,7 @@ def train_epidenoise15(hyper_parameters, checkpoint_path=None, start_ds=0):
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
 
     model_name = f"EpiDenoise15_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    with open(f'models/hyper_parameters15_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
@@ -1063,7 +1052,6 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
     mask_percentage = hyper_parameters["mask_percentage"]
     chunk = hyper_parameters["chunk"]
     context_length = hyper_parameters["context_length"]
-    alpha = hyper_parameters["alpha"]
 
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
@@ -1091,7 +1079,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
 
     model_name = f"EpiDenoise17_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    with open(f'models/hyper_parameters17_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     # criterion = WeightedMSELoss()
@@ -1130,7 +1118,6 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
 #========================================================================================================#
 
 if __name__ == "__main__":
-
     # EPIDENOISE_1.5
     hyper_parameters = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
@@ -1145,10 +1132,32 @@ if __name__ == "__main__":
         "context_length": 400,
         "batch_size": 50,
         "learning_rate": 0.005,
-        "alpha":0.75
     }
 
     train_epidenoise17(
+        hyper_parameters, 
+        checkpoint_path=None, 
+        start_ds=0)
+
+    exit()
+    # EPIDENOISE_1.5
+    hyper_parameters = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.1,
+        "nhead": 8,
+        "d_model": 64,
+        "nlayers": 2,
+        "epochs": 15,
+        "mask_percentage": 0.15,
+        "chunk": True,
+        "context_length": 400,
+        "batch_size": 50,
+        "learning_rate": 0.05,
+        "alpha":0.75
+    }
+
+    train_epidenoise15(
         hyper_parameters, 
         checkpoint_path=None, 
         start_ds=0)
