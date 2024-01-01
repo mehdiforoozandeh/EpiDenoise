@@ -137,7 +137,6 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
     seglength = (seq_len - 3)/2
-    print(available_features)
 
     special_tokens = [0, seglength+1, (2*seglength)+2]
 
