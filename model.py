@@ -1256,7 +1256,7 @@ def train_epidenoise16(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.75)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.99)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -1329,7 +1329,7 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.75)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.99)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
