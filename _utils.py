@@ -122,7 +122,7 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Return the masked data and the mask
     return masked_data, mask
 
-def mask_data16(data, available_assays, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
+def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
     """
     dimensions of the data: (batch_size, context_length, features)
     in this version, we make the following changes
@@ -133,23 +133,27 @@ def mask_data16(data, available_assays, mask_value=-1, chunk_size=6, mask_percen
         length: axis2 (start + chunk_size -> no overlap with special tokens)
         feature: random.choice(available_features)
     """
-    # Identify available features
-    available_features = available_assays
-    print(available_features)
-    exit()
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    seq_len = data.size(1)
+    special_tokens = [0, seq_len/2, seq_len+1]
 
     # Calculate total number of signals and number of chunks to be masked
     num_all_signals = data.size(1) * len(available_features)
     num_mask_start = int((num_all_signals * mask_percentage) / chunk_size)
 
-    # Initialize a mask tensor with the same shape as the data tensor, filled with False
-    mask = torch.zeros_like(data, dtype=torch.bool)
-
     # Loop over the number of chunks to be masked
     for _ in range(num_mask_start):
-        # Randomly select start coordinates for the chunk
-        length_start = torch.randint(0, data.size(1) - chunk_size, (1,))
-        feature_start = available_features[torch.randint(0, len(available_features), (1,))]
+        while True:
+            # Randomly select start coordinates for the chunk
+            length_start = torch.randint(0, seq_len - chunk_size, (1,))
+
+            # Check if the chunk overlaps with any special tokens
+            if not any(length_start <= idx + chunk_size and length_start + chunk_size >= idx for idx in special_tokens):
+                print(length_start)
+                break
+
+            feature_start = available_features[torch.randint(0, len(available_features), (1,))]
 
         # Apply the masking to the selected chunk
         mask[:, length_start:length_start+chunk_size, feature_start] = True
