@@ -1387,14 +1387,14 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
-        "d_model": 256,
-        "nlayers": 4,
+        "d_model": 64,
+        "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005,
+        "learning_rate": 0.01,
     }
 
     train_epidenoise16(
