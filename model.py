@@ -1396,7 +1396,7 @@ if __name__ == "__main__":
         "learning_rate": 0.0005,
     }
 
-    train_epidenoise16(
+    train_epidenoise17(
         hyper_parameters, 
         checkpoint_path=None, 
         start_ds=0)
