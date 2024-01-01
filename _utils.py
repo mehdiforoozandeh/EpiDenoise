@@ -139,8 +139,9 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
     mask = torch.zeros_like(data, dtype=torch.bool)
     seq_len = data.size(1)
     seglength = (seq_len - 3)/2
+    print(available_features)
 
-    special_tokens = [0, seglength+1, 2*seglength + 2]
+    special_tokens = [0, seglength+1, (2*seglength)+2]
 
     # Calculate total number of signals and number of chunks to be masked
     num_all_signals = data.size(1) * len(available_features)
@@ -152,12 +153,11 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
             # Randomly select start coordinates for the chunk
             length_start = torch.randint(0, seq_len - chunk_size, (1,))
             feature_start = available_features[torch.randint(0, len(available_features), (1,))]
+            print(feature_start)
 
             # Check if the chunk overlaps with any special tokens
             if not any(length_start <= idx < length_start+chunk_size for idx in special_tokens):
                 break
-            else:
-                print(length_start, set(range(length_start, length_start + chunk_size)).intersection(special_tokens))
 
         # Apply the masking to the selected chunk
         mask[:, length_start:length_start+chunk_size, feature_start] = True
