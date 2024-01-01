@@ -154,7 +154,7 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
             feature_start = available_features[torch.randint(0, len(available_features), (1,))]
 
             # Check if the chunk overlaps with any special tokens
-            if not any(length_start <= idx + chunk_size and length_start + chunk_size >= idx for idx in special_tokens):
+            if not any(idx >= length_start and idx <= length_start+chunk_size for idx in special_tokens):
                 break
             else:
                 print(length_start, set(range(length_start, length_start + chunk_size)).intersection(special_tokens))
