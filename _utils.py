@@ -67,10 +67,12 @@ def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15
 
 # Function to mask a certain percentage of the data
 def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15):
-
     """
-    find indices of data where all of the values of last dimension are -1.
-    with some probability, mask a random subset of available features and task to predict
+    in this version, we added special tokens and made sure not to mask them
+    similar to BERT, using 3 different maskings:
+        1. mask
+        2. replace with random data
+        3. do nothing
     """
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
@@ -112,7 +114,7 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
                 masked_data[:, pos, :] = mask_value
             elif rand_num < 0.9:
                 # 10% of the time, replace with a random value in the range of the data
-                data_min = torch.min(data)
+                data_min = 0
                 data_max = torch.max(data)
                 random_value = data_min + torch.rand(1) * (data_max - data_min)
                 masked_data[:, pos, :] = random_value
@@ -120,6 +122,41 @@ def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.
     # Return the masked data and the mask
     return masked_data, mask
 
+def mask_data16(data, mask_value=-1, chunk_size=6, mask_percentage=0.15): 
+    """
+    dimensions of the data: (batch_size, context_length, features)
+    in this version, we make the following changes
+    find available features -> for unavailable features, are corresponding values are -1. 
+    num_all_signals = context * num_available_features
+    num_mask_start = (num_all_signals * mask_percentage) / chunk_size
+    randomly select mask_start coordinates 
+        length: axis2 (start + chunk_size -> no overlap with special tokens)
+        feature: random.choice(available_features)
+    """
+    # Identify available features
+    available_features = (data != mask_value).any(dim=0).nonzero(as_tuple=True)[0]
+    print(available_features)
+    exit()
+
+    # Calculate total number of signals and number of chunks to be masked
+    num_all_signals = data.size(1) * len(available_features)
+    num_mask_start = int((num_all_signals * mask_percentage) / chunk_size)
+
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+
+    # Loop over the number of chunks to be masked
+    for _ in range(num_mask_start):
+        # Randomly select start coordinates for the chunk
+        length_start = torch.randint(0, data.size(1) - chunk_size, (1,))
+        feature_start = available_features[torch.randint(0, len(available_features), (1,))]
+
+        # Apply the masking to the selected chunk
+        mask[:, length_start:length_start+chunk_size, feature_start] = True
+        data[mask] = mask_value
+
+    return data, mask
+    
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()

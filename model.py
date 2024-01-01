@@ -786,15 +786,16 @@ class PRE_TRAINER(object):
                             target_SAP = target_SAP.to(self.device)
 
                             # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                            # masked_x_batch, cloze_mask = mask_data15(x_batch, mask_value=-1, chunk=chunk, n_chunks=n_chunks, mask_percentage=mask_percentage)
+                            masked_x_batch, cloze_mask = mask_data16(x_batch, mask_value=-1, mask_percentage=mask_percentage)
                             union_mask = cloze_mask | missing_mask_batch
                             pred_mask = cloze_mask & ~missing_mask_batch
 
-                            if len(available_assays_ind) > 1:
-                                assaymask_ind = random.choice(available_assays_ind)
-                                masked_x_batch[:,:,available_assays_ind] = -1
-                                pred_mask[:, :, available_assays_ind] = True
-                                pred_mask[:, special_token_indices, :] = False
+                            # if len(available_assays_ind) > 1:
+                            #     assaymask_ind = random.choice(available_assays_ind)
+                            #     masked_x_batch[:,:,available_assays_ind] = -1
+                            #     pred_mask[:, :, available_assays_ind] = True
+                            #     pred_mask[:, special_token_indices, :] = False
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
