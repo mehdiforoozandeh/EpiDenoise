@@ -803,7 +803,7 @@ class PRE_TRAINER(object):
 
                             outputs, pred_mask, SAP = self.model(masked_x_batch, segment_label)
 
-                            #pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, pred_mask, obs_mask
+                            #pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, obs_mask
                             loss = self.criterion(outputs, x_batch, SAP, target_SAP, pred_mask, cloze_mask, ~union_mask)
 
                             if torch.isnan(loss).sum() > 0:
@@ -1271,8 +1271,7 @@ def train_epidenoise16(hyper_parameters, checkpoint_path=None, start_ds=0):
     with open(f'models/hyper_parameters16_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    # criterion = WeightedMSELoss()
-    criterion = ComboLoss17()
+    criterion = ComboLoss16()
 
     start_time = time.time()
 
