@@ -141,17 +141,16 @@ class ComboLoss16(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, cloze_mask, union_mask):
-        print(pred_mask.min(), pred_mask.max())
 
         mse_obs_loss = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
 
         # Check for nan values in pred_adjac and true_adjac
-        if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
+        if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any() or torch.isnan(pred_mask).any():
             # print("NaN value encountered in pred_adjac or true_adjac.")
             return torch.tensor(float('nan')).to(pred_signals.device)
 
+        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
         SAP_bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
         if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(SAP_bce_loss) or torch.isnan(bce_mask_loss):
