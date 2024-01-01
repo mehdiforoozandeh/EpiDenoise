@@ -144,7 +144,11 @@ class ComboLoss16(nn.Module):
 
         mse_obs_loss = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
+        try:
+            bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
+        except:
+            print(pred_mask.min(), pred_mask.max())
+            exit()
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any():
@@ -1387,8 +1391,8 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
-        "d_model": 64,
-        "nlayers": 2,
+        "d_model": 256,
+        "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.15,
         "chunk": True,
