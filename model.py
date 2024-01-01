@@ -254,6 +254,7 @@ class EpiDenoise16(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
         self.SAP = nn.Linear(d_model, 2) # segment adjacency prediction head
+
         self.softmax = torch.nn.Softmax(dim=-1)
     
 
@@ -267,7 +268,7 @@ class EpiDenoise16(nn.Module):
         cls_token = src[0, :, :].unsqueeze(0)
         SAP = self.softmax(self.SAP(cls_token))
         
-        msk = self.mask_decoder(src)
+        msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
 
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
