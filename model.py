@@ -1,4 +1,4 @@
-import torch, math, random, time, json, os, pickle
+import torch, math, random, time, json, os, pickle, sys
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
@@ -1380,8 +1380,8 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
 #========================================================================================================#
 
 if __name__ == "__main__":
-    # EPIDENOISE_1.7
-    hyper_parameters = {
+    # EPIDENOISE 1.6 & 1.7
+    hyper_parameters167 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
@@ -1396,33 +1396,17 @@ if __name__ == "__main__":
         "learning_rate": 0.001,
     }
 
-    train_epidenoise16(
-        hyper_parameters, 
-        checkpoint_path=None, 
-        start_ds=0)
+    if sys.argv[1] == "epd16":
+        train_epidenoise16(
+            hyper_parameters167, 
+            checkpoint_path=None, 
+            start_ds=0)
 
-    exit()
-
-    # EPIDENOISE_1.6
-    hyper_parameters = {
-        "data_path": "/project/compbio-lab/EIC/training_data/",
-        "input_dim": 35,
-        "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 256,
-        "nlayers": 4,
-        "epochs": 10,
-        "mask_percentage": 0.15,
-        "chunk": True,
-        "context_length": 400,
-        "batch_size": 50,
-        "learning_rate": 0.01,
-    }
-
-    train_epidenoise16(
-        hyper_parameters, 
-        checkpoint_path=None, 
-        start_ds=0)
+    elif sys.argv[1] == "epd17":
+        train_epidenoise17(
+            hyper_parameters167, 
+            checkpoint_path=None, 
+            start_ds=0)
 
     exit()
     # EPIDENOISE_1.5
