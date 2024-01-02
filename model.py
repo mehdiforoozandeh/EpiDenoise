@@ -868,7 +868,8 @@ class PRE_TRAINER(object):
 
                 # Save the model after each dataset
                 try:
-                    torch.save(self.model.state_dict(), f'models/EPD16_model_checkpoint_ds_{ds}.pth')
+                    if ds%5 == 0:
+                        torch.save(self.model.state_dict(), f'models/EPD16_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
@@ -1050,7 +1051,8 @@ class PRE_TRAINER(object):
 
                 # Save the model after each dataset
                 try:
-                    torch.save(self.model.state_dict(), f'models/EPD17_model_checkpoint_ds_{ds}.pth')
+                    if ds%5 == 0:
+                        torch.save(self.model.state_dict(), f'models/EPD17_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
