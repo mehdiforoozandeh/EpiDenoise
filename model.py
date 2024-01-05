@@ -824,8 +824,8 @@ class PRE_TRAINER(object):
                             torch.cuda.empty_cache()
 
                             loss.backward()  
-                            self.optimizer.step()
-                            self.scheduler.step()
+                            # self.optimizer.step()
+                            # self.scheduler.step()
                         
                         if p%8 == 0:
                             logfile = open("models/EPD16_log.txt", "w")
@@ -845,8 +845,8 @@ class PRE_TRAINER(object):
                             print(logstr)
                         
                     # update parameters over all batches and all patterns of missing data
-                    # self.optimizer.step()
-                    # self.scheduler.step()
+                    self.optimizer.step()
+                    self.scheduler.step()
 
                     t1 = datetime.now()
                     logfile = open("models/EPD16_log.txt", "w")
