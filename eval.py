@@ -182,6 +182,9 @@ class Evaluation: # on chr21
             # Store the predictions in the large tensor
             P[i:i+batch_size, :, :] = outputs.cpu()
         
+        print(P.shape)
+        exit()
+        
         P = P.view((P.shape[0] * context_length), P.shape[-1]) # preds
         Y = Y.view((Y.shape[0] * context_length), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * context_length), X.shape[-1]) # train data
