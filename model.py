@@ -824,7 +824,7 @@ class PRE_TRAINER(object):
                             torch.cuda.empty_cache()
 
                             loss.backward()  
-                            # self.optimizer.step()
+                            self.optimizer.step()
                             # self.scheduler.step()
                         
                         if p%8 == 0:
@@ -845,7 +845,7 @@ class PRE_TRAINER(object):
                             print(logstr)
                         
                     # update parameters over all batches and all patterns of missing data
-                    self.optimizer.step()
+                    # self.optimizer.step()
                     self.scheduler.step()
 
                     t1 = datetime.now()
@@ -1273,7 +1273,7 @@ def train_epidenoise16(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.99)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
