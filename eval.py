@@ -191,7 +191,7 @@ class Evaluation: # on chr21
         if self.is_arcsin:
             arcmask = (X != -1)
             P = torch.sinh_(P)
-            X = torch.sinh_(X[arcmask])
+            X[arcmask] = torch.sinh_(X[arcmask])
 
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
