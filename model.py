@@ -152,7 +152,7 @@ class ComboLoss16(nn.Module):
         bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
         # SAP_bce_loss = self.bce_loss(pred_adjac, true_adjac)
 
-        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(SAP_bce_loss) or torch.isnan(bce_mask_loss):
+        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):# or torch.isnan(SAP_bce_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
