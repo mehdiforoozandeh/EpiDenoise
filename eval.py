@@ -140,12 +140,15 @@ class Evaluation: # on chr21
                 fmask[i,:] = 0
             fmask = fmask.to(self.device)
 
-        elif self.version == "16":
-            segment_label = [0] + [1 for i in range(context_length//2)] + [0] + [2 for i in range(context_length//2)] + [0]
-            segment_label = torch.from_numpy(np.array(segment_label))
-            segment_label = segment_label.to(self.device)
+        elif self.version == "16" or self.version == "17":
+            CLS_x = torch.full((X.shape[0], 1, X.shape[2]), -2)
+            SEP_x = torch.full((X.shape[0], 1, X.shape[2]), -3)
+            CLS_y = torch.full((Y.shape[0], 1, Y.shape[2]), -2)
+            SEP_y = torch.full((Y.shape[0], 1, Y.shape[2]), -3)
 
-        elif self.version == "17":
+            X = torch.cat([CLS_x, X[:, :context_length//2, :], SEP_x, X[:, context_length//2:, :], SEP_x], dim=1)
+            Y = torch.cat([CLS_y, Y[:, :context_length//2, :], SEP_y, Y[:, context_length//2:, :], SEP_y], dim=1)
+
             segment_label = [0] + [1 for i in range(context_length//2)] + [0] + [2 for i in range(context_length//2)] + [0]
             segment_label = torch.from_numpy(np.array(segment_label))
             segment_label = segment_label.to(self.device)
@@ -457,7 +460,7 @@ if __name__=="__main__":
         hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240102154151_params3977288.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True
+        is_arcsin=True, version="16"
     )
     e.evaluate_model("eval_EPD16.csv")
 
@@ -466,7 +469,7 @@ if __name__=="__main__":
         hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True
+        is_arcsin=True,  version="17"
     )
     e.evaluate_model("eval_EPD17.csv")
 
