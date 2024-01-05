@@ -127,7 +127,8 @@ class Evaluation: # on chr21
         X, Y = X[:num_rows, :], Y[:num_rows, :]
         
         if self.is_arcsin:
-            X = torch.arcsinh_(X)
+            arcmask = (X != -1)
+            X[arcmask] = torch.arcsinh_(X[arcmask])
 
         X = X.view(-1, context_length, X.shape[-1])
         Y = Y.view(-1, context_length, Y.shape[-1])
@@ -188,8 +189,9 @@ class Evaluation: # on chr21
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
         if self.is_arcsin:
+            arcmask = (X != -1)
             P = torch.sinh_(P)
-            X = torch.sinh_(X)
+            X = torch.sinh_(X[arcmask])
 
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
@@ -455,16 +457,6 @@ def eDICE_eval():
     results.to_csv("eDICE_results.csv", index=False)
     
 if __name__=="__main__":
-    # eDICE_eval()
-    e = Evaluation(
-        model_path= "models/EpiDenoise16_20240102154151_params3977288.pt", 
-        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240102154151_params3977288.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True, version="16"
-    )
-    e.evaluate_model("eval_EPD16.csv")
-
     e = Evaluation(
         model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
         hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
@@ -473,6 +465,15 @@ if __name__=="__main__":
         is_arcsin=True,  version="17"
     )
     e.evaluate_model("eval_EPD17.csv")
+
+    e = Evaluation(
+        model_path= "models/EpiDenoise16_20240102154151_params3977288.pt", 
+        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240102154151_params3977288.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=True, version="16"
+    )
+    e.evaluate_model("eval_EPD16.csv")
 
     exit()
     e = Evaluation(
