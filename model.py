@@ -156,7 +156,7 @@ class ComboLoss16(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return mse_obs_loss + mse_pred_loss + SAP_bce_loss + bce_mask_loss
+        return mse_obs_loss + mse_pred_loss + bce_mask_loss #+ SAP_bce_loss
 
 class ComboLoss17(nn.Module):
     def __init__(self):
@@ -1402,11 +1402,11 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 256,
-        "nlayers": 4,
+        "nhead": 4,
+        "d_model": 64,
+        "nlayers": 2,
         "epochs": 10,
-        "mask_percentage": 0.15,
+        "mask_percentage": 0.20,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
