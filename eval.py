@@ -171,7 +171,6 @@ class Evaluation: # on chr21
 
                 elif self.version == "16":
                     outputs, pred_mask, SAP = self.model(x_batch, segment_label)
-                    print(SAP)
 
                 elif self.version == "17":
                     mask = torch.zeros_like(x_batch, dtype=torch.bool)
