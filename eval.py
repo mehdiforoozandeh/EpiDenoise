@@ -179,7 +179,6 @@ class Evaluation: # on chr21
                         mask[:,:,i] = True
 
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
-                    print(SAP, outputs.mean(dim=0), outputs.std(dim=0))
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -458,14 +457,14 @@ def eDICE_eval():
     results.to_csv("eDICE_results.csv", index=False)
     
 if __name__=="__main__":
-    e = Evaluation(
-        model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
-        hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True,  version="17"
-    )
-    e.evaluate_model("eval_EPD17.csv")
+    # e = Evaluation(
+    #     model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
+    #     hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
+    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
+    #     evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+    #     is_arcsin=True,  version="17"
+    # )
+    # e.evaluate_model("eval_EPD17.csv")
 
     e = Evaluation(
         model_path= "models/EpiDenoise16_20240102154151_params3977288.pt", 
