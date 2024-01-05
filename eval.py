@@ -11,12 +11,13 @@ PROC_PROM_BED_PATH = "data/tss.bed"
 class Evaluation: # on chr21
     def __init__(
         self, model_path, hyper_parameters_path, 
-        traindata_path, evaldata_path, 
+        traindata_path, evaldata_path, version="16",
         resolution=25, chr_sizes_file="data/hg38.chrom.sizes", is_arcsin=True):
 
         self.traindata_path = traindata_path
         self.evaldata_path = evaldata_path
         self.is_arcsin = is_arcsin
+        self.version = version
 
         with open(hyper_parameters_path, 'rb') as f:
             self.hyper_parameters = pickle.load(f)
@@ -24,7 +25,9 @@ class Evaluation: # on chr21
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         loader = MODEL_LOADER(model_path, self.hyper_parameters)
-        self.model = loader.load_epidenoise10()
+
+        self.model = loader.load_epidenoise(version=self.version)
+
         print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
@@ -130,12 +133,23 @@ class Evaluation: # on chr21
         Y = Y.view(-1, context_length, Y.shape[-1])
 
         d_model = X.shape[-1]
-        fmask = torch.ones(d_model, self.hyper_parameters["d_model"])
 
-        for i in missing_x_i: # input fmask
-            fmask[i,:] = 0
-        
-        fmask = fmask.to(self.device)
+        if self.version == "10":
+            fmask = torch.ones(d_model, self.hyper_parameters["d_model"])
+            for i in missing_x_i: # input fmask
+                fmask[i,:] = 0
+            fmask = fmask.to(self.device)
+
+        elif self.version == "16":
+            segment_label = [0] + [1 for i in range(context_length//2)] + [0] + [2 for i in range(context_length//2)] + [0]
+            segment_label = torch.from_numpy(np.array(segment_label))
+            segment_label = segment_label.to(self.device)
+
+        elif self.version == "17":
+            segment_label = [0] + [1 for i in range(context_length//2)] + [0] + [2 for i in range(context_length//2)] + [0]
+            segment_label = torch.from_numpy(np.array(segment_label))
+            segment_label = segment_label.to(self.device)
+
         # Initialize a tensor to store all predictions
         P = torch.empty_like(X, device="cpu")
 
@@ -146,10 +160,21 @@ class Evaluation: # on chr21
             x_batch = X[i:i+batch_size]
 
             with torch.no_grad():
-                # all one pmask (no position is masked)
-                pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
                 x_batch = x_batch.to(self.device)
-                outputs = self.model(x_batch, pmask, fmask)
+                if self.version == "10":
+                    # (no position is masked)
+                    pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
+                    outputs = self.model(x_batch, pmask, fmask)
+
+                elif self.version == "16":
+                    outputs, pred_mask, SAP = self.model(x_batch, segment_label)
+
+                elif self.version == "17":
+                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
+                    for i in missing_x_i: # input fmask
+                        mask[:,:,i] = True
+
+                    outputs, SAP = self.model(x_batch, ~mask, segment_label)
 
             # Store the predictions in the large tensor
             P[i:i+batch_size, :, :] = outputs.cpu()
@@ -427,7 +452,25 @@ def eDICE_eval():
     
 if __name__=="__main__":
     # eDICE_eval()
-    # exit()
+    e = Evaluation(
+        model_path= "models/EpiDenoise16_20240102154151_params3977288.pt", 
+        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240102154151_params3977288.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=True
+    )
+    e.evaluate_model("eval_EPD16.csv")
+
+    e = Evaluation(
+        model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
+        hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=True
+    )
+    e.evaluate_model("eval_EPD17.csv")
+
+    exit()
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
         hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 

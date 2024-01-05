@@ -255,7 +255,6 @@ class EpiDenoise16(nn.Module):
         self.SAP = nn.Linear(d_model, 2) # segment adjacency prediction head
 
         self.softmax = torch.nn.Softmax(dim=-1)
-    
 
     def forward(self, src, segment_label):
         src = self.embedding_linear(src)
@@ -1064,7 +1063,7 @@ class MODEL_LOADER(object):
         self.hyper_parameters = hyper_parameters
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    def load_epidenoise10(self):
+    def load_epidenoise(self, version= "16"):
         input_dim = output_dim = self.hyper_parameters["input_dim"]
         dropout = self.hyper_parameters["dropout"]
         nhead = self.hyper_parameters["nhead"]
@@ -1073,9 +1072,25 @@ class MODEL_LOADER(object):
         context_length = self.hyper_parameters["context_length"]
         
         # Assuming model is an instance of the correct class
-        model = EpiDenoise10(
-            input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
-            output_dim=output_dim, dropout=dropout, context_length=context_length)
+        if version == "10":
+            model = EpiDenoise10(
+                input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+                output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+        elif version == "15":
+            model = EpiDenoise15(
+                input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+                output_dim=output_dim, dropout=dropout, context_length=context_length)
+        
+        elif version == "16":
+            model = EpiDenoise16(
+                input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+                output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+        elif version == "17":
+            model = EpiDenoise17(
+                input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+                output_dim=output_dim, dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path))
         model = model.to(self.device)
