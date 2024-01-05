@@ -179,6 +179,7 @@ class Evaluation: # on chr21
 
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
 
+            print(outputs.shape)
             # Store the predictions in the large tensor
             P[i:i+batch_size, :, :] = outputs.cpu()
         
