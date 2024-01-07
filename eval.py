@@ -467,8 +467,8 @@ if __name__=="__main__":
     # e.evaluate_model("eval_EPD17.csv")
 
     e = Evaluation(
-        model_path= "models/EpiDenoise16_20240102154151_params3977288.pt", 
-        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240102154151_params3977288.pkl", 
+        model_path= "models/EpiDenoise16_20240105145712_params157128.pt", 
+        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240105145712_params157128.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         is_arcsin=True, version="16"
