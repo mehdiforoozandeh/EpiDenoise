@@ -235,7 +235,9 @@ class Evaluation: # on chr21
                 'Pearson_prom': self.pearson_prom(target, pred),
                 'Spearman_prom': self.spearman_prom(target, pred),
 
-                "peak_overlap": self.peak_overlap(target, pred)
+                "peak_overlap_01thr": self.peak_overlap(target, pred, threshold=0.01),
+                "peak_overlap_05thr": self.peak_overlap(target, pred, threshold=0.05),
+                "peak_overlap_10thr": self.peak_overlap(target, pred, threshold=0.10)
             }
             self.results.append(metrics)
 
