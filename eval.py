@@ -1,5 +1,5 @@
 from model import *
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr, spearmanr, poisson
 from sklearn.metrics import mean_squared_error
 import scipy.stats
 import pyBigWig
@@ -234,6 +234,8 @@ class Evaluation: # on chr21
                 'MSE-prom': self.mse_prom(target, pred),
                 'Pearson_prom': self.pearson_prom(target, pred),
                 'Spearman_prom': self.spearman_prom(target, pred),
+
+                "peak_overlap": self.peak_overlap(target, pred)
             }
             self.results.append(metrics)
 
@@ -390,6 +392,21 @@ class Evaluation: # on chr21
         perc_99_pos = np.where(y_pred >= perc_99)[0]
 
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def peak_overlap(self, y_true, y_pred, threshold=0.01):
+        # Calculate the p-value of the Poisson distribution for both y_true and y_pred
+        pvalue_true = 1 - poisson.cdf(y_true, np.mean(y_true))
+        pvalue_pred = 1 - poisson.cdf(y_pred, np.mean(y_pred))
+
+        # Binarize y_true and y_pred according to the pvalue and the threshold
+        y_true_bin = np.where(pvalue_true < threshold, 1, 0)
+        y_pred_bin = np.where(pvalue_pred < threshold, 1, 0)
+
+        # Calculate and return the ratio of 1s in y_true for which the corresponding y_pred is also 1
+        overlap = np.sum((y_true_bin == 1) & (y_pred_bin == 1))
+        total = np.sum(y_true_bin == 1)
+
+        return overlap / total if total > 0 else 0
 
 def eDICE_eval():
     e = Evaluation(
