@@ -1516,7 +1516,7 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 63,
+        "d_model": 64,
         "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.30,
