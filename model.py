@@ -181,7 +181,7 @@ class ComboLoss17(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return mse_obs_loss + mse_pred_loss + bce_loss
+        return mse_obs_loss + mse_pred_loss #+ bce_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
