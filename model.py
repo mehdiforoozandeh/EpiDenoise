@@ -1,4 +1,5 @@
 import torch, math, random, time, json, os, pickle, sys
+from scipy.stats import spearmanr
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET
@@ -323,9 +324,7 @@ class EpiDenoise17(nn.Module):
 
 class PRE_TRAINER(object):  
     def __init__(
-        self, model, dataset, criterion, optimizer, scheduler, 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/"):
+        self, model, dataset, criterion, optimizer, scheduler):
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(self.device)
@@ -336,26 +335,112 @@ class PRE_TRAINER(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
 
-        self.train_data = {}
-        self.eval_data = {}
+        self.test_x_dir = "/project/compbio-lab/EIC/training_data/C23_chr21_25.pt"
+        self.test_y_dir = "/project/compbio-lab/EIC/validation_data/C23_chr21_25.pt"
+    
+    def test_model(self, context_length, version, is_arcsin):
+        """
+        load X and Y
+        pred = model(X)
+        compare X and Y
+        """
+        missing_x_i = []
+        missing_y_i = []
 
-        # load and bin chr21 of all bigwig files 
-        for t in os.listdir(traindata_path):
-            if ".bigwig" in t:
+        X = torch.load(self.test_x_dir)
+        # fill-in missing_ind
+        for i in range(X.shape[1]):
+            if (X[:, i] == -1).all():
+                missing_x_i.append(i)
 
-                for e in os.listdir(evaldata_path):
-                    if ".bigwig" in e:
-                        
-                        if t[:3] == e[:3]:
+        Y = torch.load(self.test_y_dir)
+        # fill-in missing_ind
+        for i in range(Y.shape[1]):
+            if (Y[:, i] == -1).all():
+                missing_y_i.append(i)
 
-                            if t[:3] not in self.train_data:
-                                self.train_data[t[:3]] = {}
+        num_rows = (X.shape[0] // context_length) * context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
 
-                            if e[:3] not in self.eval_data:
-                                self.eval_data[e[:3]] = {}
+        if self.is_arcsin:
+            arcmask1 = (X != -1)
+            X[arcmask1] = torch.arcsinh_(X[arcmask1])
 
-                            self.train_data[t[:3]][t[3:6]] = traindata_path + "/" + t
-                            self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
+            arcmask2 = (Y != -1)
+            Y[arcmask2] = torch.arcsinh_(Y[arcmask2])
+
+        X = X.view(-1, context_length, X.shape[-1])
+        Y = Y.view(-1, context_length, Y.shape[-1])
+
+        d_model = X.shape[-1]
+
+        if version == "10":
+            fmask = torch.ones(d_model, self.hyper_parameters["d_model"])
+            for i in missing_x_i: # input fmask
+                fmask[i,:] = 0
+            fmask = fmask.to(self.device)
+
+        elif version == "16" or version == "17":
+            CLS_x = torch.full((X.shape[0], 1, X.shape[2]), -2)
+            SEP_x = torch.full((X.shape[0], 1, X.shape[2]), -3)
+            CLS_y = torch.full((Y.shape[0], 1, Y.shape[2]), -2)
+            SEP_y = torch.full((Y.shape[0], 1, Y.shape[2]), -3)
+
+            X = torch.cat([CLS_x, X[:, :context_length//2, :], SEP_x, X[:, context_length//2:, :], SEP_x], dim=1)
+            Y = torch.cat([CLS_y, Y[:, :context_length//2, :], SEP_y, Y[:, context_length//2:, :], SEP_y], dim=1)
+
+            segment_label = [0] + [1 for i in range(context_length//2)] + [0] + [2 for i in range(context_length//2)] + [0]
+            segment_label = torch.from_numpy(np.array(segment_label))
+            segment_label = segment_label.to(self.device)
+
+        # Initialize a tensor to store all predictions
+        P = torch.empty_like(X, device="cpu")
+
+        # make predictions in batches
+        for i in range(0, len(X), batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.to(self.device)
+                if version == "10":
+                    # (no position is masked)
+                    pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
+                    outputs = self.model(x_batch, pmask, fmask)
+
+                elif version == "16":
+                    outputs, pred_mask, SAP = self.model(x_batch, segment_label)
+
+                elif version == "17":
+                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
+                    for i in missing_x_i: 
+                        mask[:,:,i] = True
+
+                    outputs, SAP = self.model(x_batch, ~mask, segment_label)
+
+            # Store the predictions in the large tensor
+            P[i:i+outputs.shape[0], :, :] = outputs.cpu()
+        
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
+
+        mses = []
+        spearmans = []
+        for j in range(Y.shape[-1]):  # for each feature i.e. assay
+            pred = P[:, j].numpy()
+            metrics_list = []
+
+            if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
+                target = Y[:, j].numpy()   
+                mse_GW = np.mean((np.array(target) - np.array(pred))**2)
+                spearman_GW = spearmanr(pred, target)[0]
+
+                mses.append(mse_GW)
+                spearmans.append(spearman_GW)
+        
+        return sum(mses)/len(mses), sum(spearmans)/len(spearmans) 
 
     def pretrain_epidenoise_10(self, 
         d_model, outer_loop_epochs=1, arcsinh_transform=True,
@@ -715,13 +800,9 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_16(self, 
-        d_model, outer_loop_epochs=3, arcsinh_transform=False,
+        d_model, outer_loop_epochs=3, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
-
-        print({k:len(self.eval_data[k]) for k in self.eval_data.keys()})
-        print({k:len(self.train_data[k]) for k in self.train_data.keys()})
-        exit()
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -878,12 +959,16 @@ class PRE_TRAINER(object):
 
                     t1 = datetime.now()
                     logfile = open("models/EPD16_log.txt", "w")
+                    
+                    test_mse, test_corr = self.test_model(context_length, version="16", is_arcsin=arcsinh_transform)
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
                         f"Epoch Loss Mean: {np.mean(epoch_loss):.4f}", 
                         f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"Test_MSE: {test_mse:.4f}",
+                        f"Test Corr: {test_corr:.4f}",
                         f"Epoch took: {t1 - t0}"
                         ]
                     logstr = " | ".join(logstr)
@@ -1430,9 +1515,9 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 128,
-        "nlayers": 4,
+        "nhead": 4,
+        "d_model": 63,
+        "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.30,
         "chunk": True,
