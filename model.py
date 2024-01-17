@@ -1123,7 +1123,6 @@ class PRE_TRAINER(object):
 
                             loss.backward()  
                             self.optimizer.step()
-                            self.scheduler.step()
                         
                         if p%8 == 0:
                             logfile = open("models/EPD17_log.txt", "w")
@@ -1144,16 +1143,22 @@ class PRE_TRAINER(object):
                         
                     # update parameters over all batches and all patterns of missing data
                     # self.optimizer.step()
-                    # self.scheduler.step()
+                    self.scheduler.step()
 
                     t1 = datetime.now()
                     logfile = open("models/EPD17_log.txt", "w")
+
+                    test_mse, test_corr = self.test_model(
+                        context_length, version="17", 
+                        is_arcsin=arcsinh_transform, batch_size=batch_size)
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
                         f"Epoch Loss Mean: {np.mean(epoch_loss):.4f}", 
                         f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"Test_MSE: {test_mse:.4f}",
+                        f"Test Corr: {test_corr:.4f}",
                         f"Epoch took: {t1 - t0}"
                         ]
                     logstr = " | ".join(logstr)
@@ -1460,8 +1465,8 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
         output_dim=output_dim, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.99)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -1518,12 +1523,12 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 128,
-        "nlayers": 4,
+        "d_model": 64,
+        "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.30,
         "chunk": True,
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
         "learning_rate": 0.001,
     }
