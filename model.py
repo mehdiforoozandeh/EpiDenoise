@@ -338,7 +338,7 @@ class PRE_TRAINER(object):
         self.test_x_dir = "/project/compbio-lab/EIC/training_data/C23_chr21_25.pt"
         self.test_y_dir = "/project/compbio-lab/EIC/validation_data/C23_chr21_25.pt"
     
-    def test_model(self, context_length, version, is_arcsin):
+    def test_model(self, context_length, version, is_arcsin, batch_size):
         """
         load X and Y
         pred = model(X)
@@ -960,7 +960,9 @@ class PRE_TRAINER(object):
                     t1 = datetime.now()
                     logfile = open("models/EPD16_log.txt", "w")
                     
-                    test_mse, test_corr = self.test_model(context_length, version="16", is_arcsin=arcsinh_transform)
+                    test_mse, test_corr = self.test_model(
+                        context_length, version="16", 
+                        is_arcsin=arcsinh_transform, batch_size=batch_size)
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
@@ -1521,7 +1523,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "mask_percentage": 0.30,
         "chunk": True,
-        "context_length": 400,
+        "context_length": 200,
         "batch_size": 50,
         "learning_rate": 0.001,
     }
