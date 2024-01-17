@@ -138,12 +138,12 @@ class ComboLoss15(nn.Module):
 class ComboLoss16(nn.Module):
     def __init__(self):
         super(ComboLoss16, self).__init__()
-        self.mse_loss = nn.MSELoss(reduction='mean')
+        self.mse_loss = nn.L1Loss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_adjac, true_adjac, pred_mask, cloze_mask, union_mask):
-        mse_obs_loss =  torch.sqrt(self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask]))
-        mse_pred_loss = torch.sqrt(self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask]))
+        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any() or torch.isnan(pred_mask).any():
