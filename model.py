@@ -362,7 +362,7 @@ class PRE_TRAINER(object):
         num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
 
-        if self.is_arcsin:
+        if is_arcsin:
             arcmask1 = (X != -1)
             X[arcmask1] = torch.arcsinh_(X[arcmask1])
 
@@ -1551,7 +1551,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.15,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 50,
+        "batch_size": 100,
         "learning_rate": 0.05,
         "alpha":0.75
     }
