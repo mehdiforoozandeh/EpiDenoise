@@ -322,7 +322,10 @@ class EpiDenoise17(nn.Module):
 #========================================================================================================#
 
 class PRE_TRAINER(object):  
-    def __init__(self, model, dataset, criterion, optimizer, scheduler):
+    def __init__(
+        self, model, dataset, criterion, optimizer, scheduler, 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/"):
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(self.device)
@@ -332,7 +335,28 @@ class PRE_TRAINER(object):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-    
+
+        self.train_data = {}
+        self.eval_data = {}
+
+        # load and bin chr21 of all bigwig files 
+        for t in os.listdir(traindata_path):
+            if ".bigwig" in t:
+
+                for e in os.listdir(evaldata_path):
+                    if ".bigwig" in e:
+                        
+                        if t[:3] == e[:3]:
+
+                            if t[:3] not in self.train_data:
+                                self.train_data[t[:3]] = {}
+
+                            if e[:3] not in self.eval_data:
+                                self.eval_data[e[:3]] = {}
+
+                            self.train_data[t[:3]][t[3:6]] = traindata_path + "/" + t
+                            self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
+
     def pretrain_epidenoise_10(self, 
         d_model, outer_loop_epochs=1, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
@@ -694,6 +718,10 @@ class PRE_TRAINER(object):
         d_model, outer_loop_epochs=3, arcsinh_transform=False,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
+
+        print(self.eval_data)
+        print(self.train_data)
+        exit()
 
         log_strs = []
         log_strs.append(str(self.device))
