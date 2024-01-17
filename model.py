@@ -719,8 +719,8 @@ class PRE_TRAINER(object):
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
-        print(self.eval_data)
-        print(self.train_data)
+        print(self.eval_data.keys())
+        print(self.train_data.keys())
         exit()
 
         log_strs = []
