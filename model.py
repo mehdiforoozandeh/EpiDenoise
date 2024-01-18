@@ -16,6 +16,33 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #===========================================building blocks==============================================#
 #========================================================================================================#
 
+class FeedForwardNN(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, n_layers):
+        super(FeedForwardNN, self).__init__()
+        self.hidden_layers = nn.ModuleList()
+        
+        # Input Layer
+        self.hidden_layers.append(nn.Linear(input_size, hidden_size))
+        
+        # Hidden Layers
+        for _ in range(n_layers):
+            self.hidden_layers.append(nn.Linear(hidden_size, hidden_size))
+        
+        # Output Layer
+        self.output_layer = nn.Linear(hidden_size, output_size)
+        
+        # Activation Function
+        self.relu = nn.ReLU()
+        
+    def forward(self, x):
+        # Pass through each layer
+        for hidden_layer in self.hidden_layers:
+            x = self.relu(hidden_layer(x))
+        
+        x = self.output_layer(x)
+        
+        return x
+
 class PositionalEncoding10(nn.Module):
 
      def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
@@ -382,6 +409,8 @@ class EpiDenoise18(nn.Module):
 
         if not linear_embeddings:
             src = self.relu(src)
+
+        src = self.position(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         src = self.transformer_encoder(src) 
@@ -1327,7 +1356,7 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask, SAP = self.model(masked_x_batch)
+                            outputs, pred_mask = self.model(masked_x_batch)
 
                             loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
