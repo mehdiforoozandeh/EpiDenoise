@@ -446,7 +446,7 @@ class EpiDenoise17(nn.Module):
 #         return src, msk
 
 class EpiDenoise18(nn.Module):
-    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=128, dropout=0.1, context_length=2000):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
         self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
@@ -1918,7 +1918,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "mask_percentage": 0.01,
         "chunk": True,
-        "context_length": 400,
+        "context_length": 8000,
         "batch_size": 50,
         "learning_rate": 0.001,
     }
