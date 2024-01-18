@@ -210,7 +210,7 @@ class ComboLoss18(nn.Module):
         mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
         # Check for nan values in pred_adjac and true_adjac
-        if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any() or torch.isnan(pred_mask).any():
+        if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
             return torch.tensor(float('nan')).to(pred_signals.device)
 
         bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
@@ -410,9 +410,7 @@ class EpiDenoise18(nn.Module):
         if not linear_embeddings:
             src = self.relu(src)
 
-        print(src.shape)
         src = src + self.position(src)
-        print(src.shape)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         src = self.transformer_encoder(src) 
