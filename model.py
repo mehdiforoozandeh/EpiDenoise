@@ -446,7 +446,7 @@ class EpiDenoise17(nn.Module):
 #         return src, msk
 
 class EpiDenoise18(nn.Module):
-    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=128, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
         self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
