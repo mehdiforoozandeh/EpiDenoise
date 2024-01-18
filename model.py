@@ -414,7 +414,7 @@ class EpiDenoise18(nn.Module):
         p = self.position(src)
         print(p.shape)
         exit()
-        src = src + 
+        # src = src + 
 
         print(src.shape)
 
