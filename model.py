@@ -410,7 +410,10 @@ class EpiDenoise18(nn.Module):
         if not linear_embeddings:
             src = self.relu(src)
 
-        src = self.position(src)
+        print(src.shape)
+        src = src + self.position(src).unsqueeze(1)
+
+        print(src.shape)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         src = self.transformer_encoder(src) 
