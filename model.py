@@ -1422,7 +1422,7 @@ class PRE_TRAINER(object):
                             # outputs, pred_mask = self.model(masked_x_batch)
                             # loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
-                            outputs, pred_mask = self.model(masked_x_batch)
+                            outputs = self.model(masked_x_batch)
                             loss = self.criterion(outputs, x_batch, union_mask)
 
                             if torch.isnan(loss).sum() > 0:
