@@ -1327,7 +1327,7 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask, SAP = self.model(masked_x_batch, segment_label)
+                            outputs, pred_mask, SAP = self.model(masked_x_batch)
 
                             loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
