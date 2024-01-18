@@ -12,17 +12,6 @@ from datetime import datetime
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
-# # Set the seed value
-# seed_value = 42
-# # Set the seed for Python's built-in random module
-# random.seed(seed_value)
-# # Set the seed for NumPy
-# np.random.seed(seed_value)
-# # Set the seed for PyTorch
-# torch.manual_seed(seed_value)
-# torch.cuda.manual_seed(seed_value)
-# torch.cuda.manual_seed_all(seed_value)
-
 #========================================================================================================#
 #===========================================building blocks==============================================#
 #========================================================================================================#
@@ -183,6 +172,57 @@ class ComboLoss17(nn.Module):
         
         return mse_obs_loss + mse_pred_loss #+ bce_loss
 
+class ComboLoss18(nn.Module):
+    def __init__(self):
+        super(ComboLoss18, self).__init__()
+        self.l1_loss = nn.L1Loss(reduction='mean')
+        self.bce_loss = nn.BCELoss(reduction='mean')
+
+    def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
+        mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+
+        # Check for nan values in pred_adjac and true_adjac
+        if torch.isnan(pred_adjac).any() or torch.isnan(true_adjac).any() or torch.isnan(pred_mask).any():
+            return torch.tensor(float('nan')).to(pred_signals.device)
+
+        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
+
+        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
+        
+        return mse_obs_loss + mse_pred_loss + bce_mask_loss
+
+class MatrixFactorizationEmbedding(nn.Module):
+    """
+    learns two factorizations from input matrix M of size l*d
+    U of size l*k
+    V of size d*k
+    UV^T is should reconstruct the input matrix M
+    """
+
+    def __init__(self, l, d, k):
+        super().__init__()
+        self.dense_U = nn.Linear(l, k)
+        self.dense_V = nn.Linear(d, k)
+        self.relu = nn.ReLU()
+        
+       
+    def forward(self, M, linear=False):
+        # shape of M is (N, L, D)
+
+        U = self.dense_U(M) 
+        V = self.dense_V(torch.permute(M, (0, 2, 1)))
+
+        if not linear:
+            U = self.relu(U)
+            V = self.relu(V)
+        
+        V = torch.permute(V, (0, 2, 1))
+        
+        return torch.matmul(U, V)
+
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
 #========================================================================================================#
@@ -317,6 +357,42 @@ class EpiDenoise17(nn.Module):
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
 
         return src, SAP  
+
+class EpiDenoise18(nn.Module):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
+        super(EpiDenoise18, self).__init__()
+
+        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
+        self.embedding_linear = nn.Linear(input_dim, d_model)
+        self.relu = nn.ReLU()
+
+        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+
+        self.signal_decoder = nn.Linear(d_model, output_dim)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
+
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+    def forward(self, src, linear_embeddings=False):
+        src = self.mf_embedding(src, linear=linear_embeddings)
+        src = self.embedding_linear(src)
+
+        if not linear_embeddings:
+            src = self.relu(src)
+
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = self.transformer_encoder(src) 
+        
+        msk = torch.sigmoid(self.mask_decoder(src))
+        src = self.signal_decoder(src)
+
+        src = torch.permute(src, (1, 0, 2))  # to N, L, F
+        msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
+
+        return src, msk
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -1177,6 +1253,154 @@ class PRE_TRAINER(object):
 
         return self.model
 
+    def pretrain_epidenoise_18(self, 
+        d_model, outer_loop_epochs=3, arcsinh_transform=True,
+        num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
+        context_length=2000, batch_size=100, start_ds=0):
+
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
+        logfile = open("models/EPD18_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        for ole in range(outer_loop_epochs):
+            ds=0
+
+            for ds_path in self.dataset.preprocessed_datasets:
+                ds+=1
+                
+                if ds < start_ds:
+                    continue
+                
+                print('-_-' * 10)
+                x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
+                num_features = x.shape[2]
+
+                if arcsinh_transform:
+                    arcmask = (x != -1)
+                    x[arcmask] = torch.arcsinh_(x[arcmask])
+                                
+                for epoch in range(0, num_epochs):
+                    print('-' * 10)
+                    print(f'Epoch {epoch+1}/{num_epochs}')
+
+                    # zero grads before going over all batches and all patterns of missing data
+                    self.optimizer.zero_grad()
+                    epoch_loss = []
+                    t0 = datetime.now()
+
+                    p = 0
+                    for pattern, indices in missing_f_pattern.items():
+                        p += 1
+
+                        pattern_batch = x[indices]
+                        missing_mask_patten_batch = missing_mask[indices]
+
+                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
+
+                        # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
+
+                        if context_length < pattern_batch.shape[1]:
+                            context_length_factor = context_length / pattern_batch.shape[1]
+
+                            pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
+                            missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
+
+                        # Break down x into smaller batches
+                        for i in range(0, len(pattern_batch), batch_size):
+                            self.optimizer.zero_grad()
+
+                            torch.cuda.empty_cache()
+
+                            x_batch = pattern_batch[i:i+batch_size]
+                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+                            
+                            # Masking a subset of the input data -- genomic position mask
+                            masked_x_batch, cloze_mask = mask_data16(x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            union_mask = cloze_mask | missing_mask_batch
+
+                            # move to GPU
+                            x_batch = x_batch.to(self.device)
+                            masked_x_batch = masked_x_batch.to(self.device)
+                            union_mask = union_mask.to(self.device)
+                            cloze_mask = cloze_mask.to(self.device)
+
+                            outputs, pred_mask, SAP = self.model(masked_x_batch, segment_label)
+
+                            loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
+
+                            if torch.isnan(loss).sum() > 0:
+                                skipmessage = "Encountered nan loss! Skipping batch..."
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
+                                del x_batch
+                                del masked_x_batch
+                                del outputs
+                                torch.cuda.empty_cache()
+                                continue
+
+                            del x_batch
+                            del masked_x_batch
+                            del outputs
+                            epoch_loss.append(loss.item())
+
+                            # Clear GPU memory again
+                            torch.cuda.empty_cache()
+
+                            loss.backward()  
+                            self.optimizer.step()
+                        
+                        if p%8 == 0:
+                            logfile = open("models/EPD18_log.txt", "w")
+
+                            logstr = [
+                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                                f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
+                                f"Loss: {loss.item():.4f}"
+                                ]
+                            logstr = " | ".join(logstr)
+
+                            log_strs.append(logstr)
+                            logfile.write("\n".join(log_strs))
+                            logfile.close()
+                            print(logstr)
+                        
+                    self.scheduler.step()
+
+                    t1 = datetime.now()
+                    logfile = open("models/EPD18_log.txt", "w")
+                    
+                    test_mse, test_corr = self.test_model(
+                        context_length, version="18", 
+                        is_arcsin=arcsinh_transform, batch_size=batch_size)
+
+                    logstr = [
+                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        f'Epoch {epoch+1}/{num_epochs}', 
+                        f"Epoch Loss Mean: {np.mean(epoch_loss):.4f}", 
+                        f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"Test_MSE: {test_mse:.4f}",
+                        f"Test Corr: {test_corr:.4f}",
+                        f"Epoch took: {t1 - t0}"
+                        ]
+                    logstr = " | ".join(logstr)
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+
+                # Save the model after each dataset
+                try:
+                    if ds%5 == 0:
+                        torch.save(self.model.state_dict(), f'models/EPD18_model_checkpoint_ds_{ds}.pth')
+                except:
+                    pass
+
+        return self.model
+
 class MODEL_LOADER(object):
     def __init__(self, model_path, hyper_parameters):
         self.model_path = model_path
@@ -1512,13 +1736,84 @@ def train_epidenoise17(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     return model
 
+def train_epidenoise18(hyper_parameters, checkpoint_path=None, start_ds=0):
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    d_model = hyper_parameters["d_model"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    chunk = hyper_parameters["chunk"]
+    context_length = hyper_parameters["context_length"]
+
+    # one nucleosome is around 150bp -> 6bins
+    # each chuck ~ 1 nucleosome
+
+    n_chunks = (mask_percentage * context_length) // 6 
+
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
+
+    model = EpiDenoise18(
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        model.load_state_dict(torch.load(checkpoint_path))
+
+    # model = model.to(device)
+
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
+
+    model_name = f"EpiDenoise18_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
+    with open(f'models/hyper_parameters18_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
+    criterion = ComboLoss18()
+
+    start_time = time.time()
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epidenoise_18(d_model=d_model, num_epochs=epochs, 
+        mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+        context_length=context_length, batch_size=batch_size, start_ds=start_ds)
+
+    end_time = time.time()
+
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    # os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
+
+    return model
+
 #========================================================================================================#
 #================================================main====================================================#
 #========================================================================================================#
 
 if __name__ == "__main__":
-    # EPIDENOISE 1.6 & 1.7
-    hyper_parameters167 = {
+    hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
@@ -1535,13 +1830,19 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "epd16":
         train_epidenoise16(
-            hyper_parameters167, 
+            hyper_parameters1678, 
             checkpoint_path=None, 
             start_ds=0)
 
     elif sys.argv[1] == "epd17":
         train_epidenoise17(
-            hyper_parameters167, 
+            hyper_parameters1678, 
+            checkpoint_path=None, 
+            start_ds=0)
+
+    elif sys.argv[1] == "epd18":
+        train_epidenoise18(
+            hyper_parameters1678, 
             checkpoint_path=None, 
             start_ds=0)
 
