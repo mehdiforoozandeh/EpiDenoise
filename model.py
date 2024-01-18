@@ -411,11 +411,7 @@ class EpiDenoise18(nn.Module):
             src = self.relu(src)
 
         print(src.shape)
-        p = self.position(src)
-        print(p.shape)
-        exit()
-        # src = src + 
-
+        src = src + self.position(src)
         print(src.shape)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
