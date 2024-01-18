@@ -238,17 +238,22 @@ class MatrixFactorizationEmbedding(nn.Module):
        
     def forward(self, M, linear=False):
         # shape of M is (N, L, D)
-
+        print(M.shape)
         U = self.dense_U(M) 
+        print(U.shape)
         V = self.dense_V(torch.permute(M, (0, 2, 1)))
+        print(V.shape)
 
         if not linear:
             U = self.relu(U)
             V = self.relu(V)
         
         V = torch.permute(V, (0, 2, 1))
-        
-        return torch.matmul(U, V)
+        print(V.shape)
+        M = torch.matmul(U, V)
+        print(M.shape)
+
+        return M
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
