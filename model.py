@@ -585,7 +585,8 @@ class PRE_TRAINER(object):
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
                 
                 elif version == "18":
-                    outputs, pred_mask = self.model(x_batch)
+                    # outputs, pred_mask = self.model(x_batch)
+                    outputs = self.model(x_batch)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
