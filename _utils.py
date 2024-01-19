@@ -211,7 +211,7 @@ def add_noise(data, noise_factor):
     noise = np.random.normal(loc=0.0, scale=1.0, size=data.shape)
     print(noise.dtype)
     noisy_data = data + noise_factor * noise
-    print(noise.dtype)
+    print(noisy_data.dtype)
     exit()
     # noisy_data = np.clip(noisy_data, 0., 1.)
     return noisy_data
