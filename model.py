@@ -199,49 +199,27 @@ class ComboLoss17(nn.Module):
         
         return mse_obs_loss + mse_pred_loss #+ bce_loss
 
-# class ComboLoss18(nn.Module):
-#     def __init__(self):
-#         super(ComboLoss18, self).__init__()
-#         self.l1_loss = nn.L1Loss(reduction='mean')
-#         self.bce_loss = nn.BCELoss(reduction='mean')
-
-#     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
-#         mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
-#         mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-
-#         # Check for nan values in pred_adjac and true_adjac
-#         if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
-#             return torch.tensor(float('nan')).to(pred_signals.device)
-
-#         bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
-
-#         if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
-#             print("NaN value encountered in loss components.")
-#             return torch.tensor(float('nan')).to(pred_signals.device)
-        
-#         return mse_obs_loss + mse_pred_loss + bce_mask_loss
-
 class ComboLoss18(nn.Module):
     def __init__(self):
         super(ComboLoss18, self).__init__()
         self.l1_loss = nn.L1Loss(reduction='mean')
-        # self.bce_loss = nn.BCELoss(reduction='mean')
+        self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, union_mask):
-        loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        # mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+    def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
+        mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
-        # # Check for nan values in pred_adjac and true_adjac
-        # if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
-        #     return torch.tensor(float('nan')).to(pred_signals.device)
+        # Check for nan values in pred_adjac and true_adjac
+        if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
+            return torch.tensor(float('nan')).to(pred_signals.device)
 
-        # loss = self.l1_loss(pred_signals, union_mask.float())
+        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
 
-        # if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
-        #     print("NaN value encountered in loss components.")
-        #     return torch.tensor(float('nan')).to(pred_signals.device)
+        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return loss #mse_obs_loss + mse_pred_loss + bce_mask_loss
+        return mse_obs_loss + mse_pred_loss + bce_mask_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -407,93 +385,44 @@ class EpiDenoise17(nn.Module):
 
         return src, SAP  
 
-# class EpiDenoise18(nn.Module):
-#     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
-#         super(EpiDenoise18, self).__init__()
-
-#         self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-#         self.embedding_linear = nn.Linear(input_dim, d_model)
-#         self.relu = nn.ReLU()
-
-#         self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-
-#         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
-#         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-
-#         self.signal_decoder = FeedForwardNN(d_model, 3*d_model, output_dim, 2)# nn.Linear(d_model, output_dim)
-#         self.mask_decoder = nn.Linear(d_model, output_dim)
-
-#         self.softmax = torch.nn.Softmax(dim=-1)
-
-#     def forward(self, src, linear_embeddings=False):
-#         src = self.mf_embedding(src, linear=linear_embeddings)
-#         src = self.embedding_linear(src)
-
-#         if not linear_embeddings:
-#             src = self.relu(src)
-
-#         src = src + self.position(src)
-
-#         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-#         src = self.transformer_encoder(src) 
-        
-#         msk = torch.sigmoid(self.mask_decoder(src))
-#         src = self.signal_decoder(src)
-
-#         src = torch.permute(src, (1, 0, 2))  # to N, L, F
-#         msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
-
-#         return src, msk
-
 class EpiDenoise18(nn.Module):
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-
-        self.dense_U = FeedForwardNN(context_length, 4*d_model, k, 2)
-        self.dense_V = FeedForwardNN(input_dim, 4*d_model, k, 2)
+        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
+        self.embedding_linear = nn.Linear(input_dim, d_model)
         self.relu = nn.ReLU()
 
-        # self.embedding_linear = nn.Linear(input_dim, d_model)
-        # self.relu = nn.ReLU()
+        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
 
-        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
-        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
-        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.signal_decoder =  nn.Linear(d_model, output_dim)
+        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
 
-        # self.signal_decoder = FeedForwardNN(d_model, 3*d_model, output_dim, 2)# nn.Linear(d_model, output_dim)
-        # self.mask_decoder = nn.Linear(d_model, output_dim)
+        self.softmax = torch.nn.Softmax(dim=-1)
 
-        # self.softmax = torch.nn.Softmax(dim=-1)
+    def forward(self, src, linear_embeddings=True):
+        src = self.mf_embedding(src, linear=linear_embeddings)
+        src = self.embedding_linear(src)
 
-    def forward(self, M):
-        U = self.dense_U(torch.permute(M, (0, 2, 1))) 
-        V = self.dense_V(M)
+        if not linear_embeddings:
+            src = self.relu(src)
+
+        src = src + self.position(src)
+
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = self.transformer_encoder(src) 
         
-        V = torch.permute(V, (0, 2, 1))
-        M = torch.matmul(U, V)
+        msk = torch.sigmoid(self.mask_decoder(src))
+        src = self.signal_decoder(src)
 
-        return torch.permute(M, (0, 2, 1))
-        # src = self.mf_embedding(src, linear=linear_embeddings)
-        # src = self.embedding_linear(src)
+        src = torch.permute(src, (1, 0, 2))  # to N, L, F
+        msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
 
-        # if not linear_embeddings:
-        #     src = self.relu(src)
-
-        # src = src + self.position(src)
-
-        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        # src = self.transformer_encoder(src) 
-        
-        # msk = torch.sigmoid(self.mask_decoder(src))
-        # src = self.signal_decoder(src)
-
-        # src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        # msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
-
-        # return M #, msk
+        return src, msk
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -597,8 +526,7 @@ class PRE_TRAINER(object):
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
                 
                 elif version == "18":
-                    # outputs, pred_mask = self.model(x_batch)
-                    outputs = self.model(x_batch)
+                    outputs, pred_mask = self.model(x_batch)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -1432,11 +1360,8 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            # outputs, pred_mask = self.model(masked_x_batch)
-                            # loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
-
-                            outputs = self.model(masked_x_batch)
-                            loss = self.criterion(outputs, x_batch, union_mask)
+                            outputs, pred_mask = self.model(masked_x_batch)
+                            loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -1920,6 +1845,8 @@ def train_epidenoise18(hyper_parameters, checkpoint_path=None, start_ds=0):
 #========================================================================================================#
 
 if __name__ == "__main__":
+
+
     hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
@@ -1928,27 +1855,12 @@ if __name__ == "__main__":
         "d_model": 64,
         "nlayers": 2,
         "epochs": 10,
-        "mask_percentage": 0.01,
+        "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
         "batch_size": 50,
         "learning_rate": 0.001,
     }
-
-    # hyper_parameters1678 = {
-    #     "data_path": "/project/compbio-lab/EIC/training_data/",
-    #     "input_dim": 35,
-    #     "dropout": 0.1,
-    #     "nhead": 4,
-    #     "d_model": 64,
-    #     "nlayers": 2,
-    #     "epochs": 10,
-    #     "mask_percentage": 0.30,
-    #     "chunk": True,
-    #     "context_length": 400,
-    #     "batch_size": 50,
-    #     "learning_rate": 0.001,
-    # }
 
     if sys.argv[1] == "epd16":
         train_epidenoise16(
