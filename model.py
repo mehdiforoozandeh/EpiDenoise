@@ -1845,8 +1845,6 @@ def train_epidenoise18(hyper_parameters, checkpoint_path=None, start_ds=0):
 #========================================================================================================#
 
 if __name__ == "__main__":
-
-
     hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
