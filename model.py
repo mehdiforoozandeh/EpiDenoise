@@ -219,7 +219,7 @@ class ComboLoss18(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device)
         
-        return mse_obs_loss + mse_pred_loss + bce_mask_loss
+        return mse_obs_loss, mse_pred_loss, bce_mask_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -1322,6 +1322,9 @@ class PRE_TRAINER(object):
                     # zero grads before going over all batches and all patterns of missing data
                     self.optimizer.zero_grad()
                     epoch_loss = []
+                    epoch_obs_loss = []
+                    epoch_msk_loss = []
+                    epoch_clz_loss = []
                     t0 = datetime.now()
 
                     p = 0
@@ -1361,7 +1364,8 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
 
                             outputs, pred_mask = self.model(masked_x_batch)
-                            loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
+                            mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
+                            loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -1376,7 +1380,12 @@ class PRE_TRAINER(object):
                             del x_batch
                             del masked_x_batch
                             del outputs
+
+
                             epoch_loss.append(loss.item())
+                            epoch_obs_loss.append(mse_obs_loss.item())
+                            epoch_clz_loss.append(mse_pred_loss.item())
+                            epoch_msk_loss.append(bce_mask_loss.item())
 
                             # Clear GPU memory again
                             torch.cuda.empty_cache()
@@ -1411,8 +1420,10 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Epoch Loss Mean: {np.mean(epoch_loss):.4f}", 
-                        f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"Epoch Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
+                        f"Epoch Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
+                        f"Epoch Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
+                        # f"Epoch Loss std: {np.std(epoch_loss):.4f}",
                         f"Test_MSE: {test_mse:.4f}",
                         f"Test Corr: {test_corr:.4f}",
                         f"Epoch took: {t1 - t0}"
