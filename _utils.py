@@ -211,7 +211,7 @@ def add_noise(data, noise_factor):
     noise = torch.from_numpy(np.random.normal(loc=0.0, scale=1.0, size=data.shape))
     noisy_data = data + noise_factor * noise
     # noisy_data = np.clip(noisy_data, 0., 1.)
-    return noisy_data
+    return noisy_data.to(torch.float32)
 
 class COORD(object):
     def __init__(self, Meuleman_file="data/Meuleman.tsv", cCRE_file="data/GRCh38-cCREs.bed", 
