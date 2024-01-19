@@ -389,11 +389,11 @@ class EpiDenoise18(nn.Module):
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-        # self.embedding_linear = nn.Linear(input_dim, d_model)
-        # self.relu = nn.ReLU()
+        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
+        self.embedding_linear = nn.Linear(input_dim, d_model)
+        self.relu = nn.ReLU()
 
-        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
@@ -405,13 +405,13 @@ class EpiDenoise18(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, src, linear_embeddings=True):
-        src = self.mf_embedding(src, linear=linear_embeddings)
-        # src = self.embedding_linear(src)
+        # src = self.mf_embedding(src, linear=linear_embeddings)
+        src = self.embedding_linear(src)
 
-        # if not linear_embeddings:
-        #     src = self.relu(src)
+        if not linear_embeddings:
+            src = self.relu(src)
 
-        # src = src + self.position(src)
+        src = src + self.position(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         src = self.transformer_encoder(src) 
@@ -1849,8 +1849,8 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 5,
-        "d_model": 35,
+        "nhead": 4,
+        "d_model": 64,
         "nlayers": 2,
         "epochs": 15,
         "mask_percentage": 0.30,
