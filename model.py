@@ -406,10 +406,10 @@ class EpiDenoise18(nn.Module):
 
     def forward(self, src, linear_embeddings=True):
         src = self.mf_embedding(src, linear=linear_embeddings)
-        src = self.embedding_linear(src)
+        # src = self.embedding_linear(src)
 
-        if not linear_embeddings:
-            src = self.relu(src)
+        # if not linear_embeddings:
+        #     src = self.relu(src)
 
         src = src + self.position(src)
 
@@ -1287,7 +1287,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_18(self, 
-        d_model, outer_loop_epochs=3, arcsinh_transform=True,
+        d_model, outer_loop_epochs=1, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -1851,14 +1851,14 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 4,
-        "d_model": 64,
+        "nhead": 5,
+        "d_model": 35,
         "nlayers": 2,
-        "epochs": 10,
+        "epochs": 15,
         "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 50,
+        "batch_size": 100,
         "learning_rate": 0.001,
     }
 
