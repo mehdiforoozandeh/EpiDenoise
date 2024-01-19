@@ -1398,8 +1398,8 @@ class PRE_TRAINER(object):
                             logstr = [
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                                f"Obs Loss: {mse_obs_loss.item():.4f}"
-                                f"Clz Loss: {mse_pred_loss.item():.4f}"
+                                f"Obs Loss: {mse_obs_loss.item():.4f}",
+                                f"Clz Loss: {mse_pred_loss.item():.4f}",
                                 f"Msk Loss: {bce_mask_loss.item():.4f}"
                                 ]
                             logstr = " | ".join(logstr)
