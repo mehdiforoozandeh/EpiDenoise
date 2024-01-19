@@ -390,10 +390,10 @@ class EpiDenoise18(nn.Module):
         super(EpiDenoise18, self).__init__()
 
         self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-        self.embedding_linear = nn.Linear(input_dim, d_model)
-        self.relu = nn.ReLU()
+        # self.embedding_linear = nn.Linear(input_dim, d_model)
+        # self.relu = nn.ReLU()
 
-        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
 
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
