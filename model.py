@@ -1381,7 +1381,6 @@ class PRE_TRAINER(object):
                             del masked_x_batch
                             del outputs
 
-
                             epoch_loss.append(loss.item())
                             epoch_obs_loss.append(mse_obs_loss.item())
                             epoch_clz_loss.append(mse_pred_loss.item())
@@ -1393,13 +1392,15 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                         
-                        if p%8 == 0:
+                        if p == 1 or p%8 == 0:
                             logfile = open("models/EPD18_log.txt", "w")
 
                             logstr = [
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                                f"Loss: {loss.item():.4f}"
+                                f"Obs Loss: {mse_obs_loss.item():.4f}"
+                                f"Clz Loss: {mse_pred_loss.item():.4f}"
+                                f"Msk Loss: {bce_mask_loss.item():.4f}"
                                 ]
                             logstr = " | ".join(logstr)
 
