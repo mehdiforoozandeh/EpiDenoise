@@ -1357,12 +1357,8 @@ class PRE_TRAINER(object):
                             masked_x_batch, cloze_mask = mask_data16(x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                             union_mask = cloze_mask | missing_mask_batch
 
-                            print(masked_x_batch.dtype)
-
                             masked_x_batch = add_noise(masked_x_batch, 0.5)
                             masked_x_batch[union_mask] = -1
-                            
-                            print(masked_x_batch.dtype)
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
