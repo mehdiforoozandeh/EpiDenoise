@@ -211,13 +211,13 @@ class ComboLoss18(nn.Module):
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
-            return torch.tensor(float('nan')).to(pred_signals.device)
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
 
         bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
 
         if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
             print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(pred_signals.device)
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
         
         return mse_obs_loss, mse_pred_loss, bce_mask_loss
 
@@ -1865,13 +1865,13 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 24,
+        "d_model": 128,
         "nlayers": 4,
         "epochs": 15,
         "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 250,
+        "batch_size": 100,
         "learning_rate": 0.001,
     }
 
