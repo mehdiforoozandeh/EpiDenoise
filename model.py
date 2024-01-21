@@ -231,19 +231,20 @@ class MatrixFactorizationEmbedding(nn.Module):
 
     def __init__(self, l, d, k):
         super().__init__()
-        self.dense_U = nn.Linear(l, k)
-        self.dense_V = nn.Linear(d, k)
-        self.relu = nn.ReLU()
-        
+        # self.dense_U = nn.Linear(l, k)
+        # self.dense_V = nn.Linear(d, k)
+        # self.relu = nn.ReLU()
+        self.dense_U = FeedForwardNN(l, 4*k, k, 2)
+        self.dense_V = FeedForwardNN(d, 4*k, k, 2)
        
     def forward(self, M, linear=False):
         # shape of M is (N, L, D)
         U = self.dense_U(torch.permute(M, (0, 2, 1))) 
         V = self.dense_V(M)
 
-        if not linear:
-            U = self.relu(U)
-            V = self.relu(V)
+        # if not linear:
+        #     U = self.relu(U)
+        #     V = self.relu(V)
         
         V = torch.permute(V, (0, 2, 1))
         M = torch.matmul(U, V)
@@ -389,7 +390,7 @@ class EpiDenoise18(nn.Module):
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
+        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
         self.embedding_linear = nn.Linear(input_dim, d_model)
         self.relu = nn.ReLU()
 
@@ -405,7 +406,7 @@ class EpiDenoise18(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, src, linear_embeddings=True):
-        # src = self.mf_embedding(src, linear=linear_embeddings)
+        src = self.mf_embedding(src, linear=linear_embeddings)
         src = self.embedding_linear(src)
 
         if not linear_embeddings:
