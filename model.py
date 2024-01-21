@@ -399,8 +399,8 @@ class EpiDenoise18(nn.Module):
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
-        self.signal_decoder =  nn.Linear(d_model, output_dim)
-        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
+        # self.signal_decoder =  nn.Linear(d_model, output_dim)
+        self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
         self.softmax = torch.nn.Softmax(dim=-1)
