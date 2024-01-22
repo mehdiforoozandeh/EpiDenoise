@@ -163,7 +163,37 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
         data[mask] = mask_value
 
     return data, mask
-    
+
+def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
+
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+
+    if len(available_features) == 1:
+        mask_percentage = 0
+
+    if mask_percentage == 0:
+        return data, mask
+
+    seq_len = data.size(1)
+
+    # Calculate total number of signals and number of chunks to be masked
+    num_all_signals = data.size(1) * len(available_features)
+    num_mask_start = int((num_all_signals * mask_percentage) / chunk_size)
+
+    num_mask_features = int(len(available_features) * mask_percentage) + 1
+
+    # Loop over the number of chunks to be masked
+    for _ in range(num_mask_features):
+        mask_f = available_features[torch.randint(0, len(available_features), (1,))]
+
+        # Apply the masking to the selected chunk
+        mask[:, :, mask_f] = True
+        
+    data[mask] = mask_value
+
+    return data, mask
+ 
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()
