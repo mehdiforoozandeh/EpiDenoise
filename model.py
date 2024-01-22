@@ -542,7 +542,6 @@ class EpiDenoise18(nn.Module):
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv1d(in_channels=d_model//8, out_channels=d_model//4, kernel_size=3, stride=1, padding="same")
         self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
-
         self.conv3 = nn.Conv1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
         self.pool3 = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv4 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
@@ -574,12 +573,23 @@ class EpiDenoise18(nn.Module):
         # src = self.mf_embedding(src, linear=linear_embeddings)
 
         src = torch.permute(src, (0, 2, 1))  # to N, F, L
-    
+        print(src.shape)
         src = self.conv1(src)
         src = self.pool1(src)
+        print(src.shape)
 
         src = self.conv2(src)
         src = self.pool2(src)
+        print(src.shape)
+        
+        src = self.conv3(src)
+        src = self.pool3(src)
+        print(src.shape)
+
+        src = self.conv4(src)
+        src = self.pool4(src)
+        print(src.shape)
+
 
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
 
@@ -595,10 +605,20 @@ class EpiDenoise18(nn.Module):
         src = self.transformer_encoder(src) 
         
         src = torch.permute(src, (1, 2, 0)) # to N, F, L
+        print(src.shape)
 
         # Apply Deconvolution layers
         src = self.deconv1(src)
+        print(src.shape)
+
         src = self.deconv2(src)
+        print(src.shape)
+
+        src = self.deconv3(src)
+        print(src.shape)
+
+        src = self.deconv4(src)
+        print(src.shape)
 
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
         
