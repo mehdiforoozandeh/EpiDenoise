@@ -601,7 +601,9 @@ class EpiDenoise18(nn.Module):
         print(src.shape)
         src = self.deconv2(src)
         print(src.shape)
-        exit()
+
+        src = torch.permute(src, (2, 0, 1)) # to L, N, F
+        print(src.shape)
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
