@@ -175,7 +175,6 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
         return data, mask
 
     seq_len = data.size(1)
-
     num_mask_features = int(len(available_features) * mask_percentage)
     
     if num_mask_features == 0:
@@ -189,7 +188,7 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     # Loop over the selected indices
     for mask_f in selected_indices:
-
+        
         # Apply the masking to the selected chunk
         mask[:, :, mask_f] = True
         
