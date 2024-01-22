@@ -1504,7 +1504,7 @@ class PRE_TRAINER(object):
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
                             # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data18(
+                            masked_x_batch, cloze_mask = mask_data16(
                                 x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
 
                             union_mask = cloze_mask | missing_mask_batch
