@@ -592,6 +592,9 @@ class EpiDenoise18(nn.Module):
         
         src = self.transformer_encoder(src) 
         print(src.shape)
+        
+        src = torch.permute(src, (1, 2, 0)) # to N, F, L
+        print(src.shape)
 
         # Apply Deconvolution layers
         src = self.deconv1(src)
