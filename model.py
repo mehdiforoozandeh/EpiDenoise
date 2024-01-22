@@ -142,7 +142,7 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
 
 class RelativeEncoderLayer(torch.nn.Module):
     def __init__(self, d_model, heads, feed_forward_hidden, dropout=0.1):
-        super(EncoderLayer, self).__init__()
+        super(RelativeEncoderLayer, self).__init__()
         self.layernorm = torch.nn.LayerNorm(d_model)
         self.self_multihead = RelativeMultiHeadAttentionLayer(hid_dim=d_model, n_heads=heads, dropout=dropout)
         self.feed_forward = FeedForwardNN(
