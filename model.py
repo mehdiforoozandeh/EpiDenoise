@@ -42,6 +42,16 @@ class FeedForwardNN(nn.Module):
         
         return x
 
+class AttentionPooling(nn.Module):
+    def __init__(self, input_dim):
+        super(AttentionPooling, self).__init__()
+        self.attention = nn.Linear(input_dim, 1)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        weights = self.softmax(self.attention(x))
+        return (x * weights).sum(dim=1)
+
 class RelativePosition(nn.Module):
 
     def __init__(self, num_units, max_relative_position):
@@ -538,30 +548,23 @@ class EpiDenoise18(nn.Module):
         super(EpiDenoise18, self).__init__()
 
         # Convolution + Pooling layers
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//8, kernel_size=3, stride=1, padding="same")
-        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(in_channels=d_model//8, out_channels=d_model//4, kernel_size=3, stride=1, padding="same")
-        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv3 = nn.Conv1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
-        self.pool3 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv4 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
-        self.pool4 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
+        self.pool1 = AttentionPooling(d_model//2)
+        # self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
+        self.pool2 = AttentionPooling(d_model)
+        # self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-        self.embedding_linear = nn.Linear(input_dim, d_model)
+        # self.embedding_linear = nn.Linear(input_dim, d_model)
         self.relu = nn.ReLU()
-
-        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         # Deconvolution layers
-        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//8, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//8, out_channels=d_model//4, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv3 = nn.ConvTranspose1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv4 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//2, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=2, padding=1, output_padding=1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
@@ -579,23 +582,7 @@ class EpiDenoise18(nn.Module):
         src = self.conv2(src)
         src = self.pool2(src)
         
-        src = self.conv3(src)
-        src = self.pool3(src)
-
-        src = self.conv4(src)
-        src = self.pool4(src)
-
-
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
-
-        # src = self.embedding_linear(src)
-
-        # if not linear_embeddings:
-        #     src = self.relu(src)
-
-        # src = src + self.position(src)
-
-        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
         
         src = self.transformer_encoder(src) 
         
@@ -604,8 +591,6 @@ class EpiDenoise18(nn.Module):
         # Apply Deconvolution layers
         src = self.deconv1(src)
         src = self.deconv2(src)
-        src = self.deconv3(src)
-        src = self.deconv4(src)
 
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
         
