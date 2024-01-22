@@ -544,8 +544,8 @@ class EpiDenoise18(nn.Module):
         # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
         # self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
 
-        self.transformer_encoder = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
@@ -563,7 +563,8 @@ class EpiDenoise18(nn.Module):
         # src = src + self.position(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        src = self.transformer_encoder(src) 
+        
+        src = self.transformer_encoder(src, mask=None, src_key_padding_mask=None, is_causal=None) 
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
