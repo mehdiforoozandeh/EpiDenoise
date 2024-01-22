@@ -2025,7 +2025,7 @@ if __name__ == "__main__":
         "d_model": 64,
         "nlayers": 4,
         "epochs": 3,
-        "mask_percentage": 0.10,
+        "mask_percentage": 0.80,
         "chunk": True,
         "context_length": 400,
         "batch_size": 100,
