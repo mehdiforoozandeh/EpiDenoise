@@ -563,9 +563,9 @@ class EpiDenoise18(nn.Module):
         self.deconv3 = nn.ConvTranspose1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.deconv4 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=2, padding=1, output_padding=1)
 
-        self.signal_decoder =  nn.Linear(output_dim, output_dim)
+        self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
-        self.mask_decoder = nn.Linear(output_dim, output_dim)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
 
         self.softmax = torch.nn.Softmax(dim=-1)
 
