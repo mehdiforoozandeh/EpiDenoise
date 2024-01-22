@@ -573,12 +573,11 @@ class EpiDenoise18(nn.Module):
         print(src.shape)
         src = self.pool1(src)
         print(src.shape)
-        exit()
         src = self.conv2(src)
         print(src.shape)
         src = self.pool2(src)
         print(src.shape)
-        
+        exit()
 
         # src = self.embedding_linear(src)
 
