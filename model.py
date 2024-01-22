@@ -42,16 +42,6 @@ class FeedForwardNN(nn.Module):
         
         return x
 
-class AttentionPooling(nn.Module):
-    def __init__(self, input_dim):
-        super(AttentionPooling, self).__init__()
-        self.attention = nn.Linear(input_dim, 1)
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        weights = self.softmax(self.attention(x))
-        return (x * weights).sum(dim=1)
-
 class RelativePosition(nn.Module):
 
     def __init__(self, num_units, max_relative_position):
@@ -549,11 +539,9 @@ class EpiDenoise18(nn.Module):
 
         # Convolution + Pooling layers
         self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
-        self.pool1 = AttentionPooling(d_model//2)
-        # self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
-        self.pool2 = AttentionPooling(d_model)
-        # self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
         # self.embedding_linear = nn.Linear(input_dim, d_model)
