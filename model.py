@@ -542,8 +542,8 @@ class EpiDenoise18(nn.Module):
         # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
         # self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model)
 
-        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.transformer_encoder = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
