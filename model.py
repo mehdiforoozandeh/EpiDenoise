@@ -538,10 +538,15 @@ class EpiDenoise18(nn.Module):
         super(EpiDenoise18, self).__init__()
 
         # Convolution + Pooling layers
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
+        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//8, kernel_size=3, stride=1, padding="same")
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
+        self.conv2 = nn.Conv1d(in_channels=d_model//8, out_channels=d_model//4, kernel_size=3, stride=1, padding="same")
         self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
+
+        self.conv3 = nn.Conv1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
+        self.pool3 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv4 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
+        self.pool4 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
         self.embedding_linear = nn.Linear(input_dim, d_model)
@@ -554,8 +559,10 @@ class EpiDenoise18(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         # Deconvolution layers
-        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//2, kernel_size=3, stride=2, padding="same", output_padding=1)
-        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=output_dim, kernel_size=3, stride=2, padding="same", output_padding=1)
+        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//8, kernel_size=3, stride=2, padding="same", output_padding=1)
+        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//8, out_channels=d_model//4, kernel_size=3, stride=2, padding="same", output_padding=1)
+        self.deconv3 = nn.ConvTranspose1d(in_channels=d_model//4, out_channels=d_model//2, kernel_size=3, stride=2, padding="same", output_padding=1)
+        self.deconv4 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=2, padding="same", output_padding=1)
 
         self.signal_decoder =  nn.Linear(output_dim, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
@@ -2048,13 +2055,13 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 64,
+        "d_model": 128,
         "nlayers": 4,
         "epochs": 5,
         "mask_percentage": 0.30,
         "chunk": True,
-        "context_length": 400,
-        "batch_size": 50,
+        "context_length": 4000,
+        "batch_size": 25,
         "learning_rate": 0.001,
     }
 
