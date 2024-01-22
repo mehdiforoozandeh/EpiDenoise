@@ -2060,10 +2060,10 @@ if __name__ == "__main__":
     hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.1,
+        "dropout": 0.05,
         "nhead": 4,
-        "d_model": 128,
-        "nlayers": 4,
+        "d_model": 64,
+        "nlayers": 2,
         "epochs": 5,
         "mask_percentage": 0.30,
         "chunk": True,
