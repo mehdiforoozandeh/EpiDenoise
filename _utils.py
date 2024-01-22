@@ -179,7 +179,6 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     # Calculate total number of signals and number of chunks to be masked
     num_all_signals = data.size(1) * len(available_features)
-    num_mask_start = int((num_all_signals * mask_percentage) / chunk_size)
 
     num_mask_features = int(len(available_features) * mask_percentage) + 1
 
