@@ -2038,9 +2038,9 @@ if __name__ == "__main__":
         "d_model": 64,
         "nlayers": 2,
         "epochs": 5,
-        "mask_percentage": 0.30,
+        "mask_percentage": 0.2,
         "chunk": True,
-        "context_length": 400,
+        "context_length": 2000,
         "batch_size": 25,
         "learning_rate": 0.001,
     }
