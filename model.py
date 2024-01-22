@@ -2023,7 +2023,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 4,
-        "epochs": 15,
+        "epochs": 3,
         "mask_percentage": 0.10,
         "chunk": True,
         "context_length": 400,
