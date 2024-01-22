@@ -177,14 +177,12 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     seq_len = data.size(1)
 
-    # Calculate total number of signals and number of chunks to be masked
-    num_all_signals = data.size(1) * len(available_features)
-
     num_mask_features = int(len(available_features) * mask_percentage) + 1
 
     # Loop over the number of chunks to be masked
     for _ in range(num_mask_features):
         mask_f = available_features[torch.randint(0, len(available_features), (1,))]
+        del available_features[fmask]
 
         # Apply the masking to the selected chunk
         mask[:, :, mask_f] = True
