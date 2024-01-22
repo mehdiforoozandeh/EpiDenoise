@@ -534,8 +534,14 @@ class EpiDenoise17(nn.Module):
         return src, SAP  
 
 class EpiDenoise18(nn.Module):
-    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, k=16, dropout=0.1, context_length=2000):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
+
+        # Convolution + Pooling layers
+        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model/2, kernel_size=3, stride=1, padding=1)
+        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv1d(in_channels=d_model/2, out_channels=d_model, kernel_size=3, stride=1, padding=1)
+        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
         self.embedding_linear = nn.Linear(input_dim, d_model)
@@ -547,6 +553,10 @@ class EpiDenoise18(nn.Module):
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
+        # Deconvolution layers
+        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model/2, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model/2, out_channels=output_dim, kernel_size=3, stride=2, padding=1, output_padding=1)
+
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
@@ -555,7 +565,18 @@ class EpiDenoise18(nn.Module):
 
     def forward(self, src, linear_embeddings=True):
         # src = self.mf_embedding(src, linear=linear_embeddings)
-        src = self.embedding_linear(src)
+        print(src.shape)
+        src = self.conv1(src)
+        print(src.shape)
+        src = self.pool1(src)
+        print(src.shape)
+        src = self.conv2(src)
+        print(src.shape)
+        src = self.pool2(src)
+        print(src.shape)
+        exit()
+
+        # src = self.embedding_linear(src)
 
         if not linear_embeddings:
             src = self.relu(src)
@@ -565,6 +586,10 @@ class EpiDenoise18(nn.Module):
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         
         src = self.transformer_encoder(src) 
+
+        # Apply Deconvolution layers
+        src = self.deconv1(src)
+        src = self.deconv2(src)
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
