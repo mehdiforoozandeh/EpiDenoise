@@ -151,7 +151,7 @@ class RelativeEncoderLayer(torch.nn.Module):
             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
         self.dropout = torch.nn.Dropout(dropout)
 
-    def forward(self, embeddings, mask=None):
+    def forward(self, embeddings, src_mask=None, mask=None):
         # embeddings: (batch_size, max_len, d_model)
         # encoder mask: (batch_size, 1, 1, max_len)
         # result: (batch_size, max_len, d_model)
@@ -564,7 +564,7 @@ class EpiDenoise18(nn.Module):
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
         
-        src = self.transformer_encoder(src, mask=None, src_key_padding_mask=None, is_causal=None) 
+        src = self.transformer_encoder(src) 
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
