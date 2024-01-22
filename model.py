@@ -604,6 +604,7 @@ class EpiDenoise18(nn.Module):
 
         src = torch.permute(src, (2, 0, 1)) # to L, N, F
         print(src.shape)
+        exit()
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
