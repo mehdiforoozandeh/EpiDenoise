@@ -540,8 +540,8 @@ class EpiDenoise18(nn.Module):
         # Convolution + Pooling layers
         self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model/2, kernel_size=3, stride=1, padding=1)
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(in_channels=d_model/2, out_channels=d_model, kernel_size=3, stride=1, padding=1)
-        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
+        # self.conv2 = nn.Conv1d(in_channels=d_model/2, out_channels=d_model, kernel_size=3, stride=1, padding=1)
+        # self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
         self.embedding_linear = nn.Linear(input_dim, d_model)
@@ -570,11 +570,12 @@ class EpiDenoise18(nn.Module):
         print(src.shape)
         src = self.pool1(src)
         print(src.shape)
+        exit()
         src = self.conv2(src)
         print(src.shape)
         src = self.pool2(src)
         print(src.shape)
-        exit()
+        
 
         # src = self.embedding_linear(src)
 
