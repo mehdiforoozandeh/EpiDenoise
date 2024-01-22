@@ -565,6 +565,16 @@ class EpiDenoise18(nn.Module):
 
     def forward(self, src, linear_embeddings=True):
         # src = self.mf_embedding(src, linear=linear_embeddings)
+
+        # src = self.embedding_linear(src)
+
+        if not linear_embeddings:
+            src = self.relu(src)
+
+        # src = src + self.position(src)
+
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+
         print(src.shape)
         src = self.conv1(src)
         print(src.shape)
@@ -575,16 +585,6 @@ class EpiDenoise18(nn.Module):
         print(src.shape)
         src = self.pool2(src)
         print(src.shape)
-        
-
-        # src = self.embedding_linear(src)
-
-        if not linear_embeddings:
-            src = self.relu(src)
-
-        # src = src + self.position(src)
-
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
         
         src = self.transformer_encoder(src) 
 
