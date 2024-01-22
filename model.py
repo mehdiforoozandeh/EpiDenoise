@@ -1503,7 +1503,8 @@ class PRE_TRAINER(object):
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
                             # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data18(x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            masked_x_batch, cloze_mask = mask_data18(
+                                x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                             union_mask = cloze_mask | missing_mask_batch
 
                             masked_x_batch = add_noise(masked_x_batch, 0.5)
@@ -1516,7 +1517,8 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
 
                             outputs, pred_mask = self.model(masked_x_batch)
-                            mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(outputs, x_batch, pred_mask, cloze_mask, union_mask)
+                            mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
+                                outputs, x_batch, pred_mask, cloze_mask, union_mask)
                             loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
 
                             if torch.isnan(loss).sum() > 0:

@@ -165,7 +165,6 @@ def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_perc
     return data, mask
 
 def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
-
     # Initialize a mask tensor with the same shape as the data tensor, filled with False
     mask = torch.zeros_like(data, dtype=torch.bool)
 
@@ -179,9 +178,14 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     num_mask_features = int(len(available_features) * mask_percentage) + 1
 
-    # Loop over the number of chunks to be masked
-    for _ in range(num_mask_features):
-        mask_f = available_features[torch.randint(0, len(available_features), (1,))]
+    # Generate a tensor of random permutation of integers from 0 to len(available_features) - 1
+    rand_perm = torch.randperm(len(available_features))
+
+    # Select the first num_mask_features elements
+    selected_indices = rand_perm[:num_mask_features]
+
+    # Loop over the selected indices
+    for mask_f in selected_indices:
 
         # Apply the masking to the selected chunk
         mask[:, :, mask_f] = True
