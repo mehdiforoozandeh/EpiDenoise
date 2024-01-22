@@ -151,7 +151,7 @@ class RelativeEncoderLayer(torch.nn.Module):
             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
         self.dropout = torch.nn.Dropout(dropout)
 
-    def forward(self, embeddings, src_mask=None, mask=None):
+    def forward(self, embeddings, src_mask=None, mask=None, is_causal=None):
         # embeddings: (batch_size, max_len, d_model)
         # encoder mask: (batch_size, 1, 1, max_len)
         # result: (batch_size, max_len, d_model)
