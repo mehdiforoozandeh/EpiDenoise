@@ -1453,7 +1453,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_18(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True,
+        d_model, outer_loop_epochs=2, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
         context_length=2000, batch_size=100, start_ds=0):
 
@@ -1525,7 +1525,7 @@ class PRE_TRAINER(object):
 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.5)
+                            masked_x_batch = add_noise(masked_x_batch, 0.4)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
@@ -2037,7 +2037,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 128,
         "nlayers": 2,
-        "epochs": 5,
+        "epochs": 10,
         "mask_percentage": 0.2,
         "chunk": True,
         "context_length": 2000,
