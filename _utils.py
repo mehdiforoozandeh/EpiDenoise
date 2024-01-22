@@ -182,7 +182,7 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
     # Loop over the number of chunks to be masked
     for _ in range(num_mask_features):
         mask_f = available_features[torch.randint(0, len(available_features), (1,))]
-        del available_features[fmask]
+        del available_features[mask_f]
 
         # Apply the masking to the selected chunk
         mask[:, :, mask_f] = True
