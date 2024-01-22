@@ -547,8 +547,8 @@ class EpiDenoise18(nn.Module):
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
-        self.signal_decoder =  nn.Linear(d_model, output_dim)
-        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
+        # self.signal_decoder =  nn.Linear(d_model, output_dim)
+        self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
         self.softmax = torch.nn.Softmax(dim=-1)
@@ -2021,10 +2021,10 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 3,
-        "d_model": 24,
-        "nlayers": 12,
-        "epochs": 4,
+        "nhead": 4,
+        "d_model": 64,
+        "nlayers": 4,
+        "epochs": ,
         "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
