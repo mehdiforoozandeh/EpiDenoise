@@ -107,6 +107,7 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         r_k2 = self.relative_position_k(len_q, len_k)
         attn2 = torch.matmul(r_q2, r_k2.transpose(1, 2)).transpose(0, 1)
         attn2 = attn2.contiguous().view(batch_size, self.n_heads, len_q, len_k)
+        self.scale = self.scale.to(attn1.device)
         attn = (attn1 + attn2) / self.scale
 
         if mask is not None:
@@ -144,7 +145,8 @@ class RelativeEncoderLayer(torch.nn.Module):
     def __init__(self, d_model, heads, feed_forward_hidden, dropout=0.1):
         super(RelativeEncoderLayer, self).__init__()
         self.layernorm = torch.nn.LayerNorm(d_model)
-        self.self_multihead = RelativeMultiHeadAttentionLayer(hid_dim=d_model, n_heads=heads, dropout=dropout)
+        self.self_multihead = RelativeMultiHeadAttentionLayer(
+            hid_dim=d_model, n_heads=heads, dropout=dropout)
         self.feed_forward = FeedForwardNN(
             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
         self.dropout = torch.nn.Dropout(dropout)
