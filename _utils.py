@@ -176,7 +176,10 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     seq_len = data.size(1)
 
-    num_mask_features = int(len(available_features) * mask_percentage) + 1
+    num_mask_features = int(len(available_features) * mask_percentage)
+    
+    if num_mask_features == 0:
+        num_mask_features += 1
 
     # Generate a tensor of random permutation of integers from 0 to len(available_features) - 1
     rand_perm = torch.randperm(len(available_features))
