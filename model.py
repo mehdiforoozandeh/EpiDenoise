@@ -538,7 +538,7 @@ class EpiDenoise18(nn.Module):
         super(EpiDenoise18, self).__init__()
 
         # Convolution + Pooling layers
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=int(d_model/2), kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding=1, output_padding=1)
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
         # self.conv2 = nn.Conv1d(in_channels=d_model/2, out_channels=d_model, kernel_size=3, stride=1, padding=1)
         # self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
