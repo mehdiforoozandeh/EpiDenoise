@@ -1523,6 +1523,7 @@ class PRE_TRAINER(object):
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
+                                print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
                                 log_strs.append(skipmessage)
                                 print(skipmessage)
                                 del x_batch
