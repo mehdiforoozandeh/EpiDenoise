@@ -2024,7 +2024,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 64,
         "nlayers": 4,
-        "epochs": ,
+        "epochs": 5,
         "mask_percentage": 0.30,
         "chunk": True,
         "context_length": 400,
