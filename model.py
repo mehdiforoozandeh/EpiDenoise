@@ -540,7 +540,7 @@ class EpiDenoise18(nn.Module):
         # Convolution + Pooling layers
         self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
         self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
 
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
@@ -554,8 +554,8 @@ class EpiDenoise18(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         # Deconvolution layers
-        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//2, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=output_dim, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//2, kernel_size=3, stride=2, padding="same", output_padding=1)
+        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=output_dim, kernel_size=3, stride=2, padding="same", output_padding=1)
 
         self.signal_decoder =  nn.Linear(output_dim, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
@@ -567,7 +567,7 @@ class EpiDenoise18(nn.Module):
         # src = self.mf_embedding(src, linear=linear_embeddings)
 
         src = torch.permute(src, (0, 2, 1))  # to N, F, L
-
+    
         src = self.conv1(src)
         src = self.pool1(src)
 
