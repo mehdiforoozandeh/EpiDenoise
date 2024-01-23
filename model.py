@@ -637,8 +637,8 @@ class EpiDenoise20(nn.Module):
     def __init__(self, input_dim, kernel_size, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.convblock1 = ConvBlock(input_dim, d_model, kernel_size, 1)
-        self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1)
+        self.convblock1 = ConvBlock(input_dim, d_model, kernel_size, 1, 1)
+        self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
         self.pool1 = nn.MaxPool1d(2, stride=2)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
