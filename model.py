@@ -23,9 +23,14 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, padding="same")
         
     def forward(self, x):
+        print(x.shape)
         x = self.batch_norm(x)
+        print(x.shape)
         x = F.gelu(x)
+        print(x.shape)
         x = self.conv(x)
+        print(x.shape)
+        exit()
         return x
 
 class DeconvBlock(nn.Module):
