@@ -665,10 +665,10 @@ class EpiDenoise20(nn.Module):
         x = x.permute(2, 0, 1)  # to L, N, F
 
         x = self.transformer_encoder(x)
-        x = x.permute(1, 2, 0)
+        x = x.permute(1, 2, 0) # to N, F, L
 
         x = self.deconv1(x)
-        x = x.permute(1, 0, 2)  # to N, L, F
+        x = x.permute(0,2,1)  # to N, L, F
         print(x.shape)
         exit()
 
