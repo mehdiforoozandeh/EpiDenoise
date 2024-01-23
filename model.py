@@ -658,28 +658,17 @@ class EpiDenoise20(nn.Module):
 
 
     def forward(self, x):
-        print(x.shape)
         x = x.permute(0, 2, 1) # to N, F, L
-        print(x.shape)
         x = self.convblock1(x)
-        print(x.shape)
         x = self.rconvblock1(x)
-        print(x.shape)
         x = self.pool1(x)
-        print(x.shape)
-
         x = x.permute(2, 0, 1)  # to L, N, F
-        print(x.shape)
+
         x = self.transformer_encoder(x)
         x = x.permute(1, 2, 0)
-        print(x.shape)
 
         x = self.deconv1(x)
-        print(x.shape)
-
         x = x.permute(1, 0, 2)  # to N, L, F
-        print(x.shape)
-        exit()
 
         mask = self.softmax(self.mask_decoder(x))
         x = self.signal_decoder(x)
@@ -2385,8 +2374,8 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 64,
-        "nlayers": 4,
+        "d_model": 256,
+        "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 3,
