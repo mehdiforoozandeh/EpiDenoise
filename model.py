@@ -66,7 +66,6 @@ class AttentionPool(nn.Module):
         return torch.sum(attn * x, dim=-1)
 
 
-
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
         super(FeedForwardNN, self).__init__()
@@ -401,6 +400,28 @@ class ComboLoss17(nn.Module):
 class ComboLoss18(nn.Module):
     def __init__(self):
         super(ComboLoss18, self).__init__()
+        self.l1_loss = nn.L1Loss(reduction='mean')
+        self.bce_loss = nn.BCELoss(reduction='mean')
+
+    def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
+        mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+
+        # Check for nan values in pred_adjac and true_adjac
+        if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
+
+        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
+
+        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
+        
+        return mse_obs_loss, mse_pred_loss, bce_mask_loss
+
+class ComboLoss20(nn.Module):
+    def __init__(self):
+        super(ComboLoss20, self).__init__()
         self.l1_loss = nn.L1Loss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
 
@@ -2253,12 +2274,99 @@ def train_epidenoise18(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     return model
 
+def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    d_model = hyper_parameters["d_model"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    chunk = hyper_parameters["chunk"]
+    context_length = hyper_parameters["context_length"]
+
+    # one nucleosome is around 150bp -> 6bins
+    # each chuck ~ 1 nucleosome
+
+    n_chunks = (mask_percentage * context_length) // 6 
+
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
+
+    model = EpiDenoise20(
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        model.load_state_dict(torch.load(checkpoint_path))
+
+    # model = model.to(device)
+
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
+
+    model_name = f"EpiDenoise20_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
+    with open(f'models/hyper_parameters20_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
+    criterion = ComboLoss20()
+
+    start_time = time.time()
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epidenoise_20(d_model=d_model, num_epochs=epochs, 
+        mask_percentage=mask_percentage, chunk=chunk, n_chunks=n_chunks,
+        context_length=context_length, batch_size=batch_size, start_ds=start_ds)
+
+    end_time = time.time()
+
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    # os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
+
+    return model
+
 #========================================================================================================#
 #================================================main====================================================#
 #========================================================================================================#
 
 if __name__ == "__main__":
     hyper_parameters1678 = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.05,
+        "nhead": 4,
+        "d_model": 64,
+        "nlayers": 4,
+        "epochs": 10,
+        "mask_percentage": 0.2,
+        "chunk": True,
+        "context_length": 400,
+        "batch_size": 100,
+        "learning_rate": 0.0001,
+    }
+
+    hyper_parameters20 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
@@ -2291,63 +2399,8 @@ if __name__ == "__main__":
             checkpoint_path=None, 
             start_ds=0)
 
-    exit()
-    # EPIDENOISE_1.5
-    hyper_parameters = {
-        "data_path": "/project/compbio-lab/EIC/training_data/",
-        "input_dim": 35,
-        "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 64,
-        "nlayers": 2,
-        "epochs": 15,
-        "mask_percentage": 0.15,
-        "chunk": True,
-        "context_length": 400,
-        "batch_size": 100,
-        "learning_rate": 0.05,
-        "alpha":0.75
-    }
-
-    train_epidenoise15(
-        hyper_parameters, 
-        checkpoint_path=None, 
-        start_ds=0)
-
-    exit()
-    # EPIDENOISE_1.0-LARGE
-    hyper_parameters_large = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
-            "input_dim": 35,
-            "dropout": 0.1,
-            "nhead": 8,
-            "d_model": 128,
-            "nlayers": 4,
-            "epochs": 20,
-            "mask_percentage": 0.15,
-            "chunk": True,
-            "context_length": 400,
-            "batch_size": 80,
-            "learning_rate": 0.01
-        }
-
-    # EPIDENOISE_1.0-SMALL
-    hyper_parameters_small = {
-        "data_path": "/project/compbio-lab/EIC/training_data/",
-        "input_dim": 35,
-        "dropout": 0.1,
-        "nhead": 4,
-        "d_model": 64,
-        "nlayers": 2,
-        "epochs": 10,
-        "mask_percentage": 0.15,
-        "chunk": True,
-        "context_length": 400,
-        "batch_size": 50,
-        "learning_rate": 0.005
-    }
-
-    train_epidenoise10(
-        hyper_parameters_small, 
-        checkpoint_path=None, 
-        start_ds=0)
+    elif sys.argv[1] == "epd20":
+        train_epidenoise20(
+            hyper_parameters20, 
+            checkpoint_path=None, 
+            start_ds=0)
