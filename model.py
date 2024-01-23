@@ -2284,8 +2284,9 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     nlayers = hyper_parameters["nlayers"]
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
-    chunk = hyper_parameters["chunk"]
     context_length = hyper_parameters["context_length"]
+
+    kernel_size = hyper_parameters["kernel_size"]
 
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
@@ -2297,8 +2298,9 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     # end of hyperparameters
 
     model = EpiDenoise20(
-        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
-        output_dim=output_dim, dropout=dropout, context_length=context_length)
+        input_dim=input_dim, kernel_size=kernel_size, nhead=nhead, d_model=d_model, 
+        n_encoder_layers=nlayers, output_dim=output_dim, dropout=dropout, 
+        context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
@@ -2375,7 +2377,7 @@ if __name__ == "__main__":
         "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.2,
-        "chunk": True,
+        "kernel_size": 5,
         "context_length": 400,
         "batch_size": 100,
         "learning_rate": 0.0001,
