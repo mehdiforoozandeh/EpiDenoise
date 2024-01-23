@@ -669,6 +669,8 @@ class EpiDenoise20(nn.Module):
 
         x = self.deconv1(x)
         x = x.permute(2, 0, 1)  # to L, N, F
+        print(x.shape)
+        exit()
 
         mask = self.softmax(self.mask_decoder(x))
         x = self.signal_decoder(x)
