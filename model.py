@@ -656,7 +656,7 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         x = self.rconvblock1(x)
         print(x.shape)
-        x = self.attnpool1(x)
+        x = self.pool1(x)
         print(x.shape)
         exit()
 
