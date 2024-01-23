@@ -659,6 +659,7 @@ class EpiDenoise20(nn.Module):
 
 
     def forward(self, x):
+        print(x.shape)
         x = self.convblock1(x)
         x = self.rconvblock1(x)
         x = self.attnpool1(x)
