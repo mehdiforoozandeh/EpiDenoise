@@ -15,6 +15,58 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #========================================================================================================#
 #===========================================building blocks==============================================#
 #========================================================================================================#
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, D):
+        super(ConvBlock, self).__init__()
+        self.batch_norm = nn.BatchNorm1d(in_C)
+        self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, padding="same")
+        
+    def forward(self, x):
+        x = self.batch_norm(x)
+        x = F.gelu(x)
+        x = self.conv(x)
+        return x
+
+class DeconvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, D):
+        super(DeconvBlock, self).__init__()
+        self.batch_norm = nn.BatchNorm1d(in_C)
+        self.deconv = nn.ConvTranspose1d(in_C, out_C, kernel_size=W, dilation=D, padding=1, output_padding=1)
+        
+    def forward(self, x):
+        x = self.batch_norm(x)
+        x = F.gelu(x)
+        x = self.deconv(x)
+        return x
+
+class RConvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, D):
+        super(RConvBlock, self).__init__()
+        self.conv_block = ConvBlock(in_C, out_C, W, D)
+        
+    def forward(self, x):
+        return x + self.conv_block(x)
+
+class RDeconvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, D):
+        super(RDeconvBlock, self).__init__()
+        self.deconv_block = DeconvBlock(in_C, out_C, W, D)
+        
+    def forward(self, x):
+        return x + self.deconv_block(x)
+
+class AttentionPool(nn.Module):
+    def __init__(self, width):
+        super(AttentionPool, self).__init__()
+        self.width = width
+
+    def forward(self, x):
+        attn = F.softmax(x, dim=-1)
+        return torch.sum(attn * x, dim=-1)
+
+
+
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
         super(FeedForwardNN, self).__init__()
@@ -537,22 +589,11 @@ class EpiDenoise18(nn.Module):
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        # Convolution + Pooling layers
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=d_model//2, kernel_size=3, stride=1, padding="same")
-        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=1, padding="same")
-        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
-
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
-        # self.embedding_linear = nn.Linear(input_dim, d_model)
-        self.relu = nn.ReLU()
+        self.embedding_linear = nn.Linear(input_dim, d_model)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-
-        # Deconvolution layers
-        self.deconv1 = nn.ConvTranspose1d(in_channels=d_model, out_channels=d_model//2, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv2 = nn.ConvTranspose1d(in_channels=d_model//2, out_channels=d_model, kernel_size=3, stride=2, padding=1, output_padding=1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
@@ -562,25 +603,11 @@ class EpiDenoise18(nn.Module):
 
     def forward(self, src, linear_embeddings=True):
         # src = self.mf_embedding(src, linear=linear_embeddings)
+        src = self.embedding_linear(src)
 
-        src = torch.permute(src, (0, 2, 1))  # to N, F, L
-        src = self.conv1(src)
-        src = self.pool1(src)
-
-        src = self.conv2(src)
-        src = self.pool2(src)
-        
-        src = torch.permute(src, (2, 0, 1)) # to L, N, F
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
         
         src = self.transformer_encoder(src) 
-        
-        src = torch.permute(src, (1, 2, 0)) # to N, F, L
-
-        # Apply Deconvolution layers
-        src = self.deconv1(src)
-        src = self.deconv2(src)
-
-        src = torch.permute(src, (2, 0, 1)) # to L, N, F
         
         msk = torch.sigmoid(self.mask_decoder(src))
         src = self.signal_decoder(src)
