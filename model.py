@@ -663,6 +663,7 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
 
         x = x.permute(2, 1, 0)  # to L, N, F
+        print(x.shape)
         x = self.transformer_encoder(x)
         x = x.permute(1, 0, 2)
         print(x.shape)
