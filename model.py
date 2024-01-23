@@ -56,28 +56,6 @@ class RDeconvBlock(nn.Module):
     def forward(self, x):
         return x + self.deconv_block(x)
 
-class AttentionPool(nn.Module):
-    def __init__(self, pool_size=2, per_channel=False, w_init_scale=0.0):
-        super(AttentionPool, self).__init__()
-        self.pool_size = pool_size
-        self.per_channel = per_channel
-        self.w_init_scale = w_init_scale
-        self.logit_linear = None
-
-    def _initialize(self, num_features):
-        self.logit_linear = nn.Linear(num_features if self.per_channel else 1, num_features, bias=False)
-        nn.init.constant_(self.logit_linear.weight, self.w_init_scale)
-
-    def forward(self, inputs):
-        _, length, num_features = inputs.shape
-        if self.logit_linear is None:
-            self._initialize(num_features)
-            self.logit_linear = self.logit_linear.to(inputs.device)
-            
-        inputs = inputs.view(-1, length // self.pool_size, self.pool_size, num_features)
-        inputs = inputs.mean(dim=-2) if not self.per_channel else inputs
-        return torch.sum(inputs * F.softmax(self.logit_linear(inputs), dim=-2), dim=-2)
-
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
         super(FeedForwardNN, self).__init__()
@@ -660,7 +638,7 @@ class EpiDenoise20(nn.Module):
 
         self.convblock1 = ConvBlock(input_dim, d_model, kernel_size, 1)
         self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1)
-        self.attnpool1 = AttentionPool(2)
+        self.pool1 = nn.MaxPool1d(3, stride=1)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
