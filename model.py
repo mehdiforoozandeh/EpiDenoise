@@ -662,7 +662,7 @@ class EpiDenoise20(nn.Module):
         x = self.pool1(x)
         print(x.shape)
 
-        x = x.permute(2, 1, 0)  # to L, N, F
+        x = x.permute(2, 0, 1)  # to L, N, F
         print(x.shape)
         x = self.transformer_encoder(x)
         x = x.permute(1, 0, 2)
