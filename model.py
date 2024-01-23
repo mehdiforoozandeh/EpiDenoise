@@ -664,9 +664,11 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         x = self.convblock1(x)
         print(x.shape)
-        exit()
         x = self.rconvblock1(x)
+        print(x.shape)
         x = self.attnpool1(x)
+        print(x.shape)
+        exit()
 
         x = x.permute(1, 0, 2)  # swap batch and sequence length dimension for pytorch transformer
         x = self.transformer_encoder(x)
