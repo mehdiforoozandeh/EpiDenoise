@@ -2269,7 +2269,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.2,
         "chunk": True,
         "context_length": 400,
-        "batch_size": 50,
+        "batch_size": 100,
         "learning_rate": 0.0001,
     }
 
