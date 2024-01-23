@@ -2299,8 +2299,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     model = EpiDenoise20(
         input_dim=input_dim, kernel_size=kernel_size, nhead=nhead, d_model=d_model, 
-        n_encoder_layers=nlayers, output_dim=output_dim, dropout=dropout, 
-        context_length=context_length)
+        n_encoder_layers=nlayers, output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
