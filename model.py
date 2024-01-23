@@ -1702,8 +1702,7 @@ class PRE_TRAINER(object):
 
     def pretrain_epidenoise_20(self, 
         d_model, outer_loop_epochs=2, arcsinh_transform=True,
-        num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
-        context_length=2000, batch_size=100, start_ds=0):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=100, start_ds=0):
 
         log_strs = []
         log_strs.append(str(self.device))
