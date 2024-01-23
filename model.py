@@ -33,7 +33,7 @@ class DeconvBlock(nn.Module):
         super(DeconvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
         self.deconv = nn.ConvTranspose1d(
-            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding=0, output_padding=1)
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding=1, output_padding=0)
         
     def forward(self, x):
         x = self.batch_norm(x)
@@ -637,12 +637,15 @@ class EpiDenoise20(nn.Module):
     def __init__(self, input_dim, kernel_size, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.convblock1 = ConvBlock(input_dim, d_model, kernel_size, 1, 1)
+        self.convblock1 =   ConvBlock(input_dim, d_model, kernel_size, 1, 1)
         self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
         self.pool1 = nn.MaxPool1d(2, stride=2)
 
-        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         self.deconv1 = DeconvBlock(d_model, output_dim, kernel_size, 2, 1)
         self.rdeconv1 = RDeconvBlock(output_dim, output_dim, kernel_size, 2, 1)
