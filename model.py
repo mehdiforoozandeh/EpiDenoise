@@ -33,7 +33,7 @@ class DeconvBlock(nn.Module):
         super(DeconvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
         padding = (W - 1) // 2  # This is for 'same' padding
-        output_padding = S - (2 * padding - W + 1) % S  # Adjust output_padding
+        output_padding = min(S, D) - 1  # Adjust output_padding
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
             padding=padding, output_padding=output_padding)
