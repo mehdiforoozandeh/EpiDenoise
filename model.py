@@ -643,6 +643,9 @@ class EpiDenoise20(nn.Module):
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
 
+        self.deconv1 = DeconvBlock(d_model, output_dim, 2, 1)
+        self.rdeconv1 = RDeconvBlock(output_dim, output_dim, 2, 1)
+
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
         self.softmax = torch.nn.Softmax(dim=-1)
@@ -658,11 +661,12 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         x = self.pool1(x)
         print(x.shape)
-        exit()
 
         x = x.permute(1, 0, 2)  # swap batch and sequence length dimension for pytorch transformer
         x = self.transformer_encoder(x)
         x = x.permute(1, 0, 2)
+        print(x.shape)
+        exit()
 
         mask = self.softmax(self.mask_decoder(x))
         x = self.signal_decoder(x)
