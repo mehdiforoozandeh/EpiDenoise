@@ -72,8 +72,8 @@ class AttentionPool(nn.Module):
         _, length, num_features = inputs.shape
         if self.logit_linear is None:
             self._initialize(num_features)
-        else:
             self.logit_linear = self.logit_linear.to(inputs.device)
+            
         inputs = inputs.view(-1, length // self.pool_size, self.pool_size, num_features)
         return torch.sum(inputs * F.softmax(self.logit_linear(inputs), dim=-2), dim=-2)
 
