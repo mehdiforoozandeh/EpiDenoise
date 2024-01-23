@@ -653,7 +653,7 @@ class EpiDenoise20(nn.Module):
 
     def forward(self, x):
         print(x.shape)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1) # to N, F, L
         print(x.shape)
         x = self.convblock1(x)
         print(x.shape)
@@ -662,7 +662,7 @@ class EpiDenoise20(nn.Module):
         x = self.pool1(x)
         print(x.shape)
 
-        x = x.permute(1, 0, 2)  # swap batch and sequence length dimension for pytorch transformer
+        x = x.permute(2, 1, 0)  # to L, N, F
         x = self.transformer_encoder(x)
         x = x.permute(1, 0, 2)
         print(x.shape)
