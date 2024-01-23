@@ -651,7 +651,6 @@ class EpiDenoise20(nn.Module):
             self.encoder_layer, num_layers=n_encoder_layers)
 
         self.deconv1 = DeconvBlock(d_model, output_dim, kernel_size, 2, 1)
-        self.rdeconv1 = RDeconvBlock(output_dim, output_dim, kernel_size, 2, 1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
@@ -677,10 +676,8 @@ class EpiDenoise20(nn.Module):
 
         x = self.deconv1(x)
         print(x.shape)
-        x = self.rdeconv1(x)
-        print(x.shape)
 
-        exit()
+        x = x.permute(1, 0, 2.)  # to N, L, F
 
         mask = self.softmax(self.mask_decoder(x))
         x = self.signal_decoder(x)
