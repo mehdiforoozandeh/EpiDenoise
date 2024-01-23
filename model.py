@@ -20,7 +20,7 @@ class ConvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, D):
         super(ConvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
-        self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, padding="same")
+        self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
         x = self.batch_norm(x)
@@ -42,9 +42,9 @@ class DeconvBlock(nn.Module):
         return x
 
 class RConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, D):
+    def __init__(self, in_C, out_C, W, S, D):
         super(RConvBlock, self).__init__()
-        self.conv_block = ConvBlock(in_C, out_C, W, D)
+        self.conv_block = ConvBlock(in_C, out_C, W, S, D)
         
     def forward(self, x):
         return x + self.conv_block(x)
