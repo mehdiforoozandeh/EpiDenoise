@@ -57,14 +57,23 @@ class RDeconvBlock(nn.Module):
         return x + self.deconv_block(x)
 
 class AttentionPool(nn.Module):
-    def __init__(self, width):
+    def __init__(self, pool_size=2, per_channel=False, w_init_scale=0.0):
         super(AttentionPool, self).__init__()
-        self.width = width
+        self.pool_size = pool_size
+        self.per_channel = per_channel
+        self.w_init_scale = w_init_scale
+        self.logit_linear = None
 
-    def forward(self, x):
-        attn = F.softmax(x, dim=-1)
-        return torch.sum(attn * x, dim=-1)
+    def _initialize(self, num_features):
+        self.logit_linear = nn.Linear(num_features if self.per_channel else 1, num_features, bias=False)
+        nn.init.constant_(self.logit_linear.weight, self.w_init_scale)
 
+    def forward(self, inputs):
+        _, length, num_features = inputs.shape
+        if self.logit_linear is None:
+            self._initialize(num_features)
+        inputs = inputs.view(-1, length // self.pool_size, self.pool_size, num_features)
+        return torch.sum(inputs * F.softmax(self.logit_linear(inputs), dim=-2), dim=-2)
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
