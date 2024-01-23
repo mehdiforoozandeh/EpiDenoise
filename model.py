@@ -75,6 +75,7 @@ class AttentionPool(nn.Module):
             self.logit_linear = self.logit_linear.to(inputs.device)
             
         inputs = inputs.view(-1, length // self.pool_size, self.pool_size, num_features)
+        inputs = inputs.mean(dim=-2) if not self.per_channel else inputs
         return torch.sum(inputs * F.softmax(self.logit_linear(inputs), dim=-2), dim=-2)
 
 class FeedForwardNN(nn.Module):
