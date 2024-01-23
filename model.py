@@ -33,7 +33,7 @@ class DeconvBlock(nn.Module):
         super(DeconvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
         self.deconv = nn.ConvTranspose1d(
-            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding=1, output_padding=0)
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding=0, output_padding=0)
         
     def forward(self, x):
         x = self.batch_norm(x)
