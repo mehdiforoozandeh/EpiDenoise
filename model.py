@@ -23,14 +23,9 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, padding="same")
         
     def forward(self, x):
-        print(x.shape)
         x = self.batch_norm(x)
-        print(x.shape)
         x = F.gelu(x)
-        print(x.shape)
         x = self.conv(x)
-        print(x.shape)
-        exit()
         return x
 
 class DeconvBlock(nn.Module):
@@ -666,7 +661,10 @@ class EpiDenoise20(nn.Module):
     def forward(self, x):
         print(x.shape)
         x = x.permute(0, 2, 1)
+        print(x.shape)
         x = self.convblock1(x)
+        print(x.shape)
+        exit()
         x = self.rconvblock1(x)
         x = self.attnpool1(x)
 
