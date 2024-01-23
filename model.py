@@ -586,10 +586,14 @@ class EpiDenoise17(nn.Module):
         return src, SAP  
 
 class EpiDenoise18(nn.Module):
+    """
+    no SAP
+    added relative position encodings
+    """
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=k)
+        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
         self.embedding_linear = nn.Linear(input_dim, d_model)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -601,8 +605,8 @@ class EpiDenoise18(nn.Module):
 
         self.softmax = torch.nn.Softmax(dim=-1)
 
-    def forward(self, src, linear_embeddings=True):
-        # src = self.mf_embedding(src, linear=linear_embeddings)
+    def forward(self, src):
+        src = self.mf_embedding(src, linear=True)
         src = self.embedding_linear(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -616,6 +620,36 @@ class EpiDenoise18(nn.Module):
         msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
 
         return src, msk
+
+class EpiDenoise20(nn.Module):
+    def __init__(self, input_dim, kernel_size, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
+        super(EpiDenoise20, self).__init__()
+
+        self.convblock1 = ConvBlock(input_dim, d_model//2, kernel_size, 1)
+        self.rconvblock1 = RConvBlock(d_model//2, d_model, kernel_size, 1)
+        self.attnpool1 = AttentionPool(2)
+
+        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
+
+        self.signal_decoder =  nn.Linear(d_model, output_dim)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+
+    def forward(self, x):
+        x = self.convblock1(x)
+        x = self.rconvblock1(x)
+        x = self.attnpool1(x)
+
+        x = x.permute(1, 0, 2)  # swap batch and sequence length dimension for pytorch transformer
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 0, 2)
+
+        mask = self.softmax(self.mask_decoder(x))
+        x = self.signal_decoder(x)
+
+        return x, mask
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -1640,6 +1674,173 @@ class PRE_TRAINER(object):
                 try:
                     if ds%5 == 0:
                         torch.save(self.model.state_dict(), f'models/EPD18_model_checkpoint_ds_{ds}.pth')
+                except:
+                    pass
+
+        return self.model
+
+    def pretrain_epidenoise_20(self, 
+        d_model, outer_loop_epochs=2, arcsinh_transform=True,
+        num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
+        context_length=2000, batch_size=100, start_ds=0):
+
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
+        logfile = open("models/EPD20_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        for ole in range(outer_loop_epochs):
+            ds=0
+
+            for ds_path in self.dataset.preprocessed_datasets:
+                ds+=1
+                
+                if ds < start_ds:
+                    continue
+                
+                print('-_-' * 10)
+                x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
+                num_features = x.shape[2]
+
+                if arcsinh_transform:
+                    arcmask = (x != -1)
+                    x[arcmask] = torch.arcsinh_(x[arcmask])
+                                
+                for epoch in range(0, num_epochs):
+                    print('-' * 10)
+                    print(f'Epoch {epoch+1}/{num_epochs}')
+
+                    # zero grads before going over all batches and all patterns of missing data
+                    self.optimizer.zero_grad()
+                    epoch_loss = []
+                    epoch_obs_loss = []
+                    epoch_msk_loss = []
+                    epoch_clz_loss = []
+                    t0 = datetime.now()
+
+                    p = 0
+                    for pattern, indices in missing_f_pattern.items():
+                        p += 1
+
+                        pattern_batch = x[indices]
+                        missing_mask_patten_batch = missing_mask[indices]
+
+                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
+
+                        # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
+
+                        if context_length < pattern_batch.shape[1]:
+                            context_length_factor = context_length / pattern_batch.shape[1]
+
+                            pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
+                            missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
+
+                        # Break down x into smaller batches
+                        for i in range(0, len(pattern_batch), batch_size):
+                            self.optimizer.zero_grad()
+
+                            torch.cuda.empty_cache()
+
+                            x_batch = pattern_batch[i:i+batch_size]
+                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
+                            
+                            # Masking a subset of the input data -- genomic position mask
+                            masked_x_batch, cloze_mask = mask_data16(
+                                x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+
+                            union_mask = cloze_mask | missing_mask_batch
+
+                            masked_x_batch = add_noise(masked_x_batch, 0.4)
+                            masked_x_batch[union_mask] = -1
+
+                            # move to GPU
+                            x_batch = x_batch.to(self.device)
+                            masked_x_batch = masked_x_batch.to(self.device)
+                            union_mask = union_mask.to(self.device)
+                            cloze_mask = cloze_mask.to(self.device)
+
+                            outputs, pred_mask = self.model(masked_x_batch)
+                            mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
+                                outputs, x_batch, pred_mask, cloze_mask, union_mask)
+                            loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
+
+                            if torch.isnan(loss).sum() > 0:
+                                skipmessage = "Encountered nan loss! Skipping batch..."
+                                print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
+                                del x_batch
+                                del masked_x_batch
+                                del outputs
+                                torch.cuda.empty_cache()
+                                continue
+
+                            del x_batch
+                            del masked_x_batch
+                            del outputs
+
+                            epoch_loss.append(loss.item())
+                            epoch_obs_loss.append(mse_obs_loss.item())
+                            epoch_clz_loss.append(mse_pred_loss.item())
+                            epoch_msk_loss.append(bce_mask_loss.item())
+
+                            # Clear GPU memory again
+                            torch.cuda.empty_cache()
+
+                            loss.backward()  
+                            self.optimizer.step()
+                        
+                        if p == 1 or p%8 == 0:
+                            logfile = open("models/EPD20_log.txt", "w")
+
+                            logstr = [
+                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                                f'Epoch {epoch+1}/{num_epochs}', 
+                                f'Missing Pattern {p}/{len(missing_f_pattern)}', 
+                                f"Obs Loss: {mse_obs_loss.item():.4f}",
+                                f"Clz Loss: {mse_pred_loss.item():.4f}",
+                                f"Msk Loss: {bce_mask_loss.item():.4f}"
+                                ]
+                            logstr = " | ".join(logstr)
+
+                            log_strs.append(logstr)
+                            logfile.write("\n".join(log_strs))
+                            logfile.close()
+                            print(logstr)
+                        
+                    self.scheduler.step()
+
+                    t1 = datetime.now()
+                    logfile = open("models/EPD20_log.txt", "w")
+                    
+                    test_mse, test_corr = self.test_model(
+                        context_length, version="18", 
+                        is_arcsin=arcsinh_transform, batch_size=batch_size)
+
+                    logstr = [
+                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        f'Epoch {epoch+1}/{num_epochs}', 
+                        f"Epoch Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
+                        f"Epoch Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
+                        f"Epoch Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
+                        # f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"Test_MSE: {test_mse:.4f}",
+                        f"Test Corr: {test_corr:.4f}",
+                        f"Epoch took: {t1 - t0}"
+                        ]
+                    logstr = " | ".join(logstr)
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+
+                # Save the model after each dataset
+                try:
+                    if ds%5 == 0:
+                        torch.save(self.model.state_dict(), f'models/EPD20_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
