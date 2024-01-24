@@ -217,60 +217,38 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         
         return x
 
-class RelativeEncoderLayer(torch.nn.Module):
-    def __init__(self, d_model, heads, feed_forward_hidden, dropout=0.1):
-        super(RelativeEncoderLayer, self).__init__()
-        self.layernorm = torch.nn.LayerNorm(d_model)
-        self.self_multihead = RelativeMultiHeadAttentionLayer(
-            hid_dim=d_model, n_heads=heads, dropout=dropout)
-        self.feed_forward = FeedForwardNN(
-            input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
-        self.dropout = torch.nn.Dropout(dropout)
-
-    def forward(self, embeddings, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
-        # embeddings: (batch_size, max_len, d_model)
-        # encoder mask: (batch_size, 1, 1, max_len)
-        # result: (batch_size, max_len, d_model)
-        interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
-        # residual layer
-        interacted = self.layernorm(interacted + embeddings)
-        # bottleneck
-        feed_forward_out = self.dropout(self.feed_forward(interacted))
-        encoded = self.layernorm(feed_forward_out + interacted)
-        return encoded
-
-# class RelativeEncoderLayer(nn.Module):
-#     def __init__(self, d_model, heads, feed_forward_hidden, dropout):
-#         super().__init__()
+class RelativeEncoderLayer(nn.Module):
+    def __init__(self, d_model, heads, feed_forward_hidden, dropout):
+        super().__init__()
         
-#         self.layer_norm_1 = nn.LayerNorm(d_model)
-#         self.layer_norm_2 = nn.LayerNorm(d_model)
-#         self.relative_multihead_attn = RelativeMultiHeadAttentionLayer(d_model, heads, dropout)
-#         self.positionwise_feedforward = nn.Sequential(
-#             nn.Linear(d_model, feed_forward_hidden),
-#             nn.ReLU(),
-#             nn.Dropout(dropout),
-#             nn.Linear(feed_forward_hidden, d_model)
-#         )
-#         self.dropout = nn.Dropout(dropout)
+        self.layer_norm_1 = nn.LayerNorm(d_model)
+        self.layer_norm_2 = nn.LayerNorm(d_model)
+        self.relative_multihead_attn = RelativeMultiHeadAttentionLayer(d_model, heads, dropout)
+        self.positionwise_feedforward = nn.Sequential(
+            nn.Linear(d_model, feed_forward_hidden),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(feed_forward_hidden, d_model)
+        )
+        self.dropout = nn.Dropout(dropout)
 
-#     def forward(self, src, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
-#         # src = [batch size, src len, hid dim]
-#         # src_mask = [batch size, src len]
+    def forward(self, src, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
+        # src = [batch size, src len, hid dim]
+        # src_mask = [batch size, src len]
 
-#         # Self-attention
-#         _src = self.relative_multihead_attn(src, src, src, src_mask)
+        # Self-attention
+        _src = self.relative_multihead_attn(src, src, src, src_mask)
         
-#         # Residual connection and layer norm
-#         src = self.layer_norm_1(src + self.dropout(_src))
+        # Residual connection and layer norm
+        src = self.layer_norm_1(src + self.dropout(_src))
 
-#         # Position-wise feedforward
-#         _src = self.positionwise_feedforward(src)
+        # Position-wise feedforward
+        _src = self.positionwise_feedforward(src)
 
-#         # Another residual connection and layer norm
-#         src = self.layer_norm_2(src + self.dropout(_src))
+        # Another residual connection and layer norm
+        src = self.layer_norm_2(src + self.dropout(_src))
 
-#         return src
+        return src
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
