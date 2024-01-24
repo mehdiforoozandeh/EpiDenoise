@@ -711,8 +711,6 @@ class EpiDenoise20(nn.Module):
         m = m.permute(0, 2, 1) # to N, F, L
         m = torch.sigmoid(self.convm(m.float()))
 
-        print(m.shape)
-
         x = self.conv1(x)
         x = torch.cat([x, m], dim=1)
         x = self.convtower(x)
