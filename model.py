@@ -653,8 +653,8 @@ class EpiDenoise20(nn.Module):
                  nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
+        # Convolutional layers
         self.conv1 = ConvTower(2*input_dim, d_model // (2**n_cnn_layer), kernel_size, 1, dilation)
-
         self.convtower = nn.Sequential(*[
             ConvTower(
                 d_model // (2**(n_cnn_layer-i)), 
@@ -666,37 +666,34 @@ class EpiDenoise20(nn.Module):
         # Transformer Encoder Layer (replace with your actual RelativeEncoderLayer)
         self.encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
-        
+        # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model, d_model, 
-                kernel_size//2, 2, 1) for i in range(n_cnn_layer)
+                d_model // (2**i), d_model // (2**(i+1)), 
+                kernel_size//2, 2, 1) for i in range(n_cnn_layer - 1)
         ])
+        self.final_deconv = DeconvBlock(d_model // (2**(n_cnn_layer-1)), input_dim, kernel_size, 2, 1)
 
-        self.signal_decoder = nn.Linear(d_model, output_dim)
-        self.mask_decoder = nn.Linear(d_model, output_dim)
+        self.signal_decoder = nn.Linear(input_dim, output_dim)
+        self.mask_decoder = nn.Linear(input_dim, output_dim)
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x, m):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
 
-        print(x.shape)
         x = self.conv1(x)
-        print(x.shape)
         x = self.convtower(x)
-        print(x.shape)
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        # x = self.transformer_encoder(x)
-        # x = x.permute(1, 2, 0) # to N, F, L
+        x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 2, 0) # to N, F, L'
 
         x = self.deconvtower(x)
-        print(x.shape)
-        exit()
+        x = self.final_deconv(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
 
