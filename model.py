@@ -641,13 +641,19 @@ class EpiDenoise18(nn.Module):
 
         return src, msk
 
+
+# self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
+# self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
+# self.pool1 = nn.MaxPool1d(2, stride=2)
+
+
 class EpiDenoise20(nn.Module):
     def __init__(self, 
     input_dim, kernel_size, n_cnn_layer, dilation,
     nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.conv1 = ConvTower(2*input_dim, d_model//(n_cnn_layer+1), kernel_size, 1, dilation)
+        self.conv1 = ConvTower(2*input_dim, d_model//(n_cnn_layer), kernel_size, 1, dilation)
 
         self.convtower = nn.Sequential(*[ConvTower(
                 d_model//(n_cnn_layer - (i)), 
@@ -655,17 +661,13 @@ class EpiDenoise20(nn.Module):
                 kernel_size//(i+1), 1, dilation
                 ) for i in range(n_cnn_layer)])
 
-        # self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
-        # self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
-        # self.pool1 = nn.MaxPool1d(2, stride=2)
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
 
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
-
-        # self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
+        self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
@@ -680,12 +682,10 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         x = self.convtower(x)
         print(x.shape)
-        exit()
 
-
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        # x = self.transformer_encoder(x)
-        # x = x.permute(1, 2, 0) # to N, F, L
+        x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 2, 0) # to N, F, L
 
         x = self.deconv1(x)
         print(x.shape)
