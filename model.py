@@ -672,8 +672,8 @@ class EpiDenoise20(nn.Module):
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model // (2**i), d_model // (2**(i+1)), 
-                kernel_size, 2, 1) for i in range(n_cnn_layer - 1)
+                d_model // (2**(i-1)), d_model // (2**(i)), 
+                kernel_size, 2, 1) for i in range(n_cnn_layer)
         ])
         self.final_deconv = DeconvBlock(d_model // (2**(n_cnn_layer-1)), input_dim, kernel_size, 2, 1)
 
