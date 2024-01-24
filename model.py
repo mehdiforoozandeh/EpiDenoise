@@ -52,12 +52,12 @@ class RConvBlock(nn.Module):
     def forward(self, x):
         return x + self.conv_block(x)
 
-class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D):
-        super(ConvTower, self).__init__()
+# class ConvTower(nn.Module):
+#     def __init__(self, in_C, out_C, W, S, D):
+#         super(ConvTower, self).__init__()
 
         
-    def forward(self, x):
+#     def forward(self, x):
 
 
 class FeedForwardNN(nn.Module):
