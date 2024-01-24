@@ -667,12 +667,13 @@ class EpiDenoise20(nn.Module):
         self.encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
 
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=n_encoder_layers)
-
-        # Deconvolution layers to reverse the effect of conv1 and convtowers
+        # self.transformer_encoder = nn.TransformerEncoder(
+        #     self.encoder_layer, num_layers=n_encoder_layers)
+        
         self.deconvtower = nn.Sequential(*[
-            DeconvBlock(d_model, d_model, kernel_size, 2, 1) for _ in range(n_cnn_layer)
+            DeconvBlock(
+                d_model, d_model, 
+                kernel_size//2, 2, 1) for i in range(n_cnn_layer)
         ])
 
         self.signal_decoder = nn.Linear(d_model, output_dim)
@@ -683,14 +684,19 @@ class EpiDenoise20(nn.Module):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
 
+        print(x.shape)
         x = self.conv1(x)
+        print(x.shape)
         x = self.convtower(x)
+        print(x.shape)
 
-        x = x.permute(2, 0, 1)  # to L, N, F
-        x = self.transformer_encoder(x)
-        x = x.permute(1, 2, 0) # to N, F, L
+        # x = x.permute(2, 0, 1)  # to L, N, F
+        # x = self.transformer_encoder(x)
+        # x = x.permute(1, 2, 0) # to N, F, L
 
         x = self.deconvtower(x)
+        print(x.shape)
+        exit()
 
         x = x.permute(2, 0, 1)  # to L, N, F
 
