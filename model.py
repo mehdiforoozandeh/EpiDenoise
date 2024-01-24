@@ -655,8 +655,8 @@ class EpiDenoise20(nn.Module):
 
         stride = 1
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
-        self.convm = ConvTower(input_dim, d_model // (2**n_cnn_layer), 1, stride, dilation)
+        self.conv1 = ConvTower(input_dim, int((0.75 * (d_model // (2**n_cnn_layer)))), kernel_size, stride, dilation)
+        self.convm = ConvTower(input_dim, int((0.25 * (d_model // (2**n_cnn_layer)))), 1, stride, dilation)
 
         self.convtower = nn.Sequential(*[
             ConvTower(
