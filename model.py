@@ -227,17 +227,17 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
 #             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
 #         self.dropout = torch.nn.Dropout(dropout)
 
-#     def forward(self, embeddings, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
-#         # embeddings: (batch_size, max_len, d_model)
-#         # encoder mask: (batch_size, 1, 1, max_len)
-#         # result: (batch_size, max_len, d_model)
-#         interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
-#         # residual layer
-#         interacted = self.layernorm(interacted + embeddings)
-#         # bottleneck
-#         feed_forward_out = self.dropout(self.feed_forward(interacted))
-#         encoded = self.layernorm(feed_forward_out + interacted)
-#         return encoded
+    # def forward(self, embeddings, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
+    #     # embeddings: (batch_size, max_len, d_model)
+    #     # encoder mask: (batch_size, 1, 1, max_len)
+    #     # result: (batch_size, max_len, d_model)
+    #     interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
+    #     # residual layer
+    #     interacted = self.layernorm(interacted + embeddings)
+    #     # bottleneck
+    #     feed_forward_out = self.dropout(self.feed_forward(interacted))
+    #     encoded = self.layernorm(feed_forward_out + interacted)
+    #     return encoded
 
 class RelativeEncoderLayer(nn.Module):
     def __init__(self, d_model, heads, feed_forward_hidden, dropout):
@@ -254,7 +254,7 @@ class RelativeEncoderLayer(nn.Module):
         )
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, src, src_mask):
+    def forward(self, src, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
         # src = [batch size, src len, hid dim]
         # src_mask = [batch size, src len]
 
