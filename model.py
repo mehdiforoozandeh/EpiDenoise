@@ -655,7 +655,7 @@ class EpiDenoise20(nn.Module):
 
         stride = 1
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
+        self.conv1 = ConvTower(2*input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
         self.convtower = nn.Sequential(*[
             ConvTower(
                 d_model // (2**(n_cnn_layer-i)), 
@@ -684,7 +684,7 @@ class EpiDenoise20(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x, m):
-        # x = torch.cat([x, m.float()], dim=2)
+        x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
         print(x.shape)
         x = self.conv1(x)
@@ -2424,16 +2424,16 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 512,
+        "d_model": 1024,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.2,
-        "kernel_size": 11,
-        "n_cnn_layer": 7,
+        "kernel_size": 7,
+        "n_cnn_layer": 4,
         "dilation":1,
         "context_length": 1600,
         "batch_size": 100,
-        "learning_rate": 0.0001,
+        "learning_rate": 0.001,
     }
 
     if sys.argv[1] == "epd16":
