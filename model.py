@@ -714,10 +714,7 @@ class EpiDenoise20(nn.Module):
         print(m.shape)
 
         x = self.conv1(x)
-        print(x.shape)
         x = torch.cat([x, m], dim=1)
-        print(x.shape)
-        exit()
         x = self.convtower(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
