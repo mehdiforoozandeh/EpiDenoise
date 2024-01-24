@@ -2346,7 +2346,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.8)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -2425,7 +2425,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 1600,
         "batch_size": 100,
-        "learning_rate": 0.001,
+        "learning_rate": 0.01,
     }
 
     if sys.argv[1] == "epd16":
