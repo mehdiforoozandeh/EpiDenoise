@@ -1818,7 +1818,7 @@ class PRE_TRAINER(object):
 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.4)
+                            masked_x_batch = add_noise(masked_x_batch, 0.25)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
@@ -2350,7 +2350,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.8)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -2429,7 +2429,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 1600,
         "batch_size": 100,
-        "learning_rate": 0.01,
+        "learning_rate": 0.1,
     }
 
     if sys.argv[1] == "epd16":
