@@ -655,11 +655,11 @@ class EpiDenoise20(nn.Module):
 
         stride = 1
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, d_model // int(1.2**n_cnn_layer), kernel_size, stride, dilation)
+        self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
         self.convtower = nn.Sequential(*[
             ConvTower(
-                d_model // int(1.2**(n_cnn_layer-i)), 
-                d_model // int(1.2**(n_cnn_layer-i-1)),
+                d_model // (2**(n_cnn_layer-i)), 
+                d_model // (2**(n_cnn_layer-i-1)),
                 kernel_size//2, stride, dilation
             ) for i in range(n_cnn_layer)
         ])
@@ -673,7 +673,7 @@ class EpiDenoise20(nn.Module):
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model // int(1.2**(i)), d_model // int(1.2**(i+1)), 
+                d_model // (2**(i)), d_model // (2**(i+1)), 
                 kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
         ])
         self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
