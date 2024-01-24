@@ -2346,7 +2346,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
         output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -2415,15 +2415,15 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 4,
-        "d_model": 1024,
-        "nlayers": 4,
+        "nhead": 8,
+        "d_model": 512,
+        "nlayers": 6,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 7,
         "n_cnn_layer": 4,
         "dilation":1,
-        "context_length": 1600,
+        "context_length": 2000,
         "batch_size": 100,
         "learning_rate": 0.001,
     }
