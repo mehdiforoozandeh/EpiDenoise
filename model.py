@@ -653,7 +653,7 @@ class EpiDenoise20(nn.Module):
                  nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        stride = kernel_size // 2
+        stride = 1
         # Convolutional layers
         self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
         self.convtower = nn.Sequential(*[
@@ -686,9 +686,7 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         # x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
-
         print(x.shape)
-
         x = self.conv1(x)
         print(x.shape)
         x = self.convtower(x)
