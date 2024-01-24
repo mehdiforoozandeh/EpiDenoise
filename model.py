@@ -1851,7 +1851,7 @@ class PRE_TRAINER(object):
                     logfile = open("models/EPD20_log.txt", "w")
                     
                     test_mse, test_corr = self.test_model(
-                        context_length, version="18", 
+                        context_length, version="20", 
                         is_arcsin=arcsinh_transform, batch_size=batch_size)
 
                     logstr = [
