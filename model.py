@@ -2448,7 +2448,7 @@ if __name__ == "__main__":
         "kernel_size": 7,
         "n_cnn_layer": 2,
         "dilation":1,
-        "context_length": 1600,
+        "context_length": 800,
         "batch_size": 50,
         "learning_rate": 0.005,
     }
