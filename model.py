@@ -672,10 +672,11 @@ class EpiDenoise20(nn.Module):
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model // (2**(i-1)), d_model // (2**(i)), 
-                kernel_size, 2, 1) for i in range(n_cnn_layer)
+                d_model // (2**(i)), d_model // (2**(i+1)), 
+                kernel_size, 2, 1) for i in range(n_cnn_layer - 1)
         ])
-        self.final_deconv = DeconvBlock(d_model // (2**(n_cnn_layer-1)), input_dim, kernel_size, 2, 1)
+        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size, 2, 1)
+        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 2, 1)
 
         self.signal_decoder = nn.Linear(input_dim, output_dim)
         self.mask_decoder = nn.Linear(input_dim, output_dim)
@@ -698,7 +699,9 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         x = self.deconvtower(x)
         print(x.shape)
-        x = self.final_deconv(x)
+        x = self.deconv1(x)
+        print(x.shape)
+        x = self.deconv2(x)
         print(x.shape)
         exit()
         x = x.permute(2, 0, 1)  # to L, N, F
