@@ -655,7 +655,7 @@ class EpiDenoise20(nn.Module):
 
         stride = 1
         # Convolutional layers
-        self.conv1 = ConvTower(2*input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
+        self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
         self.convtower = nn.Sequential(*[
             ConvTower(
                 d_model // (2**(n_cnn_layer-i)), 
@@ -665,10 +665,10 @@ class EpiDenoise20(nn.Module):
         ])
 
         # Transformer Encoder Layer (replace with your actual RelativeEncoderLayer)
-        # self.encoder_layer = nn.TransformerEncoderLayer(
-        #     d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
@@ -684,7 +684,7 @@ class EpiDenoise20(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x, m):
-        x = torch.cat([x, m.float()], dim=2)
+        # x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
         print(x.shape)
         x = self.conv1(x)
@@ -692,9 +692,9 @@ class EpiDenoise20(nn.Module):
         x = self.convtower(x)
         print(x.shape)
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        # x = self.transformer_encoder(x)
-        # x = x.permute(1, 2, 0) # to N, F, L'
+        x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 2, 0) # to N, F, L'
 
         print(x.shape)
         x = self.deconvtower(x)
@@ -2424,8 +2424,8 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 1024,
-        "nlayers": 1,
+        "d_model": 512,
+        "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 7,
