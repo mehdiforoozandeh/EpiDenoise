@@ -2426,7 +2426,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 3,
-        "n_cnn_layer": 4,
+        "n_cnn_layer": 2,
         "dilation":1,
         "context_length": 400,
         "batch_size": 100,
