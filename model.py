@@ -688,16 +688,10 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
-        print(m.shape)
         m = self.convm(m.float())
-        print(m.shape)
 
-        print(x.shape)
         x = self.conv1(x)
-        print(x.shape)
         x = torch.cat([x, m], dim=1)
-        print(x.shape)
-        exit()
         x = self.convtower(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
