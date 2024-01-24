@@ -76,7 +76,7 @@ class ConvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S, D, pool_type="attn"):
         super(ConvTower, self).__init__()
         self.conv  =   ConvBlock(in_C, out_C, W, S, D)
-        self.rconv = RConvBlock(out_C, out_C, 1, S, D)
+        # self.rconv = RConvBlock(out_C, out_C, 1, S, D)
         if pool_type == "attn":
             self.pool = AttentionPooling1D(out_C, 2)
         else:
@@ -84,7 +84,7 @@ class ConvTower(nn.Module):
     
     def forward(self, x):
         x = self.conv(x)
-        x = self.rconv(x)
+        # x = self.rconv(x)
         return self.pool(x)
 
 
