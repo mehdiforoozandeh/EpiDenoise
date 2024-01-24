@@ -35,7 +35,7 @@ class DeconvBlock(nn.Module):
         if W%2 == 1:
             padding = W // 2
         else:
-            padding = (W // 2) - 1
+            padding = (W // 2) + 1
         output_padding = 1 
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
