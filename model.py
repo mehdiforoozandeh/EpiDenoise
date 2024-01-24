@@ -688,7 +688,7 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
-        m = self.convm(m.float())
+        m = self.softmax(self.convm(m.float()))
 
         x = self.conv1(x)
         x = torch.cat([x, m], dim=1)
