@@ -679,6 +679,7 @@ class EpiDenoise20(nn.Module):
         # Convolutional layers
         self.conv1 = ConvTower(input_dim, int((0.75 * (d_model // (2**n_cnn_layer)))), kernel_size, stride, dilation)
         self.convm = ConvTower(input_dim, int((0.25 * (d_model // (2**n_cnn_layer)))), 1, stride, dilation)
+        self.m_softmax = torch.nn.Softmax(dim=1)
 
         self.convtower = nn.Sequential(*[
             ConvTower(
