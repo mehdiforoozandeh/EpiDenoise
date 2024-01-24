@@ -653,20 +653,16 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
-        print(x.shape)
+        
         x = self.convblock1(x)
         x = self.rconvblock1(x)
         x = self.pool1(x)
-        print(x.shape)
         x = x.permute(2, 0, 1)  # to L, N, F
 
         x = self.transformer_encoder(x)
         x = x.permute(1, 2, 0) # to N, F, L
 
-        print(x.shape)
         x = self.deconv1(x)
-        print(x.shape)
-        exit()
         x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = self.softmax(self.mask_decoder(x))
