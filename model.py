@@ -649,8 +649,8 @@ class EpiDenoise18(nn.Module):
 
 class EpiDenoise20(nn.Module):
     def __init__(self, 
-    input_dim, kernel_size, n_cnn_layer, dilation,
-    nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
+                 input_dim, kernel_size, n_cnn_layer, dilation,
+                 nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
         self.conv1 = ConvTower(2*input_dim, d_model // (2**n_cnn_layer), kernel_size, 1, dilation)
@@ -663,15 +663,19 @@ class EpiDenoise20(nn.Module):
             ) for i in range(n_cnn_layer)
         ])
 
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        # Transformer Encoder Layer (replace with your actual RelativeEncoderLayer)
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
 
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
-        self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
+        # Deconvolution layers to reverse the effect of conv1 and convtowers
+        self.deconvtower = nn.Sequential(*[
+            DeconvBlock(d_model, d_model, kernel_size, 2, 1) for _ in range(n_cnn_layer)
+        ])
 
-        self.signal_decoder =  nn.Linear(d_model, output_dim)
+        self.signal_decoder = nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
         self.softmax = torch.nn.Softmax(dim=-1)
 
@@ -679,19 +683,15 @@ class EpiDenoise20(nn.Module):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
 
-        print(x.shape)
         x = self.conv1(x)
-        print(x.shape)
         x = self.convtower(x)
-        print(x.shape)
-        exit()
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        # x = self.transformer_encoder(x)
-        # x = x.permute(1, 2, 0) # to N, F, L
+        x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 2, 0) # to N, F, L
 
-        x = self.deconv1(x)
-        print(x.shape)
+        x = self.deconvtower(x)
+
         x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = self.softmax(self.mask_decoder(x))
