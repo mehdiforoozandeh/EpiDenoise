@@ -649,12 +649,11 @@ class EpiDenoise20(nn.Module):
 
         self.conv1 = ConvTower(input_dim, d_model/n_cnn_layer, kernel_size, 1, dilation)
 
-        self.convtower = nn.Sequential([
-            ConvTower(
+        self.convtower = nn.Sequential([ConvTower(
                 d_model/(n_cnn_layer - (i+1)), 
-                d_model/(n_cnn_layer - (i)) for i in range(n_cnn_layer),
-                kernel_size/(i+1), 1, dilation)
-            ])
+                d_model/(n_cnn_layer - (i)),
+                kernel_size/(i+1), 1, dilation
+                ) for i in range(n_cnn_layer)])
 
         # self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
         # self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
