@@ -32,10 +32,7 @@ class DeconvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D):
         super(DeconvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
-        if W%2 == 1:
-            padding = W // 2
-        else:
-            padding = (W // 2) + 1
+        padding = W // 2
         output_padding = 1 
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
@@ -2430,7 +2427,7 @@ if __name__ == "__main__":
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.2,
-        "kernel_size": 6,
+        "kernel_size": 3,
         "n_cnn_layer": 3,
         "dilation":1,
         "context_length": 1600,
