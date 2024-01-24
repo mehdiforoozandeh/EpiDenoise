@@ -692,7 +692,7 @@ class EpiDenoise20(nn.Module):
         ])
 
         self.encoder_layer = RelativeEncoderLayer(
-            _model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+            model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
 
