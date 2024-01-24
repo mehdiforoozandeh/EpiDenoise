@@ -16,6 +16,26 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #===========================================building blocks==============================================#
 #========================================================================================================#
 
+class AttentionPooling1D(nn.Module):
+    def __init__(self, in_channels, pooling_size=2):
+        super(AttentionPooling1D, self).__init__()
+        self.pooling_size = pooling_size
+        self.attention_weights = nn.Parameter(torch.randn(in_channels, pooling_size))
+
+    def forward(self, x):
+        # x shape: (batch_size, channels, length)
+
+        # Split the input tensor into pools
+        unfolded = x.unfold(dimension=2, size=self.pooling_size, step=self.pooling_size)
+        # unfolded shape: (batch_size, channels, num_pools, pooling_size)
+
+        # Compute attention scores and apply them
+        scores = F.softmax(self.attention_weights, dim=1)
+        pooled = (unfolded * scores.unsqueeze(0).unsqueeze(2)).sum(dim=-1)
+        # pooled shape: (batch_size, channels, num_pools)
+
+        return pooled
+
 class ConvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D):
         super(ConvBlock, self).__init__()
@@ -53,11 +73,14 @@ class RConvBlock(nn.Module):
         return x + self.conv_block(x)
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D):
+    def __init__(self, in_C, out_C, W, S, D, pool_type="attn"):
         super(ConvTower, self).__init__()
         self.conv  =   ConvBlock(in_C, out_C, W, S, D)
         self.rconv = RConvBlock(out_C, out_C, W, S, D)
-        self.pool  = nn.MaxPool1d(2)
+        if pool_type == "attn":
+            self.pool = AttentionPooling1D(out_C, 2)
+        else:
+            self.pool  = nn.MaxPool1d(2)
     
     def forward(self, x):
         x = self.conv(x)
