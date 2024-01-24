@@ -52,12 +52,17 @@ class RConvBlock(nn.Module):
     def forward(self, x):
         return x + self.conv_block(x)
 
-# class ConvTower(nn.Module):
-#     def __init__(self, in_C, out_C, W, S, D):
-#         super(ConvTower, self).__init__()
-
-        
-#     def forward(self, x):
+class ConvTower(nn.Module):
+    def __init__(self, in_C, out_C, W, S, D):
+        super(ConvTower, self).__init__()
+        self.conv  =   ConvBlock(in_C, out_C, W, S, D)
+        self.rconv = RConvBlock(out_C, out_C, W, S, D)
+        self.pool  = nn.MaxPool1d(2)
+    
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.rconv(x)
+        return self.pool(x)
 
 
 class FeedForwardNN(nn.Module):
@@ -637,12 +642,22 @@ class EpiDenoise18(nn.Module):
         return src, msk
 
 class EpiDenoise20(nn.Module):
-    def __init__(self, input_dim, kernel_size, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
+    def __init__(self, 
+    input_dim, kernel_size, n_cnn_layer, dilation,
+    nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
-        self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
-        self.pool1 = nn.MaxPool1d(2, stride=2)
+        self.conv1 = ConvTower(input_dim, d_model/n_cnn_layer, kernel_size, 1, dilation)
+
+        self.convtower = nn.Sequential([
+            ConvTower(
+                d_model/(n_cnn_layer - (i+1)), 
+                d_model/(n_cnn_layer - (i))) for i in range(n_cnn_layer)
+            ])
+
+        # self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
+        # self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
+        # self.pool1 = nn.MaxPool1d(2, stride=2)
 
         # self.encoder_layer = RelativeEncoderLayer(
         #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -650,26 +665,30 @@ class EpiDenoise20(nn.Module):
         # self.transformer_encoder = nn.TransformerEncoder(
         #     self.encoder_layer, num_layers=n_encoder_layers)
 
-        self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
+        # self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
         self.softmax = torch.nn.Softmax(dim=-1)
 
-
     def forward(self, x, m):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
 
-        x = self.convblock1(x)
-        x = self.rconvblock1(x)
-        x = self.pool1(x)
-        # x = x.permute(2, 0, 1)  # to L, N, F
+        print(x.shape)
+        x = self.conv1(x)
+        print(x.shape)
+        x = self.convtower(x)
+        print(x.shape)
+        exit()
 
+
+        # x = x.permute(2, 0, 1)  # to L, N, F
         # x = self.transformer_encoder(x)
         # x = x.permute(1, 2, 0) # to N, F, L
 
         x = self.deconv1(x)
+        print(x.shape)
         x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = self.softmax(self.mask_decoder(x))
