@@ -2448,7 +2448,7 @@ if __name__ == "__main__":
         "nlayers": 3,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": 15,
+        "kernel_size": 7,
         "n_cnn_layer": 3,
         "dilation":1,
         "context_length": 400,
