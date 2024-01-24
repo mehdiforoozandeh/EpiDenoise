@@ -706,12 +706,11 @@ class EpiDenoise20(nn.Module):
 
         self.signal_decoder = nn.Linear(input_dim, output_dim)
         self.mask_decoder = nn.Linear(input_dim, output_dim)
-        self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
-        m = self.softmax(self.convm(m.float()))
+        m = torch.sigmoid(self.convm(m.float()))
 
         x = self.conv1(x)
         x = torch.cat([x, m], dim=1)
@@ -726,7 +725,7 @@ class EpiDenoise20(nn.Module):
         x = self.deconv2(x)
         x = x.permute(2, 0, 1)  # to L, N, F
 
-        mask = self.softmax(self.mask_decoder(x))
+        mask = torch.sigmoid(self.mask_decoder(x))
         x = self.signal_decoder(x)
 
         x = torch.permute(x, (1, 0, 2))  # to N, L, F
