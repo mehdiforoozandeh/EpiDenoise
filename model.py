@@ -644,11 +644,11 @@ class EpiDenoise20(nn.Module):
         self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
         self.pool1 = nn.MaxPool1d(2, stride=2)
 
-        self.encoder_layer = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        # self.encoder_layer = RelativeEncoderLayer(
+        #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
 
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=n_encoder_layers)
+        # self.transformer_encoder = nn.TransformerEncoder(
+        #     self.encoder_layer, num_layers=n_encoder_layers)
 
         self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
 
@@ -664,10 +664,10 @@ class EpiDenoise20(nn.Module):
         x = self.convblock1(x)
         x = self.rconvblock1(x)
         x = self.pool1(x)
-        x = x.permute(2, 0, 1)  # to L, N, F
+        # x = x.permute(2, 0, 1)  # to L, N, F
 
-        x = self.transformer_encoder(x)
-        x = x.permute(1, 2, 0) # to N, F, L
+        # x = self.transformer_encoder(x)
+        # x = x.permute(1, 2, 0) # to N, F, L
 
         x = self.deconv1(x)
         x = x.permute(2, 0, 1)  # to L, N, F
