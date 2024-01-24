@@ -2429,7 +2429,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 3,
-        "n_cnn_layer": 4,
+        "n_cnn_layer": 5,
         "dilation":1,
         "context_length": 1600,
         "batch_size": 100,
