@@ -675,7 +675,7 @@ class EpiDenoise20(nn.Module):
                 kernel_size, 1, 1) for i in range(n_cnn_layer - 1)
         ])
         self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size, 1, 1)
-        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 1, 1)
+        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 2, 1)
 
         self.signal_decoder = nn.Linear(input_dim, output_dim)
         self.mask_decoder = nn.Linear(input_dim, output_dim)
