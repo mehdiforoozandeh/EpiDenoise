@@ -240,7 +240,7 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
 #         return encoded
 
 class RelativeEncoderLayer(nn.Module):
-    def __init__(self, hid_dim, heads, feed_forward_hidden, dropout):
+    def __init__(self, d_model, heads, feed_forward_hidden, dropout):
         super(RelativeEncoderLayer).__init__()
         
         self.layer_norm_1 = nn.LayerNorm(d_model)
