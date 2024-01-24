@@ -2319,6 +2319,8 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
     context_length = hyper_parameters["context_length"]
+    n_cnn_layer = hyper_parameters["n_cnn_layer"]
+    dilation = hyper_parameters["dilation"]
 
     kernel_size = hyper_parameters["kernel_size"]
 
@@ -2332,8 +2334,10 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     # end of hyperparameters
 
     model = EpiDenoise20(
-        input_dim=input_dim, kernel_size=kernel_size, nhead=nhead, d_model=d_model, 
-        n_encoder_layers=nlayers, output_dim=output_dim, dropout=dropout)
+        input_dim=input_dim, 
+        kernel_size=kernel_size, n_cnn_layer=n_cnn_layer, dilation=dilation,
+        nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
+        output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
