@@ -52,6 +52,13 @@ class RConvBlock(nn.Module):
     def forward(self, x):
         return x + self.conv_block(x)
 
+class ConvTower(nn.Module):
+    def __init__(self, in_C, out_C, W, S, D):
+        super(ConvTower, self).__init__()
+
+        
+    def forward(self, x):
+
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
@@ -653,7 +660,7 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
-        
+
         x = self.convblock1(x)
         x = self.rconvblock1(x)
         x = self.pool1(x)
@@ -776,6 +783,13 @@ class PRE_TRAINER(object):
                 
                 elif version == "18":
                     outputs, pred_mask = self.model(x_batch)
+
+                elif version == "20":
+                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
+                    for i in missing_x_i: 
+                        mask[:,:,i] = True
+
+                    outputs, pred_mask = self.model(x_batch, ~mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
