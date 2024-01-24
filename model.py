@@ -669,7 +669,6 @@ class EpiDenoise18(nn.Module):
 # self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
 # self.pool1 = nn.MaxPool1d(2, stride=2)
 
-
 class EpiDenoise20(nn.Module):
     def __init__(self, 
                  input_dim, kernel_size, n_cnn_layer, dilation,
@@ -2441,17 +2440,17 @@ if __name__ == "__main__":
     hyper_parameters20 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.05,
+        "dropout": 0.01,
         "nhead": 8,
-        "d_model": 64,
-        "nlayers": 6,
+        "d_model": 512,
+        "nlayers": 3,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": 7,
-        "n_cnn_layer": 1,
+        "n_cnn_layer": 3,
         "dilation":1,
-        "context_length": 400,
-        "batch_size": 10,
+        "context_length": 800,
+        "batch_size": 25,
         "learning_rate": 0.001,
     }
 
