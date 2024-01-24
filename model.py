@@ -668,7 +668,6 @@ class EpiDenoise18(nn.Module):
 
         return src, msk
 
-
 # self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
 # self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
 # self.pool1 = nn.MaxPool1d(2, stride=2)
@@ -688,7 +687,7 @@ class EpiDenoise20(nn.Module):
             ConvTower(
                 d_model // (2**(n_cnn_layer-i)), 
                 d_model // (2**(n_cnn_layer-i-1)),
-                kernel_size//3, stride, dilation
+                kernel_size//2, stride, dilation
             ) for i in range(n_cnn_layer)
         ])
 
@@ -702,9 +701,9 @@ class EpiDenoise20(nn.Module):
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
                 d_model // (2**(i)), d_model // (2**(i+1)), 
-                kernel_size//3, 2, dilation) for i in range(n_cnn_layer - 1)
+                kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
         ])
-        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//3, 2, dilation)
+        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
         self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 2, dilation)
 
         self.signal_decoder = nn.Linear(input_dim, output_dim)
@@ -2445,7 +2444,7 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 8,
-        "d_model": 1024,
+        "d_model": 512,
         "nlayers": 3,
         "epochs": 10,
         "mask_percentage": 0.3,
