@@ -691,8 +691,10 @@ class EpiDenoise20(nn.Module):
             ) for i in range(n_cnn_layer)
         ])
 
-        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = RelativeEncoderLayer(
+            _model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
@@ -2450,7 +2452,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.01,
+        "learning_rate": 0.0005,
     }
 
     if sys.argv[1] == "epd16":
