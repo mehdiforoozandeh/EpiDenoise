@@ -650,7 +650,7 @@ class EpiDenoise20(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
 
-        self.deconv1 = DeconvBlock(d_model, output_dim, kernel_size, 2, 1)
+        self.deconv1 = DeconvBlock(d_model, d_model, kernel_size, 2, 1)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
