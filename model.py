@@ -656,6 +656,8 @@ class EpiDenoise20(nn.Module):
         stride = 1
         # Convolutional layers
         self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
+        self.convm = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
+
         self.convtower = nn.Sequential(*[
             ConvTower(
                 d_model // (2**(n_cnn_layer-i)), 
@@ -684,9 +686,18 @@ class EpiDenoise20(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x, m):
-        # x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
+        m = m.permute(0, 2, 1) # to N, F, L
+        print(m.shape)
+        m = self.convm(m.float())
+        print(m.shape)
+
+        print(x.shape)
         x = self.conv1(x)
+        print(x.shape)
+        x = torch.cat([x, m], dim=1)
+        print(x.shape)
+        exit()
         x = self.convtower(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
@@ -2333,7 +2344,6 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
 
-    n_chunks = (mask_percentage * context_length) // 6 
 
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
