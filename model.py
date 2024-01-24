@@ -648,40 +648,44 @@ class EpiDenoise18(nn.Module):
 
 
 class EpiDenoise20(nn.Module):
-    def __init__(self, 
-                 input_dim, kernel_size, n_cnn_layer, dilation,
-                 nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
+    def __init__(self, input_dim, kernel_size, n_cnn_layer, dilation, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
         stride = 1
-        # Convolutional layers
-        self.conv1 = ConvTower(input_dim, d_model // (2**n_cnn_layer), kernel_size, stride, dilation)
+
+        # Calculate the linear increment for channel sizes
+        channel_increment = (d_model - input_dim) / n_cnn_layer
+
+        # Convolutional layers with linearly spaced channels
+        self.conv1 = ConvTower(input_dim, int(input_dim + channel_increment), kernel_size, stride, dilation)
         self.convtower = nn.Sequential(*[
             ConvTower(
-                d_model // (2**(n_cnn_layer-i)), 
-                d_model // (2**(n_cnn_layer-i-1)),
-                kernel_size//2, stride, dilation
-            ) for i in range(n_cnn_layer)
+                int(input_dim + channel_increment * i), 
+                int(input_dim + channel_increment * (i + 1)),
+                kernel_size // 2, stride, dilation
+            ) for i in range(1, n_cnn_layer)
         ])
 
-        # Transformer Encoder Layer (replace with your actual RelativeEncoderLayer)
+        # Transformer Encoder Layer
         self.encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
 
-        # Deconvolution layers
+        # Deconvolution layers with linearly spaced channels
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model // (2**(i)), d_model // (2**(i+1)), 
-                kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
+                int(input_dim + channel_increment * (n_cnn_layer - i)), 
+                int(input_dim + channel_increment * (n_cnn_layer - i - 1)),
+                kernel_size // 2, 2, dilation) 
+            for i in range(1, n_cnn_layer)
         ])
-        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
-        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 2, dilation)
+        self.deconv1 = DeconvBlock(int(input_dim + channel_increment), input_dim, kernel_size, 2, dilation)
 
         self.signal_decoder = nn.Linear(input_dim, output_dim)
         self.mask_decoder = nn.Linear(input_dim, output_dim)
         self.softmax = torch.nn.Softmax(dim=-1)
+
 
     def forward(self, x, m):
         # x = torch.cat([x, m.float()], dim=2)
