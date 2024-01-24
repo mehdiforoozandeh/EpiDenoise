@@ -32,8 +32,8 @@ class DeconvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D):
         super(DeconvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
-        padding = 1  # This is for 'same' padding
-        output_padding = 1  # Adjust output_padding
+        padding = 1  
+        output_padding = 1 
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
             padding=padding, output_padding=output_padding)
@@ -52,13 +52,6 @@ class RConvBlock(nn.Module):
     def forward(self, x):
         return x + self.conv_block(x)
 
-class RDeconvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D):
-        super(RDeconvBlock, self).__init__()
-        self.deconv_block = DeconvBlock(in_C, out_C, W, S, D)
-        
-    def forward(self, x):
-        return x + self.deconv_block(x)
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
@@ -640,7 +633,7 @@ class EpiDenoise20(nn.Module):
     def __init__(self, input_dim, kernel_size, nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.convblock1 =   ConvBlock(input_dim, d_model, kernel_size, 1, 1)
+        self.convblock1 =   ConvBlock(2*input_dim, d_model, kernel_size, 1, 1)
         self.rconvblock1 = RConvBlock(d_model, d_model, kernel_size, 1, 1)
         self.pool1 = nn.MaxPool1d(2, stride=2)
 
@@ -657,17 +650,23 @@ class EpiDenoise20(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
 
-    def forward(self, x):
+    def forward(self, x, m):
+        x = torch.cat([x, m.float()], dim=2)
         x = x.permute(0, 2, 1) # to N, F, L
+        print(x.shape)
         x = self.convblock1(x)
         x = self.rconvblock1(x)
         x = self.pool1(x)
+        print(x.shape)
         x = x.permute(2, 0, 1)  # to L, N, F
 
         x = self.transformer_encoder(x)
         x = x.permute(1, 2, 0) # to N, F, L
 
+        print(x.shape)
         x = self.deconv1(x)
+        print(x.shape)
+        exit()
         x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = self.softmax(self.mask_decoder(x))
@@ -1787,7 +1786,7 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask = self.model(masked_x_batch)
+                            outputs, pred_mask = self.model(masked_x_batch, union_mask)
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
                             loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
