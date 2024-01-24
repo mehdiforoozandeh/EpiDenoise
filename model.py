@@ -653,13 +653,15 @@ class EpiDenoise20(nn.Module):
     nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
-        self.conv1 = ConvTower(2*input_dim, d_model//(n_cnn_layer), kernel_size, 1, dilation)
+        self.conv1 = ConvTower(2*input_dim, d_model // (2**n_cnn_layer), kernel_size, 1, dilation)
 
-        self.convtower = nn.Sequential(*[ConvTower(
-                d_model**(1/(i+1)), 
-                d_model**(1/(i+2)),
-                kernel_size//(i+1), 1, dilation
-                ) for i in range(n_cnn_layer)])
+        self.convtower = nn.Sequential(*[
+            ConvTower(
+                d_model // (2**(n_cnn_layer-i)), 
+                d_model // (2**(n_cnn_layer-i-1)),
+                kernel_size//2, 1, dilation
+            ) for i in range(n_cnn_layer)
+        ])
 
         # self.encoder_layer = RelativeEncoderLayer(
         #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -2414,7 +2416,7 @@ if __name__ == "__main__":
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.2,
-        "kernel_size": 15,
+        "kernel_size": 7,
         "n_cnn_layer": 2,
         "dilation":1,
         "context_length": 400,
