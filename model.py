@@ -1937,16 +1937,18 @@ class PRE_TRAINER(object):
                     test_ovr_max = np.max(test_ovr)
 
                     logstr = [
+                        "----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"AVG Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
-                        f"AVG Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
-                        f"AVG Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
-                        f"Test_MSE: {test_mse:.4f}",
-                        f"Test_PO_mean: {test_ovr_mean:.4f}",
-                        f"Test_PO_min: {test_ovr_min:.4f}",
-                        f"Test_PO_max: {test_ovr_max:.4f}",
+                        f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
+                        f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
+                        f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
+                        f"Val_MSE: {test_mse:.4f}",
+                        f"Val_POmean: {test_ovr_mean:.3f}",
+                        f"Val_POmin: {test_ovr_min:.3f}",
+                        f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
+                        "----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
 
