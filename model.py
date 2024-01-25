@@ -217,28 +217,6 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         
         return x
 
-# class RelativeEncoderLayer(torch.nn.Module):
-#     def __init__(self, d_model, heads, feed_forward_hidden, dropout=0.1):
-#         super(RelativeEncoderLayer, self).__init__()
-#         self.layernorm = torch.nn.LayerNorm(d_model)
-#         self.self_multihead = RelativeMultiHeadAttentionLayer(
-#             hid_dim=d_model, n_heads=heads, dropout=dropout)
-#         self.feed_forward = FeedForwardNN(
-#             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
-#         self.dropout = torch.nn.Dropout(dropout)
-
-#     def forward(self, embeddings, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
-#         # embeddings: (batch_size, max_len, d_model)
-#         # encoder mask: (batch_size, 1, 1, max_len)
-#         # result: (batch_size, max_len, d_model)
-#         interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
-#         # residual layer
-#         interacted = self.layernorm(interacted + embeddings)
-#         # bottleneck
-#         feed_forward_out = self.dropout(self.feed_forward(interacted))
-#         encoded = self.layernorm(feed_forward_out + interacted)
-#         return encoded
-
 class RelativeEncoderLayer(nn.Module):
     def __init__(self, d_model, heads, feed_forward_hidden, dropout):
         super().__init__()
@@ -253,6 +231,8 @@ class RelativeEncoderLayer(nn.Module):
             nn.Linear(feed_forward_hidden, d_model)
         )
         self.dropout = nn.Dropout(dropout)
+        self.relu = nn.ReLU()
+        self.deconv = DeconvBlock(d_model, d_model, 1, 2, 1)
 
     def forward(self, src, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
         # src = [batch size, src len, hid dim]
@@ -269,6 +249,10 @@ class RelativeEncoderLayer(nn.Module):
 
         # Another residual connection and layer norm
         src = self.layer_norm_2(src + self.dropout(_src))
+
+        src = src.permute(1, 2, 0)
+        src =  self.deconv(src)
+        src = src.permute(2, 0, 1)
 
         return src
 
@@ -720,20 +704,21 @@ class EpiDenoise20(nn.Module):
         ])
         self.encoder_layer = RelativeEncoderLayer(
             d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
-        self.deconvtower = nn.Sequential(*[
-            DeconvBlock(
-                d_model // (2**(i)), d_model // (2**(i+1)), 
-                kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
-        ])
-        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
-        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
+        # self.deconvtower = nn.Sequential(*[
+        #     DeconvBlock(
+        #         d_model // (2**(i)), d_model // (2**(i+1)), 
+        #         kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
+        # ])
+        # self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
+        # self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
 
-        # self.signal_decoder = nn.Linear(d_model, output_dim)
-        self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
+        self.signal_decoder = nn.Linear(d_model, output_dim)
+        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
@@ -747,12 +732,12 @@ class EpiDenoise20(nn.Module):
 
         x = x.permute(2, 0, 1)  # to L, N, F
         x = self.transformer_encoder(x)
-        x = x.permute(1, 2, 0) # to N, F, L'
+        # x = x.permute(1, 2, 0) # to N, F, L'
 
-        x = self.deconvtower(x)
-        x = self.deconv1(x)
-        x = self.deconv2(x)
-        x = x.permute(2, 0, 1)  # to L, N, F
+        # x = self.deconvtower(x)
+        # x = self.deconv1(x)
+        # x = self.deconv2(x)
+        # x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = torch.sigmoid(self.mask_decoder(x))
         x = self.signal_decoder(x)
