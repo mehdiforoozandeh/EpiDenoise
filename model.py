@@ -702,20 +702,9 @@ class EpiDenoise20(nn.Module):
                 kernel_size//2, stride, dilation
             ) for i in range(n_cnn_layer)
         ])
-        self.encoder_layer1 = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
 
-        self.encoder_layer2 = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-
-        self.encoder_layer3 = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        
-        self.encoder_layer4 = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         # self.deconvtower = nn.Sequential(*[
