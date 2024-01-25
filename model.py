@@ -1767,7 +1767,7 @@ class PRE_TRAINER(object):
                     test_ovr_max = np.max(test_ovr)
 
                     logstr = [
-                        "----------------------------------------------------\n"
+                        "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
                         f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
@@ -1778,7 +1778,7 @@ class PRE_TRAINER(object):
                         f"Val_POmin: {test_ovr_min:.3f}",
                         f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
-                        "----------------------------------------------------\n"
+                        "\n----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
 
@@ -1947,7 +1947,7 @@ class PRE_TRAINER(object):
                     test_ovr_max = np.max(test_ovr)
 
                     logstr = [
-                        "----------------------------------------------------\n"
+                        "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
                         f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
@@ -1958,7 +1958,7 @@ class PRE_TRAINER(object):
                         f"Val_POmin: {test_ovr_min:.3f}",
                         f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
-                        "----------------------------------------------------\n"
+                        "\n----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
 
