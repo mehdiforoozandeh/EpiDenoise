@@ -729,11 +729,7 @@ class EpiDenoise20(nn.Module):
         x = self.convtower(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
-        x = self.encoder_layer1(x)
-        x = self.encoder_layer2(x)
-        x = self.encoder_layer3(x)
-        x = self.encoder_layer4(x)
-        # x = self.transformer_encoder(x)
+        x = self.transformer_encoder(x)
         # x = x.permute(1, 2, 0) # to N, F, L'
 
         # x = self.deconvtower(x)
