@@ -395,20 +395,25 @@ class Evaluation: # on chr21
 
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
-    def peak_overlap(self, y_true, y_pred, threshold=0.01):
-        # Calculate the p-value of the Poisson distribution for both y_true and y_pred
-        pvalue_true = 1 - poisson.cdf(y_true, np.mean(y_true))
-        pvalue_pred = 1 - poisson.cdf(y_pred, np.mean(y_pred))
+    def peak_overlap(self, y_true, y_pred, p=0.01):
+        top_p_percent = int(p * len(y_true))
+        
+        # Get the indices of the top p percent of the observed (true) values
+        top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
+        
+        # Get the indices of the top p percent of the predicted values
+        top_p_percent_pred_i = np.argsort(y_pred)[-top_p_percent:]
 
-        # Binarize y_true and y_pred according to the pvalue and the threshold
-        y_true_bin = np.where(pvalue_true < threshold, 1, 0)
-        y_pred_bin = np.where(pvalue_pred < threshold, 1, 0)
+        # Calculate the overlap
+        overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
 
-        # Calculate and return the ratio of 1s in y_true for which the corresponding y_pred is also 1
-        overlap = np.sum((y_true_bin == 1) & (y_pred_bin == 1))
-        total = np.sum(y_true_bin == 1)
+        # Calculate the percentage of overlap
+        self.overlap_percent = overlap / top_p_percent 
 
-        return overlap / total if total > 0 else 0
+        return self.overlap_percent
+        
+
+
 
 def eDICE_eval():
     e = Evaluation(

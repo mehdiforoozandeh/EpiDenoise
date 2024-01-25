@@ -652,7 +652,7 @@ class EpiDenoise18(nn.Module):
     def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise18, self).__init__()
 
-        self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
+        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
         self.embedding_linear = nn.Linear(input_dim, d_model)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -865,6 +865,7 @@ class PRE_TRAINER(object):
 
         mses = []
         spearmans = []
+        peak_overlaps = []
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
             metrics_list = []
@@ -873,11 +874,16 @@ class PRE_TRAINER(object):
                 target = Y[:, j].numpy()   
                 mse_GW = np.mean((np.array(target) - np.array(pred))**2)
                 spearman_GW = spearmanr(pred, target)[0]
+                ovr = peak_overlap(target, pred)
 
                 mses.append(mse_GW)
                 spearmans.append(spearman_GW)
-        
-        return sum(mses)/len(mses), sum(spearmans)/len(spearmans) 
+                peak_overlaps.append(ovr)
+
+        if version in ["10", "16", "17", "18"]:
+            return sum(mses)/len(mses), sum(spearmans)/len(spearmans)
+        else:
+            return mses, spearmans, peak_overlaps
 
     def pretrain_epidenoise_10(self, 
         d_model, outer_loop_epochs=1, arcsinh_transform=True,
@@ -1919,19 +1925,27 @@ class PRE_TRAINER(object):
                     t1 = datetime.now()
                     logfile = open("models/EPD20_log.txt", "w")
                     
-                    test_mse, test_corr = self.test_model(
+                    test_mse, test_corr, test_ovr = self.test_model(
                         context_length, version="20", 
                         is_arcsin=arcsinh_transform, batch_size=batch_size)
+
+                    test_mse = np.mean(test_mse)
+                    test_corr = np.mean(test_corr)
+
+                    test_ovr_mean = np.mean(test_ovr)
+                    test_ovr_min = np.min(test_ovr)
+                    test_ovr_max = np.max(test_ovr)
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Epoch Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
-                        f"Epoch Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
-                        f"Epoch Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
-                        # f"Epoch Loss std: {np.std(epoch_loss):.4f}",
+                        f"AVG Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
+                        f"AVG Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
+                        f"AVG Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
                         f"Test_MSE: {test_mse:.4f}",
-                        f"Test Corr: {test_corr:.4f}",
+                        f"Test_PO_mean: {test_ovr_mean:.4f}",
+                        f"Test_PO_min: {test_ovr_min:.4f}",
+                        f"Test_PO_max: {test_ovr_max:.4f}",
                         f"Epoch took: {t1 - t0}"
                         ]
                     logstr = " | ".join(logstr)
