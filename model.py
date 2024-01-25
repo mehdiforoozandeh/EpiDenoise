@@ -217,6 +217,28 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         
         return x
 
+# class RelativeEncoderLayer(torch.nn.Module):
+#     def __init__(self, d_model, heads, feed_forward_hidden, dropout=0.1):
+#         super(RelativeEncoderLayer, self).__init__()
+#         self.layernorm = torch.nn.LayerNorm(d_model)
+#         self.self_multihead = RelativeMultiHeadAttentionLayer(
+#             hid_dim=d_model, n_heads=heads, dropout=dropout)
+#         self.feed_forward = FeedForwardNN(
+#             input_size=d_model, hidden_size=feed_forward_hidden, output_size=d_model, n_hidden_layers=1)
+#         self.dropout = torch.nn.Dropout(dropout)
+
+#     def forward(self, embeddings, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
+#         # embeddings: (batch_size, max_len, d_model)
+#         # encoder mask: (batch_size, 1, 1, max_len)
+#         # result: (batch_size, max_len, d_model)
+#         interacted = self.dropout(self.self_multihead(embeddings, embeddings, embeddings, mask))
+#         # residual layer
+#         interacted = self.layernorm(interacted + embeddings)
+#         # bottleneck
+#         feed_forward_out = self.dropout(self.feed_forward(interacted))
+#         encoded = self.layernorm(feed_forward_out + interacted)
+#         return encoded
+
 class RelativeEncoderLayer(nn.Module):
     def __init__(self, d_model, heads, feed_forward_hidden, dropout):
         super().__init__()
@@ -708,10 +730,10 @@ class EpiDenoise20(nn.Module):
                 kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
         ])
         self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
-        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), input_dim, kernel_size, 2, dilation)
+        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
 
-        self.signal_decoder = nn.Linear(input_dim, output_dim)
-        self.mask_decoder = nn.Linear(input_dim, output_dim)
+        self.signal_decoder = nn.Linear(d_model, output_dim)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
