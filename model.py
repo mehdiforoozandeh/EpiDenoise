@@ -1869,7 +1869,6 @@ class PRE_TRAINER(object):
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
                             loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
-                            # loss = mse_obs_loss
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2458,13 +2457,13 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 8,
-        "d_model": 512,
+        "nhead": 4,
+        "d_model": 256,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
         "kernel_size": 7,
-        "n_cnn_layer": 3,
+        "n_cnn_layer": 2,
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
