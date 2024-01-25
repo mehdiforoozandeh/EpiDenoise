@@ -880,7 +880,7 @@ class PRE_TRAINER(object):
                 spearmans.append(spearman_GW)
                 peak_overlaps.append(ovr)
 
-        if version in ["10", "16", "17", "18"]:
+        if version in ["10", "16", "17"]:
             return sum(mses)/len(mses), sum(spearmans)/len(spearmans)
         else:
             return mses, spearmans, peak_overlaps
@@ -1755,20 +1755,30 @@ class PRE_TRAINER(object):
                     t1 = datetime.now()
                     logfile = open("models/EPD18_log.txt", "w")
                     
-                    test_mse, test_corr = self.test_model(
-                        context_length, version="18", 
+                    test_mse, test_corr, test_ovr = self.test_model(
+                        context_length, version="20", 
                         is_arcsin=arcsinh_transform, batch_size=batch_size)
 
+                    test_mse = np.mean(test_mse)
+                    test_corr = np.mean(test_corr)
+
+                    test_ovr_mean = np.mean(test_ovr)
+                    test_ovr_min = np.min(test_ovr)
+                    test_ovr_max = np.max(test_ovr)
+
                     logstr = [
+                        "----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Epoch Obs Loss: {np.mean(epoch_obs_loss):.4f}", 
-                        f"Epoch Clz Loss: {np.mean(epoch_clz_loss):.4f}", 
-                        f"Epoch Msk Loss: {np.mean(epoch_msk_loss):.4f}", 
-                        # f"Epoch Loss std: {np.std(epoch_loss):.4f}",
-                        f"Test_MSE: {test_mse:.4f}",
-                        f"Test Corr: {test_corr:.4f}",
+                        f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
+                        f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
+                        f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
+                        f"Val_MSE: {test_mse:.4f}",
+                        f"Val_POmean: {test_ovr_mean:.3f}",
+                        f"Val_POmin: {test_ovr_min:.3f}",
+                        f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
+                        "----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
 
