@@ -704,7 +704,7 @@ class EpiDenoise20(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
 
-        Deconvolution layers
+        # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
                 d_model // (2**(i)), d_model // (2**(i+1)), 
