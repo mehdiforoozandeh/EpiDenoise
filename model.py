@@ -2457,7 +2457,7 @@ if __name__ == "__main__":
         "dropout": 0.05,
         "nhead": 8,
         "d_model": 512,
-        "nlayers": 3,
+        "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.3,
         "kernel_size": 7,
