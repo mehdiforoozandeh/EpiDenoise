@@ -688,41 +688,31 @@ class EpiDenoise20(nn.Module):
 
         stride = 1
 
-        self.conv1 = ConvTower(input_dim, 128, 7, stride, dilation)
-        self.convm = ConvTower(input_dim, 64,  1, stride, dilation)
+        # Convolutional layers
+        self.conv1 = ConvTower(input_dim, int((0.75 * (d_model // (2**n_cnn_layer)))), kernel_size, stride, dilation)
+        self.convm = ConvTower(input_dim, int((0.25 * (d_model // (2**n_cnn_layer)))), 1, stride, dilation)
 
         self.convtower = nn.Sequential(*[
-            ConvTower(128 + 64, 128 + 64, 3, stride, dilation),
-            ConvTower(128 + 64, 256, 3, stride, dilation),
-            ConvTower(256, 256, 3, stride, dilation)
-            ])
+            ConvTower(
+                d_model // (2**(n_cnn_layer-i)), 
+                d_model // (2**(n_cnn_layer-i-1)),
+                kernel_size//2, stride, dilation
+            ) for i in range(n_cnn_layer)
+        ])
 
-
-        # Convolutional layers
-        # self.conv1 = ConvTower(input_dim, int((0.75 * (d_model // (2**n_cnn_layer)))), kernel_size, stride, dilation)
-        # self.convm = ConvTower(input_dim, int((0.25 * (d_model // (2**n_cnn_layer)))), 1, stride, dilation)
-
-        # self.convtower = nn.Sequential(*[
-        #     ConvTower(
-        #         d_model // (2**(n_cnn_layer-i)), 
-        #         d_model // (2**(n_cnn_layer-i-1)),
-        #         kernel_size//2, stride, dilation
-        #     ) for i in range(n_cnn_layer)
-        # ])
-
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
-            DeconvBlock(256, 256, 3, 2, dilation),
-            DeconvBlock(128 + 64, 256, 3, 2, dilation),
-            DeconvBlock(128 + 64, 128 + 64, 3, 2, dilation),
+            DeconvBlock(
+                d_model // (2**(i)), d_model // (2**(i+1)), 
+                kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
         ])
-        self.deconv1 = DeconvBlock(128 + 64, 128 + 64,  3, 2, dilation)
-        self.deconv2 = DeconvBlock(128 + 64, input_dim, 7, 2, dilation)
+        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
+        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
 
         self.signal_decoder = nn.Linear(d_model, output_dim)
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
