@@ -732,7 +732,8 @@ class EpiDenoise20(nn.Module):
         self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
         self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
 
-        self.signal_decoder = nn.Linear(d_model, output_dim)
+        # self.signal_decoder = nn.Linear(d_model, output_dim)
+        self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
