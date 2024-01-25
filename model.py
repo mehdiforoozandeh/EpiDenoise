@@ -2463,7 +2463,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.001,
+        "learning_rate": 0.01,
     }
 
     if sys.argv[1] == "epd16":
