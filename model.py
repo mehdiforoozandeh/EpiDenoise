@@ -44,8 +44,8 @@ class ConvBlock(nn.Module):
         
     def forward(self, x):
         x = self.batch_norm(x)
-        x = F.gelu(x)
         x = self.conv(x)
+        x = F.gelu(x)
         return x
 
 class DeconvBlock(nn.Module):
