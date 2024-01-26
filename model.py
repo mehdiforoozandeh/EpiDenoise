@@ -43,7 +43,7 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        x = self.batch_norm(x)
+        # x = self.batch_norm(x)
         x = self.conv(x)
         x = F.gelu(x)
         return x
@@ -59,9 +59,9 @@ class DeconvBlock(nn.Module):
             padding=padding, output_padding=output_padding)
         
     def forward(self, x):
-        x = self.batch_norm(x)
-        x = F.gelu(x)
+        # x = self.batch_norm(x)
         x = self.deconv(x)
+        x = F.gelu(x)
         return x
 
 class RConvBlock(nn.Module):
