@@ -665,7 +665,7 @@ class EpiDenoise18(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, src):
-        src = self.mf_embedding(src, linear=True)
+        # src = self.mf_embedding(src, linear=True)
         src = self.embedding_linear(src)
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
