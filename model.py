@@ -684,22 +684,23 @@ class EpiDenoise18(nn.Module):
 
 class EpiDenoise20(nn.Module):
     def __init__(self, 
-                 input_dim, kernel_size, n_cnn_layer, dilation,
+                 input_dim, conv_out_channels, conv_kernel_sizes, dilation,
                  nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
         super(EpiDenoise20, self).__init__()
 
         stride = 1
+        n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, int((0.75 * (d_model // (2**n_cnn_layer)))), kernel_size, stride, dilation)
-        self.convm = ConvTower(input_dim, int((0.25 * (d_model // (2**n_cnn_layer)))), 1, stride, dilation)
+        self.conv1 = ConvTower(input_dim, conv_out_channels[0], conv_kernel_sizes[0], stride, dilation)
+        self.convm = ConvTower(input_dim, conv_out_channels[0] // 3, 1, stride, dilation)
 
         self.convtower = nn.Sequential(*[
             ConvTower(
-                d_model // (2**(n_cnn_layer-i)), 
-                d_model // (2**(n_cnn_layer-i-1)),
-                kernel_size//2, stride, dilation
-            ) for i in range(n_cnn_layer)
+                conv_out_channels[i], 
+                conv_out_channels[i + 1],
+                conv_kernel_sizes[i + 1], stride, dilation
+            ) for i in range(n_cnn_layers - 1)
         ])
 
         self.encoder_layer = RelativeEncoderLayer(
@@ -708,16 +709,18 @@ class EpiDenoise20(nn.Module):
             self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
+        reversed_channels = list(reversed(conv_out_channels))
+        reversed_kernels = list(reversed(conv_kernel_sizes))
+
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
-                d_model // (2**(i)), d_model // (2**(i+1)), 
-                kernel_size//2, 2, dilation) for i in range(n_cnn_layer - 1)
+                reversed_channels[i], reversed_channels[i + 1], 
+                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
         ])
-        self.deconv1 = DeconvBlock(d_model // (2**(n_cnn_layer-1)), d_model // (2**(n_cnn_layer)), kernel_size//2, 2, dilation)
-        self.deconv2 = DeconvBlock(d_model // (2**(n_cnn_layer)), d_model, kernel_size, 2, dilation)
+        self.deconv1 = DeconvBlock(reversed_channels[-2], reversed_channels[-1], reversed_kernels[-1], 2, dilation)
+        self.deconv2 = DeconvBlock(reversed_channels[-1], output_dim, conv_kernel_sizes[0], 2, dilation)
 
         self.signal_decoder = nn.Linear(d_model, output_dim)
-        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
@@ -1868,7 +1871,7 @@ class PRE_TRAINER(object):
                                 masked_x_batch, cloze_mask = mask_data16(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage/2)
                             else:
-                                masked_x_batch, cloze_mask = mask_data16(
+                                masked_x_batch, cloze_mask = mask_data18(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                                 
                             union_mask = cloze_mask | missing_mask_batch
@@ -2396,24 +2399,28 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
     context_length = hyper_parameters["context_length"]
-    n_cnn_layer = hyper_parameters["n_cnn_layer"]
-    dilation = hyper_parameters["dilation"]
 
+
+    conv_out_channels = hyper_parameters["conv_out_channels"]
+    dilation = hyper_parameters["dilation"]
     kernel_size = hyper_parameters["kernel_size"]
 
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
-
 
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
     # end of hyperparameters
 
     model = EpiDenoise20(
-        input_dim=input_dim, 
-        kernel_size=kernel_size, n_cnn_layer=n_cnn_layer, dilation=dilation,
-        nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
-        output_dim=output_dim, dropout=dropout)
+        input_dim=input_dim, conv_out_channels=conv_out_channels, conv_kernel_sizes=kernel_size,
+        dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
+        output_dim= output_dim, dropout=0.1)
+
+        # input_dim=input_dim, 
+        # kernel_size=kernel_size, n_cnn_layer=n_cnn_layer, dilation=dilation,
+        # nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
+        # output_dim=output_dim, dropout=dropout)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
@@ -2485,13 +2492,13 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 4,
-        "d_model": 128,
+        "nhead": 8,
+        "d_model": 1024,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": 7,
-        "n_cnn_layer": 1,
+        "kernel_size": [11, 9, 7, 5, 3],
+        "conv_out_channels": [128, 256, 256, 512, 1024],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
