@@ -89,7 +89,8 @@ class ConvTower(nn.Module):
         x = self.conv(x)
         if self.resid:
             x = self.rconv(x)
-        return self.pool(x)
+        x = self.pool(x)
+        return x
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
@@ -700,10 +701,10 @@ class EpiDenoise20(nn.Module):
             ) for i in range(n_cnn_layer)
         ])
 
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
@@ -721,16 +722,16 @@ class EpiDenoise20(nn.Module):
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
-        # m = torch.sigmoid(self.convm(m.float()))
-        m = self.convm(m.float())
+        m = torch.sigmoid(self.convm(m.float()))
+        # m = self.convm(m.float())
 
         x = self.conv1(x)
         x = torch.cat([x, m], dim=1)
         x = self.convtower(x)
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        # x = self.transformer_encoder(x)
-        # x = x.permute(1, 2, 0) # to N, F, L'
+        x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 2, 0) # to N, F, L'
 
         x = self.deconvtower(x)
         x = self.deconv1(x)
