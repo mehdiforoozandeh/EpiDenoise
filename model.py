@@ -1756,7 +1756,7 @@ class PRE_TRAINER(object):
                     logfile = open("models/EPD18_log.txt", "w")
                     
                     test_mse, test_corr, test_ovr = self.test_model(
-                        context_length, version="20", 
+                        context_length, version="18", 
                         is_arcsin=arcsinh_transform, batch_size=batch_size)
 
                     test_mse = np.mean(test_mse)
