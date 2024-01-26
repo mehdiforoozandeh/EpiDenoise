@@ -700,10 +700,14 @@ class EpiDenoise20(nn.Module):
             ) for i in range(n_cnn_layer)
         ])
 
-        self.encoder_layer = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=n_encoder_layers)
+        # self.encoder_layer = RelativeEncoderLayer(
+        #     d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        # self.transformer_encoder = nn.TransformerEncoder(
+        #     self.encoder_layer, num_layers=n_encoder_layers)
+
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
+
 
         # Deconvolution layers
         self.deconvtower = nn.Sequential(*[
@@ -1953,7 +1957,7 @@ class PRE_TRAINER(object):
                         f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
                         f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
                         f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
-                        f"Val_MSE: {test_mse:.4f}",
+                        f"Val_MSE: {test_mse:.3f}",
                         f"Val_POmean: {test_ovr_mean:.3f}",
                         f"Val_POmin: {test_ovr_min:.3f}",
                         f"Val_POmax: {test_ovr_max:.3f}",
