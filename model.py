@@ -40,10 +40,11 @@ class ConvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D):
         super(ConvBlock, self).__init__()
         self.batch_norm = nn.BatchNorm1d(in_C)
-        self.conv = nn.Conv1d(in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
+        self.conv = nn.Conv1d(
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        # x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = self.conv(x)
         x = F.gelu(x)
         return x
@@ -59,7 +60,7 @@ class DeconvBlock(nn.Module):
             padding=padding, output_padding=output_padding)
         
     def forward(self, x):
-        # x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = self.deconv(x)
         x = F.gelu(x)
         return x
@@ -1867,7 +1868,7 @@ class PRE_TRAINER(object):
                                 masked_x_batch, cloze_mask = mask_data16(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage/2)
                             else:
-                                masked_x_batch, cloze_mask = mask_data18(
+                                masked_x_batch, cloze_mask = mask_data16(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                                 
                             union_mask = cloze_mask | missing_mask_batch
