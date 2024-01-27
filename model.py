@@ -692,16 +692,16 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, int(0.75 * conv_out_channels[0]), conv_kernel_sizes[0], stride, dilation)
-        self.convm = ConvTower(input_dim, int(0.25 * conv_out_channels[0]), 1, stride, dilation)
+        # self.conv1 = ConvTower(input_dim, int(0.75 * conv_out_channels[0]), conv_kernel_sizes[0], stride, dilation)
+        # self.convm = ConvTower(input_dim, int(0.25 * conv_out_channels[0]), 1, stride, dilation)
 
-        self.convtower = nn.Sequential(*[
-            ConvTower(
-                conv_out_channels[i], 
-                conv_out_channels[i + 1],
-                conv_kernel_sizes[i + 1], stride, dilation
-            ) for i in range(n_cnn_layers - 1)
-        ])
+        # self.convtower = nn.Sequential(*[
+        #     ConvTower(
+        #         conv_out_channels[i], 
+        #         conv_out_channels[i + 1],
+        #         conv_kernel_sizes[i + 1], stride, dilation
+        #     ) for i in range(n_cnn_layers - 1)
+        # ])
 
         self.encoder_layer = RelativeEncoderLayer(
             d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
@@ -709,36 +709,37 @@ class EpiDenoise20(nn.Module):
             self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
-        reversed_channels = list(reversed(conv_out_channels))
-        reversed_kernels = list(reversed(conv_kernel_sizes))
+        # reversed_channels = list(reversed(conv_out_channels))
+        # reversed_kernels = list(reversed(conv_kernel_sizes))
 
-        self.deconvtower = nn.Sequential(*[
-            DeconvBlock(
-                reversed_channels[i], reversed_channels[i + 1], 
-                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
-        ])
-        self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
+        # self.deconvtower = nn.Sequential(*[
+        #     DeconvBlock(
+        #         reversed_channels[i], reversed_channels[i + 1], 
+        #         reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
+        # ])
+        # self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
 
         self.signal_decoder = nn.Linear(output_dim, output_dim)
         self.mask_decoder = nn.Linear(output_dim, output_dim)
 
     def forward(self, x, m):
-        x = x.permute(0, 2, 1) # to N, F, L
-        m = m.permute(0, 2, 1) # to N, F, L
+        # x = x.permute(0, 2, 1) # to N, F, L
+        # m = m.permute(0, 2, 1) # to N, F, L
 
-        m = torch.sigmoid(self.convm(m.float()))
-        x = self.conv1(x)
+        # m = torch.sigmoid(self.convm(m.float()))
+        # x = self.conv1(x)
 
-        x = torch.cat([x, m], dim=1)
-        x = self.convtower(x)
+        # x = torch.cat([x, m], dim=1)
+        # x = self.convtower(x)
 
-        x = x.permute(2, 0, 1)  # to L, N, F
+        # x = x.permute(2, 0, 1)  # to L, N, F
+        x = x.permute(1, 0, 2)  # to L, N, F
         x = self.transformer_encoder(x)
-        x = x.permute(1, 2, 0) # to N, F, L'
-
-        x = self.deconvtower(x)
-        x = self.deconvF(x)
-        x = x.permute(2, 0, 1)  # to L, N, F
+        
+        # x = x.permute(1, 2, 0) # to N, F, L'
+        # x = self.deconvtower(x)
+        # x = self.deconvF(x)
+        # x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = torch.sigmoid(self.mask_decoder(x))
         x = self.signal_decoder(x)
@@ -2485,8 +2486,8 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 2,
-        "d_model": 128,
+        "nhead": 5,
+        "d_model": 35,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
