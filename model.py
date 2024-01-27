@@ -866,8 +866,6 @@ class PRE_TRAINER(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
-        P = torch.zeros_like(P)
-
         mses = []
         spearmans = []
         peak_overlaps = []
@@ -2487,13 +2485,13 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 12,
-        "d_model": 768,
-        "nlayers": 4,
+        "nhead": 4,
+        "d_model": 256,
+        "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [9, 7, 5],
-        "conv_out_channels": [256, 512, 768],
+        "kernel_size": [3, 3, 3],
+        "conv_out_channels": [256, 256, 256],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
