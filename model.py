@@ -2505,7 +2505,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 5,
+        "nhead": 2,
         "d_model": 64,
         "nlayers": 1,
         "epochs": 10,
