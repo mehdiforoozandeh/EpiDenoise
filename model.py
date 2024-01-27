@@ -730,8 +730,8 @@ class EpiDenoise20(nn.Module):
         # ])
         # self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
 
-        self.signal_decoder = nn.Linear(output_dim, output_dim)
-        self.mask_decoder = nn.Linear(output_dim, output_dim)
+        self.signal_decoder = nn.Linear(d_model, output_dim)
+        self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
