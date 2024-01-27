@@ -740,12 +740,11 @@ class EpiDenoise20(nn.Module):
         print(x.shape)
         print(m.shape)
 
-        m = torch.sigmoid(self.convm(m.float()))
+        m = self.convm(m.float())
         x = self.conv1(x)
 
         print(x.shape)
         print(m.shape)
-        exit()
 
         x = x + m
 
@@ -2507,12 +2506,12 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 5,
-        "d_model": 35,
+        "d_model": 64,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
         "kernel_size": [1],
-        "conv_out_channels": [128],
+        "conv_out_channels": [64],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
