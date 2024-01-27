@@ -2508,7 +2508,7 @@ if __name__ == "__main__":
         "conv_out_channels": [64],
         "dilation":1,
         "context_length": 200,
-        "batch_size": 300,
+        "batch_size": 50,
         "learning_rate": 0.005,
     }
 
