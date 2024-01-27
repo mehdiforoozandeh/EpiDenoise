@@ -78,6 +78,11 @@ class ConvTower(nn.Module):
         super(ConvTower, self).__init__()
         self.resid = residuals
         self.conv  =   ConvBlock(in_C, out_C, W, S, D)
+        if pool_type == "max" or pool_type == "attn":
+            self.do_pool = True
+        else:
+            self.do_pool = False
+
         if self.resid:
             self.rconv = RConvBlock(out_C, out_C, 1, S, D)
 
@@ -90,7 +95,8 @@ class ConvTower(nn.Module):
         x = self.conv(x)
         if self.resid:
             x = self.rconv(x)
-        x = self.pool(x)
+        if self.do_pool:
+            x = self.pool(x)
         return x
 
 class FeedForwardNN(nn.Module):
