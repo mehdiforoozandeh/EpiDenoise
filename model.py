@@ -74,7 +74,7 @@ class RConvBlock(nn.Module):
         return x + self.conv_block(x)
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, pool_type="attn", residuals=False):
+    def __init__(self, in_C, out_C, W, S, D, pool_type="max", residuals=False):
         super(ConvTower, self).__init__()
         self.resid = residuals
         self.conv  =   ConvBlock(in_C, out_C, W, S, D)
@@ -2485,13 +2485,13 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 4,
-        "d_model": 256,
+        "nhead": 2,
+        "d_model": 128,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
         "kernel_size": [1],
-        "conv_out_channels": [256],
+        "conv_out_channels": [128],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
