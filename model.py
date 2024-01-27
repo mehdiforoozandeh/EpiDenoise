@@ -744,7 +744,7 @@ class EpiDenoise20(nn.Module):
 
         x = torch.cat([x, m], dim=1)
         x = x.permute(2, 0, 1)  # to L, N, F
-        x = self.merger(x)
+        x = F.relu(self.merger(x))
         x = x.permute(1, 2, 0) # to N, F, L
 
         # x = torch.cat([x, m], dim=1)
