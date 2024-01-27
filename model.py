@@ -759,7 +759,7 @@ class EpiDenoise20(nn.Module):
         x = x.permute(2, 0, 1)  # to L, N, F
         # x = x.permute(1, 0, 2)  # to L, N, F
 
-        x = self.position(x)
+        x = x + self.position(x)
         x = self.transformer_encoder(x)
 
         # x = x.permute(1, 2, 0) # to N, F, L'
