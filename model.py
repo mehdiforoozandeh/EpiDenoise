@@ -691,7 +691,7 @@ class EpiDenoise18(nn.Module):
 class EpiDenoise20(nn.Module):
     def __init__(self, 
                  input_dim, conv_out_channels, conv_kernel_sizes, dilation,
-                 nhead, d_model, n_encoder_layers, output_dim, dropout=0.1):
+                 nhead, d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise20, self).__init__()
 
         stride = 1
@@ -716,10 +716,16 @@ class EpiDenoise20(nn.Module):
         #     ) for i in range(n_cnn_layers - 1)
         # ])
 
-        self.encoder_layer = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=seq_len)
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=2*d_model)
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=n_encoder_layers)
+
+        # self.encoder_layer = RelativeEncoderLayer(
+        #     d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        # self.transformer_encoder = nn.TransformerEncoder(
+        #     self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         # reversed_channels = list(reversed(conv_out_channels))
@@ -752,6 +758,8 @@ class EpiDenoise20(nn.Module):
 
         x = x.permute(2, 0, 1)  # to L, N, F
         # x = x.permute(1, 0, 2)  # to L, N, F
+
+        x = self.position(x)
         x = self.transformer_encoder(x)
 
         # x = x.permute(1, 2, 0) # to N, F, L'
@@ -2432,7 +2440,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     model = EpiDenoise20(
         input_dim=input_dim, conv_out_channels=conv_out_channels, conv_kernel_sizes=kernel_size,
         dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
-        output_dim= output_dim, dropout=0.1)
+        output_dim= output_dim, dropout=0.1, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
