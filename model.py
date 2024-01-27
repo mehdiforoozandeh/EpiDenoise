@@ -692,8 +692,8 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        self.conv1 = ConvTower(input_dim, conv_out_channels[0], conv_kernel_sizes[0], stride, dilation)
-        self.convm = ConvTower(input_dim, conv_out_channels[0] // 3, 1, stride, dilation)
+        self.conv1 = ConvTower(input_dim, int(0.75 * conv_out_channels[0]), conv_kernel_sizes[0], stride, dilation)
+        self.convm = ConvTower(input_dim, int(0.25 * conv_out_channels[0]), 1, stride, dilation)
 
         self.convtower = nn.Sequential(*[
             ConvTower(
