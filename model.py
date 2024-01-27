@@ -717,36 +717,27 @@ class EpiDenoise20(nn.Module):
                 reversed_channels[i], reversed_channels[i + 1], 
                 reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
         ])
-        self.deconv1 = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
-        # self.deconv2 = DeconvBlock(reversed_channels[-1], output_dim, conv_kernel_sizes[0], 2, dilation)
+        self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
 
-        self.signal_decoder = nn.Linear(d_model, output_dim)
-        self.mask_decoder = nn.Linear(d_model, output_dim)
+        self.signal_decoder = nn.Linear(output_dim, output_dim)
+        self.mask_decoder = nn.Linear(output_dim, output_dim)
 
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
+
         m = torch.sigmoid(self.convm(m.float()))
-        # m = self.convm(m.float())
-        print(x.shape)
-
         x = self.conv1(x)
-        x = torch.cat([x, m], dim=1)
 
-        print(x.shape)
+        x = torch.cat([x, m], dim=1)
         x = self.convtower(x)
-        print(x.shape)
+
         x = x.permute(2, 0, 1)  # to L, N, F
         x = self.transformer_encoder(x)
         x = x.permute(1, 2, 0) # to N, F, L'
-        print(x.shape)
 
         x = self.deconvtower(x)
-        print(x.shape)
-        x = self.deconv1(x)
-        print(x.shape)
-        exit()
-        # x = self.deconv2(x)
+        x = self.deconvF(x)
         x = x.permute(2, 0, 1)  # to L, N, F
 
         mask = torch.sigmoid(self.mask_decoder(x))
