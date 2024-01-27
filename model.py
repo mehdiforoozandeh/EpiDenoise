@@ -2417,11 +2417,6 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
         dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
         output_dim= output_dim, dropout=0.1)
 
-        # input_dim=input_dim, 
-        # kernel_size=kernel_size, n_cnn_layer=n_cnn_layer, dilation=dilation,
-        # nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
-        # output_dim=output_dim, dropout=dropout)
-
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
 
@@ -2493,12 +2488,12 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 8,
-        "d_model": 1024,
+        "d_model": 768,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [11, 9, 7, 5, 3],
-        "conv_out_channels": [128, 256, 256, 512, 1024],
+        "kernel_size": [11, 9, 7, 5],
+        "conv_out_channels": [128, 256, 512, 768],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
