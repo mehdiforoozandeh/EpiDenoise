@@ -737,14 +737,8 @@ class EpiDenoise20(nn.Module):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
-        print(x.shape)
-        print(m.shape)
-
         m = self.convm(m.float())
         x = self.conv1(x)
-
-        print(x.shape)
-        print(m.shape)
 
         x = x + m
 
