@@ -344,7 +344,7 @@ class AbsPositionalEmbedding15(nn.Module):
         # self.register_buffer('pe', pe)
 
     def forward(self, x):
-        return self.pe
+        return self.pe.unsqueeze(1)
 
 class ComboEmbedding15(nn.Module):
     """
