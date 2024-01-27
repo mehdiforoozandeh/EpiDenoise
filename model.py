@@ -83,7 +83,7 @@ class ConvTower(nn.Module):
 
         if pool_type == "attn":
             self.pool = AttentionPooling1D(out_C, 2)
-        else:
+        elif pool_type == "max":
             self.pool  = nn.MaxPool1d(2)
     
     def forward(self, x):
@@ -692,8 +692,13 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        # self.conv1 = ConvTower(input_dim, int(0.75 * conv_out_channels[0]), conv_kernel_sizes[0], stride, dilation)
-        # self.convm = ConvTower(input_dim, int(0.25 * conv_out_channels[0]), 1, stride, dilation)
+        self.conv1 = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None")
+
+        self.convm = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None")
 
         # self.convtower = nn.Sequential(*[
         #     ConvTower(
@@ -723,19 +728,28 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(output_dim, output_dim)
 
     def forward(self, x, m):
-        # x = x.permute(0, 2, 1) # to N, F, L
-        # m = m.permute(0, 2, 1) # to N, F, L
+        x = x.permute(0, 2, 1) # to N, F, L
+        m = m.permute(0, 2, 1) # to N, F, L
 
-        # m = torch.sigmoid(self.convm(m.float()))
-        # x = self.conv1(x)
+        print(x.shape)
+        print(m.shape)
+
+        m = torch.sigmoid(self.convm(m.float()))
+        x = self.conv1(x)
+
+        print(x.shape)
+        print(m.shape)
+        exit()
+
+        x = x + m
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        x = x.permute(1, 0, 2)  # to L, N, F
+        x = x.permute(2, 0, 1)  # to L, N, F
+        # x = x.permute(1, 0, 2)  # to L, N, F
         x = self.transformer_encoder(x)
-        
+
         # x = x.permute(1, 2, 0) # to N, F, L'
         # x = self.deconvtower(x)
         # x = self.deconvF(x)
