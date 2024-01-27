@@ -468,7 +468,7 @@ class ComboLoss18(nn.Module):
 class ComboLoss20(nn.Module):
     def __init__(self):
         super(ComboLoss20, self).__init__()
-        self.l1_loss = nn.MSELoss(reduction='mean')
+        self.l1_loss = nn.L1Loss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
@@ -740,7 +740,7 @@ class EpiDenoise20(nn.Module):
         m = self.convm(m.float())
         x = self.conv1(x)
 
-        x = x + m
+        x = x * m
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
@@ -2500,12 +2500,12 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 2,
-        "d_model": 128,
+        "d_model": 64,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
         "kernel_size": [1],
-        "conv_out_channels": [128],
+        "conv_out_channels": [64],
         "dilation":1,
         "context_length": 200,
         "batch_size": 50,
