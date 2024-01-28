@@ -698,13 +698,13 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        # self.conv1 = ConvTower(
-        #     input_dim, conv_out_channels[0], 
-        #     1, stride, dilation, pool_type="None", residuals=False)
+        self.conv1 = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
 
-        # self.convm = ConvTower(
-        #     input_dim, conv_out_channels[0], 
-        #     1, stride, dilation, pool_type="None", residuals=False)
+        self.convm = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
 
         # self.convtower = nn.Sequential(*[
         #     ConvTower(
@@ -714,7 +714,6 @@ class EpiDenoise20(nn.Module):
         #     ) for i in range(n_cnn_layers - 1)
         # ])
 
-        self.l = nn.Linear(input_dim, d_model)
 
         self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
         self.encoder_layer = nn.TransformerEncoderLayer(
@@ -742,20 +741,17 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
-        # x = x.permute(0, 2, 1) # to N, F, L
-        # m = m.permute(0, 2, 1) # to N, F, L
+        x = x.permute(0, 2, 1) # to N, F, L
+        m = m.permute(0, 2, 1) # to N, F, L
 
-        # m = self.convm(m.float())
-        # x = self.conv1(x)
+        m = self.convm(m.float())
+        x = self.conv1(x)
 
-        # x = x + m
+        x = x + m
 
-        # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
-        x = self.l(x)
 
-        # x = x.permute(2, 0, 1)  # to L, N, F
-        x = x.permute(1, 0, 2)  # to L, N, F
+        x = x.permute(2, 0, 1)  # to L, N, F
 
         x = x + self.position(x)
         x = self.transformer_encoder(x)
@@ -1894,7 +1890,7 @@ class PRE_TRAINER(object):
                                 masked_x_batch, cloze_mask = mask_data16(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage/2)
                             else:
-                                masked_x_batch, cloze_mask = mask_data16(
+                                masked_x_batch, cloze_mask = mask_data18(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                                 
                             union_mask = cloze_mask | missing_mask_batch
