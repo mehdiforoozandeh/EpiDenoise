@@ -1978,9 +1978,10 @@ class PRE_TRAINER(object):
                         f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
                         f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
                         f"Val_MSE: {test_mse:.3f}",
-                        f"Val_POmean: {test_ovr_mean:.3f}",
-                        f"Val_POmin: {test_ovr_min:.3f}",
-                        f"Val_POmax: {test_ovr_max:.3f}",
+                        f"Val_Corr: {test_corr:.3f}",
+                        # f"Val_POmean: {test_ovr_mean:.3f}",
+                        # f"Val_POmin: {test_ovr_min:.3f}",
+                        # f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
                         "\n----------------------------------------------------\n"
                         ]
