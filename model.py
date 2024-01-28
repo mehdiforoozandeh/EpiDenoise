@@ -1821,7 +1821,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_20(self, 
-        d_model, outer_loop_epochs=3, arcsinh_transform=True,
+        d_model, outer_loop_epochs=3, arcsinh_transform=False,
         num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=100, start_ds=0):
 
         log_strs = []
@@ -2435,7 +2435,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     model = EpiDenoise20(
         input_dim=input_dim, conv_out_channels=conv_out_channels, conv_kernel_sizes=kernel_size,
         dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
-        output_dim= output_dim, dropout=0.1, context_length=context_length)
+        output_dim= output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
