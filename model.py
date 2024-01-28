@@ -741,12 +741,12 @@ class EpiDenoise20(nn.Module):
 
     def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
-        m = m.permute(0, 2, 1) # to N, F, L
+        # m = m.permute(0, 2, 1) # to N, F, L
 
-        m = self.convm(m.float())
+        # m = self.convm(m.float())
         x = self.conv1(x)
 
-        x = x + m
+        # x = x + m
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
@@ -887,8 +887,6 @@ class PRE_TRAINER(object):
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
-
-        P = add_noise(P, 1)
 
         mses = []
         spearmans = []
