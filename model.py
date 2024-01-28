@@ -698,13 +698,13 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        self.conv1 = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        # self.conv1 = ConvTower(
+        #     input_dim, conv_out_channels[0], 
+        #     1, stride, dilation, pool_type="None", residuals=False)
 
-        self.convm = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        # self.convm = ConvTower(
+        #     input_dim, conv_out_channels[0], 
+        #     1, stride, dilation, pool_type="None", residuals=False)
 
         # self.convtower = nn.Sequential(*[
         #     ConvTower(
@@ -713,6 +713,8 @@ class EpiDenoise20(nn.Module):
         #         conv_kernel_sizes[i + 1], stride, dilation
         #     ) for i in range(n_cnn_layers - 1)
         # ])
+
+        self.l = nn.Linear(input_dim, d_model)
 
         self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
         self.encoder_layer = nn.TransformerEncoderLayer(
@@ -740,11 +742,11 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
-        x = x.permute(0, 2, 1) # to N, F, L
+        # x = x.permute(0, 2, 1) # to N, F, L
         # m = m.permute(0, 2, 1) # to N, F, L
 
         # m = self.convm(m.float())
-        x = self.conv1(x)
+        # x = self.conv1(x)
 
         # x = x + m
 
@@ -752,6 +754,7 @@ class EpiDenoise20(nn.Module):
         # x = self.convtower(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
+        x = self.l(x)
         # x = x.permute(1, 0, 2)  # to L, N, F
 
         x = x + self.position(x)
@@ -1909,8 +1912,7 @@ class PRE_TRAINER(object):
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
-                            # loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
-                            loss = mse_obs_loss + mse_pred_loss #+ bce_mask_loss
+                            loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
