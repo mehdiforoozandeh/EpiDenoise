@@ -44,7 +44,7 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        x = self.batch_norm(x)
+        # x = self.batch_norm(x)
         x = self.conv(x)
         x = F.gelu(x)
         return x
@@ -700,11 +700,11 @@ class EpiDenoise20(nn.Module):
         # Convolutional layers
         self.conv1 = ConvTower(
             input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None")
+            1, stride, dilation, pool_type="None", residuals=False)
 
         self.convm = ConvTower(
             input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None")
+            1, stride, dilation, pool_type="None", residuals=False)
 
         # self.merger = nn.Linear(2*conv_out_channels[0], conv_out_channels[0])
 
