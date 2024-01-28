@@ -468,7 +468,7 @@ class ComboLoss18(nn.Module):
 class ComboLoss20(nn.Module):
     def __init__(self):
         super(ComboLoss20, self).__init__()
-        self.l1_loss = nn.L1Loss(reduction='mean')
+        self.l1_loss = nn.MSELoss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
