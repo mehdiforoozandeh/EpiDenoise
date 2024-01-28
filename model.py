@@ -888,7 +888,6 @@ class PRE_TRAINER(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
-        P = torch.ones_like(P)
         P = add_noise(P, 1)
 
         mses = []
