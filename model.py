@@ -1824,6 +1824,8 @@ class PRE_TRAINER(object):
         d_model, outer_loop_epochs=3, arcsinh_transform=False,
         num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=100, start_ds=0):
 
+        
+
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
@@ -1847,6 +1849,10 @@ class PRE_TRAINER(object):
                 if arcsinh_transform:
                     arcmask = (x != -1)
                     x[arcmask] = torch.arcsinh_(x[arcmask])
+                else:
+                    arcmask = (x != -1)
+                    print(x[arcmask].sum())
+
                                 
                 for epoch in range(0, num_epochs):
                     print('-' * 10)
