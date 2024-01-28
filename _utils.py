@@ -246,21 +246,21 @@ def add_noise(data, noise_factor):
     return noisy_data.to(torch.float32)
 
 def peak_overlap(y_true, y_pred, p=0.01):
-        top_p_percent = int(p * len(y_true))
-        
-        # Get the indices of the top p percent of the observed (true) values
-        top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
-        
-        # Get the indices of the top p percent of the predicted values
-        top_p_percent_pred_i = np.argsort(y_pred)[-top_p_percent:]
+    top_p_percent = int(p * len(y_true))
+    
+    # Get the indices of the top p percent of the observed (true) values
+    top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
+    
+    # Get the indices of the top p percent of the predicted values
+    top_p_percent_pred_i = np.argsort(y_pred)[-top_p_percent:]
 
-        # Calculate the overlap
-        overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
+    # Calculate the overlap
+    overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
 
-        # Calculate the percentage of overlap
-        overlap_percent = overlap / top_p_percent 
+    # Calculate the percentage of overlap
+    overlap_percent = overlap / top_p_percent 
 
-        return overlap_percent
+    return overlap_percent
 
 class COORD(object):
     def __init__(self, Meuleman_file="data/Meuleman.tsv", cCRE_file="data/GRCh38-cCREs.bed", 

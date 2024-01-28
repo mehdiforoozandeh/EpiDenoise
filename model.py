@@ -889,6 +889,7 @@ class PRE_TRAINER(object):
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
         P = torch.ones_like(P)
+        P = add_noise(P, 1)
 
         mses = []
         spearmans = []
