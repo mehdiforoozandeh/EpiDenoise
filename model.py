@@ -706,7 +706,7 @@ class EpiDenoise20(nn.Module):
             input_dim, conv_out_channels[0], 
             1, stride, dilation, pool_type="None")
 
-        self.merger = nn.Linear(2*conv_out_channels[0], conv_out_channels[0])
+        # self.merger = nn.Linear(2*conv_out_channels[0], conv_out_channels[0])
 
         # self.convtower = nn.Sequential(*[
         #     ConvTower(
@@ -748,12 +748,12 @@ class EpiDenoise20(nn.Module):
         m = self.convm(m.float())
         x = self.conv1(x)
 
-        x = torch.cat([x, m], dim=1)
-        x = x.permute(2, 0, 1)  # to L, N, F
-        x = F.relu(self.merger(x))
-        x = x.permute(1, 2, 0) # to N, F, L
+        # x = torch.cat([x, m], dim=1)
+        # x = x.permute(2, 0, 1)  # to L, N, F
+        # x = F.relu(self.merger(x))
+        # x = x.permute(1, 2, 0) # to N, F, L
 
-        # x = x + m
+        x = x + m
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
