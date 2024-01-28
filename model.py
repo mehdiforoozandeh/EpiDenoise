@@ -698,13 +698,13 @@ class EpiDenoise20(nn.Module):
         n_cnn_layers = len(conv_out_channels)
 
         # Convolutional layers
-        self.conv1 = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        # self.conv1 = ConvTower(
+        #     input_dim, conv_out_channels[0], 
+        #     1, stride, dilation, pool_type="None", residuals=False)
 
-        self.convm = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        # self.convm = ConvTower(
+        #     input_dim, conv_out_channels[0], 
+        #     1, stride, dilation, pool_type="None", residuals=False)
 
         # self.merger = nn.Linear(2*conv_out_channels[0], conv_out_channels[0])
 
@@ -742,24 +742,24 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
-        x = x.permute(0, 2, 1) # to N, F, L
-        m = m.permute(0, 2, 1) # to N, F, L
+        # x = x.permute(0, 2, 1) # to N, F, L
+        # m = m.permute(0, 2, 1) # to N, F, L
 
-        m = self.convm(m.float())
-        x = self.conv1(x)
+        # m = self.convm(m.float())
+        # x = self.conv1(x)
 
         # x = torch.cat([x, m], dim=1)
         # x = x.permute(2, 0, 1)  # to L, N, F
         # x = F.relu(self.merger(x))
         # x = x.permute(1, 2, 0) # to N, F, L
 
-        x = x + m
+        # x = x + m
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
 
-        x = x.permute(2, 0, 1)  # to L, N, F
-        # x = x.permute(1, 0, 2)  # to L, N, F
+        # x = x.permute(2, 0, 1)  # to L, N, F
+        x = x.permute(1, 0, 2)  # to L, N, F
 
         x = x + self.position(x)
         x = self.transformer_encoder(x)
@@ -2514,8 +2514,8 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "nhead": 2,
-        "d_model": 64,
+        "nhead": 5,
+        "d_model": 35,
         "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.3,
