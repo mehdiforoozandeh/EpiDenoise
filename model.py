@@ -906,7 +906,7 @@ class PRE_TRAINER(object):
                 target = Y[:, j].numpy()   
                 mse_GW = np.mean((np.array(target) - np.array(pred))**2)
                 spearman_GW = spearmanr(pred, target)[0]
-                ovr = peak_overlap(target, pred)
+                ovr = peak_overlap(target, pred, p=0.05)
 
                 mses.append(mse_GW)
                 spearmans.append(spearman_GW)
