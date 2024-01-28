@@ -752,9 +752,9 @@ class EpiDenoise20(nn.Module):
 
         # x = torch.cat([x, m], dim=1)
         # x = self.convtower(x)
+        x = self.l(x)
 
         x = x.permute(2, 0, 1)  # to L, N, F
-        x = self.l(x)
         # x = x.permute(1, 0, 2)  # to L, N, F
 
         x = x + self.position(x)
