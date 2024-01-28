@@ -180,11 +180,12 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
     if num_mask_features == 0:
         num_mask_features += 1
 
-    # Generate a tensor of random permutation of integers from 0 to len(available_features) - 1
-    rand_perm = torch.randperm(len(available_features))
 
-    # Select the first num_mask_features elements
-    selected_indices = rand_perm[:num_mask_features]
+    selected_indices = []
+    while len(selected_indices) < num_mask_features:
+        randomF = random.choice(available_features)
+        if randomF not in selected_indices:
+            selected_indices.append(randomF)
 
     # Loop over the selected indices
     for mask_f in selected_indices:
