@@ -1849,9 +1849,6 @@ class PRE_TRAINER(object):
                 if arcsinh_transform:
                     arcmask = (x != -1)
                     x[arcmask] = torch.arcsinh_(x[arcmask])
-                else:
-                    arcmask = (x != -1)
-                    print(x[arcmask].sum())
 
                                 
                 for epoch in range(0, num_epochs):
