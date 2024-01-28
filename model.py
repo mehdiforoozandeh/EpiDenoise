@@ -1895,7 +1895,7 @@ class PRE_TRAINER(object):
                                 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.05)
+                            masked_x_batch = add_noise(masked_x_batch, 0.1)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
@@ -1967,8 +1967,8 @@ class PRE_TRAINER(object):
                     test_corr = np.mean(test_corr)
 
                     test_ovr_mean = np.mean(test_ovr)
-                    test_ovr_min = np.min(test_ovr)
-                    test_ovr_max = np.max(test_ovr)
+                    # test_ovr_min = np.min(test_ovr)
+                    # test_ovr_max = np.max(test_ovr)
 
                     logstr = [
                         "\n----------------------------------------------------\n"
@@ -1979,7 +1979,7 @@ class PRE_TRAINER(object):
                         f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
                         f"Val_MSE: {test_mse:.3f}",
                         f"Val_Corr: {test_corr:.3f}",
-                        # f"Val_POmean: {test_ovr_mean:.3f}",
+                        f"Val_POmean: {test_ovr_mean:.3f}",
                         # f"Val_POmin: {test_ovr_min:.3f}",
                         # f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
@@ -2437,7 +2437,7 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
         dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
         output_dim= output_dim, dropout=0.1, context_length=context_length)
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
 
     # Load from checkpoint if provided
@@ -2506,14 +2506,14 @@ if __name__ == "__main__":
     hyper_parameters20 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.2,
+        "dropout": 0.1,
         "nhead": 2,
-        "d_model": 128,
+        "d_model": 64,
         "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": [1],
-        "conv_out_channels": [128],
+        "conv_out_channels": [64],
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
