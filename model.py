@@ -888,6 +888,8 @@ class PRE_TRAINER(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
+        P = torch.ones_like(P)
+
         mses = []
         spearmans = []
         peak_overlaps = []
@@ -2518,7 +2520,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 200,
         "batch_size": 50,
-        "learning_rate": 0.5,
+        "learning_rate": 0.005,
     }
 
     if sys.argv[1] == "epd16":
