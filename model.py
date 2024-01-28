@@ -715,16 +715,16 @@ class EpiDenoise20(nn.Module):
         # ])
 
 
-        self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-        self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=n_encoder_layers)
-
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        # self.encoder_layer = nn.TransformerEncoderLayer(
+        #     d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
         # self.transformer_encoder = nn.TransformerEncoder(
         #     self.encoder_layer, num_layers=n_encoder_layers)
+
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Deconvolution layers
         # reversed_channels = list(reversed(conv_out_channels))
@@ -753,7 +753,7 @@ class EpiDenoise20(nn.Module):
 
         x = x.permute(2, 0, 1)  # to L, N, F
 
-        x = x + self.position(x)
+        # x = x + self.position(x)
         x = self.transformer_encoder(x)
 
         # x = x.permute(1, 2, 0) # to N, F, L'
@@ -2509,7 +2509,7 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 2,
         "d_model": 64,
-        "nlayers": 2,
+        "nlayers": 1,
         "epochs": 10,
         "mask_percentage": 0.2,
         "kernel_size": [1],
