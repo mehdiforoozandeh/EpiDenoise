@@ -1916,7 +1916,8 @@ class PRE_TRAINER(object):
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
-                            loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
+                            # loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
+                            loss = mse_obs_loss + mse_pred_loss #+ bce_mask_loss
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
