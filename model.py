@@ -855,6 +855,7 @@ class PRE_TRAINER(object):
         self.test_y_dir = "/project/compbio-lab/EIC/validation_data/C23_chr21_25.pt"
     
     def test_model(self, context_length, version, is_arcsin, batch_size):
+        self.model.eval()
         """
         load X and Y
         pred = model(X)
@@ -949,7 +950,7 @@ class PRE_TRAINER(object):
                     mask = torch.zeros_like(x_batch, dtype=torch.bool)
                     for i in missing_x_i: 
                         mask[:,:,i] = True
-                        
+
                     outputs, pred_mask = self.model(x_batch, ~mask)
 
             # Store the predictions in the large tensor
@@ -975,6 +976,8 @@ class PRE_TRAINER(object):
                 mses.append(mse_GW)
                 spearmans.append(spearman_GW)
                 peak_overlaps.append(ovr)
+
+        self.model.train()
 
         if version in ["10", "16", "17"]:
             return sum(mses)/len(mses), sum(spearmans)/len(spearmans)
