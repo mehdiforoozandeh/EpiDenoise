@@ -918,7 +918,6 @@ class PRE_TRAINER(object):
 
         # Initialize a tensor to store all predictions
         P = torch.empty_like(X, device="cpu")
-        print(P.sum())
 
         # make predictions in batches
         for i in range(0, len(X), batch_size):
@@ -929,8 +928,8 @@ class PRE_TRAINER(object):
             with torch.no_grad():
                 x_batch = x_batch.to(self.device)
                 mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
-                for i in missing_x_i: 
-                    mask[:,:,i] = True
+                for ii in missing_x_i: 
+                    mask[:,:,ii] = True
                 mask = mask.to(self.device)
 
                 if version == "10":
@@ -948,9 +947,6 @@ class PRE_TRAINER(object):
                     outputs, pred_mask = self.model(x_batch)
 
                 elif version == "20":
-                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
-                    for i in missing_x_i: 
-                        mask[:,:,i] = True
 
                     outputs, pred_mask = self.model(x_batch, ~mask)
                 
