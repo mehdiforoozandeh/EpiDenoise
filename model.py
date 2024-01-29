@@ -689,85 +689,115 @@ class EpiDenoise18(nn.Module):
         return src, msk
 
 class EpiDenoise20(nn.Module):
-    def __init__(self, 
-                 input_dim, conv_out_channels, conv_kernel_sizes, dilation,
-                 nhead, d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
+    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise20, self).__init__()
 
-        stride = 1
-        n_cnn_layers = len(conv_out_channels)
+        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
+        self.embedding_linear = nn.Linear(input_dim, d_model)
 
-        # Convolutional layers
-        self.conv1 = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
-        self.convm = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
-
-        # self.convtower = nn.Sequential(*[
-        #     ConvTower(
-        #         conv_out_channels[i], 
-        #         conv_out_channels[i + 1],
-        #         conv_kernel_sizes[i + 1], stride, dilation
-        #     ) for i in range(n_cnn_layers - 1)
-        # ])
-
-
-        # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-        # self.encoder_layer = nn.TransformerEncoderLayer(
-        #     d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
-
-        self.encoder_layer = RelativeEncoderLayer(
-            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=n_encoder_layers)
-
-        # Deconvolution layers
-        # reversed_channels = list(reversed(conv_out_channels))
-        # reversed_kernels = list(reversed(conv_kernel_sizes))
-
-        # self.deconvtower = nn.Sequential(*[
-        #     DeconvBlock(
-        #         reversed_channels[i], reversed_channels[i + 1], 
-        #         reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
-        # ])
-        # self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
-
-        self.signal_decoder = nn.Linear(d_model, output_dim)
+        self.signal_decoder =  nn.Linear(d_model, output_dim)
+        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
-    def forward(self, x, m):
-        x = x.permute(0, 2, 1) # to N, F, L
-        m = m.permute(0, 2, 1) # to N, F, L
+        self.softmax = torch.nn.Softmax(dim=-1)
 
-        m = self.convm(m.float())
-        x = self.conv1(x)
+    def forward(self, src, m):
+        # src = self.mf_embedding(src, linear=True)
+        src = self.embedding_linear(src)
 
-        x = x + m
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        
+        src = self.transformer_encoder(src) 
+        
+        msk = torch.sigmoid(self.mask_decoder(src))
+        src = self.signal_decoder(src)
 
-        # x = self.convtower(x)
+        src = torch.permute(src, (1, 0, 2))  # to N, L, F
+        msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
 
-        x = x.permute(2, 0, 1)  # to L, N, F
+        return src, msk
+    # def __init__(self, 
+    #              input_dim, conv_out_channels, conv_kernel_sizes, dilation,
+    #              nhead, d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
+    #     super(EpiDenoise20, self).__init__()
 
-        # x = x + self.position(x)
-        x = self.transformer_encoder(x)
+    #     stride = 1
+    #     n_cnn_layers = len(conv_out_channels)
 
-        # x = x.permute(1, 2, 0) # to N, F, L'
-        # x = self.deconvtower(x)
-        # x = self.deconvF(x)
-        # x = x.permute(2, 0, 1)  # to L, N, F
+    #     # Convolutional layers
+    #     self.conv1 = ConvTower(
+    #         input_dim, conv_out_channels[0], 
+    #         1, stride, dilation, pool_type="None", residuals=False)
 
-        mask = torch.sigmoid(self.mask_decoder(x))
-        x = self.signal_decoder(x)
+    #     self.convm = ConvTower(
+    #         input_dim, conv_out_channels[0], 
+    #         1, stride, dilation, pool_type="None", residuals=False)
 
-        x = torch.permute(x, (1, 0, 2))  # to N, L, F
-        mask = torch.permute(mask, (1, 0, 2))  # to N, L, F
+    #     # self.convtower = nn.Sequential(*[
+    #     #     ConvTower(
+    #     #         conv_out_channels[i], 
+    #     #         conv_out_channels[i + 1],
+    #     #         conv_kernel_sizes[i + 1], stride, dilation
+    #     #     ) for i in range(n_cnn_layers - 1)
+    #     # ])
 
-        return x, mask
+
+    #     # self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+    #     # self.encoder_layer = nn.TransformerEncoderLayer(
+    #     #     d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+    #     # self.transformer_encoder = nn.TransformerEncoder(
+    #     #     self.encoder_layer, num_layers=n_encoder_layers)
+
+    #     self.encoder_layer = RelativeEncoderLayer(
+    #         d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+    #     self.transformer_encoder = nn.TransformerEncoder(
+    #         self.encoder_layer, num_layers=n_encoder_layers)
+
+    #     # Deconvolution layers
+    #     # reversed_channels = list(reversed(conv_out_channels))
+    #     # reversed_kernels = list(reversed(conv_kernel_sizes))
+
+    #     # self.deconvtower = nn.Sequential(*[
+    #     #     DeconvBlock(
+    #     #         reversed_channels[i], reversed_channels[i + 1], 
+    #     #         reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
+    #     # ])
+    #     # self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
+
+    #     self.signal_decoder = nn.Linear(d_model, output_dim)
+    #     self.mask_decoder = nn.Linear(d_model, output_dim)
+
+    # def forward(self, x, m):
+    #     x = x.permute(0, 2, 1) # to N, F, L
+    #     m = m.permute(0, 2, 1) # to N, F, L
+
+    #     m = self.convm(m.float())
+    #     x = self.conv1(x)
+
+    #     x = x + m
+
+    #     # x = self.convtower(x)
+
+    #     x = x.permute(2, 0, 1)  # to L, N, F
+
+    #     # x = x + self.position(x)
+    #     x = self.transformer_encoder(x)
+
+    #     # x = x.permute(1, 2, 0) # to N, F, L'
+    #     # x = self.deconvtower(x)
+    #     # x = self.deconvF(x)
+    #     # x = x.permute(2, 0, 1)  # to L, N, F
+
+    #     mask = torch.sigmoid(self.mask_decoder(x))
+    #     x = self.signal_decoder(x)
+
+    #     x = torch.permute(x, (1, 0, 2))  # to N, L, F
+    #     mask = torch.permute(mask, (1, 0, 2))  # to N, L, F
+
+    #     return x, mask
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -1821,7 +1851,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_20(self, 
-        d_model, outer_loop_epochs=3, arcsinh_transform=False,
+        d_model, outer_loop_epochs=3, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=100, start_ds=0):
 
         
@@ -2436,9 +2466,13 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     # end of hyperparameters
 
     model = EpiDenoise20(
-        input_dim=input_dim, conv_out_channels=conv_out_channels, conv_kernel_sizes=kernel_size,
-        dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
-        output_dim= output_dim, dropout=dropout, context_length=context_length)
+        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+        output_dim=output_dim, dropout=dropout, context_length=context_length)
+
+    # model = EpiDenoise20(
+    #     input_dim=input_dim, conv_out_channels=conv_out_channels, conv_kernel_sizes=kernel_size,
+    #     dilation=dilation, nhead=nhead, d_model=d_model, n_encoder_layers=nlayers, 
+    #     output_dim= output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.75)
