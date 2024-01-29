@@ -956,12 +956,12 @@ class PRE_TRAINER(object):
                 elif version == "21":
                     outputs, pred_mask = self.model(x_batch, mask)
 
-            print(outputs.cpu())
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
         
-        
+        print(P.sum())
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
+        print(P.sum())
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
