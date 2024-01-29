@@ -370,37 +370,6 @@ class ComboEmbedding15(nn.Module):
     def forward(self, sequence, segment_label):
         x = sequence + self.position(sequence).unsqueeze(1) + self.segment(segment_label).unsqueeze(1) 
         return self.dropout(x)
-
-class Peak_Loss(nn.Module):
-    def __init__(self, p):
-        super(Peak_Loss, self).__init__()
-        self.p = p
-    
-    def forward(self, y_pred, y_true):
-        top_p_percent = int(self.p * len(y_true))
-
-        # Ensure y_pred and y_true are on CPU and converted to numpy, if they are on GPU
-        if y_pred.is_cuda:
-            y_pred = y_pred.cpu()
-        if y_true.is_cuda:
-            y_true = y_true.cpu()
-
-        # Get the indices of the top p percent of the observed (true) values
-        # Using PyTorch's topk for this purpose
-        _, top_p_percent_obs_i = torch.topk(y_true, top_p_percent, sorted=False)
-
-        # Get the indices of the top p percent of the predicted values
-        _, top_p_percent_pred_i = torch.topk(y_pred, top_p_percent, sorted=False)
-
-        # Calculate the overlap
-        # Convert to set for intersection
-        overlap = len(set(top_p_percent_obs_i.tolist()).intersection(top_p_percent_pred_i.tolist()))
-
-        # Calculate the percentage of overlap
-        overlap_percent = overlap / top_p_percent
-
-        return overlap_percent
-
         
 class ComboLoss15(nn.Module):
     def __init__(self, alpha=0.5):
@@ -523,7 +492,6 @@ class ComboLoss21(nn.Module):
         super(ComboLoss21, self).__init__()
         self.l1_loss = nn.L1Loss(reduction='mean')
         self.bce_loss = nn.BCELoss(reduction='mean')
-        self.peak_detector = Peak_Loss(p=0.01)
 
     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
         # print(
@@ -532,8 +500,8 @@ class ComboLoss21(nn.Module):
         # print(cloze_mask[0,0,:])
         # print(pred_mask[0,0,:])
 
-        mse_obs_loss =  self.peak_detector(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_pred_loss = self.peak_detector(pred_signals[cloze_mask], true_signals[cloze_mask])
+        mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
         # Check for nan values in pred_adjac and true_adjac
         if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
@@ -541,9 +509,9 @@ class ComboLoss21(nn.Module):
 
         bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
 
-        # if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
-        #     print("NaN value encountered in loss components.")
-        #     return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
+        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
         
         return mse_obs_loss, mse_pred_loss, bce_mask_loss
 
