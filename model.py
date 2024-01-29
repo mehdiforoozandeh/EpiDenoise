@@ -376,7 +376,7 @@ class Peak_Loss(nn.Module):
         super(Peak_Loss, self).__init__()
         self.p = p
     
-    def forward(self, y_true, y_pred):
+    def forward(self, y_pred, y_true):
         top_p_percent = int(self.p * len(y_true))
     
         # Get the indices of the top p percent of the observed (true) values
