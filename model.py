@@ -834,7 +834,7 @@ class EpiDenoise21(nn.Module):
                 reversed_channels[i], reversed_channels[i + 1], 
                 reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
         ])
-        # self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
+        self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 1, dilation)
 
         self.signal_decoder =  nn.Linear(output_dim, output_dim)
         self.mask_decoder = nn.Linear(output_dim, output_dim)
@@ -855,7 +855,7 @@ class EpiDenoise21(nn.Module):
 
         x = x.permute(1, 2, 0) # to N, F, L'
         x = self.deconvtower(x)
-        # x = self.deconvF(x)
+        x = self.deconvF(x)
         x = x.permute(2, 0, 1)  # to L, N, F
         
         mask = torch.sigmoid(self.mask_decoder(x))
