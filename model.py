@@ -378,20 +378,29 @@ class Peak_Loss(nn.Module):
     
     def forward(self, y_pred, y_true):
         top_p_percent = int(self.p * len(y_true))
-    
+
+        # Ensure y_pred and y_true are on CPU and converted to numpy, if they are on GPU
+        if y_pred.is_cuda:
+            y_pred = y_pred.cpu()
+        if y_true.is_cuda:
+            y_true = y_true.cpu()
+
         # Get the indices of the top p percent of the observed (true) values
-        top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
-        
+        # Using PyTorch's topk for this purpose
+        _, top_p_percent_obs_i = torch.topk(y_true, top_p_percent, sorted=False)
+
         # Get the indices of the top p percent of the predicted values
-        top_p_percent_pred_i = np.argsort(y_pred)[-top_p_percent:]
+        _, top_p_percent_pred_i = torch.topk(y_pred, top_p_percent, sorted=False)
 
         # Calculate the overlap
-        overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
+        # Convert to set for intersection
+        overlap = len(set(top_p_percent_obs_i.tolist()).intersection(top_p_percent_pred_i.tolist()))
 
         # Calculate the percentage of overlap
-        overlap_percent = overlap / top_p_percent 
+        overlap_percent = overlap / top_p_percent
 
         return overlap_percent
+
         
 class ComboLoss15(nn.Module):
     def __init__(self, alpha=0.5):
