@@ -847,9 +847,16 @@ class EpiDenoise21(nn.Module):
         x = self.conv1(x)
 
         x = x + m        
+        x = self.convtower(x)
+
         x = x.permute(2, 0, 1)  # to L, N, F
         
         x = self.transformer_encoder(x)
+
+        x = x.permute(1, 2, 0) # to N, F, L'
+        x = self.deconvtower(x)
+        x = self.deconvF(x)
+        x = x.permute(2, 0, 1)  # to L, N, F
         
         mask = torch.sigmoid(self.mask_decoder(x))
         x = self.signal_decoder(x)
