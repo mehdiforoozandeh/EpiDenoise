@@ -1988,12 +1988,12 @@ class PRE_TRAINER(object):
                             x_batch = pattern_batch[i:i+batch_size]
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
-                            # if len(available_assays_ind) == 1:
-                            masked_x_batch, cloze_mask = mask_data16(
-                                x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
-                            # else:
-                            #     masked_x_batch, cloze_mask = mask_data18(
-                            #         x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            if len(available_assays_ind) == 1:
+                                masked_x_batch, cloze_mask = mask_data16(
+                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            else:
+                                masked_x_batch, cloze_mask = mask_data18(
+                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                                 
                             union_mask = cloze_mask | missing_mask_batch
 
@@ -2171,9 +2171,12 @@ class PRE_TRAINER(object):
                             x_batch = pattern_batch[i:i+batch_size]
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
-                            # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data16(
-                                x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            if len(available_assays_ind) == 1:
+                                masked_x_batch, cloze_mask = mask_data16(
+                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            else:
+                                masked_x_batch, cloze_mask = mask_data18(
+                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
 
                             union_mask = cloze_mask | missing_mask_batch
 
@@ -2860,15 +2863,15 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 8,
-        "d_model": 768,
-        "nlayers": 4,
+        "nhead": 4,
+        "d_model": 512,
+        "nlayers": 3,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [1, 11, 9, 7, 5],
-        "conv_out_channels": [96, 128, 256, 512, 768],
+        "kernel_size": [1, 9, 7, 5],
+        "conv_out_channels": [96, 128, 256, 512],
         "dilation":1,
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
         "learning_rate": 0.0001,
     }
