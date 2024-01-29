@@ -952,7 +952,6 @@ class PRE_TRAINER(object):
                         mask[:,:,i] = True
 
                     outputs, pred_mask = self.model(x_batch, ~mask)
-                    print(outputs[0,0,:])
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -966,6 +965,7 @@ class PRE_TRAINER(object):
         peak_overlaps = []
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
+            print(pred)
             metrics_list = []
 
             if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
