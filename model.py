@@ -494,9 +494,9 @@ class ComboLoss21(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
-        print(
-            pred_signals[union_mask].mean().item(), true_signals[union_mask].mean().item(), "|" ,
-            pred_signals[~union_mask].mean().item(), true_signals[~union_mask].mean().item())
+        # print(
+        #     pred_signals[union_mask].mean().item(), true_signals[union_mask].mean().item(), "|" ,
+        #     pred_signals[~union_mask].mean().item(), true_signals[~union_mask].mean().item())
         # print(cloze_mask[0,0,:])
         # print(pred_mask[0,0,:])
 
@@ -954,6 +954,8 @@ class PRE_TRAINER(object):
                     outputs, pred_mask = self.model(x_batch, ~mask)
                 
                 elif version == "21":
+                    print(x_batch[0,0,:])
+                    print(mask[0,0,:])
                     outputs, pred_mask = self.model(x_batch, mask)
 
             # Store the predictions in the large tensor
@@ -2156,8 +2158,7 @@ class PRE_TRAINER(object):
                             union_mask = cloze_mask | missing_mask_batch
 
                             masked_x_batch = add_noise(masked_x_batch, 0.4)
-                            masked_x_batch[union_mask] = -1000
-                            x_batch[missing_mask_batch] = -1000
+                            masked_x_batch[union_mask] = -1
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
