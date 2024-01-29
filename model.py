@@ -791,34 +791,48 @@ class EpiDenoise20(nn.Module):
         return x, mask
 
 class EpiDenoise21(nn.Module):
-    def __init__(self, input_dim, nhead, d_model, nlayers, output_dim, dropout=0.1, context_length=2000):
+    def __init__(self, 
+                input_dim, conv_out_channels, conv_kernel_sizes, dilation, nhead, 
+                d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
         super(EpiDenoise21, self).__init__()
 
-        # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
-        self.embedding_linear = nn.Linear(input_dim, d_model)
+        stride = 1
+        n_cnn_layers = len(conv_out_channels)
+
+        # Convolutional layers
+        self.conv1 = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
+
+        self.convm = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
-        # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
-    def forward(self, src):
-        # src = self.mf_embedding(src, linear=True)
-        src = self.embedding_linear(src)
+    def forward(self, x, m):
+        m = m.permute(0, 2, 1) # to N, F, L
+        m = self.convm(m.float())
 
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        x = x.permute(0, 2, 1) # to N, F, L
+        x = self.conv1(x)
+
+        x = x + m        
+        x = x.permute(2, 0, 1)  # to L, N, F
         
-        src = self.transformer_encoder(src) 
+        x = self.transformer_encoder(x)
         
-        msk = torch.sigmoid(self.mask_decoder(src))
-        src = self.signal_decoder(src)
+        mask = torch.sigmoid(self.mask_decoder(x))
+        x = self.signal_decoder(x)
 
-        src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
+        x = torch.permute(x, (1, 0, 2))  # to N, L, F
+        mask = torch.permute(mask, (1, 0, 2))  # to N, L, F
 
-        return src, msk
+        return x, mask
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -932,7 +946,7 @@ class PRE_TRAINER(object):
                     outputs, pred_mask = self.model(x_batch, ~mask)
                 
                 elif version == "21":
-                    outputs, pred_mask = self.model(x_batch)
+                    outputs, pred_mask = self.model(x_batch, ~mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -2139,7 +2153,8 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask = self.model(masked_x_batch)
+                            outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
+
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
                             loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
@@ -2728,18 +2743,20 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
     chunk = hyper_parameters["chunk"]
     context_length = hyper_parameters["context_length"]
 
+    conv_out_channels = hyper_parameters["conv_out_channels"]
+    dilation = hyper_parameters["dilation"]
+    kernel_size = hyper_parameters["kernel_size"]
+
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
-
-    n_chunks = (mask_percentage * context_length) // 6 
 
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
     # end of hyperparameters
 
     model = EpiDenoise21(
-        input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
-        output_dim=output_dim, dropout=dropout, context_length=context_length)
+        input_dim, conv_out_channels, kernel_size, dilation, nhead, 
+        d_model, nlayers, output_dim, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
