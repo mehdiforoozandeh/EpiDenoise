@@ -952,6 +952,7 @@ class PRE_TRAINER(object):
                         mask[:,:,i] = True
 
                     outputs, pred_mask = self.model(x_batch, ~mask)
+                    print(outputs[0,0,:])
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
