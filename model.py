@@ -2543,9 +2543,9 @@ if __name__ == "__main__":
     hyper_parameters20 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.1,
-        "nhead": 2,
-        "d_model": 256,
+        "dropout": 0.05,
+        "nhead": 4,
+        "d_model": 64,
         "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.2,
@@ -2554,7 +2554,7 @@ if __name__ == "__main__":
         "dilation":1,
         "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 0.005,
+        "learning_rate": 0.0001,
     }
 
     if sys.argv[1] == "epd16":
