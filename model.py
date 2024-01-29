@@ -739,9 +739,6 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m, test=False):
-        print(x.shape)
-        print(x[0,0,:])
-        print(m[0,0,:])
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
