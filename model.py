@@ -2157,6 +2157,7 @@ class PRE_TRAINER(object):
 
                             masked_x_batch = add_noise(masked_x_batch, 0.4)
                             masked_x_batch[union_mask] = -1000
+                            x_batch[missing_mask_batch] = -1000
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
