@@ -738,7 +738,7 @@ class EpiDenoise20(nn.Module):
         self.signal_decoder = nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
-    def forward(self, x, m):
+    def forward(self, x, m, test=False):
         print(x.shape)
         print(x[0,0,:])
         print(m[0,0,:])
@@ -748,10 +748,9 @@ class EpiDenoise20(nn.Module):
         m = self.convm(m.float())
         x = self.conv1(x)
 
-        print(x.shape)
-        print(x[0,:,0])
-        print(m[0,:,0])
-        exit()
+        if test:
+            print(x[0,:,0])
+            print(m[0,:,0])
 
         x = x + m
 
@@ -884,7 +883,7 @@ class PRE_TRAINER(object):
                     for i in missing_x_i: 
                         mask[:,:,i] = True
 
-                    outputs, pred_mask = self.model(x_batch, ~mask)
+                    outputs, pred_mask = self.model(x_batch, ~mask, test=True)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
