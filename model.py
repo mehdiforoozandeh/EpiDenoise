@@ -2164,7 +2164,7 @@ class PRE_TRAINER(object):
 
                             outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
 
-                            if p == 32:
+                            if p == 32 and epoch==9:
                                 print(outputs[0,0,:])
                                 exit()
 
