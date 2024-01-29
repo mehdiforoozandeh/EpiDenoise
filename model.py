@@ -39,12 +39,12 @@ class AttentionPooling1D(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D):
         super(ConvBlock, self).__init__()
-        # self.batch_norm = nn.BatchNorm1d(in_C)
+        self.batch_norm = nn.BatchNorm1d(in_C)
         self.conv = nn.Conv1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        # x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = self.conv(x)
         x = F.gelu(x)
         return x
