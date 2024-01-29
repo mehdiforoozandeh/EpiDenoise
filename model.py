@@ -950,6 +950,7 @@ class PRE_TRAINER(object):
                     mask = torch.zeros_like(x_batch, dtype=torch.bool)
                     for i in missing_x_i: 
                         mask[:,:,i] = True
+                    mask = mask.to(self.device)
 
                     outputs, pred_mask = self.model(x_batch, ~mask)
 
