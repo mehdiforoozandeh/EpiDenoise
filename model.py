@@ -749,8 +749,8 @@ class EpiDenoise20(nn.Module):
         x = self.conv1(x)
 
         print(x.shape)
-        print(x[0,0,:])
-        print(m[0,0,:])
+        print(x[0,:,0])
+        print(m[0,:,0])
         exit()
 
         x = x + m
