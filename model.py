@@ -739,6 +739,10 @@ class EpiDenoise20(nn.Module):
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
     def forward(self, x, m):
+        print(x.shape)
+        print(x[0,0,:])
+        print(m[0,0,:])
+        exit()
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
@@ -1904,6 +1908,7 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
 
                             outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
+
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
