@@ -918,6 +918,7 @@ class PRE_TRAINER(object):
 
         # Initialize a tensor to store all predictions
         P = torch.empty_like(X, device="cpu")
+        print(P.sum())
 
         # make predictions in batches
         for i in range(0, len(X), batch_size):
