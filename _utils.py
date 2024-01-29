@@ -243,7 +243,7 @@ def get_bin_value_dict(input_dict):
 def add_noise(data, noise_factor):
     noise = torch.from_numpy(np.random.normal(loc=0.0, scale=1.0, size=data.shape))
     noisy_data = data + noise_factor * noise
-    # noisy_data = np.clip(noisy_data, 0., 1.)
+    noisy_data = torch.clamp(noisy_data, min=0)
     return noisy_data.to(torch.float32)
 
 def peak_overlap(y_true, y_pred, p=0.01):

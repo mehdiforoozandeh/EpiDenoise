@@ -814,8 +814,27 @@ class EpiDenoise21(nn.Module):
             input_dim, conv_out_channels[0], 
             1, stride, dilation, pool_type="None", residuals=False)
 
+        self.convtower = nn.Sequential(*[
+            ConvTower(
+                conv_out_channels[i], 
+                conv_out_channels[i + 1],
+                conv_kernel_sizes[i + 1], stride, dilation
+            ) for i in range(n_cnn_layers - 1)
+        ])
+
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
+
+        # Deconvolution layers
+        reversed_channels = list(reversed(conv_out_channels))
+        reversed_kernels = list(reversed(conv_kernel_sizes))
+
+        self.deconvtower = nn.Sequential(*[
+            DeconvBlock(
+                reversed_channels[i], reversed_channels[i + 1], 
+                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
+        ])
+        self.deconvF = DeconvBlock(reversed_channels[-1], output_dim, reversed_kernels[-1], 2, dilation)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
@@ -2834,15 +2853,15 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 2,
-        "d_model": 64,
-        "nlayers": 1,
+        "nhead": 8,
+        "d_model": 768,
+        "nlayers": 4,
         "epochs": 10,
-        "mask_percentage": 0.2,
-        "kernel_size": [1],
-        "conv_out_channels": [64],
+        "mask_percentage": 0.3,
+        "kernel_size": [11, 9, 6, 7],
+        "conv_out_channels": [128, 128, 256, 512, 768],
         "dilation":1,
-        "context_length": 400,
+        "context_length": 800,
         "batch_size": 50,
         "learning_rate": 0.0001,
     }
