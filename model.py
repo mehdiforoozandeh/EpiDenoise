@@ -966,7 +966,7 @@ class PRE_TRAINER(object):
         peak_overlaps = []
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
-            print(pred)
+            # print(pred)
             metrics_list = []
 
             if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
@@ -2163,6 +2163,10 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
 
                             outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
+
+                            if p == 32:
+                                print(outputs[0,0,:])
+                                exit()
 
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
