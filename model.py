@@ -970,7 +970,9 @@ class PRE_TRAINER(object):
         spearmans = []
         peak_overlaps = []
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
+            print(P[:, j].sum())
             pred = P[:, j].numpy()
+            print(pred.sum())
             # print(pred)
             metrics_list = []
 
