@@ -1898,7 +1898,7 @@ class PRE_TRAINER(object):
                                 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.4)
+                            # masked_x_batch = add_noise(masked_x_batch, 0.4)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
