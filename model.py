@@ -2864,16 +2864,16 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 512,
-        "nlayers": 3,
+        "d_model": 256,
+        "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [1, 9, 7, 5],
-        "conv_out_channels": [96, 128, 256, 512],
+        "kernel_size": [1, 9, 3, 3],
+        "conv_out_channels": [64, 64, 128, 256],
         "dilation":1,
-        "context_length": 400,
-        "batch_size": 50,
-        "learning_rate": 0.0005,
+        "context_length": 200,
+        "batch_size": 100,
+        "learning_rate": 0.0001,
     }
 
     if sys.argv[1] == "epd16":
