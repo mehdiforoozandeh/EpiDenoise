@@ -2858,7 +2858,7 @@ if __name__ == "__main__":
         "nlayers": 4,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [1, 11, 9, 6, 7],
+        "kernel_size": [1, 11, 9, 7, 5],
         "conv_out_channels": [96, 128, 256, 512, 768],
         "dilation":1,
         "context_length": 800,
