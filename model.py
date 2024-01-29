@@ -927,6 +927,11 @@ class PRE_TRAINER(object):
 
             with torch.no_grad():
                 x_batch = x_batch.to(self.device)
+                mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
+                for i in missing_x_i: 
+                    mask[:,:,i] = True
+                mask = mask.to(self.device)
+
                 if version == "10":
                     # (no position is masked)
                     pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
@@ -936,10 +941,6 @@ class PRE_TRAINER(object):
                     outputs, pred_mask, SAP = self.model(x_batch, segment_label)
 
                 elif version == "17":
-                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
-                    for i in missing_x_i: 
-                        mask[:,:,i] = True
-
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
                 
                 elif version == "18":
@@ -953,12 +954,7 @@ class PRE_TRAINER(object):
                     outputs, pred_mask = self.model(x_batch, ~mask)
                 
                 elif version == "21":
-                    mask = torch.zeros_like(x_batch, dtype=torch.bool)
-                    for i in missing_x_i: 
-                        mask[:,:,i] = True
-                    mask = mask.to(self.device)
-
-                    outputs, pred_mask = self.model(x_batch, ~mask)
+                    outputs, pred_mask = self.model(x_batch, mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -2160,7 +2156,7 @@ class PRE_TRAINER(object):
                             union_mask = cloze_mask | missing_mask_batch
 
                             masked_x_batch = add_noise(masked_x_batch, 0.4)
-                            masked_x_batch[union_mask] = -1
+                            masked_x_batch[union_mask] = -1000
 
                             # move to GPU
                             x_batch = x_batch.to(self.device)
