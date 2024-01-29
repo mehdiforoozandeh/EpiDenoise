@@ -960,9 +960,7 @@ class PRE_TRAINER(object):
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
         
-        print(P.sum())
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
-        print(P.sum())
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
@@ -970,9 +968,7 @@ class PRE_TRAINER(object):
         spearmans = []
         peak_overlaps = []
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
-            print(P[:, j].sum())
             pred = P[:, j].numpy()
-            print(pred.sum())
             # print(pred)
             metrics_list = []
 
@@ -980,6 +976,7 @@ class PRE_TRAINER(object):
                 target = Y[:, j].numpy()   
                 mse_GW = np.mean((np.array(target) - np.array(pred))**2)
                 spearman_GW = spearmanr(pred, target)[0]
+                print(pred)
                 ovr = peak_overlap(target, pred, p=0.05)
 
                 mses.append(mse_GW)
