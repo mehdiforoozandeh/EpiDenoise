@@ -972,11 +972,11 @@ class PRE_TRAINER(object):
             metrics_list = []
 
             if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
-                print(pred.sum())
+                print(pred, pred.sum())
                 target = Y[:, j].numpy()   
                 mse_GW = np.mean((np.array(target) - np.array(pred))**2)
                 spearman_GW = spearmanr(pred, target)[0]
-                print(pred.sum())
+                print(pred, pred.sum())
                 ovr = peak_overlap(target, pred, p=0.05)
 
                 mses.append(mse_GW)
