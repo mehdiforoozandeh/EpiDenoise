@@ -670,8 +670,6 @@ class EpiDenoise18(nn.Module):
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
-        self.softmax = torch.nn.Softmax(dim=-1)
-
     def forward(self, src):
         # src = self.mf_embedding(src, linear=True)
         src = self.embedding_linear(src)
@@ -878,7 +876,7 @@ class PRE_TRAINER(object):
                     for i in missing_x_i: 
                         mask[:,:,i] = True
 
-                    outputs, pred_mask = self.model(x_batch, mask)
+                    outputs, pred_mask = self.model(x_batch, ~mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -1891,7 +1889,7 @@ class PRE_TRAINER(object):
                                 masked_x_batch, cloze_mask = mask_data16(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage/2)
                             else:
-                                masked_x_batch, cloze_mask = mask_data16(
+                                masked_x_batch, cloze_mask = mask_data18(
                                     x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
                                 
                             union_mask = cloze_mask | missing_mask_batch
@@ -1905,7 +1903,7 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask = self.model(masked_x_batch, union_mask)
+                            outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
 
@@ -2420,7 +2418,6 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
     context_length = hyper_parameters["context_length"]
-
 
     conv_out_channels = hyper_parameters["conv_out_channels"]
     dilation = hyper_parameters["dilation"]
