@@ -2167,7 +2167,7 @@ class PRE_TRAINER(object):
                             union_mask = union_mask.to(self.device)
                             cloze_mask = cloze_mask.to(self.device)
 
-                            outputs, pred_mask = self.model(masked_x_batch, ~union_mask)
+                            outputs, pred_mask = self.model(masked_x_batch, union_mask)
 
                             mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
                                 outputs, x_batch, pred_mask, cloze_mask, union_mask)
