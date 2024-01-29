@@ -2740,7 +2740,6 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
     nlayers = hyper_parameters["nlayers"]
     epochs = hyper_parameters["epochs"]
     mask_percentage = hyper_parameters["mask_percentage"]
-    chunk = hyper_parameters["chunk"]
     context_length = hyper_parameters["context_length"]
 
     conv_out_channels = hyper_parameters["conv_out_channels"]
