@@ -494,8 +494,10 @@ class ComboLoss21(nn.Module):
         self.bce_loss = nn.BCELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
-        a = ~union_mask
-        print(pred_mask[union_mask].mean().item(), pred_mask[~union_mask].mean().item())
+        a = union_mask.float()
+        print(
+            pred_mask[union_mask].mean().item(), a[union_mask].mean().item(), "|" ,
+            pred_mask[~union_mask].mean().item(), a[~union_mask].mean().item())
         # print(cloze_mask[0,0,:])
         # print(pred_mask[0,0,:])
 
