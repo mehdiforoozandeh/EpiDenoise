@@ -742,7 +742,7 @@ class EpiDenoise20(nn.Module):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
-        m = self.convm(m.float())
+        m = F.sigmoid(self.convm(m.float()))
         x = self.conv1(x)
 
         if test:
