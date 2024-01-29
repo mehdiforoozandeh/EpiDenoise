@@ -956,7 +956,7 @@ class PRE_TRAINER(object):
                 elif version == "21":
                     outputs, pred_mask = self.model(x_batch, mask)
 
-            print(output.cpu())
+            print(outputs.cpu())
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
         
