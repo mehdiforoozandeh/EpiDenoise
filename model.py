@@ -738,16 +738,13 @@ class EpiDenoise20(nn.Module):
         self.signal_decoder = nn.Linear(d_model, output_dim)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
-    def forward(self, x, m, test=False):
+    def forward(self, x, m):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
         m = F.sigmoid(self.convm(m.float()))
         x = self.conv1(x)
 
-        if test:
-            print(x[0,:,0])
-            print(m[0,:,0])
 
         x = x + m
 
@@ -880,7 +877,7 @@ class PRE_TRAINER(object):
                     for i in missing_x_i: 
                         mask[:,:,i] = True
 
-                    outputs, pred_mask = self.model(x_batch, ~mask, test=True)
+                    outputs, pred_mask = self.model(x_batch, ~mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
