@@ -2202,6 +2202,7 @@ class PRE_TRAINER(object):
                             self.optimizer.zero_grad()
                             torch.cuda.empty_cache()
                             loss = 0
+                            
                             for AR in range(context.shape[1]):
                                 trg_msk[:, :AR] = True
 
