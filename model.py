@@ -260,6 +260,48 @@ class RelativeEncoderLayer(nn.Module):
 
         return src
 
+class RelativeDecoderLayer(nn.Module):
+    def __init__(self, hid_dim, n_heads, pf_dim, dropout):
+        super().__init__()
+
+        self.layer_norm_cross_attn = nn.LayerNorm(hid_dim)
+        self.layer_norm_ff = nn.LayerNorm(hid_dim)
+
+        self.encoder_attention = RelativeMultiHeadAttentionLayer(hid_dim, n_heads, dropout)
+        self.positionwise_feedforward = nn.Sequential(
+            nn.Linear(hid_dim, pf_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(pf_dim, hid_dim)
+        )
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, trg, enc_src, trg_mask):
+        # trg = [batch size, trg len, hid dim]
+        # enc_src = [batch size, src len, hid dim]
+        # trg_mask = [batch size, trg len]
+        # src_mask = [batch size, src len]
+
+        # Encoder-decoder attention
+        query = enc_src
+        key = trg
+        value = trg
+        # Using the decoder input as the query, and the encoder output as key and value
+        _trg, encoder_attn = self.encoder_attention(query, key, value, trg_mask)
+
+        # Residual connection and layer norm
+        trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
+
+        # Positionwise feedforward
+        _trg = self.positionwise_feedforward(trg)
+
+        # Residual connection and layer norm
+        trg = self.layer_norm_ff(trg + self.dropout(_trg))
+
+        return trg, encoder_attn
+
+
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
         super(FeedForwardNN, self).__init__()
@@ -823,19 +865,8 @@ class EpiDenoise21(nn.Module):
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
 
-        # Deconvolution layers
-        reversed_channels = list(reversed(conv_out_channels))
-        reversed_kernels = list(reversed(conv_kernel_sizes))
-
-        self.deconvtower = nn.Sequential(*[
-            DeconvBlock(
-                reversed_channels[i], reversed_channels[i + 1], 
-                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 2)
-        ])
-        self.deconvF = DeconvBlock(reversed_channels[-2], output_dim, reversed_kernels[-1], 2, dilation)
-
-        self.signal_decoder =  nn.Linear(output_dim, output_dim)
-        self.mask_decoder = nn.Linear(output_dim, output_dim)
+        # Transformer Decoder Layer
+        self.signal_decoder = RelativeDecoderLayer(hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
 
     def forward(self, x, m):
         m = m.permute(0, 2, 1) # to N, F, L
@@ -850,19 +881,10 @@ class EpiDenoise21(nn.Module):
         x = x.permute(2, 0, 1)  # to L, N, F
         
         x = self.transformer_encoder(x)
-
-        x = x.permute(1, 2, 0) # to N, F, L'
-        x = self.deconvtower(x)
-        x = self.deconvF(x)
-        x = x.permute(2, 0, 1)  # to L, N, F
-        
-        mask = torch.sigmoid(self.mask_decoder(x))
         x = self.signal_decoder(x)
-
         x = torch.permute(x, (1, 0, 2))  # to N, L, F
-        mask = torch.permute(mask, (1, 0, 2))  # to N, L, F
 
-        return x, mask
+        return x
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -1995,7 +2017,7 @@ class PRE_TRAINER(object):
                                 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            # masked_x_batch = add_noise(masked_x_batch, 0.4)
+                            masked_x_batch = add_noise(masked_x_batch, 0.2)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
