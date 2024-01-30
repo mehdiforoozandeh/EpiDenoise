@@ -857,11 +857,11 @@ class EpiDenoise21(nn.Module):
 
         # Convolutional layers
         self.d_conv1 = ConvTower(
-            input_dim, conv_out_channels[0], 
+            input_dim, d_model, 
             1, stride, dilation, pool_type="None", residuals=False)
 
         self.d_convm = ConvTower(
-            input_dim, conv_out_channels[0], 
+            input_dim, d_model, 
             1, stride, dilation, pool_type="None", residuals=False)
 
         # Replace deconvolution layers with RelativeDecoderLayer
