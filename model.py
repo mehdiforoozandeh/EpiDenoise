@@ -872,13 +872,13 @@ class EpiDenoise21(nn.Module):
         self.linear_output = nn.Linear(d_model, output_dim)
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
-        src_mask = src_mask.permute(0, 2, 1) # to N, F, L
-        src_mask = self.convm(src_mask.float())
+        src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
+        src_missing_mask = self.convm(src_missing_mask.float())
 
         src = src.permute(0, 2, 1) # to N, F, L
         src = self.conv1(src)
 
-        src = src + src_mask        
+        src = src + src_missing_mask        
         src = self.convtower(src)
 
         src = src.permute(2, 0, 1)  # to L, N, F
