@@ -2186,60 +2186,57 @@ class PRE_TRAINER(object):
                     for pattern, indices in missing_f_pattern.items():
                         p += 1
 
-                        pattern_batch = x[indices]
+                        x_batch = x[indices]
                         missing_mask_patten_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
 
-                        # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
+                        # x_batch = pattern_batch[b:b+batch_size, :, :]
 
-                        for b in range(0, len(pattern_batch), batch_size):
-                            # loss = 0
-
+                        for i in range(0, L - context_length):
                             self.optimizer.zero_grad()
                             torch.cuda.empty_cache()
-
-                            x_batch = pattern_batch[b:b+batch_size, :, :]
-
-                            for i in range(0, L - context_length):
-                                # Extract the context and the target for this step
-                                context = x_batch[:, i:i+context_length, :].to(self.device)
-                                target_context = x_batch[:, i+1:i+context_length+1, :].to(self.device) 
-
-                                missing_msk_src = missing_mask_patten_batch[b:b+batch_size, i:i+context_length, :].to(self.device) 
-
-                                trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
-                                for AR in range(context.shape[1]):
-                                    trg_msk[:, :AR] = True
-
-                                    outputs = self.model(
-                                        context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
-
-                                    loss = self.criterion(outputs, target_context, missing_msk_src)
-                                    loss.backward()  
-                                    self.optimizer.step()
-                                    
-                            if torch.isnan(loss).sum() > 0:
-                                skipmessage = "Encountered nan loss! Skipping batch..."
-                                print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
-                                log_strs.append(skipmessage)
-                                print(skipmessage)
-                                del x_batch
-                                del outputs
-                                torch.cuda.empty_cache()
-                                continue
                             
+                            loss = 0
+                            # Extract the context and the target for this step
+                            context = x_batch[:, i:i+context_length, :].to(self.device)
+                            target_context = x_batch[:, i+1:i+context_length+1, :].to(self.device) 
+                            missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device) 
+
+                            trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
+                            
+                            for AR in range(context.shape[1]):
+                                trg_msk[:, :AR] = True
+
+                                outputs = self.model(
+                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+
+                                loss += self.criterion(outputs, target_context, missing_msk_src)
+                                
+                            loss.backward()  
+                            self.optimizer.step()
+                                
+                        if torch.isnan(loss).sum() > 0:
+                            skipmessage = "Encountered nan loss! Skipping batch..."
+                            print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
+                            log_strs.append(skipmessage)
+                            print(skipmessage)
                             del x_batch
                             del outputs
-                            del context
-                            del target_context
-                            del missing_msk_src
-
-                            epoch_loss.append(loss.item())
-
-                            # Clear GPU memory again
                             torch.cuda.empty_cache()
+                            continue
                         
+                        del x_batch
+                        del outputs
+                        del context
+                        del target_context
+                        del missing_msk_src
+
+                        epoch_loss.append(loss.item())
+
+                        # Clear GPU memory again
+                        torch.cuda.empty_cache()
+                    
                         if p == 1 or p%8 == 0:
                             logfile = open("models/EPD21_log.txt", "w")
 
