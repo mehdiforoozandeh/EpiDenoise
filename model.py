@@ -285,8 +285,8 @@ class RelativeDecoderLayer(nn.Module):
 
         # Encoder-decoder attention
         query = trg
-        key = trg
-        value = trg
+        key = enc_src
+        value = enc_src
 
         # Using the decoder input as the query, and the encoder output as key and value
         _trg, encoder_attn = self.encoder_attention(query, key, value, trg_mask)
@@ -849,10 +849,10 @@ class EpiDenoise21(nn.Module):
             ) for i in range(n_cnn_layers - 1)
         ])
 
-        # self.encoder_layer = RelativeEncoderLayer(
-        #     d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        # self.transformer_encoder = nn.TransformerEncoder(
-        #     self.encoder_layer, num_layers=n_encoder_layers)
+        self.encoder_layer = RelativeEncoderLayer(
+            d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=n_encoder_layers)
 
         # Convolutional layers
         self.d_conv1 = ConvTower(
@@ -864,12 +864,12 @@ class EpiDenoise21(nn.Module):
             1, stride, dilation, pool_type="None", residuals=False)
 
         # Replace deconvolution layers with RelativeDecoderLayer
-        # self.relative_decoder = RelativeDecoderLayer(
-        #     hid_dim=d_model, 
-        #     n_heads=nhead, 
-        #     pf_dim=4*d_model, 
-        #     dropout=dropout
-        # )
+        self.relative_decoder = RelativeDecoderLayer(
+            hid_dim=d_model, 
+            n_heads=nhead, 
+            pf_dim=2*d_model, 
+            dropout=dropout
+        )
 
         self.linear_output = nn.Linear(d_model, output_dim)
 
