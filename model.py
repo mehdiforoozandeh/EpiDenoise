@@ -302,7 +302,6 @@ class RelativeDecoderLayer(nn.Module):
 
         return trg
 
-
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
         super(FeedForwardNN, self).__init__()
@@ -897,9 +896,6 @@ class EpiDenoise21(nn.Module):
 
         # Apply the relative decoder
         src = self.relative_decoder(trg, src, trg_mask)
-
-        # Decoder output is permuted back to N, L, F for linear layers
-        # src = src.permute(1, 0, 2)  # to N, L, F
 
         # Apply the final linear layers
         src = self.linear_output(src)
@@ -2203,6 +2199,7 @@ class PRE_TRAINER(object):
 
                             trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
                             
+                            loss = 0
                             for AR in range(context.shape[1]):
                                 self.optimizer.zero_grad()
                                 torch.cuda.empty_cache()
@@ -2212,15 +2209,12 @@ class PRE_TRAINER(object):
                                 outputs = self.model(
                                     context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                                loss = self.criterion(outputs, target_context, missing_msk_src)
-                                if AR %100 == 0:
-                                    print(loss.item())
-                                loss.backward()  
-                                self.optimizer.step()
+                                loss += self.criterion(outputs, target_context, missing_msk_src)
+                            loss.backward()  
+                            self.optimizer.step()
                                 
                         if torch.isnan(loss).sum() > 0:
                             skipmessage = "Encountered nan loss! Skipping batch..."
-                            print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
                             log_strs.append(skipmessage)
                             print(skipmessage)
                             del x_batch
