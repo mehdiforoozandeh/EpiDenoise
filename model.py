@@ -289,7 +289,7 @@ class RelativeDecoderLayer(nn.Module):
         value = trg
 
         # Using the decoder input as the query, and the encoder output as key and value
-        _trg, encoder_attn = self.encoder_attention(query, key, value, None)# trg_mask)
+        _trg = self.encoder_attention(query, key, value, None)# trg_mask)
 
         # Residual connection and layer norm
         trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
