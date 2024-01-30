@@ -533,11 +533,11 @@ class ComboLoss20(nn.Module):
 class ComboLoss21(nn.Module):
     def __init__(self):
         super(ComboLoss21, self).__init__()
-        self.l1_loss = nn.L1Loss(reduction='mean')
+        self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, union_mask):
 
-        mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         if torch.isnan(pred_signals).any() or torch.isnan(mse_obs_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
