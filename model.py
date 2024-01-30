@@ -533,29 +533,15 @@ class ComboLoss21(nn.Module):
     def __init__(self):
         super(ComboLoss21, self).__init__()
         self.l1_loss = nn.L1Loss(reduction='mean')
-        self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, pred_mask, cloze_mask, union_mask):
-        # print(
-        #     pred_signals[union_mask].mean().item(), true_signals[union_mask].mean().item(), "|" ,
-        #     pred_signals[~union_mask].mean().item(), true_signals[~union_mask].mean().item())
-        # print(cloze_mask[0,0,:])
-        # print(pred_mask[0,0,:])
+    def forward(self, pred_signals, true_signals, union_mask):
 
         mse_obs_loss =  self.l1_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_pred_loss = self.l1_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-
-        # Check for nan values in pred_adjac and true_adjac
-        if torch.isnan(pred_signals).any() or torch.isnan(pred_mask).any():
-            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
-
-        bce_mask_loss = self.bce_loss(pred_mask, union_mask.float())
-
-        if torch.isnan(mse_obs_loss) or torch.isnan(mse_pred_loss) or torch.isnan(bce_mask_loss):
+        if torch.isnan(pred_signals).any() or torch.isnan(mse_obs_loss):
             print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
-        
-        return mse_obs_loss, mse_pred_loss, bce_mask_loss
+            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
+
+        return mse_obs_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -865,26 +851,61 @@ class EpiDenoise21(nn.Module):
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
 
-        # Transformer Decoder Layer
-        self.signal_decoder = RelativeDecoderLayer(hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
 
-    def forward(self, x, m):
-        m = m.permute(0, 2, 1) # to N, F, L
-        m = self.convm(m.float())
+        # Convolutional layers
+        self.d_conv1 = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
 
-        x = x.permute(0, 2, 1) # to N, F, L
-        x = self.conv1(x)
+        self.d_convm = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
 
-        x = x + m        
-        x = self.convtower(x)
+        # Replace deconvolution layers with RelativeDecoderLayer
+        self.relative_decoder = RelativeDecoderLayer(
+            hid_dim=d_model, 
+            n_heads=nhead, 
+            pf_dim=4*d_model, 
+            dropout=dropout, 
+            max_position_length=context_length
+        )
 
-        x = x.permute(2, 0, 1)  # to L, N, F
+        self.linear_output = nn.Linear(d_model, output_dim)
+
+    def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
+        src_mask = src_mask.permute(0, 2, 1) # to N, F, L
+        src_mask = self.convm(src_mask.float())
+
+        src = src.permute(0, 2, 1) # to N, F, L
+        src = self.conv1(src)
+
+        src = src + src_mask        
+        src = self.convtower(src)
+
+        src = src.permute(2, 0, 1)  # to L, N, F
         
-        x = self.transformer_encoder(x)
-        x = self.signal_decoder(x)
-        x = torch.permute(x, (1, 0, 2))  # to N, L, F
+        src = self.transformer_encoder(src)
+        
 
-        return x
+        trg = trg.permute(0, 2, 1)
+        trg = self.d_conv1(trg)
+
+        trg_missing_mask = trg_missing_mask.permute(0, 2, 1)
+        trg_missing_mask = self.d_convm(trg_missing_mask)
+
+        trg = trg + trg_missing_mask  
+        trg = trg.permute(2, 0, 1)      
+
+        # Apply the relative decoder
+        src, _ = self.relative_decoder(trg, src, trg_mask)
+
+        # Decoder output is permuted back to N, L, F for linear layers
+        src = src.permute(1, 0, 2)  # to N, L, F
+
+        # Apply the final linear layers
+        src = self.linear_output(src)
+
+        return src
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -2160,9 +2181,6 @@ class PRE_TRAINER(object):
                     # zero grads before going over all batches and all patterns of missing data
                     self.optimizer.zero_grad()
                     epoch_loss = []
-                    epoch_obs_loss = []
-                    epoch_msk_loss = []
-                    epoch_clz_loss = []
                     t0 = datetime.now()
 
                     p = 0
@@ -2176,64 +2194,42 @@ class PRE_TRAINER(object):
 
                         # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
-                        if context_length < pattern_batch.shape[1]:
-                            context_length_factor = context_length / pattern_batch.shape[1]
+                        for b in range(0, len(pattern_batch), batch_size):
+                            loss = 0
 
-                            pattern_batch = reshape_tensor(pattern_batch, context_length_factor)
-                            missing_mask_patten_batch = reshape_tensor(missing_mask_patten_batch, context_length_factor)
-
-                        # Break down x into smaller batches
-                        for i in range(0, len(pattern_batch), batch_size):
                             self.optimizer.zero_grad()
-
                             torch.cuda.empty_cache()
 
-                            x_batch = pattern_batch[i:i+batch_size]
-                            missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
-                            
-                            if len(available_assays_ind) == 1:
-                                masked_x_batch, cloze_mask = mask_data16(
-                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
-                            else:
-                                masked_x_batch, cloze_mask = mask_data18(
-                                    x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
+                            x_batch = pattern_batch[b:b+batch_size, :, :]
 
-                            union_mask = cloze_mask | missing_mask_batch
+                            for i in range(0, L - context_length):
+                                # Extract the context and the target for this step
+                                context = x_batch[:, i:i+context_length, :].to(self.device)
+                                target_context = x_batch[:, i+1:i+context_length+1, :].to(self.device) 
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.4)
-                            masked_x_batch[union_mask] = -1
+                                missing_msk_src = missing_mask_patten_batch[b:b+batch_size, i:i+context_length, :]
 
-                            # move to GPU
-                            x_batch = x_batch.to(self.device)
-                            masked_x_batch = masked_x_batch.to(self.device)
-                            union_mask = union_mask.to(self.device)
-                            cloze_mask = cloze_mask.to(self.device)
+                                trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool)
+                                for AR in range(context.shape[1]):
+                                    trg_msk[:, :AR] = True
 
-                            outputs, pred_mask = self.model(masked_x_batch, union_mask)
+                                    outputs = self.model(
+                                        context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                            mse_obs_loss, mse_pred_loss, bce_mask_loss = self.criterion(
-                                outputs, x_batch, pred_mask, cloze_mask, union_mask)
-                            loss = mse_obs_loss + mse_pred_loss + bce_mask_loss
-
+                                    loss += self.criterion(outputs, target_context, missing_msk_src)
+                                    
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
                                 log_strs.append(skipmessage)
                                 print(skipmessage)
                                 del x_batch
-                                del masked_x_batch
-                                del outputs
                                 torch.cuda.empty_cache()
                                 continue
-
+                            
                             del x_batch
-                            del masked_x_batch
-                            del outputs
 
                             epoch_loss.append(loss.item())
-                            epoch_obs_loss.append(mse_obs_loss.item())
-                            epoch_clz_loss.append(mse_pred_loss.item())
-                            epoch_msk_loss.append(bce_mask_loss.item())
 
                             # Clear GPU memory again
                             torch.cuda.empty_cache()
@@ -2247,10 +2243,7 @@ class PRE_TRAINER(object):
                             logstr = [
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                                f"Obs Loss: {mse_obs_loss.item():.4f}",
-                                f"Clz Loss: {mse_pred_loss.item():.4f}",
-                                f"Msk Loss: {bce_mask_loss.item():.4f}"
-                                ]
+                                f"Loss: {loss.item():.4f}"]
                             logstr = " | ".join(logstr)
 
                             log_strs.append(logstr)
@@ -2263,14 +2256,14 @@ class PRE_TRAINER(object):
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
                     
-                    test_mse, test_corr, test_ovr = self.test_model(
-                        context_length, version="21", 
-                        is_arcsin=arcsinh_transform, batch_size=batch_size)
+                    # test_mse, test_corr, test_ovr = self.test_model(
+                    #     context_length, version="21", 
+                    #     is_arcsin=arcsinh_transform, batch_size=batch_size)
 
-                    test_mse = np.mean(test_mse)
-                    test_corr = np.mean(test_corr)
+                    # test_mse = np.mean(test_mse)
+                    # test_corr = np.mean(test_corr)
 
-                    test_ovr_mean = np.mean(test_ovr)
+                    # test_ovr_mean = np.mean(test_ovr)
                     # test_ovr_min = np.min(test_ovr)
                     # test_ovr_max = np.max(test_ovr)
 
@@ -2278,12 +2271,10 @@ class PRE_TRAINER(object):
                         "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
-                        f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
-                        f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
-                        f"Val_MSE: {test_mse:.4f}",
-                        f"Val_POmean: {test_ovr_mean:.3f}",
-                        f"Val_Corr: {test_corr:.3f}",
+                        f"Epoch Loss: {np.mean(epoch_loss):.3f}", 
+                        # f"Val_MSE: {test_mse:.4f}",
+                        # f"Val_POmean: {test_ovr_mean:.3f}",
+                        # f"Val_Corr: {test_corr:.3f}",
                         # f"Val_POmin: {test_ovr_min:.3f}",
                         # f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
