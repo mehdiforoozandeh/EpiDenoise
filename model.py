@@ -769,9 +769,8 @@ class EpiDenoise20(nn.Module):
         x = x.permute(0, 2, 1) # to N, F, L
         m = m.permute(0, 2, 1) # to N, F, L
 
-        m = F.sigmoid(self.convm(m.float()))
+        m = self.convm(m.float())
         x = self.conv1(x)
-
 
         x = x + m
 
@@ -779,6 +778,9 @@ class EpiDenoise20(nn.Module):
 
         x = x.permute(2, 0, 1)  # to L, N, F
 
+        print(x.shape)
+        print(self.position(x).shape)
+        exit()
         x = x + self.position(x)
         x = self.transformer_encoder(x)
 
