@@ -288,9 +288,6 @@ class RelativeDecoderLayer(nn.Module):
         key = enc_src
         value = enc_src
 
-        print(trg.shape)
-        print(enc_src.shape)
-        exit()
         # Using the decoder input as the query, and the encoder output as key and value
         _trg, encoder_attn = self.encoder_attention(query, key, value, trg_mask)
 
