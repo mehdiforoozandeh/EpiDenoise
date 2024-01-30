@@ -900,6 +900,8 @@ class EpiDenoise21(nn.Module):
         # Apply the relative decoder
         src = self.relative_decoder(trg, src, trg_mask)
 
+        print(src.shape)
+
         # Decoder output is permuted back to N, L, F for linear layers
         src = src.permute(1, 0, 2)  # to N, L, F
 
