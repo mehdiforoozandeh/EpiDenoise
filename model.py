@@ -2884,13 +2884,13 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 128,
-        "nlayers": 2,
+        "d_model": 512,
+        "nlayers": 4,
         "epochs": 10,
-        "kernel_size": [1, 3, 3],
-        "conv_out_channels": [64, 64, 128],
+        "kernel_size": [1, 7, 3, 3],
+        "conv_out_channels": [64, 128, 256, 512],
         "dilation":1,
-        "context_length": 200,
+        "context_length": 1600,
         "learning_rate": 0.0001,
     }
 
