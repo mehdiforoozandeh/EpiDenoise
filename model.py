@@ -537,6 +537,8 @@ class ComboLoss21(nn.Module):
     def forward(self, pred_signals, true_signals, union_mask):
 
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_next_pos = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+
         if torch.isnan(pred_signals).any() or torch.isnan(mse_obs_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
@@ -2199,17 +2201,19 @@ class PRE_TRAINER(object):
 
                             trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
                             
-                            self.optimizer.zero_grad()
-                            for AR in range(context.shape[1]):
-                                
-                                torch.cuda.empty_cache()
-                                trg_msk[:, :AR] = True
-                                outputs = self.model(
-                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+                            trg_msk[:, -1] = True
+                            outputs = self.model(
+                                context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                                loss = self.criterion(outputs, target_context, missing_msk_src)
-                                loss.backward()  
+                            next_pos_mask = torch.zeros_like(context)
+                            next_pos_mask[:,-1, available_assays_ind] = True
 
+                            print(next_pos_mask.shape)
+                            print(next_pos_mask.sum())
+                            exit()
+
+                            loss = self.criterion(outputs, target_context, missing_msk_src)
+                            loss.backward()  
                             self.optimizer.step()
                                 
                         if torch.isnan(loss).sum() > 0:
