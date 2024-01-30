@@ -758,7 +758,7 @@ class EpiDenoise20(nn.Module):
         self.deconvtower = nn.Sequential(*[
             DeconvBlock(
                 reversed_channels[i], reversed_channels[i + 1], 
-                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 1)
+                reversed_kernels[i + 1], 2, dilation) for i in range(n_cnn_layers - 2)
         ])
         self.deconvF = DeconvBlock(reversed_channels[-2], output_dim, reversed_kernels[-1], 2, dilation)
 
