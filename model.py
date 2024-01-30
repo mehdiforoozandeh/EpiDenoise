@@ -874,12 +874,6 @@ class EpiDenoise21(nn.Module):
         self.linear_output = nn.Linear(d_model, output_dim)
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
-        print(src.shape)
-        print(src_missing_mask.shape)
-        print(trg.shape)
-        print(trg_missing_mask.shape)
-        print(trg_mask.shape)
-        exit()
         src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
         src_missing_mask = self.convm(src_missing_mask.float())
 
@@ -2206,6 +2200,8 @@ class PRE_TRAINER(object):
                             torch.cuda.empty_cache()
 
                             x_batch = pattern_batch[b:b+batch_size, :, :]
+                            print(x_batch.shape)
+                            exit()
 
                             for i in range(0, L - context_length):
                                 # Extract the context and the target for this step
