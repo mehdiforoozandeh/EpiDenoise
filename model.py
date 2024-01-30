@@ -179,6 +179,11 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         len_q = query.shape[1]
         len_v = value.shape[1]
 
+        print(query.shape)
+        print(key.shape)
+        print(value.shape)
+        exit()
+
         query = self.fc_q(query)
         key = self.fc_k(key)
         value = self.fc_v(value)
@@ -885,17 +890,17 @@ class EpiDenoise21(nn.Module):
         src = src + src_missing_mask        
         src = self.convtower(src)
 
-        src = src.permute(2, 0, 1)  # to L, N, F
+        src = src.permute(0, 2, 1)  # to N, L, F
         src = self.transformer_encoder(src)
         
-        trg = trg.permute(0, 2, 1)
-        trg = self.d_conv1(trg)
+        trg = trg.permute(0, 2, 1) # to N, F, L
+        trg = self.d_conv1(trg) 
 
-        trg_missing_mask = trg_missing_mask.permute(0, 2, 1)
+        trg_missing_mask = trg_missing_mask.permute(0, 2, 1) # to N, F, L
         trg_missing_mask = self.d_convm(trg_missing_mask.float())
 
         trg = trg + trg_missing_mask  
-        trg = trg.permute(2, 0, 1)  # to L, N, F
+        trg = trg.permute(0, 2, 1)  # to N, L, F
 
         # Apply the relative decoder
         src = self.relative_decoder(trg, src, trg_mask)
