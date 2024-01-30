@@ -2920,6 +2920,6 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "epd21":
         train_epidenoise21(
-            hyper_parameters20, 
+            hyper_parameters21, 
             checkpoint_path=None, 
             start_ds=0)
