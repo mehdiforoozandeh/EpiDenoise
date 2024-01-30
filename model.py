@@ -534,16 +534,16 @@ class ComboLoss21(nn.Module):
         super(ComboLoss21, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, union_mask):
+    def forward(self, pred_signals, true_signals, union_mask, next_pos_mask):
 
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_next_pos = self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_next_pos = self.mse_loss(pred_signals[next_pos_mask], true_signals[next_pos_mask])
 
         if torch.isnan(pred_signals).any() or torch.isnan(mse_obs_loss):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
 
-        return mse_obs_loss
+        return mse_next_pos
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -2188,8 +2188,6 @@ class PRE_TRAINER(object):
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
 
-                        # x_batch = pattern_batch[b:b+batch_size, :, :]
-
                         for i in range(0, L - context_length):
                             self.optimizer.zero_grad()
                             torch.cuda.empty_cache()
@@ -2209,15 +2207,8 @@ class PRE_TRAINER(object):
                             next_pos_mask[:,-1, :] = True
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
-
-                            print(len(available_assays_ind))
-                            print(missing_msk_src)
-
-                            print(next_pos_mask.shape)
-                            print(next_pos_mask.sum())
-                            exit()
-
-                            loss = self.criterion(outputs, target_context, missing_msk_src)
+                            loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
+                            print(i, loss.item())
                             loss.backward()  
                             self.optimizer.step()
                                 
