@@ -974,7 +974,7 @@ class PRE_TRAINER(object):
 
                 elif version == "20":
 
-                    outputs, pred_mask = self.model(x_batch, ~mask)
+                    outputs, pred_mask = self.model(x_batch, mask)
                 
                 elif version == "21":
                     outputs, pred_mask = self.model(x_batch, mask)
@@ -2864,12 +2864,12 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 256,
+        "d_model": 128,
         "nlayers": 2,
         "epochs": 10,
         "mask_percentage": 0.3,
-        "kernel_size": [1, 9, 3, 3],
-        "conv_out_channels": [64, 64, 128, 256],
+        "kernel_size": [1, 3, 3],
+        "conv_out_channels": [64, 64, 128],
         "dilation":1,
         "context_length": 200,
         "batch_size": 100,
