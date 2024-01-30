@@ -890,7 +890,7 @@ class EpiDenoise21(nn.Module):
         trg = self.d_conv1(trg)
 
         trg_missing_mask = trg_missing_mask.permute(0, 2, 1)
-        trg_missing_mask = self.d_convm(trg_missing_mask)
+        trg_missing_mask = self.d_convm(trg_missing_mask.float())
 
         trg = trg + trg_missing_mask  
         trg = trg.permute(2, 0, 1)      
