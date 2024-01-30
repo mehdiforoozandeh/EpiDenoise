@@ -2206,7 +2206,8 @@ class PRE_TRAINER(object):
                                 context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
                             next_pos_mask = torch.zeros_like(context)
-                            next_pos_mask[:,-1, available_assays_ind] = True
+                            next_pos_mask[:,-1, :] = True
+                            next_pos_mask = next_pos_mask & ~missing_msk_src
 
 
                             print(len(available_assays_ind))
