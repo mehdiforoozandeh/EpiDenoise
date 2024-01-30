@@ -2194,7 +2194,7 @@ class PRE_TRAINER(object):
                         # print(pattern_batch.shape, (fmask.sum(dim=1) > 0).sum().item(), len(pattern))
 
                         for b in range(0, len(pattern_batch), batch_size):
-                            loss = 0
+                            # loss = 0
 
                             self.optimizer.zero_grad()
                             torch.cuda.empty_cache()
@@ -2215,7 +2215,9 @@ class PRE_TRAINER(object):
                                     outputs = self.model(
                                         context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                                    loss += self.criterion(outputs, target_context, missing_msk_src)
+                                    loss = self.criterion(outputs, target_context, missing_msk_src)
+                                    loss.backward()  
+                                    self.optimizer.step()
                                     
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2223,18 +2225,20 @@ class PRE_TRAINER(object):
                                 log_strs.append(skipmessage)
                                 print(skipmessage)
                                 del x_batch
+                                del outputs
                                 torch.cuda.empty_cache()
                                 continue
                             
                             del x_batch
+                            del outputs
+                            del context
+                            del target_context
+                            del missing_msk_src
 
                             epoch_loss.append(loss.item())
 
                             # Clear GPU memory again
                             torch.cuda.empty_cache()
-
-                            loss.backward()  
-                            self.optimizer.step()
                         
                         if p == 1 or p%8 == 0:
                             logfile = open("models/EPD21_log.txt", "w")
