@@ -284,9 +284,9 @@ class RelativeDecoderLayer(nn.Module):
         # src_mask = [batch size, src len]
 
         # Encoder-decoder attention
-        query = enc_src
-        key = trg
-        value = trg
+        query = trg
+        key = enc_src
+        value = enc_src
         # Using the decoder input as the query, and the encoder output as key and value
         _trg, encoder_attn = self.encoder_attention(query, key, value, trg_mask)
 
@@ -850,7 +850,6 @@ class EpiDenoise21(nn.Module):
 
         self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_encoder_layers)
-
 
         # Convolutional layers
         self.d_conv1 = ConvTower(
