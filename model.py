@@ -2885,7 +2885,7 @@ if __name__ == "__main__":
         "kernel_size": [1, 3, 3],
         "conv_out_channels": [64, 64, 128],
         "dilation":1,
-        "context_length": 800,
+        "context_length": 200,
         "learning_rate": 0.0001,
     }
 
