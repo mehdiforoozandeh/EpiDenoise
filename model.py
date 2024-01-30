@@ -2208,6 +2208,10 @@ class PRE_TRAINER(object):
                             next_pos_mask = torch.zeros_like(context)
                             next_pos_mask[:,-1, available_assays_ind] = True
 
+
+                            print(len(available_assays_ind))
+                            print(missing_msk_src)
+
                             print(next_pos_mask.shape)
                             print(next_pos_mask.sum())
                             exit()
