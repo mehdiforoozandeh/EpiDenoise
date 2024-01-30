@@ -2214,7 +2214,8 @@ class PRE_TRAINER(object):
                                     context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
                                 loss = self.criterion(outputs, target_context, missing_msk_src)
-                                print(loss.item())
+                                if AR %100 == 0:
+                                    print(loss.item())
                                 loss.backward()  
                                 self.optimizer.step()
                                 
