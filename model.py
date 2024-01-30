@@ -2199,19 +2199,18 @@ class PRE_TRAINER(object):
 
                             trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
                             
-                            self.optimizer.zero_grad()
-                            loss = 0
+                            
                             for AR in range(context.shape[1]):
+                                self.optimizer.zero_grad()
                                 torch.cuda.empty_cache()
                                 trg_msk[:, :AR] = True
 
                                 outputs = self.model(
                                     context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                                loss += self.criterion(outputs, target_context, missing_msk_src)
-
-                            loss.backward()  
-                            self.optimizer.step()
+                                loss = self.criterion(outputs, target_context, missing_msk_src)
+                                loss.backward()  
+                                self.optimizer.step()
                                 
                         if torch.isnan(loss).sum() > 0:
                             skipmessage = "Encountered nan loss! Skipping batch..."
