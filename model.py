@@ -285,8 +285,8 @@ class RelativeDecoderLayer(nn.Module):
 
         # Encoder-decoder attention
         query = trg
-        key = trg
-        value = trg
+        key = enc_src
+        value = enc_src
 
         print(trg.shape)
         # Using the decoder input as the query, and the encoder output as key and value
