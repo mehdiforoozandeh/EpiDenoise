@@ -2146,8 +2146,7 @@ class PRE_TRAINER(object):
     
     def pretrain_epidenoise_21(self, 
         d_model, outer_loop_epochs=2, arcsinh_transform=True,
-        num_epochs=25, mask_percentage=0.15, context_length=2000, 
-        batch_size=100, start_ds=0):
+        num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -2826,9 +2825,9 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
-    model = trainer.pretrain_epidenoise_21(d_model=d_model, num_epochs=epochs, 
-        mask_percentage=mask_percentage, context_length=context_length, 
-        batch_size=batch_size, start_ds=start_ds)
+    model = trainer.pretrain_epidenoise_21(
+        d_model=d_model, num_epochs=epochs,  
+        context_length=context_length, start_ds=start_ds)
 
     end_time = time.time()
 
