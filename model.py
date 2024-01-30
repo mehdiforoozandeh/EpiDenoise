@@ -539,7 +539,7 @@ class ComboLoss21(nn.Module):
         # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_next_pos = self.mse_loss(pred_signals[next_pos_mask], true_signals[next_pos_mask])
 
-        if torch.isnan(pred_signals).any() or torch.isnan(mse_obs_loss):
+        if torch.isnan(pred_signals).any() or torch.isnan(mse_next_pos):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
 
