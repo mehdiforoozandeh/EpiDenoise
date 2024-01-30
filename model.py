@@ -2207,13 +2207,14 @@ class PRE_TRAINER(object):
                             for AR in range(context.shape[1]):
                                 self.optimizer.zero_grad()
                                 torch.cuda.empty_cache()
-                                
+
                                 trg_msk[:, :AR] = True
 
                                 outputs = self.model(
                                     context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
                                 loss = self.criterion(outputs, target_context, missing_msk_src)
+                                print(loss.item())
                                 loss.backward()  
                                 self.optimizer.step()
                                 
