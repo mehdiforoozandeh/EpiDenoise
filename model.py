@@ -288,8 +288,11 @@ class RelativeDecoderLayer(nn.Module):
         key = trg
         value = trg
 
+
+        print(trg.shape)
         # Using the decoder input as the query, and the encoder output as key and value
         _trg = self.encoder_attention(query, key, value, None)# trg_mask)
+        print(_trg.shape)
 
         # Residual connection and layer norm
         trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
@@ -300,7 +303,7 @@ class RelativeDecoderLayer(nn.Module):
         # Residual connection and layer norm
         trg = self.layer_norm_ff(trg + self.dropout(_trg))
 
-        return trg, encoder_attn
+        return trg
 
 
 class FeedForwardNN(nn.Module):
