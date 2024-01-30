@@ -288,7 +288,6 @@ class RelativeDecoderLayer(nn.Module):
         key = trg
         value = trg
 
-
         print(trg.shape)
         # Using the decoder input as the query, and the encoder output as key and value
         _trg = self.encoder_attention(query, key, value, None)# trg_mask)
@@ -808,12 +807,12 @@ class EpiDenoise20(nn.Module):
 
         x = self.convtower(x)
 
-        x = x.permute(2, 0, 1)  # to L, N, F
+        x = x.permute(0, 2, 1)  # to N, L, F
 
         # x = x + self.position(x)
         x = self.transformer_encoder(x)
 
-        x = x.permute(1, 2, 0) # to N, F, L'
+        x = x.permute(0, 2, 1) # to N, F, L'
         x = self.deconvtower(x)
         x = self.deconvF(x)
         x = x.permute(2, 0, 1)  # to L, N, F
@@ -889,7 +888,6 @@ class EpiDenoise21(nn.Module):
         src = src.permute(2, 0, 1)  # to L, N, F
         src = self.transformer_encoder(src)
         
-
         trg = trg.permute(0, 2, 1)
         trg = self.d_conv1(trg)
 
