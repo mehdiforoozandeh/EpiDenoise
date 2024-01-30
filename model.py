@@ -288,10 +288,8 @@ class RelativeDecoderLayer(nn.Module):
         key = enc_src
         value = enc_src
 
-        print(trg.shape)
         # Using the decoder input as the query, and the encoder output as key and value
         _trg = self.encoder_attention(query, key, value, None)# trg_mask)
-        print(_trg.shape)
 
         # Residual connection and layer norm
         trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
@@ -876,6 +874,12 @@ class EpiDenoise21(nn.Module):
         self.linear_output = nn.Linear(d_model, output_dim)
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
+        print(src.shape)
+        print(src_missing_mask.shape)
+        print(trg.shape)
+        print(trg_missing_mask.shape)
+        print(trg_mask.shape)
+        exit()
         src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
         src_missing_mask = self.convm(src_missing_mask.float())
 
@@ -899,9 +903,6 @@ class EpiDenoise21(nn.Module):
 
         # Apply the relative decoder
         src = self.relative_decoder(trg, src, trg_mask)
-
-        print("aaa",src.shape)
-        exit()
 
         # Decoder output is permuted back to N, L, F for linear layers
         src = src.permute(1, 0, 2)  # to N, L, F
