@@ -2789,7 +2789,6 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
     d_model = hyper_parameters["d_model"]
     nlayers = hyper_parameters["nlayers"]
     epochs = hyper_parameters["epochs"]
-    mask_percentage = hyper_parameters["mask_percentage"]
     context_length = hyper_parameters["context_length"]
 
     conv_out_channels = hyper_parameters["conv_out_channels"]
@@ -2799,7 +2798,6 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
     # one nucleosome is around 150bp -> 6bins
     # each chuck ~ 1 nucleosome
 
-    batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
     # end of hyperparameters
 
@@ -2885,8 +2883,23 @@ if __name__ == "__main__":
         "kernel_size": [1, 3, 3],
         "conv_out_channels": [64, 64, 128],
         "dilation":1,
-        "context_length": 1600,
+        "context_length": 800,
         "batch_size": 100,
+        "learning_rate": 0.0001,
+    }
+
+    hyper_parameters21 = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.05,
+        "nhead": 4,
+        "d_model": 128,
+        "nlayers": 2,
+        "epochs": 10,
+        "kernel_size": [1, 3, 3],
+        "conv_out_channels": [64, 64, 128],
+        "dilation":1,
+        "context_length": 800,
         "learning_rate": 0.0001,
     }
 
