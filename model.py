@@ -867,7 +867,6 @@ class EpiDenoise21(nn.Module):
             n_heads=nhead, 
             pf_dim=4*d_model, 
             dropout=dropout, 
-            max_position_length=context_length
         )
 
         self.linear_output = nn.Linear(d_model, output_dim)
