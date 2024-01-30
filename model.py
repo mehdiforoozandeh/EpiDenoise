@@ -2205,7 +2205,7 @@ class PRE_TRAINER(object):
                             outputs = self.model(
                                 context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-                            next_pos_mask = torch.zeros_like(context)
+                            next_pos_mask = torch.zeros_like(context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-1, :] = True
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
