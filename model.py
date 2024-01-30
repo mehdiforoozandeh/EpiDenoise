@@ -2200,8 +2200,6 @@ class PRE_TRAINER(object):
                             torch.cuda.empty_cache()
 
                             x_batch = pattern_batch[b:b+batch_size, :, :]
-                            print(x_batch.shape)
-                            exit()
 
                             for i in range(0, L - context_length):
                                 # Extract the context and the target for this step
