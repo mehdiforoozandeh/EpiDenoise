@@ -179,11 +179,6 @@ class RelativeMultiHeadAttentionLayer(nn.Module):
         len_q = query.shape[1]
         len_v = value.shape[1]
 
-        print(query.shape)
-        print(key.shape)
-        print(value.shape)
-        exit()
-
         query = self.fc_q(query)
         key = self.fc_k(key)
         value = self.fc_v(value)
