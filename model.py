@@ -1112,7 +1112,6 @@ class PRE_TRAINER(object):
         
         P = P.squeeze(0)
         print(P)
-        exit()
 
         mses = []
         spearmans = []
