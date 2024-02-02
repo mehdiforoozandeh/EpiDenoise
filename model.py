@@ -1111,6 +1111,8 @@ class PRE_TRAINER(object):
             torch.cuda.empty_cache()
         
         P = P.squeeze(0)
+        print(P)
+        exit()
 
         mses = []
         spearmans = []
@@ -2296,8 +2298,6 @@ class PRE_TRAINER(object):
                             loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
                             p_loss.append(loss.item())
 
-                            # print(i, loss.item())
-
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 log_strs.append(skipmessage)
@@ -2324,19 +2324,15 @@ class PRE_TRAINER(object):
                             test_corr = np.mean(test_corr)
 
                             test_ovr_mean = np.mean(test_ovr)
-                            # test_ovr_min = np.min(test_ovr)
-                            # test_ovr_max = np.max(test_ovr)
 
                             logstr = [
                                 "\n----------------------------------------------------\n"
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                                f'P_epoch #: {np.mean(p_loss)}', 
-                                f"Val_MSE: {test_mse:.4f}",
+                                f'P_epoch #: {np.mean(p_loss):.3f}', 
+                                f"Val_MSE: {test_mse:.3f}",
                                 f"Val_POmean: {test_ovr_mean:.3f}",
                                 f"Val_Corr: {test_corr:.3f}",
-                                # f"Val_POmin: {test_ovr_min:.3f}",
-                                # f"Val_POmax: {test_ovr_max:.3f}",
                                 "\n----------------------------------------------------\n"
                                 ]
                             logstr = " | ".join(logstr)
@@ -2358,8 +2354,6 @@ class PRE_TRAINER(object):
                     test_corr = np.mean(test_corr)
 
                     test_ovr_mean = np.mean(test_ovr)
-                    # test_ovr_min = np.min(test_ovr)
-                    # test_ovr_max = np.max(test_ovr)
 
                     logstr = [
                         "\n----------------------------------------------------\n"
@@ -2369,8 +2363,6 @@ class PRE_TRAINER(object):
                         f"Val_MSE: {test_mse:.4f}",
                         f"Val_POmean: {test_ovr_mean:.3f}",
                         f"Val_Corr: {test_corr:.3f}",
-                        # f"Val_POmin: {test_ovr_min:.3f}",
-                        # f"Val_POmax: {test_ovr_max:.3f}",
                         "\n----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
