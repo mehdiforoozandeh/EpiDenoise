@@ -1096,7 +1096,7 @@ class PRE_TRAINER(object):
             
             print(outputs.shape)
 
-            P[i+context_length:i+context_length+step_size, :] = outputs[-step_size, :].cpu()
+            P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
         
         mses = []
         spearmans = []
