@@ -1092,9 +1092,6 @@ class PRE_TRAINER(object):
         
         P = torch.empty_like(X, device="cpu").unsqueeze(0)
         for i in range(start_index, end_index - context_length, step_size):
-            print(i)
-            continue
-        
 
             context = X[i:i+context_length, :].unsqueeze(0).to(self.device)
             missing_msk_src = mask[i:i+context_length, :].unsqueeze(0).to(self.device) 
@@ -1105,14 +1102,11 @@ class PRE_TRAINER(object):
             trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:, i+step_size:i+context_length+step_size] = True
 
+            print(context.shape, target_context.shape)
+
             with torch.no_grad():
-                try:
-                    outputs = self.model(
-                        context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
-                    print("Done")
-                except:
-                    print(context.shape)
-                    print(target_context.shape)
+                outputs = self.model(
+                    context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
 
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
              
@@ -2997,7 +2991,7 @@ if __name__ == "__main__":
         "kernel_size": [1, 7, 3, 3],
         "conv_out_channels": [64, 128, 256, 512],
         "dilation":1,
-        "context_length": 800,
+        "context_length": 1600,
         "learning_rate": 0.0001,
     }
 
