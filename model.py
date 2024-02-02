@@ -2233,7 +2233,7 @@ class PRE_TRAINER(object):
                 
                 print('-_-' * 10)
                 x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
-                N, L, num_features = x.shape
+                L, num_features = x.shape
 
                 if arcsinh_transform:
                     arcmask = (x != -1)
