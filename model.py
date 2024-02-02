@@ -1093,16 +1093,16 @@ class PRE_TRAINER(object):
         P = torch.empty_like(X, device="cpu").unsqueeze(0)
         for i in range(start_index, end_index - context_length, step_size):
 
-            context = X[i:i+context_length, :].unsqueeze(0).to(self.device)
-            missing_msk_src = mask[i:i+context_length, :].unsqueeze(0).to(self.device) 
+            context = X[i : i+context_length, :].unsqueeze(0).to(self.device)
+            missing_msk_src = mask[i : i+context_length, :].unsqueeze(0).to(self.device) 
 
-            target_context = X[i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device)
-            missing_msk_trg = mask[i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device) 
+            target_context = X[i+step_size : i+context_length+step_size, :].unsqueeze(0).to(self.device)
+            missing_msk_trg = mask[i+step_size : i+context_length+step_size, :].unsqueeze(0).to(self.device) 
             
             trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:, i+step_size:i+context_length+step_size] = True
 
-            print(context.shape, target_context.shape)
+            print(i, context.shape, target_context.shape)
 
             with torch.no_grad():
                 outputs = self.model(
