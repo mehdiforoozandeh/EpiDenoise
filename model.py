@@ -1111,7 +1111,6 @@ class PRE_TRAINER(object):
             torch.cuda.empty_cache()
         
         P = P.squeeze(0)
-        print(P)
 
         mses = []
         spearmans = []
@@ -2309,67 +2308,69 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
 
+                        print(np.mean(p_loss))
+
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
                     
-                        if p == 1 or p%4 == 0:
-                            logfile = open("models/EPD21_log.txt", "w")
-                            torch.cuda.empty_cache()
+                        # if p == 1 or p%4 == 0:
+                        #     logfile = open("models/EPD21_log.txt", "w")
+                        #     torch.cuda.empty_cache()
 
-                            test_mse, test_corr, test_ovr = self.test_autoregressive_model(
-                                context_length, is_arcsin=arcsinh_transform, step_size=step_size)
+                        #     test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                        #         context_length, is_arcsin=arcsinh_transform, step_size=step_size)
 
-                            test_mse = np.mean(test_mse)
-                            test_corr = np.mean(test_corr)
+                        #     test_mse = np.mean(test_mse)
+                        #     test_corr = np.mean(test_corr)
 
-                            test_ovr_mean = np.mean(test_ovr)
+                        #     test_ovr_mean = np.mean(test_ovr)
 
-                            logstr = [
-                                "\n----------------------------------------------------\n"
-                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                                f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                                f'P_epoch #: {np.mean(p_loss):.3f}', 
-                                f"Val_MSE: {test_mse:.3f}",
-                                f"Val_POmean: {test_ovr_mean:.3f}",
-                                f"Val_Corr: {test_corr:.3f}",
-                                "\n----------------------------------------------------\n"
-                                ]
-                            logstr = " | ".join(logstr)
+                        #     logstr = [
+                        #         "\n----------------------------------------------------\n"
+                        #         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        #         f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                        #         f'P_epoch #: {np.mean(p_loss):.3f}', 
+                        #         f"Val_MSE: {test_mse:.3f}",
+                        #         f"Val_POmean: {test_ovr_mean:.3f}",
+                        #         f"Val_Corr: {test_corr:.3f}",
+                        #         "\n----------------------------------------------------\n"
+                        #         ]
+                        #     logstr = " | ".join(logstr)
 
-                            log_strs.append(logstr)
-                            logfile.write("\n".join(log_strs))
-                            logfile.close()
-                            print(logstr)
+                        #     log_strs.append(logstr)
+                        #     logfile.write("\n".join(log_strs))
+                        #     logfile.close()
+                        #     print(logstr)
                         
                     self.scheduler.step()
 
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
                     
-                    test_mse, test_corr, test_ovr = self.test_autoregressive_model(
-                        context_length, is_arcsin=arcsinh_transform, step_size=step_size)
+                    # test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                    #     context_length, is_arcsin=arcsinh_transform, step_size=step_size)
 
-                    test_mse = np.mean(test_mse)
-                    test_corr = np.mean(test_corr)
+                    # test_mse = np.mean(test_mse)
+                    # test_corr = np.mean(test_corr)
 
-                    test_ovr_mean = np.mean(test_ovr)
+                    # test_ovr_mean = np.mean(test_ovr)
 
-                    logstr = [
-                        "\n----------------------------------------------------\n"
-                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                        f'Epoch {epoch+1}/{num_epochs}', 
-                        f"Epoch Loss: {np.mean(epoch_loss):.3f}", 
-                        f"Val_MSE: {test_mse:.4f}",
-                        f"Val_POmean: {test_ovr_mean:.3f}",
-                        f"Val_Corr: {test_corr:.3f}",
-                        "\n----------------------------------------------------\n"
-                        ]
-                    logstr = " | ".join(logstr)
+                    # logstr = [
+                    #     "\n----------------------------------------------------\n"
+                    #     f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                    #     f'Epoch {epoch+1}/{num_epochs}', 
+                    #     f"Epoch Loss: {np.mean(epoch_loss):.3f}", 
+                    #     f"Val_MSE: {test_mse:.4f}",
+                    #     f"Val_POmean: {test_ovr_mean:.3f}",
+                    #     f"Val_Corr: {test_corr:.3f}",
+                    #     "\n----------------------------------------------------\n"
+                    #     ]
+                    # logstr = " | ".join(logstr)
 
-                    log_strs.append(logstr)
-                    logfile.write("\n".join(log_strs))
-                    logfile.close()
-                    print(logstr)
+                    # log_strs.append(logstr)
+                    # logfile.write("\n".join(log_strs))
+                    # logfile.close()
+                    # print(logstr)
 
                 # Save the model after each dataset
                 try:
