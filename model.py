@@ -1115,6 +1115,11 @@ class PRE_TRAINER(object):
              
             torch.cuda.empty_cache()
         
+        print(X.shape)
+        print(Y.shape)
+        print(P.shape)
+        exit()
+
         mses = []
         spearmans = []
         peak_overlaps = []
