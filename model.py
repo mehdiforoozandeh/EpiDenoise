@@ -1075,13 +1075,11 @@ class PRE_TRAINER(object):
             arcmask2 = (Y != -1)
             Y[arcmask2] = torch.arcsinh_(Y[arcmask2])
         
-        mask = torch.zeros_like(X, dtype=torch.bool, device=self.device)
+        mask = torch.zeros_like(X, dtype=torch.bool)
         for ii in missing_x_i: 
             mask[:,ii] = True
-        mask = mask.to(self.device)
         
         P = torch.empty_like(X, device="cpu").unsqueeze(0)
-        
         for i in range(0, L - context_length, step_size):
 
             context = X[i:i+context_length, :].unsqueeze(0).to(self.device)
@@ -1098,6 +1096,7 @@ class PRE_TRAINER(object):
             torch.cuda.empty_cache()
              
             del context
+            del target_context
             del missing_msk_src
             del trg_msk
             del outputs
