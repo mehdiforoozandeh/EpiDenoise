@@ -535,6 +535,7 @@ class ComboLoss21(nn.Module):
         self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, union_mask, next_pos_mask):
+        print(pred_signals[next_pos_mask].mean().item(), true_signals[next_pos_mask].mean().item())
 
         # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_next_pos = self.mse_loss(pred_signals[next_pos_mask], true_signals[next_pos_mask])
@@ -2287,7 +2288,7 @@ class PRE_TRAINER(object):
                             
                             trg_msk[:, -step_size] = True
                             outputs = self.model(
-                                context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+                                context, missing_msk_src, target_context, missing_msk_src, trg_msk)
 
                             next_pos_mask = torch.zeros_like(context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size, :] = True
