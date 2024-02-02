@@ -1072,6 +1072,11 @@ class PRE_TRAINER(object):
         start_index = (L - subset_size) // 2  # Start index for the middle subset
         end_index = start_index + subset_size  # End index for the middle subset
 
+        start_index -= start_index % step_size
+        end_index -= end_index % step_size
+        
+
+
         # Slice X and Y to get the middle subset
         X = X[start_index:end_index, :]
         Y = Y[start_index:end_index, :]
