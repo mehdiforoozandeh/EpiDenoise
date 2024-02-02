@@ -1094,12 +1094,14 @@ class PRE_TRAINER(object):
             missing_msk_src = mask[i:i+context_length, :].unsqueeze(0).to(self.device) 
 
             target_context = X[i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device)
+            missing_msk_trg = mask[i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device) 
+            
             trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:,-step_size] = True
 
             with torch.no_grad():
                 outputs = self.model(
-                    context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+                    context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
             
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
              
@@ -2271,8 +2273,10 @@ class PRE_TRAINER(object):
 
                             # Extract the context and the target for this step
                             context = x_batch[:, i:i+context_length, :].to(self.device)
-                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
                             missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device) 
+
+                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
+                            missing_msk_trg = mask[:, i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device) 
 
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
