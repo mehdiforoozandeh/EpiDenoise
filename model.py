@@ -1081,6 +1081,10 @@ class PRE_TRAINER(object):
         X = X[start_index:end_index, :]
         Y = Y[start_index:end_index, :]
 
+        print(X.shape)
+        print(Y.shape)
+        exit()
+
         if is_arcsin:
             arcmask1 = (X != -1)
             X[arcmask1] = torch.arcsinh_(X[arcmask1])
