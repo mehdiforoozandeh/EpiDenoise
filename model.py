@@ -1048,7 +1048,7 @@ class PRE_TRAINER(object):
         else:
             return mses, spearmans, peak_overlaps
 
-    def test_autoregressive_model(self, context_length, is_arcsin, step_size, p=0.1):
+    def test_autoregressive_model(self, context_length, is_arcsin, step_size, p=0.005):
         self.model.eval()
 
         missing_x_i = []
