@@ -1092,7 +1092,9 @@ class PRE_TRAINER(object):
         
         P = torch.empty_like(X, device="cpu").unsqueeze(0)
         for i in range(start_index, end_index - context_length, step_size):
-
+            print(i)
+            continue
+        
 
             context = X[i:i+context_length, :].unsqueeze(0).to(self.device)
             missing_msk_src = mask[i:i+context_length, :].unsqueeze(0).to(self.device) 
