@@ -1097,10 +1097,10 @@ class PRE_TRAINER(object):
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
             torch.cuda.empty_cache()
              
-            # del context
-            # del missing_msk_src
-            # del trg_msk
-            # del outputs
+            del context
+            del missing_msk_src
+            del trg_msk
+            del outputs
         
         mses = []
         spearmans = []
