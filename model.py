@@ -1102,8 +1102,10 @@ class PRE_TRAINER(object):
             with torch.no_grad():
                 outputs = self.model(
                     context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
-            
-            P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
+            try:
+                P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
+            except:
+                print(output.shape)
              
             torch.cuda.empty_cache()
         
