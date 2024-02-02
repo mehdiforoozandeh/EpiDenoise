@@ -1092,7 +1092,7 @@ class PRE_TRAINER(object):
             try:
                 outputs = self.model(
                     context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
-            else:
+            except:
                 print(i)
                 exit()
             
