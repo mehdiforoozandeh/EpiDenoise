@@ -1117,7 +1117,9 @@ class PRE_TRAINER(object):
         
         print(X.shape)
         print(Y.shape)
+        P = P.squeeze(0)
         print(P.shape)
+    
         exit()
 
         mses = []
