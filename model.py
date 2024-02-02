@@ -1048,7 +1048,7 @@ class PRE_TRAINER(object):
         else:
             return mses, spearmans, peak_overlaps
 
-    def test_autoregressive_model(self, context_length, is_arcsin, step_size):
+    def test_autoregressive_model(self, context_length, is_arcsin, step_size, p=0.1):
         self.model.eval()
 
         missing_x_i = []
@@ -1067,7 +1067,15 @@ class PRE_TRAINER(object):
                 missing_y_i.append(i)
 
         L, num_features = X.shape
-        
+
+        subset_size = int(L * p)  # The total number of rows to include in the subset
+        start_index = (L - subset_size) // 2  # Start index for the middle subset
+        end_index = start_index + subset_size  # End index for the middle subset
+
+        # Slice X and Y to get the middle subset
+        X = X[start_index:end_index, :]
+        Y = Y[start_index:end_index, :]
+
         if is_arcsin:
             arcmask1 = (X != -1)
             X[arcmask1] = torch.arcsinh_(X[arcmask1])
@@ -2213,7 +2221,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=100,
+        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=80,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
