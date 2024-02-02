@@ -1077,24 +1077,24 @@ class PRE_TRAINER(object):
         
         mask = torch.zeros_like(X, dtype=torch.bool, device=self.device)
         for ii in missing_x_i: 
-            mask[:,:,ii] = True
+            mask[:,ii] = True
         mask = mask.to(self.device)
         
         P = torch.empty_like(X, device="cpu")
         
         for i in range(0, L - context_length, step_size):
 
-            context = X[:, i:i+context_length, :].to(self.device)
-            missing_msk_src = mask[:, i:i+context_length, :].to(self.device) 
+            context = X[i:i+context_length, :].to(self.device)
+            missing_msk_src = mask[i:i+context_length, :].to(self.device) 
 
-            target_context = X[:, i+step_size:i+context_length+step_size, :].to(self.device) 
+            target_context = X[i+step_size:i+context_length+step_size, :].to(self.device) 
             trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:, -step_size] = True
 
             outputs = self.model(
                 context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
 
-            P[:, i+context_length:i+context_length+step_size, :] = outputs[:,-step_size, :].cpu()
+            P[i+context_length:i+context_length+step_size, :] = outputs[-step_size, :].cpu()
         
         mses = []
         spearmans = []
