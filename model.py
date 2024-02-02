@@ -1105,7 +1105,7 @@ class PRE_TRAINER(object):
             try:
                 P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
             except:
-                print(output.shape)
+                print(outputs.shape)
              
             torch.cuda.empty_cache()
         
