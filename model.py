@@ -1089,16 +1089,12 @@ class PRE_TRAINER(object):
             trg_msk = torch.zeros((1, context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:,-step_size] = True
 
-            outputs = self.model(
-                context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+            with torch.no_grad():
+                outputs = self.model(
+                    context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
             
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
              
-            # del context
-            # del target_context
-            # del missing_msk_src
-            # del trg_msk
-            # del outputs
             torch.cuda.empty_cache()
         
         mses = []
@@ -2304,12 +2300,6 @@ class PRE_TRAINER(object):
                     
                         if p == 1 or p%4 == 0:
                             logfile = open("models/EPD21_log.txt", "w")
-
-                            # del context
-                            # del target_context
-                            # del missing_msk_src
-                            # del trg_msk
-                            # del outputs
                             torch.cuda.empty_cache()
 
                             test_mse, test_corr, test_ovr = self.test_autoregressive_model(
@@ -2979,11 +2969,11 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 256,
+        "d_model": 512,
         "nlayers": 4,
         "epochs": 10,
         "kernel_size": [1, 7, 3, 3],
-        "conv_out_channels": [64, 128, 256, 256],
+        "conv_out_channels": [64, 128, 256, 512],
         "dilation":1,
         "context_length": 800,
         "learning_rate": 0.0001,
