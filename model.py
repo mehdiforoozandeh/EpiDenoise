@@ -1093,6 +1093,9 @@ class PRE_TRAINER(object):
 
             outputs = self.model(
                 context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+            
+            print(outputs.shape)
+            exit()
 
             P[i+context_length:i+context_length+step_size, :] = outputs[-step_size, :].cpu()
         
