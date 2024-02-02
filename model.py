@@ -1078,9 +1078,6 @@ class PRE_TRAINER(object):
         # Slice X and Y to get the middle subset
         X = X[start_index:end_index, :]
         Y = Y[start_index:end_index, :]
-
-        # print(X.shape)
-        # print(Y.shape)
         
         if is_arcsin:
             arcmask1 = (X != -1)
@@ -1104,8 +1101,6 @@ class PRE_TRAINER(object):
             
             trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:, i+step_size:i+context_length+step_size] = True
-
-            print(i, start_index, end_index, end_index - context_length, context.shape, target_context.shape)
 
             with torch.no_grad():
                 outputs = self.model(
@@ -2342,7 +2337,6 @@ class PRE_TRAINER(object):
                                 f"Val_Corr: {test_corr:.3f}",
                                 f"Val_POmin: {test_ovr_min:.3f}",
                                 f"Val_POmax: {test_ovr_max:.3f}",
-                                f"Epoch took: {t1 - t0}"
                                 "\n----------------------------------------------------\n"
                                 ]
                             logstr = " | ".join(logstr)
@@ -2377,7 +2371,6 @@ class PRE_TRAINER(object):
                         f"Val_Corr: {test_corr:.3f}",
                         f"Val_POmin: {test_ovr_min:.3f}",
                         f"Val_POmax: {test_ovr_max:.3f}",
-                        f"Epoch took: {t1 - t0}"
                         "\n----------------------------------------------------\n"
                         ]
                     logstr = " | ".join(logstr)
