@@ -1088,7 +1088,7 @@ class PRE_TRAINER(object):
             missing_msk_src = mask[i:i+context_length, :].unsqueeze(0).to(self.device) 
 
             target_context = X[i+step_size:i+context_length+step_size, :].unsqueeze(0).to(self.device)
-            trg_msk = torch.zeros((context.shape[0]), dtype=torch.bool, device=self.device)
+            trg_msk = torch.zeros((1, context.shape[0]), dtype=torch.bool, device=self.device)
             trg_msk[:,-step_size] = True
 
             outputs = self.model(
