@@ -1097,6 +1097,7 @@ class PRE_TRAINER(object):
         for i in range(start_index, end_index - context_length, step_size):
 
             context = X[i : i+context_length, :].to(self.device)
+            context = context.unsqueeze(0)
             print(context.shape)
             context = X[i : i+context_length, :].unsqueeze(0).to(self.device)
             print(context.shape)
