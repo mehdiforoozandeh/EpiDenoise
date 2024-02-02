@@ -1066,7 +1066,7 @@ class PRE_TRAINER(object):
             if (Y[:, i] == -1).all():
                 missing_y_i.append(i)
 
-        N, L, num_features = X.shape
+        L, num_features = X.shape
         
         if is_arcsin:
             arcmask1 = (X != -1)
@@ -2233,7 +2233,7 @@ class PRE_TRAINER(object):
                 
                 print('-_-' * 10)
                 x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
-                L, num_features = x.shape
+                N, L, num_features = x.shape
 
                 if arcsinh_transform:
                     arcmask = (x != -1)
