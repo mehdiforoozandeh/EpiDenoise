@@ -1097,13 +1097,13 @@ class PRE_TRAINER(object):
                 exit()
             
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
-            torch.cuda.empty_cache()
              
             del context
             del target_context
             del missing_msk_src
             del trg_msk
             del outputs
+            torch.cuda.empty_cache()
         
         mses = []
         spearmans = []
