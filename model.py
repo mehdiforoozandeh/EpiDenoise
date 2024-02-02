@@ -1067,8 +1067,6 @@ class PRE_TRAINER(object):
                 missing_y_i.append(i)
 
         L, num_features = X.shape
-        print(L)
-        exit()
         
         if is_arcsin:
             arcmask1 = (X != -1)
