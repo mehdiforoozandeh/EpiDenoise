@@ -1089,8 +1089,12 @@ class PRE_TRAINER(object):
             trg_msk = torch.zeros((1, context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:,-step_size] = True
 
-            outputs = self.model(
-                context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+            try:
+                outputs = self.model(
+                    context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+            else:
+                print(i)
+                exit()
             
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
             torch.cuda.empty_cache()
