@@ -1102,7 +1102,7 @@ class PRE_TRAINER(object):
             trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
             trg_msk[:, i+step_size:i+context_length+step_size] = True
 
-            print(i, context.shape, target_context.shape)
+            print(i, start_index, end_index, end_index - context_length, context.shape, target_context.shape)
 
             with torch.no_grad():
                 outputs = self.model(
