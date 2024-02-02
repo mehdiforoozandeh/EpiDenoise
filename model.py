@@ -1048,6 +1048,75 @@ class PRE_TRAINER(object):
         else:
             return mses, spearmans, peak_overlaps
 
+    def test_autoregressive_model(self, context_length, is_arcsin, step_size):
+        self.model.eval()
+
+        missing_x_i = []
+        missing_y_i = []
+
+        X = torch.load(self.test_x_dir)
+        # fill-in missing_ind
+        for i in range(X.shape[1]):
+            if (X[:, i] == -1).all():
+                missing_x_i.append(i)
+
+        Y = torch.load(self.test_y_dir)
+        # fill-in missing_ind
+        for i in range(Y.shape[1]):
+            if (Y[:, i] == -1).all():
+                missing_y_i.append(i)
+
+        N, L, num_features = X.shape
+        
+        if is_arcsin:
+            arcmask1 = (X != -1)
+            X[arcmask1] = torch.arcsinh_(X[arcmask1])
+
+            arcmask2 = (Y != -1)
+            Y[arcmask2] = torch.arcsinh_(Y[arcmask2])
+        
+        mask = torch.zeros_like(X, dtype=torch.bool, device=self.device)
+        for ii in missing_x_i: 
+            mask[:,:,ii] = True
+        mask = mask.to(self.device)
+        
+        P = torch.empty_like(X, device="cpu")
+        
+        for i in range(0, L - context_length, step_size):
+
+            context = X[:, i:i+context_length, :].to(self.device)
+            missing_msk_src = mask[:, i:i+context_length, :].to(self.device) 
+
+            target_context = X[:, i+step_size:i+context_length+step_size, :].to(self.device) 
+            trg_msk = torch.zeros((context.shape[0], context.shape[1]), dtype=torch.bool, device=self.device)
+            trg_msk[:, -step_size] = True
+
+            outputs = self.model(
+                context, missing_msk_src, target_context, missing_msk_src, trg_msk) 
+
+            P[:, i+context_length:i+context_length+step_size, :] = outputs[:,-step_size, :].cpu()
+        
+        mses = []
+        spearmans = []
+        peak_overlaps = []
+        for j in range(Y.shape[-1]):  # for each feature i.e. assay
+            pred = P[:, j].numpy()
+            metrics_list = []
+
+            if j in missing_x_i and j not in missing_y_i:  # if the feature is missing in the input
+                target = Y[:, j].numpy()   
+                mse_GW = np.mean((np.array(target) - np.array(pred))**2)
+                spearman_GW = spearmanr(pred, target)[0]
+                ovr = peak_overlap(target, pred, p=0.05)
+
+                mses.append(mse_GW)
+                spearmans.append(spearman_GW)
+                peak_overlaps.append(ovr)
+
+        self.model.train()
+        return mses, spearmans, peak_overlaps
+
+
     def pretrain_epidenoise_10(self, 
         d_model, outer_loop_epochs=1, arcsinh_transform=True,
         num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, 
@@ -2143,7 +2212,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=80,
+        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=120,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
@@ -2207,12 +2276,7 @@ class PRE_TRAINER(object):
                             next_pos_mask[:,-step_size, :] = True
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
-
                             loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
-                            print(
-                                i, loss.item(), 
-                                outputs[missing_msk_src].std().item(), 
-                                outputs[~missing_msk_src].std().item())
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2231,13 +2295,31 @@ class PRE_TRAINER(object):
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
                     
-                        if p == 1 or p%8 == 0:
+                        if p == 1 or p%4 == 0:
                             logfile = open("models/EPD21_log.txt", "w")
 
+                            test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                                context_length, is_arcsin=arcsinh_transform, step_size=step_size)
+
+                            test_mse = np.mean(test_mse)
+                            test_corr = np.mean(test_corr)
+
+                            test_ovr_mean = np.mean(test_ovr)
+                            test_ovr_min = np.min(test_ovr)
+                            test_ovr_max = np.max(test_ovr)
+
                             logstr = [
+                                "\n----------------------------------------------------\n"
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                                f'Epoch {epoch+1}/{num_epochs}', f'Missing Pattern {p}/{len(missing_f_pattern)}', 
-                                f"Loss: {loss.item():.4f}"]
+                                f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                                f"Val_MSE: {test_mse:.4f}",
+                                f"Val_POmean: {test_ovr_mean:.3f}",
+                                f"Val_Corr: {test_corr:.3f}",
+                                f"Val_POmin: {test_ovr_min:.3f}",
+                                f"Val_POmax: {test_ovr_max:.3f}",
+                                f"Epoch took: {t1 - t0}"
+                                "\n----------------------------------------------------\n"
+                                ]
                             logstr = " | ".join(logstr)
 
                             log_strs.append(logstr)
@@ -2250,27 +2332,26 @@ class PRE_TRAINER(object):
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
                     
-                    # test_mse, test_corr, test_ovr = self.test_model(
-                    #     context_length, version="21", 
-                    #     is_arcsin=arcsinh_transform, batch_size=batch_size)
+                    test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                        context_length, is_arcsin=arcsinh_transform, step_size=step_size)
 
-                    # test_mse = np.mean(test_mse)
-                    # test_corr = np.mean(test_corr)
+                    test_mse = np.mean(test_mse)
+                    test_corr = np.mean(test_corr)
 
-                    # test_ovr_mean = np.mean(test_ovr)
-                    # test_ovr_min = np.min(test_ovr)
-                    # test_ovr_max = np.max(test_ovr)
+                    test_ovr_mean = np.mean(test_ovr)
+                    test_ovr_min = np.min(test_ovr)
+                    test_ovr_max = np.max(test_ovr)
 
                     logstr = [
                         "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}', 
                         f"Epoch Loss: {np.mean(epoch_loss):.3f}", 
-                        # f"Val_MSE: {test_mse:.4f}",
-                        # f"Val_POmean: {test_ovr_mean:.3f}",
-                        # f"Val_Corr: {test_corr:.3f}",
-                        # f"Val_POmin: {test_ovr_min:.3f}",
-                        # f"Val_POmax: {test_ovr_max:.3f}",
+                        f"Val_MSE: {test_mse:.4f}",
+                        f"Val_POmean: {test_ovr_mean:.3f}",
+                        f"Val_Corr: {test_corr:.3f}",
+                        f"Val_POmin: {test_ovr_min:.3f}",
+                        f"Val_POmax: {test_ovr_max:.3f}",
                         f"Epoch took: {t1 - t0}"
                         "\n----------------------------------------------------\n"
                         ]
