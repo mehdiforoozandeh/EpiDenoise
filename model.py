@@ -2276,7 +2276,7 @@ class PRE_TRAINER(object):
                             missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device) 
 
                             target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
-                            missing_msk_trg = mask[:, i+step_size:i+context_length+step_size, :].to(self.device) 
+                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
 
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
