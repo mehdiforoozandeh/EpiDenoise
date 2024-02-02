@@ -1106,6 +1106,7 @@ class PRE_TRAINER(object):
                 try:
                     outputs = self.model(
                         context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
+                    print("Done")
                 except:
                     print(context.shape)
                     print(target_context.shape)
