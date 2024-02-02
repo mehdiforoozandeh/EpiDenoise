@@ -2260,13 +2260,13 @@ class PRE_TRAINER(object):
 
                     # zero grads before going over all batches and all patterns of missing data
                     self.optimizer.zero_grad()
-                    epoch_loss = []
                     t0 = datetime.now()
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
                         p += 1
 
+                        p_loss = []
                         x_batch = x[indices]
                         missing_mask_patten_batch = missing_mask[indices]
 
@@ -2294,6 +2294,7 @@ class PRE_TRAINER(object):
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
                             loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
+                            p_loss.append(loss.item())
 
                             # print(i, loss.item())
 
@@ -2308,8 +2309,6 @@ class PRE_TRAINER(object):
 
                             loss.backward()  
                             self.optimizer.step()
-                                
-                        epoch_loss.append(loss.item())
 
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
@@ -2332,6 +2331,7 @@ class PRE_TRAINER(object):
                                 "\n----------------------------------------------------\n"
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                                f'P_epoch #: {np.mean(p_loss)}', 
                                 f"Val_MSE: {test_mse:.4f}",
                                 f"Val_POmean: {test_ovr_mean:.3f}",
                                 f"Val_Corr: {test_corr:.3f}",
