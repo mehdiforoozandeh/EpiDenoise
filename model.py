@@ -1080,7 +1080,7 @@ class PRE_TRAINER(object):
             mask[:,ii] = True
         mask = mask.to(self.device)
         
-        P = torch.empty_like(X, device="cpu")
+        P = torch.empty_like(X, device="cpu").unsqueeze(0)
         
         for i in range(0, L - context_length, step_size):
 
