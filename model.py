@@ -1103,12 +1103,14 @@ class PRE_TRAINER(object):
             trg_msk[:, i+step_size:i+context_length+step_size] = True
 
             with torch.no_grad():
-                outputs = self.model(
-                    context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
-            try:
-                P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
-            except:
-                print(outputs.shape)
+                try:
+                    outputs = self.model(
+                        context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
+                except:
+                    print(context.shape)
+                    print(target_context.shape)
+
+            P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
              
             torch.cuda.empty_cache()
         
