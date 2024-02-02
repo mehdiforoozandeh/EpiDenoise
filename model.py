@@ -1094,12 +1094,12 @@ class PRE_TRAINER(object):
             
             P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
              
-            del context
-            del target_context
-            del missing_msk_src
-            del trg_msk
-            del outputs
-            # torch.cuda.empty_cache()
+            # del context
+            # del target_context
+            # del missing_msk_src
+            # del trg_msk
+            # del outputs
+            torch.cuda.empty_cache()
         
         mses = []
         spearmans = []
@@ -2305,12 +2305,12 @@ class PRE_TRAINER(object):
                         if p == 1 or p%4 == 0:
                             logfile = open("models/EPD21_log.txt", "w")
 
-                            del context
-                            del target_context
-                            del missing_msk_src
-                            del trg_msk
-                            del outputs
-                            # torch.cuda.empty_cache()
+                            # del context
+                            # del target_context
+                            # del missing_msk_src
+                            # del trg_msk
+                            # del outputs
+                            torch.cuda.empty_cache()
 
                             test_mse, test_corr, test_ovr = self.test_autoregressive_model(
                                 context_length, is_arcsin=arcsinh_transform, step_size=step_size)
