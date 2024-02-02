@@ -1076,8 +1076,8 @@ class PRE_TRAINER(object):
         end_index -= end_index % step_size
         
         # Slice X and Y to get the middle subset
-        # X = X[start_index:end_index, :]
-        # Y = Y[start_index:end_index, :]
+        X = X[start_index:end_index, :]
+        Y = Y[start_index:end_index, :]
 
         # print(X.shape)
         # print(Y.shape)
@@ -1094,7 +1094,7 @@ class PRE_TRAINER(object):
             mask[:,ii] = True
         
         P = torch.empty_like(X, device="cpu").unsqueeze(0)
-        for i in range(start_index, end_index - context_length, step_size):
+        for i in range(0, X.shape[0] - context_length, step_size):
 
             context = X[i : i+context_length, :].unsqueeze(0).to(self.device)
             missing_msk_src = mask[i : i+context_length, :].unsqueeze(0).to(self.device) 
