@@ -2325,8 +2325,8 @@ class PRE_TRAINER(object):
                             test_corr = np.mean(test_corr)
 
                             test_ovr_mean = np.mean(test_ovr)
-                            test_ovr_min = np.min(test_ovr)
-                            test_ovr_max = np.max(test_ovr)
+                            # test_ovr_min = np.min(test_ovr)
+                            # test_ovr_max = np.max(test_ovr)
 
                             logstr = [
                                 "\n----------------------------------------------------\n"
@@ -2335,8 +2335,8 @@ class PRE_TRAINER(object):
                                 f"Val_MSE: {test_mse:.4f}",
                                 f"Val_POmean: {test_ovr_mean:.3f}",
                                 f"Val_Corr: {test_corr:.3f}",
-                                f"Val_POmin: {test_ovr_min:.3f}",
-                                f"Val_POmax: {test_ovr_max:.3f}",
+                                # f"Val_POmin: {test_ovr_min:.3f}",
+                                # f"Val_POmax: {test_ovr_max:.3f}",
                                 "\n----------------------------------------------------\n"
                                 ]
                             logstr = " | ".join(logstr)
