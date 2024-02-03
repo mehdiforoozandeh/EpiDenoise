@@ -1091,7 +1091,50 @@ class PRE_TRAINER(object):
         
         P = torch.empty_like(X, device="cpu")
 
+        src_context = []
+        trg_context = []
+
+        src_missing = []
+        trg_missing = []
+
+        for i in range(0, X.shape[0] - context_length, step_size):
+            if i+context_length+step_size > X.shape[0]:
+                break
+
+            src_context.append(X[i : i+context_length, :].unsqueeze(0).numpy())
+            trg_context.append(X[i+step_size : i+context_length+step_size, :].unsqueeze(0).numpy())
+
+            src_missing.append(mask[i : i+context_length, :].unsqueeze(0).numpy())
+            trg_missing.append(mask[i+step_size : i+context_length+step_size, :].unsqueeze(0).numpy())
+
+        src_context = torch.from_numpy(src_context)
+        trg_context = torch.from_numpy(trg_context)
+
+        src_missing = torch.from_numpy(src_missing)
+        trg_missing = torch.from_numpy(trg_missing)
+
+        print(src_context.shape, src_missing.shape, trg_context.shape, trg_missing.shape)
+        exit()
+
+        trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
+        trg_msk[:, i+step_size:i+context_length+step_size] = True
+
+
         
+
+
+
+
+        """
+        create src_context empty tensor
+        create target_context empty tensor
+
+        forward:
+            
+        backward:
+
+
+        """
 
 
         for i in range(0, X.shape[0] - context_length, step_size):
