@@ -1094,8 +1094,7 @@ class PRE_TRAINER(object):
         src_context = []
         trg_context = []
 
-        src_missing = []
-        trg_missing = []
+        missing_mask = []
 
         for i in range(0, X.shape[0] - context_length, step_size):
             if i+context_length+step_size > X.shape[0]:
@@ -1105,25 +1104,20 @@ class PRE_TRAINER(object):
             trg_context.append(X[i+step_size : i+context_length+step_size, :].numpy())
 
             src_missing.append(mask[i : i+context_length, :].numpy())
-            trg_missing.append(mask[i+step_size : i+context_length+step_size, :].numpy())
 
-        src_context = torch.from_numpy(np.array(src_context))
-        trg_context = torch.from_numpy(np.array(trg_context))
+        src_context = torch.from_numpy(np.array(src_context)).to(self.device)
+        trg_context = torch.from_numpy(np.array(trg_context)).to(self.device)
 
-        src_missing = torch.from_numpy(np.array(src_missing))
-        trg_missing = torch.from_numpy(np.array(trg_missing))
+        src_missing = torch.from_numpy(np.array(src_missing)).to(self.device)
 
-        print(src_context.shape, src_missing.shape, trg_context.shape, trg_missing.shape)
-        exit()
+        trg_msk = torch.zeros((trg_context.shape[0], trg_context.shape[1]), dtype=torch.bool, device=self.device)
+        trg_msk[:, -step_size:] = True
 
-        trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
-        trg_msk[:, i+step_size:i+context_length+step_size] = True
-
-
+        with torch.no_grad():
+            outputs = self.model(
+                context, missing_mask, trg_context, missing_mask, trg_msk) 
         
-
-
-
+        print(outputs)
 
         """
         create src_context empty tensor
