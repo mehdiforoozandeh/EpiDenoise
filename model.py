@@ -1118,6 +1118,8 @@ class PRE_TRAINER(object):
                 src_context, missing_mask, trg_context, missing_mask, trg_msk) 
         
         print(outputs.sum().item(), outputs.mean().item(), outputs.std().item())
+        outputs = outputs.view(outputs.shape[0]*outputs.shape[1], outputs.shape[2])
+        print(outputs.shape, Y.shape)
         return 0, 0, 0
         """
         create src_context empty tensor
@@ -2311,10 +2313,8 @@ class PRE_TRAINER(object):
                         missing_mask_patten_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
-
+                        self.optimizer.zero_grad()
                         for i in range(0, L - context_length, step_size):
-                            self.optimizer.zero_grad()
-                            torch.cuda.empty_cache()
 
                             # Extract the context and the target for this step
                             context = x_batch[:, i:i+context_length, :].to(self.device)
@@ -2346,7 +2346,9 @@ class PRE_TRAINER(object):
                                 continue
 
                             loss.backward()  
-                            self.optimizer.step()
+
+                        self.optimizer.step()
+                        torch.cuda.empty_cache()
 
                         print(np.mean(p_loss))
 
