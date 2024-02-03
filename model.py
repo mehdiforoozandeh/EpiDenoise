@@ -1117,8 +1117,8 @@ class PRE_TRAINER(object):
             outputs = self.model(
                 context, missing_mask, trg_context, missing_mask, trg_msk) 
         
-        print(outputs)
-
+        print(outputs.sum().item(), outputs.mean().item(), outputs.std().item())
+        return 0, 0, 0
         """
         create src_context empty tensor
         create target_context empty tensor
