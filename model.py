@@ -1114,15 +1114,13 @@ class PRE_TRAINER(object):
         trg_msk[:, -step_size:] = True
 
         with torch.no_grad():
-            outputs = self.model(
+            fw_outputs = self.model(
                 src_context, missing_mask, trg_context, missing_mask, trg_msk) 
             
-            outputs = outputs[:,-step_size:, :]
+            fw_outputs = fw_outputs[:,-step_size:, :]
         
-        print(outputs.shape, Y.shape)
-        print(outputs.sum().item(), outputs.mean().item(), outputs.std().item())
-        outputs = outputs.reshape(outputs.shape[0]*outputs.shape[1], outputs.shape[2])
-        print(outputs.shape, Y.shape)
+        fw_outputs = fw_outputs.reshape(fw_outputs.shape[0]*fw_outputs.shape[1], fw_outputs.shape[2])
+        print(fw_outputs.shape, Y.shape)
         return 0, 0, 0
         """
         create src_context empty tensor
