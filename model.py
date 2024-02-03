@@ -1103,12 +1103,12 @@ class PRE_TRAINER(object):
             src_context.append(X[i : i+context_length, :].numpy())
             trg_context.append(X[i+step_size : i+context_length+step_size, :].numpy())
 
-            src_missing.append(mask[i : i+context_length, :].numpy())
+            missing_mask.append(mask[i : i+context_length, :].numpy())
 
         src_context = torch.from_numpy(np.array(src_context)).to(self.device)
         trg_context = torch.from_numpy(np.array(trg_context)).to(self.device)
 
-        src_missing = torch.from_numpy(np.array(src_missing)).to(self.device)
+        missing_mask = torch.from_numpy(np.array(missing_mask)).to(self.device)
 
         trg_msk = torch.zeros((trg_context.shape[0], trg_context.shape[1]), dtype=torch.bool, device=self.device)
         trg_msk[:, -step_size:] = True
