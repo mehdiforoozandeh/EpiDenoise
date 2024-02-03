@@ -1107,11 +1107,11 @@ class PRE_TRAINER(object):
             src_missing.append(mask[i : i+context_length, :].unsqueeze(0).numpy())
             trg_missing.append(mask[i+step_size : i+context_length+step_size, :].unsqueeze(0).numpy())
 
-        src_context = torch.from_numpy(src_context)
-        trg_context = torch.from_numpy(trg_context)
+        src_context = torch.from_numpy(np.array(src_context))
+        trg_context = torch.from_numpy(np.array(trg_context))
 
-        src_missing = torch.from_numpy(src_missing)
-        trg_missing = torch.from_numpy(trg_missing)
+        src_missing = torch.from_numpy(np.array(src_missing))
+        trg_missing = torch.from_numpy(np.array(trg_missing))
 
         print(src_context.shape, src_missing.shape, trg_context.shape, trg_missing.shape)
         exit()
