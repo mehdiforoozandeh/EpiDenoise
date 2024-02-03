@@ -1115,7 +1115,7 @@ class PRE_TRAINER(object):
 
         with torch.no_grad():
             outputs = self.model(
-                context, missing_mask, trg_context, missing_mask, trg_msk) 
+                src_context, missing_mask, trg_context, missing_mask, trg_msk) 
         
         print(outputs.sum().item(), outputs.mean().item(), outputs.std().item())
         return 0, 0, 0
