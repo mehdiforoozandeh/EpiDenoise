@@ -535,8 +535,6 @@ class ComboLoss21(nn.Module):
         self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, union_mask, next_pos_mask):
-        print(pred_signals[next_pos_mask].mean().item(), true_signals[next_pos_mask].mean().item())
-
         # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_next_pos = self.mse_loss(pred_signals[next_pos_mask], true_signals[next_pos_mask])
 
@@ -1091,7 +1089,11 @@ class PRE_TRAINER(object):
         for ii in missing_x_i: 
             mask[:,ii] = True
         
-        P = torch.empty_like(X, device="cpu").unsqueeze(0)
+        P = torch.empty_like(X, device="cpu")
+
+        
+
+
         for i in range(0, X.shape[0] - context_length, step_size):
 
             context = X[i : i+context_length, :].unsqueeze(0).to(self.device)
@@ -2314,34 +2316,34 @@ class PRE_TRAINER(object):
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
                     
-                        # if p == 1 or p%4 == 0:
-                        #     logfile = open("models/EPD21_log.txt", "w")
-                        #     torch.cuda.empty_cache()
+                        if p == 1 or p%4 == 0:
+                            logfile = open("models/EPD21_log.txt", "w")
+                            torch.cuda.empty_cache()
 
-                        #     test_mse, test_corr, test_ovr = self.test_autoregressive_model(
-                        #         context_length, is_arcsin=arcsinh_transform, step_size=step_size)
+                            test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                                context_length, is_arcsin=arcsinh_transform, step_size=step_size)
 
-                        #     test_mse = np.mean(test_mse)
-                        #     test_corr = np.mean(test_corr)
+                            test_mse = np.mean(test_mse)
+                            test_corr = np.mean(test_corr)
 
-                        #     test_ovr_mean = np.mean(test_ovr)
+                            test_ovr_mean = np.mean(test_ovr)
 
-                        #     logstr = [
-                        #         "\n----------------------------------------------------\n"
-                        #         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                        #         f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                        #         f'P_epoch #: {np.mean(p_loss):.3f}', 
-                        #         f"Val_MSE: {test_mse:.3f}",
-                        #         f"Val_POmean: {test_ovr_mean:.3f}",
-                        #         f"Val_Corr: {test_corr:.3f}",
-                        #         "\n----------------------------------------------------\n"
-                        #         ]
-                        #     logstr = " | ".join(logstr)
+                            logstr = [
+                                "\n----------------------------------------------------\n"
+                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                                f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                                f'P_epoch #: {np.mean(p_loss):.3f}', 
+                                f"Val_MSE: {test_mse:.3f}",
+                                f"Val_POmean: {test_ovr_mean:.3f}",
+                                f"Val_Corr: {test_corr:.3f}",
+                                "\n----------------------------------------------------\n"
+                                ]
+                            logstr = " | ".join(logstr)
 
-                        #     log_strs.append(logstr)
-                        #     logfile.write("\n".join(log_strs))
-                        #     logfile.close()
-                        #     print(logstr)
+                            log_strs.append(logstr)
+                            logfile.write("\n".join(log_strs))
+                            logfile.close()
+                            print(logstr)
                         
                     self.scheduler.step()
 
@@ -2976,11 +2978,11 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 4,
-        "d_model": 512,
-        "nlayers": 4,
+        "d_model": 256,
+        "nlayers": 1,
         "epochs": 10,
         "kernel_size": [1, 7, 3, 3],
-        "conv_out_channels": [64, 128, 256, 512],
+        "conv_out_channels": [64, 128, 256, 256],
         "dilation":1,
         "context_length": 800,
         "learning_rate": 0.0001,
