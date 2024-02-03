@@ -1101,11 +1101,11 @@ class PRE_TRAINER(object):
             if i+context_length+step_size > X.shape[0]:
                 break
 
-            src_context.append(X[i : i+context_length, :].unsqueeze(0).numpy())
-            trg_context.append(X[i+step_size : i+context_length+step_size, :].unsqueeze(0).numpy())
+            src_context.append(X[i : i+context_length, :].numpy())
+            trg_context.append(X[i+step_size : i+context_length+step_size, :].numpy())
 
-            src_missing.append(mask[i : i+context_length, :].unsqueeze(0).numpy())
-            trg_missing.append(mask[i+step_size : i+context_length+step_size, :].unsqueeze(0).numpy())
+            src_missing.append(mask[i : i+context_length, :].numpy())
+            trg_missing.append(mask[i+step_size : i+context_length+step_size, :].numpy())
 
         src_context = torch.from_numpy(np.array(src_context))
         trg_context = torch.from_numpy(np.array(trg_context))
