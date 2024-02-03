@@ -1119,8 +1119,9 @@ class PRE_TRAINER(object):
             
             outputs = outputs[:,-step_size:, :]
         
+        print(outputs.shape, Y.shape)
         print(outputs.sum().item(), outputs.mean().item(), outputs.std().item())
-        outputs = outputs.view(outputs.shape[0]*outputs.shape[1], outputs.shape[2])
+        # outputs = outputs.view(outputs.shape[0]*outputs.shape[1], outputs.shape[2])
         print(outputs.shape, Y.shape)
         return 0, 0, 0
         """
