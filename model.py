@@ -1096,6 +1096,9 @@ class PRE_TRAINER(object):
 
         missing_mask = []
 
+        # ============================================ #
+        #               SENSE PREDICTION
+        # ============================================ #
         for i in range(0, X.shape[0] - context_length, step_size):
             if i+context_length+step_size > X.shape[0]:
                 break
@@ -1120,7 +1123,36 @@ class PRE_TRAINER(object):
             fw_outputs = fw_outputs[:,-step_size:, :]
         
         fw_outputs = fw_outputs.reshape(fw_outputs.shape[0]*fw_outputs.shape[1], fw_outputs.shape[2])
-        print(fw_outputs.shape, Y.shape)
+        
+        # ============================================ #
+        #           ANTI-SENSE PREDICTION
+        # ============================================ #
+        X = torch.flip(X, dims=(0))
+        src_context = []
+        trg_context = []
+        missing_mask = []
+
+        start_i = X.shape[0] - (2 * context_length) - 1
+
+        for i in range(start_i, X.shape[0] - context_length, step_size):
+            if i+context_length+step_size > X.shape[0]:
+                break
+
+            src_context.append(X[i : i+context_length, :].numpy())
+            trg_context.append(X[i+step_size : i+context_length+step_size, :].numpy())
+
+            missing_mask.append(mask[i : i+context_length, :].numpy())
+
+        src_context = torch.from_numpy(np.array(src_context)).to(self.device)
+        trg_context = torch.from_numpy(np.array(trg_context)).to(self.device)
+
+        missing_mask = torch.from_numpy(np.array(missing_mask)).to(self.device)
+
+        trg_msk = torch.zeros((trg_context.shape[0], trg_context.shape[1]), dtype=torch.bool, device=self.device)
+        trg_msk[:, -step_size:] = True
+
+        print(src_context.shape, trg_context.shape, missing_mask.shape, trg_msk.shape)
+
         return 0, 0, 0
         """
         create src_context empty tensor
