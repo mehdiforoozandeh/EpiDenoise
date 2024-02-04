@@ -1127,7 +1127,7 @@ class PRE_TRAINER(object):
         # ============================================ #
         #           ANTI-SENSE PREDICTION
         # ============================================ #
-        X = torch.flip(X, dims=(0))
+        X = torch.flip(X, dims=(0,))
         src_context = []
         trg_context = []
         missing_mask = []
