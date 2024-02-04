@@ -2390,7 +2390,7 @@ class PRE_TRAINER(object):
                                 "\n----------------------------------------------------\n"
                                 f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                                 f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                                f'P_epoch #: {np.mean(p_loss):.4f}'
+                                f'P_epoch: {np.mean(p_loss):.4f}'
                                 "\n----------------------------------------------------"
                                 ]
                             logstr = " | ".join(logstr)
@@ -2415,7 +2415,7 @@ class PRE_TRAINER(object):
                         "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                        f'epoch_loss #: {np.mean(epoch_loss):.4f}', 
+                        f'epoch_loss: {np.mean(epoch_loss):.4f}', 
                         f"Val_MSE: {test_mse:.3f}",
                         f"Val_POmean: {test_ovr_mean:.3f}",
                         f"Val_Corr: {test_corr:.3f}",
