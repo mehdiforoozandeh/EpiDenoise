@@ -2338,7 +2338,7 @@ class PRE_TRAINER(object):
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
                             trg_msk[:, -step_size:] = True
-                            if p ==0:
+                            if p == 30:
                                 try:
                                     outputs = self.model(
                                         context, missing_msk_src, target_context, missing_msk_src, trg_msk)
