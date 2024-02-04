@@ -2329,23 +2329,22 @@ class PRE_TRAINER(object):
                             self.optimizer.zero_grad()
 
                             # Extract the context and the target for this step
-                            context = x_batch[:, i:i+context_length, :].to(self.device)
-                            missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device) 
+                            context = x_batch[:, i:i+context_length, :].to(self.device).half()
+                            missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device).half()
 
-                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
-                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device) 
+                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device).half()
+                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device).half()
 
-                            trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
+                            trg_msk = torch.zeros(
+                                (target_context.shape[0], target_context.shape[1]), 
+                                dtype=torch.bool, device=self.device).half()
                             
                             trg_msk[:, -step_size:] = True
-                            if p == 30:
-                                try:
-                                    outputs = self.model(
-                                        context, missing_msk_src, target_context, missing_msk_src, trg_msk)
-                                except:
-                                    print(ds, p, epoch, len(available_assays_ind))
-                                    continue
-                            else:
+                            try:
+                                outputs = self.model(
+                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk)
+                            except:
+                                print(ds, p, epoch, len(available_assays_ind))
                                 continue
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
