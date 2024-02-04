@@ -2310,6 +2310,8 @@ class PRE_TRAINER(object):
                     print('-' * 10)
                     print(f'Epoch {epoch+1}/{num_epochs}')
 
+                    epoch_loss = []
+
                     # zero grads before going over all batches and all patterns of missing data
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
@@ -2321,6 +2323,10 @@ class PRE_TRAINER(object):
 
                         p_loss = []
                         x_batch = x[indices]
+
+                        if epoch%2==1:
+                            x_batch = torch.flip(x_batch, dim=(1,))
+
                         missing_mask_patten_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
@@ -2328,6 +2334,7 @@ class PRE_TRAINER(object):
                             continue
 
                         for i in range(0, L - context_length, step_size):
+                            
                             if i+context_length+step_size > L:
                                 break
 
@@ -2369,71 +2376,62 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                             del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
-                        
-                        torch.cuda.empty_cache()
 
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
+                        epoch_loss.append(np.mean(p_loss))
+
+                        logfile = open("models/EPD21_log.txt", "w")
+                        logstr = [
+                            "\n----------------------------------------------------\n"
+                            f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                            f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                            f'P_epoch #: {np.mean(p_loss):.3f}'
+                            "\n----------------------------------------------------\n"
+                            ]
+                        logstr = " | ".join(logstr)
+
+                        log_strs.append(logstr)
+                        logfile.write("\n".join(log_strs))
+                        logfile.close()
+                        print(logstr)
                     
-                        if p == 1 or p%4 == 0:
-                            logfile = open("models/EPD21_log.txt", "w")
-                            torch.cuda.empty_cache()
 
-                            test_mse, test_corr, test_ovr = self.test_autoregressive_model(
-                                context_length, is_arcsin=arcsinh_transform, step_size=step_size)
+                    torch.cuda.empty_cache()
 
-                            test_mse = np.mean(test_mse)
-                            test_corr = np.mean(test_corr)
+                    test_mse, test_corr, test_ovr = self.test_autoregressive_model(
+                        context_length, is_arcsin=arcsinh_transform, step_size=step_size)
 
-                            test_ovr_mean = np.mean(test_ovr)
+                    test_mse = np.mean(test_mse)
+                    test_corr = np.mean(test_corr)
 
-                            logstr = [
-                                "\n----------------------------------------------------\n"
-                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                                f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                                f'P_epoch #: {np.mean(p_loss):.3f}', 
-                                f"Val_MSE: {test_mse:.3f}",
-                                f"Val_POmean: {test_ovr_mean:.3f}",
-                                f"Val_Corr: {test_corr:.3f}",
-                                "\n----------------------------------------------------\n"
-                                ]
-                            logstr = " | ".join(logstr)
+                    test_ovr_mean = np.mean(test_ovr)
 
-                            log_strs.append(logstr)
-                            logfile.write("\n".join(log_strs))
-                            logfile.close()
-                            print(logstr)
+
+                    t1 = datetime.now()
+                    logfile = open("models/EPD21_log.txt", "w")
+                    logstr = [
+                        "\n----------------------------------------------------\n"
+                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                        f'epoch_loss #: {np.mean(epoch_loss):.3f}', 
+                        f"Val_MSE: {test_mse:.3f}",
+                        f"Val_POmean: {test_ovr_mean:.3f}",
+                        f"Val_Corr: {test_corr:.3f}",
+                        f"Epoch took: {t1 - t0}"
+                        "\n----------------------------------------------------\n"
+                        ]
+                    logstr = " | ".join(logstr)
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
                         
                     self.scheduler.step()
                     torch.cuda.empty_cache()
 
-                    t1 = datetime.now()
-                    logfile = open("models/EPD21_log.txt", "w")
                     
-                    # test_mse, test_corr, test_ovr = self.test_autoregressive_model(
-                    #     context_length, is_arcsin=arcsinh_transform, step_size=step_size)
-
-                    # test_mse = np.mean(test_mse)
-                    # test_corr = np.mean(test_corr)
-
-                    # test_ovr_mean = np.mean(test_ovr)
-
-                    # logstr = [
-                    #     "\n----------------------------------------------------\n"
-                    #     f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                    #     f'Epoch {epoch+1}/{num_epochs}', 
-                    #     f"Epoch Loss: {np.mean(epoch_loss):.3f}", 
-                    #     f"Val_MSE: {test_mse:.4f}",
-                    #     f"Val_POmean: {test_ovr_mean:.3f}",
-                    #     f"Val_Corr: {test_corr:.3f}",
-                    #     "\n----------------------------------------------------\n"
-                    #     ]
-                    # logstr = " | ".join(logstr)
-
-                    # log_strs.append(logstr)
-                    # logfile.write("\n".join(log_strs))
-                    # logfile.close()
-                    # print(logstr)
 
                 # Save the model after each dataset
                 try:
@@ -3040,7 +3038,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "d_model": 256,
         "nlayers": 2,
-        "epochs": 10,
+        "epochs": 2,
         "kernel_size": [1, 7, 3],
         "conv_out_channels": [64, 128, 256],
         "dilation":1,
