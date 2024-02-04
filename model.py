@@ -1158,7 +1158,7 @@ class PRE_TRAINER(object):
         bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
         bw_outputs = torch.flip(bw_outputs, dims=(0,))
 
-        del src_context, trg_context, missing_mask, trg_msk, outputs, bw_outputs, fw_outputs
+        del src_context, trg_context, missing_mask, trg_msk, bw_outputs, fw_outputs
 
         P = torch.cat((bw_outputs, fw_outputs), dim=0).cpu()
 
