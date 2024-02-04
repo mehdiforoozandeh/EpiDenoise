@@ -875,7 +875,7 @@ class EpiDenoise21(nn.Module):
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
         src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
-        src_missing_mask = self.convm(src_missing_mask.float())
+        src_missing_mask = self.convm(src_missing_mask.half())
 
         src = src.permute(0, 2, 1) # to N, F, L
         src = self.conv1(src)
@@ -890,7 +890,7 @@ class EpiDenoise21(nn.Module):
         trg = self.d_conv1(trg) 
 
         trg_missing_mask = trg_missing_mask.permute(0, 2, 1) # to N, F, L
-        trg_missing_mask = self.d_convm(trg_missing_mask.float())
+        trg_missing_mask = self.d_convm(trg_missing_mask.half())
 
         trg = trg + trg_missing_mask  
         trg = trg.permute(0, 2, 1)  # to N, L, F
