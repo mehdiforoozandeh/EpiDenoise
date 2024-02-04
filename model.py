@@ -2370,8 +2370,10 @@ class PRE_TRAINER(object):
                                     del outputs
                                     torch.cuda.empty_cache()
                                     continue
-
+                                
+                                
                                 p_loss.append(loss.item())
+
                                 loss.backward()  
                                 self.optimizer.step()
                                 del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
@@ -2382,7 +2384,8 @@ class PRE_TRAINER(object):
 
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
-                        epoch_loss.append(np.mean(p_loss))
+                        if not math.isnan(np.mean(p_loss)):
+                            epoch_loss.append(np.mean(p_loss))
 
                         if p==1 or p%4==0:
                             logfile = open("models/EPD21_log.txt", "w")
