@@ -2337,7 +2337,7 @@ class PRE_TRAINER(object):
 
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
-                            trg_msk[:, -step_size] = True
+                            trg_msk[:, -step_size:] = True
 
                             try:
                                 outputs = self.model(
@@ -2351,7 +2351,6 @@ class PRE_TRAINER(object):
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
                             loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
-                            p_loss.append(loss.item())
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2362,12 +2361,13 @@ class PRE_TRAINER(object):
                                 torch.cuda.empty_cache()
                                 continue
 
+                            p_loss.append(loss.item())
+
                             loss.backward()  
                             self.optimizer.step()
                             del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
                         
                         torch.cuda.empty_cache()
-                        print(np.mean(p_loss))
 
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
