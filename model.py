@@ -2950,8 +2950,6 @@ def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim, conv_out_channels, kernel_size, dilation, nhead, 
         d_model, nlayers, output_dim, dropout=dropout, context_length=context_length)
 
-    model = model.half()
-
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
 
