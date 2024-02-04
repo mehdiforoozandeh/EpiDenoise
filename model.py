@@ -1158,6 +1158,8 @@ class PRE_TRAINER(object):
         bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
         bw_outputs = torch.flip(bw_outputs, dims=(0,))
 
+        del src_context, trg_context, missing_mask, trg_msk, outputs, bw_outputs, fw_outputs
+
         P = torch.cat((bw_outputs, fw_outputs), dim=0).cpu()
 
         mses = []
@@ -2336,8 +2338,12 @@ class PRE_TRAINER(object):
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
                             trg_msk[:, -step_size] = True
-                            outputs = self.model(
-                                context, missing_msk_src, target_context, missing_msk_src, trg_msk)
+
+                            try:
+                                outputs = self.model(
+                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk)
+                            except:
+                                print(ds, p, epoch)
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
