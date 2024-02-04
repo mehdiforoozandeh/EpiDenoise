@@ -875,6 +875,7 @@ class EpiDenoise21(nn.Module):
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
         src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
+        src_missing_mask = ~src_missing_mask
         src_missing_mask = self.convm(src_missing_mask.float())
 
         src = src.permute(0, 2, 1) # to N, F, L
@@ -890,6 +891,7 @@ class EpiDenoise21(nn.Module):
         trg = self.d_conv1(trg) 
 
         trg_missing_mask = trg_missing_mask.permute(0, 2, 1) # to N, F, L
+        trg_missing_mask = ~trg_missing_mask
         trg_missing_mask = self.d_convm(trg_missing_mask.float())
 
         trg = trg + trg_missing_mask  
@@ -2324,7 +2326,7 @@ class PRE_TRAINER(object):
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
                         if len(available_assays_ind) < 2:
                             continue
-                        
+
                         for i in range(0, L - context_length, step_size):
                             if i+context_length+step_size > L:
                                 break
@@ -2346,9 +2348,6 @@ class PRE_TRAINER(object):
 
                             outputs = self.model(
                                 context, missing_msk_src, target_context, missing_msk_src, trg_msk)
-                            # except:
-                            #     print(ds, p, epoch, len(available_assays_ind))
-                            #     continue
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
