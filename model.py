@@ -2279,7 +2279,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=80,
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=40,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
@@ -2325,7 +2325,7 @@ class PRE_TRAINER(object):
                         x_batch = x[indices]
 
                         if epoch%2==1:
-                            x_batch = torch.flip(x_batch, dim=(1,))
+                            x_batch = torch.flip(x_batch, dims=(1,))
 
                         missing_mask_patten_batch = missing_mask[indices]
 
@@ -2372,7 +2372,6 @@ class PRE_TRAINER(object):
                                 continue
 
                             p_loss.append(loss.item())
-
                             loss.backward()  
                             self.optimizer.step()
                             del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
@@ -2386,8 +2385,8 @@ class PRE_TRAINER(object):
                             "\n----------------------------------------------------\n"
                             f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                             f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                            f'P_epoch #: {np.mean(p_loss):.3f}'
-                            "\n----------------------------------------------------\n"
+                            f'P_epoch #: {np.mean(p_loss):.4f}'
+                            "\n----------------------------------------------------"
                             ]
                         logstr = " | ".join(logstr)
 
@@ -2396,7 +2395,6 @@ class PRE_TRAINER(object):
                         logfile.close()
                         print(logstr)
                     
-
                     torch.cuda.empty_cache()
 
                     test_mse, test_corr, test_ovr = self.test_autoregressive_model(
@@ -2407,14 +2405,13 @@ class PRE_TRAINER(object):
 
                     test_ovr_mean = np.mean(test_ovr)
 
-
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
                     logstr = [
                         "\n----------------------------------------------------\n"
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                        f'epoch_loss #: {np.mean(epoch_loss):.3f}', 
+                        f'epoch_loss #: {np.mean(epoch_loss):.4f}', 
                         f"Val_MSE: {test_mse:.3f}",
                         f"Val_POmean: {test_ovr_mean:.3f}",
                         f"Val_Corr: {test_corr:.3f}",
@@ -2430,8 +2427,6 @@ class PRE_TRAINER(object):
                         
                     self.scheduler.step()
                     torch.cuda.empty_cache()
-
-                    
 
                 # Save the model after each dataset
                 try:
