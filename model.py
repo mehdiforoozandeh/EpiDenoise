@@ -1153,6 +1153,16 @@ class PRE_TRAINER(object):
 
         print(src_context.shape, trg_context.shape, missing_mask.shape, trg_msk.shape)
 
+        with torch.no_grad():
+            bw_outputs = self.model(
+                src_context, missing_mask, trg_context, missing_mask, trg_msk) 
+            
+            bw_outputs = bw_outputs[:,-step_size:, :]
+        
+        bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
+        
+        print(bw_outputs.shape)
+
         return 0, 0, 0
         """
         create src_context empty tensor
