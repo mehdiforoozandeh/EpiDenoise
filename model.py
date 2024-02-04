@@ -2345,6 +2345,8 @@ class PRE_TRAINER(object):
                                 except:
                                     print(ds, p, epoch, len(available_assays_ind))
                                     continue
+                            else:
+                                continue
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
