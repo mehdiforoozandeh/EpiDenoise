@@ -1158,9 +1158,7 @@ class PRE_TRAINER(object):
         bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
         bw_outputs = torch.flip(bw_outputs, dims=(0,))
 
-        P = torch.cat((bw_outputs, fw_outputs), dim=0, device="cpu")
-        print(P.shape, Y.shape)
-        exit()
+        P = torch.cat((bw_outputs, fw_outputs), dim=0).cpu()
 
         mses = []
         spearmans = []
@@ -2310,6 +2308,7 @@ class PRE_TRAINER(object):
 
                     # zero grads before going over all batches and all patterns of missing data
                     self.optimizer.zero_grad()
+                    torch.cuda.empty_cache()
                     t0 = datetime.now()
 
                     p = 0
@@ -2321,8 +2320,8 @@ class PRE_TRAINER(object):
                         missing_mask_patten_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
-                        self.optimizer.zero_grad()
                         for i in range(0, L - context_length, step_size):
+                            self.optimizer.zero_grad()
 
                             # Extract the context and the target for this step
                             context = x_batch[:, i:i+context_length, :].to(self.device)
@@ -2354,10 +2353,9 @@ class PRE_TRAINER(object):
                                 continue
 
                             loss.backward()  
-
-                        self.optimizer.step()
+                            self.optimizer.step()
+                        
                         torch.cuda.empty_cache()
-
                         print(np.mean(p_loss))
 
                         # Clear GPU memory again
@@ -2393,6 +2391,7 @@ class PRE_TRAINER(object):
                             print(logstr)
                         
                     self.scheduler.step()
+                    torch.cuda.empty_cache()
 
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
