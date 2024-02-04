@@ -1049,7 +1049,7 @@ class PRE_TRAINER(object):
         else:
             return mses, spearmans, peak_overlaps
 
-    def test_autoregressive_model(self, context_length, is_arcsin, step_size, p=0.005):
+    def test_autoregressive_model(self, context_length, is_arcsin, step_size, p=0.01):
         self.model.eval()
 
         missing_x_i = []
@@ -2279,7 +2279,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=80,
+        d_model, outer_loop_epochs=2, arcsinh_transform=True, step_size=60,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
