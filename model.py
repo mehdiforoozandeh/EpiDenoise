@@ -2279,7 +2279,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=40,
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=80,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
@@ -3038,7 +3038,7 @@ if __name__ == "__main__":
         "conv_out_channels": [64, 128, 256],
         "dilation":1,
         "context_length": 800,
-        "learning_rate": 0.0001,
+        "learning_rate": 1e-4,
     }
 
     if sys.argv[1] == "epd16":
