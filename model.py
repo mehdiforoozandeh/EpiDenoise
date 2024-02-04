@@ -1151,8 +1151,6 @@ class PRE_TRAINER(object):
         trg_msk = torch.zeros((trg_context.shape[0], trg_context.shape[1]), dtype=torch.bool, device=self.device)
         trg_msk[:, -step_size:] = True
 
-        print(src_context.shape, trg_context.shape, missing_mask.shape, trg_msk.shape)
-
         with torch.no_grad():
             bw_outputs = self.model(
                 src_context, missing_mask, trg_context, missing_mask, trg_msk) 
@@ -1161,7 +1159,7 @@ class PRE_TRAINER(object):
         
         bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
         
-        print(bw_outputs.shape)
+        print(fw_outputs.shape, bw_outputs.shape)
 
         return 0, 0, 0
         """
