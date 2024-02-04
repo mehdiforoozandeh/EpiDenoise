@@ -2384,7 +2384,7 @@ class PRE_TRAINER(object):
                         torch.cuda.empty_cache()
                         epoch_loss.append(np.mean(p_loss))
 
-                        if p==1 or P%4==0:
+                        if p==1 or p%4==0:
                             logfile = open("models/EPD21_log.txt", "w")
                             logstr = [
                                 "\n----------------------------------------------------\n"
