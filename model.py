@@ -2338,13 +2338,13 @@ class PRE_TRAINER(object):
                             trg_msk = torch.zeros((target_context.shape[0], target_context.shape[1]), dtype=torch.bool, device=self.device)
                             
                             trg_msk[:, -step_size:] = True
-
-                            try:
-                                outputs = self.model(
-                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk)
-                            except:
-                                print(ds, p, epoch, print(len(available_assays_ind)))
-                                continue
+                            if p ==0:
+                                try:
+                                    outputs = self.model(
+                                        context, missing_msk_src, target_context, missing_msk_src, trg_msk)
+                                except:
+                                    print(ds, p, epoch, len(available_assays_ind))
+                                    continue
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
