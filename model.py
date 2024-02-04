@@ -2344,6 +2344,7 @@ class PRE_TRAINER(object):
                                     context, missing_msk_src, target_context, missing_msk_src, trg_msk)
                             except:
                                 print(ds, p, epoch)
+                                continue
 
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
