@@ -1088,17 +1088,15 @@ class PRE_TRAINER(object):
         mask = torch.zeros_like(X, dtype=torch.bool)
         for ii in missing_x_i: 
             mask[:,ii] = True
-        
-        P = torch.empty_like(X, device="cpu")
 
+        # ============================================ #
+        #               SENSE PREDICTION
+        # ============================================ #
         src_context = []
         trg_context = []
 
         missing_mask = []
 
-        # ============================================ #
-        #               SENSE PREDICTION
-        # ============================================ #
         for i in range(0, X.shape[0] - context_length, step_size):
             if i+context_length+step_size > X.shape[0]:
                 break
@@ -1158,42 +1156,11 @@ class PRE_TRAINER(object):
             bw_outputs = bw_outputs[:,-step_size:, :]
         
         bw_outputs = bw_outputs.reshape(bw_outputs.shape[0]*bw_outputs.shape[1], bw_outputs.shape[2])
-        
-        print(fw_outputs.shape, bw_outputs.shape)
+        bw_outputs = torch.flip(bw_outputs, dims=(0,))
 
-        return 0, 0, 0
-        """
-        create src_context empty tensor
-        create target_context empty tensor
-
-        forward:
-            
-        backward:
-
-
-        """
-
-
-        for i in range(0, X.shape[0] - context_length, step_size):
-
-            context = X[i : i+context_length, :].unsqueeze(0).to(self.device)
-            missing_msk_src = mask[i : i+context_length, :].unsqueeze(0).to(self.device) 
-
-            target_context = X[i+step_size : i+context_length+step_size, :].unsqueeze(0).to(self.device)
-            missing_msk_trg = mask[i+step_size : i+context_length+step_size, :].unsqueeze(0).to(self.device) 
-            
-            trg_msk = torch.zeros((1, target_context.shape[1]), dtype=torch.bool, device=self.device)
-            trg_msk[:, i+step_size:i+context_length+step_size] = True
-
-            with torch.no_grad():
-                outputs = self.model(
-                    context, missing_msk_src, target_context, missing_msk_trg, trg_msk) 
-
-            P[i+context_length:i+context_length+step_size, :] = outputs[:, -step_size, :].cpu()
-             
-            torch.cuda.empty_cache()
-        
-        P = P.squeeze(0)
+        P = torch.cat((bw_outputs, fw_outputs), dim=0, device="cpu")
+        print(P.shape, Y.shape)
+        exit()
 
         mses = []
         spearmans = []
