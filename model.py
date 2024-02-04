@@ -875,7 +875,7 @@ class EpiDenoise21(nn.Module):
 
     def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
         src_missing_mask = src_missing_mask.permute(0, 2, 1) # to N, F, L
-        src_missing_mask = self.convm(src_missing_mask.half())
+        src_missing_mask = self.convm(src_missing_mask.float())
 
         src = src.permute(0, 2, 1) # to N, F, L
         src = self.conv1(src)
@@ -890,7 +890,7 @@ class EpiDenoise21(nn.Module):
         trg = self.d_conv1(trg) 
 
         trg_missing_mask = trg_missing_mask.permute(0, 2, 1) # to N, F, L
-        trg_missing_mask = self.d_convm(trg_missing_mask.half())
+        trg_missing_mask = self.d_convm(trg_missing_mask.float())
 
         trg = trg + trg_missing_mask  
         trg = trg.permute(0, 2, 1)  # to N, L, F
@@ -2322,6 +2322,9 @@ class PRE_TRAINER(object):
                         missing_mask_patten_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
+                        if len(available_assays_ind) < 2:
+                            continue
+                        
                         for i in range(0, L - context_length, step_size):
                             if i+context_length+step_size > L:
                                 break
@@ -2329,15 +2332,15 @@ class PRE_TRAINER(object):
                             self.optimizer.zero_grad()
 
                             # Extract the context and the target for this step
-                            context = x_batch[:, i:i+context_length, :].to(self.device).half()
-                            missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device).half()
+                            context = x_batch[:, i:i+context_length, :].to(self.device)
+                            missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device)
 
-                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device).half()
-                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device).half()
+                            target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device)
+                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device)
 
                             trg_msk = torch.zeros(
                                 (target_context.shape[0], target_context.shape[1]), 
-                                dtype=torch.bool, device=self.device).half()
+                                dtype=torch.bool, device=self.device)
                             
                             trg_msk[:, -step_size:] = True
 
