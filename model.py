@@ -540,8 +540,7 @@ class ComboLoss21(nn.Module):
 
         if torch.isnan(pred_signals).any() or torch.isnan(mse_next_pos):
             print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(pred_signals.device), torch.tensor(float('nan')).to(pred_signals.device)
-
+            return torch.tensor(float('nan')).to(pred_signals.device)
         return mse_next_pos
 
 class MatrixFactorizationEmbedding(nn.Module):
@@ -2353,49 +2352,53 @@ class PRE_TRAINER(object):
                             
                             trg_msk[:, -step_size:] = True
 
-                            outputs = self.model(
-                                context, missing_msk_src, target_context, missing_msk_src, trg_msk)
-
                             next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
                             next_pos_mask[:,-step_size:, :] = True
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
-                            loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
+                            try:
+                                outputs = self.model(
+                                    context, missing_msk_src, target_context, missing_msk_src, trg_msk)
 
-                            if torch.isnan(loss).sum() > 0:
-                                skipmessage = "Encountered nan loss! Skipping batch..."
-                                log_strs.append(skipmessage)
-                                print(skipmessage)
-                                del x_batch
-                                del outputs
+                                loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
+
+                                if torch.isnan(loss).sum() > 0:
+                                    skipmessage = "Encountered nan loss! Skipping batch..."
+                                    log_strs.append(skipmessage)
+                                    print(skipmessage)
+                                    del x_batch
+                                    del outputs
+                                    torch.cuda.empty_cache()
+                                    continue
+
+                                p_loss.append(loss.item())
+                                loss.backward()  
+                                self.optimizer.step()
+                                del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
+
+                            except:
                                 torch.cuda.empty_cache()
                                 continue
-
-                            p_loss.append(loss.item())
-                            loss.backward()  
-                            self.optimizer.step()
-                            del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
 
                         # Clear GPU memory again
                         torch.cuda.empty_cache()
                         epoch_loss.append(np.mean(p_loss))
 
-                        logfile = open("models/EPD21_log.txt", "w")
-                        logstr = [
-                            "\n----------------------------------------------------\n"
-                            f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                            f'Pattern #: {p}/{len(missing_f_pattern)}', 
-                            f'P_epoch #: {np.mean(p_loss):.4f}'
-                            "\n----------------------------------------------------"
-                            ]
-                        logstr = " | ".join(logstr)
+                        if p==1 or P%4==0:
+                            logfile = open("models/EPD21_log.txt", "w")
+                            logstr = [
+                                "\n----------------------------------------------------\n"
+                                f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                                f'Pattern #: {p}/{len(missing_f_pattern)}', 
+                                f'P_epoch #: {np.mean(p_loss):.4f}'
+                                "\n----------------------------------------------------"
+                                ]
+                            logstr = " | ".join(logstr)
 
-                        log_strs.append(logstr)
-                        logfile.write("\n".join(log_strs))
-                        logfile.close()
-                        print(logstr)
-                    
-                    torch.cuda.empty_cache()
+                            log_strs.append(logstr)
+                            logfile.write("\n".join(log_strs))
+                            logfile.close()
+                            print(logstr)
 
                     test_mse, test_corr, test_ovr = self.test_autoregressive_model(
                         context_length, is_arcsin=arcsinh_transform, step_size=step_size)
@@ -2404,6 +2407,7 @@ class PRE_TRAINER(object):
                     test_corr = np.mean(test_corr)
 
                     test_ovr_mean = np.mean(test_ovr)
+                    torch.cuda.empty_cache()
 
                     t1 = datetime.now()
                     logfile = open("models/EPD21_log.txt", "w")
@@ -2426,7 +2430,6 @@ class PRE_TRAINER(object):
                     print(logstr)
                         
                     self.scheduler.step()
-                    torch.cuda.empty_cache()
 
                 # Save the model after each dataset
                 try:
@@ -3029,13 +3032,13 @@ if __name__ == "__main__":
     hyper_parameters21 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.05,
+        "dropout": 0.1,
         "nhead": 4,
         "d_model": 256,
-        "nlayers": 2,
+        "nlayers": 4,
         "epochs": 2,
-        "kernel_size": [1, 7, 3],
-        "conv_out_channels": [64, 128, 256],
+        "kernel_size": [1, 7, 5, 3],
+        "conv_out_channels": [64, 128, 192, 256],
         "dilation":1,
         "context_length": 800,
         "learning_rate": 1e-4,
