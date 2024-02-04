@@ -2321,6 +2321,9 @@ class PRE_TRAINER(object):
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
                         for i in range(0, L - context_length, step_size):
+                            if i+context_length+step_size > L:
+                                break
+
                             self.optimizer.zero_grad()
 
                             # Extract the context and the target for this step
@@ -2336,8 +2339,8 @@ class PRE_TRAINER(object):
                             outputs = self.model(
                                 context, missing_msk_src, target_context, missing_msk_src, trg_msk)
 
-                            next_pos_mask = torch.zeros_like(context, dtype=torch.bool, device=self.device)
-                            next_pos_mask[:,-step_size, :] = True
+                            next_pos_mask = torch.zeros_like(target_context, dtype=torch.bool, device=self.device)
+                            next_pos_mask[:,-step_size:, :] = True
                             next_pos_mask = next_pos_mask & ~missing_msk_src
 
                             loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
@@ -2354,6 +2357,7 @@ class PRE_TRAINER(object):
 
                             loss.backward()  
                             self.optimizer.step()
+                            del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
                         
                         torch.cuda.empty_cache()
                         print(np.mean(p_loss))
