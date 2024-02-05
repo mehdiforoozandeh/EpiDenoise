@@ -2345,6 +2345,12 @@ class PRE_TRAINER(object):
 
                             target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device)
 
+                            if torch.isnan(context).sum() > 0 or torch.isnan(target_context).sum() > 0:
+                                skipmessage = "Encountered nan data! Skipping..."
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
+                                continue
+
                             trg_msk = torch.zeros(
                                 (target_context.shape[0], target_context.shape[1]), 
                                 dtype=torch.bool, device=self.device)
@@ -2362,10 +2368,7 @@ class PRE_TRAINER(object):
                                 loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
 
                                 if torch.isnan(loss).sum() > 0:
-                                    print(torch.isnan(loss).sum() )
-                                    print(torch.isnan(context).sum() )
-                                    print(torch.isnan(target_context).sum())
-                                    skipmessage = "Encountered nan loss! Skipping..."
+                                    skipmessage = "Encountered nan loss! Skipping batch..."
                                     log_strs.append(skipmessage)
                                     print(skipmessage)
                                     del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
