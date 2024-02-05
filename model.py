@@ -3034,7 +3034,7 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 4,
         "d_model": 384,
-        "nlayers": 6,
+        "nlayers": 4,
         "epochs": 2,
         "kernel_size": [1, 9, 7, 5, 3],
         "conv_out_channels": [64, 128, 192, 256, 384],
