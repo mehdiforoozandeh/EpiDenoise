@@ -862,11 +862,10 @@ class EpiDenoise21(nn.Module):
             input_dim, d_model, 
             1, stride, dilation, pool_type="None", residuals=False)
 
-        # Replace deconvolution layers with RelativeDecoderLayer
         self.relative_decoder = RelativeDecoderLayer(
             hid_dim=d_model, 
             n_heads=nhead, 
-            pf_dim=2*d_model, 
+            pf_dim=4*d_model, 
             dropout=dropout
         )
 
@@ -897,12 +896,12 @@ class EpiDenoise21(nn.Module):
         trg = trg.permute(0, 2, 1)  # to N, L, F
 
         # Apply the relative decoder
-        src = self.relative_decoder(trg, src, trg_mask)
+        trg = self.relative_decoder(trg, src, trg_mask)
 
         # Apply the final linear layers
-        src = self.linear_output(src)
+        trg = self.linear_output(trg)
 
-        return src
+        return trg
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -3035,7 +3034,7 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "nhead": 4,
         "d_model": 384,
-        "nlayers": 4,
+        "nlayers": 6,
         "epochs": 2,
         "kernel_size": [1, 9, 7, 5, 3],
         "conv_out_channels": [64, 128, 192, 256, 384],
