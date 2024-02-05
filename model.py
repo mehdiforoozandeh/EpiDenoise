@@ -3040,7 +3040,7 @@ if __name__ == "__main__":
         "kernel_size": [1, 9, 7, 5, 3],
         "conv_out_channels": [64, 128, 192, 256, 384],
         "dilation":1,
-        "context_length": 1600,
+        "context_length": 800,
         "learning_rate": 1e-3,
     }
 
