@@ -2332,11 +2332,10 @@ class PRE_TRAINER(object):
                             continue
 
                         for i in range(0, L - context_length, step_size):
+                            self.optimizer.zero_grad()
                             
                             if i+context_length+step_size > L:
                                 break
-
-                            self.optimizer.zero_grad()
 
                             # Extract the context and the target for this step
                             context = x_batch[:, i:i+context_length, :].to(self.device)
@@ -2364,21 +2363,22 @@ class PRE_TRAINER(object):
                                     skipmessage = "Encountered nan loss! Skipping..."
                                     log_strs.append(skipmessage)
                                     print(skipmessage)
-                                    torch.cuda.empty_cache()
                                     del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
+                                    torch.cuda.empty_cache()
                                     continue
                                 
                                 p_loss.append(loss.item())
                                 loss.backward()  
                                 self.optimizer.step()
+
                                 del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
 
                             except:
                                 skipmessage = f"Exception! Skipping... [e:{epoch}, p:{p}]"
                                 log_strs.append(skipmessage)
                                 print(skipmessage)
-                                torch.cuda.empty_cache()
                                 del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
+                                torch.cuda.empty_cache()
                                 continue
 
                         # Clear GPU memory again
