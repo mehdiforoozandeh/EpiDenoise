@@ -865,7 +865,7 @@ class EpiDenoise21(nn.Module):
         self.relative_decoder = RelativeDecoderLayer(
             hid_dim=d_model, 
             n_heads=nhead, 
-            pf_dim=4*d_model, 
+            pf_dim=2*d_model, 
             dropout=dropout
         )
 
