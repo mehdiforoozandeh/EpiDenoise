@@ -2362,6 +2362,9 @@ class PRE_TRAINER(object):
                                 loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
 
                                 if torch.isnan(loss).sum() > 0:
+                                    print(torch.isnan(loss).sum() )
+                                    print(torch.isnan(context).sum() )
+                                    print(torch.isnan(target_context).sum())
                                     skipmessage = "Encountered nan loss! Skipping..."
                                     log_strs.append(skipmessage)
                                     print(skipmessage)
