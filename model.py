@@ -2292,6 +2292,8 @@ class PRE_TRAINER(object):
 
             for ds_path in self.dataset.preprocessed_datasets:
                 ds+=1
+                if ds < 12:
+                    continue
                 
                 if ds < start_ds:
                     continue
@@ -2333,7 +2335,7 @@ class PRE_TRAINER(object):
 
                         for i in range(0, L - context_length, step_size):
                             self.optimizer.zero_grad()
-                            
+
                             if i+context_length+step_size > L:
                                 break
 
