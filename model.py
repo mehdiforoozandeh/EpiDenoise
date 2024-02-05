@@ -2366,11 +2366,8 @@ class PRE_TRAINER(object):
                                     skipmessage = "Encountered nan loss! Skipping batch..."
                                     log_strs.append(skipmessage)
                                     print(skipmessage)
-                                    del x_batch
-                                    del outputs
                                     torch.cuda.empty_cache()
                                     continue
-                                
                                 
                                 p_loss.append(loss.item())
 
@@ -3037,13 +3034,13 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 256,
+        "d_model": 384,
         "nlayers": 4,
         "epochs": 2,
-        "kernel_size": [1, 7, 5, 3],
-        "conv_out_channels": [64, 128, 192, 256],
+        "kernel_size": [1, 9, 7, 5, 3],
+        "conv_out_channels": [64, 128, 192, 256, 384],
         "dilation":1,
-        "context_length": 800,
+        "context_length": 1600,
         "learning_rate": 1e-3,
     }
 
