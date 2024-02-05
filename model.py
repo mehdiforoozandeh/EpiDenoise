@@ -2343,7 +2343,6 @@ class PRE_TRAINER(object):
                             missing_msk_src = missing_mask_patten_batch[:, i:i+context_length, :].to(self.device)
 
                             target_context = x_batch[:, i+step_size:i+context_length+step_size, :].to(self.device)
-                            missing_msk_trg = missing_mask_patten_batch[:, i+step_size:i+context_length+step_size, :].to(self.device)
 
                             trg_msk = torch.zeros(
                                 (target_context.shape[0], target_context.shape[1]), 
@@ -2362,20 +2361,24 @@ class PRE_TRAINER(object):
                                 loss = self.criterion(outputs, target_context, missing_msk_src, next_pos_mask)
 
                                 if torch.isnan(loss).sum() > 0:
-                                    skipmessage = "Encountered nan loss! Skipping batch..."
+                                    skipmessage = "Encountered nan loss! Skipping..."
                                     log_strs.append(skipmessage)
                                     print(skipmessage)
                                     torch.cuda.empty_cache()
+                                    del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
                                     continue
                                 
                                 p_loss.append(loss.item())
-
                                 loss.backward()  
                                 self.optimizer.step()
-                                del context, target_context, missing_msk_trg, missing_msk_src, outputs, next_pos_mask
+                                del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
 
                             except:
+                                skipmessage = f"Exception! Skipping... [e:{epoch}, p:{p}]"
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
                                 torch.cuda.empty_cache()
+                                del context, target_context, missing_msk_src, outputs, next_pos_mask, loss
                                 continue
 
                         # Clear GPU memory again
