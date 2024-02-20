@@ -280,24 +280,24 @@ class Evaluation: # on chr21
                     mask[:,:,ii] = True
                 mask = mask.to(self.device)
 
-                if version == "10":
+                if self.version == "10":
                     # (no position is masked)
                     pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
                     outputs = self.model(x_batch, pmask, fmask)
 
-                elif version == "16":
+                elif self.version == "16":
                     outputs, pred_mask, SAP = self.model(x_batch, segment_label)
 
-                elif version == "17":
+                elif self.version == "17":
                     outputs, SAP = self.model(x_batch, ~mask, segment_label)
                 
-                elif version == "18":
+                elif self.version == "18":
                     outputs, pred_mask = self.model(x_batch)
 
-                elif version == "20":
+                elif self.version == "20":
                     outputs, pred_mask = self.model(x_batch, mask)
                 
-                elif version == "21":
+                elif self.version == "21":
                     outputs, pred_mask = self.model(x_batch, mask)
 
             # Store the predictions in the large tensor
