@@ -3010,14 +3010,14 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 2,
-        "d_model": 64,
+        "d_model": 128,
         "nlayers": 4,
-        "epochs": 10,
+        "epochs": 3,
         "mask_percentage": 0.2,
         "chunk": True,
-        "context_length": 400,
-        "batch_size": 100,
-        "learning_rate": 0.0001,
+        "context_length": 200,
+        "batch_size": 200,
+        "learning_rate": 0.001,
     }
 
     hyper_parameters20 = {

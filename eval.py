@@ -240,6 +240,9 @@ class Evaluation: # on chr21
                 "peak_overlap_10thr": self.peak_overlap(target, pred, threshold=0.10)
             }
             self.results.append(metrics)
+    
+    def biosample_generate_imputations(self, bios_name, savedir="data/imputations/bios_name"):
+        pass
 
     def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
@@ -422,9 +425,7 @@ class Evaluation: # on chr21
         2. SAGA on a subset of tracks + SAGAconf (imp vs obs)
         3. sum(abs(log(derivative of correspondence curve))) --> near zero is better 
     """
-
-
-    
+ 
 if __name__=="__main__":
     # e = Evaluation(
     #     model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
