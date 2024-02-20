@@ -1985,12 +1985,12 @@ class PRE_TRAINER(object):
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
                             # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data16(
+                            masked_x_batch, cloze_mask = mask_data18(
                                 x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
 
                             union_mask = cloze_mask | missing_mask_batch
 
-                            masked_x_batch = add_noise(masked_x_batch, 0.4)
+                            masked_x_batch = add_noise(masked_x_batch, 0.2)
                             masked_x_batch[union_mask] = -1
 
                             # move to GPU
@@ -2277,7 +2277,7 @@ class PRE_TRAINER(object):
         return self.model
     
     def pretrain_epidenoise_21(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=False, step_size=80,
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=40,
         num_epochs=25, context_length=2000, start_ds=0):
 
         log_strs = []
@@ -3042,11 +3042,11 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.1,
         "nhead": 4,
-        "d_model": 384,
-        "nlayers": 4,
+        "d_model": 256,
+        "nlayers": 2,
         "epochs": 2,
-        "kernel_size": [1, 9, 7, 5, 3],
-        "conv_out_channels": [64, 128, 192, 256, 384],
+        "kernel_size": [1, 9, 7, 5],
+        "conv_out_channels": [64, 128, 192, 256],
         "dilation":1,
         "context_length": 800,
         "learning_rate": 1e-3,

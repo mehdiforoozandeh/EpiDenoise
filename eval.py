@@ -276,6 +276,8 @@ class Evaluation: # on chr21
 
         return signals
 
+    ################################################################################
+
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
@@ -411,72 +413,17 @@ class Evaluation: # on chr21
         self.overlap_percent = overlap / top_p_percent 
 
         return self.overlap_percent
-        
+    
+    ################################################################################
 
-def eDICE_eval():
-    e = Evaluation(
-        model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
-        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True
-    )
+    """
+    to do -- eval:
+        1. binary classification eval (aucPR, aucROC) on peak called signals (imp vs obs)
+        2. SAGA on a subset of tracks + SAGAconf (imp vs obs)
+        3. sum(abs(log(derivative of correspondence curve))) --> near zero is better 
+    """
 
-    preds_dir = "/project/compbio-lab/EIC/mehdi_preds/scratch/"
-    obs_dir1 = "/project/compbio-lab/EIC/validation_data/"
-    obs_dir2 = "/project/compbio-lab/EIC/blind_data/"
 
-    results = []
-
-    for pf in os.listdir(preds_dir):
-        name = pf.replace(".pkl","")
-        assay = name[3:]
-        ct = name[:3]
-        print(ct, assay)
-
-        with open(preds_dir + pf, 'rb') as pf_file:
-            pred = pickle.load(pf_file)
-            pred = np.sinh(pred)
-        
-        if pf.replace(".pkl", ".bigwig") in os.listdir(obs_dir1):
-            target = torch.load(obs_dir1 + f"/{ct}_chr21_25.pt")
-            target = target[:, int(assay.replace("M", "")) - 1].numpy()
-
-        elif pf.replace(".pkl", ".bigwig") in os.listdir(obs_dir2):
-            target = torch.load(obs_dir2 + f"/{ct}_chr21_25.pt")
-            target = target[:, int(assay.replace("M", "")) - 1].numpy()
-
-        print(pf, target.sum(), pred.sum())
-        metrics = {
-                'celltype': ct,
-                'feature': assay,
-
-                'MSE-GW': e.mse(target, pred),
-                'Pearson-GW': e.pearson(target, pred),
-                'Spearman-GW': e.spearman(target, pred),
-
-                'MSE-1obs': e.mse1obs(target, pred),
-                'Pearson_1obs': e.pearson1_obs(target, pred),
-                'Spearman_1obs': e.spearman1_obs(target, pred),
-
-                'MSE-1imp': e.mse1imp(target, pred),
-                'Pearson_1imp': e.pearson1_imp(target, pred),
-                'Spearman_1imp': e.spearman1_imp(target, pred),
-
-                'MSE-gene': e.mse_gene(target, pred),
-                'Pearson_gene': e.pearson_gene(target, pred),
-                'Spearman_gene': e.spearman_gene(target, pred),
-
-                'MSE-prom': e.mse_prom(target, pred),
-                'Pearson_prom': e.pearson_prom(target, pred),
-                'Spearman_prom': e.spearman_prom(target, pred),
-            }
-        
-
-        results.append(metrics)
-
-    results = pd.DataFrame(results)
-    results.to_csv("eDICE_results.csv", index=False)
     
 if __name__=="__main__":
     # e = Evaluation(

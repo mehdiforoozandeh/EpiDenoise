@@ -7,3 +7,4 @@ data/Meuleman.tsv
 data/background_*
 data/foreground_*
 data/bins*
+data/*.pt
