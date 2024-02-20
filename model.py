@@ -2482,6 +2482,11 @@ class MODEL_LOADER(object):
             model = EpiDenoise17(
                 input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
                 output_dim=output_dim, dropout=dropout, context_length=context_length)
+        
+        elif version == "18":
+            model = EpiDenoise18(
+                input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
+                output_dim=output_dim, dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path))
         model = model.to(self.device)
