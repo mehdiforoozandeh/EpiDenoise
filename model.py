@@ -3011,7 +3011,7 @@ if __name__ == "__main__":
         "dropout": 0.05,
         "nhead": 2,
         "d_model": 64,
-        "nlayers": 4,
+        "nlayers": 2,
         "epochs": 3,
         "mask_percentage": 0.2,
         "chunk": True,
