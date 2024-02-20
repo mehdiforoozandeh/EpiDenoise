@@ -3010,7 +3010,7 @@ if __name__ == "__main__":
         "input_dim": 35,
         "dropout": 0.05,
         "nhead": 2,
-        "d_model": 128,
+        "d_model": 64,
         "nlayers": 4,
         "epochs": 3,
         "mask_percentage": 0.2,
