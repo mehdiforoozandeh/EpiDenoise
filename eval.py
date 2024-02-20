@@ -241,7 +241,7 @@ class Evaluation: # on chr21
             }
             self.results.append(metrics)
     
-    def biosample_generate_imputations(self, bios_name, savedir="data/imputations_bios_name"):
+    def biosample_generate_imputations(self, bios_name, savedir="data/imputations_bios_name/"):
         if os.path.exists(savedir) == False:
             os.mkdir(savedir)
 
