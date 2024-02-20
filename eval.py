@@ -241,7 +241,7 @@ class Evaluation: # on chr21
             }
             self.results.append(metrics)
     
-    def biosample_generate_imputations(self, bios_name, savedir="data/imputations_bios_name/"):
+    def biosample_generate_imputations(self, bios_name, savedir="data/imputations/"):
         if os.path.exists(savedir) == False:
             os.mkdir(savedir)
 
@@ -304,7 +304,7 @@ class Evaluation: # on chr21
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
         
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
-        torch.save(P, savedir)
+        torch.save(P, savedir+ bios_name + "_imp.pt")
 
 
     def evaluate_model(self, outdir):
