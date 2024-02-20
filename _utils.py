@@ -180,7 +180,6 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
     if num_mask_features == 0:
         num_mask_features += 1
 
-
     selected_indices = []
     while len(selected_indices) < num_mask_features:
         randomF = random.choice(available_features)

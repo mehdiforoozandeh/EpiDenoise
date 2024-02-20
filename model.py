@@ -1985,7 +1985,7 @@ class PRE_TRAINER(object):
                             missing_mask_batch = missing_mask_patten_batch[i:i+batch_size]
                             
                             # Masking a subset of the input data -- genomic position mask
-                            masked_x_batch, cloze_mask = mask_data18(
+                            masked_x_batch, cloze_mask = mask_data16(
                                 x_batch, available_assays_ind, mask_value=-1, mask_percentage=mask_percentage)
 
                             union_mask = cloze_mask | missing_mask_batch
@@ -3009,7 +3009,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 4,
+        "nhead": 2,
         "d_model": 64,
         "nlayers": 4,
         "epochs": 10,
