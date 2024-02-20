@@ -932,7 +932,6 @@ class EVAL(object): # on chr21
 if __name__=="__main__":
     e = EVAL(
         model= "models/EPD18_model_checkpoint_ds_10.pth", 
-        hyper_parameters_path= "models/hyper_parameters18_EpiDenoise18_20240220112009_params170630.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         context_length=200, batch_size=200)
