@@ -119,10 +119,10 @@ class Evaluation: # on chr21
             return all_samples, missing_ind
       
     def evaluate_biosample(self, bios_name):
-        context_length, batch_size = self.hyper_parameters["context_length"], self.hyper_parameters["batch_size"]
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
+        context_length, batch_size = self.hyper_parameters["context_length"], self.hyper_parameters["batch_size"]
         num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
         
@@ -241,8 +241,70 @@ class Evaluation: # on chr21
             }
             self.results.append(metrics)
     
-    def biosample_generate_imputations(self, bios_name, savedir="data/imputations/bios_name"):
-        pass
+    def biosample_generate_imputations(self, bios_name, savedir="data/imputations_bios_name"):
+        if os.path.exists(savedir) == False:
+            os.mkdir(savedir)
+
+        X, missing_x_i = self.load_biosample(bios_name, mode="train")
+        Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
+
+        num_rows = (X.shape[0] // context_length) * context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        if self.is_arcsin:
+            arcmask1 = (X != -1)
+            X[arcmask1] = torch.arcsinh_(X[arcmask1])
+
+            arcmask2 = (Y != -1)
+            Y[arcmask2] = torch.arcsinh_(Y[arcmask2])
+
+        X = X.view(-1, context_length, X.shape[-1])
+        Y = Y.view(-1, context_length, Y.shape[-1])
+
+        d_model = X.shape[-1]
+
+        # Initialize a tensor to store all predictions
+        P = torch.empty_like(X, device="cpu")
+
+        # make predictions in batches
+        for i in range(0, len(X), batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.to(self.device)
+                mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
+                for ii in missing_x_i: 
+                    mask[:,:,ii] = True
+                mask = mask.to(self.device)
+
+                if version == "10":
+                    # (no position is masked)
+                    pmask = torch.zeros((x_batch.shape[0], x_batch.shape[1]), dtype=torch.bool,  device=self.device)
+                    outputs = self.model(x_batch, pmask, fmask)
+
+                elif version == "16":
+                    outputs, pred_mask, SAP = self.model(x_batch, segment_label)
+
+                elif version == "17":
+                    outputs, SAP = self.model(x_batch, ~mask, segment_label)
+                
+                elif version == "18":
+                    outputs, pred_mask = self.model(x_batch)
+
+                elif version == "20":
+                    outputs, pred_mask = self.model(x_batch, mask)
+                
+                elif version == "21":
+                    outputs, pred_mask = self.model(x_batch, mask)
+
+            # Store the predictions in the large tensor
+            P[i:i+outputs.shape[0], :, :] = outputs.cpu()
+        
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
+        torch.save(P, savedir)
+
 
     def evaluate_model(self, outdir):
         for bios in self.eval_data.keys():
@@ -427,14 +489,16 @@ class Evaluation: # on chr21
     """
  
 if __name__=="__main__":
-    # e = Evaluation(
-    #     model_path= "models/EpiDenoise17_20240102154151_params3977253.pt", 
-    #     hyper_parameters_path= "models/hyper_parameters17_EpiDenoise17_20240102154151_params3977253.pkl", 
-    #     traindata_path="/project/compbio-lab/EIC/training_data/", 
-    #     evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-    #     is_arcsin=True,  version="17"
-    # )
+    e = Evaluation(
+        model_path= "models/EPD18_model_checkpoint_ds_10.pth", 
+        hyper_parameters_path= "models/hyper_parameters18_EpiDenoise18_20240220112009_params170630.pkl", 
+        traindata_path="/project/compbio-lab/EIC/training_data/", 
+        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
+        is_arcsin=True,  version="18"
+    )
+    e.biosample_generate_imputations("C23")
     # e.evaluate_model("eval_EPD17.csv")
+    exit()
 
     e = Evaluation(
         model_path= "models/EpiDenoise16_20240105145712_params157128.pt", 

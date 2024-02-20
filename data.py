@@ -718,8 +718,7 @@ class ENCODE_IMPUTATION_DATASET(object):
             pattern_dict[tuple(pattern)].append(i)
 
         return ds, mask, pattern_dict
-
-            
+          
 if __name__ == "__main__": 
     eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
     for ds_path in eic.preprocessed_datasets:
