@@ -248,6 +248,7 @@ class Evaluation: # on chr21
         X, missing_x_i = self.load_biosample(bios_name, mode="train")
         Y, missing_y_i = self.load_biosample(bios_name, mode="eval")
 
+        context_length, batch_size = self.hyper_parameters["context_length"], self.hyper_parameters["batch_size"]
         num_rows = (X.shape[0] // context_length) * context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
 
