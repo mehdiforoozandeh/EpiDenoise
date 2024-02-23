@@ -744,6 +744,9 @@ class VISUALS(object):
         plt.clf()
 
     def BIOS_signal_track(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+
         example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
         example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
         example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
@@ -792,9 +795,12 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/signal_tracks.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_tracks.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
+        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
         # Define the size of the figure
@@ -843,9 +849,12 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/signal_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_rank(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
         # Define the size of the figure
@@ -901,9 +910,12 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/signal_rank_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_rank_scatters.png", dpi=150)
     
     def BIOS_corresp_curve(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
         n_rows = math.ceil(num_assays / n_cols)
@@ -934,9 +946,12 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/corresp_curve.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/corresp_curve.png", dpi=150)
 
     def BIOS_corresp_curve_deriv(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+            
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
         n_rows = math.ceil(num_assays / n_cols)
@@ -967,7 +982,7 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi'")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/corresp_curve_deriv.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/corresp_curve_deriv.png", dpi=150)
     
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
@@ -1260,7 +1275,7 @@ class EVAL(object): # on chr21
         
         return P
 
-    def get_metrics(self, X, Y, P, missing_x_i, missing_y_i):
+    def get_metrics(self, X, Y, P, missing_x_i, missing_y_i, bios_name):
         """
         reportoir of metrics -- per_bios:
 
@@ -1292,6 +1307,7 @@ class EVAL(object): # on chr21
             
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
+                'bios':bios_name,
                 'feature': self.mark_dict[self.all_assays[j]],
                 'comparison': comparison,
                 'available train assays': len(self.all_assays) - len(missing_x_i),
@@ -1339,7 +1355,7 @@ class EVAL(object): # on chr21
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
-        eval_res = self.get_metrics(X, Y, P, missing_x_i, missing_y_i)
+        eval_res = self.get_metrics(X, Y, P, missing_x_i, missing_y_i, bios_name)
 
         return eval_res
 
