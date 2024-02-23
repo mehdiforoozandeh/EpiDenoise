@@ -1391,6 +1391,7 @@ class EVAL(object): # on chr21
         for bios in self.eval_data.keys():
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
+            print("got results for ", bios)
             self.viz_bios(eval_res_bios)
 
             for f in eval_res_bios:
