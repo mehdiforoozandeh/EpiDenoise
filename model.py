@@ -3015,13 +3015,13 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 4,
-        "d_model": 384,
-        "nlayers": 6,
+        "nhead": 2,
+        "d_model": 192,
+        "nlayers": 3,
         "epochs": 3,
         "mask_percentage": 0.25,
         "chunk": True,
-        "context_length": 400,
+        "context_length": 200,
         "batch_size": 100,
         "learning_rate": 0.0005
     }
