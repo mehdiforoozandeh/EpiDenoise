@@ -3022,7 +3022,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.2,
         "chunk": True,
         "context_length": 200,
-        "batch_size": 50,
+        "batch_size": 200,
         "learning_rate": 0.01
     }
 
