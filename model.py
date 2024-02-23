@@ -3018,12 +3018,12 @@ if __name__ == "__main__":
         "nhead": 2,
         "d_model": 192,
         "nlayers": 3,
-        "epochs": 3,
-        "mask_percentage": 0.25,
+        "epochs": 4,
+        "mask_percentage": 0.2,
         "chunk": True,
         "context_length": 200,
         "batch_size": 100,
-        "learning_rate": 0.0005
+        "learning_rate": 0.001
     }
 
     hyper_parameters20 = {
