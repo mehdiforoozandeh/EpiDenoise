@@ -735,7 +735,7 @@ class EpiDenoise18(nn.Module):
         src = self.transformer_encoder(src) 
         
         msk = torch.sigmoid(self.mask_decoder(src))
-        src = self.signal_decoder(src)
+        src = nn.Softplus(self.signal_decoder(src))
 
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
         msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
@@ -3014,15 +3014,15 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "nhead": 2,
-        "d_model": 64,
-        "nlayers": 2,
+        "nhead": 4,
+        "d_model": 384,
+        "nlayers": 6,
         "epochs": 3,
-        "mask_percentage": 0.2,
+        "mask_percentage": 0.25,
         "chunk": True,
-        "context_length": 200,
-        "batch_size": 200,
-        "learning_rate": 0.001,
+        "context_length": 400,
+        "batch_size": 100,
+        "learning_rate": 0.0005
     }
 
     hyper_parameters20 = {
