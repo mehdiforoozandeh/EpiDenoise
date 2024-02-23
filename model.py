@@ -719,7 +719,7 @@ class EpiDenoise18(nn.Module):
         # self.mf_embedding = MatrixFactorizationEmbedding(l=context_length, d=input_dim, k=d_model)
         self.embedding_linear = nn.Linear(input_dim, d_model)
 
-        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
@@ -3014,16 +3014,16 @@ if __name__ == "__main__":
     hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.1,
-        "nhead": 2,
+        "dropout": 0.05,
+        "nhead": 4,
         "d_model": 192,
         "nlayers": 3,
-        "epochs": 2,
+        "epochs": 4,
         "mask_percentage": 0.2,
         "chunk": True,
         "context_length": 200,
         "batch_size": 200,
-        "learning_rate": 0.01
+        "learning_rate": 0.0001
     }
 
     hyper_parameters20 = {
