@@ -723,6 +723,7 @@ class EpiDenoise18(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
+        self.signal_softplus = nn.Softplus()
         # self.signal_decoder = FeedForwardNN(d_model, 4*d_model, output_dim, 2)
         self.mask_decoder = nn.Linear(d_model, output_dim)
 
@@ -735,7 +736,7 @@ class EpiDenoise18(nn.Module):
         src = self.transformer_encoder(src) 
         
         msk = torch.sigmoid(self.mask_decoder(src))
-        src = nn.Softplus(self.signal_decoder(src))
+        src = self.signal_softplus(self.signal_decoder(src))
 
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
         msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
