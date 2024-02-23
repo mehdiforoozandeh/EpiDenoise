@@ -1104,6 +1104,7 @@ class EVAL(object): # on chr21
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
             loader = MODEL_LOADER(model, self.hyper_parameters)
+            self.model = loader.load_epidenoise(version=self.version)
 
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
