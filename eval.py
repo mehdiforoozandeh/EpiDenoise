@@ -1415,9 +1415,9 @@ class EVAL(object): # on chr21
             'peak_overlap_01thr', 'peak_overlap_05thr', 'peak_overlap_10thr']
         
         for m in boxplot_metrics:
-            self.viz.MODEL_boxplot(df, metric=m)
-            self.viz.MODEL_regplot_overall(df, metric=m)
-            self.viz.MODEL_regplot_perassay(df, metric=m)
+            self.viz.MODEL_boxplot(self.model_res, metric=m)
+            self.viz.MODEL_regplot_overall(self.model_res, metric=m)
+            self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
 if __name__=="__main__":
     e = EVAL(
