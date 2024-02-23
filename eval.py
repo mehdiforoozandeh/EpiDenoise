@@ -1359,12 +1359,15 @@ class EVAL(object): # on chr21
             selected regions' signals
         """
 
+        print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
         self.viz.clear_pallete()
         
+        print("plotting signal scatter")
         self.viz.BIOS_signal_scatter(eval_res)
         self.viz.clear_pallete()
 
+        print("plotting signal rank scatter")
         self.viz.BIOS_signal_scatter_rank(eval_res)
         self.viz.clear_pallete()
 
