@@ -1408,7 +1408,7 @@ class EVAL(object): # on chr21
         """
         self.model_res = []
         for bios in self.eval_data.keys():
-            if "5" not in bios:
+            if "3" not in bios:
                 continue
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
