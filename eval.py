@@ -1383,9 +1383,9 @@ class EVAL(object): # on chr21
         self.viz.BIOS_signal_scatter(eval_res)
         self.viz.clear_pallete()
 
-        print("plotting signal rank scatter")
-        self.viz.BIOS_signal_scatter_rank(eval_res)
-        self.viz.clear_pallete()
+        # print("plotting signal rank scatter")
+        # self.viz.BIOS_signal_scatter_rank(eval_res)
+        # self.viz.clear_pallete()
 
         # self.viz.BIOS_corresp_curve(eval_res)
         # self.viz.clear_pallete()
