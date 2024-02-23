@@ -262,7 +262,6 @@ def peak_overlap(y_true, y_pred, p=0.01):
 
     return overlap_percent
         
-
 class COORD(object):
     def __init__(self, Meuleman_file="data/Meuleman.tsv", cCRE_file="data/GRCh38-cCREs.bed", 
                 resolution=1000, chr_sizes_file="data/hg38.chrom.sizes", outdir="data/"):

@@ -1,7 +1,11 @@
 from model import *
-from scipy.stats import pearsonr, spearmanr, poisson
+from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error
 import scipy.stats
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import matplotlib.lines as mlines
 import pyBigWig
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
@@ -41,13 +45,45 @@ class METRICS(object):
 
     ################################################################################
 
+    def get_gene_signals(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+
+        return gt_vals, pred_vals
+    
+    def get_prom_signals(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=prom_df)
+
+        return gt_vals, pred_vals
+    
+    def get_1obs_signals(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return y_true[perc_99_pos], y_pred[perc_99_pos]
+
+    def get_1imp_signals(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return y_true[perc_99_pos], y_pred[perc_99_pos]
+    
+    ################################################################################
+
     def mse(self, y_true, y_pred):
         """
         Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
         between the true and predicted values across the entire genome at a resolution of 25bp.
         """
         return np.mean((np.array(y_true) - np.array(y_pred))**2)
-
+    
     def mse_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
@@ -166,9 +202,9 @@ class METRICS(object):
 
         elif p == 1:
             return 1
-        
+
         top_p_percent = int(p * len(y_true))
-        
+
         # Get the indices of the top p percent of the observed (true) values
         top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
         
@@ -179,19 +215,39 @@ class METRICS(object):
         overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
 
         # Calculate the percentage of overlap
-        self.overlap_percent = overlap / top_p_percent 
+        overlap_percent = overlap / top_p_percent 
 
-        return self.overlap_percent
+        return overlap_percent
 
     def correspondence_curve(self, y_true, y_pred):
         curve = []
-        steps = [float(p / 100) for p_i in range(0, 100, 1)]
-        for p in steps:
-            curve.append(
-                (p, peak_overlap(y_true, y_pred, p=p))
-            )
+        derivatives = []
+        steps = [float(p / 100) for p in range(0, 101, 1)]
 
-        return curve
+        obs_rank = np.argsort(y_true)
+        pred_rank = np.argsort(y_pred)
+
+        for p in steps:
+            if p == 0 or p == 1:
+                overlap_percent = p
+            else:
+                top_p_percent = int(p * len(y_true))
+                top_p_percent_obs_i = obs_rank[-top_p_percent:]
+                top_p_percent_pred_i = pred_rank[-top_p_percent:]
+
+                overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
+                overlap_percent = overlap / len(y_true)
+
+            curve.append((p, overlap_percent))
+
+        # Calculate derivatives using finite differences
+        for i in range(1, len(curve)):
+            dp = curve[i][0] - curve[i-1][0]
+            d_overlap_percent = curve[i][1] - curve[i-1][1]
+            derivative = d_overlap_percent / dp
+            derivatives.append((curve[i][0], derivative))
+
+        return curve, derivatives
 
 class Evaluation: # on chr21
     def __init__(
@@ -675,10 +731,364 @@ class Evaluation: # on chr21
         3. sum(abs(log(derivative of correspondence curve))) --> near zero is better 
     """
  
+class VISUALS(object):
+    def __init__(self, resolution=25, savedir="models/evals/"):
+        self.metrics = METRICS()
+        self.resolution = resolution
+        self.savedir = savedir
+
+    def clear_pallete(self):
+        sns.reset_orig
+        plt.close("all")
+        plt.style.use('default')
+        plt.clf()
+
+    def BIOS_signal_track(self, eval_res):
+        example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
+        example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
+        example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
+        example_gene_coord4 = (39526359//self.resolution, 39802081//self.resolution) # B3GALT5
+        example_gene_coord5 = (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            example_gene_coord, example_gene_coord2, example_gene_coord3,
+            example_gene_coord4, example_gene_coord5]
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
+                observed_values = eval_res[j]["obs"][gene_coord[0]:gene_coord[1]]
+                imputed_values = eval_res[j]["imp"][gene_coord[0]:gene_coord[1]]
+
+                # Plot the lines
+                ax.plot(x_values, observed_values, color="blue", alpha=0.7, label="Observed", linewidth=0.1)
+                ax.plot(x_values, imputed_values, "--", color="red", alpha=0.5, label="Imputed", linewidth=0.1)
+
+                # Shade under the curves
+                ax.fill_between(x_values, 0, observed_values, alpha=0.7, color="blue")
+                ax.fill_between(x_values, 0, imputed_values, color="red", alpha=0.5)
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("arcsinh(-log10(pval))")
+
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
+
+                custom_lines = [mlines.Line2D([], [], color='blue', label='Observed'),
+                                mlines.Line2D([], [], color='red',  label='Imputed')]
+                ax.legend(handles=custom_lines)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/signal_tracks.png", dpi=300)
+
+    def BIOS_signal_scatter(self, eval_res, share_axes=True):
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                ax.scatter(xs, ys, color="black", s=5, alpha=0.7)
+                
+                if share_axes:
+                    # Determine the range for x and y axes
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    
+                    # Set the same range for x and y axes
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_xlabel("Obs | arcsinh(-log10(pval))")
+                ax.set_ylabel("Imp | arcsinh(-log10(pval))")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/signal_scatters.png", dpi=150)
+
+    def BIOS_signal_scatter_rank(self, eval_res):
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+
+
+                # Convert values to ranks
+                xs = rankdata(xs)
+                ys = rankdata(ys)
+
+                ax.scatter(xs, ys, color="black", s=5, alpha=0.7)
+
+                # Set the formatter for both axes
+                formatter = mticker.ScalarFormatter(useMathText=True)
+                formatter.set_scientific(True)
+                formatter.set_powerlimits((-1, 1))  # This will use scientific notation for numbers outside this range
+
+                ax.xaxis.set_major_formatter(formatter)
+                ax.yaxis.set_major_formatter(formatter)
+
+                # Update the subplot with the new formatter
+                plt.draw()  # This updates the current figure and applies the formatter
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}", fontsize=9)
+                ax.set_xlabel("Obs | rank")
+                ax.set_ylabel("Imp | rank")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/signal_rank_scatters.png", dpi=150)
+    
+    def BIOS_corresp_curve(self, eval_res):
+        num_assays = len(eval_res)
+        n_cols = math.floor(math.sqrt(num_assays))
+        n_rows = math.ceil(num_assays / n_cols)
+
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=((4*n_cols), (4*n_rows)))
+
+        c = 0
+
+        for i in range(n_rows):
+            for j in range(n_cols):
+
+                if c>=num_assays:
+                    continue
+                
+                t = [p[0] for p in eval_res[c]['corresp_curve']]
+                psi = [p[1] for p in eval_res[c]['corresp_curve']]
+
+                axs[i,j].plot(t, psi, c="red")
+
+                axs[i,j].plot(t, t, "--", c="black")
+
+                axs[i,j].set_title(f"{eval_res[c]['feature']}_{eval_res[c]['comparison']}")
+
+                axs[i,j].fill_between(t, t, psi, color="red", alpha=0.4)
+
+                c += 1
+                axs[i,j].set_xlabel("t")
+                axs[i,j].set_ylabel("psi")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/corresp_curve.png", dpi=150)
+
+    def BIOS_corresp_curve_deriv(self, eval_res):
+        num_assays = len(eval_res)
+        n_cols = math.floor(math.sqrt(num_assays))
+        n_rows = math.ceil(num_assays / n_cols)
+
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=((4*n_cols), (4*n_rows)))
+
+        c = 0
+
+        for i in range(n_rows):
+            for j in range(n_cols):
+
+                if c>=num_assays:
+                    continue
+                    
+                t = [p[0] for p in eval_res[c]['corresp_curve_deriv']]
+                psii = [p[1] for p in eval_res[c]['corresp_curve_deriv']]
+
+                axs[i,j].plot(t, psii, c="red")
+
+                axs[i,j].plot(t, [1 for _ in range(len(t))], "--", c="black")
+
+                axs[i,j].set_title(f"{eval_res[c]['feature']}_{eval_res[c]['comparison']}")
+
+                axs[i,j].fill_between(t, [1 for _ in range(len(t))], psii, color="red", alpha=0.4)
+
+                c += 1
+                axs[i,j].set_xlabel("t")
+                axs[i,j].set_ylabel("psi'")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/corresp_curve_deriv.png", dpi=150)
+    
+    def MODEL_boxplot(self, df, metric):
+        df = df.copy()
+        # Sort the dataframe by 'feature'
+        df.sort_values('feature', inplace=True)
+        fig, axs = plt.subplots(2, figsize=(10, 6))
+        fig.suptitle('Boxplots for Imputed and Denoised')
+
+        # Boxplot for Imputed
+        imputed_df = df[df['comparison'] == 'imputed']
+
+        if "MSE" in metric:
+            imputed_df[metric] = np.log(imputed_df[metric])
+            
+        sns.boxplot(x='feature', y=metric, data=imputed_df, ax=axs[0], color="grey")
+        axs[0].set_title('Imputed')
+        axs[0].set(xlabel='Assay', ylabel='log('+metric+')' if "MSE" in metric else metric)
+        axs[0].set_xticklabels(axs[0].get_xticklabels(), rotation=90)  # Rotate x-axis labels
+
+        # Boxplot for Denoised
+        denoised_df = df[df['comparison'] == 'denoised']
+        if "MSE" in metric:
+            denoised_df[metric] = np.log(denoised_df[metric])
+
+        sns.boxplot(x='feature', y=metric, data=denoised_df, ax=axs[1], color="grey")
+        axs[1].set_title('Denoised')
+        axs[1].set(xlabel='Assay', ylabel='log('+metric+')' if "MSE" in metric else metric)
+        axs[1].set_xticklabels(axs[1].get_xticklabels(), rotation=90)  # Rotate x-axis labels
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{metric}_boxplot.png", dpi=150)
+
+    def MODEL_regplot_overall(self, df, metric):
+        fig, ax = plt.subplots(figsize=(10, 6))
+        fig.suptitle('Scatter plots for Imputed and Denoised')
+
+        # Plot for Imputed
+        imputed_df = df[df['comparison'] == 'imputed']
+        x_imputed = imputed_df['available train assays']
+        y_imputed = imputed_df[metric]
+
+        if "MSE" in metric:
+            y_imputed = np.log(y_imputed)
+        sns.regplot(x=x_imputed, y=y_imputed, scatter=True, line_kws={"color": "red"}, scatter_kws={"color": "red"}, ax=ax, label='Imputed')
+        
+        # Plot for Denoised
+        denoised_df = df[df['comparison'] == 'denoised']
+        x_denoised = denoised_df['available train assays']
+        y_denoised = denoised_df[metric]
+
+        if "MSE" in metric:
+            y_denoised = np.log(y_denoised)
+        sns.regplot(x=x_denoised, y=y_denoised, scatter=True, line_kws={"color": "green"}, scatter_kws={"color": "green"}, ax=ax, label='Denoised')
+        
+        ax.set(xlabel='Number of Available Train Assays', ylabel='log('+metric+')' if "MSE" in metric else metric)
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{metric}_overall_regplot.png", dpi=300)
+
+    def MODEL_regplot_perassay(self, df, metric):
+        # Get the unique features (assays)
+        features = df['feature'].unique()
+        num_features = len(features)
+
+        # Determine the layout of the subplots
+        n_cols = math.ceil(math.sqrt(num_features))
+        n_rows = math.ceil(num_features / n_cols)
+
+        # Create a large figure to accommodate all subplots
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows), squeeze=False)
+        
+        # Flatten the array of axes for easy iteration
+        axs = axs.flatten()
+
+        # Iterate over each unique feature and create a subplot
+        for i, feature in enumerate(features):
+            # Data for current feature
+            feature_df = df[df['feature'] == feature]
+            
+            # Plot for Imputed
+            imputed_df = feature_df[feature_df['comparison'] == 'imputed']
+            x_imputed = imputed_df['available train assays']
+            y_imputed = imputed_df[metric]
+
+            if "MSE" in metric:
+                y_imputed = np.log(y_imputed)
+            
+            sns.regplot(x=x_imputed, y=y_imputed, scatter=True, line_kws={"color": "red"}, scatter_kws={"color": "red"}, ax=axs[i], label='Imputed')
+            
+            # Plot for Denoised
+            denoised_df = feature_df[feature_df['comparison'] == 'denoised']
+            x_denoised = denoised_df['available train assays']
+            y_denoised = denoised_df[metric]
+
+            if "MSE" in metric:
+                y_denoised = np.log(y_denoised)
+            
+            sns.regplot(x=x_denoised, y=y_denoised, scatter=True, line_kws={"color": "green"}, scatter_kws={"color": "green"}, ax=axs[i], label='Denoised')
+            
+            # Set the title and labels
+            axs[i].set_title(feature)
+            axs[i].set_xlabel('Number of Available Train Assays')
+            axs[i].set_ylabel('log('+metric+')' if "MSE" in metric else metric)
+            axs[i].legend()
+
+            # Turn off axes for any empty subplots
+            if i >= num_features:
+                axs[i].axis('off')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.png", dpi=300)
+
 class EVAL(object): # on chr21
     def __init__(
-        self, model, traindata_path, evaldata_path, context_length, batch_size,
-        train_log={}, version="18", resolution=25, is_arcsin=True):
+        self, model, traindata_path, evaldata_path, context_length, batch_size, hyper_parameters_path="",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="18", resolution=25, 
+        is_arcsin=True, savedir="models/evals/"):
+
+        self.savedir = savedir
+        if os.path.exists(self.savedir) == False:
+            os.mkdir(self.savedir)
 
         self.traindata_path = traindata_path
         self.evaldata_path = evaldata_path
@@ -689,12 +1099,31 @@ class EVAL(object): # on chr21
 
         self.model = model
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        if type(self.model) != str:
-            self.model = self.model.to(self.device)
-            self.model.eval()  # set the model to evaluation mode
-            print(f"# model_parameters: {count_parameters(self.model)}")
+
+        if type(self.model) == str:
+            with open(hyper_parameters_path, 'rb') as f:
+                self.hyper_parameters = pickle.load(f)
+            loader = MODEL_LOADER(model, self.hyper_parameters)
+
+        self.model = self.model.to(self.device)
+        self.model.eval()  # set the model to evaluation mode
+        print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
+        self.mark_dict = {
+            "M01": "ATAC-seq", "M02": "DNase-seq", "M03": "H2AFZ",
+            "M04": "H2AK5ac", "M05": "H2AK9ac", "M06": "H2BK120ac",
+            "M07": "H2BK12ac", "M08": "H2BK15ac", "M09": "H2BK20ac",
+            "M10": "H2BK5ac", "M11": "H3F3A", "M12": "H3K14ac",
+            "M13": "H3K18ac", "M14": "H3K23ac", "M15": "H3K23me2",
+            "M16": "H3K27ac", "M17": "H3K27me3", "M18": "H3K36me3",
+            "M19": "H3K4ac", "M20": "H3K4me1", "M21": "H3K4me2",
+            "M22": "H3K4me3", "M23": "H3K56ac", "M24": "H3K79me1",
+            "M25": "H3K79me2", "M26": "H3K9ac", "M27": "H3K9me1",
+            "M28": "H3K9me2", "M29": "H3K9me3", "M30": "H3T11ph",
+            "M31": "H4K12ac", "M32": "H4K20me1", "M33": "H4K5ac",
+            "M34": "H4K8ac", "M35": "H4K91ac"
+        }
 
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
         self.chr_sizes = {}
@@ -706,14 +1135,10 @@ class EVAL(object): # on chr21
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)
 
-        self.results = []
-
-        self.train_data = {}
-        self.eval_data = {}
-
         self.train_data = {}
         self.eval_data = {}
         self.metrics = METRICS()
+        self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
 
         # load and bin chr21 of all bigwig files 
         for t in os.listdir(traindata_path):
@@ -835,7 +1260,20 @@ class EVAL(object): # on chr21
         return P
 
     def get_metrics(self, X, Y, P, missing_x_i, missing_y_i):
+        """
+        reportoir of metrics -- per_bios:
+
+            peak_ovr: 01thr, 05thr, 10thr
+
+            GeWi: MSE, Pearson, Spearman
+            1imp: MSE, Pearson, Spearman
+            1obs: MSE, Pearson, Spearman
+            gene: MSE, Pearson, Spearman
+            prom: MSE, Pearson, Spearman
+        """
+
         results = []
+        
         for j in range(Y.shape[-1]):  # for each feature i.e. assay
             pred = P[:, j].numpy()
             metrics_list = []
@@ -851,8 +1289,9 @@ class EVAL(object): # on chr21
             else:
                 continue
             
+            # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
-                'assay': self.all_assays[j],
+                'feature': self.mark_dict[self.all_assays[j]],
                 'comparison': comparison,
                 'available train assays': len(self.all_assays) - len(missing_x_i),
                 'available eval assays': len(self.all_assays) - len(missing_y_i),
@@ -884,59 +1323,104 @@ class EVAL(object): # on chr21
                 "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
                 "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
-                "corresp_curve": self.metrics.correspondence_curve(target, pred)
+            #     "corresp_curve": corresp,
+            #     "corresp_curve_deriv": corresp_deriv
             }
             results.append(metrics)
         
         return results
 
-    def bios_pipeline(self, bios_name, test=False):
-        """
-        load bios
-        get imp
-        get metrics
-        """
-        if test:
-            X = torch.load("data/C23_trn.pt")
-            # fill-in missing_ind
-            for i in range(X.shape[1]):
-                if (X[:, i] == -1).all():
-                    missing_x_ind.append(i)
-            
-            Y = torch.load("data/C23_val.pt")
-            # fill-in missing_ind
-            for i in range(Y.shape[1]):
-                if (Y[:, i] == -1).all():
-                    missing_y_ind.append(i)
+    def bios_pipeline(self, bios_name):
+        X, Y, missing_x_i, missing_y_i = self.load_bios(bios_name)
+        P = self.get_imp(X, missing_x_i)
 
-            P = torch.load("data/C23_imp.pt")
-
-            print(X.shape)
-            print(Y.shape)
-            print(P.shape)
-
-        else:
-            X, Y, missing_x_i, missing_y_i = self.load_bios(bios_name)
-            P = self.get_imp(X, missing_x_i)
-
-            P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
-            Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
-            X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1]) # preds
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) # eval data
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) # train data
 
         eval_res = self.get_metrics(X, Y, P, missing_x_i, missing_y_i)
+
         return eval_res
 
-    def viz(self):
-        pass
+    def viz_bios(self, eval_res):
+        """
+        visualizations -- per_bios:
+
+            highlight imputed vs denoised
+            corresp curve + deriv
+
+            scatter_gewi: value, rank 
+            scatter_gene: value, rank 
+            scatter_prom: value, rank 
+            scatter_1imp: value, rank 
+            scatter_1obs: value, rank 
+
+            selected regions' signals
+        """
+
+        self.viz.BIOS_signal_track(eval_res)
+        self.viz.clear_pallete()
+        
+        self.viz.BIOS_signal_scatter(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_signal_scatter_rank(eval_res)
+        self.viz.clear_pallete()
+
+        # self.viz.BIOS_corresp_curve(eval_res)
+        # self.viz.clear_pallete()
+
+        # self.viz.BIOS_corresp_curve_deriv(eval_res)
+        # self.viz.clear_pallete()
+    
+    def viz_all(self):
+        """
+        visualizations -- all_bios:
+        
+            denoised vs imputed
+                boxplots for metric per assay
+                    peak_ovr: 01thr, 05thr, 10thr
+                    GeWi: MSE, Pearson, Spearman
+                    1imp: MSE, Pearson, Spearman
+                    1obs: MSE, Pearson, Spearman
+                    gene: MSE, Pearson, Spearman
+                    prom: MSE, Pearson, Spearman
+        """
+        self.model_res = []
+        for bios in self.eval_data.keys():
+            print("evaluating ", bios)
+            eval_res_bios = self.bios_pipeline(bios, test=False)
+            self.viz_bios(eval_res_bios)
+
+            for f in eval_res_bios:
+                del f["obs"], f["imp"]
+                self.model_res.append(f)
+
+        self.model_res = pd.DataFrame(self.model_res)
+        self.model_res.to_csv(f"{self.savedir}/model_eval.csv", index=False)
+
+        boxplot_metrics = [
+            'MSE-GW', 'Pearson-GW', 'Spearman-GW',
+            'MSE-1obs', 'Pearson_1obs', 'Spearman_1obs',
+            'MSE-1imp', 'Pearson_1imp', 'Spearman_1imp',
+            'MSE-gene', 'Pearson_gene', 'Spearman_gene',
+            'MSE-prom', 'Pearson_prom', 'Spearman_prom',
+            'peak_overlap_01thr', 'peak_overlap_05thr', 'peak_overlap_10thr']
+        
+        for m in boxplot_metrics:
+            self.viz.MODEL_boxplot(df, metric=m)
+            self.viz.MODEL_regplot_overall(df, metric=m)
+            self.viz.MODEL_regplot_perassay(df, metric=m)
 
 if __name__=="__main__":
     e = EVAL(
         model= "models/EPD18_model_checkpoint_ds_10.pth", 
+        hyper_parameters_path="models/hyper_parameters18_EpiDenoise18_20240220112009_params170630.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         context_length=200, batch_size=200)
 
-    e.bios_pipeline("C23")
+    e.viz_all()
 
     exit()
     e = Evaluation(
