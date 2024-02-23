@@ -795,7 +795,7 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/signal_tracks.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
-        cols = ["GW", "gene", "TSS"]#, "1obs", "1imp"]
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
         # Define the size of the figure
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
@@ -846,7 +846,7 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_rank(self, eval_res):
-        cols = ["GW", "gene", "TSS"]#, "1obs", "1imp"]
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
         # Define the size of the figure
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
@@ -1160,7 +1160,7 @@ class EVAL(object): # on chr21
                             self.eval_data[e[:3]][e[3:6]] = evaldata_path + "/" + e
 
         print(self.eval_data.keys())
-        print(self.train_data.keys())
+        # print(self.train_data.keys())
 
     def load_tensor(self, bios_name, mode="train"):
         chr, start, end = "chr21", 0, self.chr_sizes["chr21"]
@@ -1392,6 +1392,8 @@ class EVAL(object): # on chr21
         """
         self.model_res = []
         for bios in self.eval_data.keys():
+            if "5" not in bios:
+                continue
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
             print("got results for ", bios)
