@@ -904,6 +904,44 @@ class EpiDenoise21(nn.Module):
 
         return trg
 
+class EpiDenoise22(nn.Module):
+    def __init__(
+        self, input_dim, conv_out_channels, conv_kernel_sizes, dilation, nhead, 
+        d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
+
+        super(EpiDenoise22, self).__init__()
+        # stride = 1
+        # n_cnn_layers = len(conv_out_channels)
+
+        # Convolutional layers
+        self.conv1 = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
+
+        self.convm = ConvTower(
+            input_dim, conv_out_channels[0], 
+            1, stride, dilation, pool_type="None", residuals=False)
+
+        self.convtower = nn.Sequential(*[
+            ConvTower(
+                conv_out_channels[i], 
+                conv_out_channels[i + 1],
+                conv_kernel_sizes[i + 1], stride, dilation
+            ) for i in range(n_cnn_layers - 1)
+        ])
+
+
+        # multi-head self-attention
+        self.mhsa
+        self.enc_block
+
+        # multi-head cross-attention
+        self.mhca
+        self.linear_decoder
+
+    def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
+        pass
+        
 #========================================================================================================#
 #=========================================Pretraining====================================================#
 #========================================================================================================#
@@ -2449,6 +2487,79 @@ class PRE_TRAINER(object):
 
         return self.model
 
+    def pretrain_epidenoise_22(self, 
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=40,
+        batch_size=100, num_epochs=25, context_length=2000, start_ds=0):
+
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
+        logfile = open("models/EPD21_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        for ole in range(outer_loop_epochs):
+
+            ds=0
+            for ds_path in self.dataset.preprocessed_datasets:
+                ds+=1
+                
+                if ds < start_ds:
+                    continue
+                
+                print('-_-' * 10)
+                x, missing_mask, missing_f_pattern = self.dataset.get_dataset_pt(ds_path)
+                N, L, num_features = x.shape
+
+                if arcsinh_transform:
+                    arcmask = (x != -1)
+                    x[arcmask] = torch.arcsinh_(x[arcmask])
+                                
+                for epoch in range(0, num_epochs):
+                    print('-' * 10)
+                    print(f'Epoch {epoch+1}/{num_epochs}')
+
+                    epoch_loss = []
+
+                    # zero grads before going over all batches and all patterns of missing data
+                    self.optimizer.zero_grad()
+                    torch.cuda.empty_cache()
+                    t0 = datetime.now()
+
+                    p = 0
+                    for pattern, indices in missing_f_pattern.items():
+                        p += 1
+                        p_loss = []
+
+                        p_batch = x[indices]
+                        missing_p_batch = missing_mask[indices]
+
+                        available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
+
+                        """
+                        token_dictionary: {
+                            "-1": missing_mask, 
+                            "-2": cloze_mask,
+                            "-3": pad
+                            }                        
+                        """
+
+    
+                        # Select m random points along the L dimension
+                        random_points = torch.randint(low=0, high=L, size=(m,))
+
+                        # Initialize the output tensor with padding value (e.g., 0) and the padding tracker
+                        # x_batch = torch.zeros, C, F))
+                        x_batch_pad = torch.zeros((m, C, F), dtype=torch.bool)
+
+
+                        # create x_batch by selecting batch_size random starting points on L
+                        # for each instance, pad accordingly
+                        # apply cloze mask
+
+                        
+
+
 class MODEL_LOADER(object):
     def __init__(self, model_path, hyper_parameters):
         self.model_path = model_path
@@ -2936,6 +3047,77 @@ def train_epidenoise20(hyper_parameters, checkpoint_path=None, start_ds=0):
     return model
 
 def train_epidenoise21(hyper_parameters, checkpoint_path=None, start_ds=0):
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    d_model = hyper_parameters["d_model"]
+    nlayers = hyper_parameters["nlayers"]
+    epochs = hyper_parameters["epochs"]
+    context_length = hyper_parameters["context_length"]
+
+    conv_out_channels = hyper_parameters["conv_out_channels"]
+    dilation = hyper_parameters["dilation"]
+    kernel_size = hyper_parameters["kernel_size"]
+
+    # one nucleosome is around 150bp -> 6bins
+    # each chuck ~ 1 nucleosome
+
+    learning_rate = hyper_parameters["learning_rate"]
+    # end of hyperparameters
+
+    model = EpiDenoise21(
+        input_dim, conv_out_channels, kernel_size, dilation, nhead, 
+        d_model, nlayers, output_dim, dropout=dropout, context_length=context_length)
+
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.9326035)
+
+    # Load from checkpoint if provided
+    if checkpoint_path is not None:
+        model.load_state_dict(torch.load(checkpoint_path))
+
+    # model = model.to(device)
+
+    print(f"# model_parameters: {count_parameters(model)}")
+    dataset = ENCODE_IMPUTATION_DATASET(data_path)
+
+    model_name = f"EpiDenoise21_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
+    with open(f'models/hyper_parameters21_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+        pickle.dump(hyper_parameters, f)
+
+    criterion = ComboLoss21()
+
+    start_time = time.time()
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epidenoise_21(
+        d_model=d_model, num_epochs=epochs,  
+        context_length=context_length, start_ds=start_ds)
+
+    end_time = time.time()
+
+    # Save the trained model
+    model_dir = "models/"
+    os.makedirs(model_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    # os.system(f"mv models/hyper_parameters.pkl models/hyper_parameters_{model_name.replace( '.pt', '.pkl' )}")
+
+    # Write a description text file
+    description = {
+        "hyper_parameters": hyper_parameters,
+        "model_architecture": str(model),
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "number_of_model_parameters": count_parameters(model),
+        "training_duration": int(end_time - start_time)
+    }
+    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+        f.write(json.dumps(description, indent=4))
+
+    return model
+
+def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     # Defining the hyperparameters
     data_path = hyper_parameters["data_path"]
     input_dim = output_dim = hyper_parameters["input_dim"]
