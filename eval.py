@@ -795,7 +795,7 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/signal_tracks.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
-        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+        cols = ["GW", "gene", "TSS"]#, "1obs", "1imp"]
 
         # Define the size of the figure
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
@@ -846,7 +846,7 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_rank(self, eval_res):
-        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+        cols = ["GW", "gene", "TSS"]#, "1obs", "1imp"]
 
         # Define the size of the figure
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
