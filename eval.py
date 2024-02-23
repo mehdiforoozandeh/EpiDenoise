@@ -744,8 +744,8 @@ class VISUALS(object):
         plt.clf()
 
     def BIOS_signal_track(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
 
         example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
         example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
@@ -795,11 +795,11 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_tracks.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_tracks.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
-        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -849,11 +849,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_rank(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -910,11 +910,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/signal_rank_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_scatters.png", dpi=150)
     
     def BIOS_corresp_curve(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
 
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -946,11 +946,11 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/corresp_curve.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve.png", dpi=150)
 
     def BIOS_corresp_curve_deriv(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[j]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[j]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
             
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -982,7 +982,7 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi'")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[j]['bios']}/corresp_curve_deriv.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve_deriv.png", dpi=150)
     
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
