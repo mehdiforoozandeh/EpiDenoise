@@ -2671,7 +2671,7 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                     
-                    logfile = open("models/EPD18_log.txt", "w")
+                    logfile = open("models/EPD22_log.txt", "w")
 
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
