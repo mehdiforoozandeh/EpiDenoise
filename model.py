@@ -3429,7 +3429,7 @@ if __name__ == "__main__":
         "n_enc_layers": 2,
         "n_dec_layers": 2,
         
-        "mask_percentage":0.2,
+        "mask_percentage":0.1,
         "batch_size":100,
         "epochs": 10,
         "outer_loop_epochs":1,
