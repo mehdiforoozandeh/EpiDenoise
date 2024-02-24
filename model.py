@@ -567,9 +567,9 @@ class ComboLoss22(nn.Module):
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
-        if torch.isnan(mse_pred_loss).any():
+        if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
             print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(mse_midslice.device)
+            return torch.tensor(float('nan')).to(mse_pred_loss.device)
         return mse_pred_loss + mse_obs_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
