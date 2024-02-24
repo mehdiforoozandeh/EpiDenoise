@@ -2584,8 +2584,6 @@ class PRE_TRAINER(object):
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
-                        self.optimizer.zero_grad()
-                        torch.cuda.empty_cache()
                         p += 1
                         
                         p_batch = x[indices]
@@ -2618,6 +2616,8 @@ class PRE_TRAINER(object):
                             xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival   
 
                         for x_p in range(0, xp_batch.shape[0], batch_size):
+                            self.optimizer.zero_grad()
+                            torch.cuda.empty_cache()
                             x_batch = xp_batch[x_p:x_p+batch_size, :, :]
 
                             """
@@ -2674,8 +2674,7 @@ class PRE_TRAINER(object):
 
                             epoch_loss.append(loss.item())
                             loss.backward()  
-
-                        self.optimizer.step()
+                            self.optimizer.step()
                     
                     logfile = open("models/EPD18_log.txt", "w")
 
