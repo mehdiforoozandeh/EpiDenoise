@@ -2617,7 +2617,7 @@ class PRE_TRAINER(object):
                                 xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival   
                         
                         else:
-                            context_length_factor = context_length / pattern_batch.shape[1]
+                            context_length_factor = context_length / p_batch.shape[1]
 
                             xp_batch = reshape_tensor(p_batch, context_length_factor)
                             missing_p_batch = reshape_tensor(missing_p_batch, context_length_factor)
