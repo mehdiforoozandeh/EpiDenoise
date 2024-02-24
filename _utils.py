@@ -203,6 +203,7 @@ class DataMasker:
         self.chunk_size = chunk_size
 
     def mask_chunks(self, data):
+        data = data.clone()
         N, L, F = data.size()
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
         num_masks = int((L * self.mask_percentage) / self.chunk_size)
@@ -215,6 +216,7 @@ class DataMasker:
     def mask_features(self, data, available_features):
         self.available_features = available_features
 
+        data = data.clone()
         N, L, F = data.size()
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
         num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
@@ -227,6 +229,7 @@ class DataMasker:
     def mask_chunk_features(self, data, available_features):
         self.available_features = available_features
 
+        data = data.clone()
         N, L, F = data.size()
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
         num_all_signals = L * len(self.available_features)
@@ -239,6 +242,7 @@ class DataMasker:
         return data, mask_indicator
 
     def mid_slice_mask(self, data):
+        data = data.clone()
         N, L, F = data.size()
         slice_length = int(L * self.mask_percentage)
         start = L // 2 - slice_length // 2
@@ -250,6 +254,7 @@ class DataMasker:
     def mid_slice_mask_features(self, data, available_features):
         self.available_features = available_features
 
+        data = data.clone()
         N, L, F = data.size()
         slice_length = int(L * self.mask_percentage)
         num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
@@ -264,6 +269,7 @@ class DataMasker:
     def mid_slice_focused_full_feature_mask(self, data, missing_mask_value, available_features):
         self.available_features = available_features
 
+        data = data.clone()
         N, L, F = data.size()
         num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
         features_to_mask = random.sample(self.available_features, num_features_to_mask)
