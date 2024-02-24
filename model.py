@@ -974,21 +974,21 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        print(src.shape)
+        print("src", src.shape)
         for conv in self.convtower:
             src = conv(src)
-            print(conv, src.shape)
+            print("src", src.shape)
         
         src = src.permute(0, 2, 1)  # to N, L, F
         for enc in self.transformer_encoder:
             src = enc(src)
-            print(enc, src.shape)
+            print("src", src.shape)
         
-        print(trg.shape)
+        print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
         for dec in self.transformer_decoder:
             trg = dec(trg, src, pad)
-            print(dec, trg.shape)
+            print("trg", trg.shape)
         
         exit()
         trg = self.linear_output(trg)
