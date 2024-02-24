@@ -3331,7 +3331,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_epidenoise_22(
-        d_model=d_model, num_epochs=epochs, mask_percentage= ,outer_loop_epochs=, 
+        d_model=d_model, num_epochs=epochs, mask_percentage=mask_percentage ,outer_loop_epochs=outer_loop_epochs, 
         context_length=context_length, start_ds=start_ds)
         
 
