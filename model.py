@@ -2535,7 +2535,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_22(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, num_random_segs=5, 
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, num_random_segs=10, 
         num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0, batch_size=50):
 
         log_strs = []
@@ -2612,9 +2612,7 @@ class PRE_TRAINER(object):
                                 elif end > L:
                                     ival = torch.cat([ival, pad], dim=1)
 
-                            xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival
-
-                        print(p, len(available_assays_ind), xp_batch.shape)    
+                            xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival   
 
                         for x_p in range(0, xp_batch.shape[0], batch_size):
                             x_batch = xp_batch[x_p:x_p+batch_size, :, :]
@@ -3417,10 +3415,10 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 200,
+        "context_length": 400,
         
-        "kernel_size": [1, 5, 3],
-        "conv_out_channels": [64, 128, 192],
+        "kernel_size": [1, 11, 9, 7, 5],
+        "conv_out_channels": [64, 128, 192, 256, 384],
         "dilation":1,
 
         "nhead": 4,
@@ -3428,10 +3426,10 @@ if __name__ == "__main__":
         "n_dec_layers": 2,
         
         "mask_percentage":0.2,
-        "batch_size":50,
+        "batch_size":100,
         "epochs": 10,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-3,
+        "learning_rate": 1e-2,
     }
 
     if sys.argv[1] == "epd16":
