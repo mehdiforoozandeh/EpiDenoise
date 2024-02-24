@@ -2638,6 +2638,12 @@ class PRE_TRAINER(object):
 
                         x_batch_pad = x_batch_pad[:, :, 0]
 
+                        x_batch_pad = x_batch_pad.to(self.device)
+                        masked_x_batch = masked_x_batch.to(self.device)
+                        union_mask = union_mask.to(self.device)
+                        cloze_mask = cloze_mask.to(self.device)
+                        x_batch = x_batch.to(self.device)
+
                         outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
 
                         loss = self.criterion(outputs, x_batch, cloze_mask)
