@@ -3416,7 +3416,7 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "context_length": 1600,
         
-        "kernel_size": [1, 25, 13, 7, 3],
+        "kernel_size": [1, 7, 7, 7, 7],
         "conv_out_channels": [128, 128, 192, 256, 384],
         "dilation":1,
 
