@@ -2571,13 +2571,11 @@ class PRE_TRAINER(object):
                     x[arcmask] = torch.arcsinh_(x[arcmask])
                                 
                 for epoch in range(0, num_epochs):
+                    t0 = datetime.now()
                     print('-' * 10)
                     print(f'Epoch {epoch+1}/{num_epochs}')
 
                     epoch_loss = []
-
-                    # zero grads before going over all batches and all patterns of missing data
-                    t0 = datetime.now()
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
@@ -2674,7 +2672,8 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}',
-                        f"Loss: {np.mean(epoch_loss):.4f}"]
+                        f"Loss: {np.mean(epoch_loss):.4f}",
+                        f"Epoch took: {datetime.now() - t0}"]
 
                     logstr = " | ".join(logstr)
 
@@ -2685,7 +2684,7 @@ class PRE_TRAINER(object):
                     
                     self.scheduler.step()
 
-                # t1 = datetime.now()
+                # 
                 # logfile = open("models/EPD22_log.txt", "w")
                 
                 # test_mse, test_corr, test_ovr = self.test_model(
@@ -3415,10 +3414,10 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 400,
+        "context_length": 200,
         
         "kernel_size": [1, 11, 9, 7, 5],
-        "conv_out_channels": [64, 128, 192, 256, 384],
+        "conv_out_channels": [128, 128, 192, 256, 384],
         "dilation":1,
 
         "nhead": 4,
