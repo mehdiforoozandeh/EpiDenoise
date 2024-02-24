@@ -2650,7 +2650,6 @@ class PRE_TRAINER(object):
                             else:
                                 masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
 
-                            
                             # ensure that padded regions remain padded
                             x_batch[x_batch_pad] = token_dict["pad"]
                             
@@ -3448,7 +3447,7 @@ if __name__ == "__main__":
         
         "mask_percentage":0.2,
         "batch_size":100,
-        "epochs": 20,
+        "epochs": 10,
         "outer_loop_epochs":4,
         "learning_rate": 1e-3
     }
