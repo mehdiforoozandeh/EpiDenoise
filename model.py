@@ -2553,8 +2553,6 @@ class PRE_TRAINER(object):
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
-        
-
         for ole in range(outer_loop_epochs):
 
             ds=0
@@ -2579,12 +2577,12 @@ class PRE_TRAINER(object):
                     epoch_loss = []
 
                     # zero grads before going over all batches and all patterns of missing data
-                    self.optimizer.zero_grad()
-                    torch.cuda.empty_cache()
                     t0 = datetime.now()
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
+                        self.optimizer.zero_grad()
+                        torch.cuda.empty_cache()
                         p += 1
 
                         p_batch = x[indices]
