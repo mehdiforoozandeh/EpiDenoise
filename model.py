@@ -3334,7 +3334,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.8)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3449,7 +3449,7 @@ if __name__ == "__main__":
         "batch_size":100,
         "epochs": 10,
         "outer_loop_epochs":4,
-        "learning_rate": 1e-3
+        "learning_rate": 5e-4
     }
 
     if sys.argv[1] == "epd16":
