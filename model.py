@@ -990,7 +990,7 @@ class EpiDenoise22(nn.Module):
             trg = dec(trg, src, pad)
             # print("trg", trg.shape)
         
-        trg = self.linear_output(trg+src)
+        trg = self.linear_output(trg)
         trg = self.signal_softplus(trg)
         return trg
         
