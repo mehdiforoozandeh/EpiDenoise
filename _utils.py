@@ -281,6 +281,7 @@ class DataMasker:
         # Mask features completely
         for feature in features_to_mask:
             data[:, :, feature] = missing_mask_value
+            
         # Mark only the middle part of those masked features
         slice_length = int(L * self.mask_percentage)
         start = L // 2 - slice_length // 2
