@@ -974,24 +974,23 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        print("src", src.shape)
+        # print("src", src.shape)
         for conv in self.convtower:
             src = conv(src)
-            print("src", src.shape)
+            # print("src", src.shape)
         
         src = src.permute(0, 2, 1)  # to N, L, F
         for enc in self.transformer_encoder:
             src = enc(src)
-            print("src", src.shape)
+            # print("src", src.shape)
         
-        print("trg",trg.shape)
+        # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
         for dec in self.transformer_decoder:
             trg = dec(trg, src, pad)
-            print("trg", trg.shape)
+            # print("trg", trg.shape)
         
-        exit()
-        trg = self.linear_output(trg)
+        trg = self.linear_output(trg+src)
         trg = self.signal_softplus(trg)
         return trg
         
@@ -3319,7 +3318,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=epochs, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3434,7 +3433,7 @@ if __name__ == "__main__":
         "batch_size":100,
         "epochs": 10,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-2,
+        "learning_rate": 1e-1,
     }
 
     if sys.argv[1] == "epd16":
