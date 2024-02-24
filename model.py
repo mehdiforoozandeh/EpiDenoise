@@ -2617,7 +2617,7 @@ class PRE_TRAINER(object):
                         print(p, len(available_assays_ind), xp_batch.shape)    
 
                         for x_p in range(0, xp_batch.shape[0], batch_size):
-                            x_batch = xp_batch[xp:xp+batch_size, :, :]
+                            x_batch = xp_batch[x_p:x_p+batch_size, :, :]
 
                             """
                             src: cloze(x_batch)
