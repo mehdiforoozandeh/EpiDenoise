@@ -104,7 +104,7 @@ class ConvTower(nn.Module):
         if pool_type == "attn":
             self.pool = AttentionPooling1D(out_C, 2)
         elif pool_type == "max":
-            self.pool  = nn.MaxPool1d(2)
+            self.pool  = nn.MaxPool1d(W)
     
     def forward(self, x):
         x = self.conv(x)
@@ -973,9 +973,6 @@ class EpiDenoise22(nn.Module):
 
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
-
-        print((src == trg).sum().item())
-        exit()
 
         for conv in self.convtower:
             src = conv(src)
@@ -3428,7 +3425,7 @@ if __name__ == "__main__":
         "n_dec_layers": 2,
         
         "mask_percentage":0.2,
-        "batch_size":100,
+        "batch_size":200,
         "epochs": 10,
         "outer_loop_epochs":1,
         "learning_rate": 1e-2,
