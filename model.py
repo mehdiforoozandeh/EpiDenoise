@@ -2536,7 +2536,7 @@ class PRE_TRAINER(object):
 
     def pretrain_epidenoise_22(self, 
         d_model, outer_loop_epochs=1, arcsinh_transform=True, num_random_segs=5, 
-        num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0, batch_size=50):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -2590,12 +2590,11 @@ class PRE_TRAINER(object):
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
                         
-
                         # Select m random points along the L dimension
                         random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
 
                         # Initialize the output tensor with padding value (e.g., 0) and the padding tracker
-                        x_batch = torch.zeros((num_random_segs * p_batch.shape[0], context_length, num_features))
+                        xp_batch = torch.zeros((num_random_segs * p_batch.shape[0], context_length, num_features))
 
                         for i, point in enumerate(random_points):
                             start = point - context_length // 2
@@ -2613,60 +2612,64 @@ class PRE_TRAINER(object):
                                 elif end > L:
                                     ival = torch.cat([ival, pad], dim=1)
 
-                            x_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival
+                            xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival
 
-                        print(p, len(available_assays_ind), x_batch.shape)    
-                        """
-                        src: cloze(x_batch)
-                        trg: cloze(x_batch)
-                        trg_pad: x_batch_pad
+                        print(p, len(available_assays_ind), xp_batch.shape)    
 
-                        src_mask and trg_msk
-                            union_mask: union(missing, cloze, x_batch_pad)
-                        """
+                        for x_p in range(0, xp_batch.shape[0], batch_size):
+                            x_batch = xp_batch[xp:xp+batch_size, :, :]
 
-                        x_batch_pad = (x_batch == token_dict["pad"])
+                            """
+                            src: cloze(x_batch)
+                            trg: cloze(x_batch)
+                            trg_pad: x_batch_pad
 
-                        masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
-                        
-                        # ensure that padded regions remain padded
-                        x_batch[x_batch_pad] = token_dict["pad"]
-                        
-                        x_batch_missing = (x_batch == token_dict["missing_mask"])
-                        # ensure that padded regions remain padded
-                        
-                        union_mask = x_batch_pad | cloze_mask | x_batch_missing
+                            src_mask and trg_msk
+                                union_mask: union(missing, cloze, x_batch_pad)
+                            """
 
-                        x_batch_pad = x_batch_pad[:, :, 0]
+                            x_batch_pad = (x_batch == token_dict["pad"])
 
-                        x_batch_pad = x_batch_pad.to(self.device)
-                        masked_x_batch = masked_x_batch.to(self.device)
-                        union_mask = union_mask.to(self.device)
-                        cloze_mask = cloze_mask.to(self.device)
-                        x_batch = x_batch.to(self.device)
+                            masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
+                            
+                            # ensure that padded regions remain padded
+                            x_batch[x_batch_pad] = token_dict["pad"]
+                            
+                            x_batch_missing = (x_batch == token_dict["missing_mask"])
+                            # ensure that padded regions remain padded
+                            
+                            union_mask = x_batch_pad | cloze_mask | x_batch_missing
 
-                        outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
-                        loss = self.criterion(outputs, x_batch, cloze_mask)
+                            x_batch_pad = x_batch_pad[:, :, 0]
 
-                        if torch.isnan(loss).sum() > 0:
-                            skipmessage = "Encountered nan loss! Skipping batch..."
-                            print(len(available_assays_ind), loss)
-                            log_strs.append(skipmessage)
-                            print(skipmessage)
+                            x_batch_pad = x_batch_pad.to(self.device)
+                            masked_x_batch = masked_x_batch.to(self.device)
+                            union_mask = union_mask.to(self.device)
+                            cloze_mask = cloze_mask.to(self.device)
+                            x_batch = x_batch.to(self.device)
+
+                            outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+                            loss = self.criterion(outputs, x_batch, cloze_mask)
+
+                            if torch.isnan(loss).sum() > 0:
+                                skipmessage = "Encountered nan loss! Skipping batch..."
+                                print(len(available_assays_ind), loss)
+                                log_strs.append(skipmessage)
+                                print(skipmessage)
+                                del x_batch
+                                del masked_x_batch
+                                del outputs
+                                torch.cuda.empty_cache()
+                                continue
+
                             del x_batch
                             del masked_x_batch
                             del outputs
-                            torch.cuda.empty_cache()
-                            continue
 
-                        del x_batch
-                        del masked_x_batch
-                        del outputs
+                            epoch_loss.append(loss.item())
 
-                        epoch_loss.append(loss.item())
-
-                        loss.backward()  
-                        self.optimizer.step()
+                            loss.backward()  
+                            self.optimizer.step()
                     
                     logfile = open("models/EPD18_log.txt", "w")
 
@@ -3303,6 +3306,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     kernel_size = hyper_parameters["kernel_size"]
 
     learning_rate = hyper_parameters["learning_rate"]
+    batch_size = hyper_parameters["batch_size"]
     mask_percentage = hyper_parameters["mask_percentage"]
     outer_loop_epochs = hyper_parameters["outer_loop_epochs"]
     # end of hyperparameters
@@ -3334,7 +3338,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_epidenoise_22(
         d_model=d_model, num_epochs=epochs, mask_percentage=mask_percentage ,outer_loop_epochs=outer_loop_epochs, 
-        context_length=context_length, start_ds=start_ds)
+        context_length=context_length, start_ds=start_ds, batch_size=batch_size)
         
     end_time = time.time()
 
@@ -3424,6 +3428,7 @@ if __name__ == "__main__":
         "n_dec_layers": 2,
         
         "mask_percentage":0.2,
+        "batch_size":50,
         "epochs": 10,
         "outer_loop_epochs":1,
         "learning_rate": 1e-3,
