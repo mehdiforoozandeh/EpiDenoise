@@ -3432,7 +3432,7 @@ if __name__ == "__main__":
         "mask_percentage":0.1,
         "batch_size":100,
         "epochs": 10,
-        "outer_loop_epochs":1,
+        "outer_loop_epochs":3,
         "learning_rate": 1e-1,
     }
 
