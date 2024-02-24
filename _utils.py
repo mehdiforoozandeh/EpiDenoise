@@ -219,10 +219,17 @@ class DataMasker:
         data = data.clone()
         N, L, F = data.size()
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
-        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        
+        if len(available_features) == 1:
+            return data, mask_indicator
+        else:
+            num_features_to_mask = int(len(self.available_features) * self.mask_percentage) + 1
+
         features_to_mask = random.sample(self.available_features, num_features_to_mask)
+
         for feature in features_to_mask:
             mask_indicator[:, :, feature] = True
+
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 

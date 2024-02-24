@@ -563,14 +563,14 @@ class ComboLoss22(nn.Module):
         super(ComboLoss22, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask):
-        # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_midslice = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
+        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
-        if torch.isnan(mse_midslice).any():
+        if torch.isnan(mse_pred_loss).any():
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(mse_midslice.device)
-        return mse_midslice
+        return mse_pred_loss + mse_obs_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -2540,7 +2540,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_22(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, num_random_segs=10, 
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, focus_middle=True, num_random_segs=10,
         num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0, batch_size=50):
 
         log_strs = []
@@ -2591,29 +2591,37 @@ class PRE_TRAINER(object):
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
                         
-                        # Select m random points along the L dimension
-                        random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
+                        if focus_middle:
+                            # Select m random points along the L dimension
+                            random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
 
-                        # Initialize the output tensor with padding value (e.g., 0) and the padding tracker
-                        xp_batch = torch.zeros((num_random_segs * p_batch.shape[0], context_length, num_features))
+                            # Initialize the output tensor with padding value (e.g., 0) and the padding tracker
+                            xp_batch = torch.zeros((num_random_segs * p_batch.shape[0], context_length, num_features))
 
-                        for i, point in enumerate(random_points):
-                            start = point - context_length // 2
-                            end = point + context_length // 2
+                            for i, point in enumerate(random_points):
+                                start = point - context_length // 2
+                                end = point + context_length // 2
 
-                            adjusted_start = max(start, 0)
-                            adjusted_end = min(end, L)
-                            ival = p_batch[:, adjusted_start:adjusted_end, :]
+                                adjusted_start = max(start, 0)
+                                adjusted_end = min(end, L)
+                                ival = p_batch[:, adjusted_start:adjusted_end, :]
 
-                            if ival.shape[1] < context_length:
-                                pad_length = context_length - ival.shape[1]
-                                pad = torch.full((ival.shape[0], pad_length, ival.shape[2]), token_dict["pad"])
-                                if start < 0:
-                                    ival = torch.cat([pad, ival], dim=1)
-                                elif end > L:
-                                    ival = torch.cat([ival, pad], dim=1)
+                                if ival.shape[1] < context_length:
+                                    pad_length = context_length - ival.shape[1]
+                                    pad = torch.full((ival.shape[0], pad_length, ival.shape[2]), token_dict["pad"])
+                                    if start < 0:
+                                        ival = torch.cat([pad, ival], dim=1)
+                                    elif end > L:
+                                        ival = torch.cat([ival, pad], dim=1)
 
-                            xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival   
+                                xp_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival   
+                        
+                        else:
+                            context_length_factor = context_length / pattern_batch.shape[1]
+
+                            xp_batch = reshape_tensor(p_batch, context_length_factor)
+                            missing_p_batch = reshape_tensor(missing_p_batch, context_length_factor)
+                            del p_batch
 
                         for x_p in range(0, xp_batch.shape[0], batch_size):
                             self.optimizer.zero_grad()
@@ -2631,7 +2639,11 @@ class PRE_TRAINER(object):
 
                             x_batch_pad = (x_batch == token_dict["pad"])
 
-                            masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
+                            if focus_middle:
+                                masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
+                            else:
+                                masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
+
                             
                             # ensure that padded regions remain padded
                             x_batch[x_batch_pad] = token_dict["pad"]
@@ -2650,7 +2662,7 @@ class PRE_TRAINER(object):
                             x_batch = x_batch.to(self.device)
 
                             outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
-                            loss = self.criterion(outputs, x_batch, cloze_mask)
+                            loss = self.criterion(outputs, x_batch, cloze_mask, union_mask)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
