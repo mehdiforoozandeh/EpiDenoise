@@ -990,6 +990,7 @@ class EpiDenoise22(nn.Module):
             trg = dec(trg, src, pad)
             print(dec, trg.shape)
         
+        exit()
         trg = self.linear_output(trg)
         trg = self.signal_softplus(trg)
         return trg
@@ -3419,7 +3420,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 800,
+        "context_length": 400,
         
         "kernel_size": [1, 7, 7, 7, 7],
         "conv_out_channels": [128, 128, 192, 256, 384],
