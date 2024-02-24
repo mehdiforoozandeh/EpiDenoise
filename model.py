@@ -2584,12 +2584,12 @@ class PRE_TRAINER(object):
                         self.optimizer.zero_grad()
                         torch.cuda.empty_cache()
                         p += 1
-                        print(p)
-
+                        
                         p_batch = x[indices]
                         missing_p_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
+                        print(p, len(available_assays_ind))
 
                         # Select m random points along the L dimension
                         random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
@@ -2645,7 +2645,6 @@ class PRE_TRAINER(object):
                         x_batch = x_batch.to(self.device)
 
                         outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
-
                         loss = self.criterion(outputs, x_batch, cloze_mask)
 
                         if torch.isnan(loss).sum() > 0:
@@ -2664,9 +2663,6 @@ class PRE_TRAINER(object):
                         del outputs
 
                         epoch_loss.append(loss.item())
-
-                        # Clear GPU memory again
-                        torch.cuda.empty_cache()
 
                         loss.backward()  
                         self.optimizer.step()
