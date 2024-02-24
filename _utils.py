@@ -196,6 +196,92 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     return data, mask
  
+class DataMasker:
+    def __init__(self, mask_value, mask_percentage, chunk_size=6):
+        self.mask_value = mask_value
+        self.mask_percentage = mask_percentage
+        self.chunk_size = chunk_size
+
+    def mask_chunks(self, data):
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        num_masks = int((L * self.mask_percentage) / self.chunk_size)
+        for _ in range(num_masks):
+            start = random.randint(0, L - self.chunk_size)
+            mask_indicator[:, start:start+self.chunk_size, :] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mask_features(self, data, available_features):
+        self.available_features = available_features
+
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        for feature in features_to_mask:
+            mask_indicator[:, :, feature] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mask_chunk_features(self, data, available_features):
+        self.available_features = available_features
+
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        num_all_signals = L * len(self.available_features)
+        num_masks = int((num_all_signals * self.mask_percentage) / self.chunk_size)
+        for _ in range(num_masks):
+            length_start = random.randint(0, L - self.chunk_size)
+            feature_start = random.choice(self.available_features)
+            mask_indicator[:, length_start:length_start+self.chunk_size, feature_start] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_mask(self, data):
+        N, L, F = data.size()
+        slice_length = int(L * self.mask_percentage)
+        start = L // 2 - slice_length // 2
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        mask_indicator[:, start:start+slice_length, :] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_mask_features(self, data, available_features):
+        self.available_features = available_features
+
+        N, L, F = data.size()
+        slice_length = int(L * self.mask_percentage)
+        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        start = L // 2 - slice_length // 2
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        for feature in features_to_mask:
+            mask_indicator[:, start:start+slice_length, feature] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_focused_full_feature_mask(self, data, missing_mask_value, available_features):
+        self.available_features = available_features
+
+        N, L, F = data.size()
+        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+
+        if num_features_to_mask == 0:
+            return self.mid_slice_mask(data)
+
+        # Mask features completely
+        for feature in features_to_mask:
+            data[:, :, feature] = missing_mask_value
+        # Mark only the middle part of those masked features
+        slice_length = int(L * self.mask_percentage)
+        start = L // 2 - slice_length // 2
+        mask_indicator[:, start:start+slice_length, features_to_mask] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()

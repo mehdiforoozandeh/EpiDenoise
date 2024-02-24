@@ -16,6 +16,21 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #===========================================building blocks==============================================#
 #========================================================================================================#
 
+class DualConvEmbedding(nn.Module):
+    def __init__(self, in_C, out_C):
+        super(DualConvEmbedding, self).__init__()
+        
+        self.convF = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
+        self.convM = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
+        
+        self.act = nn.ReLU()
+        
+    def forward(self, F, M): # F is feature matrix # M is the binary mask matrix
+        F = self.act(self.convF(F))
+        M = self.act(self.convM(M))
+        
+        return F * M
+
 class AttentionPooling1D(nn.Module):
     def __init__(self, in_channels, pooling_size=2):
         super(AttentionPooling1D, self).__init__()
@@ -77,7 +92,7 @@ class ConvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S, D, pool_type="max", residuals=False):
         super(ConvTower, self).__init__()
         self.resid = residuals
-        self.conv  =   ConvBlock(in_C, out_C, W, S, D)
+        self.conv  = ConvBlock(in_C, out_C, W, S, D)
         if pool_type == "max" or pool_type == "attn":
             self.do_pool = True
         else:
@@ -543,6 +558,20 @@ class ComboLoss21(nn.Module):
             return torch.tensor(float('nan')).to(pred_signals.device)
         return mse_next_pos
 
+class ComboLoss22(nn.Module):
+    def __init__(self):
+        super(ComboLoss22, self).__init__()
+        self.mse_loss = nn.MSELoss(reduction='mean')
+
+    def forward(self, pred_signals, true_signals, cloze_mask):
+        # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        mse_midslice = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+
+        if torch.isnan(pred_signals).any() or torch.isnan(mse_next_pos):
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_signals.device)
+        return mse_midslice
+
 class MatrixFactorizationEmbedding(nn.Module):
     """
     learns two factorizations from input matrix M of size l*d
@@ -906,41 +935,58 @@ class EpiDenoise21(nn.Module):
 
 class EpiDenoise22(nn.Module):
     def __init__(
-        self, input_dim, conv_out_channels, conv_kernel_sizes, dilation, nhead, 
-        d_model, n_encoder_layers, output_dim, dropout=0.1, context_length=2000):
+        self, input_dim, conv_out_channels, conv_kernel_sizes, nhead, 
+        d_model, n_encoder_layers, n_decoder_layers, output_dim, dilation=1, dropout=0.1, context_length=2000):
 
         super(EpiDenoise22, self).__init__()
-        # stride = 1
-        # n_cnn_layers = len(conv_out_channels)
 
-        # Convolutional layers
-        self.conv1 = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        stride = 1
+        n_cnn_layers = len(conv_out_channels)
 
-        self.convm = ConvTower(
-            input_dim, conv_out_channels[0], 
-            1, stride, dilation, pool_type="None", residuals=False)
+        self.dual_conv_emb_src = DualConvEmbedding(in_C=input_dim, out_C=conv_out_channels[0])
 
-        self.convtower = nn.Sequential(*[
-            ConvTower(
-                conv_out_channels[i], 
-                conv_out_channels[i + 1],
-                conv_kernel_sizes[i + 1], stride, dilation
-            ) for i in range(n_cnn_layers - 1)
-        ])
+        self.convtower = nn.ModuleList([ConvTower(
+                conv_out_channels[i], conv_out_channels[i + 1],
+                conv_kernel_sizes[i + 1], stride, dilation, 
+                pool_type="max", residuals=False
+            ) for i in range(n_cnn_layers - 1)])
 
+        self.transformer_encoder = nn.ModuleList([RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, 
+                feed_forward_hidden=2*d_model, 
+                dropout=dropout) for _ in range(n_encoder_layers)])
 
-        # multi-head self-attention
-        self.mhsa
-        self.enc_block
+        self.dual_conv_emb_trg = DualConvEmbedding(in_C=input_dim, out_C=d_model)
 
-        # multi-head cross-attention
-        self.mhca
-        self.linear_decoder
+        self.transformer_decoder = nn.ModuleList([RelativeDecoderLayer(
+            hid_dim=d_model, n_heads=nhead, 
+            pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
+    
+        self.linear_output = nn.Linear(d_model, output_dim)
+        self.signal_softplus = nn.Softplus()
 
-    def forward(self, src, src_missing_mask, trg, trg_missing_mask, trg_mask):
-        pass
+    def forward(self, seq, mask, pad):
+        mask = mask.permute(0, 2, 1) # to N, F, L
+        src = seq.permute(0, 2, 1) # to N, F, L
+        trg = seq.permute(0, 2, 1) # to N, F, L
+
+        src = self.dual_conv_emb_src(src, mask)
+        trg = self.dual_conv_emb_trg(trg, mask)
+
+        for conv in self.convtower:
+            src = conv(src)
+        
+        src = src.permute(0, 2, 1)  # to N, L, F
+        for enc in self.transformer_encoder:
+            src = enc(src)
+        
+        trg = trg.permute(0, 2, 1)  # to N, L, F
+        for dec in self.transformer_decoder:
+            trg = dec(trg, src, pad)
+        
+        trg = self.linear_output(trg)
+        trg = self.signal_softplus(trg)
+        return trg
         
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -2488,15 +2534,25 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_22(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, step_size=40,
-        batch_size=100, num_epochs=25, context_length=2000, start_ds=0):
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, num_random_segs=5, 
+        num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0):
 
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
-        logfile = open("models/EPD21_log.txt", "w")
+        logfile = open("models/EPD22_log.txt", "w")
         logfile.write("\n".join(log_strs))
         logfile.close()
+
+        token_dict = {
+            "missing_mask": -1, 
+            "cloze_mask": -2,
+            "pad": -3
+        }
+
+        self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
+
+        
 
         for ole in range(outer_loop_epochs):
 
@@ -2529,35 +2585,144 @@ class PRE_TRAINER(object):
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
                         p += 1
-                        p_loss = []
 
                         p_batch = x[indices]
                         missing_p_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
 
-                        """
-                        token_dictionary: {
-                            "-1": missing_mask, 
-                            "-2": cloze_mask,
-                            "-3": pad
-                            }                        
-                        """
-
-    
                         # Select m random points along the L dimension
-                        random_points = torch.randint(low=0, high=L, size=(m,))
+                        random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
 
                         # Initialize the output tensor with padding value (e.g., 0) and the padding tracker
-                        # x_batch = torch.zeros, C, F))
-                        x_batch_pad = torch.zeros((m, C, F), dtype=torch.bool)
+                        x_batch = torch.zeros((num_random_segs * p_batch.shape[0], context_length, num_features))
 
+                        for i, point in enumerate(random_points):
+                            start = point - context_length // 2
+                            end = point + context_length // 2
 
-                        # create x_batch by selecting batch_size random starting points on L
-                        # for each instance, pad accordingly
-                        # apply cloze mask
+                            adjusted_start = max(start, 0)
+                            adjusted_end = min(end, L)
+                            ival = p_batch[:, adjusted_start:adjusted_end, :]
 
+                            if ival.shape[1] < context_length:
+                                pad_length = context_length - ival.shape[1]
+                                pad = torch.full((ival.shape[0], pad_length, ival.shape[2]), token_dict["pad"])
+                                if start < 0:
+                                    ival = torch.cat([pad, ival], dim=1)
+                                elif end > L:
+                                    ival = torch.cat([ival, pad], dim=1)
+
+                            x_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival
+                                   
+                        """
+                        src: cloze(x_batch)
+                        trg: cloze(x_batch)
+                        trg_pad: x_batch_pad
+
+                        src_mask and trg_msk
+                            union_mask: union(missing, cloze, x_batch_pad)
+                        """
+
+                        x_batch_pad = (x_batch == token_dict["pad"])
+
+                        masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
                         
+                        # ensure that padded regions remain padded
+                        x_batch[x_batch_pad] = token_dict["pad"]
+                        
+                        x_batch_missing = (x_batch == token_dict["missing_mask"])
+                        # ensure that padded regions remain padded
+                        
+                        union_mask = x_batch_pad | cloze_mask | x_batch_missing
+
+                        x_batch_pad = x_batch_pad[:, :, 0]
+
+                        outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+
+                        loss = self.criterion(outputs, x_batch, cloze_mask)
+
+                        if torch.isnan(loss).sum() > 0:
+                            skipmessage = "Encountered nan loss! Skipping batch..."
+                            print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
+                            log_strs.append(skipmessage)
+                            print(skipmessage)
+                            del x_batch
+                            del masked_x_batch
+                            del outputs
+                            torch.cuda.empty_cache()
+                            continue
+
+                        del x_batch
+                        del masked_x_batch
+                        del outputs
+
+                        epoch_loss.append(loss.item())
+
+                        # Clear GPU memory again
+                        torch.cuda.empty_cache()
+
+                        loss.backward()  
+                        self.optimizer.step()
+                    
+                    logfile = open("models/EPD18_log.txt", "w")
+
+                    logstr = [
+                        f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                        f'Epoch {epoch+1}/{num_epochs}',
+                        f"Loss: {np.mean(epoch_loss):.4f}"]
+
+                    logstr = " | ".join(logstr)
+
+                    log_strs.append(logstr)
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
+                    print(logstr)
+                    
+                    self.scheduler.step()
+
+                # t1 = datetime.now()
+                # logfile = open("models/EPD22_log.txt", "w")
+                
+                # test_mse, test_corr, test_ovr = self.test_model(
+                #     context_length, version="22", 
+                #     is_arcsin=arcsinh_transform, batch_size=batch_size)
+
+                # test_mse = np.mean(test_mse)
+                # test_corr = np.mean(test_corr)
+
+                # test_ovr_mean = np.mean(test_ovr)
+                # test_ovr_min = np.min(test_ovr)
+                # test_ovr_max = np.max(test_ovr)
+
+                # logstr = [
+                #     "\n----------------------------------------------------\n"
+                #     f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
+                #     f'Epoch {epoch+1}/{num_epochs}', 
+                #     f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
+                #     f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
+                #     f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
+                #     f"Val_MSE: {test_mse:.4f}",
+                #     f"Val_POmean: {test_ovr_mean:.3f}",
+                #     f"Val_POmin: {test_ovr_min:.3f}",
+                #     f"Val_POmax: {test_ovr_max:.3f}",
+                #     f"Epoch took: {t1 - t0}"
+                #     "\n----------------------------------------------------\n"
+                #     ]
+                # logstr = " | ".join(logstr)
+
+                # log_strs.append(logstr)
+                # logfile.write("\n".join(log_strs))
+                # logfile.close()
+                # print(logstr)
+
+                try:
+                    if ds%5 == 0:
+                        torch.save(self.model.state_dict(), f'models/EPD18_model_checkpoint_ds_{ds}.pth')
+                except:
+                    pass
+
+        return self.model
 
 
 class MODEL_LOADER(object):
@@ -3123,27 +3288,29 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     input_dim = output_dim = hyper_parameters["input_dim"]
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
-    d_model = hyper_parameters["d_model"]
-    nlayers = hyper_parameters["nlayers"]
+    n_enc_layers = hyper_parameters["n_enc_layers"]
+    n_dec_layers = hyper_parameters["n_dec_layers"]
     epochs = hyper_parameters["epochs"]
     context_length = hyper_parameters["context_length"]
 
     conv_out_channels = hyper_parameters["conv_out_channels"]
+    d_model = conv_out_channels[-1]
+
     dilation = hyper_parameters["dilation"]
     kernel_size = hyper_parameters["kernel_size"]
 
-    # one nucleosome is around 150bp -> 6bins
-    # each chuck ~ 1 nucleosome
-
     learning_rate = hyper_parameters["learning_rate"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    outer_loop_epochs = hyper_parameters["outer_loop_epochs"]
     # end of hyperparameters
 
-    model = EpiDenoise21(
-        input_dim, conv_out_channels, kernel_size, dilation, nhead, 
-        d_model, nlayers, output_dim, dropout=dropout, context_length=context_length)
+    model = EpiDenoise22(
+        input_dim, conv_out_channels, kernel_size, nhead, 
+        d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
+
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.9326035)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3154,18 +3321,19 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     print(f"# model_parameters: {count_parameters(model)}")
     dataset = ENCODE_IMPUTATION_DATASET(data_path)
 
-    model_name = f"EpiDenoise21_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters21_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    model_name = f"EpiDenoise22_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
+    with open(f'models/hyper_parameters22_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss21()
+    criterion = ComboLoss22()
 
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
-    model = trainer.pretrain_epidenoise_21(
-        d_model=d_model, num_epochs=epochs,  
+    model = trainer.pretrain_epidenoise_22(
+        d_model=d_model, num_epochs=epochs, mask_percentage= ,outer_loop_epochs=, 
         context_length=context_length, start_ds=start_ds)
+        
 
     end_time = time.time()
 
@@ -3240,6 +3408,26 @@ if __name__ == "__main__":
         "learning_rate": 1e-3,
     }
 
+    hyper_parameters22 = {
+        "data_path": "/project/compbio-lab/EIC/training_data/",
+        "input_dim": 35,
+        "dropout": 0.1,
+        "context_length": 400,
+        
+        "kernel_size": [1, 9, 7, 5],
+        "conv_out_channels": [64, 128, 192, 256],
+        "dilation":1,
+
+        "nhead": 4,
+        "n_enc_layers": 2,
+        "n_dec_layers": 2,
+        
+        "mask_percentage":0.2,
+        "epochs": 10,
+        "outer_loop_epochs":1,
+        "learning_rate": 1e-3,
+    }
+
     if sys.argv[1] == "epd16":
         train_epidenoise16(
             hyper_parameters1678, 
@@ -3267,5 +3455,11 @@ if __name__ == "__main__":
     elif sys.argv[1] == "epd21":
         train_epidenoise21(
             hyper_parameters21, 
+            checkpoint_path=None, 
+            start_ds=0)
+    
+    elif sys.argv[1] == "epd22":
+        train_epidenoise22(
+            hyper_parameters22, 
             checkpoint_path=None, 
             start_ds=0)
