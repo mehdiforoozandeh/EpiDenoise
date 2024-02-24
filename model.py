@@ -2589,7 +2589,7 @@ class PRE_TRAINER(object):
                         missing_p_batch = missing_mask[indices]
 
                         available_assays_ind = [feat_ind for feat_ind in range(num_features) if feat_ind not in pattern]
-                        print(p, len(available_assays_ind))
+                        
 
                         # Select m random points along the L dimension
                         random_points = torch.randint(low=0, high=L, size=(num_random_segs,))
@@ -2614,7 +2614,8 @@ class PRE_TRAINER(object):
                                     ival = torch.cat([ival, pad], dim=1)
 
                             x_batch[i*p_batch.shape[0]:(i+1)*p_batch.shape[0]] = ival
-                                   
+
+                        print(p, len(available_assays_ind), x_batch.shape)    
                         """
                         src: cloze(x_batch)
                         trg: cloze(x_batch)
@@ -2649,7 +2650,7 @@ class PRE_TRAINER(object):
 
                         if torch.isnan(loss).sum() > 0:
                             skipmessage = "Encountered nan loss! Skipping batch..."
-                            print(len(available_assays_ind), mse_obs_loss + mse_pred_loss + bce_mask_loss)
+                            print(len(available_assays_ind), loss)
                             log_strs.append(skipmessage)
                             print(skipmessage)
                             del x_batch
