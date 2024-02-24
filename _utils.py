@@ -273,11 +273,11 @@ class DataMasker:
         N, L, F = data.size()
 
         num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
-        features_to_mask = random.sample(self.available_features, num_features_to_mask)
-        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
-
         if num_features_to_mask == 0:
-            return self.mid_slice_mask(data, available_features)
+            features_to_mask = available_features
+        else:
+            features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
 
         # Mask features completely
         for feature in features_to_mask:

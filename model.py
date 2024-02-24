@@ -561,7 +561,7 @@ class ComboLoss21(nn.Module):
 class ComboLoss22(nn.Module):
     def __init__(self):
         super(ComboLoss22, self).__init__()
-        self.mse_loss = nn.L1Loss(reduction='mean')
+        self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask):
         # mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
@@ -2653,8 +2653,8 @@ class PRE_TRAINER(object):
                             loss = self.criterion(outputs, x_batch, cloze_mask)
 
                             print(
-                                outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item(),
-                                x_batch[cloze_mask].min().item(), x_batch[cloze_mask].mean().item()
+                                outputs[cloze_mask].max().item(),
+                                x_batch[cloze_mask].max().item()
                             )
 
                             if torch.isnan(loss).sum() > 0:
