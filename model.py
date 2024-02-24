@@ -104,7 +104,7 @@ class ConvTower(nn.Module):
         if pool_type == "attn":
             self.pool = AttentionPooling1D(out_C, 2)
         elif pool_type == "max":
-            self.pool  = nn.MaxPool1d(W)
+            self.pool  = nn.MaxPool1d(2)
     
     def forward(self, x):
         x = self.conv(x)
@@ -3414,7 +3414,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 400,
+        "context_length": 200,
         
         "kernel_size": [1, 11, 9, 7, 5],
         "conv_out_channels": [128, 128, 192, 256, 384],
