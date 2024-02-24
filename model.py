@@ -2737,7 +2737,7 @@ class PRE_TRAINER(object):
 
                 try:
                     if ds%5 == 0:
-                        torch.save(self.model.state_dict(), f'models/EPD18_model_checkpoint_ds_{ds}.pth')
+                        torch.save(self.model.state_dict(), f'models/EPD22_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
 
