@@ -2652,11 +2652,6 @@ class PRE_TRAINER(object):
                             outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
                             loss = self.criterion(outputs, x_batch, cloze_mask)
 
-                            print(
-                                outputs[cloze_mask].max().item(),
-                                x_batch[cloze_mask].max().item()
-                            )
-
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 print(len(available_assays_ind), loss)
@@ -3322,7 +3317,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=epochs, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.5)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3422,7 +3417,7 @@ if __name__ == "__main__":
     hyper_parameters22 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.1,
+        "dropout": 0.05,
         "context_length": 400,
         
         "kernel_size": [1, 7, 7, 7, 7],
@@ -3430,14 +3425,14 @@ if __name__ == "__main__":
         "dilation":1,
 
         "nhead": 4,
-        "n_enc_layers": 6,
+        "n_enc_layers": 4,
         "n_dec_layers": 2,
         
-        "mask_percentage":0.1,
+        "mask_percentage":0.15,
         "batch_size":100,
-        "epochs": 10,
+        "epochs": 5,
         "outer_loop_epochs":3,
-        "learning_rate": 1e-1,
+        "learning_rate": 1e-2
     }
 
     if sys.argv[1] == "epd16":
