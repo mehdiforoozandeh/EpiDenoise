@@ -968,7 +968,11 @@ class EpiDenoise22(nn.Module):
     def forward(self, seq, mask, pad):
         mask = mask.permute(0, 2, 1) # to N, F, L
         mask = mask.float()
+        print(seq.shape)
         src = seq.permute(0, 2, 1) # to N, F, L
+        print(src.shape)
+        print(seq.shape)
+        exit()
         trg = seq.permute(0, 2, 1) # to N, F, L
 
         src = self.dual_conv_emb_src(src, mask)
