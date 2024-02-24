@@ -2663,8 +2663,8 @@ class PRE_TRAINER(object):
                             del outputs
 
                             epoch_loss.append(loss.item())
-
-                        loss.backward()  
+                            loss.backward()  
+                            
                         self.optimizer.step()
                     
                     logfile = open("models/EPD18_log.txt", "w")
