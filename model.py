@@ -2652,6 +2652,11 @@ class PRE_TRAINER(object):
                             outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
                             loss = self.criterion(outputs, x_batch, cloze_mask)
 
+                            print(
+                                outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item(),
+                                x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item()
+                            )
+
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 print(len(available_assays_ind), loss)
