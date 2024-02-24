@@ -2584,6 +2584,7 @@ class PRE_TRAINER(object):
                         self.optimizer.zero_grad()
                         torch.cuda.empty_cache()
                         p += 1
+                        print(p)
 
                         p_batch = x[indices]
                         missing_p_batch = missing_mask[indices]
