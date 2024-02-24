@@ -967,6 +967,7 @@ class EpiDenoise22(nn.Module):
 
     def forward(self, seq, mask, pad):
         mask = mask.permute(0, 2, 1) # to N, F, L
+        mask = mask.float()
         src = seq.permute(0, 2, 1) # to N, F, L
         trg = seq.permute(0, 2, 1) # to N, F, L
 
@@ -3314,6 +3315,9 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim, conv_out_channels, kernel_size, nhead, 
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
+    print(model)
+    exit()
+
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=330, gamma=0.5)
@@ -3339,9 +3343,6 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     model = trainer.pretrain_epidenoise_22(
         d_model=d_model, num_epochs=epochs, mask_percentage=mask_percentage ,outer_loop_epochs=outer_loop_epochs, 
         context_length=context_length, start_ds=start_ds)
-    
-    print(model)
-    exit()
         
     end_time = time.time()
 
