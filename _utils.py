@@ -241,13 +241,13 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
-    def mid_slice_mask(self, data):
+    def mid_slice_mask(self, data, available_features):
         data = data.clone()
         N, L, F = data.size()
         slice_length = int(L * self.mask_percentage)
         start = L // 2 - slice_length // 2
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
-        mask_indicator[:, start:start+slice_length, :] = True
+        mask_indicator[:, start:start+slice_length, available_features] = True
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
@@ -271,17 +271,18 @@ class DataMasker:
 
         data = data.clone()
         N, L, F = data.size()
+
         num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
         features_to_mask = random.sample(self.available_features, num_features_to_mask)
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
 
         if num_features_to_mask == 0:
-            return self.mid_slice_mask(data)
+            return self.mid_slice_mask(data, available_features)
 
         # Mask features completely
         for feature in features_to_mask:
             data[:, :, feature] = missing_mask_value
-            
+
         # Mark only the middle part of those masked features
         slice_length = int(L * self.mask_percentage)
         start = L // 2 - slice_length // 2
