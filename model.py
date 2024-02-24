@@ -2540,7 +2540,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_22(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, focus_middle=True, num_random_segs=10,
+        d_model, outer_loop_epochs=1, arcsinh_transform=True, focus_middle=False, num_random_segs=10,
         num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0, batch_size=50):
 
         log_strs = []
