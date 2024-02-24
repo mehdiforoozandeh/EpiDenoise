@@ -3317,7 +3317,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.8)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3418,21 +3418,21 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "context_length": 400,
+        "context_length": 200,
         
-        "kernel_size": [1, 7, 7, 7, 7],
-        "conv_out_channels": [128, 128, 192, 256, 384],
+        "kernel_size": [1, 5, 5, 5],
+        "conv_out_channels": [64, 96, 144, 192],
         "dilation":1,
 
-        "nhead": 4,
-        "n_enc_layers": 4,
-        "n_dec_layers": 2,
+        "nhead": 2,
+        "n_enc_layers": 2,
+        "n_dec_layers": 1,
         
         "mask_percentage":0.15,
         "batch_size":100,
-        "epochs": 5,
-        "outer_loop_epochs":3,
-        "learning_rate": 1e-2
+        "epochs": 10,
+        "outer_loop_epochs":1,
+        "learning_rate": 1e-3
     }
 
     if sys.argv[1] == "epd16":
