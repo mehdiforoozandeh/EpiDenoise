@@ -2654,6 +2654,7 @@ class PRE_TRAINER(object):
 
                             print(
                                 outputs[cloze_mask].min().item(), outputs[cloze_mask].max().item(),
+                                masked_x_batch[cloze_mask].min().item(), masked_x_batch[cloze_mask].max().item(),
                                 x_batch[cloze_mask].min().item(), x_batch[cloze_mask].max().item()
                             )
 
