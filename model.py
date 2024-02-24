@@ -565,7 +565,8 @@ class ComboLoss22(nn.Module):
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+        if cloze_mask.sum().item() != 0:
+            mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
 
         if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
             print("NaN value encountered in loss components.")
