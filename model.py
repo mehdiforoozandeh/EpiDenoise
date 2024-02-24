@@ -2664,7 +2664,7 @@ class PRE_TRAINER(object):
 
                             epoch_loss.append(loss.item())
                             loss.backward()  
-                            
+
                         self.optimizer.step()
                     
                     logfile = open("models/EPD18_log.txt", "w")
@@ -3414,9 +3414,9 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 200,
+        "context_length": 1600,
         
-        "kernel_size": [1, 11, 9, 7, 5],
+        "kernel_size": [1, 25, 13, 7, 3],
         "conv_out_channels": [128, 128, 192, 256, 384],
         "dilation":1,
 
