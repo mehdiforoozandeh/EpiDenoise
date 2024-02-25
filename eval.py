@@ -1280,11 +1280,9 @@ class EVAL(object): # on chr21
                     x_batch_missing_vals = (x_batch == -1)
                     x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
 
-                    # mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
-                    # for ii in missing_x_i: 
-                    #     mask[:,:,ii] = True
-
-                    mask = (x_batch == token_dict["cloze_mask"] )
+                    mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
+                    for ii in missing_x_i: 
+                        mask[:,:,ii] = True
                     
                     x_batch_pad = (x_batch == token_dict["pad"])
                     x_batch_pad = x_batch_pad[:, :, 0]
@@ -1330,6 +1328,11 @@ class EVAL(object): # on chr21
 
             else:
                 continue
+                
+            if torch.isnan(pred).any():
+                print(f"{self.mark_dict[self.all_assays[j]]} contains nan. skipping")
+            else:
+                print(f"{self.mark_dict[self.all_assays[j]]} worked")
 
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
