@@ -59,8 +59,6 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        print("Running Mean:", self.batch_norm.running_mean)
-        print("Running Var:", self.batch_norm.running_var)
         x = self.batch_norm(x)
         x = self.conv(x)
         x = F.gelu(x)
@@ -982,30 +980,21 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        print("1", torch.isnan(src).any(), torch.isnan(trg).any())
-
         # print("src", src.shape)
         for conv in self.convtower:
-            print("convtower", torch.isnan(src).any(), torch.isnan(trg).any())
             src = conv(src)
             # print("src", src.shape)
-
-        print("2", torch.isnan(src).any(), torch.isnan(trg).any())
         
         src = src.permute(0, 2, 1)  # to N, L, F
         for enc in self.transformer_encoder:
             src = enc(src)
             # print("src", src.shape)
-
-        print("3", torch.isnan(src).any(), torch.isnan(trg).any())
         
         # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
         for dec in self.transformer_decoder:
             trg = dec(trg, src, pad)
             # print("trg", trg.shape)
-
-        print("4", torch.isnan(src).any(), torch.isnan(trg).any())
         
         trg = self.linear_output(trg)
         trg = self.signal_softplus(trg)

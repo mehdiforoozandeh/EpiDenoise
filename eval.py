@@ -1283,13 +1283,6 @@ class EVAL(object): # on chr21
                     mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
                     for ii in missing_x_i: 
                         mask[:,:,ii] = True
-                    
-                    # x_batch_pad = (x_batch == token_dict["pad"])
-                    # x_batch_pad = x_batch_pad[:, :, 0]
-                    # x_batch_pad = x_batch_pad.to(self.device)
-
-                    # print(x_batch)
-                    # print(x_batch.shape)
 
                     mask = mask.to(self.device)
 
@@ -1505,7 +1498,7 @@ if __name__=="__main__":
     exit()
 
     e = Evaluation(
-        model_path= "models/EpiDenoise16_20240105145712_params157128.pt", 
+        model_path= "models/EPD22_model_checkpoint_ds_30.pt", 
         hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240105145712_params157128.pkl", 
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
