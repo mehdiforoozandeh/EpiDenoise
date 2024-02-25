@@ -59,9 +59,9 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
-        print("before batchnorm", torch.isnan(x).any(), torch.isnan(x).any())
+        print("Running Mean:", self.batch_norm.running_mean)
+        print("Running Var:", self.batch_norm.running_var)
         x = self.batch_norm(x)
-        print("after batchnorm", torch.isnan(x).any(), torch.isnan(x).any())
         x = self.conv(x)
         x = F.gelu(x)
         return x
