@@ -1269,6 +1269,27 @@ class EVAL(object): # on chr21
 
                     mask = mask.to(self.device)
                     outputs, pred_mask = self.model(x_batch, mask)
+                
+                elif self.version=="22":
+                    token_dict = {
+                        "missing_mask": -1, 
+                        "cloze_mask": -2,
+                        "pad": -3
+                    }
+                    # change missing token to cloze token to force prediction
+                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
+
+                    mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
+                    for ii in missing_x_i: 
+                        mask[:,:,ii] = True
+                    
+                    x_batch_pad = (x_batch == token_dict["pad"])
+                    x_batch_pad = x_batch_pad[:, :, 0]
+                    x_batch_pad = x_batch_pad.to(self.device)
+
+                    mask = mask.to(self.device)
+                    outputs = self.model(x_batch, mask)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -1375,23 +1396,40 @@ class EVAL(object): # on chr21
             selected regions' signals
         """
 
-        print("plotting signal tracks")
-        self.viz.BIOS_signal_track(eval_res)
-        self.viz.clear_pallete()
-        
-        print("plotting signal scatter")
-        self.viz.BIOS_signal_scatter(eval_res)
-        self.viz.clear_pallete()
+        try:
+            print("plotting signal tracks")
+            self.viz.BIOS_signal_track(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot signal tracks")
+            
+        try:
+            print("plotting signal scatter")
+            self.viz.BIOS_signal_scatter(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal scatter")
 
-        # print("plotting signal rank scatter")
-        # self.viz.BIOS_signal_scatter_rank(eval_res)
-        # self.viz.clear_pallete()
+        try:
+            print("plotting signal rank scatter")
+            self.viz.BIOS_signal_scatter_rank(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal rank scatter")
 
-        # self.viz.BIOS_corresp_curve(eval_res)
-        # self.viz.clear_pallete()
+        try:
+            print("plotting corresp_curve")
+            self.viz.BIOS_corresp_curve(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot corresp_curve")
 
-        # self.viz.BIOS_corresp_curve_deriv(eval_res)
-        # self.viz.clear_pallete()
+        try:
+            print("plotting corresp_curve_deriv")
+            self.viz.BIOS_corresp_curve_deriv(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot corresp_curve_deriv")
     
     def viz_all(self):
         """
@@ -1436,10 +1474,11 @@ class EVAL(object): # on chr21
 if __name__=="__main__":
     e = EVAL(
         model= "models/EpiDenoise18_20240223021727_params1951558.pt", 
-        hyper_parameters_path="models/hyper_parameters18_EpiDenoise18_20240223021727_params1951558.pkl",
+        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240224020309_params1233139.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=200)
+        context_length=200, batch_size=200, 
+        version="22", savedir="models/epd22_evals/")
 
     e.viz_all()
 
