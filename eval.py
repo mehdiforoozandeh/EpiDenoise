@@ -1290,6 +1290,7 @@ class EVAL(object): # on chr21
 
                     mask = mask.to(self.device)
                     outputs = self.model(x_batch, mask, x_batch_pad)
+                    print(outputs)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -1325,8 +1326,6 @@ class EVAL(object): # on chr21
 
             else:
                 continue
-            print(pred)
-            exit()
 
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
