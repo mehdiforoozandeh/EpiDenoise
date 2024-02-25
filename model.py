@@ -2804,9 +2804,9 @@ class MODEL_LOADER(object):
             model = EpiDenoise18(
                 input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
                 output_dim=output_dim, dropout=dropout, context_length=context_length)
-                
+
         elif version == "22":
-            model = EpiDenoise18(
+            model = EpiDenoise22(
                 input_dim, conv_out_channels, kernel_size, nhead, 
                 d_model, n_enc_layers, n_dec_layers, output_dim, 
                 dilation=dilation, dropout=dropout, context_length=context_length)
