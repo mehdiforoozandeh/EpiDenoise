@@ -1293,9 +1293,7 @@ class EVAL(object): # on chr21
 
                     mask = mask.to(self.device)
 
-                    with torch.autograd.detect_anomaly():
-                        self.model.eval()
-                        outputs = self.model(x_batch, mask, None)
+                    outputs = self.model(x_batch, mask, None)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
