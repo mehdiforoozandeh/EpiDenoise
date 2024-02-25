@@ -1292,7 +1292,7 @@ class EVAL(object): # on chr21
                     # print(x_batch.shape)
 
                     mask = mask.to(self.device)
-                    outputs = self.model(x_batch, mask, None)
+                    outputs = self.model(x_batch, mask, x_batch_pad)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
@@ -1486,7 +1486,7 @@ if __name__=="__main__":
         hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240224020309_params1233139.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=200, 
+        context_length=200, batch_size=100, 
         version="22", savedir="models/epd22_evals/")
 
     e.viz_all()
