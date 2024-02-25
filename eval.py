@@ -1121,6 +1121,8 @@ class EVAL(object): # on chr21
             loader = MODEL_LOADER(model, self.hyper_parameters)
             self.model = loader.load_epidenoise(version=self.version)
 
+        print(self.model)
+        exit()
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
