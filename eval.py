@@ -1288,8 +1288,8 @@ class EVAL(object): # on chr21
                     x_batch_pad = x_batch_pad[:, :, 0]
                     x_batch_pad = x_batch_pad.to(self.device)
 
-                    print(x_batch)
-                    print(x_batch.shape)
+                    # print(x_batch)
+                    # print(x_batch.shape)
 
                     mask = mask.to(self.device)
                     outputs = self.model(x_batch, mask, x_batch_pad)
