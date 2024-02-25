@@ -1323,11 +1323,11 @@ class EVAL(object): # on chr21
             else:
                 continue
                 
-            if np.isnan(pred).any():
-                print(f"{self.mark_dict[self.all_assays[j]]} contains nan. skipping")
-                continue
-            else:
-                print(f"{self.mark_dict[self.all_assays[j]]} worked")
+            # if np.isnan(pred).any():
+            #     print(f"{self.mark_dict[self.all_assays[j]]} contains nan. skipping")
+            #     continue
+            # else:
+            #     print(f"{self.mark_dict[self.all_assays[j]]} worked")
 
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
