@@ -984,6 +984,7 @@ class EpiDenoise22(nn.Module):
 
         # print("src", src.shape)
         for conv in self.convtower:
+            print("convtower", torch.isnan(src).any(), torch.isnan(trg).any())
             src = conv(src)
             # print("src", src.shape)
 
