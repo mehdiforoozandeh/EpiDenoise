@@ -1329,7 +1329,7 @@ class EVAL(object): # on chr21
             else:
                 continue
                 
-            if torch.isnan(pred).any():
+            if np.isnan(pred).any():
                 print(f"{self.mark_dict[self.all_assays[j]]} contains nan. skipping")
                 continue
             else:
