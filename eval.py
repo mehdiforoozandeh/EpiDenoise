@@ -1122,7 +1122,7 @@ class EVAL(object): # on chr21
             self.model = loader.load_epidenoise(version=self.version)
 
         self.model = self.model.to(self.device)
-        # self.model.eval()  # set the model to evaluation mode
+        self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
