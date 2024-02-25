@@ -1277,22 +1277,22 @@ class EVAL(object): # on chr21
                         "pad": -3
                     }
                     # change missing token to cloze token to force prediction
-                    x_batch_missing_vals = (x_batch == -1)
-                    x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
+                    # x_batch_missing_vals = (x_batch == -1)
+                    # x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
 
                     mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
                     for ii in missing_x_i: 
                         mask[:,:,ii] = True
                     
-                    x_batch_pad = (x_batch == token_dict["pad"])
-                    x_batch_pad = x_batch_pad[:, :, 0]
-                    x_batch_pad = x_batch_pad.to(self.device)
+                    # x_batch_pad = (x_batch == token_dict["pad"])
+                    # x_batch_pad = x_batch_pad[:, :, 0]
+                    # x_batch_pad = x_batch_pad.to(self.device)
 
                     # print(x_batch)
                     # print(x_batch.shape)
 
                     mask = mask.to(self.device)
-                    outputs = self.model(x_batch, mask, x_batch_pad)
+                    outputs = self.model(x_batch, mask, None)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
