@@ -1289,7 +1289,7 @@ class EVAL(object): # on chr21
                     x_batch_pad = x_batch_pad.to(self.device)
 
                     mask = mask.to(self.device)
-                    outputs = self.model(x_batch, mask)
+                    outputs = self.model(x_batch, mask, x_batch_pad)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
