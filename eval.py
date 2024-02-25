@@ -1325,7 +1325,7 @@ class EVAL(object): # on chr21
 
             else:
                 continue
-            print(pred.shape)
+            print(pred)
             exit()
 
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
