@@ -1122,7 +1122,7 @@ class EVAL(object): # on chr21
             self.model = loader.load_epidenoise(version=self.version)
 
         self.model = self.model.to(self.device)
-        self.model.eval()  # set the model to evaluation mode
+        # self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
@@ -1476,7 +1476,7 @@ class EVAL(object): # on chr21
 
 if __name__=="__main__":
     e = EVAL(
-        model= "models/EPD22_model_checkpoint_ds_5.pth", 
+        model= "models/EpiDenoise22_20240224020309_params1233139.pt", 
         hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240224020309_params1233139.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
