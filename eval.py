@@ -1325,7 +1325,8 @@ class EVAL(object): # on chr21
 
             else:
                 continue
-            
+            print(pred.min().item(), pred.max().item(), pred.mean().item())
+
             # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
             metrics = {
                 'bios':bios_name,
