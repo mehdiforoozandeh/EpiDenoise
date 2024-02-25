@@ -1280,9 +1280,11 @@ class EVAL(object): # on chr21
                     x_batch_missing_vals = (x_batch == -1)
                     x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
 
-                    mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
-                    for ii in missing_x_i: 
-                        mask[:,:,ii] = True
+                    # mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
+                    # for ii in missing_x_i: 
+                    #     mask[:,:,ii] = True
+
+                    mask = (x_batch == token_dict["cloze_mask"] )
                     
                     x_batch_pad = (x_batch == token_dict["pad"])
                     x_batch_pad = x_batch_pad[:, :, 0]

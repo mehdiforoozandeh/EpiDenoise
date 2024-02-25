@@ -993,7 +993,7 @@ class EpiDenoise22(nn.Module):
         # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
         for dec in self.transformer_decoder:
-            trg = dec(trg, src, pad=None)
+            trg = dec(trg, src, pad)
             # print("trg", trg.shape)
         
         trg = self.linear_output(trg)
