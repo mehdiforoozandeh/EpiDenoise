@@ -1277,8 +1277,8 @@ class EVAL(object): # on chr21
                         "pad": -3
                     }
                     # change missing token to cloze token to force prediction
-                    # x_batch_missing_vals = (x_batch == -1)
-                    # x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
+                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch[x_batch_missing_vals] = token_dict["cloze_mask"] 
 
                     mask = torch.zeros_like(x_batch, dtype=torch.bool, device=self.device)
                     for ii in missing_x_i: 

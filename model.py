@@ -3507,5 +3507,5 @@ if __name__ == "__main__":
     elif sys.argv[1] == "epd22":
         train_epidenoise22(
             hyper_parameters22, 
-            checkpoint_path=None, 
+            checkpoint_path="models/EpiDenoise22_20240224020309_params1233139.pt", 
             start_ds=0)
