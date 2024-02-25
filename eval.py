@@ -1473,7 +1473,7 @@ class EVAL(object): # on chr21
 
 if __name__=="__main__":
     e = EVAL(
-        model= "models/EpiDenoise18_20240223021727_params1951558.pt", 
+        model= "models/EPD22_model_checkpoint_ds_25.pth", 
         hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240224020309_params1233139.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
