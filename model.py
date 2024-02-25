@@ -2756,12 +2756,28 @@ class MODEL_LOADER(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def load_epidenoise(self, version= "16"):
-        input_dim = output_dim = self.hyper_parameters["input_dim"]
-        dropout = self.hyper_parameters["dropout"]
-        nhead = self.hyper_parameters["nhead"]
-        d_model = self.hyper_parameters["d_model"]
-        nlayers = self.hyper_parameters["nlayers"]
-        context_length = self.hyper_parameters["context_length"]
+        if version in ["10", "15", "16", "17", "18"]:
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            d_model = self.hyper_parameters["d_model"]
+            nlayers = self.hyper_parameters["nlayers"]
+            context_length = self.hyper_parameters["context_length"]
+
+        elif version in ["22"]:
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            n_enc_layers = self.hyper_parameters["n_enc_layers"]
+            n_dec_layers = self.hyper_parameters["n_dec_layers"]
+            context_length = self.hyper_parameters["context_length"]
+
+            conv_out_channels = self.hyper_parameters["conv_out_channels"]
+            d_model = conv_out_channels[-1]
+
+            dilation = self.hyper_parameters["dilation"]
+            kernel_size = self.hyper_parameters["kernel_size"]
+
         
         # Assuming model is an instance of the correct class
         if version == "10":
@@ -2788,6 +2804,12 @@ class MODEL_LOADER(object):
             model = EpiDenoise18(
                 input_dim=input_dim, nhead=nhead, d_model=d_model, nlayers=nlayers, 
                 output_dim=output_dim, dropout=dropout, context_length=context_length)
+                
+        elif version == "22":
+            model = EpiDenoise18(
+                input_dim, conv_out_channels, kernel_size, nhead, 
+                d_model, n_enc_layers, n_dec_layers, output_dim, 
+                dilation=dilation, dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path))
         model = model.to(self.device)
