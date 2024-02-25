@@ -1098,7 +1098,7 @@ class VISUALS(object):
 class EVAL(object): # on chr21
     def __init__(
         self, model, traindata_path, evaldata_path, context_length, batch_size, hyper_parameters_path="",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="18", resolution=25, 
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="22", resolution=25, 
         is_arcsin=True, savedir="models/evals/"):
 
         self.savedir = savedir
@@ -1122,7 +1122,7 @@ class EVAL(object): # on chr21
             self.model = loader.load_epidenoise(version=self.version)
 
         self.model = self.model.to(self.device)
-        self.model.eval()  # set the model to evaluation mode
+        # self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
@@ -1486,7 +1486,7 @@ if __name__=="__main__":
         hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240224020309_params1233139.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=100, 
+        context_length=200, batch_size=100,
         version="22", savedir="models/epd22_evals/")
 
     e.viz_all()
