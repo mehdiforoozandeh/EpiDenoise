@@ -59,7 +59,9 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
+        print("before batchnorm", torch.isnan(x).any(), torch.isnan(x).any())
         x = self.batch_norm(x)
+        print("after batchnorm", torch.isnan(x).any(), torch.isnan(x).any())
         x = self.conv(x)
         x = F.gelu(x)
         return x
