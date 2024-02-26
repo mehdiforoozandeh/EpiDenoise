@@ -36,7 +36,7 @@ class DualConvEmbedding(nn.Module):
 
         M = self.convM(M)
         if self.do_batchnorm:
-            M = self.self.batch_norm(M)
+            M = self.batch_norm(M)
         M = self.act(M)
         
         return F * M
