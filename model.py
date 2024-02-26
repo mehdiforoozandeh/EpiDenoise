@@ -31,7 +31,7 @@ class DualConvEmbedding(nn.Module):
     def forward(self, F, M): # F is feature matrix # M is the binary mask matrix
         F = self.convF(F)
         if self.do_batchnorm:
-            F = self.self.batch_norm(F)
+            F = self.batch_norm(F)
         F = self.act(F)
 
         M = self.convM(M)
