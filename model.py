@@ -19,7 +19,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class DualConvEmbedding(nn.Module):
     def __init__(self, in_C, out_C, do_batchnorm=True):
         super(DualConvEmbedding, self).__init__()
-
+        self.do_batchnorm = do_batchnorm
         if self.do_batchnorm:
             self.batch_norm = nn.BatchNorm1d(in_C)
         
