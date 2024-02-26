@@ -566,23 +566,32 @@ class ComboLoss21(nn.Module):
         return mse_next_pos
 
 class ComboLoss22(nn.Module):
-    def __init__(self):
+    def __init__(self, obs_loss = False):
         super(ComboLoss22, self).__init__()
+        self.obs_loss = obs_loss
         self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
-        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        if cloze_mask.sum().item() != 0:
+        if self.obs_loss:
+            mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+            if cloze_mask.sum().item() != 0:
+                mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+                if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
+                    print("NaN value encountered in loss components.")
+                    return torch.tensor(float('nan')).to(mse_pred_loss.device)
+                return mse_pred_loss + mse_obs_loss
+            else:
+                if torch.isnan(mse_obs_loss).any():
+                    print("NaN value encountered in loss components.")
+                    return torch.tensor(float('nan')).to(mse_obs_loss.device)
+                return mse_obs_los
+
+        else:
             mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-            if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
+            if torch.isnan(mse_pred_loss).any():
                 print("NaN value encountered in loss components.")
                 return torch.tensor(float('nan')).to(mse_pred_loss.device)
-            return mse_pred_loss + mse_obs_loss
-        else:
-            if torch.isnan(mse_obs_loss).any():
-                print("NaN value encountered in loss components.")
-                return torch.tensor(float('nan')).to(mse_obs_loss.device)
-            return mse_obs_loss
+            return mse_pred_loss
 
 
 class MatrixFactorizationEmbedding(nn.Module):
@@ -2658,7 +2667,7 @@ class PRE_TRAINER(object):
                                 if len(available_assays_ind) == 1:
                                     msk_type = "chunk"
                                 else:
-                                    msk_type = random.choice(["feature", "chunk"])
+                                    msk_type = "feature"
                                 
                                 if msk_type == "feature":
                                     masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
@@ -2728,43 +2737,8 @@ class PRE_TRAINER(object):
                     
                     self.scheduler.step()
 
-                # 
-                # logfile = open("models/EPD22_log.txt", "w")
-                
-                # test_mse, test_corr, test_ovr = self.test_model(
-                #     context_length, version="22", 
-                #     is_arcsin=arcsinh_transform, batch_size=batch_size)
-
-                # test_mse = np.mean(test_mse)
-                # test_corr = np.mean(test_corr)
-
-                # test_ovr_mean = np.mean(test_ovr)
-                # test_ovr_min = np.min(test_ovr)
-                # test_ovr_max = np.max(test_ovr)
-
-                # logstr = [
-                #     "\n----------------------------------------------------\n"
-                #     f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
-                #     f'Epoch {epoch+1}/{num_epochs}', 
-                #     f"Obs Loss: {np.mean(epoch_obs_loss):.3f}", 
-                #     f"Clz Loss: {np.mean(epoch_clz_loss):.3f}", 
-                #     f"Msk Loss: {np.mean(epoch_msk_loss):.3f}", 
-                #     f"Val_MSE: {test_mse:.4f}",
-                #     f"Val_POmean: {test_ovr_mean:.3f}",
-                #     f"Val_POmin: {test_ovr_min:.3f}",
-                #     f"Val_POmax: {test_ovr_max:.3f}",
-                #     f"Epoch took: {t1 - t0}"
-                #     "\n----------------------------------------------------\n"
-                #     ]
-                # logstr = " | ".join(logstr)
-
-                # log_strs.append(logstr)
-                # logfile.write("\n".join(log_strs))
-                # logfile.close()
-                # print(logstr)
-
                 try:
-                    if ds%5 == 0:
+                    if ds%11 == 0:
                         torch.save(self.model.state_dict(), f'models/EPD22_model_checkpoint_ds_{ds}.pth')
                 except:
                     pass
@@ -3379,7 +3353,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.99)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10*epochs, gamma=0.8)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3492,9 +3466,9 @@ if __name__ == "__main__":
         
         "mask_percentage":0.2,
         "batch_size":300,
-        "epochs": 10,
+        "epochs": 15,
         "outer_loop_epochs":2,
-        "learning_rate": 1e-4
+        "learning_rate": 1e-3
     }
 
     if sys.argv[1] == "epd16":

@@ -795,7 +795,7 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_tracks.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_tracks.png", dpi=200)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
@@ -1040,7 +1040,7 @@ class VISUALS(object):
         ax.set(xlabel='Number of Available Train Assays', ylabel='log('+metric+')' if "MSE" in metric else metric)
         ax.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{metric}_overall_regplot.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{metric}_overall_regplot.png", dpi=200)
 
     def MODEL_regplot_perassay(self, df, metric):
         # Get the unique features (assays)
@@ -1093,7 +1093,7 @@ class VISUALS(object):
                 axs[i].axis('off')
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.png", dpi=200)
 
 class EVAL(object): # on chr21
     def __init__(
