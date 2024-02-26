@@ -17,8 +17,11 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #========================================================================================================#
 
 class DualConvEmbedding(nn.Module):
-    def __init__(self, in_C, out_C):
+    def __init__(self, in_C, out_C, do_batchnorm=True):
         super(DualConvEmbedding, self).__init__()
+
+        if self.do_batchnorm:
+            self.batch_norm = nn.BatchNorm1d(in_C)
         
         self.convF = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
         self.convM = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
@@ -26,8 +29,15 @@ class DualConvEmbedding(nn.Module):
         self.act = nn.ReLU()
         
     def forward(self, F, M): # F is feature matrix # M is the binary mask matrix
-        F = self.act(self.convF(F))
-        M = self.act(self.convM(M))
+        F = self.convF(F)
+        if self.do_batchnorm:
+            F = self.self.batch_norm(F)
+        F = self.act(F)
+
+        M = self.convM(M)
+        if self.do_batchnorm:
+            M = self.self.batch_norm(M)
+        M = self.act(M)
         
         return F * M
 
@@ -52,15 +62,19 @@ class AttentionPooling1D(nn.Module):
         return pooled
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D):
+    def __init__(self, in_C, out_C, W, S, D, do_batchnorm=True):
         super(ConvBlock, self).__init__()
-        self.batch_norm = nn.BatchNorm1d(in_C)
+        self.do_batchnorm = do_batchnorm
+        if self.do_batchnorm:
+            self.batch_norm = nn.BatchNorm1d(in_C)
+
         self.conv = nn.Conv1d(
-            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
+            in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
         
     def forward(self, x):
-        x = self.batch_norm(x)
         x = self.conv(x)
+        if self.do_batchnorm:
+            x = self.batch_norm(x)
         x = F.gelu(x)
         return x
 
@@ -80,26 +94,19 @@ class DeconvBlock(nn.Module):
         x = F.gelu(x)
         return x
 
-class RConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D):
-        super(RConvBlock, self).__init__()
-        self.conv_block = ConvBlock(in_C, out_C, W, S, D)
-        
-    def forward(self, x):
-        return x + self.conv_block(x)
-
 class ConvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S, D, pool_type="max", residuals=False):
         super(ConvTower, self).__init__()
         self.resid = residuals
         self.conv  = ConvBlock(in_C, out_C, W, S, D)
+        
         if pool_type == "max" or pool_type == "attn":
             self.do_pool = True
         else:
             self.do_pool = False
 
         if self.resid:
-            self.rconv = RConvBlock(out_C, out_C, 1, S, D)
+            self.rconv = ConvBlock(out_C, out_C, 1, S, D)
 
         if pool_type == "attn":
             self.pool = AttentionPooling1D(out_C, 2)
@@ -109,7 +116,7 @@ class ConvTower(nn.Module):
     def forward(self, x):
         x = self.conv(x)
         if self.resid:
-            x = self.rconv(x)
+            x = self.rconv(x) + x
         if self.do_pool:
             x = self.pool(x)
         return x
