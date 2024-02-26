@@ -2681,8 +2681,6 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
                             x_batch = x_batch.to(self.device)
 
-                            
-
                             outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
                             loss = self.criterion(outputs, x_batch, cloze_mask, union_mask)
 
@@ -3488,7 +3486,7 @@ if __name__ == "__main__":
         "batch_size":100,
         "epochs": 10,
         "outer_loop_epochs":4,
-        "learning_rate": 5e-4
+        "learning_rate": 1e-3
     }
 
     if sys.argv[1] == "epd16":
