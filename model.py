@@ -2720,6 +2720,7 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                     
+                    self.scheduler.step(loss)
                     logfile = open("models/EPD22_log.txt", "w")
 
                     logstr = [
@@ -2735,7 +2736,7 @@ class PRE_TRAINER(object):
                     logfile.close()
                     print(logstr)
                     
-                    self.scheduler.step()
+                    
 
                 try:
                     if ds%11 == 0:
