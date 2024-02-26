@@ -3515,4 +3515,4 @@ if __name__ == "__main__":
         train_epidenoise22(
             hyper_parameters22, 
             checkpoint_path=None, 
-            start_ds=0)
+            start_ds=12)
