@@ -3400,7 +3400,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_epidenoise_22(
-        d_model=d_model, num_epochs=epochs, mask_percentage=mask_percentage ,outer_loop_epochs=outer_loop_epochs, 
+        d_model=d_model, num_epochs=epochs, mask_percentage=mask_percentage, outer_loop_epochs=outer_loop_epochs, 
         context_length=context_length, start_ds=start_ds, batch_size=batch_size)
         
     end_time = time.time()
@@ -3492,7 +3492,7 @@ if __name__ == "__main__":
         
         "mask_percentage":0.2,
         "batch_size":300,
-        "epochs": 20,
+        "epochs": 10,
         "outer_loop_epochs":2,
         "learning_rate": 1e-4
     }
