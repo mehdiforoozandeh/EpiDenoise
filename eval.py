@@ -1420,19 +1420,19 @@ class EVAL(object): # on chr21
         except:
             print("faild to plot  signal rank scatter")
 
-        try:
-            print("plotting corresp_curve")
-            self.viz.BIOS_corresp_curve(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot corresp_curve")
+        # try:
+        #     print("plotting corresp_curve")
+        #     self.viz.BIOS_corresp_curve(eval_res)
+        #     self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot corresp_curve")
 
-        try:
-            print("plotting corresp_curve_deriv")
-            self.viz.BIOS_corresp_curve_deriv(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot corresp_curve_deriv")
+        # try:
+        #     print("plotting corresp_curve_deriv")
+        #     self.viz.BIOS_corresp_curve_deriv(eval_res)
+        #     self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot corresp_curve_deriv")
     
     def viz_all(self):
         """
