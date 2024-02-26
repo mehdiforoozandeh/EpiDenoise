@@ -2660,6 +2660,14 @@ class PRE_TRAINER(object):
                             # ensure that padded regions remain padded
                             x_batch[x_batch_pad] = token_dict["pad"]
                             
+                            if torch.isnan(x_batch).sum() > 0:
+                                skipmessage = "Encountered nan input! Skipping batch..."
+                                log_strs.append(skipmessage)
+                                # print(skipmessage)
+                                del x_batch
+                                torch.cuda.empty_cache()
+                                continue
+
                             x_batch_missing = (x_batch == token_dict["missing_mask"])
                             # ensure that padded regions remain padded
                             
@@ -2673,15 +2681,7 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
                             x_batch = x_batch.to(self.device)
 
-                            if torch.isnan(x_batch).sum() > 0:
-                                skipmessage = "Encountered nan input! Skipping batch..."
-                                print(len(available_assays_ind), loss)
-                                log_strs.append(skipmessage)
-                                print(skipmessage)
-                                del x_batch
-                                del masked_x_batch
-                                torch.cuda.empty_cache()
-                                continue
+                            
 
                             outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
                             loss = self.criterion(outputs, x_batch, cloze_mask, union_mask)
