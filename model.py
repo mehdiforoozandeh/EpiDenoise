@@ -2655,7 +2655,11 @@ class PRE_TRAINER(object):
                             if focus_middle:
                                 masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
                             else:
-                                msk_type = random.choice(["feature", "chunk"])
+                                if len(available_assays_ind) == 1:
+                                    msk_type = "chunk"
+                                else:
+                                    msk_type = random.choice(["feature", "chunk"])
+                                
                                 if msk_type == "feature":
                                     masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
                                 elif msk_type == "chunk":
