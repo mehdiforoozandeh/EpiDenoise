@@ -21,7 +21,7 @@ class DualConvEmbedding(nn.Module):
         super(DualConvEmbedding, self).__init__()
         self.do_batchnorm = do_batchnorm
         if self.do_batchnorm:
-            self.batch_norm = nn.BatchNorm1d(in_C)
+            self.batch_norm = nn.BatchNorm1d(out_C)
         
         self.convF = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
         self.convM = nn.Conv1d(in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
@@ -66,7 +66,7 @@ class ConvBlock(nn.Module):
         super(ConvBlock, self).__init__()
         self.do_batchnorm = do_batchnorm
         if self.do_batchnorm:
-            self.batch_norm = nn.BatchNorm1d(in_C)
+            self.batch_norm = nn.BatchNorm1d(out_C)
 
         self.conv = nn.Conv1d(
             in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
