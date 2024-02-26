@@ -2655,7 +2655,11 @@ class PRE_TRAINER(object):
                             if focus_middle:
                                 masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
                             else:
-                                masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
+                                msk_type = random.choice(["feature", "chunk"])
+                                if msk_type == "feature":
+                                    masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
+                                elif msk_type == "chunk":
+                                    masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
 
                             # ensure that padded regions remain padded
                             x_batch[x_batch_pad] = token_dict["pad"]
