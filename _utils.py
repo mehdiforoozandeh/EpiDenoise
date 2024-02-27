@@ -747,7 +747,7 @@ class PROCESS_EIC_DATA(object):
             
         return m_regions
     
-    def generate_m_samples_from_predefined_regions(self, m_regions, multi_p=True, n_p=20):
+    def generate_m_samples_from_predefined_regions(self, m_regions, multi_p=False, n_p=20):
         m = len(m_regions)
         if multi_p:
             bw_obj = False
