@@ -629,7 +629,7 @@ class PROCESS_EIC_DATA(object):
 
             for chr, size in self.util.chr_sizes.items():
                 m_c = int(m * (size / self.genomesize))
-                print(m_c)
+                print(chr, m_c)
                 mii = 0
                 while mii < m_c:
                     # Generate a random start position that is divisible by self.resolution
