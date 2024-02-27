@@ -632,6 +632,7 @@ class PROCESS_EIC_DATA(object):
                 print(chr, m_c)
                 mii = 0
                 while mii < m_c:
+                    print(mii, m_c)
                     # Generate a random start position that is divisible by self.resolution
                     rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
                     rand_end = rand_start + self.max_len
