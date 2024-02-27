@@ -579,7 +579,7 @@ class PROCESS_EIC_DATA(object):
                 pickle.dump(bios_data, f)
             os.system(f"gzip {file_path}")
 
-    def generate_m_samples(self, m, n_datasets=50, multi_p=True, n_p=20):
+    def generate_m_samples(self, m, n_datasets=50, multi_p=True, n_p=10):
         if self.stratified:
             self.util.get_foreground()
             df = self.util.foreground
