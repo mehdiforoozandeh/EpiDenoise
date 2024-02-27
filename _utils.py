@@ -641,6 +641,9 @@ class PROCESS_EIC_DATA(object):
                         used_regions[chr].append((rand_start, rand_end))
                         mii += 1 
                         break
+            
+            print(len(m_regions))
+            exit()
 
         if multi_p:
             bw_obj = False
