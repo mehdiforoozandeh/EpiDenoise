@@ -629,7 +629,6 @@ class PROCESS_EIC_DATA(object):
 
             for chr, size in self.util.chr_sizes.items():
                 m_c = int(m * (size / self.genomesize))
-                print(chr, m_c)
                 mii = 0
                 while mii < m_c:
                     print(mii, m_c)
