@@ -658,8 +658,6 @@ class PROCESS_EIC_DATA(object):
         ds_number = 0  
         print("m2:   ", len(m_regions))
         samples_per_ds = len(m_regions) // n_datasets
-        print(samples_per_ds)
-        exit()
         for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
             print("ds:   ", ds_number)
