@@ -219,7 +219,7 @@ class DataMasker:
         data = data.clone()
         N, L, F = data.size()
         mask_indicator = torch.zeros_like(data, dtype=torch.bool)
-        
+
         if len(available_features) == 1:
             return data, mask_indicator
         else:
@@ -611,17 +611,18 @@ class PROCESS_EIC_DATA(object):
             # Select m/2 regions that are not necessarily in the DataFrame 
             for chr, size in self.util.chr_sizes.items():
                 m_c = int((m // 2) * (size / self.genomesize))  # Calculate the number of instances from each chromosome proportional to its size
-                for _ in range(m_c):
-                    while True:
-                        # Generate a random start position that is divisible by self.resolution
-                        rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
-                        rand_end = rand_start + self.max_len
+                mii = 0
+                while mii < m_c:
+                    # Generate a random start position that is divisible by self.resolution
+                    rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
+                    rand_end = rand_start + self.max_len
 
-                        # Check if the region overlaps with any existing region
-                        if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
-                            m_regions.append([chr, rand_start, rand_end])
-                            used_regions[chr].append((rand_start, rand_end))
-                            break
+                    # Check if the region overlaps with any existing region
+                    if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
+                        m_regions.append([chr, rand_start, rand_end])
+                        used_regions[chr].append((rand_start, rand_end))
+                        mii += 1 
+                        break
 
         else:
             m_regions = []
@@ -629,18 +630,18 @@ class PROCESS_EIC_DATA(object):
 
             for chr, size in self.util.chr_sizes.items():
                 m_c = int(m * (size / self.genomesize))
+                mii = 0
+                while mii < m_c:
+                    # Generate a random start position that is divisible by self.resolution
+                    rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
+                    rand_end = rand_start + self.max_len
 
-                for _ in range(m_c):
-                    while True:
-                        # Generate a random start position that is divisible by self.resolution
-                        rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
-                        rand_end = rand_start + self.max_len
-
-                        # Check if the region overlaps with any existing region in the same chromosome
-                        if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
-                            m_regions.append([chr, rand_start, rand_end])
-                            used_regions[chr].append((rand_start, rand_end))
-                            break
+                    # Check if the region overlaps with any existing region in the same chromosome
+                    if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
+                        m_regions.append([chr, rand_start, rand_end])
+                        used_regions[chr].append((rand_start, rand_end))
+                        mii += 1 
+                        break
 
         if multi_p:
             bw_obj = False
@@ -838,12 +839,32 @@ if __name__ == "__main__":
     # # print("generated training datasets in :", t1-t0)
     # exit()
 
+
+
+
+
+    
+
     solar_path = "/project/compbio-lab/EIC/training_data/"
-    eic = PROCESS_EIC_DATA(solar_path, stratified=True)
+    eic = PROCESS_EIC_DATA(solar_path, stratified=True, resolution=25, max_len=8000)
     t0 = datetime.datetime.now()
-    eic.generate_m_samples(m=2000, n_datasets=50, multi_p=True, n_p=10)
+    eic.generate_m_samples(m=7000, n_datasets=50, multi_p=True, n_p=10)
     t1 = datetime.datetime.now()
     print("generated training datasets in :", t1-t0)
+
+    # solar_path = "/project/compbio-lab/EIC/training_data/"
+    # eic = PROCESS_EIC_DATA(solar_path, stratified=True, resolution=128, max_len=8000)
+    # t0 = datetime.datetime.now()
+    # eic.generate_m_samples(m=2000, n_datasets=30, multi_p=True, n_p=10)
+    # t1 = datetime.datetime.now()
+    # print("generated training datasets in :", t1-t0)
+
+
+
+
+
+
+
     
     # solar_path = "/project/compbio-lab/EIC/validation_data/"
     # eic = PROCESS_EIC_DATA(solar_path, stratified=True)
