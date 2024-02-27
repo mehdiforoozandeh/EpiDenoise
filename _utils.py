@@ -660,7 +660,6 @@ class PROCESS_EIC_DATA(object):
         samples_per_ds = len(m_regions) // n_datasets
         for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
-            print("ds:   ", ds_number)
 
             ds_i_regions = m_regions[ds_i : (ds_i + samples_per_ds)]
             ds_i_regions.sort(key=lambda x: x[1]) # sorted based on start coord
@@ -747,7 +746,7 @@ class PROCESS_EIC_DATA(object):
             
         return m_regions
     
-    def generate_m_samples_from_predefined_regions(self, m_regions, multi_p=True, n_p=20):
+    def generate_m_samples_from_predefined_regions(self, m_regions, multi_p=True, n_p=100):
         m = len(m_regions)
         if multi_p:
             bw_obj = False
