@@ -629,6 +629,7 @@ class PROCESS_EIC_DATA(object):
 
             for chr, size in self.util.chr_sizes.items():
                 m_c = int(m * (size / self.genomesize))
+                print(m_c)
                 mii = 0
                 while mii < m_c:
                     # Generate a random start position that is divisible by self.resolution
@@ -637,14 +638,13 @@ class PROCESS_EIC_DATA(object):
 
                     # Check if the region overlaps with any existing region in the same chromosome
                     if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
-                        print(mii)
                         m_regions.append([chr, rand_start, rand_end])
                         used_regions[chr].append((rand_start, rand_end))
                         mii += 1 
                         break
             
             
-            exit()
+        exit()
 
         if multi_p:
             bw_obj = False
