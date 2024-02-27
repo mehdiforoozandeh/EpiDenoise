@@ -630,6 +630,7 @@ class PROCESS_EIC_DATA(object):
             for chr, size in self.util.chr_sizes.items():
                 m_c = int(m * (size / self.genomesize))
                 mii = 0
+
                 while mii < m_c:
                     print(mii, m_c)
                     # Generate a random start position that is divisible by self.resolution
@@ -641,7 +642,6 @@ class PROCESS_EIC_DATA(object):
                         m_regions.append([chr, rand_start, rand_end])
                         used_regions[chr].append((rand_start, rand_end))
                         mii += 1 
-                        break
             
             
         exit()
