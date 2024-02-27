@@ -632,7 +632,6 @@ class PROCESS_EIC_DATA(object):
                 mii = 0
 
                 while mii < m_c:
-                    print(mii, m_c)
                     # Generate a random start position that is divisible by self.resolution
                     rand_start = random.randint(0, (size - self.max_len) // self.resolution) * self.resolution
                     rand_end = rand_start + self.max_len
@@ -642,9 +641,6 @@ class PROCESS_EIC_DATA(object):
                         m_regions.append([chr, rand_start, rand_end])
                         used_regions[chr].append((rand_start, rand_end))
                         mii += 1 
-            
-            
-        exit()
 
         if multi_p:
             bw_obj = False
@@ -662,6 +658,8 @@ class PROCESS_EIC_DATA(object):
         ds_number = 0  
         print("m2:   ", len(m_regions))
         samples_per_ds = len(m_regions) // n_datasets
+        print(samples_per_ds)
+        exit()
         for ds_i in range(0, len(m_regions), samples_per_ds):
             ds_number += 1
             print("ds:   ", ds_number)
