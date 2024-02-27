@@ -600,7 +600,6 @@ class PROCESS_EIC_DATA(object):
                     rand_start = random.randint(row['start'] // self.resolution, (row['end']) // self.resolution) * self.resolution
                     rand_end = rand_start + self.max_len
 
-
                     # Check if the region overlaps with any existing region in the same chromosome
                     if rand_start >= 0 and rand_end <= self.util.chr_sizes[row['chrom']]:
                         if not any(start <= rand_end and end >= rand_start for start, end in used_regions[row['chrom']]):
@@ -839,14 +838,8 @@ if __name__ == "__main__":
     # # print("generated training datasets in :", t1-t0)
     # exit()
 
-
-
-
-
-    
-
     solar_path = "/project/compbio-lab/EIC/training_data/"
-    eic = PROCESS_EIC_DATA(solar_path, stratified=True, resolution=25, max_len=8000)
+    eic = PROCESS_EIC_DATA(solar_path, stratified=False, resolution=25, max_len=8000)
     t0 = datetime.datetime.now()
     eic.generate_m_samples(m=7000, n_datasets=50, multi_p=True, n_p=10)
     t1 = datetime.datetime.now()
