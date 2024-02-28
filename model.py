@@ -1012,10 +1012,10 @@ class EpiDenoise22(nn.Module):
         
         if self.aggr:
             print("agg+src", src.shape)
-            aggregation = src[:, 0:, :]
+            aggr_token = src[:, 0:, :]
             src = src[:, 1:, :]
             print("src", src.shape)
-            print("agg", aggregation.shape)
+            print("agg", aggr_token.shape)
         
         exit()
 
@@ -1029,7 +1029,7 @@ class EpiDenoise22(nn.Module):
         trg = self.signal_softplus(trg)
 
         if self.aggr:
-            return trg, aggregation
+            return trg, aggr_token
         else:
             return trg
         
