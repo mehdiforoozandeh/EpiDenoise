@@ -568,7 +568,7 @@ class ComboLoss21(nn.Module):
 class ComboLoss22(nn.Module):
     def __init__(self):
         super(ComboLoss22, self).__init__()
-        self.mse_loss = nn.MSELoss(reduction='mean')
+        self.mse_loss = nn.L1Loss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask):
 
@@ -967,7 +967,7 @@ class EpiDenoise22(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_sizes[i + 1], stride, dilation, 
-                pool_type="max", residuals=False
+                pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
         if self.aggr:
@@ -3502,13 +3502,13 @@ if __name__ == "__main__":
         "dropout": 0.05,
         "context_length": 200,
         
-        "kernel_size": [1, 5, 5, 5, 5],
-        "conv_out_channels": [128, 192, 256, 320, 384],
+        "kernel_size": [1, 5, 5, 5],
+        "conv_out_channels": [128, 192, 256, 384],
         "dilation":1,
 
         "nhead": 4,
         "n_enc_layers": 3,
-        "n_dec_layers": 2,
+        "n_dec_layers": 1,
         
         "mask_percentage":0.2,
         "batch_size":300,
