@@ -1002,8 +1002,8 @@ class EpiDenoise22(nn.Module):
         if self.aggr:
             # Concatenate special token to src
             batch_size, seq_len, _ = src.shape
-            special_tokens = self.special_token.repeat(batch_size, 1, 1)
-            src = torch.cat([special_tokens, src], dim=1)
+            aggr_token = self.aggr_token.repeat(batch_size, 1, 1)
+            src = torch.cat([aggr_token, src], dim=1)
             print("agg+src", src.shape)
 
         for enc in self.transformer_encoder:
