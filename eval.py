@@ -1286,7 +1286,7 @@ class EVAL(object): # on chr21
 
                     mask = mask.to(self.device)
 
-                    outputs = self.model(x_batch, mask, None)
+                    outputs, aggrmean, aggrstd = self.model(x_batch, mask, None)
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()

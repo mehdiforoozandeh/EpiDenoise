@@ -2768,11 +2768,11 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}',
-                        f"total_Loss: {np.mean(epoch_loss):.2f}",
-                        f"clz_loss: {np.mean(pred_loss):.2f}",
-                        f"obs_loss: {np.mean(obs_loss):.2f}",
-                        f"aggrmean_loss: {np.mean(aggrmean_loss):.2f}",
-                        f"aggrstd_loss: {np.mean(aggrstd_loss):.2f}",
+                        f"total_Loss: {np.mean(epoch_loss):.3f}",
+                        f"clz_loss: {np.mean(pred_loss):.3f}",
+                        f"obs_loss: {np.mean(obs_loss):.3f}",
+                        f"aggrmean_loss: {np.mean(aggrmean_loss):.3f}",
+                        f"aggrstd_loss: {np.mean(aggrstd_loss):.3f}",
                         f"took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
@@ -3500,21 +3500,21 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "context_length": 200,
+        "context_length": 2000,
         
-        "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [64, 96, 144, 192],
+        "kernel_size": [1, 5, 5, 5, 5],
+        "conv_out_channels": [128, 192, 256, 320, 384],
         "dilation":1,
 
-        "nhead": 2,
-        "n_enc_layers": 2,
-        "n_dec_layers": 1,
+        "nhead": 4,
+        "n_enc_layers": 3,
+        "n_dec_layers": 2,
         
         "mask_percentage":0.2,
-        "batch_size":300,
+        "batch_size":100,
         "epochs": 15,
         "outer_loop_epochs":2,
-        "learning_rate": 1e-3
+        "learning_rate": 1e-4
     }
 
     if sys.argv[1] == "epd16":
