@@ -967,7 +967,7 @@ class EpiDenoise22(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_sizes[i + 1], stride, dilation, 
-                pool_type="max", residuals=True
+                pool_type="max", residuals=False
             ) for i in range(n_cnn_layers - 1)])
 
         if self.aggr:
