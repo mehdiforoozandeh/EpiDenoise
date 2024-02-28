@@ -2774,7 +2774,7 @@ class PRE_TRAINER(object):
                         f"Loss: {np.mean(cloz_loss):.2f}",
                         f"Loss: {np.mean(aggrmean_loss):.2f}",
                         f"Loss: {np.mean(aggrstd_loss):.2f}",
-                        f"Epoch took: {int(minutes):int(seconds)}"]
+                        f"Epoch took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
 
