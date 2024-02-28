@@ -3507,7 +3507,7 @@ if __name__ == "__main__":
         "dilation":1,
 
         "nhead": 4,
-        "n_enc_layers": 3,
+        "n_enc_layers": 1,
         "n_dec_layers": 1,
         
         "mask_percentage":0.2,
