@@ -1012,7 +1012,7 @@ class EpiDenoise22(nn.Module):
         
         if self.aggr:
             print("agg+src", src.shape)
-            aggr_token = src[:, 0:, :]
+            aggr_token = src[:, 0, :]
             src = src[:, 1:, :]
             print("src", src.shape)
             print("agg", aggr_token.shape)
