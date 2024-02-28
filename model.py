@@ -969,6 +969,10 @@ class EpiDenoise22(nn.Module):
 
         if self.aggr:
             self.aggr_token = nn.Parameter(torch.randn(1, 1, d_model))
+            # Additional linear layers for predicting mean and standard deviation
+            self.mean_prediction = nn.Linear(d_model, output_dim)
+            self.stddev_prediction = nn.Linear(d_model, output_dim)
+
 
         self.transformer_encoder = nn.ModuleList([RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, 
@@ -982,7 +986,7 @@ class EpiDenoise22(nn.Module):
             pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
     
         self.linear_output = nn.Linear(d_model, output_dim)
-        self.signal_softplus = nn.Softplus()
+        self.softplus = nn.Softplus()
 
     def forward(self, seq, mask, pad):
         mask = mask.permute(0, 2, 1) # to N, F, L
@@ -1012,10 +1016,14 @@ class EpiDenoise22(nn.Module):
         
         if self.aggr:
             print("agg+src", src.shape)
-            aggr_token = src[:, 0, :]
+            aggr_token = src[:, 0, :].unsqueeze(1)
             src = src[:, 1:, :]
             print("src", src.shape)
             print("agg", aggr_token.shape)
+            aggrmean = self.softplus(self.mean_prediction(aggr_token))
+            aggrstddev = self.softplus(self.stddev_prediction(aggr_token))
+            print("aggrmean", aggrmean.shape)
+            print("aggrstddev", aggrstddev.shape)
         
         exit()
 
@@ -1026,7 +1034,7 @@ class EpiDenoise22(nn.Module):
             # print("trg", trg.shape)
         
         trg = self.linear_output(trg)
-        trg = self.signal_softplus(trg)
+        trg = self.softplus(trg)
 
         if self.aggr:
             return trg, aggr_token
