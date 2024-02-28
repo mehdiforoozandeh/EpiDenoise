@@ -3500,7 +3500,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "context_length": 2000,
+        "context_length": 200,
         
         "kernel_size": [1, 5, 5, 5, 5],
         "conv_out_channels": [128, 192, 256, 320, 384],
