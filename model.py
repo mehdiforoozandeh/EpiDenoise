@@ -566,25 +566,27 @@ class ComboLoss21(nn.Module):
         return mse_next_pos
 
 class ComboLoss22(nn.Module):
-    def __init__(self, alpha=0.5, aggr=True):
+    def __init__(self):
         super(ComboLoss22, self).__init__()
-        self.alpha = alpha
         self.mse_loss = nn.MSELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask, aggrmean, aggrstd):
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask):
+
+        true_seq_mean = true_signals.mean(dim=1)
+        true_seq_std = true_signals.std(dim=1)
+
+        mse_aggrmean_loss = self.mse_loss(aggrmean[aggr_mask], true_seq_mean[aggr_mask]) 
+        mse_aggrstd_loss  = self.mse_loss(aggrstd[aggr_mask], true_seq_std[aggr_mask]) 
 
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        if cloze_mask.sum().item() != 0:
-            mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-            if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
-                print("NaN value encountered in loss components.")
-                return torch.tensor(float('nan')).to(mse_pred_loss.device)
-            return ((self.alpha)*mse_pred_loss), ((1-self.alpha)*mse_obs_loss)
-        else:
-            if torch.isnan(mse_obs_loss).any():
-                print("NaN value encountered in loss components.")
-                return torch.tensor(float('nan')).to(mse_obs_loss.device)
-            return mse_obs_loss
+        mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+
+        if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(mse_pred_loss.device)
+
+        return mse_pred_loss, mse_obs_loss, mse_aggrmean_loss, mse_aggrstd_loss
+
 
 
 class MatrixFactorizationEmbedding(nn.Module):
@@ -2624,6 +2626,11 @@ class PRE_TRAINER(object):
 
                     epoch_loss = []
 
+                    pred_loss = []
+                    cloz_loss = []
+                    aggrmean_loss = []
+                    aggrstd_loss = []
+
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
                         p += 1
@@ -2724,19 +2731,10 @@ class PRE_TRAINER(object):
                             for av_i in available_assays_ind:
                                 aggr_mask[:,av_i] = True
 
-                            x_batch_seq_mean = x_batch.mean(dim=1)
-                            x_batch_seq_std = x_batch.std(dim=1)
+                            mse_pred_loss, mse_obs_loss, mse_aggrmean_loss, mse_aggrstd_loss = self.criterion(
+                                outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask)
 
-                            print(outputs.shape)
-                            print(aggrmean.shape)
-                            print(aggrstd.shape)
-                            print(aggr_mask.shape)
-                            print(x_batch_seq_mean.shape)
-                            print(x_batch_seq_std.shape)
-
-                            exit()
-                            loss = self.criterion(outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd)
-
+                            loss = mse_pred_loss + mse_obs_loss + mse_aggrmean_loss + mse_aggrstd_loss
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 print(len(available_assays_ind), loss)
@@ -2752,6 +2750,11 @@ class PRE_TRAINER(object):
                             del masked_x_batch
                             del outputs
 
+                            pred_loss.append(mse_pred_loss.item())
+                            cloz_loss.append(mse_obs_loss.item())
+                            aggrmean_loss.append(mse_aggrmean_loss.item())
+                            aggrstd_loss.append(mse_aggrstd_loss.item())
+
                             epoch_loss.append(loss.item())
                             loss.backward()  
                             self.optimizer.step()
@@ -2759,11 +2762,19 @@ class PRE_TRAINER(object):
                     self.scheduler.step(loss)
                     logfile = open("models/EPD22_log.txt", "w")
 
+                    elapsed_time = datetime.now() - t0
+                    hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                    minutes, seconds = divmod(remainder, 60)
+
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}',
-                        f"Loss: {np.mean(epoch_loss):.4f}",
-                        f"Epoch took: {datetime.now() - t0}"]
+                        f"Loss: {np.mean(epoch_loss):.2f}",
+                        f"Loss: {np.mean(pred_loss):.2f}",
+                        f"Loss: {np.mean(cloz_loss):.2f}",
+                        f"Loss: {np.mean(aggrmean_loss):.2f}",
+                        f"Loss: {np.mean(aggrstd_loss):.2f}",
+                        f"Epoch took: {int(minutes):int(seconds)}"]
 
                     logstr = " | ".join(logstr)
 
