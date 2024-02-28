@@ -100,7 +100,7 @@ class ConvTower(nn.Module):
         self.resid = residuals
         self.conv  = ConvBlock(in_C, out_C, W, S, D)
         
-        if pool_type == "max" or pool_type == "attn":
+        if pool_type == "max" or pool_type == "attn" or pool_type == "avg":
             self.do_pool = True
         else:
             self.do_pool = False
@@ -112,6 +112,8 @@ class ConvTower(nn.Module):
             self.pool = AttentionPooling1D(out_C, 2)
         elif pool_type == "max":
             self.pool  = nn.MaxPool1d(2)
+        elif pool_type == "avg":
+            self.pool  = nn.AvgPool1d(2)
     
     def forward(self, x):
         x = self.conv(x)
@@ -967,7 +969,7 @@ class EpiDenoise22(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_sizes[i + 1], stride, dilation, 
-                pool_type="max", residuals=False
+                pool_type="avg", residuals=False
             ) for i in range(n_cnn_layers - 1)])
 
         if self.aggr:
@@ -3503,7 +3505,7 @@ if __name__ == "__main__":
         "context_length": 200,
         
         "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [128, 192, 256, 384],
+        "conv_out_channels": [64, 128, 144, 192],
         "dilation":1,
 
         "nhead": 4,
