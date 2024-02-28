@@ -566,12 +566,12 @@ class ComboLoss21(nn.Module):
         return mse_next_pos
 
 class ComboLoss22(nn.Module):
-    def __init__(self, alpha=0.5):
+    def __init__(self, alpha=0.5, aggr=True):
         super(ComboLoss22, self).__init__()
         self.alpha = alpha
         self.mse_loss = nn.MSELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask, aggrmean, aggrstd):
 
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         if cloze_mask.sum().item() != 0:
@@ -585,6 +585,7 @@ class ComboLoss22(nn.Module):
                 print("NaN value encountered in loss components.")
                 return torch.tensor(float('nan')).to(mse_obs_loss.device)
             return mse_obs_loss
+
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -1018,14 +1019,12 @@ class EpiDenoise22(nn.Module):
             print("agg+src", src.shape)
             aggr_token = src[:, 0, :].unsqueeze(1)
             src = src[:, 1:, :]
-            print("src", src.shape)
-            print("agg", aggr_token.shape)
+            # print("src", src.shape)
+            # print("agg", aggr_token.shape)
             aggrmean = self.softplus(self.mean_prediction(aggr_token))
             aggrstddev = self.softplus(self.stddev_prediction(aggr_token))
-            print("aggrmean", aggrmean.shape)
-            print("aggrstddev", aggrstddev.shape)
-        
-        exit()
+            # print("aggrmean", aggrmean.shape)
+            # print("aggrstddev", aggrstddev.shape)
 
         # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
@@ -1037,7 +1036,7 @@ class EpiDenoise22(nn.Module):
         trg = self.softplus(trg)
 
         if self.aggr:
-            return trg, aggr_token
+            return trg, aggrmean, aggrstddev
         else:
             return trg
         
@@ -2723,8 +2722,13 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
                             x_batch = x_batch.to(self.device)
 
-                            outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
-                            loss = self.criterion(outputs, x_batch, cloze_mask, union_mask)
+                            outputs, aggrmean, aggrstd = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+                            print(outputs.shape)
+                            print(aggrmean.shape)
+                            print(aggrstd.shape)
+
+                            exit()
+                            loss = self.criterion(outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd)
 
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2770,7 +2774,6 @@ class PRE_TRAINER(object):
                     pass
 
         return self.model
-
 
 class MODEL_LOADER(object):
     def __init__(self, model_path, hyper_parameters):
