@@ -998,10 +998,10 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        print("src", src.shape)
+        # print("src", src.shape)
         for conv in self.convtower:
             src = conv(src)
-            print("src", src.shape)
+            # print("src", src.shape)
 
         src = src.permute(0, 2, 1)  # to N, L, F
         if self.aggr:
@@ -1009,22 +1009,18 @@ class EpiDenoise22(nn.Module):
             batch_size, seq_len, _ = src.shape
             aggr_token = self.aggr_token.repeat(batch_size, 1, 1)
             src = torch.cat([aggr_token, src], dim=1)
-            print("agg+src", src.shape)
+            # print("agg+src", src.shape)
 
         for enc in self.transformer_encoder:
             src = enc(src)
-            print("src", src.shape)
+            # print("src", src.shape)
         
         if self.aggr:
-            print("agg+src", src.shape)
-            aggr_token = src[:, 0, :].unsqueeze(1)
+            aggr_token = src[:, 0, :]
             src = src[:, 1:, :]
-            # print("src", src.shape)
-            # print("agg", aggr_token.shape)
+
             aggrmean = self.softplus(self.mean_prediction(aggr_token))
             aggrstddev = self.softplus(self.stddev_prediction(aggr_token))
-            # print("aggrmean", aggrmean.shape)
-            # print("aggrstddev", aggrstddev.shape)
 
         # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
@@ -2723,9 +2719,20 @@ class PRE_TRAINER(object):
                             x_batch = x_batch.to(self.device)
 
                             outputs, aggrmean, aggrstd = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+
+                            aggr_mask = torch.zeros((x_batch.shape[0], x_batch.shape[2]), dtype=torch.bool)
+                            for av_i in available_assays_ind:
+                                aggr_mask[:,av_i] = True
+
+                            x_batch_seq_mean = x_batch.mean(dim=1)
+                            x_batch_seq_std = x_batch.std(dim=1)
+
                             print(outputs.shape)
                             print(aggrmean.shape)
                             print(aggrstd.shape)
+                            print(aggr_mask.shape)
+                            print(x_batch_seq_mean.shape)
+                            print(x_batch_seq_std.shape)
 
                             exit()
                             loss = self.criterion(outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd)
