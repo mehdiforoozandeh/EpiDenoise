@@ -2627,7 +2627,7 @@ class PRE_TRAINER(object):
                     epoch_loss = []
 
                     pred_loss = []
-                    cloz_loss = []
+                    obs_loss = []
                     aggrmean_loss = []
                     aggrstd_loss = []
 
@@ -2751,7 +2751,7 @@ class PRE_TRAINER(object):
                             del outputs
 
                             pred_loss.append(mse_pred_loss.item())
-                            cloz_loss.append(mse_obs_loss.item())
+                            obs_loss.append(mse_obs_loss.item())
                             aggrmean_loss.append(mse_aggrmean_loss.item())
                             aggrstd_loss.append(mse_aggrstd_loss.item())
 
@@ -2765,16 +2765,15 @@ class PRE_TRAINER(object):
                     elapsed_time = datetime.now() - t0
                     hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                     minutes, seconds = divmod(remainder, 60)
-
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}',
-                        f"Loss: {np.mean(epoch_loss):.2f}",
-                        f"Loss: {np.mean(pred_loss):.2f}",
-                        f"Loss: {np.mean(cloz_loss):.2f}",
-                        f"Loss: {np.mean(aggrmean_loss):.2f}",
-                        f"Loss: {np.mean(aggrstd_loss):.2f}",
-                        f"Epoch took: {int(minutes)}:{int(seconds)}"]
+                        f"total_Loss: {np.mean(epoch_loss):.2f}",
+                        f"clz_loss: {np.mean(pred_loss):.2f}",
+                        f"obs_loss: {np.mean(obs_loss):.2f}",
+                        f"aggrmean_loss: {np.mean(aggrmean_loss):.2f}",
+                        f"aggrstd_loss: {np.mean(aggrstd_loss):.2f}",
+                        f"took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
 
