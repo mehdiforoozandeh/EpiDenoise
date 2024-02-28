@@ -566,33 +566,25 @@ class ComboLoss21(nn.Module):
         return mse_next_pos
 
 class ComboLoss22(nn.Module):
-    def __init__(self, obs_loss = False):
+    def __init__(self, alpha=0.5):
         super(ComboLoss22, self).__init__()
-        self.obs_loss = obs_loss
+        self.alpha = alpha
         self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
-        if self.obs_loss:
-            mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-            if cloze_mask.sum().item() != 0:
-                mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-                if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
-                    print("NaN value encountered in loss components.")
-                    return torch.tensor(float('nan')).to(mse_pred_loss.device)
-                return mse_pred_loss + mse_obs_loss
-            else:
-                if torch.isnan(mse_obs_loss).any():
-                    print("NaN value encountered in loss components.")
-                    return torch.tensor(float('nan')).to(mse_obs_loss.device)
-                return mse_obs_los
 
-        else:
+        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
+        if cloze_mask.sum().item() != 0:
             mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
-            if torch.isnan(mse_pred_loss).any():
+            if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
                 print("NaN value encountered in loss components.")
                 return torch.tensor(float('nan')).to(mse_pred_loss.device)
-            return mse_pred_loss
-
+            return ((self.alpha)*mse_pred_loss), ((1-self.alpha)*mse_obs_loss)
+        else:
+            if torch.isnan(mse_obs_loss).any():
+                print("NaN value encountered in loss components.")
+                return torch.tensor(float('nan')).to(mse_obs_loss.device)
+            return mse_obs_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -958,12 +950,14 @@ class EpiDenoise21(nn.Module):
 class EpiDenoise22(nn.Module):
     def __init__(
         self, input_dim, conv_out_channels, conv_kernel_sizes, nhead, 
-        d_model, n_encoder_layers, n_decoder_layers, output_dim, dilation=1, dropout=0.1, context_length=2000):
+        d_model, n_encoder_layers, n_decoder_layers, output_dim, dilation=1, 
+        dropout=0.1, context_length=2000, aggr=True):
 
         super(EpiDenoise22, self).__init__()
 
         stride = 1
         n_cnn_layers = len(conv_out_channels)
+        self.aggr=aggr
 
         self.dual_conv_emb_src = DualConvEmbedding(in_C=input_dim, out_C=conv_out_channels[0])
 
@@ -972,6 +966,9 @@ class EpiDenoise22(nn.Module):
                 conv_kernel_sizes[i + 1], stride, dilation, 
                 pool_type="max", residuals=False
             ) for i in range(n_cnn_layers - 1)])
+
+        if self.aggr:
+            self.aggr_token = nn.Parameter(torch.randn(1, 1, d_model))
 
         self.transformer_encoder = nn.ModuleList([RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, 
@@ -996,16 +993,32 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        # print("src", src.shape)
+        print("src", src.shape)
         for conv in self.convtower:
             src = conv(src)
-            # print("src", src.shape)
-        
+            print("src", src.shape)
+
         src = src.permute(0, 2, 1)  # to N, L, F
+        if self.aggr:
+            # Concatenate special token to src
+            batch_size, seq_len, _ = src.shape
+            special_tokens = self.special_token.repeat(batch_size, 1, 1)
+            src = torch.cat([special_tokens, src], dim=1)
+            print("agg+src", src.shape)
+
         for enc in self.transformer_encoder:
             src = enc(src)
-            # print("src", src.shape)
+            print("src", src.shape)
         
+        if self.aggr:
+            print("agg+src", src.shape)
+            aggregation = src[:, 0:, :]
+            src = src[:, 1:, :]
+            print("src", src.shape)
+            print("agg", aggregation.shape)
+        
+        exit()
+
         # print("trg",trg.shape)
         trg = trg.permute(0, 2, 1)  # to N, L, F
         for dec in self.transformer_decoder:
@@ -1014,7 +1027,11 @@ class EpiDenoise22(nn.Module):
         
         trg = self.linear_output(trg)
         trg = self.signal_softplus(trg)
-        return trg
+
+        if self.aggr:
+            return trg, aggregation
+        else:
+            return trg
         
 #========================================================================================================#
 #=========================================Pretraining====================================================#
