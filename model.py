@@ -3511,7 +3511,7 @@ if __name__ == "__main__":
         "n_dec_layers": 2,
         
         "mask_percentage":0.2,
-        "batch_size":10,
+        "batch_size":300,
         "epochs": 15,
         "outer_loop_epochs":2,
         "learning_rate": 1e-4
