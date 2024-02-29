@@ -2786,8 +2786,6 @@ class PRE_TRAINER(object):
                     logfile.write("\n".join(log_strs))
                     logfile.close()
                     print(logstr)
-                    
-                    
 
                 try:
                     if ds%11 == 0:
@@ -3517,9 +3515,9 @@ if __name__ == "__main__":
         
         "mask_percentage":0.2,
         "batch_size":300,
-        "epochs": 30,
+        "epochs": 15,
         "outer_loop_epochs":1,
-        "learning_rate": 4e-4
+        "learning_rate": 1e-3
     }
 
     if sys.argv[1] == "epd16":
