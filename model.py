@@ -570,7 +570,7 @@ class ComboLoss21(nn.Module):
 class ComboLoss22(nn.Module):
     def __init__(self):
         super(ComboLoss22, self).__init__()
-        self.mse_loss = nn.L1Loss(reduction='mean')
+        self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):#, aggrmean, aggrstd, aggr_mask):
 
@@ -2586,7 +2586,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_22(self, 
-        d_model, outer_loop_epochs=1, arcsinh_transform=True, focus_middle=False, num_random_segs=10,
+        d_model, outer_loop_epochs=1, arcsinh_transform=False, focus_middle=False, num_random_segs=10,
         num_epochs=25, mask_percentage=0.15, context_length=2000, start_ds=0, batch_size=50):
 
         log_strs = []
