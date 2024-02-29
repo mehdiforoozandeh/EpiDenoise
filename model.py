@@ -572,13 +572,13 @@ class ComboLoss22(nn.Module):
         super(ComboLoss22, self).__init__()
         self.mse_loss = nn.L1Loss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask):
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask):
 
-        true_seq_mean = true_signals.mean(dim=1)
-        true_seq_std = true_signals.std(dim=1)
+        # true_seq_mean = true_signals.mean(dim=1)
+        # true_seq_std = true_signals.std(dim=1)
 
-        mse_aggrmean_loss = self.mse_loss(aggrmean[aggr_mask], true_seq_mean[aggr_mask]) 
-        mse_aggrstd_loss  = self.mse_loss(aggrstd[aggr_mask], true_seq_std[aggr_mask]) 
+        # mse_aggrmean_loss = self.mse_loss(aggrmean[aggr_mask], true_seq_mean[aggr_mask]) 
+        # mse_aggrstd_loss  = self.mse_loss(aggrstd[aggr_mask], true_seq_std[aggr_mask]) 
 
         mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
         mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
@@ -587,7 +587,7 @@ class ComboLoss22(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(mse_pred_loss.device)
 
-        return mse_pred_loss, mse_obs_loss, mse_aggrmean_loss, mse_aggrstd_loss
+        return mse_pred_loss, mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
 
 
@@ -956,7 +956,7 @@ class EpiDenoise22(nn.Module):
     def __init__(
         self, input_dim, conv_out_channels, conv_kernel_sizes, nhead, 
         d_model, n_encoder_layers, n_decoder_layers, output_dim, dilation=1, 
-        dropout=0.1, context_length=2000, aggr=True):
+        dropout=0.1, context_length=2000, aggr=False):
 
         super(EpiDenoise22, self).__init__()
 
@@ -2630,8 +2630,8 @@ class PRE_TRAINER(object):
 
                     pred_loss = []
                     obs_loss = []
-                    aggrmean_loss = []
-                    aggrstd_loss = []
+                    # aggrmean_loss = []
+                    # aggrstd_loss = []
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
@@ -2727,16 +2727,19 @@ class PRE_TRAINER(object):
                             cloze_mask = cloze_mask.to(self.device)
                             x_batch = x_batch.to(self.device)
 
-                            outputs, aggrmean, aggrstd = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+                            # outputs, aggrmean, aggrstd = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
+                            outputs = self.model(masked_x_batch, union_mask, x_batch_pad) #(sequence, mask, pad)
 
                             aggr_mask = torch.zeros((x_batch.shape[0], x_batch.shape[2]), dtype=torch.bool)
                             for av_i in available_assays_ind:
                                 aggr_mask[:,av_i] = True
 
-                            mse_pred_loss, mse_obs_loss, mse_aggrmean_loss, mse_aggrstd_loss = self.criterion(
-                                outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask)
+                            # mse_pred_loss, mse_obs_loss, mse_aggrmean_loss, mse_aggrstd_loss = self.criterion(
+                            #     outputs, x_batch, cloze_mask, union_mask, aggrmean, aggrstd, aggr_mask)
+                            mse_pred_loss, mse_obs_loss = self.criterion(
+                                outputs, x_batch, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask)
 
-                            loss = mse_pred_loss + mse_obs_loss + mse_aggrmean_loss + mse_aggrstd_loss
+                            loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
                                 print(len(available_assays_ind), loss)
@@ -2754,8 +2757,8 @@ class PRE_TRAINER(object):
 
                             pred_loss.append(mse_pred_loss.item())
                             obs_loss.append(mse_obs_loss.item())
-                            aggrmean_loss.append(mse_aggrmean_loss.item())
-                            aggrstd_loss.append(mse_aggrstd_loss.item())
+                            # aggrmean_loss.append(mse_aggrmean_loss.item())
+                            # aggrstd_loss.append(mse_aggrstd_loss.item())
 
                             epoch_loss.append(loss.item())
                             loss.backward()  
@@ -2773,8 +2776,8 @@ class PRE_TRAINER(object):
                         f"total_Loss: {np.mean(epoch_loss):.3f}",
                         f"clz_loss: {np.mean(pred_loss):.3f}",
                         f"obs_loss: {np.mean(obs_loss):.3f}",
-                        f"aggrmean_loss: {np.mean(aggrmean_loss):.3f}",
-                        f"aggrstd_loss: {np.mean(aggrstd_loss):.3f}",
+                        # f"aggrmean_loss: {np.mean(aggrmean_loss):.3f}",
+                        # f"aggrstd_loss: {np.mean(aggrstd_loss):.3f}",
                         f"took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
