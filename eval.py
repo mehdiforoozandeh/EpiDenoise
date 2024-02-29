@@ -1611,6 +1611,13 @@ class EVAL(object): # on chr21
         Y = torch.load("data/C23_val.pt")
         P = torch.load("data/C23_imp.pt")
 
+        for f in range(X.shape[1]):
+            if (X[:, f] != -1).all():
+                print("plotting", f)
+                plt.hist(X[:100, f], density=True, bins=10)
+                print("plotted", f)
+                plt.show()
+
         # fill-in missing_ind
         for i in range(X.shape[1]):
             if (X[:, i] == -1).all():
@@ -1765,10 +1772,11 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         context_length=200, batch_size=300,
-        version="22", savedir="models/epd22_evals/")
-
-    e.viz_all()
+        version="22", savedir="models/testevals/", mode="dev")
+    
+    e.bios_test()
     exit()
+    
 
     e = EVAL(
         model= "models/EpiDenoise22_20240228015527_params1062457.pt", 
@@ -1776,8 +1784,9 @@ if __name__=="__main__":
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         context_length=200, batch_size=300,
-        version="22", savedir="models/testevals/", mode="dev")
-    
-    e.bios_test()
+        version="22", savedir="models/epd22_evals/")
+
+    e.viz_all()
     exit()
-    
+
+   
