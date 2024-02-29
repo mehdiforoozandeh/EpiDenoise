@@ -568,7 +568,7 @@ class ComboLoss21(nn.Module):
         return mse_next_pos
 
 class ComboLoss22(nn.Module):
-    def __init__(self):
+    def __init__(self, alpha=0.75):
         super(ComboLoss22, self).__init__()
         self.mse_loss = nn.MSELoss(reduction='mean')
 
@@ -587,7 +587,7 @@ class ComboLoss22(nn.Module):
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(mse_pred_loss.device), torch.tensor(float('nan')).to(mse_pred_loss.device)
 
-        return mse_pred_loss, mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
+        return alpha*mse_pred_loss, (1-alpha)*mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
 
 
