@@ -6,6 +6,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.lines as mlines
+from matplotlib.colors import LogNorm
+from matplotlib.gridspec import GridSpec
 import pyBigWig
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
@@ -851,6 +853,118 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters.png", dpi=150)
 
+    def BIOS_signal_scatter_with_marginals(self, eval_res, share_axes=True):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+        num_rows = len(eval_res)
+        num_cols = len(cols)
+
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5 * num_rows))
+
+        for j, result in enumerate(eval_res):
+            for i, c in enumerate(cols):
+                ax = axes[j, i] if num_rows > 1 else axes[i]
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    
+                sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
+
+                bin_range = np.linspace(min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys])), 50)
+                ax_histx = ax.inset_axes([0, 1.05, 1, 0.2])
+                ax_histy = ax.inset_axes([1.05, 0, 0.2, 1])
+                
+                ax_histx.hist(xs, bins=bin_range, alpha=0.9, color="#f25a64")
+                ax_histy.hist(ys, bins=bin_range, orientation='horizontal', alpha=0.9, color="#f25a64")
+                
+                ax_histx.set_xticklabels([])
+                ax_histx.set_yticklabels([])
+                ax_histy.set_xticklabels([])
+                ax_histy.set_yticklabels([])
+
+                # Set title, labels, and range if share_axes is True
+                ax.set_title(f"{result['feature']}_{c}_{result['comparison']}_{pcc}")
+                ax.set_xlabel("Obs")
+                ax.set_ylabel("Imp")
+
+                if share_axes:
+                    common_range = [min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys]))]
+                    ax.set_xlim(common_range)
+                    ax.set_ylim(common_range)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters_with_marginals.png", dpi=150)
+
+    def BIOS_signal_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    title_suffix = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    title_suffix = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    title_suffix = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    title_suffix = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    title_suffix = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                # Create the heatmap
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{title_suffix}")
+                ax.set_xlabel("Obs | arcsinh(-log10(pval))")
+                ax.set_ylabel("Imp | arcsinh(-log10(pval))")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_heatmaps.png", dpi=150)
+        
     def BIOS_signal_scatter_rank(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
@@ -912,6 +1026,61 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_scatters.png", dpi=150)
     
+    def BIOS_signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+
+                # Convert values to ranks
+                xs = rankdata(xs)
+                ys = rankdata(ys)
+
+                # Create the heatmap for ranked values
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(xedges[0], yedges[0])
+                    common_max = max(xedges[-1], yedges[-1])
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
+                ax.set_xlabel("Obs | rank")
+                ax.set_ylabel("Imp | rank")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_heatmaps.png", dpi=150)
+
     def BIOS_corresp_curve(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
@@ -984,6 +1153,54 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve_deriv.png", dpi=150)
     
+    def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
+        list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(list_of_metrics), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            observed_values = eval_res[j]["obs"]
+            imputed_values = eval_res[j]["imp"]
+
+            bin_size = context_length // bins
+
+            observed_values = observed_values.reshape(-1, context_length)
+            imputed_values = imputed_values.reshape(-1, context_length)
+
+            observed_values = observed_values.reshape(observed_values.shape[0]*bin_size, bins)
+            imputed_values = imputed_values.reshape(imputed_values.shape[0]*bin_size, bins)
+
+            for i, m in enumerate(list_of_metrics):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(list_of_metrics), j * len(list_of_metrics) + i + 1)
+                
+                xs = [float(xt)/bins for xt in range(bins)]
+                # Calculate x_values based on the current gene's coordinates
+                ys = []
+                for b in range(bins):
+                    
+                    obs, imp = observed_values[:,b].flatten(), imputed_values[:,b].flatten()
+                    if m == 'MSE-GW':
+                        ys.append(self.metrics.mse(obs, imp))
+
+                    elif m == 'Pearson-GW':
+                        ys.append(self.metrics.pearson(obs, imp))
+
+                    elif m == 'Spearman-GW':
+                        ys.append(self.metrics.spearman(obs, imp))
+                
+                ax.plot(xs, ys, color="grey", linewidth=3)
+                # ax.fill_between(xs, 0, ys, alpha=0.7, color="grey")
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_xlabel("position in context")
+                ax.set_ylabel(m)
+        
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/context.png", dpi=150)
+
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
         # Sort the dataframe by 'feature'
@@ -1099,7 +1316,7 @@ class EVAL(object): # on chr21
     def __init__(
         self, model, traindata_path, evaldata_path, context_length, batch_size, hyper_parameters_path="",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="22", resolution=25, 
-        is_arcsin=True, savedir="models/evals/"):
+        is_arcsin=True, savedir="models/evals/", mode="eval"):
 
         self.savedir = savedir
         if os.path.exists(self.savedir) == False:
@@ -1115,15 +1332,6 @@ class EVAL(object): # on chr21
         self.model = model
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        if type(self.model) == str:
-            with open(hyper_parameters_path, 'rb') as f:
-                self.hyper_parameters = pickle.load(f)
-            loader = MODEL_LOADER(model, self.hyper_parameters)
-            self.model = loader.load_epidenoise(version=self.version)
-
-        self.model = self.model.to(self.device)
-        self.model.eval()  # set the model to evaluation mode
-        print(f"# model_parameters: {count_parameters(self.model)}")
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
         self.mark_dict = {
@@ -1155,6 +1363,19 @@ class EVAL(object): # on chr21
         self.eval_data = {}
         self.metrics = METRICS()
         self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
+
+        if mode == "dev":
+            return
+
+        if type(self.model) == str:
+            with open(hyper_parameters_path, 'rb') as f:
+                self.hyper_parameters = pickle.load(f)
+            loader = MODEL_LOADER(model, self.hyper_parameters)
+            self.model = loader.load_epidenoise(version=self.version)
+
+        self.model = self.model.to(self.device)
+        self.model.eval()  # set the model to evaluation mode
+        print(f"# model_parameters: {count_parameters(self.model)}")
 
         # load and bin chr21 of all bigwig files 
         for t in os.listdir(traindata_path):
@@ -1360,9 +1581,9 @@ class EVAL(object): # on chr21
                 'Pearson_prom': self.metrics.pearson_prom(target, pred),
                 'Spearman_prom': self.metrics.spearman_prom(target, pred),
 
-                "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+                # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
             #     "corresp_curve": corresp,
             #     "corresp_curve_deriv": corresp_deriv
@@ -1382,6 +1603,47 @@ class EVAL(object): # on chr21
         eval_res = self.get_metrics(X, Y, P, missing_x_i, missing_y_i, bios_name)
 
         return eval_res
+
+    def bios_test(self):
+        missing_x_i, missing_y_i = [], []
+        
+        X = torch.load("data/C23_trn.pt")
+        Y = torch.load("data/C23_val.pt")
+        P = torch.load("data/C23_imp.pt")
+
+        # fill-in missing_ind
+        for i in range(X.shape[1]):
+            if (X[:, i] == -1).all():
+                missing_x_i.append(i)
+        
+        # fill-in missing_ind
+        for i in range(Y.shape[1]):
+            if (Y[:, i] == -1).all():
+                missing_y_i.append(i)
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        if self.is_arcsin:
+            arcmask1 = (X != -1)
+            X[arcmask1] = torch.arcsinh_(X[arcmask1])
+
+            arcmask2 = (Y != -1)
+            Y[arcmask2] = torch.arcsinh_(Y[arcmask2])
+
+        eval_res = self.get_metrics(X, Y, P, missing_x_i, missing_y_i, "test")
+
+        self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+        self.viz.clear_pallete()
+
+        # self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+        # self.viz.clear_pallete()
+
+        # self.viz.BIOS_signal_heatmap(eval_res)
+        # self.viz.clear_pallete()
+
+        # self.viz.BIOS_signal_rank_heatmap(eval_res)
+        # self.viz.clear_pallete()
 
     def viz_bios(self, eval_res):
         """
@@ -1405,6 +1667,13 @@ class EVAL(object): # on chr21
             self.viz.clear_pallete()
         except:
             print("faild to plot signal tracks")
+
+        try:
+            print("plotting context_specific performance")
+            self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot context_specific performance")
             
         try:
             print("plotting signal scatter")
@@ -1414,11 +1683,25 @@ class EVAL(object): # on chr21
             print("faild to plot  signal scatter")
 
         try:
-            print("plotting signal rank scatter")
-            self.viz.BIOS_signal_scatter_rank(eval_res)
+            print("plotting signal scatter with marginals")
+            self.viz.BIOS_signal_scatter_with_marginals(eval_res)
             self.viz.clear_pallete()
         except:
-            print("faild to plot  signal rank scatter")
+            print("faild to plot scatter with marginals")
+
+        try:
+            print("plotting signal heatmap")
+            self.viz.BIOS_signal_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal heatmap")
+
+        try:
+            print("plotting signal rank heatmap")
+            self.viz.BIOS_signal_rank_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal rank heatmap")
 
         # try:
         #     print("plotting corresp_curve")
@@ -1475,70 +1758,26 @@ class EVAL(object): # on chr21
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
 if __name__=="__main__":
+
     e = EVAL(
-        model= "models/EpiDenoise22_20240226115450_params1043443.pt", 
-        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240226115450_params1043443.pkl",
+        model= "models/EpiDenoise22_20240228015527_params1062457.pt", 
+        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240228015527_params1062457.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
         context_length=200, batch_size=300,
         version="22", savedir="models/epd22_evals/")
 
     e.viz_all()
-
-    exit()
-    e = Evaluation(
-        model_path= "models/EPD18_model_checkpoint_ds_10.pth", 
-        hyper_parameters_path= "models/hyper_parameters18_EpiDenoise18_20240220112009_params170630.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True,  version="18"
-    )
-    e.biosample_generate_imputations("C23")
-    # e.evaluate_model("eval_EPD17.csv")
     exit()
 
-    e = Evaluation(
-        model_path= "models/EPD22_model_checkpoint_ds_30.pt", 
-        hyper_parameters_path= "models/hyper_parameters16_EpiDenoise16_20240105145712_params157128.pkl", 
+    e = EVAL(
+        model= "models/EpiDenoise22_20240228015527_params1062457.pt", 
+        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240228015527_params1062457.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True, version="16"
-    )
-    e.evaluate_model("eval_EPD16.csv")
-
+        context_length=200, batch_size=300,
+        version="22", savedir="models/testevals/", mode="dev")
+    
+    e.bios_test()
     exit()
-    e = Evaluation(
-        model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
-        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        is_arcsin=True
-    )
-    e.evaluate_model("eval_small_model_L400.csv")
-
-    e = Evaluation(
-        model_path= "models/EpiDenoise_20231212191632_params154531.pt", 
-        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231212191632_params154531.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/",
-        is_arcsin=True
-    )
-    e.evaluate_model("eval_small_model_L800.csv")
-
-    e = Evaluation(
-        model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
-        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231210014829_params154531.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/blind_data/", 
-        is_arcsin=True
-    )
-    e.evaluate_model("eval_small_model_L400_blind.csv")
-
-    e = Evaluation(
-        model_path= "models/EpiDenoise_20231212191632_params154531.pt", 
-        hyper_parameters_path= "models/hyper_parameters_EpiDenoise_20231212191632_params154531.pkl", 
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/blind_data/",
-        is_arcsin=True
-    )
-    e.evaluate_model("eval_small_model_L800_blind.csv")
+    
