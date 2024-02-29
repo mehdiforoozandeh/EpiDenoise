@@ -572,7 +572,7 @@ class ComboLoss22(nn.Module):
         super(ComboLoss22, self).__init__()
         self.mse_loss = nn.L1Loss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask):
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):#, aggrmean, aggrstd, aggr_mask):
 
         # true_seq_mean = true_signals.mean(dim=1)
         # true_seq_std = true_signals.std(dim=1)
