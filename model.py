@@ -590,7 +590,22 @@ class ComboLoss22(nn.Module):
 
         return self.alpha*mse_pred_loss, (1-self.alpha)*mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
+class ComboPoissonNLLloss(nn.Module):
+    def __init__(self, alpha=0.75):
+        super(ComboPoissonNLLloss, self).__init__()
+        self.alpha = alpha
+        self.pnlll = nn.PoissonNLLLoss(reduction='mean')
 
+    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
+
+        obs_loss =  self.pnlll(pred_signals[~union_mask], true_signals[~union_mask])
+        pred_loss = self.pnlll(pred_signals[cloze_mask], true_signals[cloze_mask])
+
+        if torch.isnan(pred_loss).any() or torch.isnan(obs_loss).any():
+            print("NaN value encountered in loss components.")
+            return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(pred_loss.device)
+
+        return self.alpha*pred_loss, (1-self.alpha)*obs_loss
 
 class MatrixFactorizationEmbedding(nn.Module):
     """
@@ -2693,16 +2708,8 @@ class PRE_TRAINER(object):
 
                             if focus_middle:
                                 masked_x_batch, cloze_mask = self.masker.mid_slice_focused_full_feature_mask(x_batch, token_dict["missing_mask"], available_assays_ind)
-                            else:
-                                if len(available_assays_ind) == 1:
-                                    msk_type = "chunk"
-                                else:
-                                    msk_type = "feature"
-                                
-                                if msk_type == "feature":
-                                    masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
-                                elif msk_type == "chunk":
-                                    masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
+                            else:                                
+                                masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
 
                             # ensure that padded regions remain padded
                             x_batch[x_batch_pad] = token_dict["pad"]
@@ -3418,7 +3425,8 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     with open(f'models/hyper_parameters22_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss22()
+    criterion = ComboPoissonNLLloss()
+    # criterion = ComboLoss22()
 
     start_time = time.time()
 

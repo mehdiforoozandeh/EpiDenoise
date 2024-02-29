@@ -1612,6 +1612,7 @@ class EVAL(object): # on chr21
         Y = torch.load("data/C23_val.pt")
         P = torch.load("data/C23_imp.pt")
 
+        
         # fill-in missing_ind
         for i in range(X.shape[1]):
             if (X[:, i] == -1).all():
@@ -1781,6 +1782,8 @@ if __name__=="__main__":
     
     e.bios_test()
     exit()
+
+    
     
 
 
