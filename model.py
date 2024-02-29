@@ -585,7 +585,7 @@ class ComboLoss22(nn.Module):
 
         if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
             print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(mse_pred_loss.device)
+            return torch.tensor(float('nan')).to(mse_pred_loss.device), torch.tensor(float('nan')).to(mse_pred_loss.device)
 
         return mse_pred_loss, mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
