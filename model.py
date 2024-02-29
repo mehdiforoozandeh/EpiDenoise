@@ -2699,7 +2699,7 @@ class PRE_TRAINER(object):
                                     msk_type = "feature"
                                 
                                 if msk_type == "feature":
-                                    masked_x_batch, cloze_mask = self.masker.mask_features(x_batch, available_assays_ind)
+                                    masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
                                 elif msk_type == "chunk":
                                     masked_x_batch, cloze_mask = self.masker.mask_chunk_features(x_batch, available_assays_ind)
 
