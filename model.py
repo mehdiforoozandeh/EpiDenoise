@@ -2646,8 +2646,8 @@ class PRE_TRAINER(object):
 
                     pred_loss = []
                     obs_loss = []
-                    # aggrmean_loss = []
-                    # aggrstd_loss = []
+                    mseobs_loss = []
+                    msepred_loss = []
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
@@ -2747,6 +2747,11 @@ class PRE_TRAINER(object):
                             mse_pred_loss, mse_obs_loss = self.criterion(
                                 outputs, x_batch, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask)
 
+                            obs_mse = np.mean(((x_batch[~union_mask]) - (outputs[~union_mask]))**2)
+                            mseobs_loss.append(obs_mse)
+                            prd_mse = np.mean(((x_batch[cloze_mask]) - (outputs[cloze_mask]))**2)
+                            msepred_loss.append(prd_mse)
+
                             loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
                             if torch.isnan(loss).sum() > 0:
                                 skipmessage = "Encountered nan loss! Skipping batch..."
@@ -2784,8 +2789,8 @@ class PRE_TRAINER(object):
                         f"total_Loss: {np.mean(epoch_loss):.3f}",
                         f"clz_loss: {np.mean(pred_loss):.3f}",
                         f"obs_loss: {np.mean(obs_loss):.3f}",
-                        # f"aggrmean_loss: {np.mean(aggrmean_loss):.3f}",
-                        # f"aggrstd_loss: {np.mean(aggrstd_loss):.3f}",
+                        f"mse_pred: {np.mean(msepred_loss):.3f}",
+                        f"mse_obs: {np.mean(mseobs_loss):.3f}",
                         f"took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
