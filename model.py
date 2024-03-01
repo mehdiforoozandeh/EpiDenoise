@@ -2758,9 +2758,9 @@ class PRE_TRAINER(object):
                             prd_mse = (((x_batch[cloze_mask]) - (outputs[cloze_mask]))**2).mean().item()
                             msepred_loss.append(prd_mse)
 
-                            r2_obs = r2_score((x_batch[~union_mask]).cpu().numpy(), (outputs[~union_mask]).cpu().numpy())
+                            r2_obs = r2_score((x_batch[~union_mask]).cpu().numpy(), (outputs[~union_mask]).cpu().detach().numpy())
                             r2obs_loss.append(r2_obs)
-                            r2_pred = r2_score((x_batch[cloze_mask]).cpu().numpy(), (outputs[cloze_mask]).cpu().numpy())
+                            r2_pred = r2_score((x_batch[cloze_mask]).cpu().numpy(), (outputs[cloze_mask]).cpu().detach().numpy())
                             r2pred_loss.append(r2_pred)
 
                             loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
