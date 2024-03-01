@@ -2747,9 +2747,9 @@ class PRE_TRAINER(object):
                             mse_pred_loss, mse_obs_loss = self.criterion(
                                 outputs, x_batch, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask)
 
-                            obs_mse = np.mean((np.array(x_batch[~union_mask]) - np.array(outputs[~union_mask]))**2)
+                            obs_mse = np.mean(((x_batch[~union_mask]) - (outputs[~union_mask]))**2).mean().item()
                             mseobs_loss.append(obs_mse)
-                            prd_mse = np.mean((np.array(x_batch[cloze_mask]) - np.array(outputs[cloze_mask]))**2)
+                            prd_mse = np.mean(((x_batch[cloze_mask]) - (outputs[cloze_mask]))**2).mean().item()
                             msepred_loss.append(prd_mse)
 
                             loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
