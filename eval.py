@@ -1752,7 +1752,8 @@ class EVAL(object): # on chr21
             'MSE-1imp', 'Pearson_1imp', 'Spearman_1imp',
             'MSE-gene', 'Pearson_gene', 'Spearman_gene',
             'MSE-prom', 'Pearson_prom', 'Spearman_prom',
-            'peak_overlap_01thr', 'peak_overlap_05thr', 'peak_overlap_10thr']
+            'peak_overlap_01thr', 'peak_overlap_05thr', 
+            'peak_overlap_10thr']
         
         for m in boxplot_metrics:
             self.viz.MODEL_boxplot(self.model_res, metric=m)

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 from _utils import *
+from sklearn.metrics import r2_score
 from datetime import datetime
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
@@ -594,7 +595,7 @@ class ComboPoissonNLLloss(nn.Module):
     def __init__(self, alpha=0.75):
         super(ComboPoissonNLLloss, self).__init__()
         self.alpha = alpha
-        self.pnlll = nn.PoissonNLLLoss(reduction='mean')
+        self.pnlll = nn.PoissonNLLLoss(reduction='mean', full=True)
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
 
@@ -2646,8 +2647,12 @@ class PRE_TRAINER(object):
 
                     pred_loss = []
                     obs_loss = []
+
                     mseobs_loss = []
                     msepred_loss = []
+
+                    r2obs_loss = []
+                    r2pred_loss = []
 
                     p = 0
                     for pattern, indices in missing_f_pattern.items():
@@ -2747,10 +2752,16 @@ class PRE_TRAINER(object):
                             mse_pred_loss, mse_obs_loss = self.criterion(
                                 outputs, x_batch, cloze_mask, union_mask)#, aggrmean, aggrstd, aggr_mask)
 
+
                             obs_mse = (((x_batch[~union_mask]) - (outputs[~union_mask]))**2).mean().item()
                             mseobs_loss.append(obs_mse)
                             prd_mse = (((x_batch[cloze_mask]) - (outputs[cloze_mask]))**2).mean().item()
                             msepred_loss.append(prd_mse)
+
+                            r2_obs = r2_score((x_batch[~union_mask]).numpy(), (outputs[~union_mask]).numpy())
+                            r2obs_loss.append(r2_obs)
+                            r2_pred = r2_score((x_batch[cloze_mask]).numpy(), (outputs[cloze_mask]).numpy())
+                            r2pred_loss.append(r2_pred)
 
                             loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
                             if torch.isnan(loss).sum() > 0:
@@ -2770,6 +2781,7 @@ class PRE_TRAINER(object):
 
                             pred_loss.append(mse_pred_loss.item())
                             obs_loss.append(mse_obs_loss.item())
+                            
                             # aggrmean_loss.append(mse_aggrmean_loss.item())
                             # aggrstd_loss.append(mse_aggrstd_loss.item())
 
@@ -2786,11 +2798,13 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"DataSet #{ds}/{len(self.dataset.preprocessed_datasets)}", 
                         f'Epoch {epoch+1}/{num_epochs}',
-                        f"total_Loss: {np.mean(epoch_loss):.3f}",
-                        f"clz_loss: {np.mean(pred_loss):.3f}",
-                        f"obs_loss: {np.mean(obs_loss):.3f}",
-                        f"mse_pred: {np.mean(msepred_loss):.3f}",
-                        f"mse_obs: {np.mean(mseobs_loss):.3f}",
+                        f"L_tot: {np.mean(epoch_loss):.2f}",
+                        f"L_clz: {np.mean(pred_loss):.2f}",
+                        f"L_obs: {np.mean(obs_loss):.2f}",
+                        f"mse_prd: {np.mean(msepred_loss):.2f}",
+                        f"mse_obs: {np.mean(mseobs_loss):.2f}",
+                        f"R2_prd: {np.mean(r2pred_loss):.2f}",
+                        f"R2_obs: {np.mean(r2obs_loss):.2f}",
                         f"took: {int(minutes)}:{int(seconds)}"]
 
                     logstr = " | ".join(logstr)
@@ -3430,7 +3444,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     with open(f'models/hyper_parameters22_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboPoissonNLLloss(alpha=0.9)
+    criterion = ComboPoissonNLLloss()
     # criterion = ComboLoss22()
 
     start_time = time.time()
