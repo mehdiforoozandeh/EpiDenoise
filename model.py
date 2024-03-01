@@ -3429,7 +3429,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=epochs*5, threshold=1e-3)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.8, patience=epochs*5, threshold=1e-3)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3543,9 +3543,9 @@ if __name__ == "__main__":
         
         "mask_percentage":0.2,
         "batch_size":300,
-        "epochs": 15,
+        "epochs": 5,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-3
+        "learning_rate": 1e-2
     }
 
     if sys.argv[1] == "epd16":
