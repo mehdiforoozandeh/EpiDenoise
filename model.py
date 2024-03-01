@@ -3545,7 +3545,7 @@ if __name__ == "__main__":
         "batch_size":300,
         "epochs": 5,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-2
+        "learning_rate": 1e-4
     }
 
     if sys.argv[1] == "epd16":
