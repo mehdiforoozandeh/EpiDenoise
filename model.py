@@ -2789,7 +2789,7 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                     
-                    self.scheduler.step(loss)
+                    self.scheduler.step(np.mean(r2pred_loss))
                     logfile = open("models/EPD22_log.txt", "w")
 
                     elapsed_time = datetime.now() - t0
