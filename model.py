@@ -3541,11 +3541,11 @@ if __name__ == "__main__":
         "n_enc_layers": 2,
         "n_dec_layers": 1,
         
-        "mask_percentage":0.2,
+        "mask_percentage":0.25,
         "batch_size":300,
-        "epochs": 5,
+        "epochs": 10,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-4
+        "learning_rate": 5e-4
     }
 
     if sys.argv[1] == "epd16":
