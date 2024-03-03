@@ -3534,8 +3534,8 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "context_length": 400,
         
-        "kernel_size": [1, 5, 5, 5, 5],
-        "conv_out_channels": [64, 128, 144, 192, 384],
+        "kernel_size": [1, 5, 5, 5],
+        "conv_out_channels": [64, 128, 192, 384],
         "dilation":1,
 
         "nhead": 4,
