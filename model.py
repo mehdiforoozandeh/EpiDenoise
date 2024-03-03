@@ -1036,6 +1036,7 @@ class EpiDenoise22(nn.Module):
             src = enc(src)
             # print("src", src.shape)
         
+        print(src.shape)
         if self.aggr:
             aggr_token = src[:, 0, :]
             src = src[:, 1:, :]
@@ -3444,8 +3445,8 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
     with open(f'models/hyper_parameters22_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboPoissonNLLloss()
-    # criterion = ComboLoss22()
+    # criterion = ComboPoissonNLLloss()
+    criterion = ComboLoss22()
 
     start_time = time.time()
 
