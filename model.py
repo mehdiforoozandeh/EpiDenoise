@@ -986,7 +986,7 @@ class EpiDenoise22(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_sizes[i + 1], stride, dilation, 
-                pool_type="avg", residuals=False
+                pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
         if self.aggr:
@@ -3531,15 +3531,15 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.05,
-        "context_length": 200,
+        "context_length": 400,
         
         "kernel_size": [1, 5, 5, 5],
         "conv_out_channels": [64, 128, 144, 192],
         "dilation":1,
 
         "nhead": 4,
-        "n_enc_layers": 2,
-        "n_dec_layers": 1,
+        "n_enc_layers": 4,
+        "n_dec_layers": 2,
         
         "mask_percentage":0.25,
         "batch_size":300,

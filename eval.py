@@ -1734,12 +1734,10 @@ class EVAL(object): # on chr21
         """
         self.model_res = []
         for bios in self.eval_data.keys():
-            bios = "C23"
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
             print("got results for ", bios)
             self.viz_bios(eval_res_bios)
-            exit()
 
             for f in eval_res_bios:
                 del f["obs"], f["imp"]
@@ -1769,7 +1767,7 @@ if __name__=="__main__":
         hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240301194644_params1048755.pkl",
         traindata_path="/project/compbio-lab/EIC/training_data/", 
         evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=300, is_arcsin=False,
+        context_length=200, batch_size=300, is_arcsin=True,
         version="22", savedir="models/epd22_evals/")
 
     e.viz_all()
