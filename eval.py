@@ -1734,10 +1734,12 @@ class EVAL(object): # on chr21
         """
         self.model_res = []
         for bios in self.eval_data.keys():
+            bios = "C23"
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
             print("got results for ", bios)
             self.viz_bios(eval_res_bios)
+            exit()
 
             for f in eval_res_bios:
                 del f["obs"], f["imp"]
