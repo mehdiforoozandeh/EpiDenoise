@@ -1036,7 +1036,7 @@ class EpiDenoise22(nn.Module):
             src = enc(src)
             # print("src", src.shape)
         
-        print(src.shape)
+        # print(src.shape)
         if self.aggr:
             aggr_token = src[:, 0, :]
             src = src[:, 1:, :]
