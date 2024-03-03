@@ -2759,9 +2759,13 @@ class PRE_TRAINER(object):
                             prd_mse = (((x_batch[cloze_mask]) - (outputs[cloze_mask]))**2).mean().item()
                             msepred_loss.append(prd_mse)
 
-                            r2_obs = r2_score((x_batch[~union_mask]).cpu().numpy(), (outputs[~union_mask]).cpu().detach().numpy())
+                            r2_obs = r2_score(
+                                (x_batch[~union_mask]).cpu().detach().numpy(), 
+                                (outputs[~union_mask]).cpu().detach().numpy())
                             r2obs_loss.append(r2_obs)
-                            r2_pred = r2_score((x_batch[cloze_mask]).cpu().numpy(), (outputs[cloze_mask]).cpu().detach().numpy())
+                            r2_pred = r2_score(
+                                (x_batch[cloze_mask]).cpu().detach().numpy(), 
+                                (outputs[cloze_mask]).cpu().detach().numpy())
                             r2pred_loss.append(r2_pred)
 
                             loss = mse_pred_loss + mse_obs_loss #+ mse_aggrmean_loss + mse_aggrstd_loss
@@ -3430,7 +3434,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.8, patience=epochs*5, threshold=1e-3)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.8, patience=epochs*5, threshold=1e-3)
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -3532,10 +3536,10 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
         "dropout": 0.1,
-        "context_length": 400,
+        "context_length": 200,
         
-        "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [64, 128, 192, 384],
+        "kernel_size": [1, 5, 5, 5, 5],
+        "conv_out_channels": [128, 192, 256, 384, 512],
         "dilation":1,
 
         "nhead": 4,
@@ -3544,7 +3548,7 @@ if __name__ == "__main__":
         
         "mask_percentage":0.25,
         "batch_size":300,
-        "epochs": 10,
+        "epochs": 15,
         "outer_loop_epochs":1,
         "learning_rate": 5e-4
     }
