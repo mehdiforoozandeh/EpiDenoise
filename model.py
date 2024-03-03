@@ -3531,11 +3531,11 @@ if __name__ == "__main__":
     hyper_parameters22 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.05,
+        "dropout": 0.1,
         "context_length": 400,
         
-        "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [64, 128, 144, 192],
+        "kernel_size": [1, 5, 5, 5, 5],
+        "conv_out_channels": [64, 128, 144, 192, 384],
         "dilation":1,
 
         "nhead": 4,
