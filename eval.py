@@ -746,8 +746,8 @@ class VISUALS(object):
         plt.clf()
 
     def BIOS_signal_track(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
         example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
@@ -800,8 +800,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_tracks.png", dpi=200)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -854,8 +854,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_with_marginals(self, eval_res, share_axes=True):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
         num_rows = len(eval_res)
@@ -915,8 +915,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters_with_marginals.png", dpi=150)
 
     def BIOS_signal_heatmap(self, eval_res, share_axes=True, bins=50):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -966,8 +966,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_heatmaps.png", dpi=150)
         
     def BIOS_signal_scatter_rank(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -1027,8 +1027,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_scatters.png", dpi=150)
     
     def BIOS_signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -1082,8 +1082,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_heatmaps.png", dpi=150)
 
     def BIOS_corresp_curve(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
 
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -1118,8 +1118,8 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve.png", dpi=150)
 
     def BIOS_corresp_curve_deriv(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
             
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -1154,6 +1154,9 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve_deriv.png", dpi=150)
     
     def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+            
         list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
 
         # Define the size of the figure
