@@ -1156,7 +1156,7 @@ class VISUALS(object):
     def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
-            
+
         list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
 
         # Define the size of the figure
@@ -1666,12 +1666,12 @@ class EVAL(object): # on chr21
             selected regions' signals
         """
 
-        try:
-            print("plotting signal tracks")
-            self.viz.BIOS_signal_track(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot signal tracks")
+        # try:
+        print("plotting signal tracks")
+        self.viz.BIOS_signal_track(eval_res)
+        self.viz.clear_pallete()
+        # except:
+        # print("faild to plot signal tracks")
 
         try:
             print("plotting context_specific performance")
