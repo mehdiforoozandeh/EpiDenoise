@@ -797,7 +797,7 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_tracks.png", dpi=200)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_tracks.png", dpi=200)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
@@ -851,7 +851,7 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_with_marginals(self, eval_res, share_axes=True):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
@@ -912,7 +912,7 @@ class VISUALS(object):
                     ax.set_ylim(common_range)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_scatters_with_marginals.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_scatters_with_marginals.png", dpi=150)
 
     def BIOS_signal_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
@@ -963,7 +963,7 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_heatmaps.png", dpi=150)
         
     def BIOS_signal_scatter_rank(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
@@ -1024,7 +1024,7 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_rank_scatters.png", dpi=150)
     
     def BIOS_signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
@@ -1079,7 +1079,7 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/signal_rank_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_rank_heatmaps.png", dpi=150)
 
     def BIOS_corresp_curve(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
@@ -1115,7 +1115,7 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/corresp_curve.png", dpi=150)
 
     def BIOS_corresp_curve_deriv(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
@@ -1151,7 +1151,7 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi'")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/corresp_curve_deriv.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/corresp_curve_deriv.png", dpi=150)
     
     def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
@@ -1202,7 +1202,7 @@ class VISUALS(object):
                 ax.set_ylabel(m)
         
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}/context.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/context.png", dpi=150)
 
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
