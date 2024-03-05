@@ -1666,12 +1666,12 @@ class EVAL(object): # on chr21
             selected regions' signals
         """
 
-        # try:
-        print("plotting signal tracks")
-        self.viz.BIOS_signal_track(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        # print("faild to plot signal tracks")
+        try: 
+            print("plotting signal tracks")
+            self.viz.BIOS_signal_track(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot signal tracks")
 
         try:
             print("plotting context_specific performance")
