@@ -3535,22 +3535,22 @@ if __name__ == "__main__":
     hyper_parameters22 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
-        "dropout": 0.1,
+        "dropout": 0.01,
         "context_length": 200,
         
         "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [128, 192, 256, 384],
+        "conv_out_channels": [64, 128, 144, 192],
         "dilation":1,
 
-        "nhead": 4,
-        "n_enc_layers": 4,
+        "nhead": 2,
+        "n_enc_layers": 2,
         "n_dec_layers": 1,
         
         "mask_percentage":0.25,
         "batch_size":400,
-        "epochs": 15,
+        "epochs": 20,
         "outer_loop_epochs":1,
-        "learning_rate": 5e-4
+        "learning_rate": 1e-4
     }
 
     if sys.argv[1] == "epd16":
