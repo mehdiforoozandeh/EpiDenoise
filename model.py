@@ -3450,7 +3450,7 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         pickle.dump(hyper_parameters, f)
 
     # criterion = ComboPoissonNLLloss()
-    criterion = ComboLoss22()
+    criterion = ComboLoss22(alpha=0.9)
 
     start_time = time.time()
 
