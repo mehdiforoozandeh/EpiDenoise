@@ -3548,8 +3548,8 @@ if __name__ == "__main__":
         
         "mask_percentage":0.25,
         "batch_size":400,
-        "epochs": 20,
-        "outer_loop_epochs":1,
+        "epochs": 10,
+        "outer_loop_epochs":2,
         "learning_rate": 1e-3
     }
 
