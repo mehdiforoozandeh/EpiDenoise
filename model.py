@@ -3538,19 +3538,19 @@ if __name__ == "__main__":
         "dropout": 0.01,
         "context_length": 200,
         
-        "kernel_size": [1, 5, 5, 5],
-        "conv_out_channels": [64, 128, 144, 192],
+        "kernel_size": [1, 3, 3, 3, 3],
+        "conv_out_channels": [64, 128, 144, 192, 256],
         "dilation":1,
 
         "nhead": 2,
         "n_enc_layers": 2,
-        "n_dec_layers": 1,
+        "n_dec_layers": 2,
         
         "mask_percentage":0.25,
         "batch_size":400,
         "epochs": 20,
         "outer_loop_epochs":1,
-        "learning_rate": 1e-4
+        "learning_rate": 1e-3
     }
 
     if sys.argv[1] == "epd16":
