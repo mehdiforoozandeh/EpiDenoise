@@ -88,7 +88,7 @@ class SoftmaxPooling1D(nn.Module):
         softmax_weights = F.softmax(logits, dim=2)
         
         # Multiply inputs by softmax weights and sum over the pooling window
-        pooled = torch.einsum('bnpc,bnp->bnc', inputs_reshaped, softmax_weights)
+        pooled = torch.einsum('bnpc,bnp->bnc', inputs, softmax_weights)
         
         return pooled.permut(0,2,1)
 
