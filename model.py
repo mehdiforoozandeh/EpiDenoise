@@ -67,6 +67,7 @@ class SoftmaxPooling1D(nn.Module):
             self.register_parameter('softmax_weights', self.weights)
         
         # Ensure the length is divisible by the pool size for simplicity
+        print(inputs.shape)
         if length % self.pool_size != 0:
             padding = self.pool_size - length % self.pool_size
             inputs = F.pad(inputs, (0, 0, 0, padding))
@@ -78,7 +79,7 @@ class SoftmaxPooling1D(nn.Module):
             1, self.pool_size, self.pool_size).contiguous().view(batch_size, -1, self.pool_size, num_features)
         print(inputs.shape)
         exit()
-        
+
         # Calculate logits using einsum for simplicity here (alternative approach could use nn.Linear for exact TensorFlow mimic)
         logits = torch.einsum('bnpc,pc->bnp', inputs_reshaped, self.weights)
         
