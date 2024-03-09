@@ -73,14 +73,14 @@ class SoftmaxPooling1D(nn.Module):
             _, length, _ = inputs.size()
         
         # Reshape inputs for pooling
-        print(inputs.shape)
         inputs_reshaped = inputs.unfold(
             1, self.pool_size, self.pool_size).contiguous().view(batch_size, -1, self.pool_size, num_features)
         print(inputs_reshaped.shape)
-        exit()
 
         # Calculate logits using einsum for simplicity here (alternative approach could use nn.Linear for exact TensorFlow mimic)
         logits = torch.einsum('bnpc,pc->bnp', inputs_reshaped, self.weights)
+        print(logits.shape)
+        exit()
         
         # Apply softmax to the logits along the pooling window dimension
         softmax_weights = F.softmax(logits, dim=2)
