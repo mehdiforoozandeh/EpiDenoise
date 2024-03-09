@@ -94,6 +94,7 @@ class AttentionPooling1D(nn.Module):
         self.attention_weights = nn.Parameter(torch.randn(in_channels, pooling_size))
 
     def forward(self, x):
+        x = x.permute(0, 2, 1)
         # x shape: (batch_size, channels, length)
 
         # Split the input tensor into pools
@@ -105,6 +106,8 @@ class AttentionPooling1D(nn.Module):
         pooled = (unfolded * scores.unsqueeze(0).unsqueeze(2)).sum(dim=-1)
         # pooled shape: (batch_size, channels, num_pools)
 
+        pooled = pooled.permute(0, 2, 1)
+        
         return pooled
 
 class ConvBlock(nn.Module):
