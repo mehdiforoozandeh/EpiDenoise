@@ -2839,7 +2839,7 @@ class PRE_TRAINER(object):
                             loss.backward()  
                             self.optimizer.step()
                     
-                    self.scheduler.step(np.mean(r2pred_loss))
+                    # self.scheduler.step(np.mean(r2pred_loss))
                     logfile = open("models/EPD22_log.txt", "w")
 
                     elapsed_time = datetime.now() - t0
@@ -3583,8 +3583,8 @@ if __name__ == "__main__":
         "dropout": 0.01,
         "context_length": 200,
         
-        "kernel_size": [1, 3, 3, 3, 3],
-        "conv_out_channels": [64, 128, 144, 192, 256],
+        "kernel_size": [1, 3, 3, 3],
+        "conv_out_channels": [128, 144, 192, 256],
         "dilation":1,
 
         "nhead": 2,
