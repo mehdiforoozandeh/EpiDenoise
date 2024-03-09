@@ -43,7 +43,7 @@ class DualConvEmbedding(nn.Module):
         return F * M
 
 class SoftmaxPooling1D(nn.Module):
-    def __init__(self, pool_size, per_channel=True, w_init_scale=1.0):
+    def __init__(self, pool_size, per_channel=False, w_init_scale=1.0):
         super(SoftmaxPooling1D, self).__init__()
         self.pool_size = pool_size
         self.per_channel = per_channel
@@ -3478,6 +3478,9 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim, conv_out_channels, kernel_size, nhead, 
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
+    for name, param in model.named_parameters():
+        print(name, param.size())
+    exit()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.8, patience=epochs*5, threshold=1e-3)
 
