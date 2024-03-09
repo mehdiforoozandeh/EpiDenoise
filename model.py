@@ -2864,6 +2864,10 @@ class PRE_TRAINER(object):
                     logfile.close()
                     print(logstr)
 
+                    for name, param in self.model.named_parameters():
+                        print(name, param.size())
+                    exit()
+
                 try:
                     if ds%11 == 0:
                         torch.save(self.model.state_dict(), f'models/EPD22_model_checkpoint_ds_{ds}.pth')
@@ -3478,9 +3482,6 @@ def train_epidenoise22(hyper_parameters, checkpoint_path=None, start_ds=0):
         input_dim, conv_out_channels, kernel_size, nhead, 
         d_model, n_enc_layers, n_dec_layers, output_dim, dilation=dilation, dropout=dropout, context_length=context_length)
 
-    for name, param in model.named_parameters():
-        print(name, param.size())
-    exit()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.8, patience=epochs*5, threshold=1e-3)
 
