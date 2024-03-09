@@ -80,8 +80,10 @@ class SoftmaxPooling1D(nn.Module):
             1, self.pool_size, self.pool_size).contiguous().view(batch_size, -1, self.pool_size, num_features)
 
         # Calculate logits using einsum for simplicity here
+        print(inputs.shape)
         logits = torch.einsum('bnpc,pc->bnp', inputs, self.weights)
-        
+        print(logits.shape)
+
         # Apply softmax to the logits along the pooling window dimension
         softmax_weights = F.softmax(logits, dim=2)
         
