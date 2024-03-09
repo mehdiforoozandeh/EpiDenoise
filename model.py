@@ -1069,9 +1069,8 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        # print("src", src.shape)
+        print(src.shape)
         for conv in self.convtower:
-            print(src.shape)
             src = conv(src)
             print(src.shape)
             # print("src", src.shape)
