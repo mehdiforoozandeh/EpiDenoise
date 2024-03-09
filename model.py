@@ -90,7 +90,6 @@ class SoftmaxPooling1D(nn.Module):
         
         return pooled.permute(0,2,1)
 
-
 class AttentionPooling1D(nn.Module):
     def __init__(self, in_channels, pooling_size=2):
         super(AttentionPooling1D, self).__init__()
@@ -1077,6 +1076,7 @@ class EpiDenoise22(nn.Module):
             print(src.shape)
             # print("src", src.shape)
 
+        exit()
         src = src.permute(0, 2, 1)  # to N, L, F
         if self.aggr:
             # Concatenate special token to src
