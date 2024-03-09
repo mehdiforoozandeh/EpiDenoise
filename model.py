@@ -91,8 +91,9 @@ class SoftmaxPooling1D(nn.Module):
         # Multiply inputs by softmax weights and sum over the pooling window
         pooled = torch.einsum('bnpc,bnp->bnc', inputs, softmax_weights)
         print(pooled.shape)
+        exit()
         
-        return pooled.permut(0,2,1)
+        return pooled.permute(0,2,1)
 
 
 class AttentionPooling1D(nn.Module):
