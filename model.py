@@ -43,29 +43,26 @@ class DualConvEmbedding(nn.Module):
         return F * M
 
 class SoftmaxPooling1D(nn.Module):
-    """Pooling operation with optional weights."""
     def __init__(self, pool_size, per_channel=False, w_init_scale=1.0):
         super(SoftmaxPooling1D, self).__init__()
         self.pool_size = pool_size
         self.per_channel = per_channel
         self.w_init_scale = w_init_scale
-        self.weights = None
+        self.weights_initialized = False  # Track whether weights have been initialized
 
     def forward(self, inputs):
         device = inputs.device
         inputs = inputs.permute(0, 2, 1)
         batch_size, length, num_features = inputs.size()
         
-        # Initialize weights if they haven't been already
-        if self.weights is None:
+        if not self.weights_initialized:
             output_size = num_features if self.per_channel else 1
             identity = torch.eye(num_features, device=device)
             init_val = identity * self.w_init_scale
-            if self.per_channel:
-                self.weights = nn.Parameter(init_val.repeat(1, output_size))
-            else:
-                self.weights = nn.Parameter(init_val.mean(dim=0, keepdim=True).repeat(output_size, 1))
+            weights_val = init_val.repeat(1, output_size) if self.per_channel else init_val.mean(dim=0, keepdim=True).repeat(output_size, 1)
+            self.weights = nn.Parameter(weights_val)
             self.register_parameter('softmax_weights', self.weights)
+            self.weights_initialized = True
         else:
             self.weights = self.weights.to(device)
         
