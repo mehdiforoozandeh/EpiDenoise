@@ -52,6 +52,7 @@ class SoftmaxPooling1D(nn.Module):
         self.weights = None
 
     def forward(self, inputs):
+        inputs = inputs.permute(0, 2, 1)
         batch_size, length, num_features = inputs.size()
         
         # Initialize weights if they haven't been already
@@ -84,7 +85,8 @@ class SoftmaxPooling1D(nn.Module):
         # Multiply inputs by softmax weights and sum over the pooling window
         pooled = torch.einsum('bnpc,bnp->bnc', inputs_reshaped, softmax_weights)
         
-        return pooled
+
+        return pooled.permut(0,2,1)
 
 
 class AttentionPooling1D(nn.Module):
@@ -94,7 +96,6 @@ class AttentionPooling1D(nn.Module):
         self.attention_weights = nn.Parameter(torch.randn(in_channels, pooling_size))
 
     def forward(self, x):
-        x = x.permute(0, 2, 1)
         # x shape: (batch_size, channels, length)
 
         # Split the input tensor into pools
