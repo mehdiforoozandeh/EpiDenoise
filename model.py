@@ -52,19 +52,22 @@ class SoftmaxPooling1D(nn.Module):
         self.weights = None
 
     def forward(self, inputs):
+        device = inputs.device
         inputs = inputs.permute(0, 2, 1)
         batch_size, length, num_features = inputs.size()
         
         # Initialize weights if they haven't been already
         if self.weights is None:
             output_size = num_features if self.per_channel else 1
-            identity = torch.eye(num_features)
+            identity = torch.eye(num_features, device=device)
             init_val = identity * self.w_init_scale
             if self.per_channel:
                 self.weights = nn.Parameter(init_val.repeat(1, output_size))
             else:
                 self.weights = nn.Parameter(init_val.mean(dim=0, keepdim=True).repeat(output_size, 1))
             self.register_parameter('softmax_weights', self.weights)
+        else:
+            self.weights = self.weights.to(device)
         
         # Ensure the length is divisible by the pool size for simplicity
         if length % self.pool_size != 0:
@@ -75,12 +78,9 @@ class SoftmaxPooling1D(nn.Module):
         # Reshape inputs for pooling
         inputs = inputs.unfold(
             1, self.pool_size, self.pool_size).contiguous().view(batch_size, -1, self.pool_size, num_features)
-        print(inputs.shape)
 
-        # Calculate logits using einsum for simplicity here (alternative approach could use nn.Linear for exact TensorFlow mimic)
+        # Calculate logits using einsum for simplicity here
         logits = torch.einsum('bnpc,pc->bnp', inputs, self.weights)
-        print(logits.shape)
-        exit()
         
         # Apply softmax to the logits along the pooling window dimension
         softmax_weights = F.softmax(logits, dim=2)
@@ -88,7 +88,6 @@ class SoftmaxPooling1D(nn.Module):
         # Multiply inputs by softmax weights and sum over the pooling window
         pooled = torch.einsum('bnpc,bnp->bnc', inputs_reshaped, softmax_weights)
         
-
         return pooled.permut(0,2,1)
 
 
