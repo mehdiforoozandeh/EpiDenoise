@@ -2864,10 +2864,6 @@ class PRE_TRAINER(object):
                     logfile.close()
                     print(logstr)
 
-                    for name, param in self.model.named_parameters():
-                        print(name, param.size())
-                    exit()
-
                 try:
                     if ds%11 == 0:
                         torch.save(self.model.state_dict(), f'models/EPD22_model_checkpoint_ds_{ds}.pth')
