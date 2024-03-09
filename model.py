@@ -3544,7 +3544,7 @@ if __name__ == "__main__":
 
         "nhead": 2,
         "n_enc_layers": 2,
-        "n_dec_layers": 2,
+        "n_dec_layers": 1,
         
         "mask_percentage":0.25,
         "batch_size":400,
