@@ -1069,13 +1069,9 @@ class EpiDenoise22(nn.Module):
         src = self.dual_conv_emb_src(src, mask)
         trg = self.dual_conv_emb_trg(trg, mask)
 
-        print(src.shape)
         for conv in self.convtower:
             src = conv(src)
-            print(src.shape)
-            # print("src", src.shape)
 
-        exit()
         src = src.permute(0, 2, 1)  # to N, L, F
         if self.aggr:
             # Concatenate special token to src
