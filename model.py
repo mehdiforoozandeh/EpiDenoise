@@ -3543,14 +3543,14 @@ if __name__ == "__main__":
         "dilation":1,
 
         "nhead": 2,
-        "n_enc_layers": 2,
+        "n_enc_layers": 1,
         "n_dec_layers": 1,
         
-        "mask_percentage":0.25,
+        "mask_percentage":0.15,
         "batch_size":400,
         "epochs": 10,
         "outer_loop_epochs":2,
-        "learning_rate": 1e-3
+        "learning_rate": 1e-4
     }
 
     if sys.argv[1] == "epd16":
