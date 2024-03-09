@@ -42,6 +42,51 @@ class DualConvEmbedding(nn.Module):
         
         return F * M
 
+class SoftmaxPooling1D(nn.Module):
+    """Pooling operation with optional weights."""
+    def __init__(self, pool_size, per_channel=False, w_init_scale=1.0):
+        super(SoftmaxPooling1D, self).__init__()
+        self.pool_size = pool_size
+        self.per_channel = per_channel
+        self.w_init_scale = w_init_scale
+        self.weights = None
+
+    def forward(self, inputs):
+        batch_size, length, num_features = inputs.size()
+        
+        # Initialize weights if they haven't been already
+        if self.weights is None:
+            output_size = num_features if self.per_channel else 1
+            identity = torch.eye(num_features)
+            init_val = identity * self.w_init_scale
+            if self.per_channel:
+                self.weights = nn.Parameter(init_val.repeat(1, output_size))
+            else:
+                self.weights = nn.Parameter(init_val.mean(dim=0, keepdim=True).repeat(output_size, 1))
+            self.register_parameter('softmax_weights', self.weights)
+        
+        # Ensure the length is divisible by the pool size for simplicity
+        if length % self.pool_size != 0:
+            padding = self.pool_size - length % self.pool_size
+            inputs = F.pad(inputs, (0, 0, 0, padding))
+            _, length, _ = inputs.size()
+        
+        # Reshape inputs for pooling
+        inputs_reshaped = inputs.unfold(
+            1, self.pool_size, self.pool_size).contiguous().view(batch_size, -1, self.pool_size, num_features)
+        
+        # Calculate logits using einsum for simplicity here (alternative approach could use nn.Linear for exact TensorFlow mimic)
+        logits = torch.einsum('bnpc,pc->bnp', inputs_reshaped, self.weights)
+        
+        # Apply softmax to the logits along the pooling window dimension
+        softmax_weights = F.softmax(logits, dim=2)
+        
+        # Multiply inputs by softmax weights and sum over the pooling window
+        pooled = torch.einsum('bnpc,bnp->bnc', inputs_reshaped, softmax_weights)
+        
+        return pooled
+
+
 class AttentionPooling1D(nn.Module):
     def __init__(self, in_channels, pooling_size=2):
         super(AttentionPooling1D, self).__init__()
@@ -110,7 +155,7 @@ class ConvTower(nn.Module):
             self.rconv = ConvBlock(out_C, out_C, 1, S, D)
 
         if pool_type == "attn":
-            self.pool = AttentionPooling1D(out_C, 2)
+            self.pool = SoftmaxPooling1D(2)
         elif pool_type == "max":
             self.pool  = nn.MaxPool1d(2)
         elif pool_type == "avg":
@@ -986,7 +1031,7 @@ class EpiDenoise22(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_sizes[i + 1], stride, dilation, 
-                pool_type="max", residuals=True
+                pool_type="attn", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
         if self.aggr:
@@ -1021,7 +1066,9 @@ class EpiDenoise22(nn.Module):
 
         # print("src", src.shape)
         for conv in self.convtower:
+            print(src.shape)
             src = conv(src)
+            print(src.shape)
             # print("src", src.shape)
 
         src = src.permute(0, 2, 1)  # to N, L, F
