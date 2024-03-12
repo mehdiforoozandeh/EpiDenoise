@@ -43,7 +43,7 @@ class DualConvEmbedding(nn.Module):
         return F * M
 
 class SoftmaxPooling1D(nn.Module):
-    def __init__(self, pool_size, per_channel=True, w_init_scale=1.0):
+    def __init__(self, pool_size, per_channel=False, w_init_scale=1.0):
         super(SoftmaxPooling1D, self).__init__()
         self.pool_size = pool_size
         self.per_channel = per_channel
