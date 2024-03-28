@@ -3,10 +3,103 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
-import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle
+import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess
 from torch.utils.data import Dataset
 import torch
 import pybedtools
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
+def extract_donor_information(json_data):
+    # Check if 'donor' key exists in the JSON data
+    # Initialize an empty dictionary to store donor information
+    donor_info = json_data.get('donor', {})
+    extracted_info = {}
+    
+    # Extract relevant donor information
+    extracted_info['Status'] = donor_info.get('status')
+    extracted_info['Accession'] = donor_info.get('accession')
+    extracted_info['Aliases'] = donor_info.get('aliases')
+    extracted_info['Species'] = donor_info.get('organism', {}).get('scientific_name')
+    extracted_info['Life Stage'] = donor_info.get('life_stage')
+    extracted_info['Age'] = donor_info.get('age')
+    extracted_info['Sex'] = donor_info.get('sex')
+    extracted_info['Ethnicity'] = donor_info.get('ethnicity')
+    
+    return extracted_info
+
+def visualize_encode_data(df):
+    # Remove all rows for which num_nonexp_available < 3
+    df_filtered = df[df['num_nonexp_available'] >= 3]
+
+    # Sort biosamples based on num_nonexp_available
+    df_sorted = df_filtered.sort_values('num_nonexp_available', ascending=False)
+
+    # Prepare the DataFrame for the heatmap (experiments as rows, biosamples as columns)
+    heatmap_df = df_sorted.set_index('Accession').drop(['num_available', 'num_nonexp_available'], axis=1).T
+
+    # Convert experiments to numerical values: 1 for available data and NaN for missing
+    heatmap_numeric = heatmap_df.notna().astype(int)
+
+    # Calculate the sum of non-NaN entries for each row (experiment) and sort the DataFrame
+    heatmap_numeric['non_nan_count'] = heatmap_numeric.sum(axis=1)
+    heatmap_numeric_sorted = heatmap_numeric.sort_values('non_nan_count', ascending=False).drop('non_nan_count', axis=1)
+
+    # Create a custom colormap
+    cmap = ListedColormap(['white', 'blue'])
+
+    # Plot the heatmap with a larger figure size
+    sns.set(style="whitegrid")
+    fig, ax = plt.subplots(figsize=(20, 15))  # Increase figure size
+
+    # Create the heatmap
+    sns.heatmap(heatmap_numeric_sorted, cmap=cmap, cbar=False, linewidths=0.0)
+
+    # Remove x-axis labels
+    ax.set_xticklabels([])
+
+    # Decrease font-size for y-axis labels
+    plt.setp(ax.get_yticklabels(), fontsize=9)
+    plt.savefig(f"data/dataset.png", dpi=200)
+
+def visualize_availability(
+    sorted_data_hist_uniq_exp, sorted_data_tf_uniq_exp, sorted_data_rest_uniq_exp, encode_imputation_challenge_assays): # Plotting
+        fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+
+        # Histone Modifications
+        axs[0].bar([item[0] for item in sorted_data_hist_uniq_exp], [item[1] for item in sorted_data_hist_uniq_exp], color='green', alpha=0.8)
+        axs[0].set_title('Histone Modifications')
+        axs[0].tick_params(axis='x', rotation=90, labelsize=7)
+        assays = [item[0] for item in sorted_data_hist_uniq_exp]
+        values = [item[1] for item in sorted_data_hist_uniq_exp]
+        # for assay, value in sorted_data_hist_uniq_exp:
+        #     if assay in encode_imputation_challenge_assays:
+        #         axs[0].text(assays.index(assay), value, '*', color='red', fontsize=14, ha='center')
+
+        # TF Binding
+        axs[1].bar([item[0] for item in sorted_data_tf_uniq_exp if item[1]>15], [item[1] for item in sorted_data_tf_uniq_exp if item[1]>15], color='orange', alpha=0.8)
+        axs[1].set_title('TF Binding')
+        axs[1].tick_params(axis='x', rotation=90, labelsize=7)
+        assays = [item[0] for item in sorted_data_tf_uniq_exp]
+        values = [item[1] for item in sorted_data_tf_uniq_exp]
+        # for assay, value in sorted_data_tf_uniq_exp:
+        #     if assay in encode_imputation_challenge_assays:
+        #         axs[1].text(assays.index(assay), value, '*', color='red', fontsize=14, ha='center')
+
+        # Other Assays
+        axs[2].bar([item[0] for item in sorted_data_rest_uniq_exp], [item[1] for item in sorted_data_rest_uniq_exp], color='blue', alpha=0.8)
+        axs[2].set_title('Other Assays')
+        axs[2].tick_params(axis='x', rotation=90, labelsize=10)
+        assays = [item[0] for item in sorted_data_rest_uniq_exp]
+        values = [item[1] for item in sorted_data_rest_uniq_exp]
+        # for assay, value in sorted_data_rest_uniq_exp:
+        #     if assay in encode_imputation_challenge_assays:
+        #         axs[2].text(assays.index(assay), value, '*', color='red', fontsize=14, ha='center')
+
+        plt.tight_layout()
+        plt.savefig(f"data/availability.png", dpi=200)
 
 def single_download(dl_dict):
     num_attempts = 10
@@ -16,6 +109,7 @@ def single_download(dl_dict):
             download_response = requests.get(url, allow_redirects=True)
             open(save_dir_name, 'wb').write(download_response.content)
             return True
+
         except:
             return False
 
@@ -47,22 +141,6 @@ def single_download(dl_dict):
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
 
-class WRAPPER(object):
-    def __init__(self, jobname, outname, mem="10G", time="0-12:00", n_cpu="1", account="def-maxwl"):
-        self.header = [
-            "#!/bin/bash", f"#SBATCH --job-name={jobname}", f"#SBATCH --account={account}",
-            f"#SBATCH --cpus-per-task={n_cpu}", f"#SBATCH --mem={mem}", f"#SBATCH --time={time}",
-            f"#SBATCH --output={outname}", "conda activate ssl\n"]
-        self.header = "\n".join(self.header)
-
-    def write_bash(self, command, file_address):
-        with open(file_address, "w") as f:
-            f.write(f"{self.header}\n{command}")
-        self.bashfile = file_address
-
-    def submit(self):
-        os.system(f"sbatch {self.bashfile}")
-
 class GET_DATA(object):
     def __init__(self):
         self.encode_imputation_challenge_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3",
@@ -91,7 +169,7 @@ class GET_DATA(object):
         self.experiment_url = """https://www.encodeproject.org/experiments/"""
         self.biosample_url = """https://www.encodeproject.org/biosamples/"""
 
-    def search_ENCODE(self):
+    def search_ENCODE(self, metadata_file_path="data/"):
         """
         DF1:
             rows: biosamples
@@ -130,6 +208,10 @@ class GET_DATA(object):
         self.DF1 = {}
         self.DF2 = {}
 
+        hist_uniq_exp = {}
+        tf_uniq_exp = {}
+        rest_uniq_exp = {}
+
         # for each experiment, look up the biosample and connect the experiment and biosample data
         for i in range(len(exp_search_report)):
             if i%1000 == 0:
@@ -150,11 +232,83 @@ class GET_DATA(object):
             elif exp_search_report["Assay name"][i] == "ChIP-seq":
                 assay = exp_search_report["Target of assay"][i]
 
-            # limit the search to select_assays only
-            if assay in list(set( self.select_assays + self.expression_data )):
+            
+            ########################################################################
+
+            if exp_search_report["Assay title"][i] == "Histone ChIP-seq":
+                if assay not in hist_uniq_exp.keys():
+                    hist_uniq_exp[assay] = 1
+                else:
+                    hist_uniq_exp[assay] += 1
+
+            elif exp_search_report["Assay title"][i] == "TF ChIP-seq":
+                if assay not in tf_uniq_exp.keys():
+                    tf_uniq_exp[assay] = 1
+                else:
+                    tf_uniq_exp[assay] += 1
+            else:
+                if assay not in rest_uniq_exp.keys():
+                    rest_uniq_exp[assay] = 1
+                else:
+                    rest_uniq_exp[assay] += 1
+
+        ########################################################################
+
+        sorted_data_hist_uniq_exp = sorted(hist_uniq_exp.items(), key=lambda x: x[1], reverse=True)
+        sorted_data_tf_uniq_exp = sorted(tf_uniq_exp.items(), key=lambda x: x[1], reverse=True)
+        sorted_data_rest_uniq_exp = sorted(rest_uniq_exp.items(), key=lambda x: x[1], reverse=True)
+
+        ########################################################################
+
+        visualize_availability(
+            sorted_data_hist_uniq_exp, sorted_data_tf_uniq_exp, 
+            sorted_data_rest_uniq_exp, self.encode_imputation_challenge_assays)
+        
+        ########################################################################
+        
+        self.sorted_data_hist_uniq_exp = dict(sorted_data_hist_uniq_exp)
+        self.sorted_data_rest_uniq_exp = dict(sorted_data_rest_uniq_exp)
+        self.sorted_data_tf_uniq_exp = dict(sorted_data_tf_uniq_exp)
+
+        # for each experiment, look up the biosample and connect the experiment and biosample data
+        for i in range(len(exp_search_report)):
+            if i%1000 == 0:
+                print(f"{i}/{len(exp_search_report)}")
+
+            exp = exp_search_report["Accession"][i]
+
+            if exp_search_report["Assay name"][i] == "DNase-seq":
+                assay = "DNase-seq"
+            elif exp_search_report["Assay name"][i] == "RNA-seq":
+                assay = "RNA-seq"
+            elif exp_search_report["Assay name"][i] == "ATAC-seq":
+                assay = "ATAC-seq"
+            elif exp_search_report["Assay name"][i] == "CAGE":
+                assay = "CAGE"
+            elif exp_search_report["Assay name"][i] == "ChIA-PET":
+                assay = "ChIA-PET"
+            elif exp_search_report["Assay name"][i] == "ChIP-seq":
+                assay = exp_search_report["Target of assay"][i]
+
+            ########################################################################
+            """
+            what to assays to include in search:
+                - all histone mods
+                - TF avail > 15
+                - DNase, ATAC, CAGE, RNA-seq, ChIA-PET
+            """
+
+            statement1 = bool(exp_search_report["Assay title"][i] == "Histone ChIP-seq")
+            statement2 = bool(exp_search_report["Assay title"][i] == "TF ChIP-seq") and bool(self.sorted_data_tf_uniq_exp[assay] > 15)
+            statement3 = bool(assay in ["DNase-seq", "RNA-seq", "ATAC-seq", "CAGE", "ChIA-PET"])
+
+            if statement1 or statement2 or statement3:
                 biosample_accessions = exp_search_report["Biosample accession"][i].split(",")
 
                 for biosample_accession in biosample_accessions:
+                    if biosample_accession not in bios_search_report.keys():
+                        continue
+                    
                     if biosample_accession in self.DF1.keys():
                         self.DF1[biosample_accession][assay] = exp
 
@@ -169,24 +323,22 @@ class GET_DATA(object):
                             if len(biosample_accessions) == 1:
                                 self.DF2[biosample_accession]["isogenic_replicates"] = None
                             else:
-                                self.DF2[biosample_accession]["isogenic_replicates"] = ",".join([x for x in biosample_accessions if x != biosample_accession])
+                                self.DF2[biosample_accession]["isogenic_replicates"] = ",".join(
+                                    [x for x in biosample_accessions if x != biosample_accession])
 
                         except:
                             pass
-        
+
         self.DF1 = pd.DataFrame.from_dict(self.DF1, orient='index').sort_index(axis=1)
         self.DF2 = pd.DataFrame.from_dict(self.DF2, orient='index').sort_index(axis=1)
-        print(self.DF1)
-        print(self.DF2)
-
-    def save_metadata(self, metadata_file_path="data/"):
         """
         save DF1 and DF2 from search_ENCODE
         """
         self.DF1.to_csv(metadata_file_path + "DF1.csv")
         self.DF2.to_csv(metadata_file_path + "DF2.csv")
 
-    def download_from_metadata(self, metadata_file_path="data/", mode="parallel", n_p=15, assembly="GRCh38"):
+    def filter_biosamples(self, metadata_file_path="data/"):
+
         """
         read DF1 and DF2 metadata files and run download_search_results on them
         """
@@ -198,28 +350,284 @@ class GET_DATA(object):
         
         self.DF1['num_available'] = self.DF1.count(axis=1) - 1
         self.DF1['num_nonexp_available'] = self.DF1.drop(
-            columns=['Accession', "CTCF", 'RNA-seq', 'CAGE', "num_available"]).count(axis=1)
+            columns=['Accession', 'RNA-seq', 'CAGE', "num_available"]).count(axis=1)
+            
+        self.DF1 = self.DF1.sort_values(by='Accession').reset_index(drop=True)
+        self.DF2 = self.DF2.sort_values(by='Accession').reset_index(drop=True)
 
-        self.DF1 = self.DF1.sort_values(by='num_nonexp_available', ascending=False)
-        self.DF1 = self.DF1.reset_index(drop=True)
+        ########################################################################
 
-        # filter DF1 based on availability of data (remove biosamples that dont have anything but expression data)
-        # self.DF1 = self.DF1[self.DF1['num_nonexp_available'] != 0]
-        self.DF1 = self.DF1[self.DF1['num_nonexp_available'] >= 6]
+        """
+        what biosamples to download
+            - any histone mod available
+            - DNase or ATAC available
+            - > 3 TF available
+        """
 
-        # print(self.DF1)
+        statement1 = self.DF1[list(self.sorted_data_hist_uniq_exp.keys())].count(axis=1) > 0
+        statement2 = self.DF1[["DNase-seq", "ATAC-seq"]].count(axis=1) > 0
+        statement3 = self.DF1[[
+            tf for tf in self.sorted_data_tf_uniq_exp.keys() if self.sorted_data_tf_uniq_exp[tf] > 15]].count(axis=1) > 3
 
-        # self.DF1 = self.DF1.iloc[:2,:]
+        combined_statement = (statement1 | statement2 | statement3)
 
+        self.DF1 = self.DF1[combined_statement].reset_index(drop=True)
+        self.DF2 = self.DF2[combined_statement].reset_index(drop=True)
+    
+        ########################################################################
+
+        visualize_encode_data(self.DF1)
+
+        ########################################################################
+                
+        self.DF1 = self.DF1.drop(["num_available", "num_nonexp_available"], axis=1)
+    
+        """
+        save DF1 and DF2 from search_ENCODE
+        """
+        self.DF1.to_csv(metadata_file_path + "DF1.csv")
+        self.DF2.to_csv(metadata_file_path + "DF2.csv")
+
+    def load_metadata(self, metadata_file_path="data/"):
+        self.DF1 = pd.read_csv(metadata_file_path + "DF1.csv").drop(["Unnamed: 0"], axis=1)
+        self.DF2 = pd.read_csv(metadata_file_path + "DF2.csv").drop(["Unnamed: 0"], axis=1)
+
+    def get_experiment(self, dl_dict, preprocess_bam=False):
+        num_attempts = 10
+
+        def download_save(url, save_dir_name):
+            try:
+                download_response = requests.get(url, allow_redirects=True)
+                open(save_dir_name, 'wb').write(download_response.content)
+                return True
+
+            except:
+                return False
+
+        url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
+
+        if os.path.exists(save_dir_name) ==  False:
+            print(f"downloading assay: {exp} | biosample: {bios}")
+            attempt = 0
+            is_done = False
+            while is_done == False and attempt < num_attempts:
+                if attempt > 0:
+                    time.sleep(10)
+
+                print(f"    attemp number {attempt}")
+                is_done = download_save(url, save_dir_name)
+                attempt += 1
+                    
+            if "bam" in save_dir_name:
+                os.system(f"samtools index {save_dir_name}")
+
+                if preprocess_bam:
+                    print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
+
+                    preprocessor = BAM_TO_SIGNAL()
+                    preprocessor.full_preprocess(
+                        bam_file=save_dir_name, 
+                        chr_sizes_file="data/hg38.chrom.sizes")
+                    
+                    os.system(f"rm {save_dir_name}")
+
+        else:
+            print(f"assay: {exp} | biosample: {bios} already exists!")
+
+    def get_biosample(self, bios, df1_ind, metadata_file_path, assembly):
+        i = df1_ind
+        to_download_bios = []
+
+        bios_data =  requests.get(f"""https://www.encodeproject.org/biosamples/{bios}""", headers=self.headers)
+        bios_data = bios_data.json()
+        donor_info = extract_donor_information(bios_data)
+
+        if os.path.exists(metadata_file_path + "/" + bios + "/") == False:
+            os.mkdir(metadata_file_path + "/" + bios + "/")
+        
+        with open(metadata_file_path + "/" + bios + '/donor.json', 'w') as file:
+            json.dump(donor_info, file, indent=4)
+
+        for exp in self.DF1.columns:
+            if exp not in ["Accession", "num_nonexp_available", "num_available"]:
+                try:
+                    if pd.notnull(self.DF1[exp][i]):
+                        # print(bios, exp, self.DF1[exp][i])
+                        experiment_accession = self.DF1[exp][i]
+                        if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
+                            os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
+
+                    else:
+                        continue
+                    
+                    exp_url = self.experiment_url + experiment_accession
+                    
+                    exp_respond = requests.get(exp_url, headers=self.headers)
+                    exp_results = exp_respond.json()
+                    
+                    e_fileslist = list(exp_results['original_files'])
+                    e_files_navigation = []
+
+                    for ef in e_fileslist:
+                        efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                        efile_results = efile_respond.json()
+
+                        if efile_results['file_format'] == "bam" or efile_results['file_format'] == "tsv":
+                            # try: #ignore files without sufficient info or metadata
+
+                            if efile_results['status'] == "released": 
+                                #ignore old and depricated versions
+
+                                if "origin_batches" in efile_results.keys():
+                                    if ',' not in str(efile_results['origin_batches']):
+                                        e_file_biosample = str(efile_results['origin_batches'])
+                                        e_file_biosample = e_file_biosample.replace('/', '')
+                                        e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                                    else:
+                                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                                else:
+                                    repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                    e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+
+                                # ignore files that contain both replicates 
+                                if e_file_biosample == bios:
+                                    parsed = [exp, efile_results['accession'], e_file_biosample,
+                                        efile_results['file_format'], efile_results['output_type'], 
+                                        efile_results['dataset'], efile_results['biological_replicates'], 
+                                        efile_results['file_size'], efile_results['assembly'], 
+                                        "https://www.encodeproject.org{}".format(efile_results['href']), 
+                                        efile_results['date_created'], efile_results['status']]
+
+                                    if "read_length" in efile_results:
+                                        read_length = efile_results["read_length"]
+                                        run_type = efile_results["run_type"]
+                                        parsed.append(read_length)
+                                        parsed.append(run_type)
+
+                                    elif "mapped_read_length" in efile_results:
+                                        read_length = efile_results["mapped_read_length"]
+                                        run_type = efile_results["mapped_run_type"]
+                                        parsed.append(read_length)
+                                        parsed.append(run_type)
+
+                                    else:
+                                        parsed.append(None)
+                                        parsed.append(None)
+
+                                    e_files_navigation.append(parsed)
+                        # except:
+                        #     pass
+
+                    if len(e_files_navigation) == 0:
+                        for ef in e_fileslist:
+                            efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                            efile_results = efile_respond.json()
+                            if efile_results['file_format'] == "bam" or efile_results['file_format'] == "tsv":
+                                if efile_results['status'] == "released": 
+                                    if "origin_batches" in efile_results.keys():
+                                        if ',' not in str(efile_results['origin_batches']):
+                                            e_file_biosample = str(efile_results['origin_batches'])
+                                            e_file_biosample = e_file_biosample.replace('/', '')
+                                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                                        else:
+                                            repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                                    else:
+                                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                                    
+                                    parsed = [exp, efile_results['accession'], e_file_biosample,
+                                        efile_results['file_format'], efile_results['output_type'], 
+                                        efile_results['dataset'], efile_results['biological_replicates'], 
+                                        efile_results['file_size'], efile_results['assembly'], 
+                                        "https://www.encodeproject.org{}".format(efile_results['href']), 
+                                        efile_results['date_created'], efile_results['status']]
+
+                                    if "read_length" in efile_results:
+                                        read_length = efile_results["read_length"]
+                                        run_type = efile_results["run_type"]
+                                        parsed.append(read_length)
+                                        parsed.append(run_type)
+
+                                    elif "mapped_read_length" in efile_results:
+                                        read_length = efile_results["mapped_read_length"]
+                                        run_type = efile_results["mapped_run_type"]
+                                        parsed.append(read_length)
+                                        parsed.append(run_type)
+
+                                    else:
+                                        parsed.append(None)
+                                        parsed.append(None)
+
+                                    e_files_navigation.append(parsed)
+
+                    e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 
+                        'status', 'read_length', "run_type"])
+
+                    # select one file from e_files_navigation to download
+                    e_files_navigation.to_csv(metadata_file_path + "/" + bios + "/" + exp + "/all_files.csv")
+                    
+                    # just keep target assembly
+                    e_files_navigation = e_files_navigation[e_files_navigation['assembly'] == assembly]
+
+                    # Convert 'date_created' to datetime
+                    e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                    
+                    if exp == "RNA-seq":
+                        # Filter rows where 'output_type' is 'gene quantification'
+                        filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
+                    else:
+                        # Filter rows where 'output_type' is 'alignments'
+                        if "alignments" in e_files_navigation['output_type'].unique():
+                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
+
+                        elif "redacted alignments" in e_files_navigation['output_type'].unique():
+                            filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'redacted alignments']
+
+                    # Find the row with the newest 'date_created'
+                    newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
+
+                    # Print the newest row
+                    # print(newest_row)
+                    # print(newest_row.to_json(indent=4))
+
+                    with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.json", "w") as f:
+                        f.write(newest_row.to_json(indent=4))
+                    
+                    if exp == "RNA-seq":
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
+                    else:
+                        save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
+                    
+                    url = newest_row["download_url"].values[0]
+                    file_size = newest_row["file_size"].values[0]
+
+                    to_download_bios.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios})
+
+                except Exception as e:
+                    with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
+                        f.write(f"failed to download {bios}_{exp}\n {e}")
+
+        return to_download_bios
+
+    def get_biosample_wrapper(self, *args):
+        # Wrapper method that can be called in a multiprocessing context
+        return self.get_biosample(*args)
+
+    def get_all(self, metadata_file_path="data/", mode="parallel", n_p=15, assembly="GRCh38"):
+        to_download = []
         if os.path.exists(metadata_file_path + "DF3.csv"):
             # parse to_download from DF3
-            to_download = []
             df = pd.read_csv(metadata_file_path + "DF3.csv").drop("Unnamed: 0", axis=1)
             for i in range(len(df)):
                 to_download.append(
                     {
                         "url":df["url"][i], "save_dir_name":df["save_dir_name"][i], 
-                        "exp":df["exp"][i], "bios":df["bios"][i], "size":df["size"][i]
+                        "exp":df["exp"][i], "bios":df["bios"][i]
                         }
                 )
                 if os.path.exists(metadata_file_path + "/" + df["bios"][i]) == False:
@@ -229,162 +637,49 @@ class GET_DATA(object):
                     os.mkdir(metadata_file_path + "/" + df["bios"][i] + "/" + df["exp"][i])
 
         else:
-            to_download = []
-            for i in range(len(self.DF1)):
-                bios = self.DF1["Accession"][i]
-                if os.path.exists(metadata_file_path + "/" + bios) == False:
-                    os.mkdir(metadata_file_path + "/" + bios)
+            self.DF1 = self.DF1.iloc[:5,:]
+            print(self.DF1)
 
-                for exp in self.DF1.columns:
-                    if exp not in ["Accession", "num_nonexp_available", "num_available"]:
-                        try:
-                            if pd.notnull(self.DF1[exp][i]):
-                                experiment_accession = self.DF1[exp][i]
-                                if os.path.exists(metadata_file_path + "/" + bios + "/" + exp) == False:
-                                    os.mkdir(metadata_file_path + "/" + bios + "/" + exp)
+            if mode == "parallel":
+                def pool_get_biosample(args):
+                    return self.get_biosample(*args)
 
-                            else:
-                                continue
-                            
-                            exp_url = self.experiment_url + experiment_accession
-                            
-                            exp_respond = requests.get(exp_url, headers=self.headers)
-                            exp_results = exp_respond.json()
-                            
-                            e_fileslist = list(exp_results['original_files'])
-                            e_files_navigation = []
+                args_list = [(self.DF1["Accession"][i], i, metadata_file_path, assembly) for i in range(len(self.DF1))]
+                with mp.Pool(n_p) as pool:
+                    # Map the get_biosample function to the arguments
+                    results = pool.starmap(self.get_biosample_wrapper, args_list)
 
-                            for ef in e_fileslist:
-                                efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                                efile_results = efile_respond.json()
+                for bios_dl in results:
+                    to_download.extend(bios_dl)
 
-                                if efile_results['file_format'] == "bam" or "tsv":
-                                    try: #ignore files without sufficient info or metadata
-
-                                        if ',' not in str(efile_results['origin_batches']):
-                                            if efile_results['status'] == "released": 
-                                                #ignore old and depricated versions
-
-                                                e_file_biosample = str(efile_results['origin_batches'])
-                                                e_file_biosample = e_file_biosample.replace('/', '')
-                                                e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                                                
-                                                # ignore files that contain both replicates 
-                                                if e_file_biosample == bios:
-                                                    e_files_navigation.append(
-                                                        [exp, efile_results['accession'], e_file_biosample,
-                                                        efile_results['file_format'], efile_results['output_type'], 
-                                                        efile_results['dataset'], efile_results['biological_replicates'], 
-                                                        efile_results['file_size'], efile_results['assembly'], 
-                                                        "https://www.encodeproject.org{}".format(efile_results['href']), 
-                                                        efile_results['date_created'], efile_results['status']])
-                                    except:
-                                        pass
-
-                            e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                                'assay', 'accession', 'biosample', 'file_format', 
-                                'output_type', 'experiment', 'bio_replicate_number', 
-                                'file_size', 'assembly', 'download_url', 'date_created', 'status'])
-
-                            # select one file from e_files_navigation to download
-                            e_files_navigation.to_csv(metadata_file_path + "/" + bios + "/" + exp + "/all_files.csv")
-                            
-                            # just keep target assembly
-                            e_files_navigation = e_files_navigation[e_files_navigation['assembly'] == assembly]
-
-                            # Convert 'date_created' to datetime
-                            e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-                            
-                            if exp == "RNA-seq":
-                                # Filter rows where 'output_type' is 'gene quantification'
-                                filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'gene quantifications']
-                            else:
-                                # Filter rows where 'output_type' is 'alignments'
-                                if "alignments" in e_files_navigation['output_type'].unique():
-                                    filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'alignments']
-
-                                elif "redacted alignments" in e_files_navigation['output_type'].unique():
-                                    filtered_df = e_files_navigation[e_files_navigation['output_type'] == 'redacted alignments']
-
-                            # Find the row with the newest 'date_created'
-                            newest_row = filtered_df[filtered_df['date_created'] == filtered_df['date_created'].max()]
-
-                            # Print the newest row
-                            with open(metadata_file_path + "/" + bios + "/" + exp + "/file_metadata.txt", "w") as f:
-                                for c in newest_row.columns:
-                                    f.write(f"{c}\t{newest_row[c].values[0]}\n")
-                            
-                            if exp == "RNA-seq":
-                                save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".tsv"
-                            else:
-                                save_dir_name = metadata_file_path + "/" + bios + "/" + exp + "/" + newest_row["accession"].values[0] + ".bam"
-                            
-                            url = newest_row["download_url"].values[0]
-                            file_size = newest_row["file_size"].values[0]
-
-                            to_download.append({"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios, "size":file_size})
-
-                        except Exception as e:
-                            with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
-                                f.write(f"failed to download {bios}_{exp}\n {e}")
-                            print(e, bios, exp)
-            
-            df3 = pd.DataFrame(to_download, columns=["url","save_dir_name", "exp", "bios", "size"])
+            else:
+                for i in range(len(self.DF1)):
+                    bios = self.DF1["Accession"][i]
+                    bios_dl = self.get_biosample(bios, i, metadata_file_path, assembly)
+                    for dl in bios_dl:
+                        to_download.append(dl)
+                
+            df3 = pd.DataFrame(to_download, columns=["url", "save_dir_name", "exp", "bios"])
             df3.to_csv(metadata_file_path + "/DF3.csv")
 
         if mode == "parallel":
             with mp.Pool(n_p) as pool:
-                pool.map(single_download, to_download)
-
-        elif mode == "wrapper":
-            subjobdir = "subjobs/"
-            if os.path.exists(subjobdir) == False:
-                os.mkdir(subjobdir) 
-                
-            for l in to_download:
-
-                if (
-                    os.path.exists({l['save_dir_name']}) == False) or (
-                        os.path.exists({l['save_dir_name']}) == True and 
-                        os.path.exists({l['save_dir_name']+".bai"}) == False):
-
-                    mem = int( (l["size"] / (1024 * 1024 * 1024)) * 2 ) + 5
-                    t = int( (l["size"] / (1024 * 1024 * 1024)) / 2 ) + 16
-
-                    wrp = WRAPPER(f"{l['bios']}_{l['exp']}", subjobdir+f"{l['bios']}_{l['exp']}.out", mem = f"{mem}G", time=f"0-{t}:00")
-
-                    wrp.write_bash(
-                        f"python download_job_wrapper.py {l['url']} {l['save_dir_name']} {l['exp']} {l['bios']}", 
-                        subjobdir+f"{l['bios']}_{l['exp']}.sh")
-
-                    wrp.submit()
-                    time.sleep(1)
+                pool.map(self.get_experiment, to_download)
 
         else:
             for d in to_download:
-                single_download(d)
+                self.get_experiment(d)
 
 class BAM_TO_SIGNAL(object):
-    def __init__(self):
-        """
-        Initialize the object
-        """
-        pass
+    def __init__(self, bam_file, chr_sizes_file, resolution):
+        self.bam_file = bam_file
+        self.chr_sizes_file = chr_sizes_file
+        self.resolution = resolution
+        self.read_chr_sizes()
+        self.load_bam()
 
     def read_chr_sizes(self):
-        """
-        Read a file with chromosome sizes and return a dictionary where keys are 
-        chromosome names and values are chromosome sizes.
-        
-        Parameters:
-        file_path (str): The path to the file with chromosome sizes.
-
-        Returns:
-        dict: A dictionary where keys are chromosome names and values are chromosome sizes.
-        """
-
-        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
-        
+        main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
         self.chr_sizes = {}
         with open(self.chr_sizes_file, 'r') as f:
             for line in f:
@@ -393,142 +688,36 @@ class BAM_TO_SIGNAL(object):
                     self.chr_sizes[chr_name] = int(chr_size)
 
     def load_bam(self):
-        """
-        Load the BAM file using pysam.
-        """
         self.bam = pysam.AlignmentFile(self.bam_file, 'rb')
 
     def initialize_empty_bins(self):
-        """
-        Initialize empty bins for each chromosome based on the resolution.
-        """
-        self.bins = {chr: [0] * (size // self.resolution + 1) for chr, size in self.chr_sizes.items()}
+        return {chr: [0] * (size // self.resolution + 1) for chr, size in self.chr_sizes.items()}
 
-    def calculate_coverage(self):
-        """
-        Calculate the coverage for each bin.
-        """
-        self.bins = {chr: [0] * (self.chr_sizes[chr] // self.resolution + 1) for chr in self.chr_sizes}
-        self.coverage = {}
+    def downsample_reads(self, factor=2):
+        pass
+
+    def calculate_coverage_pysam(self, output_file):
+        t0 = datetime.datetime.now()
+        bins = self.initialize_empty_bins()
 
         for chr in self.chr_sizes:
-            self.coverage[chr] = {
-                'chr': [],
-                'start': [],
-                'end': [],
-                'read_count': []}
-
-            # print(f"getting {chr} coverage...")
             for read in self.bam.fetch(chr):
+                if read.is_unmapped:
+                    continue
                 start_bin = read.reference_start // self.resolution
                 end_bin = read.reference_end // self.resolution
-                for i in range(start_bin, end_bin+1):
-                    self.bins[chr][i] += 1
+                for i in range(start_bin, end_bin + 1):
+                    bins[chr][i] += 1
 
-            for i, count in enumerate(self.bins[chr]):
-                start = i * self.resolution
-                end = start + self.resolution
-                self.coverage[chr]["chr"].append(str(chr))
-                self.coverage[chr]["start"].append(int(start))
-                self.coverage[chr]["end"].append(int(end))
-                self.coverage[chr]["read_count"].append(float(count))
+        with open(output_file, 'w') as f:
+            for chr, counts in bins.items():
+                for i, count in enumerate(counts):
+                    start = i * self.resolution
+                    end = start + self.resolution - 1
+                    f.write(f"{chr}\t{start}\t{end}\t{count}\n")
 
-    def calculate_signal_pvalues(self):
-        """
-        Calculate the per position signal p-value according to the MACS2 pipeline.
-        """
-        self.pvalues = {}
-
-        # Calculate the mean coverage across all bins
-        mean_coverage = np.mean([np.mean(self.coverage[chr]["read_count"]) for chr in self.coverage.keys()])
-
-        for chr in self.coverage.keys():
-            self.pvalues[chr] = {
-                'chr': [],
-                'start': [],
-                'end': [],
-                'pvalue': []}
-
-            for i, count in enumerate(self.coverage[chr]["read_count"]):
-                # Calculate the p-value of the Poisson distribution
-                pvalue = 1 - poisson.cdf(count, mean_coverage)
-
-                # Convert the p-value to -log10(p-value)
-                pvalue = -np.log10(pvalue + 1e-19)
-
-                self.pvalues[chr]["chr"].append(str(chr))
-                self.pvalues[chr]["start"].append(self.coverage[chr]["start"][i])
-                self.pvalues[chr]["end"].append(self.coverage[chr]["end"][i])
-                self.pvalues[chr]["pvalue"].append(pvalue)
-
-    def save_coverage_pkl(self):
-        """
-        Save the coverage data to a pickle file.
-
-        Parameters:
-        file_path (str): The path to the pickle file.
-        """
-
-        for chr in self.coverage.keys():
-            file_path = self.bam_file.replace(".bam", f"_{chr}_cvrg{self.resolution}bp.pkl")
-            with open(file_path, 'wb') as f:
-                pickle.dump(self.coverage[chr], f)
-        
-            os.system(f"gzip {file_path}")
-    
-    def save_coverage_bigwig(self):
-        """
-        Save the coverage data to a BigWig file.
-
-        Parameters:
-        file_path (str): The path to the BigWig file.
-        """
-        file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.bw")
-        bw = pyBigWig.open(file_path, 'w')
-        bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
-
-        for chr in self.coverage.keys():
-            bw.addEntries(
-                self.coverage[chr]["chr"], 
-                self.coverage[chr]["start"], 
-                ends=self.coverage[chr]["end"], 
-                values=self.coverage[chr]["read_count"])
-        bw.close()
-
-    def save_signal_pkl(self):
-        """
-        Save the signal pval data to a pickle file.
-
-        Parameters:
-        file_path (str): The path to the pickle file.
-        """
-
-        for chr in self.pvalues.keys():
-            file_path = self.bam_file.replace(".bam", f"_{chr}_signal{self.resolution}bp.pkl")
-            with open(file_path, 'wb') as f:
-                pickle.dump(self.pvalues[chr], f)
-        
-            os.system(f"gzip {file_path}")
-    
-    def save_signal_bigwig(self):
-        """
-        Save the signal pval data to a BigWig file.
-
-        Parameters:
-        file_path (str): The path to the BigWig file.
-        """
-        file_path = self.bam_file.replace(".bam", f"_signal{self.resolution}bp.bw")
-        bw = pyBigWig.open(file_path, 'w')
-        bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
-
-        for chr in self.pvalues.keys():
-            bw.addEntries(
-                self.pvalues[chr]["chr"], 
-                self.pvalues[chr]["start"], 
-                ends=self.pvalues[chr]["end"], 
-                values=self.pvalues[chr]["read_count"])
-                
-        bw.close()
+        t1 = datetime.datetime.now()
+        print(f"Python/Pysam method took: {t1 - t0}")
 
     def full_preprocess(self, bam_file, chr_sizes_file, resolution=25):
         t0 = datetime.datetime.now()
@@ -547,6 +736,30 @@ class BAM_TO_SIGNAL(object):
 
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
+
+def run_samtools_coverage_per_chromosome(bam_file, main_chrs):
+    # Define the dictionaries for coverage and mean depth
+    coverage_dict = {}
+    depth_dict = {}
+    # Run samtools coverage
+    try:
+        result = subprocess.run(['samtools', 'coverage', bam_file], capture_output=True, text=True, check=True)
+        output = result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error running samtools coverage: {e}")
+        return None, None
+    # Parse the output
+    lines = output.strip().split('\n')
+    for line in lines[1:]:  # Skip header line
+        parts = line.split('\t')
+        if len(parts) >= 8:  # Ensure line has enough columns
+            chromosome = parts[0]
+            if chromosome in main_chrs:  # Filter by specified chromosomes
+                mean_depth = float(parts[6])  # Mean depth of coverage
+                coverage_percentage = float(parts[5])  # Percentage of covered bases
+                depth_dict[chromosome] = mean_depth
+                coverage_dict[chromosome] = coverage_percentage
+    return coverage_dict, depth_dict
 
 class LOAD_DATA():
     def __init__(self):
@@ -718,35 +931,36 @@ class ENCODE_IMPUTATION_DATASET(object):
             pattern_dict[tuple(pattern)].append(i)
 
         return ds, mask, pattern_dict
-          
+
+       
 if __name__ == "__main__": 
-    eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
-    for ds_path in eic.preprocessed_datasets:
-        eic.get_dataset_pt(ds_path)
+    # eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
+    # for ds_path in eic.preprocessed_datasets:
+    #     eic.get_dataset_pt(ds_path)
 
-    # d = GET_DATA()
+    bam_files = [
+        "data/ENCBS001PEH/H3K27ac/ENCFF433NRH.bam",
+        "data/ENCBS001PEH/H3K27me3/ENCFF711BUA.bam",
+        "data/ENCBS001PEH/H3K36me3/ENCFF269BFR.bam",
+        "data/ENCBS001PEH/H3K4me1/ENCFF440HBN.bam",
+        "data/ENCBS001PEH/H3K4me3/ENCFF162MUZ.bam",
+        "data/ENCBS001PEH/H3K9me3/ENCFF931LRY.bam"
+    ]
+
+    chr_sizes_file = "data/hg38.chrom.sizes"
+    resolution = 25
+
+    for bf in bam_files:
+        bam_to_signal = BAM_TO_SIGNAL(bf, chr_sizes_file, resolution)
+        bam_to_signal.calculate_coverage_pysam(bf.replace(".bam", ".bed"))
+    # bam_to_signal.calculate_coverage_samtools(output_file_samtools)
+    exit()
+
+    d = GET_DATA()
     # d.search_ENCODE()
-    # d.save_metadata()
-    # d.download_from_metadata(mode="wrapper")
+    # d.filter_biosamples()
+    d.load_metadata()
+    d.get_all()
+    exit()
 
-    # df1 =pd.read_csv("data/DF1.csv")
-    # df2 =pd.read_csv("data/DF2.csv")
-
-    # print(df1)
-    # print(df2)
-
-    # print(len(df2["Biosample term name"].unique()))
-
-    # preprocessor = BAM_TO_SIGNAL()
-    # preprocessor.get_coverage(
-    #     bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", 
-    #     chr_sizes_file="data/hg38.chrom.sizes", 
-    #     resolution=1000)
-
-    # preprocessor = BAM_TO_SIGNAL()
-    # new = preprocessor.load_coverage_bigwig("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.bw", chr_sizes_file="data/hg38.chrom.sizes")
-
-    # new = preprocessor.load_coverage_pkl("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg25bp.pkl.gz")
-
-    # preprocessor.get_coverage(bam_file="data/ENCBS343AKO/H3K4me3/ENCFF984WUD.bam", chr_sizes_file="data/hg38.chrom.sizes", resolution=1000)
-    # new = preprocessor.load_coverage_pkl("data/ENCBS343AKO/H3K4me3/ENCFF984WUD_cvrg1000bp.pkl.gz")
+    d.download_from_metadata(mode="parallel")

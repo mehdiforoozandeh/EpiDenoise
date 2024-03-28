@@ -585,6 +585,194 @@ def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, m
     return model
 
 
+class old__BAM_TO_SIGNAL(object):
+    def __init__(self, resolution):
+        """
+        Initialize the object
+        """
+        self.resolution = resolution
+
+    def read_chr_sizes(self):
+        """
+        Read a file with chromosome sizes and return a dictionary where keys are 
+        chromosome names and values are chromosome sizes.
+        
+        Parameters:
+        file_path (str): The path to the file with chromosome sizes.
+
+        Returns:
+        dict: A dictionary where keys are chromosome names and values are chromosome sizes.
+        """
+
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        
+        self.chr_sizes = {}
+        with open(self.chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+
+    def load_bam(self):
+        """
+        Load the BAM file using pysam.
+        """
+        self.bam = pysam.AlignmentFile(self.bam_file, 'rb')
+
+    def initialize_empty_bins(self):
+        """
+        Initialize empty bins for each chromosome based on the resolution.
+        """
+        self.bins = {chr: [0] * (size // self.resolution + 1) for chr, size in self.chr_sizes.items()}
+
+    def calculate_coverage(self):
+        """
+        Calculate the coverage for each bin.
+        """
+        self.bins = {chr: [0] * (self.chr_sizes[chr] // self.resolution + 1) for chr in self.chr_sizes}
+        self.coverage = {}
+
+        for chr in self.chr_sizes:
+            self.coverage[chr] = {
+                'chr': [],
+                'start': [],
+                'end': [],
+                'read_count': []}
+
+            # print(f"getting {chr} coverage...")
+            for read in self.bam.fetch(chr):
+                start_bin = read.reference_start // self.resolution
+                end_bin = read.reference_end // self.resolution
+                for i in range(start_bin, end_bin+1):
+                    self.bins[chr][i] += 1
+
+            for i, count in enumerate(self.bins[chr]):
+                start = i * self.resolution
+                end = start + self.resolution
+                self.coverage[chr]["chr"].append(str(chr))
+                self.coverage[chr]["start"].append(int(start))
+                self.coverage[chr]["end"].append(int(end))
+                self.coverage[chr]["read_count"].append(float(count))
+
+    def calculate_signal_pvalues(self):
+        """
+        Calculate the per position signal p-value according to the MACS2 pipeline.
+        """
+        self.pvalues = {}
+
+        # Calculate the mean coverage across all bins
+        mean_coverage = np.mean([np.mean(self.coverage[chr]["read_count"]) for chr in self.coverage.keys()])
+
+        for chr in self.coverage.keys():
+            self.pvalues[chr] = {
+                'chr': [],
+                'start': [],
+                'end': [],
+                'pvalue': []}
+
+            for i, count in enumerate(self.coverage[chr]["read_count"]):
+                # Calculate the p-value of the Poisson distribution
+                pvalue = 1 - poisson.cdf(count, mean_coverage)
+
+                # Convert the p-value to -log10(p-value)
+                pvalue = -np.log10(pvalue + 1e-19)
+
+                self.pvalues[chr]["chr"].append(str(chr))
+                self.pvalues[chr]["start"].append(self.coverage[chr]["start"][i])
+                self.pvalues[chr]["end"].append(self.coverage[chr]["end"][i])
+                self.pvalues[chr]["pvalue"].append(pvalue)
+
+    def save_coverage_pkl(self):
+        """
+        Save the coverage data to a pickle file.
+
+        Parameters:
+        file_path (str): The path to the pickle file.
+        """
+
+        for chr in self.coverage.keys():
+            file_path = self.bam_file.replace(".bam", f"_{chr}_cvrg{self.resolution}bp.pkl")
+            with open(file_path, 'wb') as f:
+                pickle.dump(self.coverage[chr], f)
+        
+            os.system(f"gzip {file_path}")
+    
+    def save_coverage_bigwig(self):
+        """
+        Save the coverage data to a BigWig file.
+
+        Parameters:
+        file_path (str): The path to the BigWig file.
+        """
+        file_path = self.bam_file.replace(".bam", f"_cvrg{self.resolution}bp.bw")
+        bw = pyBigWig.open(file_path, 'w')
+        bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
+
+        for chr in self.coverage.keys():
+            bw.addEntries(
+                self.coverage[chr]["chr"], 
+                self.coverage[chr]["start"], 
+                ends=self.coverage[chr]["end"], 
+                values=self.coverage[chr]["read_count"])
+        bw.close()
+
+    def save_signal_pkl(self):
+        """
+        Save the signal pval data to a pickle file.
+
+        Parameters:
+        file_path (str): The path to the pickle file.
+        """
+
+        for chr in self.pvalues.keys():
+            file_path = self.bam_file.replace(".bam", f"_{chr}_signal{self.resolution}bp.pkl")
+            with open(file_path, 'wb') as f:
+                pickle.dump(self.pvalues[chr], f)
+        
+            os.system(f"gzip {file_path}")
+    
+    def save_signal_bigwig(self):
+        """
+        Save the signal pval data to a BigWig file.
+
+        Parameters:
+        file_path (str): The path to the BigWig file.
+        """
+        file_path = self.bam_file.replace(".bam", f"_signal{self.resolution}bp.bw")
+        bw = pyBigWig.open(file_path, 'w')
+        bw.addHeader([(k, v) for k, v in self.chr_sizes.items()])
+
+        for chr in self.pvalues.keys():
+            bw.addEntries(
+                self.pvalues[chr]["chr"], 
+                self.pvalues[chr]["start"], 
+                ends=self.pvalues[chr]["end"], 
+                values=self.pvalues[chr]["read_count"])
+                
+        bw.close()
+
+    def full_preprocess(self, bam_file, chr_sizes_file, resolution=25):
+        t0 = datetime.datetime.now()
+        self.bam_file = bam_file
+        self.chr_sizes_file = chr_sizes_file
+        self.resolution = resolution
+
+        self.read_chr_sizes()
+        self.load_bam()
+        self.initialize_empty_bins()
+        self.calculate_coverage()
+        self.calculate_signal_pvalues()
+
+        self.save_coverage_pkl()
+        self.save_signal_pkl()
+
+        t1 = datetime.datetime.now()
+        print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
+
+
+
+
+
 def eDICE_eval():
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
