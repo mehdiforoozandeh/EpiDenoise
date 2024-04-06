@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
-import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess
+import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random
 from torch.utils.data import Dataset
 import torch
 import pybedtools
@@ -392,7 +392,7 @@ class GET_DATA(object):
         self.DF1 = pd.read_csv(metadata_file_path + "DF1.csv").drop(["Unnamed: 0"], axis=1)
         self.DF2 = pd.read_csv(metadata_file_path + "DF2.csv").drop(["Unnamed: 0"], axis=1)
 
-    def get_experiment(self, dl_dict, preprocess_bam=False):
+    def get_experiment(self, dl_dict, process_bam=True):
         num_attempts = 10
 
         def download_save(url, save_dir_name):
@@ -421,13 +421,14 @@ class GET_DATA(object):
             if "bam" in save_dir_name:
                 os.system(f"samtools index {save_dir_name}")
 
-                if preprocess_bam:
+                if process_bam:
                     print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
 
-                    preprocessor = BAM_TO_SIGNAL()
-                    preprocessor.full_preprocess(
+                    bam_to_signal = BAM_TO_SIGNAL(
                         bam_file=save_dir_name, 
                         chr_sizes_file="data/hg38.chrom.sizes")
+
+                    bam_to_signal.full_preprocess()
                     
                     os.system(f"rm {save_dir_name}")
 
@@ -612,13 +613,16 @@ class GET_DATA(object):
                     with open(metadata_file_path + "/" + bios  + f"/failed_{exp}", "w") as f:
                         f.write(f"failed to download {bios}_{exp}\n {e}")
 
+        # NUM_BIOS_DOWNLOADED += 1
+        # if NUM_BIOS_DOWNLOADED % 30 == 0:
+        #     print(NUM_BIOS_DOWNLOADED)
         return to_download_bios
 
     def get_biosample_wrapper(self, *args):
         # Wrapper method that can be called in a multiprocessing context
         return self.get_biosample(*args)
 
-    def get_all(self, metadata_file_path="data/", mode="parallel", n_p=15, assembly="GRCh38"):
+    def get_all(self, metadata_file_path="data/", mode="parallel", n_p=25, assembly="GRCh38"):
         to_download = []
         if os.path.exists(metadata_file_path + "DF3.csv"):
             # parse to_download from DF3
@@ -637,8 +641,8 @@ class GET_DATA(object):
                     os.mkdir(metadata_file_path + "/" + df["bios"][i] + "/" + df["exp"][i])
 
         else:
-            self.DF1 = self.DF1.iloc[:5,:]
-            print(self.DF1)
+            # self.DF1 = self.DF1.iloc[:2,:]
+            # print(self.DF1)
 
             if mode == "parallel":
                 def pool_get_biosample(args):
@@ -671,7 +675,7 @@ class GET_DATA(object):
                 self.get_experiment(d)
 
 class BAM_TO_SIGNAL(object):
-    def __init__(self, bam_file, chr_sizes_file, resolution):
+    def __init__(self, bam_file, chr_sizes_file, resolution=25):
         self.bam_file = bam_file
         self.chr_sizes_file = chr_sizes_file
         self.resolution = resolution
@@ -693,73 +697,66 @@ class BAM_TO_SIGNAL(object):
     def initialize_empty_bins(self):
         return {chr: [0] * (size // self.resolution + 1) for chr, size in self.chr_sizes.items()}
 
-    def downsample_reads(self, factor=2):
-        pass
-
-    def calculate_coverage_pysam(self, output_file):
-        t0 = datetime.datetime.now()
+    def calculate_coverage_pysam(self, downsampling_factor=1.0):
         bins = self.initialize_empty_bins()
+
+        total_mapped_reads = 0 
+        bins_with_reads = 0  
 
         for chr in self.chr_sizes:
             for read in self.bam.fetch(chr):
-                if read.is_unmapped:
-                    continue
-                start_bin = read.reference_start // self.resolution
-                end_bin = read.reference_end // self.resolution
-                for i in range(start_bin, end_bin + 1):
-                    bins[chr][i] += 1
+                if random.random() < 1.0 / downsampling_factor:
+                    if read.is_unmapped:
+                        continue
+                    total_mapped_reads += 1  
 
-        with open(output_file, 'w') as f:
-            for chr, counts in bins.items():
-                for i, count in enumerate(counts):
-                    start = i * self.resolution
-                    end = start + self.resolution - 1
-                    f.write(f"{chr}\t{start}\t{end}\t{count}\n")
+                    start_bin = read.reference_start // self.resolution
+                    end_bin = read.reference_end // self.resolution
+                    for i in range(start_bin, end_bin + 1):
+                        if bins[chr][i] == 0:  
+                            bins_with_reads += 1  
+                        bins[chr][i] += 1
+        
+        # Calculate coverage as the percentage of bins with at least one read
+        total_bins = sum(len(b) for b in bins.values())  
+        coverage = (bins_with_reads / total_bins) if total_bins > 0 else 0
 
-        t1 = datetime.datetime.now()
-        print(f"Python/Pysam method took: {t1 - t0}")
+        return bins, total_mapped_reads, coverage
 
-    def full_preprocess(self, bam_file, chr_sizes_file, resolution=25):
+    def save_signal_metadata(self, depth, coverage, downsampling_factor):
+        if os.path.exists(f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/") == False:
+            os.mkdir(f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/")
+        
+        filename = f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/metadata.json"
+        mdict = {
+            "coverage":coverage,
+            "depth":depth,
+            "dsf":downsampling_factor}
+
+        with open(filename, 'w') as file:
+            json.dump(mdict, file, indent=4)
+    
+    def save_signal(self, bins, downsampling_factor=1):
+        if os.path.exists(f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/") == False:
+            os.mkdir(f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/")
+
+        for chr, data in bins.items():
+            np.savez_compressed(
+                f"{'/'.join(self.bam_file.split('/')[:-1])}/signal_DSF{downsampling_factor}_res{self.resolution}/{chr}.npz", 
+                np.array(data))
+            # data_tensor = torch.tensor(data)
+            # torch.save(data_tensor, f"{'/'.join(self.bam_file.split('/')[:-1])}/tensors_DSF{downsampling_factor}_res{self.resolution}/{chr}.pt")
+    
+    def full_preprocess(self, dsf_list=[1,2,4,8]):
         t0 = datetime.datetime.now()
-        self.bam_file = bam_file
-        self.chr_sizes_file = chr_sizes_file
-        self.resolution = resolution
 
-        self.read_chr_sizes()
-        self.load_bam()
-        self.initialize_empty_bins()
-        self.calculate_coverage()
-        self.calculate_signal_pvalues()
-
-        self.save_coverage_pkl()
-        self.save_signal_pkl()
+        for dsf in dsf_list:
+            data, depth, coverage = self.calculate_coverage_pysam(downsampling_factor=dsf)
+            self.save_signal(data, downsampling_factor=dsf)
+            self.save_signal_metadata(depth, coverage, downsampling_factor=dsf)
 
         t1 = datetime.datetime.now()
-        print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
-
-def run_samtools_coverage_per_chromosome(bam_file, main_chrs):
-    # Define the dictionaries for coverage and mean depth
-    coverage_dict = {}
-    depth_dict = {}
-    # Run samtools coverage
-    try:
-        result = subprocess.run(['samtools', 'coverage', bam_file], capture_output=True, text=True, check=True)
-        output = result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error running samtools coverage: {e}")
-        return None, None
-    # Parse the output
-    lines = output.strip().split('\n')
-    for line in lines[1:]:  # Skip header line
-        parts = line.split('\t')
-        if len(parts) >= 8:  # Ensure line has enough columns
-            chromosome = parts[0]
-            if chromosome in main_chrs:  # Filter by specified chromosomes
-                mean_depth = float(parts[6])  # Mean depth of coverage
-                coverage_percentage = float(parts[5])  # Percentage of covered bases
-                depth_dict[chromosome] = mean_depth
-                coverage_dict[chromosome] = coverage_percentage
-    return coverage_dict, depth_dict
+        print(f"took {t1-t0} to get signals for {self.bam_file} at resolution: {self.resolution}bp")
 
 class LOAD_DATA():
     def __init__(self):
@@ -931,36 +928,33 @@ class ENCODE_IMPUTATION_DATASET(object):
             pattern_dict[tuple(pattern)].append(i)
 
         return ds, mask, pattern_dict
-
        
 if __name__ == "__main__": 
     # eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
     # for ds_path in eic.preprocessed_datasets:
     #     eic.get_dataset_pt(ds_path)
 
-    bam_files = [
-        "data/ENCBS001PEH/H3K27ac/ENCFF433NRH.bam",
-        "data/ENCBS001PEH/H3K27me3/ENCFF711BUA.bam",
-        "data/ENCBS001PEH/H3K36me3/ENCFF269BFR.bam",
-        "data/ENCBS001PEH/H3K4me1/ENCFF440HBN.bam",
-        "data/ENCBS001PEH/H3K4me3/ENCFF162MUZ.bam",
-        "data/ENCBS001PEH/H3K9me3/ENCFF931LRY.bam"
-    ]
+    # bam_files = [
+    #     "data/ENCBS001PEH/H3K27ac/ENCFF433NRH.bam",
+    #     "data/ENCBS001PEH/H3K27me3/ENCFF711BUA.bam",
+    #     "data/ENCBS001PEH/H3K36me3/ENCFF269BFR.bam",
+    #     "data/ENCBS001PEH/H3K4me1/ENCFF440HBN.bam",
+    #     "data/ENCBS001PEH/H3K4me3/ENCFF162MUZ.bam",
+    #     "data/ENCBS001PEH/H3K9me3/ENCFF931LRY.bam"
+    # ]
 
-    chr_sizes_file = "data/hg38.chrom.sizes"
-    resolution = 25
+    # chr_sizes_file = "data/hg38.chrom.sizes"
+    # resolution = 25
 
-    for bf in bam_files:
-        bam_to_signal = BAM_TO_SIGNAL(bf, chr_sizes_file, resolution)
-        bam_to_signal.calculate_coverage_pysam(bf.replace(".bam", ".bed"))
-    # bam_to_signal.calculate_coverage_samtools(output_file_samtools)
-    exit()
+    # for bf in bam_files:
+    #     bam_to_signal = BAM_TO_SIGNAL(bf, chr_sizes_file, resolution)
+    #     bam_to_signal.full_preprocess(dsf_list=[1,2,4,8])
 
+    # exit()
+
+    solar_data_path = "/project/compbio-lab/encode_data/"
     d = GET_DATA()
-    # d.search_ENCODE()
-    # d.filter_biosamples()
-    d.load_metadata()
-    d.get_all()
-    exit()
-
-    d.download_from_metadata(mode="parallel")
+    d.search_ENCODE(metadata_file_path=solar_data_path)
+    d.filter_biosamples(metadata_file_path=solar_data_path)
+    d.load_metadata(metadata_file_path=solar_data_path)
+    d.get_all(metadata_file_path=solar_data_path)
