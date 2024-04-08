@@ -406,31 +406,43 @@ class GET_DATA(object):
 
         url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
 
-        if os.path.exists(save_dir_name) ==  False:
+        if os.path.exists(save_dir_name) ==  False and os.path.exists(
+            f"{'/'.join(save_dir_name.split('/')[:-1])}/signal_DSF1_res25/") == False:
+
             print(f"downloading assay: {exp} | biosample: {bios}")
             attempt = 0
             is_done = False
             while is_done == False and attempt < num_attempts:
                 if attempt > 0:
-                    time.sleep(10)
+                    time.sleep(20)
 
                 print(f"    attemp number {attempt}")
                 is_done = download_save(url, save_dir_name)
                 attempt += 1
-                    
-            if "bam" in save_dir_name:
-                os.system(f"samtools index {save_dir_name}")
+            
+            if is_done == False:
+                open(save_dir_name.replace(".bam",".failed"), 'w').write("failed to download")
+                print("failed to download", save_dir_name)
+                return
 
-                if process_bam:
-                    print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
+            else:  
+                if "bam" in save_dir_name:
+                    try:
+                        os.system(f"samtools index {save_dir_name}")
 
-                    bam_to_signal = BAM_TO_SIGNAL(
-                        bam_file=save_dir_name, 
-                        chr_sizes_file="data/hg38.chrom.sizes")
+                        if process_bam:
+                            print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
 
-                    bam_to_signal.full_preprocess()
-                    
-                    os.system(f"rm {save_dir_name}")
+                            bam_to_signal = BAM_TO_SIGNAL(
+                                bam_file=save_dir_name, 
+                                chr_sizes_file="data/hg38.chrom.sizes")
+
+                            bam_to_signal.full_preprocess()
+                            
+                            os.system(f"rm {save_dir_name}")
+                            
+                    except:
+                        print("failed to process", save_dir_name)
 
         else:
             print(f"assay: {exp} | biosample: {bios} already exists!")
