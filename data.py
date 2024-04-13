@@ -106,13 +106,19 @@ def single_download(dl_dict):
     num_attempts = 10
 
     def download_save(url, save_dir_name):
-        # try:
-        download_response = requests.get(url, allow_redirects=True)
-        open(save_dir_name, 'wb').write(download_response.content)
-        return True
-
-        # except:
-        #     return False
+        try:
+            # Stream the download; this loads the file piece by piece
+            with requests.get(url, stream=True) as response:
+                response.raise_for_status()  # Check for request errors
+                with open(save_dir_name, 'wb') as file:
+                    # Iterate over the response in chunks (e.g., 8KB each)
+                    for chunk in response.iter_content(chunk_size=8192):
+                        # Write each chunk to the file immediately
+                        file.write(chunk)
+            return True
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
 
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
 
