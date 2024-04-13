@@ -1067,7 +1067,7 @@ if __name__ == "__main__":
     solar_data_path = "/project/compbio-lab/encode_data/"
     if sys.argv[1] == "check":
         eed = ExtendedEncodeDataHandler(solar_data_path)
-        eed.is_bios_complete(sys.argv[2])
+        print(eed.is_bios_complete(sys.argv[2]))
         
 
     else:
