@@ -953,10 +953,21 @@ class ExtendedEncodeDataHandler:
 
     def fix_bios(self, bios_name):
         missing_exp = self.is_bios_complete(bios_name)
+        missingrows = []
         for exp in missing_exp:
             rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
-            # print(rows)
-            print(rows.reset_index(drop=True))
+            missingrows(rows.reset_index(drop=True))
+
+        missingrows = pd.concat(missingrows, axis=0)
+        for i in range(len(missingrows)):
+            dl_dict = {}
+            dl_dict["url"] = missingrows.loc[i, "url"]
+            dl_dict["save_dir_name"] = missingrows.loc[i, "save_dir_name"]
+            dl_dict["exp"] = missingrows.loc[i, "exp"]
+            dl_dict["bios"] = missingrows.loc[i, "bios"]
+            print(dl_dict)
+        
+
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
