@@ -954,19 +954,20 @@ class ExtendedEncodeDataHandler:
     def fix_bios(self, bios_name):
         missing_exp = self.is_bios_complete(bios_name)
         missingrows = []
-        for exp in missing_exp:
-            rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
-            missingrows.append(rows)
+        if len(missing_exp) > 0:
+            for exp in missing_exp:
+                rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
+                missingrows.append(rows)
 
-        missingrows = pd.concat(missingrows, axis=0).reset_index(drop=True)
-        # print(missingrows)
-        for i in range(len(missingrows)):
-            dl_dict = {}
-            dl_dict["url"] = missingrows.loc[i, "url"]
-            dl_dict["save_dir_name"] = missingrows.loc[i, "save_dir_name"]
-            dl_dict["exp"] = missingrows.loc[i, "exp"]
-            dl_dict["bios"] = missingrows.loc[i, "bios"]
-            single_download(dl_dict)
+            missingrows = pd.concat(missingrows, axis=0).reset_index(drop=True)
+            # print(missingrows)
+            for i in range(len(missingrows)):
+                dl_dict = {}
+                dl_dict["url"] = missingrows.loc[i, "url"]
+                dl_dict["save_dir_name"] = missingrows.loc[i, "save_dir_name"]
+                dl_dict["exp"] = missingrows.loc[i, "exp"]
+                dl_dict["bios"] = missingrows.loc[i, "bios"]
+                single_download(dl_dict)
         
 
 
