@@ -911,6 +911,8 @@ class ExtendedEncodeDataHandler:
         
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path)
+        print(self.df3)
+        exit()
         # self.ensure_files()
 
     def ensure_files(self):
@@ -934,7 +936,6 @@ class ExtendedEncodeDataHandler:
         try:
             available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]
             available_exps.remove("Accession")
-            print(available_exps)
         except Exception as e:
             return f"Error reading DF1.csv: {e}"
 
@@ -951,6 +952,11 @@ class ExtendedEncodeDataHandler:
                 missing_exp.append(exp)
 
         return missing_exp
+
+    def fix_bios(self, bios_name):
+        missing_exp = self.is_bios_complete(bios_name)
+        for exp in missing_exp:
+            
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
