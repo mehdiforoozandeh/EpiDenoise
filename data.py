@@ -5,7 +5,7 @@ from scipy.stats import poisson
 import multiprocessing as mp
 import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random
 from torch.utils.data import Dataset
-import torch
+import torch, sys
 import pybedtools
 import pandas as pd
 import seaborn as sns
@@ -65,7 +65,8 @@ def visualize_encode_data(df):
     plt.savefig(f"data/dataset.png", dpi=200)
 
 def visualize_availability(
-    sorted_data_hist_uniq_exp, sorted_data_tf_uniq_exp, sorted_data_rest_uniq_exp, encode_imputation_challenge_assays): # Plotting
+    sorted_data_hist_uniq_exp, sorted_data_tf_uniq_exp, 
+    sorted_data_rest_uniq_exp, encode_imputation_challenge_assays): # Plotting
         fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
         # Histone Modifications
@@ -140,6 +141,14 @@ def single_download(dl_dict):
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
+
+'''
+- fix bios 
+- make tensor
+- npz to npy
+- load ccre
+- make tensor from ccre
+'''
 
 class GET_DATA(object):
     def __init__(self):
@@ -440,7 +449,7 @@ class GET_DATA(object):
                             bam_to_signal.full_preprocess()
                             
                             os.system(f"rm {save_dir_name}")
-                            
+
                     except:
                         print("failed to process", save_dir_name)
 
@@ -653,8 +662,6 @@ class GET_DATA(object):
                     os.mkdir(metadata_file_path + "/" + df["bios"][i] + "/" + df["exp"][i])
 
         else:
-            # self.DF1 = self.DF1.iloc[:2,:]
-            # print(self.DF1)
 
             if mode == "parallel":
                 def pool_get_biosample(args):
@@ -770,75 +777,6 @@ class BAM_TO_SIGNAL(object):
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} to get signals for {self.bam_file} at resolution: {self.resolution}bp")
 
-class LOAD_DATA():
-    def __init__(self):
-        """
-        Initialize the object
-        """
-        pass
-
-    def read_chr_sizes(self):
-        """
-        Read a file with chromosome sizes and return a dictionary where keys are 
-        chromosome names and values are chromosome sizes.
-        
-        Parameters:
-        file_path (str): The path to the file with chromosome sizes.
-
-        Returns:
-        dict: A dictionary where keys are chromosome names and values are chromosome sizes.
-        """
-
-        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
-        
-        self.chr_sizes = {}
-        with open(self.chr_sizes_file, 'r') as f:
-            for line in f:
-                chr_name, chr_size = line.strip().split('\t')
-                if chr_name in main_chrs:
-                    self.chr_sizes[chr_name] = int(chr_size)
-
-    def load_bigwig(self, file_path, chr_sizes_file):
-        """
-        Load the coverage data from a BigWig file.
-
-        Parameters:
-        file_path (str): The path to the BigWig file.
-        """
-        self.chr_sizes_file = chr_sizes_file
-        self.read_chr_sizes()
-
-        self.bw = pyBigWig.open(file_path)
-        loaded_file = {
-            'chr': [],
-            'start': [],
-            'end': [],
-            'read_count': []
-        }
-
-        for chr in self.chr_sizes:
-            intervals = self.bw.intervals(chr)
-            for interval in intervals:
-                start, end, count = interval
-                loaded_file["chr"].append(str(chr))
-                loaded_file["start"].append(int(start))
-                loaded_file["end"].append(int(end))
-                loaded_file["read_count"].append(float(count))
-        self.bw.close()
-        
-        return loaded_file
-
-    def load_pkl(self, file_path):
-        """
-        Load the coverage data from a pickle file.
-
-        Parameters:
-        file_path (str): The path to the pickle file.
-        """
-        with gzip.open(file_path, 'rb') as f:
-            loaded_file = pickle.load(f)
-        return loaded_file
-
 class ENCODE_IMPUTATION_DATASET(object):
     def __init__(self, path):
         """
@@ -941,6 +879,169 @@ class ENCODE_IMPUTATION_DATASET(object):
 
         return ds, mask, pattern_dict
        
+class ExtendedEncodeDataHandler:
+    """
+        set alias for bios(E) and experiments(M) -> save in json
+        navigate all bios-exps -> save in json
+        [OPTIONAL: merge bios by donor ID?]
+            - write in updated navigation json + alias json
+        [train-val-test-split] -- EIC + whole_bios -> save in json
+        [OPTIONAL: npz-to-npy?]
+            - convert all npz files to npy format
+        generate_genome_loci(context_length, ccre=False, frac_genome=0.1)
+            if not ccre:
+                generate_random_loci(frac_genome, context_length)
+            else:
+                generate_ccre_loci(context_length)
+        load_exp(bios_name, exp_name, locus)
+        load_bios(bios_name, locus) 
+            - for all available exp for each bios, load all
+        
+        make tensor(loci)
+    """
+    def __init__(self, base_path):
+        self.base_path = base_path
+        self.alias_path = os.path.join(self.base_path, "aliases.json")
+        self.navigation_path = os.path.join(self.base_path, "navigation.json")
+        self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
+        self.df1_path = os.path.join(self.base_path, "DF1.csv")
+        self.df1 = pd.read_csv(self.df1_path)
+
+        self.df2_path = os.path.join(self.base_path, "DF2.csv")
+        
+        self.df3_path = os.path.join(self.base_path, "DF3.csv")
+        self.df3 = pd.read_csv(self.df3_path)
+        self.ensure_files()
+
+    def ensure_files(self):
+        essential_paths = [
+            self.alias_path, self.navigation_path, self.df1_path,
+            self.df2_path, self.df3_path, self.merged_navigation_path
+        ]
+        for path in essential_paths:
+            if not os.path.exists(path):
+                if path in [self.alias_path, self.navigation_path]:
+                    with open(path, 'w') as file:
+                        json.dump({}, file)
+                else:
+                    print(f"Warning: {path} does not exist at {path}.")
+
+    def is_bios_complete(self, bios_name):
+        """Check if a biosample has all required files."""
+        required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
+        missing_files = []
+
+        try:
+            available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]  # skip 'Accession'
+        except Exception as e:
+            return f"Error reading DF1.csv: {e}"
+
+        bios_path = os.path.join(self.base_path, bios_name)
+        for exp in available_exps:
+            exp_path = os.path.join(bios_path, exp)
+            for dsf in required_dsfs:
+                signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
+                if not (os.path.exists(signal_path) and any(
+                    f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
+                    return False
+
+        return True
+
+    def set_alias(self):
+        """Set aliases for biosamples, experiments, and donors based on data availability."""
+        df1 = pd.read_csv(self.df1_path)
+        df1.set_index('Accession', inplace=True)
+
+        # Alias for biosamples
+        biosample_counts = df1.count(axis=1).sort_values(ascending=False)
+        num_biosamples = len(biosample_counts)
+        biosample_alias = {biosample: f"E{str(index+1).zfill(len(str(num_biosamples)))}" for index, biosample in enumerate(biosample_counts.index)}
+
+        # Alias for experiments
+        experiment_counts = df1.count().sort_values(ascending=False)
+        num_experiments = len(experiment_counts)
+        experiment_alias = {experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(experiment_counts.index)}
+
+        # Alias for donors
+        if os.path.exists(self.merged_navigation_path):
+            with open(self.merged_navigation_path, 'r') as file:
+                donor_to_biosamples = json.load(file)
+            donor_counts = {donor: len(biosamples) for donor, biosamples in donor_to_biosamples.items()}
+            sorted_donors = sorted(donor_counts.items(), key=lambda x: x[1], reverse=True)
+            num_donors = len(sorted_donors)
+            donor_alias = {donor: f"D{str(index+1).zfill(len(str(num_donors)))}" for index, (donor, _) in enumerate(sorted_donors)}
+        else:
+            print("Merged navigation JSON does not exist. Run merge_donors first.")
+            donor_alias = {}
+
+        # Save aliases to JSON
+        aliases = {
+            "biosample_aliases": biosample_alias,
+            "experiment_aliases": experiment_alias,
+            "donor_aliases": donor_alias
+        }
+
+        with open(self.alias_path, 'w') as file:
+            json.dump(aliases, file, indent=4)
+
+    def merge_donors(self):
+        """Merge biosamples based on donors and write a merged navigation JSON file."""
+        donor_to_biosamples = {}
+
+        for bios in os.listdir(self.base_path):
+            donor_path = os.path.join(self.base_path, bios, "donor.json")
+            if os.path.isfile(donor_path):
+                with open(donor_path, 'r') as file:
+                    donor_data = json.load(file)
+                    donor_id = donor_data.get('Accession', None)
+
+                    if donor_id:
+                        if donor_id not in donor_to_biosamples:
+                            donor_to_biosamples[donor_id] = []
+                        donor_to_biosamples[donor_id].append(bios)
+
+        with open(self.merged_navigation_path, 'w') as file:
+            json.dump(donor_to_biosamples, file, indent=4)
+
+    def navigate_bios_exps(self):
+        """Navigate all biosample-experiment pairs and save in JSON."""
+        navigation = {}
+        for bios in os.listdir(self.base_path):
+            if os.path.isdir(os.path.join(self.base_path, bios)):
+                navigation[bios] = {}
+                for exp in os.listdir(os.path.join(self.base_path, bios)):
+                    exp_path = os.path.join(self.base_path, bios, exp)
+                    if os.path.isdir(exp_path):
+                        navigation[bios][exp] = os.listdir(exp_path)
+        
+        with open(self.navigation_path, 'w') as file:
+            json.dump(navigation, file, indent=4)
+
+    def convert_npz_to_npy(self):
+        """Convert all NPZ files to NPY format."""
+        for root, dirs, files in os.walk(self.base_path):
+            for file in files:
+                if file.endswith('.npz'):
+                    data = np.load(os.path.join(root, file))
+                    for arr_name in data.files:
+                        np.save(os.path.join(root, f"{arr_name}.npy"), data[arr_name])
+
+    def generate_random_loci(self, frac_genome, context_length):
+        """Generate random genomic loci."""
+        # Implement based on available genome data and desired specifications.
+
+    def generate_ccre_loci(self, context_length):
+        """Generate loci based on CCRE data."""
+        # Implement based on available CCRE data.
+
+    def load_exp(self, bios_name, exp_name, locus):
+        """Load specific experiment data for a given biosample and locus."""
+        # Implementation depends on data format and locus handling.
+
+    def load_bios(self, bios_name, locus):
+        """Load all available experiments for a given biosample and locus."""
+        # Similar to load_exp but iterates over all experiments.
+
 if __name__ == "__main__": 
     # eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
     # for ds_path in eic.preprocessed_datasets:
@@ -963,10 +1064,15 @@ if __name__ == "__main__":
     #     bam_to_signal.full_preprocess(dsf_list=[1,2,4,8])
 
     # exit()
-
     solar_data_path = "/project/compbio-lab/encode_data/"
-    d = GET_DATA()
-    d.search_ENCODE(metadata_file_path=solar_data_path)
-    d.filter_biosamples(metadata_file_path=solar_data_path)
-    d.load_metadata(metadata_file_path=solar_data_path)
-    d.get_all(metadata_file_path=solar_data_path)
+    if sys.argv[1] == "check":
+        eed = ExtendedEncodeDataHandler(solar_data_path)
+        eed.is_bios_complete(sys.argv[2])
+        
+
+    else:
+        d = GET_DATA()
+        d.search_ENCODE(metadata_file_path=solar_data_path)
+        d.filter_biosamples(metadata_file_path=solar_data_path)
+        d.load_metadata(metadata_file_path=solar_data_path)
+        d.get_all(metadata_file_path=solar_data_path)

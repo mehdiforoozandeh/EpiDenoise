@@ -444,18 +444,6 @@ class COORD(object):
 
     # def random_genome_subset(self, max_seq_len, stratified=True)
 
-class BIOSAMPLE(object):
-    def __init__(self, path, biosample_name, chr_sizes_file="data/hg38.chrom.sizes", resolution=25):
-        """
-        given the biosample name, look for all available tracks and have a list of available track names
-        """
-
-        self.tracks = {}
-        for f in os.listdir(path):
-            if biosample_name in f:
-                trackname = f.replace(biosample_name, "").replace(".bigwig", "")
-                self.tracks[trackname] = pyBigWig.open(path + "/" + f)
-
 class PROCESS_EIC_DATA(object):
     def __init__(self, path, max_len=8000, resolution=25, stratified=False):
         self.path = path
@@ -805,13 +793,6 @@ class PROCESS_EIC_DATA(object):
             with open(file_path, 'wb') as f:
                 pickle.dump(bios_data, f)
             os.system(f"gzip {file_path}")
-
-class augment(object):
-    def __init__(self):
-        pass 
-
-    def random_gaussian(self):
-        pass
 
 if __name__ == "__main__":
     # solar_path = "/project/compbio-lab/EIC/"
