@@ -966,7 +966,7 @@ class ExtendedEncodeDataHandler:
             dl_dict["save_dir_name"] = missingrows.loc[i, "save_dir_name"]
             dl_dict["exp"] = missingrows.loc[i, "exp"]
             dl_dict["bios"] = missingrows.loc[i, "bios"]
-            print(dl_dict)
+            single_download(dl_dict)
         
 
 
