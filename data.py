@@ -974,6 +974,10 @@ class ExtendedEncodeDataHandler:
                 dl_dict["exp"] = missingrows.loc[i, "exp"]
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
+    
+    def mp_fix_DS(self, n_p=10):
+        print(self.df1.columns)
+        
         
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
@@ -1099,7 +1103,8 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "fix":
         eed = ExtendedEncodeDataHandler(solar_data_path)
-        eed.fix_bios(sys.argv[2])
+        # eed.fix_bios(sys.argv[2])
+        eed.mp_fix_DS()
     
     else:
         d = GET_DATA()
