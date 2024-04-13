@@ -910,7 +910,7 @@ class ExtendedEncodeDataHandler:
         self.df2_path = os.path.join(self.base_path, "DF2.csv")
         
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
-        self.df3 = pd.read_csv(self.df3_path)
+        self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
         print(self.df3)
         exit()
         # self.ensure_files()
@@ -955,7 +955,7 @@ class ExtendedEncodeDataHandler:
 
     def fix_bios(self, bios_name):
         missing_exp = self.is_bios_complete(bios_name)
-        # for exp in missing_exp:
+        for exp in missing_exp:
             
 
     def set_alias(self):
