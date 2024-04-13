@@ -106,13 +106,13 @@ def single_download(dl_dict):
     num_attempts = 10
 
     def download_save(url, save_dir_name):
-        try:
-            download_response = requests.get(url, allow_redirects=True)
-            open(save_dir_name, 'wb').write(download_response.content)
-            return True
+        # try:
+        download_response = requests.get(url, allow_redirects=True)
+        open(save_dir_name, 'wb').write(download_response.content)
+        return True
 
-        except:
-            return False
+        # except:
+        #     return False
 
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
 
@@ -969,8 +969,6 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
         
-
-
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
         df1 = pd.read_csv(self.df1_path)
