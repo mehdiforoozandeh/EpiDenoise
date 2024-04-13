@@ -959,6 +959,8 @@ class ExtendedEncodeDataHandler:
             missingrows.append(rows.reset_index(drop=True))
 
         missingrows = pd.concat(missingrows, axis=0)
+        print(missingrows)
+        exit()
         for i in range(len(missingrows)):
             dl_dict = {}
             dl_dict["url"] = missingrows.loc[i, "url"]
