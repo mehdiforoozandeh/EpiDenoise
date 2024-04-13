@@ -911,8 +911,6 @@ class ExtendedEncodeDataHandler:
         
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
-        print(self.df3)
-        exit()
         # self.ensure_files()
 
     def ensure_files(self):
@@ -955,8 +953,9 @@ class ExtendedEncodeDataHandler:
 
     def fix_bios(self, bios_name):
         missing_exp = self.is_bios_complete(bios_name)
-        # for exp in missing_exp:
-            
+        for exp in missing_exp:
+            rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
+            print(rows.reset_index(drop=True))
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
@@ -1079,8 +1078,10 @@ if __name__ == "__main__":
     if sys.argv[1] == "check":
         eed = ExtendedEncodeDataHandler(solar_data_path)
         print(eed.is_bios_complete(sys.argv[2]))
-        
-
+    elif sys.argv[1] == "fix":
+        eed = ExtendedEncodeDataHandler(solar_data_path)
+        eed.fix_bios(sys.argv[2])
+    
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
