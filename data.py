@@ -938,15 +938,19 @@ class ExtendedEncodeDataHandler:
         except Exception as e:
             return f"Error reading DF1.csv: {e}"
 
+        missing_exp = []
         bios_path = os.path.join(self.base_path, bios_name)
         for exp in available_exps:
             exp_path = os.path.join(bios_path, exp)
             for dsf in required_dsfs:
                 signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
                 if os.path.exists(signal_path) == False: # and any(f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
-                    return False
+                    missing_exp.append(exp)
 
-        return True
+        if len(missing_exp) > 0 :
+            return False
+        else:
+            return True
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
