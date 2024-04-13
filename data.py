@@ -942,10 +942,13 @@ class ExtendedEncodeDataHandler:
         bios_path = os.path.join(self.base_path, bios_name)
         for exp in available_exps:
             exp_path = os.path.join(bios_path, exp)
+            exp_full = True
             for dsf in required_dsfs:
                 signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
                 if os.path.exists(signal_path) == False: # and any(f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
-                    missing_exp.append(exp)
+                    exp_full = False
+            if exp_full == False:
+                missing_exp.append(exp)
 
         if len(missing_exp) > 0 :
             return missing_exp
