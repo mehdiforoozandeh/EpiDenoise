@@ -955,7 +955,7 @@ class ExtendedEncodeDataHandler:
 
     def fix_bios(self, bios_name):
         missing_exp = self.is_bios_complete(bios_name)
-        for exp in missing_exp:
+        # for exp in missing_exp:
             
 
     def set_alias(self):
