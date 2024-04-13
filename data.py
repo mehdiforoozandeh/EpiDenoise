@@ -948,7 +948,7 @@ class ExtendedEncodeDataHandler:
                     missing_exp.append(exp)
 
         if len(missing_exp) > 0 :
-            return False
+            return missing_exp
         else:
             return True
 
