@@ -977,6 +977,8 @@ class ExtendedEncodeDataHandler:
     
     def mp_fix_DS(self, n_p=10):
         print(self.df1.columns)
+        bios_list = self.df1.Accession.to_list()
+        print(len(bios_list))
         
         
     def set_alias(self):
