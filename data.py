@@ -961,6 +961,7 @@ class ExtendedEncodeDataHandler:
         missing_exp = self.is_bios_complete(bios_name)
         missingrows = []
         if len(missing_exp) > 0:
+            print(f"fixing {bios_name}!")
             for exp in missing_exp:
                 rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
                 missingrows.append(rows)
@@ -976,9 +977,9 @@ class ExtendedEncodeDataHandler:
                 single_download(dl_dict)
     
     def mp_fix_DS(self, n_p=10):
-        print(self.df1.columns)
         bios_list = self.df1.Accession.to_list()
-        print(len(bios_list))
+        with mp.Pool(n_p) as p:
+            p.map(bios_list)
         
         
     def set_alias(self):
