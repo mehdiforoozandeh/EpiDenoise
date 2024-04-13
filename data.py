@@ -943,8 +943,7 @@ class ExtendedEncodeDataHandler:
             exp_path = os.path.join(bios_path, exp)
             for dsf in required_dsfs:
                 signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
-                if not (os.path.exists(signal_path) and any(
-                    f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
+                if os.path.exists(signal_path) == False: # and any(f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
                     return False
 
         return True
