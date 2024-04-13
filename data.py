@@ -956,7 +956,7 @@ class ExtendedEncodeDataHandler:
         missingrows = []
         for exp in missing_exp:
             rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
-            missingrows(rows.reset_index(drop=True))
+            missingrows.append(rows.reset_index(drop=True))
 
         missingrows = pd.concat(missingrows, axis=0)
         for i in range(len(missingrows)):
