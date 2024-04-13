@@ -979,7 +979,7 @@ class ExtendedEncodeDataHandler:
     def mp_fix_DS(self, n_p=10):
         bios_list = self.df1.Accession.to_list()
         with mp.Pool(n_p) as p:
-            p.map(bios_list)
+            p.map(self.fix_bios, bios_list)
         
         
     def set_alias(self):
