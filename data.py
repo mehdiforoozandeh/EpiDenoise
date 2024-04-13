@@ -138,11 +138,11 @@ def single_download(dl_dict):
             os.system(f"samtools index {save_dir_name}")
             print(f"processing BAM to Signal | assay: {exp} | biosample: {bios}")
 
-            preprocessor = BAM_TO_SIGNAL()
-            preprocessor.full_preprocess(
+            bam_to_signal = BAM_TO_SIGNAL(
                 bam_file=save_dir_name, 
                 chr_sizes_file="data/hg38.chrom.sizes")
-            
+
+            bam_to_signal.full_preprocess()
             os.system(f"rm {save_dir_name}")
 
     else:
