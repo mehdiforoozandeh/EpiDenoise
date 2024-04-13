@@ -955,8 +955,8 @@ class ExtendedEncodeDataHandler:
         missing_exp = self.is_bios_complete(bios_name)
         for exp in missing_exp:
             rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
-            print(rows)
-            # print(rows.reset_index(drop=True))
+            # print(rows)
+            print(rows.reset_index(drop=True))
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
