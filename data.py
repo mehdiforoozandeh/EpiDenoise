@@ -950,10 +950,7 @@ class ExtendedEncodeDataHandler:
             if exp_full == False:
                 missing_exp.append(exp)
 
-        if len(missing_exp) > 0 :
-            return missing_exp
-        else:
-            return True
+        return missing_exp
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
