@@ -911,7 +911,7 @@ class ExtendedEncodeDataHandler:
         
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path)
-        self.ensure_files()
+        # self.ensure_files()
 
     def ensure_files(self):
         essential_paths = [
