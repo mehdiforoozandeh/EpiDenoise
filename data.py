@@ -932,7 +932,8 @@ class ExtendedEncodeDataHandler:
         missing_files = []
 
         try:
-            available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]  # skip 'Accession'
+            available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]
+            print(available_exps)
         except Exception as e:
             return f"Error reading DF1.csv: {e}"
 
