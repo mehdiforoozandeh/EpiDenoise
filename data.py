@@ -978,6 +978,7 @@ class ExtendedEncodeDataHandler:
     
     def mp_fix_DS(self, n_p=10):
         bios_list = self.df1.Accession.to_list()
+        random.shuffle(bios_list)
         with mp.Pool(n_p) as p:
             p.map(self.fix_bios, bios_list)
         
