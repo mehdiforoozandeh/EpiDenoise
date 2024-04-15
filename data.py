@@ -1124,7 +1124,7 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "checkup":
         eed = ExtendedEncodeDataHandler(solar_data_path)
-        eed.generate_ccre_lociDS_checkup()
+        eed.DS_checkup()
 
     else:
         d = GET_DATA()
