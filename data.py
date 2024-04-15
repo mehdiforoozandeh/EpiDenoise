@@ -982,7 +982,19 @@ class ExtendedEncodeDataHandler:
         with mp.Pool(n_p) as p:
             p.map(self.fix_bios, bios_list)
         
+    def DS_checkup(self):
+        bios_list = self.df1.Accession.to_list()
+        is_comp = []
+        for bs in bios_list:
+            missing = self.is_bios_complete(bios_name)
+            if len(missing) > 0:
+                is_comp.append(0)
+            else:
+                is_comp.append(1)
         
+        return sum(is_comp) / len(is_comp)
+
+
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
         df1 = pd.read_csv(self.df1_path)
@@ -1110,6 +1122,10 @@ if __name__ == "__main__":
         # eed.fix_bios(sys.argv[2])
         eed.mp_fix_DS()
     
+    elif sys.argv[1] == "checkup":
+        eed = ExtendedEncodeDataHandler(solar_data_path)
+        eed.generate_ccre_lociDS_checkup()
+
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
