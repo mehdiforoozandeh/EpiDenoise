@@ -986,7 +986,7 @@ class ExtendedEncodeDataHandler:
         bios_list = self.df1.Accession.to_list()
         is_comp = []
         for bs in bios_list:
-            missing = self.is_bios_complete(bios_name)
+            missing = self.is_bios_complete(bs)
             if len(missing) > 0:
                 is_comp.append(0)
             else:
