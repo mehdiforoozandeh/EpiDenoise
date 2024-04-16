@@ -112,7 +112,7 @@ def single_download(dl_dict):
                 response.raise_for_status()  # Check for request errors
                 with open(save_dir_name, 'wb') as file:
                     # Iterate over the response in chunks (e.g., 8KB each)
-                    for chunk in response.iter_content(chunk_size=int(1e4*1024)):
+                    for chunk in response.iter_content(chunk_size=int(1e3*1024)):
                         # Write each chunk to the file immediately
                         file.write(chunk)
             return True
@@ -993,7 +993,6 @@ class ExtendedEncodeDataHandler:
                 is_comp.append(1)
         
         return sum(is_comp) / len(is_comp)
-
 
     def set_alias(self):
         """Set aliases for biosamples, experiments, and donors based on data availability."""
