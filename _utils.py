@@ -381,7 +381,7 @@ class COORD(object):
             for line in f:
                 chr_name, chr_size = line.strip().split('\t')
                 if chr_name in main_chrs:
-                    self.chr_sizes[chr_name] = int(chr_size)    
+                    self.chr_sizes[chr_name] = int(chr_size)
 
     def init_bins(self):
         if os.path.exists(f"{self.outdir}/bins_{self.resolution}bp.csv"):

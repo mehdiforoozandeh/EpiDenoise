@@ -11,6 +11,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from concurrent.futures import ThreadPoolExecutor
+
 
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
@@ -147,14 +149,6 @@ def single_download(dl_dict):
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
-
-'''
-- fix bios 
-- make tensor
-- npz to npy
-- load ccre
-- make tensor from ccre
-'''
 
 class GET_DATA(object):
     def __init__(self):
@@ -905,24 +899,39 @@ class ExtendedEncodeDataHandler:
         
         make tensor(loci)
     """
-    def __init__(self, base_path):
+    def __init__(self, base_path, resolution=25):
         self.base_path = base_path
+        self.chr_sizes_file = os.path.join(self.base_path, "hg38.chrom.sizes")
         self.alias_path = os.path.join(self.base_path, "aliases.json")
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
-        self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
+        # self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
         self.df1 = pd.read_csv(self.df1_path)
+        self.resolution = resolution
 
         self.df2_path = os.path.join(self.base_path, "DF2.csv")
         
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
-        # self.ensure_files()
+        self.ensure_files()
+
+    def coords(self):
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        # main_chrs.remove("chr21") # reserved for validation
+        self.chr_sizes = {}
+
+        with open(self.chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)    
+        
+        self.genomesize = sum(list(self.chr_sizes.values()))
 
     def ensure_files(self):
         essential_paths = [
             self.alias_path, self.navigation_path, self.df1_path,
-            self.df2_path, self.df3_path, self.merged_navigation_path
+            self.df2_path, self.df3_path#, self.merged_navigation_path
         ]
         for path in essential_paths:
             if not os.path.exists(path):
@@ -931,6 +940,9 @@ class ExtendedEncodeDataHandler:
                         json.dump({}, file)
                 else:
                     print(f"Warning: {path} does not exist at {path}.")
+        
+        with open(self.alias_path, 'r') as alifile:
+            self.alias = json.load(alifile)
 
     def is_bios_complete(self, bios_name):
         """Check if a biosample has all required files."""
@@ -976,7 +988,7 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
-    def mp_fix_DS(self, n_p=10):
+    def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
         random.shuffle(bios_list)
         with mp.Pool(n_p) as p:
@@ -994,39 +1006,46 @@ class ExtendedEncodeDataHandler:
         
         return sum(is_comp) / len(is_comp)
 
-    def set_alias(self):
+    def set_alias(self, donor=False):
+        if os.path.exists(self.alias_path):
+            return
         """Set aliases for biosamples, experiments, and donors based on data availability."""
-        df1 = pd.read_csv(self.df1_path)
-        df1.set_index('Accession', inplace=True)
+        self.df1.set_index('Accession', inplace=True)
+        self.df1 = self.df1.drop("Unnamed: 0", axis=1)
 
         # Alias for biosamples
-        biosample_counts = df1.count(axis=1).sort_values(ascending=False)
+        biosample_counts = self.df1.count(axis=1).sort_values(ascending=False)
         num_biosamples = len(biosample_counts)
         biosample_alias = {biosample: f"E{str(index+1).zfill(len(str(num_biosamples)))}" for index, biosample in enumerate(biosample_counts.index)}
 
         # Alias for experiments
-        experiment_counts = df1.count().sort_values(ascending=False)
+        experiment_counts = self.df1.count().sort_values(ascending=False)
         num_experiments = len(experiment_counts)
         experiment_alias = {experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(experiment_counts.index)}
 
-        # Alias for donors
-        if os.path.exists(self.merged_navigation_path):
-            with open(self.merged_navigation_path, 'r') as file:
-                donor_to_biosamples = json.load(file)
-            donor_counts = {donor: len(biosamples) for donor, biosamples in donor_to_biosamples.items()}
-            sorted_donors = sorted(donor_counts.items(), key=lambda x: x[1], reverse=True)
-            num_donors = len(sorted_donors)
-            donor_alias = {donor: f"D{str(index+1).zfill(len(str(num_donors)))}" for index, (donor, _) in enumerate(sorted_donors)}
-        else:
-            print("Merged navigation JSON does not exist. Run merge_donors first.")
-            donor_alias = {}
+        if donor:
+            # # Alias for donors
+            self.merge_donors()
+            if os.path.exists(self.merged_navigation_path):
+                with open(self.merged_navigation_path, 'r') as file:
+                    donor_to_biosamples = json.load(file)
+                donor_counts = {donor: len(biosamples) for donor, biosamples in donor_to_biosamples.items()}
+                sorted_donors = sorted(donor_counts.items(), key=lambda x: x[1], reverse=True)
+                num_donors = len(sorted_donors)
+                donor_alias = {donor: f"D{str(index+1).zfill(len(str(num_donors)))}" for index, (donor, _) in enumerate(sorted_donors)}
+            else:
+                print("Merged navigation JSON does not exist. Run merge_donors first.")
+                donor_alias = {}
 
-        # Save aliases to JSON
-        aliases = {
-            "biosample_aliases": biosample_alias,
-            "experiment_aliases": experiment_alias,
-            "donor_aliases": donor_alias
-        }
+            aliases = {
+                "biosample_aliases": biosample_alias,
+                "experiment_aliases": experiment_alias,
+                "donor_aliases": donor_alias
+            }
+        else:
+            aliases = {
+                "biosample_aliases": biosample_alias,
+                "experiment_aliases": experiment_alias}
 
         with open(self.alias_path, 'w') as file:
             json.dump(aliases, file, indent=4)
@@ -1071,46 +1090,128 @@ class ExtendedEncodeDataHandler:
                 if file.endswith('.npz'):
                     data = np.load(os.path.join(root, file))
                     for arr_name in data.files:
-                        np.save(os.path.join(root, f"{arr_name}.npy"), data[arr_name])
+                        np.save(os.path.join(root, f"{file.replace('.npz', '')}.npy"), data[arr_name])
 
-    def generate_random_loci(self, frac_genome, context_length):
-        """Generate random genomic loci."""
-        # Implement based on available genome data and desired specifications.
+    def generate_random_loci(self, m, context_length, exclude_chr=['chr21']):
+        """Generate random genomic loci, excluding specified chromosomes."""
+        self.m_regions = []
+        used_regions = {chr: [] for chr in self.chr_sizes.keys() if chr not in exclude_chr}
+        for chr in used_regions.keys():
+            size = self.chr_sizes[chr]
+            m_c = int(m * (size / self.genomesize)) + 1  # Calculate the proportional count of regions to generate
+            mii = 0
+            while mii < m_c:
+                # Generate a random start position that is divisible by self.resolution
+                rand_start = random.randint(0, (size - context_length) // self.resolution) * self.resolution
+                rand_end = rand_start + context_length
 
-    def generate_ccre_loci(self, context_length):
+                # Check if the region overlaps with any existing region in the same chromosome
+                if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
+                    self.m_regions.append([chr, rand_start, rand_end])
+                    used_regions[chr].append((rand_start, rand_end))
+                    mii += 1
+        
+        while sum([len(v) for v in used_regions.values()]) < m:
+            # Generate a random start position that is divisible by self.resolution
+            rand_start = random.randint(0, (size - context_length) // self.resolution) * self.resolution
+            rand_end = rand_start + context_length
+
+            # Check if the region overlaps with any existing region in the same chromosome
+            if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
+                self.m_regions.append([chr, rand_start, rand_end])
+                used_regions[chr].append((rand_start, rand_end))
+                mii += 1
+
+    def generate_ccre_loci(self, m, context_length, ccre_filename="GRCh38-cCREs.bed", exclude_chr=['chr21']):
         """Generate loci based on CCRE data."""
+
         # Implement based on available CCRE data.
+        self.ccres = pd.read_csv(os.path.join(self.base_path, ccre_filename), sep="\t", header=None)
+        self.ccres.columns = ["chrom", "start", "end", "id1", "id2", "desc"]
 
-    def load_exp(self, bios_name, exp_name, locus):
-        """Load specific experiment data for a given biosample and locus."""
-        # Implementation depends on data format and locus handling.
+        self.ccres = self.ccres[self.ccres["chrom"].isin(self.chr_sizes.keys())]
+        self.ccres = self.ccres[~self.ccres["chrom"].isin(exclude_chr)]
 
-    def load_bios(self, bios_name, locus):
+        self.m_regions = []
+        used_regions = {chr: [] for chr in self.ccres['chrom'].unique()}
+
+        # Sort the DataFrame by chromosome and start position
+        self.ccres = self.ccres.sort_values(['chrom', 'start'])
+
+        # Select m/2 regions from the DataFrame
+        while len(self.m_regions) < (m):
+            while True:
+                # Select a random row from the DataFrame
+                row = self.ccres.sample(1).iloc[0]
+
+                # Generate a start position that is divisible by self.resolution and within the region
+                rand_start = random.randint(row['start'] // self.resolution, (row['end']) // self.resolution) * self.resolution
+                rand_end = rand_start + context_length
+
+                # Check if the region overlaps with any existing region in the same chromosome
+                if rand_start >= 0 and rand_end <= self.chr_sizes[row['chrom']]:
+                    if not any(start <= rand_end and end >= rand_start for start, end in used_regions[row['chrom']]):
+                        self.m_regions.append([row['chrom'], rand_start, rand_end])
+                        used_regions[row['chrom']].append((rand_start, rand_end))
+                        break
+            
+    def load_npz(self, file_name):
+        with np.load(file_name, allow_pickle=True) as data:
+            return {file_name.split("/")[-3]: data[data.files[0]]}
+        
+    def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
-        # Similar to load_exp but iterates over all experiments.
+        exps = [
+            name for name in os.listdir(
+                os.path.join(self.base_path, bios_name)) if os.path.isdir(
+                    os.path.join(self.base_path, bios_name, name))]
 
+        loaded_data = {}
+        npz_files = []
+        for e in exps:
+            l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+            npz_files.append(l)
+            continue
+
+        # Load files in parallel
+        with ThreadPoolExecutor() as executor:
+            loaded = list(executor.map(self.load_npz, npz_files))
+        
+        start_bin = int(locus[1]) // self.resolution
+        end_bin = int(locus[2]) // self.resolution
+        for l in loaded:
+            for exp, data in l.items():
+                loaded_data[exp] = data[start_bin:end_bin]
+        
+        return loaded_data
+
+    def make_bios_tensor(self, loaded_data, missing_value=-1):
+        tensor = []
+        L = len(loaded_data[list(loaded_data.keys())[0]])
+        availability = []
+        i = 0
+        for assay, alias in self.alias["experiment_aliases"].items():
+            
+            assert i+1 == int(alias.replace("M",""))
+            if assay in loaded_data.keys():
+                tensor.append(loaded_data[assay])
+                availability.append(1)
+            else:
+                tensor.append([missing_value for _ in range(L)])
+                availability.append(0)
+            i += 1
+        
+        tensor = torch.tensor(np.array(tensor)).permute(1, 0)
+        return tensor, availability
+
+    def make_region_tensor(self, list_bios_tensors, list_bios_avail):
+        """
+        concat all biosamples
+        concat avail
+        """
+        return
 if __name__ == "__main__": 
-    # eic = ENCODE_IMPUTATION_DATASET("/project/compbio-lab/EIC/training_data/")
-    # for ds_path in eic.preprocessed_datasets:
-    #     eic.get_dataset_pt(ds_path)
 
-    # bam_files = [
-    #     "data/ENCBS001PEH/H3K27ac/ENCFF433NRH.bam",
-    #     "data/ENCBS001PEH/H3K27me3/ENCFF711BUA.bam",
-    #     "data/ENCBS001PEH/H3K36me3/ENCFF269BFR.bam",
-    #     "data/ENCBS001PEH/H3K4me1/ENCFF440HBN.bam",
-    #     "data/ENCBS001PEH/H3K4me3/ENCFF162MUZ.bam",
-    #     "data/ENCBS001PEH/H3K9me3/ENCFF931LRY.bam"
-    # ]
-
-    # chr_sizes_file = "data/hg38.chrom.sizes"
-    # resolution = 25
-
-    # for bf in bam_files:
-    #     bam_to_signal = BAM_TO_SIGNAL(bf, chr_sizes_file, resolution)
-    #     bam_to_signal.full_preprocess(dsf_list=[1,2,4,8])
-
-    # exit()
     solar_data_path = "/project/compbio-lab/encode_data/"
     if sys.argv[1] == "check":
         eed = ExtendedEncodeDataHandler(solar_data_path)
@@ -1124,6 +1225,31 @@ if __name__ == "__main__":
     elif sys.argv[1] == "checkup":
         eed = ExtendedEncodeDataHandler(solar_data_path)
         print(eed.DS_checkup())
+    
+    elif sys.argv[1] == "test":
+        eed = ExtendedEncodeDataHandler("data/")
+        eed.set_alias()
+        eed.coords()
+        t0 = datetime.datetime.now()
+        # eed.generate_ccre_loci(m=100, context_length=20000)
+        # print(len(eed.m_regions))
+        # t1 = datetime.datetime.now()
+        eed.generate_random_loci(m=10, context_length=20000)
+        # print(len(eed.m_regions))
+        # t2 = datetime.datetime.now()
+        # print(f"took {t1-t0} for ccre_loci and {t2-t1} for random_loci")
+        # exit()
+        # eed.convert_npz_to_npy()
+        # locus = ("chr1", "586036", "586264")
+        loaded_data = eed.load_bios("ENCBS075PNA", eed.m_regions[0], DSF=1, f_format="npz")
+        # convention of assay names (based on alias)
+        # print(loaded_data)
+        eed.make_tensor(loaded_data)
+        t1 = datetime.datetime.now()
+        print(f"took {t1-t0} ")
+
+        # turn loaded_data into tensor 
+
 
     else:
         d = GET_DATA()
