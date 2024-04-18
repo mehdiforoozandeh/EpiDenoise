@@ -7,7 +7,6 @@ import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, 
 from torch.utils.data import Dataset
 import torch, sys
 import pybedtools
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -1161,18 +1160,24 @@ class ExtendedEncodeDataHandler:
         
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
-        exps = [
-            name for name in os.listdir(
-                os.path.join(self.base_path, bios_name)) if os.path.isdir(
-                    os.path.join(self.base_path, bios_name, name))]
+        # exps = [
+        #     name for name in os.listdir(
+        #         os.path.join(self.base_path, bios_name)) if os.path.isdir(
+        #             os.path.join(self.base_path, bios_name, name))]
+        
+        exps = list(self.navigation[bios_name].keys())
 
         loaded_data = {}
+        loaded_metadata = {}
+
         npz_files = []
         for e in exps:
             l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
             npz_files.append(l)
-            continue
-
+            jsn = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+            with open(jsn, 'r') as jsnfile:
+                loaded_metadata[e]  = json.load(jsnfile)
+            
         # Load files in parallel
         with ThreadPoolExecutor() as executor:
             loaded = list(executor.map(self.load_npz, npz_files))
@@ -1183,33 +1188,100 @@ class ExtendedEncodeDataHandler:
             for exp, data in l.items():
                 loaded_data[exp] = data[start_bin:end_bin]
         
-        return loaded_data
+        return loaded_data, loaded_metadata
 
-    def make_bios_tensor(self, loaded_data, missing_value=-1):
-        tensor = []
-        L = len(loaded_data[list(loaded_data.keys())[0]])
+    def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
+        dtensor = []
+        mdtensor = []
         availability = []
+
+        L = len(loaded_data[list(loaded_data.keys())[0]])
         i = 0
         for assay, alias in self.alias["experiment_aliases"].items():
             
             assert i+1 == int(alias.replace("M",""))
             if assay in loaded_data.keys():
-                tensor.append(loaded_data[assay])
+                dtensor.append(loaded_data[assay])
                 availability.append(1)
+                mdtensor.append([np.log2(loaded_metadata[assay]['depth']), loaded_metadata[assay]['coverage']])
+
             else:
-                tensor.append([missing_value for _ in range(L)])
+                dtensor.append([missing_value for _ in range(L)])
                 availability.append(0)
+                mdtensor.append([missing_value, missing_value])
+
             i += 1
         
-        tensor = torch.tensor(np.array(tensor)).permute(1, 0)
-        return tensor, availability
+        dtensor = torch.tensor(np.array(dtensor)).permute(1, 0)
+        mdtensor = torch.tensor(np.array(mdtensor)).permute(1, 0)
+        availability = torch.tensor(np.array(availability))
+        return dtensor, mdtensor, availability
 
-    def make_region_tensor(self, list_bios_tensors, list_bios_avail):
-        """
-        concat all biosamples
-        concat avail
-        """
-        return
+    def make_region_tensor(self, list_bios, locus, DSF):
+        data = []
+        metadata = []
+        availability = []
+
+        for bios in list_bios:
+            loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+            d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
+            data.append(d)
+            metadata.append(md)
+            availability.append(avl)
+
+        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        return data, metadata, availability
+
+    def initialize_EED(self, m, context_length, bios_batchsize, loci_batchsize, ccre=False, bios_min_exp_avail_threshold=1):
+        self.set_alias()
+        self.coord()
+
+        if ccre:
+            self.generate_ccre_loci(m, context_length)
+        else:
+            self.generate_random_loci(m, context_length)
+        
+        if os.path.exists(self.navigation_path) == False:
+            self.navigate_bios_exps()
+            
+        with open(self.navigation_path, 'r') as navfile:
+            self.navigation  = json.load(navfile)
+        
+        for bios in list(self.navigation.keys()):
+            if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete)>0:
+                del self.navigation[bios] 
+
+        self.num_regions = len(self.m_regions)
+        self.num_bios = len(self.navigation)
+
+        self.bios_batchsize = bios_batchsize
+        self.loci_batchsize = loci_batchsize
+
+    def new_epoch(self):
+        self.current_bios_batch_pointer = 0
+        self.current_loci_batch_pointer = 0
+    
+    def new_batch(self):
+        self.current_loci_batch_pointer += self.loci_batchsize
+        self.current_bios_batch_pointer += self.bios_batchsize
+
+    def get_batch(self, dsf):
+        batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
+        batch_bios_list = self.m_regions[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
+        
+        batch_data = []
+        batch_metadata = []
+        batch_availability = []
+
+        for locus in batch_loci_list:
+            self.make_region_tensor
+            d, md, avl = self.self.make_region_tensor(batch_bios_list, locus, DSF=dsf)
+            batch_data.append(d)
+            batch_metadata.append(md)
+            batch_availability.append(avl)
+        
+        return batch_data, batch_metadata, batch_availability
+
 if __name__ == "__main__": 
 
     solar_data_path = "/project/compbio-lab/encode_data/"
@@ -1230,25 +1302,26 @@ if __name__ == "__main__":
         eed = ExtendedEncodeDataHandler("data/")
         eed.set_alias()
         eed.coords()
+
+        if os.path.exists(eed.navigation_path) == False:
+            eed.navigate_bios_exps()
+            
+        with open(eed.navigation_path, 'r') as navfile:
+            eed.navigation  = json.load(navfile)
+
         t0 = datetime.datetime.now()
-        # eed.generate_ccre_loci(m=100, context_length=20000)
-        # print(len(eed.m_regions))
-        # t1 = datetime.datetime.now()
+
         eed.generate_random_loci(m=10, context_length=20000)
-        # print(len(eed.m_regions))
-        # t2 = datetime.datetime.now()
-        # print(f"took {t1-t0} for ccre_loci and {t2-t1} for random_loci")
-        # exit()
-        # eed.convert_npz_to_npy()
-        # locus = ("chr1", "586036", "586264")
-        loaded_data = eed.load_bios("ENCBS075PNA", eed.m_regions[0], DSF=1, f_format="npz")
-        # convention of assay names (based on alias)
-        # print(loaded_data)
-        eed.make_tensor(loaded_data)
+        # loaded_data, loaded_metadata = eed.load_bios("ENCBS075PNA", eed.m_regions[0], DSF=1, f_format="npz")
+        # d, md, avl = eed.make_bios_tensor(loaded_data, loaded_metadata)
+
+        d, md, avl = eed.make_region_tensor(["ENCBS075PNA" for _ in range(5)], eed.m_regions[0], DSF=1)
+
+        print(d.shape, md.shape, avl.shape)
+        # print(d, md, avl)
+
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} ")
-
-        # turn loaded_data into tensor 
 
 
     else:

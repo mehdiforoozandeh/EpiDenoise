@@ -1108,9 +1108,7 @@ class EpiDenoise22(nn.Module):
 #========================================================================================================#
 
 class PRE_TRAINER(object):  
-    def __init__(
-        self, model, dataset, criterion, optimizer, scheduler):
-        
+    def __init__(self, model, dataset, criterion, optimizer, scheduler, eed=True):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(self.device)
 
@@ -1120,8 +1118,9 @@ class PRE_TRAINER(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
 
-        self.test_x_dir = "/project/compbio-lab/EIC/training_data/C23_chr21_25.pt"
-        self.test_y_dir = "/project/compbio-lab/EIC/validation_data/C23_chr21_25.pt"
+        if not eed:
+            self.test_x_dir = "/project/compbio-lab/EIC/training_data/C23_chr21_25.pt"
+            self.test_y_dir = "/project/compbio-lab/EIC/validation_data/C23_chr21_25.pt"
     
     def test_model(self, context_length, version, is_arcsin, batch_size):
         self.model.eval()
@@ -2871,6 +2870,31 @@ class PRE_TRAINER(object):
                     pass
 
         return self.model
+
+    def pretrain_epidenoise_30a(self, num_epochs=25, mask_percentage=0.15, context_length=2000, num_batch=50):
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
+        logfile = open("models/EPD22_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        token_dict = {
+            "missing_mask": -1, 
+            "cloze_mask": -2,
+            "pad": -3
+        }
+
+        self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
+
+        for epoch in range(num_epochs):
+            self.dataset.new_epoch()
+
+            # for batch 
+                # batch_data, batch_metadata, batch_availability = self.dataset.get_batch(dsf)
+
+            pass
+
 
 class MODEL_LOADER(object):
     def __init__(self, model_path, hyper_parameters):

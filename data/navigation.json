@@ -1,1 +1,124 @@
-{}
+{
+    "ENCBS075PNA": {
+        "H3K4me2": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF622IIB.bam.bai",
+            "signal_DSF4_res25"
+        ],
+        "H3K9ac": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            ".DS_Store",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "ENCFF113FCH.bam.bai"
+        ],
+        "H3K4me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF760VTC.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "EZH2": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            ".DS_Store",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF167CMC.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "ENCFF183EDU.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2AFZ": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "ENCFF650RBB.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K4me1": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF826OLG.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27ac": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "ENCFF609ZAE.bam.bai"
+        ],
+        "H3K79me2": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "ENCFF616FAT.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27me3": [
+            "ENCFF299WXR.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H4K20me1": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "ENCFF278FTJ.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "CTCF": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            ".DS_Store",
+            "ENCFF586MXO.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K36me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF317FFS.bam.bai",
+            "signal_DSF4_res25"
+        ]
+    }
+}
