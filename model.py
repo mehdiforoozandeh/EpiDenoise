@@ -54,6 +54,13 @@ class MetadataEmbeddingModule(nn.Module):
 
         runtype_embed = self.runtype_embedding(runtype)
 
+        num_embeddings = your_embedding_layer.weight.size(0)
+
+        # Check max index
+        if runtype.max() >= self.runtype_embedding:
+            print("Index out of bounds error likely!")
+            exit()
+
         # Concatenate all embeddings
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
         return embeddings
