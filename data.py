@@ -1258,7 +1258,7 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=True):
+        bios_min_exp_avail_threshold=1, check_completeness=False):
 
         self.set_alias()
         self.coords()

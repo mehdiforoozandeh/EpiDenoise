@@ -3844,7 +3844,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length, 
         bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=False)
+        bios_min_exp_avail_threshold=1, check_completeness=True)
 
     model_name = f"EpiDenoise30a_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
