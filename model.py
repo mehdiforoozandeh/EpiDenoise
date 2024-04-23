@@ -3837,6 +3837,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     nlayers = hyper_parameters["nlayers"]
     metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
     
+    resolution = 25
     epochs = hyper_parameters["epochs"]
     num_training_loci = hyper_parameters["num_loci"]
     mask_percentage = hyper_parameters["mask_percentage"]
@@ -3860,7 +3861,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=num_training_loci, context_length=context_length, 
+        m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
         bios_min_exp_avail_threshold=1, check_completeness=True)
 
@@ -4089,7 +4090,7 @@ if __name__ == "__main__":
             "nlayers": 3,
             "epochs": 4,
             "mask_percentage": 0.2,
-            "context_length": 3e5,
+            "context_length": 400,
             "batch_size": 10,
             "learning_rate": 1e-4,
             "num_loci": 1000,
@@ -4104,7 +4105,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
             "dropout": 0.01,
-            "context_length": 3e5,
+            "context_length": 400,
             
             "kernel_size": [1, 3, 3, 3],
             "conv_out_channels": [128, 144, 192, 256],
