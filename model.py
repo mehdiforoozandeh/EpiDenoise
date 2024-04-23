@@ -3157,7 +3157,7 @@ class PRE_TRAINER(object):
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
 
                 loss = pred_loss+obs_loss  
-                print(loss.item(), torch.isnan(output).sum().item)
+                print(loss.item(), torch.isnan(output).sum().item())
                 if torch.isnan(loss).sum() > 0:
                     skipmessage = "Encountered nan loss! Skipping batch..."
                     log_strs.append(skipmessage)
