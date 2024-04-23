@@ -238,7 +238,7 @@ class DataMasker:
 
         # Number of features to mask per sample in the batch
         num_to_mask = (availability.sum(dim=1) * self.mask_percentage).int()
-        print(num_to_mask)
+        print(num_to_mask.shape)
         exit()
 
         # Prepare the new availability tensor
