@@ -758,7 +758,7 @@ class ComboPoissonNLLloss(nn.Module):
 class ComboLoss30a(nn.Module):
     def __init__(self, alpha=0.5):
         super(ComboLoss30a, self).__init__()
-        self.alpha = alpha.float()
+        self.alpha = alpha
         # self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
         self.nll_loss = nn.MSELoss(reduction='mean')
 
