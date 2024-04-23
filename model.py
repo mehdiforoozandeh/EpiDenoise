@@ -3148,7 +3148,7 @@ class PRE_TRAINER(object):
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
                 print(X_batch[masked_map])
-                print(X_batch[observed_map])
+                print(X_batch[observed_map].min(), X_batch[observed_map].max())
                 exit()
 
                 X_batch = X_batch.to(self.device)
