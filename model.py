@@ -769,7 +769,7 @@ class ComboLoss30a(nn.Module):
 
         if torch.isnan(obs_loss).any() or torch.isnan(pred_loss).any():
             print("NaN value encountered in loss components.")
-            print(torch.isnan(true_signals[obs_map]).sum(), torch.isnan(pred_signals[obs_map]).sum())
+            print(torch.isnan(true_signals[obs_map]).sum().item(), torch.isnan(pred_signals[obs_map]).sum().item())
             return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(obs_loss.device)
         
         return self.alpha*pred_loss, (1-self.alpha)*obs_loss
