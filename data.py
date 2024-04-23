@@ -1258,7 +1258,7 @@ class ExtendedEncodeDataHandler:
         bios_min_exp_avail_threshold=1, check_completeness=False):
 
         self.set_alias()
-        self.coord()
+        self.coords()
 
         if ccre:
             self.generate_ccre_loci(m, context_length)
