@@ -18,7 +18,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #========================================================================================================#
 
 class MetadataEmbeddingModule(nn.Module):
-    def __init__(self, input_dim, embedding_dim, non_linearity=False):
+    def __init__(self, input_dim, embedding_dim, non_linearity=True):
         super().__init__()
         self.embedding_dim = embedding_dim
         self.input_dim = input_dim 
@@ -3168,8 +3168,8 @@ class PRE_TRAINER(object):
                     f"Epoch {epoch}: "
                     f"Progress - {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%} (Loci), "
                     f"{self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%} (Biosamples), "
-                    f"Prediction Loss: {pred_loss.item():.4f}, "
-                    f"Observed Loss: {obs_loss.item():.4f}"
+                    f"Imputation Loss: {pred_loss.item():.4f}, "
+                    f"Upsampling Loss: {obs_loss.item():.4f}"
                 )
 
                 self.dataset.update_batch_pointers()
@@ -4098,16 +4098,16 @@ if __name__ == "__main__":
             "input_dim": 50,
             "metadata_embedding_dim":50,
             "dropout": 0.05,
-            "nhead": 4,
+            "nhead": 2,
             "d_model": 192,
             "nlayers": 2,
             "epochs": 5,
             "mask_percentage": 0.1,
             "context_length": 200,
-            "batch_size": 20,
-            "learning_rate": 1e-3,
+            "batch_size": 50,
+            "learning_rate": 1e-4,
             "num_loci": 10,
-            "lr_halflife":10
+            "lr_halflife":2
         }
         train_epidenoise30a(
             hyper_parameters30a, 
