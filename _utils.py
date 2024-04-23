@@ -237,7 +237,9 @@ class DataMasker:
         B, L, F = data.shape
 
         # Number of features to mask per sample in the batch
-        num_to_mask = (availability.sum(dim=1) * self.mask_percentage).int() + 1
+        num_to_mask = (availability.sum(dim=1) * self.mask_percentage).int()
+        print(num_to_mask)
+        exit()
 
         # Prepare the new availability tensor
         new_A = availability.clone().float()
