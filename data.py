@@ -1007,6 +1007,8 @@ class ExtendedEncodeDataHandler:
 
     def set_alias(self, donor=False):
         if os.path.exists(self.alias_path):
+            with open(self.alias_path, 'r') as file:
+                self.aliases = json.load(file)
             return
         """Set aliases for biosamples, experiments, and donors based on data availability."""
         self.df1.set_index('Accession', inplace=True)
