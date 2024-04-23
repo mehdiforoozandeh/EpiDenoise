@@ -62,11 +62,9 @@ class MetadataEmbeddingModule(nn.Module):
 
     def embed_avail(self, availability):
         availability = availability.long()
-        print(availability.unique())
         availability = torch.where(
-            availability == -1, torch.tensor(2, device=availability.device), availability)
+            availability == -2, torch.tensor(2, device=availability.device), availability)
 
-        print(availability.unique())
 
         availability_embed = self.avail_embedding(availability)
         return availability_embed
