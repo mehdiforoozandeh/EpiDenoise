@@ -756,7 +756,7 @@ class ComboPoissonNLLloss(nn.Module):
         return self.alpha*pred_loss, (1-self.alpha)*obs_loss
 
 class ComboLoss30a(nn.Module):
-    def __init__(self, alpha=0.75):
+    def __init__(self, alpha=0.5):
         super(ComboLoss30a, self).__init__()
         self.alpha = alpha
         self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
@@ -3153,11 +3153,12 @@ class PRE_TRAINER(object):
                 observed_map = observed_map.to(self.device)
 
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                loss = self.criterion(output, Y_batch, masked_map, observed_map)
+                pred_loss, obs_loss = self.criterion(output, Y_batch, masked_map, observed_map)
                 
                 print(
                     epoch, self.dataset.current_loci_batch_pointer/self.dataset.num_regions, 
-                    self.dataset.current_bios_batch_pointer/self.dataset.num_bios, loss.item())
+                    self.dataset.current_bios_batch_pointer/self.dataset.num_bios, 
+                    pred_loss.item(), obs_loss.item())
 
                 self.dataset.update_batch_pointers()
                 loss.backward()  
