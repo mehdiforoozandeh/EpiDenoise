@@ -3154,7 +3154,7 @@ class PRE_TRAINER(object):
                 observed_map = observed_map.to(self.device)
 
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                pred_loss, obs_loss = self.criterion(output, Y_batch, masked_map, observed_map)
+                pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
 
                 loss = pred_loss+obs_loss  
                 if torch.isnan(loss).sum() > 0:
