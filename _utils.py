@@ -233,6 +233,27 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
+    def mask_feature30(self, data, availability):
+        B, L, F = data.shape
+
+        # Number of features to mask per sample in the batch
+        num_to_mask = (availability.sum(dim=1) * self.mask_percentage).int() + 1
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+
+        # Mask indices generation and masking operation
+        for b in range(B):
+            if num_to_mask[b] > 0:
+                available_indices = torch.where(A[b] == 1)[0]  # Find indices where features are available
+                mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
+                actual_indices_to_mask = available_indices[mask_indices]  # Actual indices in the feature dimension
+
+                data[b, :, actual_indices_to_mask] = self.mask_value  # Mask the features in X
+                new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
+
+        return data, new_A
+        
     def mask_chunk_features(self, data, available_features):
         self.available_features = available_features
 

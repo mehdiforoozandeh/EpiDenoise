@@ -1174,9 +1174,20 @@ class ExtendedEncodeDataHandler:
         for e in exps:
             l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
             npz_files.append(l)
-            jsn = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
-            with open(jsn, 'r') as jsnfile:
-                loaded_metadata[e]  = json.load(jsnfile)
+
+            jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+            with open(jsn1, 'r') as jsnfile:
+                md1 = json.load(jsnfile)
+
+            jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
+            with open(jsn2, 'r') as jsnfile:
+                md2 = json.load(jsnfile)
+
+            md = {
+                "depth":md1["depth"], "coverage":md1["coverage"], 
+                "read_length":md2["read_length"], "run_type":md2["run_type"] 
+            }
+            loaded_metadata[e] = md
             
         # Load files in parallel
         with ThreadPoolExecutor() as executor:
@@ -1203,12 +1214,22 @@ class ExtendedEncodeDataHandler:
             if assay in loaded_data.keys():
                 dtensor.append(loaded_data[assay])
                 availability.append(1)
-                mdtensor.append([np.log2(loaded_metadata[assay]['depth']), loaded_metadata[assay]['coverage']])
+
+                if "single" in loaded_metadata[assay]['run_type'][list(loaded_metadata[assay]['run_type'].keys())[0]]:
+                    runt = 0
+                elif "pair" in loaded_metadata[assay]['run_type'][list(loaded_metadata[assay]['run_type'].keys())[0]]:
+                    runt = 1
+
+                readl = loaded_metadata[assay]['read_length'][list(loaded_metadata[assay]['read_length'].keys())[0]]
+
+                mdtensor.append([
+                    np.log2(loaded_metadata[assay]['depth']), loaded_metadata[assay]['coverage'],
+                    readl, runt])
 
             else:
                 dtensor.append([missing_value for _ in range(L)])
                 availability.append(0)
-                mdtensor.append([missing_value, missing_value])
+                mdtensor.append([missing_value, missing_value, missing_value, missing_value])
 
             i += 1
         
@@ -1232,7 +1253,10 @@ class ExtendedEncodeDataHandler:
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
 
-    def initialize_EED(self, m, context_length, bios_batchsize, loci_batchsize, ccre=False, bios_min_exp_avail_threshold=1):
+    def initialize_EED(self,
+        m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
+        bios_min_exp_avail_threshold=1, check_completeness=False):
+
         self.set_alias()
         self.coord()
 
@@ -1248,8 +1272,12 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
         
         for bios in list(self.navigation.keys()):
-            if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete)>0:
-                del self.navigation[bios] 
+            if check_completeness:
+                if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete(bios_name))>0:
+                    del self.navigation[bios] 
+            else:
+                if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+                    del self.navigation[bios] 
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
@@ -1261,13 +1289,13 @@ class ExtendedEncodeDataHandler:
         self.current_bios_batch_pointer = 0
         self.current_loci_batch_pointer = 0
     
-    def new_batch(self):
+    def update_batch_pointers(self):
         self.current_loci_batch_pointer += self.loci_batchsize
         self.current_bios_batch_pointer += self.bios_batchsize
 
     def get_batch(self, dsf):
         batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
-        batch_bios_list = self.m_regions[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
+        batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
         
         batch_data = []
         batch_metadata = []
@@ -1280,6 +1308,7 @@ class ExtendedEncodeDataHandler:
             batch_metadata.append(md)
             batch_availability.append(avl)
         
+        batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
 
 if __name__ == "__main__": 
@@ -1315,9 +1344,10 @@ if __name__ == "__main__":
         # loaded_data, loaded_metadata = eed.load_bios("ENCBS075PNA", eed.m_regions[0], DSF=1, f_format="npz")
         # d, md, avl = eed.make_bios_tensor(loaded_data, loaded_metadata)
 
-        d, md, avl = eed.make_region_tensor(["ENCBS075PNA" for _ in range(5)], eed.m_regions[0], DSF=1)
+        batch_data, batch_metadata, batch_availability = eed.make_region_tensor(["ENCBS075PNA" for _ in range(5)], eed.m_regions[0], DSF=1)
+        batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
 
-        print(d.shape, md.shape, avl.shape)
+        print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
         # print(d, md, avl)
 
         t1 = datetime.datetime.now()
