@@ -1036,18 +1036,18 @@ class ExtendedEncodeDataHandler:
                 print("Merged navigation JSON does not exist. Run merge_donors first.")
                 donor_alias = {}
 
-            aliases = {
+            self.aliases = {
                 "biosample_aliases": biosample_alias,
                 "experiment_aliases": experiment_alias,
                 "donor_aliases": donor_alias
             }
         else:
-            aliases = {
+            self.aliases = {
                 "biosample_aliases": biosample_alias,
                 "experiment_aliases": experiment_alias}
 
         with open(self.alias_path, 'w') as file:
-            json.dump(aliases, file, indent=4)
+            json.dump(self.aliases, file, indent=4)
 
     def merge_donors(self):
         """Merge biosamples based on donors and write a merged navigation JSON file."""
