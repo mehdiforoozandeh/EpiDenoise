@@ -1267,12 +1267,15 @@ class ExtendedEncodeDataHandler:
             self.generate_random_loci(m, context_length)
         
         if os.path.exists(self.navigation_path) == False:
+            print("no navigation located")
             self.navigate_bios_exps()
+
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
         print(self.navigation)
+        exit()
         
         for bios in list(self.navigation.keys()):
             if check_completeness:
