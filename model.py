@@ -43,9 +43,6 @@ class MetadataEmbeddingModule(nn.Module):
         runtype = metadata[:, 3, :].long() 
         
         runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
-        # Check max index
-        print(runtype.unique(), self.runtype_embedding)
-        exit()
 
         # Transform continuous metadata
         depth_embed = self.depth_transform(depth)
@@ -68,7 +65,9 @@ class MetadataEmbeddingModule(nn.Module):
         return embeddings
 
     def embed_avail(self, availability):
-        availability_embed = self.avail_embedding(availability.long())
+        availability = availability.long()
+        availability = torch.where(availability == -1, torch.tensor(2, device=availability.device), availability)
+        availability_embed = self.avail_embedding(availability)
         return availability_embed
 
     def forward(self, x_metadata, y_metadata, availability):
