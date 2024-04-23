@@ -4063,7 +4063,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "epd30a":
         hyper_parameters30a = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
+            "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
             "metadata_embedding_dim":50,
             "dropout": 0.05,
@@ -4084,7 +4084,7 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "epd30b":
         hyper_parameters30b = {
-            "data_path": "/project/compbio-lab/EIC/training_data/",
+            "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
             "dropout": 0.01,
             "context_length": 200,
