@@ -759,8 +759,8 @@ class ComboLoss30a(nn.Module):
     def __init__(self, alpha=0.5):
         super(ComboLoss30a, self).__init__()
         self.alpha = alpha
-        # self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
-        self.nll_loss = nn.L1Loss(reduction='mean')
+        self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
+        # self.nll_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, masked_map, obs_map):
 
@@ -769,9 +769,9 @@ class ComboLoss30a(nn.Module):
 
         if torch.isnan(obs_loss).any() or torch.isnan(pred_loss).any():
             print("NaN value encountered in loss components.")
+            print(torch.isnan(obs_loss).sum(), torch.isnan(pred_loss).sum())
             return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(obs_loss.device)
-
-
+        
         return self.alpha*pred_loss, (1-self.alpha)*obs_loss
 
 class ComboLoss30b(nn.Module):
