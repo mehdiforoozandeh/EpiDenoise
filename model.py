@@ -3150,16 +3150,10 @@ class PRE_TRAINER(object):
                 observed_map = observed_map.to(self.device)
 
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
 
-                if torch.isnan(obs_loss).any():
-                    print("NaN value encountered in loss components.")
-                    loss = pred_loss
-                elif torch.isnan(pred_loss).any():
+                if torch.isnan(pred_loss).any():
                     loss = obs_loss
-                    print(len(X_batch[masked_map]), len(output[masked_map]))
-                    print("NaN value encountered in loss components.")
                 else:
                     loss = pred_loss+obs_loss  
 
@@ -4106,14 +4100,14 @@ if __name__ == "__main__":
             "dropout": 0.05,
             "nhead": 4,
             "d_model": 192,
-            "nlayers": 3,
-            "epochs": 4,
+            "nlayers": 2,
+            "epochs": 5,
             "mask_percentage": 0.1,
-            "context_length": 400,
-            "batch_size": 5,
+            "context_length": 200,
+            "batch_size": 100,
             "learning_rate": 1e-4,
-            "num_loci": 1000,
-            "lr_halflife":100
+            "num_loci": 10,
+            "lr_halflife":10
         }
         train_epidenoise30a(
             hyper_parameters30a, 
