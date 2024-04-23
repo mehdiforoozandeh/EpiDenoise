@@ -1235,12 +1235,12 @@ class EpiDenoise30a(nn.Module):
 
         self.signal_decoder =  nn.Linear(d_model, output_dim)
         self.signal_softplus = nn.Softplus()
-        self.mask_decoder = nn.Linear(d_model, output_dim)
+        # self.mask_decoder = nn.Linear(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-        print(md_embedding.shape, src.shape)
+        # print(md_embedding.shape, src.shape)
         src = torch.cat([src, md_embedding], dim=-1)
 
         src = self.embedding_linear(src)
@@ -1256,7 +1256,7 @@ class EpiDenoise30a(nn.Module):
         src = self.signal_softplus(self.signal_decoder(src))
 
         src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
+        # msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
 
         return src #, msk
 
