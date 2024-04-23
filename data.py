@@ -1300,7 +1300,7 @@ class ExtendedEncodeDataHandler:
         batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
         batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
         
-        peint(self.navigation)
+        print(self.navigation)
         exit()
         batch_data = []
         batch_metadata = []
