@@ -3117,18 +3117,16 @@ class PRE_TRAINER(object):
             - each batch consists of batch_size number of biosamples for 1 region
         """
             
-        num_total_samples = len(dataset.m_regions) * len(dataset.navigation)
+        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
 
-            while dataset.current_loci_batch_pointer < dataset.num_regions or dataset.current_bios_batch_pointer < dataset.num_bios:
+            while self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios:
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(lst, k=2), reverse=True) # dsf_X is of equal or higher dsf
 
-                X_batch, mX_batch, avX_batch = dataset.get_batch(dsf_X)
-                Y_batch, mY_batch, avY_batch = dataset.get_batch(dsf_Y)
-                
-                dataset.update_batch_pointers()
+                X_batch, mX_batch, avX_batch = self.dataset.get_batch(dsf_X)
+                Y_batch, mY_batch, avY_batch = self.dataset.get_batch(dsf_Y)
 
                 # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
                 X_batch, avail_batch = self.masker.mask_feature30(X_batch, avX_batch)
@@ -3139,9 +3137,10 @@ class PRE_TRAINER(object):
                 loss = self.criterion(output, Y_batch, masked_map, observed_map)
                 
                 print(
-                    epoch, dataset.current_loci_batch_pointer/self.num_regions, 
-                    dataset.current_bios_batch_pointer/self.num_bios, loss.item())
+                    epoch, self.dataset.current_loci_batch_pointer/self.num_regions, 
+                    self.dataset.current_bios_batch_pointer/self.num_bios, loss.item())
 
+                self.dataset.update_batch_pointers()
                 loss.backward()  
                 self.optimizer.step()
                 
