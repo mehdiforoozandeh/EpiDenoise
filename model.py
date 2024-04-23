@@ -766,10 +766,6 @@ class ComboLoss30a(nn.Module):
 
         obs_loss =  self.nll_loss(pred_signals[obs_map], true_signals[obs_map])
         pred_loss = self.nll_loss(pred_signals[masked_map], true_signals[masked_map])
-
-        if torch.isnan(obs_loss).any() or torch.isnan(pred_loss).any():
-            print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(obs_loss.device)
         
         return self.alpha*pred_loss, (1-self.alpha)*obs_loss
 
@@ -3157,7 +3153,15 @@ class PRE_TRAINER(object):
 
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
 
-                loss = pred_loss+obs_loss  
+                if torch.isnan(obs_loss).any():
+                    print("NaN value encountered in loss components.")
+                    loss = pred_loss
+                elif torch.isnan(pred_loss).any():
+                    loss = obs_loss
+                    print("NaN value encountered in loss components.")
+                else:
+                    loss = pred_loss+obs_loss  
+
                 if torch.isnan(loss).sum() > 0:
                     skipmessage = "Encountered nan loss! Skipping batch..."
                     log_strs.append(skipmessage)
