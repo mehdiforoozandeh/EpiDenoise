@@ -1071,6 +1071,7 @@ class ExtendedEncodeDataHandler:
     def navigate_bios_exps(self):
         """Navigate all biosample-experiment pairs and save in JSON."""
         navigation = {}
+        print("navigating")
         for bios in os.listdir(self.base_path):
             if os.path.isdir(os.path.join(self.base_path, bios)):
                 navigation[bios] = {}
@@ -1300,8 +1301,6 @@ class ExtendedEncodeDataHandler:
         batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
         batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
         
-        print(self.navigation)
-        exit()
         batch_data = []
         batch_metadata = []
         batch_availability = []
