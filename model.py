@@ -43,9 +43,8 @@ class MetadataEmbeddingModule(nn.Module):
         runtype = metadata[:, 3, :].long() 
 
         # Check max index
-        if runtype.max() >= self.runtype_embedding:
-            print("Index out of bounds error likely!")
-            exit()
+        print(runtype.max(), self.runtype_embedding)
+        exit()
 
         # Transform continuous metadata
         depth_embed = self.depth_transform(depth)
