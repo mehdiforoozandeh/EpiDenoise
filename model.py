@@ -56,17 +56,14 @@ class MetadataEmbeddingModule(nn.Module):
 
         runtype_embed = self.runtype_embedding(runtype)
 
-        num_embeddings = your_embedding_layer.weight.size(0)
-
-        
-
         # Concatenate all embeddings
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
         return embeddings
 
     def embed_avail(self, availability):
         availability = availability.long()
-        availability = torch.where(availability == -1, torch.tensor(2, device=availability.device), availability)
+        availability = torch.where(
+            availability == -1, torch.tensor(2, device=availability.device), availability)
         availability_embed = self.avail_embedding(availability)
         return availability_embed
 
@@ -1339,8 +1336,8 @@ class EpiDenoise30b(nn.Module):
 
 class PRE_TRAINER(object):  
     def __init__(self, model, dataset, criterion, optimizer, scheduler, eed=True):
-        # self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.device = "cpu"
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # self.device = "cpu"
         print(self.device)
 
         self.model = model.to(self.device)
