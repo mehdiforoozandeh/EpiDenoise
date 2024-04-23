@@ -1010,6 +1010,7 @@ class ExtendedEncodeDataHandler:
             with open(self.alias_path, 'r') as file:
                 self.aliases = json.load(file)
             return
+
         """Set aliases for biosamples, experiments, and donors based on data availability."""
         self.df1.set_index('Accession', inplace=True)
         self.df1 = self.df1.drop("Unnamed: 0", axis=1)
@@ -1257,7 +1258,7 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=False):
+        bios_min_exp_avail_threshold=1, check_completeness=True):
 
         self.set_alias()
         self.coords()
