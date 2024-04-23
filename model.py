@@ -3137,7 +3137,7 @@ class PRE_TRAINER(object):
                 Y_batch, mY_batch, avY_batch = self.dataset.get_batch(dsf_Y)
 
                 # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
-                X_batch, avail_batch = self.masker.mask_feature30(X_batch, avX_batch)
+                X_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                 masked_map = (X_batch == token_dict["cloze_mask"])
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
@@ -4104,8 +4104,8 @@ if __name__ == "__main__":
             "epochs": 5,
             "mask_percentage": 0.1,
             "context_length": 200,
-            "batch_size": 100,
-            "learning_rate": 1e-4,
+            "batch_size": 20,
+            "learning_rate": 1e-3,
             "num_loci": 10,
             "lr_halflife":10
         }

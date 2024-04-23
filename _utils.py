@@ -233,7 +233,7 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
-    def mask_feature30(self, data, availability):
+    def mask_feature30(self, data, metadata, availability, missing_value=-1):
         B, L, F = data.shape
 
         # Number of features to mask per sample in the batch
@@ -247,6 +247,7 @@ class DataMasker:
 
         # Prepare the new availability tensor
         new_A = availability.clone().float()
+        new_md = metadata.clone().float()
 
         # Mask indices generation and masking operation
         for b in range(B):
@@ -258,6 +259,7 @@ class DataMasker:
 
                 data[b, :, actual_indices_to_mask] = self.mask_value  # Mask the features in X
                 new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
+                new_md[b, :, actual_indices_to_mask] = missing_value
 
         return data, new_A
         
