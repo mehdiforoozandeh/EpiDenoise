@@ -3123,7 +3123,7 @@ class PRE_TRAINER(object):
 
             while self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios:
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
-                dsf_X, dsf_Y = sorted(random.choices(lst, k=2), reverse=True) # dsf_X is of equal or higher dsf
+                dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
 
                 X_batch, mX_batch, avX_batch = self.dataset.get_batch(dsf_X)
                 Y_batch, mY_batch, avY_batch = self.dataset.get_batch(dsf_Y)
