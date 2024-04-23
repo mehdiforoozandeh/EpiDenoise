@@ -3154,7 +3154,8 @@ class PRE_TRAINER(object):
 
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
                 pred_loss, obs_loss = self.criterion(output, Y_batch, masked_map, observed_map)
-                
+
+                loss = pred_loss+obs_loss    
                 print(
                     epoch, self.dataset.current_loci_batch_pointer/self.dataset.num_regions, 
                     self.dataset.current_bios_batch_pointer/self.dataset.num_bios, 
