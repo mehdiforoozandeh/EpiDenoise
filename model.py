@@ -766,8 +766,8 @@ class ComboLoss30a(nn.Module):
 
         obs_loss =  self.nll_loss(pred_signals[obs_map], true_signals[obs_map])
         pred_loss = self.nll_loss(pred_signals[masked_map], true_signals[masked_map])
-        print(obs_loss, pred_signals[obs_map].shape, true_signals[obs_map].shape)
-        print(pred_loss, pred_signals[masked_map].shape, true_signals[masked_map].shape)
+        print(obs_loss.item(), pred_signals[obs_map].shape, true_signals[obs_map].shape)
+        print(pred_loss.item(), pred_signals[masked_map].shape, true_signals[masked_map].shape)
         exit()
         if torch.isnan(obs_loss).any() or torch.isnan(pred_loss).any():
             print("NaN value encountered in loss components.")
@@ -3147,6 +3147,10 @@ class PRE_TRAINER(object):
                 masked_map = (X_batch == token_dict["cloze_mask"])
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
+                print(X_batch[masked_map])
+                print(X_batch[observed_map])
+                exit()
+
                 X_batch = X_batch.to(self.device)
                 mX_batch = mX_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
@@ -3155,9 +3159,8 @@ class PRE_TRAINER(object):
                 masked_map = masked_map.to(self.device)
                 observed_map = observed_map.to(self.device)
 
-                print(X_batch.shape, mX_batch.shape, mY_batch.shape, avail_batch.shape)
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                print(output.shape)
+
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
                 print(pred_loss.shape, obs_loss.shape)
                 exit()
