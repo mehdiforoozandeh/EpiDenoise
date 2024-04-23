@@ -718,7 +718,7 @@ class ComboLoss21(nn.Module):
 class ComboLoss22(nn.Module):
     def __init__(self, alpha=0.75):
         super(ComboLoss22, self).__init__()
-        self.alpha = alpha
+        self.alpha = alpha.float()
         self.mse_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, cloze_mask, union_mask):#, aggrmean, aggrstd, aggr_mask):
