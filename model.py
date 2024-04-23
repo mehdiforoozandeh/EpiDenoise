@@ -42,6 +42,11 @@ class MetadataEmbeddingModule(nn.Module):
         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
         runtype = metadata[:, 3, :].long() 
 
+        # Check max index
+        if runtype.max() >= self.runtype_embedding:
+            print("Index out of bounds error likely!")
+            exit()
+
         # Transform continuous metadata
         depth_embed = self.depth_transform(depth)
         coverage_embed = self.coverage_transform(coverage)
@@ -56,10 +61,7 @@ class MetadataEmbeddingModule(nn.Module):
 
         num_embeddings = your_embedding_layer.weight.size(0)
 
-        # Check max index
-        if runtype.max() >= self.runtype_embedding:
-            print("Index out of bounds error likely!")
-            exit()
+        
 
         # Concatenate all embeddings
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
@@ -1338,7 +1340,8 @@ class EpiDenoise30b(nn.Module):
 
 class PRE_TRAINER(object):  
     def __init__(self, model, dataset, criterion, optimizer, scheduler, eed=True):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = "cpu"
         print(self.device)
 
         self.model = model.to(self.device)
