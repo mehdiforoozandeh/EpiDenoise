@@ -4072,7 +4072,7 @@ if __name__ == "__main__":
             "epochs": 4,
             "mask_percentage": 0.2,
             "context_length": 200,
-            "batch_size": 200,
+            "batch_size": 10,
             "learning_rate": 1e-4,
             "num_loci": 1000,
             "lr_halflife":100

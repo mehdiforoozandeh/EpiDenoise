@@ -1250,6 +1250,7 @@ class ExtendedEncodeDataHandler:
             metadata.append(md)
             availability.append(avl)
         
+        print(list_bios)
         print(len(data), len(metadata), len(availability))
         exit()
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
