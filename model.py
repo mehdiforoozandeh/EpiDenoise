@@ -3841,7 +3841,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     nlayers = hyper_parameters["nlayers"]
     metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
     
-    
+    resolution = 25
     epochs = hyper_parameters["epochs"]
     num_training_loci = hyper_parameters["num_loci"]
     mask_percentage = hyper_parameters["mask_percentage"]
@@ -3865,7 +3865,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=num_training_loci, context_length=context_length, 
+        m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
         bios_min_exp_avail_threshold=1, check_completeness=True)
 
