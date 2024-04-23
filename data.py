@@ -1247,11 +1247,14 @@ class ExtendedEncodeDataHandler:
         availability = []
 
         for bios in list_bios:
-            loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-            d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
-            data.append(d)
-            metadata.append(md)
-            availability.append(avl)
+            try:
+                loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+                d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
+                data.append(d)
+                metadata.append(md)
+                availability.append(avl)
+            except:
+                pass
         
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
@@ -1296,18 +1299,13 @@ class ExtendedEncodeDataHandler:
     def update_batch_pointers(self):
         # Check if the biosample pointer needs to be reset or incremented
         if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
-            # Reset the biosample pointer when all biosamples have been processed
             self.current_bios_batch_pointer = 0
 
-            # Increment the loci pointer only when all biosamples are done
             if self.current_loci_batch_pointer + self.loci_batchsize < self.num_regions:
                 self.current_loci_batch_pointer += self.loci_batchsize
             else:
-                # Optionally reset or handle the loci pointer at the end of all regions
-                # This line depends on whether you loop over loci continuously or stop
                 self.current_loci_batch_pointer = 0  # Reset or manage as needed
         else:
-            # Increment the biosample pointer as usual
             self.current_bios_batch_pointer += self.bios_batchsize
 
     def get_batch(self, dsf):
