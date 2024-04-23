@@ -1295,12 +1295,12 @@ class ExtendedEncodeDataHandler:
     
     def update_batch_pointers(self):
         # Check if the biosample pointer needs to be reset or incremented
-        if self.current_bios_batch_pointer + self.bios_batchsize >= self.dataset.num_bios:
+        if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
             # Reset the biosample pointer when all biosamples have been processed
             self.current_bios_batch_pointer = 0
 
             # Increment the loci pointer only when all biosamples are done
-            if self.current_loci_batch_pointer + self.loci_batchsize < self.dataset.num_regions:
+            if self.current_loci_batch_pointer + self.loci_batchsize < self.num_regions:
                 self.current_loci_batch_pointer += self.loci_batchsize
             else:
                 # Optionally reset or handle the loci pointer at the end of all regions
