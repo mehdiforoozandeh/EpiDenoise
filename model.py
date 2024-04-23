@@ -3153,8 +3153,12 @@ class PRE_TRAINER(object):
                 masked_map = masked_map.to(self.device)
                 observed_map = observed_map.to(self.device)
 
+                print(X_batch.shape, mX_batch.shape, mY_batch.shape, avail_batch.shape)
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                print(output.shape)
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
+                print(pred_loss.shape, obs_loss.shape)
+                exit()
 
                 loss = pred_loss+obs_loss  
                 print(loss.item(), torch.isnan(output).sum().item())
