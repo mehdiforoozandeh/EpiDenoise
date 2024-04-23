@@ -3145,11 +3145,9 @@ class PRE_TRAINER(object):
                 # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
                 X_batch, avail_batch = self.masker.mask_feature30(X_batch, avX_batch)
                 masked_map = (X_batch == token_dict["cloze_mask"])
-                observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
-
-                print(X_batch[masked_map])
-                print(X_batch[observed_map].min(), X_batch[observed_map].max())
-                exit()
+                observed_map = (
+                    X_batch != token_dict["missing_mask"]) & 
+                    (X_batch != token_dict["cloze_mask"])
 
                 X_batch = X_batch.to(self.device)
                 mX_batch = mX_batch.to(self.device)
@@ -3162,7 +3160,7 @@ class PRE_TRAINER(object):
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
-                print(pred_loss.shape, obs_loss.shape)
+                print(pred_loss, obs_loss)
                 exit()
 
                 loss = pred_loss+obs_loss  
