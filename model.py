@@ -766,7 +766,9 @@ class ComboLoss30a(nn.Module):
 
         obs_loss =  self.nll_loss(pred_signals[obs_map], true_signals[obs_map])
         pred_loss = self.nll_loss(pred_signals[masked_map], true_signals[masked_map])
-
+        print(obs_loss, pred_signals[obs_map].shape, true_signals[obs_map].shape)
+        print(pred_loss, pred_signals[masked_map].shape, true_signals[masked_map].shape)
+        exit()
         if torch.isnan(obs_loss).any() or torch.isnan(pred_loss).any():
             print("NaN value encountered in loss components.")
             return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(obs_loss.device)
