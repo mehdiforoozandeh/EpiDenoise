@@ -1239,7 +1239,11 @@ class EpiDenoise30a(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        print(md_embedding.shape)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        print(md_embedding.shape)
+        print(src.shape)
+        exit()
 
         src = torch.cat([src, md_embedding], dim=-1)
 
