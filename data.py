@@ -1249,7 +1249,9 @@ class ExtendedEncodeDataHandler:
             data.append(d)
             metadata.append(md)
             availability.append(avl)
-
+        
+        print(data.shape, metadata.shape, availability.shape)
+        exit()
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
 
