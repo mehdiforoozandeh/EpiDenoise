@@ -1276,6 +1276,8 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
         
+        print(self.navigation)
+        
         for bios in list(self.navigation.keys()):
             if check_completeness:
                 if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete(bios_name))>0:
