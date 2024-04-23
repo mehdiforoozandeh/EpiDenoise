@@ -3157,23 +3157,18 @@ class PRE_TRAINER(object):
                 pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
 
                 loss = pred_loss+obs_loss  
-                print(loss.item())
-                exit()
+                print(loss.item(), torch.isnan(output).sum().item)
                 if torch.isnan(loss).sum() > 0:
                     skipmessage = "Encountered nan loss! Skipping batch..."
                     log_strs.append(skipmessage)
                     print(skipmessage)
-                    torch.cuda.empty_cache()
-
-                    print(torch.isnan(output).sum())
-                    print(output.shape)  
-                    print(output.sum())  
+                    torch.cuda.empty_cache() 
                     continue
 
-                print(
-                    epoch, self.dataset.current_loci_batch_pointer/self.dataset.num_regions, 
-                    self.dataset.current_bios_batch_pointer/self.dataset.num_bios, 
-                    pred_loss.item(), obs_loss.item())
+                # print(
+                #     epoch, self.dataset.current_loci_batch_pointer/self.dataset.num_regions, 
+                #     self.dataset.current_bios_batch_pointer/self.dataset.num_bios, 
+                #     pred_loss.item(), obs_loss.item())
 
                 self.dataset.update_batch_pointers()
                 loss.backward()  
