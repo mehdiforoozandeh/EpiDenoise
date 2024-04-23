@@ -3122,6 +3122,9 @@ class PRE_TRAINER(object):
             self.dataset.new_epoch()
 
             while self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios:
+                self.optimizer.zero_grad()
+                torch.cuda.empty_cache()
+
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
 
@@ -3132,6 +3135,14 @@ class PRE_TRAINER(object):
                 X_batch, avail_batch = self.masker.mask_feature30(X_batch, avX_batch)
                 masked_map = (X_batch == token_dict["cloze_mask"])
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
+
+                X_batch = X_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                Y_batch = Y_batch.to(self.device)
+                masked_map = masked_map.to(self.device)
+                observed_map = observed_map.to(self.device)
 
                 output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
                 loss = self.criterion(output, Y_batch, masked_map, observed_map)
