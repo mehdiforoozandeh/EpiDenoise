@@ -759,8 +759,8 @@ class ComboLoss30a(nn.Module):
     def __init__(self, alpha=0.5):
         super(ComboLoss30a, self).__init__()
         self.alpha = alpha
-        # self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
-        self.nll_loss = nn.MSELoss(reduction='mean')
+        self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
+        # self.nll_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, masked_map, obs_map):
 
@@ -3158,6 +3158,7 @@ class PRE_TRAINER(object):
                     loss = pred_loss
                 elif torch.isnan(pred_loss).any():
                     loss = obs_loss
+                    print(len(X_batch[masked_map]), len(output[masked_map]))
                     print("NaN value encountered in loss components.")
                 else:
                     loss = pred_loss+obs_loss  
