@@ -1251,9 +1251,6 @@ class ExtendedEncodeDataHandler:
             metadata.append(md)
             availability.append(avl)
         
-        print(list_bios)
-        print(len(data), len(metadata), len(availability))
-        exit()
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
 
@@ -1274,6 +1271,8 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
+
+        print(self.navigation)
         
         for bios in list(self.navigation.keys()):
             if check_completeness:
