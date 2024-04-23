@@ -3156,8 +3156,8 @@ class PRE_TRAINER(object):
                 loss = self.criterion(output, Y_batch, masked_map, observed_map)
                 
                 print(
-                    epoch, self.dataset.current_loci_batch_pointer/self.num_regions, 
-                    self.dataset.current_bios_batch_pointer/self.num_bios, loss.item())
+                    epoch, self.dataset.current_loci_batch_pointer/self.dataset.num_regions, 
+                    self.dataset.current_bios_batch_pointer/self.dataset.num_bios, loss.item())
 
                 self.dataset.update_batch_pointers()
                 loss.backward()  
