@@ -1071,7 +1071,6 @@ class ExtendedEncodeDataHandler:
     def navigate_bios_exps(self):
         """Navigate all biosample-experiment pairs and save in JSON."""
         navigation = {}
-        print("navigating")
         for bios in os.listdir(self.base_path):
             if os.path.isdir(os.path.join(self.base_path, bios)):
                 navigation[bios] = {}
@@ -1273,9 +1272,6 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
-
-        print(self.navigation)
-        exit()
         
         for bios in list(self.navigation.keys()):
             if check_completeness:
