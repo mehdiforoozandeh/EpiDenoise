@@ -237,15 +237,21 @@ class DataMasker:
         B, L, F = data.shape
 
         # Number of features to mask per sample in the batch
-        num_to_mask = (availability.sum(dim=1) * self.mask_percentage).int()
-        print(num_to_mask.shape)
-        exit()
+        num_to_mask = []
+        num_available = availability.sum(dim=1)
+        for b in range(B):
+            if num_available[b] == 1:
+                num_to_mask.append(0)
+            else:
+                num_to_mask.append(int(num_available[b] * self.mask_percentage) + 1)
+        
 
         # Prepare the new availability tensor
         new_A = availability.clone().float()
 
         # Mask indices generation and masking operation
         for b in range(B):
+            
             if num_to_mask[b] > 0:
                 available_indices = torch.where(availability[b] == 1)[0]  # Find indices where features are available
                 mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
