@@ -43,7 +43,7 @@ class MetadataEmbeddingModule(nn.Module):
         runtype = metadata[:, 3, :].long() 
 
         # Check max index
-        print(runtype.max(), self.runtype_embedding)
+        print(runtype.unique(), self.runtype_embedding)
         exit()
 
         # Transform continuous metadata
