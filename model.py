@@ -760,7 +760,7 @@ class ComboLoss30a(nn.Module):
         super(ComboLoss30a, self).__init__()
         self.alpha = alpha
         # self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
-        self.nll_loss = nn.MSELoss(reduction='mean', full=True)
+        self.nll_loss = nn.MSELoss(reduction='mean')
 
     def forward(self, pred_signals, true_signals, masked_map, obs_map):
 
