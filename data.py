@@ -1277,7 +1277,7 @@ class ExtendedEncodeDataHandler:
         for bios in list(self.navigation.keys()):
             if check_completeness:
                 if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete(bios))>0:
-                    print(f"ignoring {bios}")
+                    # print(f"ignoring {bios}")
                     del self.navigation[bios] 
             else:
                 if len(self.navigation[bios]) < bios_min_exp_avail_threshold:

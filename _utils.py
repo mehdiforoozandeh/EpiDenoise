@@ -245,7 +245,7 @@ class DataMasker:
         # Mask indices generation and masking operation
         for b in range(B):
             if num_to_mask[b] > 0:
-                available_indices = torch.where(A[b] == 1)[0]  # Find indices where features are available
+                available_indices = torch.where(availability[b] == 1)[0]  # Find indices where features are available
                 mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
                 actual_indices_to_mask = available_indices[mask_indices]  # Actual indices in the feature dimension
 
