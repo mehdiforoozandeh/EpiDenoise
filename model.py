@@ -41,7 +41,8 @@ class MetadataEmbeddingModule(nn.Module):
         coverage = metadata[:, 1, :].unsqueeze(-1).float() 
         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
         runtype = metadata[:, 3, :].long() 
-
+        
+        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
         # Check max index
         print(runtype.unique(), self.runtype_embedding)
         exit()
