@@ -961,7 +961,9 @@ class ExtendedEncodeDataHandler:
             exp_full = True
             for dsf in required_dsfs:
                 signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
-                if os.path.exists(signal_path) == False: # and any(f.endswith('.npz') or f.endswith('.npy') for f in os.listdir(signal_path))):
+                md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
+                md2_path = os.path.join(exp_path, "file_metadata.json")
+                if os.path.exists(signal_path) == False or os.path.exists(md1_path) == False or os.path.exists(md2_path) == False: 
                     exp_full = False
             if exp_full == False:
                 missing_exp.append(exp)
