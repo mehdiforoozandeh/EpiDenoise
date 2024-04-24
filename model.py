@@ -3136,6 +3136,11 @@ class PRE_TRAINER(object):
                 X_batch, mX_batch, avX_batch = self.dataset.get_batch(dsf_X)
                 Y_batch, mY_batch, avY_batch = self.dataset.get_batch(dsf_Y)
 
+                if X_batch.shape != Y_batch.shape or mX_batch.shape != mY_batch.shape or avX_batch.shape != avY_batch.shape:
+                    self.dataset.update_batch_pointers()
+                    print("mismatch in shapes! skipped batch...")
+                    continue
+
                 # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
                 X_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                 masked_map = (X_batch == token_dict["cloze_mask"])
