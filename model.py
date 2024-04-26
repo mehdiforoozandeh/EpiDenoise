@@ -9,6 +9,7 @@ import numpy as np
 from _utils import *
 from sklearn.metrics import r2_score
 from datetime import datetime
+from scipy.stats import nbinom
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -25,7 +26,7 @@ class MetadataEmbeddingModule(nn.Module):
         self.non_linearity = non_linearity
         self.continuous_size = 1 # Simplified for demonstration
 
-        self.runtype_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: single_end, pair_end, not_available
+        self.runtype_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: single_end, pair_end, missing
         self.avail_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: available, missing, cloze_masked
 
         # Dense layers for continuous metadata
@@ -82,7 +83,6 @@ class MetadataEmbeddingModule(nn.Module):
 
         return full_embed
 
-    
 class DualConvEmbedding(nn.Module):
     def __init__(self, in_C, out_C, do_batchnorm=True):
         super(DualConvEmbedding, self).__init__()
@@ -582,6 +582,92 @@ class MatrixFactorizationEmbedding(nn.Module):
         return torch.permute(M, (0, 2, 1))
 
 #========================================================================================================#
+#========================================= Negative Binomial ============================================#
+#========================================================================================================#
+
+class NegativeBinomialLayer(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(NegativeBinomialLayer, self).__init__()
+
+        self.fc_p = nn.Linear(input_dim, output_dim)
+        self.fc_n = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        # using sigmoid to ensure it's between 0 and 1
+        p = torch.sigmoid(self.fc_p(x))
+
+        # using softplus to ensure it's positive
+        n = F.softplus(self.fc_r(x))
+
+        return p, n
+
+def negative_binomial_loss(y_true, n_pred, p_pred):
+    """
+        Negative binomial loss function for PyTorch.
+        
+        Parameters
+        ----------
+        y_true : torch.Tensor
+            Ground truth values of the predicted variable.
+        n_pred : torch.Tensor
+            Tensor containing n values of the predicted distribution.
+        p_pred : torch.Tensor
+            Tensor containing p values of the predicted distribution.
+            
+        Returns
+        -------
+        nll : torch.Tensor
+            Negative log likelihood.
+    """
+    
+    # Calculate the negative log likelihood using PyTorch functions
+    nll = (
+        torch.lgamma(n_pred)
+        + torch.lgamma(y_true + 1)
+        - torch.lgamma(n_pred + y_true)
+        - n_pred * torch.log(p_pred)
+        - y_true * torch.log(1 - p_pred)
+    )
+    
+    return nll
+
+class NegativeBinomial(object):
+    def __init__(self, p, n):
+        self.p = p
+        self.n = n
+        
+    def expect(self, stat="median"):
+        if stat == "median":
+            median_value = nbinom.median(self.n, self.p)
+            return torch.tensor(median_value, dtype=torch.float32)
+
+        elif stat == "mean":
+            mean_value = nbinom.mean(self.n, self.p)
+            return torch.tensor(math.floor(mean_value), dtype=torch.float32)
+
+        elif stat == "mode":
+            if self.n <= 1:
+                raise ValueError("Mode is not well-defined for n <= 1 in the negative binomial distribution.")
+            mode_value = math.floor((self.n - 1) * (1 - self.p) / self.p)
+            return torch.tensor(mode_value, dtype=torch.float32)
+    
+    def mean(self):
+        mean_value = nbinom.mean(self.n, self.p)
+        return torch.tensor(mean_value, dtype=torch.float32)
+
+    def interval(self, confidence):
+        interval_value = nbinom.interval(confidence, self.n, self.p)
+        return torch.tensor(interval_value, dtype=torch.float32)
+    
+    def std(self):
+        std_value = nbinom.std(self.n, self.p)
+        return torch.tensor(std_value, dtype=torch.float32)
+
+    def var(self):
+        var_value = nbinom.var(self.n, self.p)
+        return torch.tensor(var_value, dtype=torch.float32)
+
+#========================================================================================================#
 #=========================================== Loss Functions =============================================#
 #========================================================================================================#
 
@@ -738,29 +824,11 @@ class ComboLoss22(nn.Module):
 
         return self.alpha*mse_pred_loss, (1-self.alpha)*mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
-class ComboPoissonNLLloss(nn.Module):
-    def __init__(self, alpha=0.75):
-        super(ComboPoissonNLLloss, self).__init__()
-        self.alpha = alpha
-        self.pnlll = nn.PoissonNLLLoss(reduction='mean', full=True)
-
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):
-
-        obs_loss =  self.pnlll(pred_signals[~union_mask], true_signals[~union_mask])
-        pred_loss = self.pnlll(pred_signals[cloze_mask], true_signals[cloze_mask])
-
-        if torch.isnan(pred_loss).any() or torch.isnan(obs_loss).any():
-            print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(pred_loss.device), torch.tensor(float('nan')).to(pred_loss.device)
-
-        return self.alpha*pred_loss, (1-self.alpha)*obs_loss
-
-class ComboLoss30a(nn.Module):
+class ComboLoss30a_PoissonNLL(nn.Module):
     def __init__(self, alpha=0.5):
-        super(ComboLoss30a, self).__init__()
+        super(ComboLoss30a_PoissonNLL, self).__init__()
         self.alpha = alpha
-        self.nll_loss = nn.PoissonNLLLoss(reduction='mean', full=True)
-        # self.nll_loss = nn.MSELoss(reduction='mean')
+        self.nll_loss = nn.PoissonNLLLoss(log_input=False, reduction='mean', full=True)
 
     def forward(self, pred_signals, true_signals, masked_map, obs_map):
 
@@ -768,6 +836,25 @@ class ComboLoss30a(nn.Module):
         pred_loss = self.nll_loss(pred_signals[masked_map], true_signals[masked_map])
         
         return self.alpha*pred_loss, (1-self.alpha)*obs_loss
+
+class ComboLoss_NBNLL(nn.Module):
+    def __init__(self, alpha=0.5):
+        super(ComboLoss_NBNLL, self).__init__()
+        self.alpha = alpha
+        self.reduction = 'mean'
+
+    def forward(self, p_pred, n_pred, true_signals, masked_map, obs_map):
+        ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
+        imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
+
+        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+
+        if self.reduction == "mean":
+            upsampling_loss = upsampling_loss.mean()
+            imputation_loss = imputation_loss.mean()
+        
+        return self.alpha * imputation_loss, (1-self.alpha) * upsampling_loss
 
 class ComboLoss30b(nn.Module):
     def __init__(self, alpha=0.75):
@@ -1219,7 +1306,6 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
         if self.pos_enc == "relative":
@@ -1230,32 +1316,23 @@ class EpiDenoise30a(nn.Module):
         
         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
-        self.signal_decoder =  nn.Linear(d_model, output_dim)
-        self.signal_softplus = nn.Softplus()
-        # self.mask_decoder = nn.Linear(d_model, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-        # print(md_embedding.shape, src.shape)
+
         src = torch.cat([src, md_embedding], dim=-1)
-
         src = self.embedding_linear(src)
-
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
         if self.pos_enc != "relative":
             src = src + self.position(src)
         
         src = self.transformer_encoder(src) 
-        
-        # msk = torch.sigmoid(self.mask_decoder(src))
-        src = self.signal_softplus(self.signal_decoder(src))
+        p, n = self.neg_binom_layer(src)
 
-        src = torch.permute(src, (1, 0, 2))  # to N, L, F
-        # msk = torch.permute(msk, (1, 0, 2))  # to N, L, F
-
-        return src #, msk
+        return p, n
 
 class EpiDenoise30b(nn.Module):
     def __init__(
@@ -3142,7 +3219,7 @@ class PRE_TRAINER(object):
                     continue
 
                 # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
-                X_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                 masked_map = (X_batch == token_dict["cloze_mask"])
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
@@ -3151,11 +3228,12 @@ class PRE_TRAINER(object):
                 avail_batch = avail_batch.to(self.device)
                 mY_batch = mY_batch.to(self.device)
                 Y_batch = Y_batch.to(self.device)
-                masked_map = masked_map.to(self.device)
-                observed_map = observed_map.to(self.device)
+                masked_map = masked_map.to(self.device) # imputation targets
+                observed_map = observed_map.to(self.device) # upsampling targets
 
-                output = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                pred_loss, obs_loss = self.criterion(output.float(), Y_batch.float(), masked_map, observed_map)
+                output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+
+                pred_loss, obs_loss = self.criterion(output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
@@ -3215,7 +3293,15 @@ class MODEL_LOADER(object):
 
             dilation = self.hyper_parameters["dilation"]
             kernel_size = self.hyper_parameters["kernel_size"]
-
+        
+        elif version in ["30a"]:
+            input_dim = output_dim = hyper_parameters["input_dim"]
+            dropout = hyper_parameters["dropout"]
+            nhead = hyper_parameters["nhead"]
+            d_model = hyper_parameters["d_model"]
+            nlayers = hyper_parameters["nlayers"]
+            metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
+            context_length = hyper_parameters["context_length"]
         
         # Assuming model is an instance of the correct class
         if version == "10":
@@ -3248,6 +3334,11 @@ class MODEL_LOADER(object):
                 input_dim, conv_out_channels, kernel_size, nhead, 
                 d_model, n_enc_layers, n_dec_layers, output_dim, 
                 dilation=dilation, dropout=dropout, context_length=context_length)
+        
+        elif version == "30a":
+            model = EpiDenoise30a(
+                input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+                dropout=dropout, context_length=context_length, pos_enc="relative")
 
         model.load_state_dict(torch.load(self.model_path))
         model = model.to(self.device)
@@ -3887,7 +3978,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss30a()
+    criterion = ComboLoss_NBNLL()
 
     start_time = time.time()
 
@@ -3917,7 +4008,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
 
     return model
 
-def train_epidenoise30b(hyper_parameters, checkpoint_path=None, start_ds=0):
+def train_epidenoise30b(hyper_parameters, checkpoint_path=None):
     # Defining the hyperparameters
     data_path = hyper_parameters["data_path"]
     input_dim = output_dim = hyper_parameters["input_dim"]

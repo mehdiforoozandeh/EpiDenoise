@@ -10,6 +10,7 @@ import pybedtools
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from sklearn.model_selection import train_test_split
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -903,6 +904,7 @@ class ExtendedEncodeDataHandler:
         self.chr_sizes_file = os.path.join(self.base_path, "hg38.chrom.sizes")
         self.alias_path = os.path.join(self.base_path, "aliases.json")
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
+        self.split_path = os.path.join(self.base_path, "train_va_test_split.json")
         # self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
         self.df1 = pd.read_csv(self.df1_path)
@@ -914,9 +916,10 @@ class ExtendedEncodeDataHandler:
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
         # self.ensure_files()
 
-    def coords(self):
+    def coords(self, mode="train"):
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
-        # main_chrs.remove("chr21") # reserved for validation
+        if mode == "train":
+            main_chrs.remove("chr21") # reserved for validation
         self.chr_sizes = {}
 
         with open(self.chr_sizes_file, 'r') as f:
@@ -1087,6 +1090,34 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
+    def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
+        if os.path.exists(self.split_path):
+            with open(self.split_path, 'r') as file:
+                self.split_dict = json.load(file)
+            return
+
+        if sum(splits) != 1:
+            raise ValueError("Sum of splits tuple must be 1.")
+
+        train_size, val_size, test_size = splits
+        train_data, temp_data = train_test_split(self.df1, test_size=(1 - train_size), random_state=random_seed)
+        relative_val_size = val_size / (val_size + test_size)  # Relative size of validation in the temp data
+        val_data, test_data = train_test_split(temp_data, test_size=(1 - relative_val_size), random_state=random_seed)
+        
+        self.split_dict = {}
+        
+        for idx in train_data.Accession:
+            self.split_dict[idx] = 'train'
+        
+        for idx in val_data.Accession:
+            self.split_dict[idx] = 'val'
+        
+        for idx in test_data.Accession:
+            self.split_dict[idx] = 'test'
+        
+        with open(self.split_path, 'w') as file:
+            json.dump(self.split_dict, file, indent=4)
+
     def convert_npz_to_npy(self):
         """Convert all NPZ files to NPY format."""
         for root, dirs, files in os.walk(self.base_path):
@@ -1165,10 +1196,6 @@ class ExtendedEncodeDataHandler:
         
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
-        # exps = [
-        #     name for name in os.listdir(
-        #         os.path.join(self.base_path, bios_name)) if os.path.isdir(
-        #             os.path.join(self.base_path, bios_name, name))]
         
         exps = list(self.navigation[bios_name].keys())
 
@@ -1263,10 +1290,11 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=False):
+        bios_min_exp_avail_threshold=1, check_completeness=True):
 
         self.set_alias()
-        self.coords()
+        self.train_val_test_split()
+        self.coords(mode="train")
 
         if ccre:
             self.generate_ccre_loci(m, context_length)
@@ -1278,15 +1306,14 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
-        
+
+        # filter biosamples
         for bios in list(self.navigation.keys()):
-            if check_completeness:
-                if len(self.navigation[bios]) < bios_min_exp_avail_threshold or len(self.is_bios_complete(bios))>0:
-                    # print(f"ignoring {bios}")
-                    del self.navigation[bios] 
-            else:
-                if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
-                    del self.navigation[bios] 
+            statement1 = bool(len(self.navigation[bios]) < bios_min_exp_avail_threshold)
+            statement2 = bool(check_completeness and len(self.is_bios_complete(bios))>0)
+            statement3 = bool(self.split_dict[bios] != "train")
+            if statement1 or statement2 or statement3:
+                del self.navigation[bios]
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
@@ -1327,6 +1354,31 @@ class ExtendedEncodeDataHandler:
         
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
+
+    def init_eval(self, context_length, bios_min_exp_avail_threshold=1, check_completeness=False, split="test"): #split in ["test", "val"]
+        self.set_alias()
+        self.train_val_test_split()
+        self.coords(mode="eval")
+        
+        if os.path.exists(self.navigation_path) == False:
+            self.navigate_bios_exps()
+            
+        with open(self.navigation_path, 'r') as navfile:
+            self.navigation  = json.load(navfile)
+
+        # filter biosamples
+        for bios in list(self.navigation.keys()):
+            statement1 = bool(len(self.navigation[bios]) < bios_min_exp_avail_threshold)
+            statement2 = bool(check_completeness and len(self.is_bios_complete(bios))>0)
+            statement3 = bool(self.split_dict[bios] != split)
+            if statement1 or statement2 or statement3:
+                del self.navigation[bios]
+
+        self.num_bios = len(self.navigation)
+        self.test_bios = []
+        for b, s in self.split_dict.items():
+            if s == split:
+                self.test_bios.append(b)
 
 if __name__ == "__main__": 
 

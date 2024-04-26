@@ -771,7 +771,192 @@ class old__BAM_TO_SIGNAL(object):
 
 
 
+def reshape_tensor(tensor, context_length_factor):
+    # Get the original size of the tensor
+    samples, seq_length, features = tensor.size()
 
+    # Calculate the new sequence length and number of samples
+    new_seq_length = int(seq_length * context_length_factor)
+    new_samples = int(samples / context_length_factor)
+
+    # Check if the new sequence length is valid
+    if seq_length % new_seq_length != 0:
+        raise ValueError("The context_length_factor does not evenly divide the sequence length")
+
+    # Reshape the tensor
+    reshaped_tensor = tensor.view(new_samples, new_seq_length, features)
+
+    return reshaped_tensor
+
+def mask_data(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15): # used for epidenoise 1.0
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    seq_len = data.size(1)
+
+    if chunk:
+        # Calculate the size of each chunk
+        chunk_size = int(mask_percentage * seq_len / n_chunks)
+    else: 
+        chunk_size = 1
+        n_chunks =  int(mask_percentage * seq_len)
+
+    # Initialize an empty list to store the start indices
+    start_indices = []
+    while len(start_indices) < n_chunks:
+        # Generate a random start index
+        start = torch.randint(0, seq_len - chunk_size, (1,))
+        # Check if the chunk overlaps with any existing chunks
+        if not any(start <= idx + chunk_size and start + chunk_size >= idx for idx in start_indices):
+            # If not, add the start index to the list
+            start_indices.append(start.item())
+
+    # Loop over the start indices
+    for start in start_indices:
+        # Calculate the end index for the current chunk
+        end = start + chunk_size
+        # Set the mask values for the current chunk to True
+        mask[:, start:end, :] = True
+
+    # Create a copy of the data tensor
+    masked_data = data.clone()
+    # Set the masked data values to the mask_value
+    masked_data[mask] = mask_value
+    # Return the masked data and the mask
+
+    return masked_data, mask
+
+def mask_data15(data, mask_value=-1, chunk=False, n_chunks=1, mask_percentage=0.15): # used for epidenoise 1.5
+    """
+    in this version, we added special tokens and made sure not to mask them
+    similar to BERT, using 3 different maskings:
+        1. mask
+        2. replace with random data
+        3. do nothing
+    """
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    seq_len = data.size(1)
+    seglength = (seq_len - 3)/2
+
+    cls_sep_indices = [0, seglength+1, 2*seglength + 2]
+    
+    if chunk:
+        # Calculate the size of each chunk
+        chunk_size = int(mask_percentage * seq_len / n_chunks)
+    else: 
+        chunk_size = 1
+        n_chunks =  int(mask_percentage * seq_len)
+
+    # Initialize an empty list to store the start indices
+    start_indices = []
+    while len(start_indices) < n_chunks:
+        # Generate a random start index
+        start = torch.randint(0, seq_len - chunk_size, (1,))
+        # Check if the chunk overlaps with any existing chunks
+        if not any(start <= idx + chunk_size and start + chunk_size >= idx for idx in start_indices + cls_sep_indices):
+            # If not, add the start index to the list
+            start_indices.append(start.item())
+
+    # Create a copy of the data tensor
+    masked_data = data.clone()
+
+    # Loop over the start indices
+    for start in start_indices:
+        # Calculate the end index for the current chunk
+        end = start + chunk_size
+        # Set the mask values for the current chunk to True
+        mask[:, start:end, :] = True
+
+        # For each position in the chunk, decide how to mask it
+        for pos in range(start, end):
+            rand_num = random.random()
+            if rand_num < 0.8:
+                # 80% of the time, replace with mask_value
+                masked_data[:, pos, :] = mask_value
+            elif rand_num < 0.9:
+                # 10% of the time, replace with a random value in the range of the data
+                data_min = 0
+                data_max = torch.max(data)
+                random_value = data_min + torch.rand(1) * (data_max - data_min)
+                masked_data[:, pos, :] = random_value
+
+    # Return the masked data and the mask
+    return masked_data, mask
+
+def mask_data16(data, available_features, mask_value=-1, chunk_size=6, mask_percentage=0.15): # used for epidenoise 1.6 and 1.7
+    """
+    dimensions of the data: (batch_size, context_length, features)
+    in this version, we make the following changes
+    find available features -> for unavailable features, are corresponding values are -1. 
+    num_all_signals = context * num_available_features
+    num_mask_start = (num_all_signals * mask_percentage) / chunk_size
+    randomly select mask_start coordinates 
+        length: axis2 (start + chunk_size -> no overlap with special tokens)
+        feature: random.choice(available_features)
+    """
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+    if mask_percentage == 0:
+        return data, mask
+
+    seq_len = data.size(1)
+    seglength = (seq_len - 3)/2
+
+    special_tokens = [0, seglength+1, (2*seglength)+2]
+
+    # Calculate total number of signals and number of chunks to be masked
+    num_all_signals = data.size(1) * len(available_features)
+    num_mask_start = int((num_all_signals * mask_percentage) / chunk_size)
+
+    # Loop over the number of chunks to be masked
+    for _ in range(num_mask_start):
+        while True:
+            # Randomly select start coordinates for the chunk
+            length_start = torch.randint(0, seq_len - chunk_size, (1,))
+            feature_start = available_features[torch.randint(0, len(available_features), (1,))]
+
+            # Check if the chunk overlaps with any special tokens
+            if not any(length_start <= idx < length_start+chunk_size for idx in special_tokens):
+                break
+
+        # Apply the masking to the selected chunk
+        mask[:, length_start:length_start+chunk_size, feature_start] = True
+        data[mask] = mask_value
+
+    return data, mask
+
+def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
+    # Initialize a mask tensor with the same shape as the data tensor, filled with False
+    mask = torch.zeros_like(data, dtype=torch.bool)
+
+    if len(available_features) == 1:
+        mask_percentage = 0
+
+    if mask_percentage == 0:
+        return data, mask
+
+    seq_len = data.size(1)
+    num_mask_features = int(len(available_features) * mask_percentage)
+    
+    if num_mask_features == 0:
+        num_mask_features += 1
+
+    selected_indices = []
+    while len(selected_indices) < num_mask_features:
+        randomF = random.choice(available_features)
+        if randomF not in selected_indices:
+            selected_indices.append(randomF)
+
+    # Loop over the selected indices
+    for mask_f in selected_indices:
+
+        # Apply the masking to the selected chunk
+        mask[:, :, mask_f] = True
+        
+    data[mask] = mask_value
+
+    return data, mask
+ 
 
 def eDICE_eval():
     e = Evaluation(

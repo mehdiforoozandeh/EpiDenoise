@@ -1,4 +1,5 @@
 from model import *
+from data import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error
 import scipy.stats
@@ -1315,7 +1316,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.png", dpi=200)
 
-class EVAL(object): # on chr21
+class EVAL_EIC(object): # on chr21
     def __init__(
         self, model, traindata_path, evaldata_path, context_length, batch_size, hyper_parameters_path="",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="22", resolution=25, 
@@ -1334,7 +1335,6 @@ class EVAL(object): # on chr21
 
         self.model = model
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
         self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
         self.mark_dict = {
@@ -1763,7 +1763,345 @@ class EVAL(object): # on chr21
             self.viz.MODEL_regplot_overall(self.model_res, metric=m)
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
+class EVAL_EED(object):
+    """
+    for imputating missing tracks, we should replace mY with 'prompt' metadata.
+    prompt = [24, ~max_assay_genome_coverage, ~max_assay_read_length, pair-end]
+    """
+    def __init__(
+        self, model, data_path, context_length, batch_size, hyper_parameters_path="",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="30a", resolution=25, 
+        savedir="models/evals/", mode="eval"):
+
+        self.savedir = savedir
+        if os.path.exists(self.savedir) == False:
+            os.mkdir(self.savedir)
+
+        self.data_path = data_path
+        self.version = version
+        self.context_length = context_length
+        self.batch_size = batch_size
+        self.resolution = resolution
+
+        self.model = model
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(self.context_length, check_completeness=True)
+
+        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.token_dict = {
+                    "missing_mask": -1, 
+                    "cloze_mask": -2,
+                    "pad": -3
+                }
+
+        self.chr_sizes = {}
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        with open(chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+
+        self.train_data = {}
+        self.eval_data = {}
+        self.metrics = METRICS()
+        self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
+
+        if mode == "dev":
+            return
+
+        if type(self.model) == str:
+            with open(hyper_parameters_path, 'rb') as f:
+                self.hyper_parameters = pickle.load(f)
+            loader = MODEL_LOADER(model, self.hyper_parameters)
+            self.model = loader.load_epidenoise(version=self.version)
+
+        self.model = self.model.to(self.device)
+        self.model.eval()  # set the model to evaluation mode
+        print(f"# model_parameters: {count_parameters(self.model)}")
+
+    def get_metrics(self, P_imp, P_ups, Y, bios_name, availability):
+        """
+        reportoir of metrics -- per_bios:
+
+            peak_ovr: 01thr, 05thr, 10thr
+
+            GeWi: MSE, Pearson, Spearman
+            1imp: MSE, Pearson, Spearman
+            1obs: MSE, Pearson, Spearman
+            gene: MSE, Pearson, Spearman
+            prom: MSE, Pearson, Spearman
+        """
+
+        results = []
+        
+        for j in availability:  # for each feature i.e. assay
+            for comparison in ['imputed', 'upsampled']:
+                pred = P[:, j].numpy()
+                target = Y[:, j].numpy()
+
+                metrics_list = []
+
+                # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': comparison,
+                    'available train assays': len(self.all_assays) - len(missing_x_i),
+                    'available eval assays': len(self.all_assays) - len(missing_y_i),
+
+                    "obs":target,
+                    "imp":pred,
+
+                    'MSE-GW': self.metrics.mse(target, pred),
+                    'Pearson-GW': self.metrics.pearson(target, pred),
+                    'Spearman-GW': self.metrics.spearman(target, pred),
+
+                    'MSE-1obs': self.metrics.mse1obs(target, pred),
+                    'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
+                    'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+
+                    'MSE-1imp': self.metrics.mse1imp(target, pred),
+                    'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
+                    'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+
+                    'MSE-gene': self.metrics.mse_gene(target, pred),
+                    'Pearson_gene': self.metrics.pearson_gene(target, pred),
+                    'Spearman_gene': self.metrics.spearman_gene(target, pred),
+
+                    'MSE-prom': self.metrics.mse_prom(target, pred),
+                    'Pearson_prom': self.metrics.pearson_prom(target, pred),
+                    'Spearman_prom': self.metrics.spearman_prom(target, pred),
+
+                    # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                    # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                    # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+
+                #     "corresp_curve": corresp,
+                #     "corresp_curve_deriv": corresp_deriv
+                }
+                results.append(metrics)
+            
+            return results
+
+    def load_bios(self, bios_name, x_dsf, y_dsf=1):
+        """
+        Load biosample data for a specified biosample at given downsampling factors for X and Y.
+
+        Parameters:
+        bios_name (str): The name of the biosample.
+        x_dsf (int): Downsampling factor for the X dataset.
+        y_dsf (int): Downsampling factor for the Y dataset, defaults to 1.
+
+        Returns:
+        tuple: A tuple containing the tensors for X, mX, avX, Y, mY, and avY.
+        """
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        return X, mX, avX, Y, mY, avY
+
+    def pred(self, X, mX, mY, avail, imp_target=[]):
+
+        # Initialize a tensor to store all predictions
+        P = torch.empty_like(X, device="cpu") 
+
+        if len(imp_target)>0:
+            X[:,:,imp_target] = self.token_dict["cloze_mask"]
+            mX_batch[:,:,imp_target] = self.token_dict["missing_mask"]
+
+        # make predictions in batches
+        for i in range(0, len(X), self.batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+ self.batch_size]
+            mX_batch = mX[i:i+ self.batch_size]
+            mY_batch = mY[i:i+ self.batch_size]
+            avail_batch = avail[i:i+ self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.to(self.device)
+                
+                # change missing token to cloze token to force prediction
+                x_batch_missing_vals = (x_batch == -1)
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
+
+                avail_batch_missing_vals = (avail_batch == -1)
+                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"] 
+
+                # outputs = self.model(x_batch, mX_batch, mY_batch, avail_batch)
+
+                outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
+                outputs = NegativeBinomial(outputs_p, outputs_n).expect(stat="median")
+
+            # Store the predictions in the large tensor
+            P[i:i+outputs.shape[0], :, :] = outputs.cpu()
+
+        return P
+
+    def bios_pipeline(self, bios_name, x_dsf):
+        X, mX, avX, Y, mY, avY = self.load_bios(bios_name, x_dsf)  
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        P_imp = torch.empty_like(X, device="cpu") 
+        for leave_one_out in available_indices:
+            P_imp[:, :, leave_one_out] = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])[:, :, leave_one_out]
+        
+        P_ups = self.pred(X, mX, mY, avail, imp_target=[])
+
+        P_imp = P_imp.view((P_imp.shape[0] * P_imp.shape[1]), P_imp.shape[-1]) # imp_preds
+        P_ups = P_ups.view((P_ups.shape[0] * P_ups.shape[1]), P_ups.shape[-1]) # ups_preds
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) 
+
+        eval_res = self.get_metrics(P_imp, P_ups, Y, bios_name, available_indices)
+        return eval_res
+
+    def viz_bios(self, eval_res):
+        """
+        visualizations -- per_bios:
+
+            highlight imputed vs denoised
+            corresp curve + deriv
+
+            scatter_gewi: value, rank 
+            scatter_gene: value, rank 
+            scatter_prom: value, rank 
+            scatter_1imp: value, rank 
+            scatter_1obs: value, rank 
+
+            selected regions' signals
+        """
+
+        try: 
+            print("plotting signal tracks")
+            self.viz.BIOS_signal_track(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot signal tracks")
+
+        try:
+            print("plotting context_specific performance")
+            self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot context_specific performance")
+            
+        try:
+            print("plotting signal scatter")
+            self.viz.BIOS_signal_scatter(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal scatter")
+
+        try:
+            print("plotting signal scatter with marginals")
+            self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot scatter with marginals")
+
+        try:
+            print("plotting signal heatmap")
+            self.viz.BIOS_signal_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal heatmap")
+
+        try:
+            print("plotting signal rank heatmap")
+            self.viz.BIOS_signal_rank_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except:
+            print("faild to plot  signal rank heatmap")
+
+        # try:
+        #     print("plotting corresp_curve")
+        #     self.viz.BIOS_corresp_curve(eval_res)
+        #     self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot corresp_curve")
+
+        # try:
+        #     print("plotting corresp_curve_deriv")
+        #     self.viz.BIOS_corresp_curve_deriv(eval_res)
+        #     self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot corresp_curve_deriv")
+
+    def viz_all(self):
+        """
+        visualizations -- all_bios:
+        
+            denoised vs imputed
+                boxplots for metric per assay
+                    peak_ovr: 01thr, 05thr, 10thr
+                    GeWi: MSE, Pearson, Spearman
+                    1imp: MSE, Pearson, Spearman
+                    1obs: MSE, Pearson, Spearman
+                    gene: MSE, Pearson, Spearman
+                    prom: MSE, Pearson, Spearman
+        """
+        self.model_res = []
+        for bios in self.dataset.test_bios:
+            print("evaluating ", bios)
+            eval_res_bios = self.bios_pipeline(bios)
+            print("got results for ", bios)
+            self.viz_bios(eval_res_bios)
+
+            for f in eval_res_bios:
+                del f["obs"], f["imp"]
+                self.model_res.append(f)
+
+        self.model_res = pd.DataFrame(self.model_res)
+        self.model_res.to_csv(f"{self.savedir}/model_eval.csv", index=False)
+
+        boxplot_metrics = [
+            'MSE-GW', 'Pearson-GW', 'Spearman-GW',
+            'MSE-1obs', 'Pearson_1obs', 'Spearman_1obs',
+            'MSE-1imp', 'Pearson_1imp', 'Spearman_1imp',
+            'MSE-gene', 'Pearson_gene', 'Spearman_gene',
+            'MSE-prom', 'Pearson_prom', 'Spearman_prom',
+            'peak_overlap_01thr', 'peak_overlap_05thr', 
+            'peak_overlap_10thr']
+        
+        for m in boxplot_metrics:
+            self.viz.MODEL_boxplot(self.model_res, metric=m)
+            self.viz.MODEL_regplot_overall(self.model_res, metric=m)
+            self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
+
 if __name__=="__main__":
+    e = EVAL_EED(
+        model="", 
+        data_path="data/", 
+        context_length=200, batch_size=50, hyper_parameters_path="",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30a", resolution=25, 
+        savedir="models/evals/", mode="dev"
+    )
+    e.bios_pipeline("ENCBS075PNA", 2)
+
+    exit()
 
     e = EVAL(
         model= "models/EpiDenoise22_20240309024015_params1382403.pt", 
