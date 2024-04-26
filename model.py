@@ -3208,6 +3208,7 @@ class PRE_TRAINER(object):
             self.dataset.new_epoch()
 
             while self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios:
+                t0 = datetime.now()
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
 
@@ -3249,6 +3250,9 @@ class PRE_TRAINER(object):
                                 (Y_batch[masked_map]).cpu().detach().numpy(), 
                                 (imp_pred))
 
+                ups_mse = (((Y_batch[observed_map]).cpu().detach().numpy() - (ups_pred))**2).mean().item()
+                imp_mse = (((Y_batch[observed_map]).cpu().detach().numpy() - (imp_pred))**2).mean().item()
+
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
                 else:
@@ -3261,14 +3265,21 @@ class PRE_TRAINER(object):
                     torch.cuda.empty_cache() 
                     continue
 
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+
                 print(
                     f"Epoch {epoch}: "
                     f"Progress - {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%} (Loci), "
                     f"{self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%} (Biosamples), "
-                    f"Imputation Loss: {pred_loss.item():.2f}, "
-                    f"Upsampling Loss: {obs_loss.item():.2f}, ",
-                    f"Imputation R2: {ups_r2:.2f}, ",
-                    f"Upsampling R2: {imp_r2:.2f}, ",
+                    f"Imp_Loss: {pred_loss.item():.2f}, "
+                    f"Ups_Loss: {obs_loss.item():.2f}, ",
+                    f"Imp_R2: {ups_r2:.2f}, ",
+                    f"Ups_R2: {imp_r2:.2f}, ",
+                    f"Imp_MSE: {ups_mse:.2f}, ",
+                    f"Ups_MSE: {imp_mse:.2f}, ",
+                    f"took: {int(minutes)}:{int(seconds)}"
                 )
 
                 self.dataset.update_batch_pointers()
