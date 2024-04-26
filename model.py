@@ -3287,6 +3287,7 @@ class PRE_TRAINER(object):
                     f"Ups_MSE {imp_mse:.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
+                logfile = open("models/EPD30a_log.txt", "w")
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 logfile.write("\n".join(log_strs))
