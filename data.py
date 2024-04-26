@@ -968,6 +968,8 @@ class ExtendedEncodeDataHandler:
                 md2_path = os.path.join(exp_path, "file_metadata.json")
                 if os.path.exists(signal_path) == False or os.path.exists(md1_path) == False or os.path.exists(md2_path) == False: 
                     exp_full = False
+                    break
+                    
             if exp_full == False:
                 missing_exp.append(exp)
 
@@ -1309,11 +1311,17 @@ class ExtendedEncodeDataHandler:
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            statement1 = bool(len(self.navigation[bios]) < bios_min_exp_avail_threshold)
-            statement2 = bool(check_completeness and len(self.is_bios_complete(bios))>0)
-            statement3 = bool(self.split_dict[bios] != "train")
-            if statement1 or statement2 or statement3:
+            to_del = False
+            if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
+
+            elif self.split_dict[bios] != "train":
+                del self.navigation[bios]
+                
+            elif check_completeness:
+                if len(self.is_bios_complete(bios))>0:
+                    del self.navigation[bios]
+
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
