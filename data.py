@@ -1327,7 +1327,9 @@ class ExtendedEncodeDataHandler:
                     del self.navigation[bios]
 
         if shuffle_bios:
-            self.navigation = {key: self.navigation[key] for key in random.shuffle(list(self.navigation.keys()))}
+            keys = list(self.navigation.keys())
+            random.shuffle(keys)
+            self.navigation = {key: self.navigation[key] for key in keys}
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
