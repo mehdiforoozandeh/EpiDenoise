@@ -3251,7 +3251,7 @@ class PRE_TRAINER(object):
                                 (imp_pred))
 
                 ups_mse = (((Y_batch[observed_map]).cpu().detach().numpy() - (ups_pred).cpu().detach().numpy())**2).mean()
-                imp_mse = (((Y_batch[observed_map]).cpu().detach().numpy() - (imp_pred).cpu().detach().numpy())**2).mean()
+                imp_mse = (((Y_batch[masked_map]).cpu().detach().numpy() - (imp_pred).cpu().detach().numpy())**2).mean()
 
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
