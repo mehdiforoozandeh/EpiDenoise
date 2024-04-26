@@ -3238,6 +3238,16 @@ class PRE_TRAINER(object):
                 output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
                 pred_loss, obs_loss = self.criterion(output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
+                
+                ups_pred = NegativeBinomial(output_p[observed_map], output_n[observed_map]).expect()
+                imp_pred = NegativeBinomial(output_p[masked_map], output_n[masked_map]).expect()
+                
+                ups_r2 = r2_score(
+                                (Y_batch[observed_map]).cpu().detach().numpy(), 
+                                (ups_pred).cpu().detach().numpy())
+                imp_r2 = r2_score(
+                                (Y_batch[masked_map]).cpu().detach().numpy(), 
+                                (ups_pred).cpu().detach().numpy())
 
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
@@ -3255,8 +3265,10 @@ class PRE_TRAINER(object):
                     f"Epoch {epoch}: "
                     f"Progress - {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%} (Loci), "
                     f"{self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%} (Biosamples), "
-                    f"Imputation Loss: {pred_loss.item():.4f}, "
-                    f"Upsampling Loss: {obs_loss.item():.4f}"
+                    f"Imputation Loss: {pred_loss.item():.2f}, "
+                    f"Upsampling Loss: {obs_loss.item():.2f}, ",
+                    f"Imputation R2: {ups_r2:.2f}, ",
+                    f"Upsampling R2: {imp_r2:.2f}, ",
                 )
 
                 self.dataset.update_batch_pointers()
