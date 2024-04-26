@@ -647,9 +647,10 @@ class NegativeBinomial(object):
 
         elif stat == "mode":
             if self.n <= 1:
-                raise ValueError("Mode is not well-defined for n <= 1 in the negative binomial distribution.")
-            mode_value = math.floor((self.n - 1) * (1 - self.p) / self.p)
-            return torch.tensor(mode_value, dtype=torch.float32)
+                return 0
+            else:
+                mode_value = math.floor((self.n - 1) * (1 - self.p) / self.p)
+                return torch.tensor(mode_value, dtype=torch.float32)
     
     def mean(self):
         mean_value = nbinom.mean(self.n, self.p)
