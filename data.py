@@ -961,15 +961,18 @@ class ExtendedEncodeDataHandler:
         bios_path = os.path.join(self.base_path, bios_name)
         for exp in available_exps:
             exp_path = os.path.join(bios_path, exp)
+            exp_listdir = os.listdir(exp_path)
             exp_full = True
             for dsf in required_dsfs:
-                signal_path = os.path.join(exp_path, f'signal_{dsf}_res25')
-                md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
-                md2_path = os.path.join(exp_path, "file_metadata.json")
-                if os.path.exists(signal_path) == False or os.path.exists(md1_path) == False or os.path.exists(md2_path) == False: 
+                if  "file_metadata.json" in exp_listdir:
+                    if f'signal_{dsf}_res25' in exp_listdir:
+                        md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
+                        exp_full = os.path.exists(md1_path)
+                    else:
+                        exp_full = False
+                else:
                     exp_full = False
-                    break
-                    
+                        
             if exp_full == False:
                 missing_exp.append(exp)
 
@@ -1317,7 +1320,7 @@ class ExtendedEncodeDataHandler:
 
             elif self.split_dict[bios] != "train":
                 del self.navigation[bios]
-                
+
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
