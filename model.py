@@ -3242,16 +3242,15 @@ class PRE_TRAINER(object):
                 
                 ups_pred = NegativeBinomial(output_p[observed_map].cpu().detach().numpy(), output_n[observed_map].cpu().detach().numpy()).expect()
                 imp_pred = NegativeBinomial(output_p[masked_map].cpu().detach().numpy(), output_n[masked_map].cpu().detach().numpy()).expect()
-                
-                ups_r2 = r2_score(
-                                (Y_batch[observed_map]).cpu().detach().numpy(), 
-                                (ups_pred))
-                imp_r2 = r2_score(
-                                (Y_batch[masked_map]).cpu().detach().numpy(), 
-                                (imp_pred))
 
-                ups_mse = (((Y_batch[observed_map]).cpu().detach().numpy() - (ups_pred).cpu().detach().numpy())**2).mean()
-                imp_mse = (((Y_batch[masked_map]).cpu().detach().numpy() - (imp_pred).cpu().detach().numpy())**2).mean()
+                ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                
+                ups_r2 = r2_score(ups_true, ups_pred)
+                imp_r2 = r2_score(imp_true, imp_pred)
+
+                ups_mse = ((ups_true - ups_pred)**2).mean()
+                imp_mse = ((imp_true - imp_pred)**2).mean()
 
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
@@ -3270,10 +3269,10 @@ class PRE_TRAINER(object):
                 minutes, seconds = divmod(remainder, 60)
 
                 batch_progress = [
-                    f"Epoch {epoch}"
-                    f"Loci Progress {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}"
-                    f"Bios Progress {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}"
-                    f"Imp_Loss {pred_loss.item():.2f}"
+                    f"Epoch {epoch}",
+                    f"Loci Progress {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                    f"Bios Progress {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                    f"Imp_Loss {pred_loss.item():.2f}",
                     f"Ups_Loss {obs_loss.item():.2f}",
                     f"Imp_R2 {ups_r2:.2f}",
                     f"Ups_R2 {imp_r2:.2f}",
