@@ -4239,11 +4239,11 @@ if __name__ == "__main__":
             "dropout": 0.05,
             "nhead": 2,
             "d_model": 192,
-            "nlayers": 4,
+            "nlayers": 2,
             "epochs": 5,
             "mask_percentage": 0.2,
             "context_length": 200,
-            "batch_size": 100,
+            "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 500,
             "lr_halflife":2
