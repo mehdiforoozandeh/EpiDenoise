@@ -597,7 +597,7 @@ class NegativeBinomialLayer(nn.Module):
         p = torch.sigmoid(self.fc_p(x))
 
         # using softplus to ensure it's positive
-        n = F.softplus(self.fc_r(x))
+        n = F.softplus(self.fc_n(x))
 
         return p, n
 
