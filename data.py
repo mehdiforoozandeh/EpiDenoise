@@ -1296,7 +1296,7 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=True):
+        bios_min_exp_avail_threshold=1, check_completeness=True, shuffle_bios=True):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1326,6 +1326,8 @@ class ExtendedEncodeDataHandler:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
 
+        if shuffle_bios:
+            self.navigation = {key: self.navigation[key] for key in random.shuffle(list(self.navigation.keys()))}
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
