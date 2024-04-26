@@ -3244,7 +3244,7 @@ class PRE_TRAINER(object):
                     output_p[observed_map].cpu().detach().numpy(), 
                     output_n[observed_map].cpu().detach().numpy()
                     ).expect().cpu().detach().numpy()
-                    
+
                 imp_pred = NegativeBinomial(
                     output_p[masked_map].cpu().detach().numpy(), 
                     output_n[masked_map].cpu().detach().numpy()
@@ -3275,7 +3275,7 @@ class PRE_TRAINER(object):
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
 
-                batch_progress = [
+                logstr = [
                     f"Epoch {epoch}",
                     f"Loci Progress {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
                     f"Bios Progress {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
@@ -3287,13 +3287,21 @@ class PRE_TRAINER(object):
                     f"Ups_MSE {imp_mse:.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
-                print(" | ".join(batch_progress))
+                logstr = " | ".join(logstr)
+                log_strs.append(logstr)
+                logfile.write("\n".join(log_strs))
+                logfile.close()
+                print(logstr)
 
                 self.dataset.update_batch_pointers()
                 loss.backward()  
                 self.optimizer.step()
                 
             self.scheduler.step()
+            try:
+                torch.save(self.model.state_dict(), f'models/EPD30a_model_checkpoint_epoch{epoch}.pth')
+            except:
+                pass
 
 #========================================================================================================#
 #==========================================  Loader  ====================================================#
