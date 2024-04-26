@@ -4236,16 +4236,16 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
             "metadata_embedding_dim":50,
-            "dropout": 0.05,
+            "dropout": 0.1,
             "nhead": 2,
             "d_model": 192,
             "nlayers": 2,
             "epochs": 5,
             "mask_percentage": 0.2,
             "context_length": 200,
-            "batch_size": 25,
-            "learning_rate": 1e-4,
-            "num_loci": 500,
+            "batch_size": 50,
+            "learning_rate": 5e-4,
+            "num_loci": 100,
             "lr_halflife":2
         }
         train_epidenoise30a(
