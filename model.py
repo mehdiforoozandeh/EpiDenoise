@@ -3239,15 +3239,15 @@ class PRE_TRAINER(object):
 
                 pred_loss, obs_loss = self.criterion(output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
                 
-                ups_pred = NegativeBinomial(output_p[observed_map], output_n[observed_map]).expect()
-                imp_pred = NegativeBinomial(output_p[masked_map], output_n[masked_map]).expect()
+                ups_pred = NegativeBinomial(output_p[observed_map].cpu().detach().numpy(), output_n[observed_map].cpu().detach().numpy()).expect()
+                imp_pred = NegativeBinomial(output_p[masked_map].cpu().detach().numpy(), output_n[masked_map].cpu().detach().numpy()).expect()
                 
                 ups_r2 = r2_score(
                                 (Y_batch[observed_map]).cpu().detach().numpy(), 
-                                (ups_pred).cpu().detach().numpy())
+                                (ups_pred))
                 imp_r2 = r2_score(
                                 (Y_batch[masked_map]).cpu().detach().numpy(), 
-                                (ups_pred).cpu().detach().numpy())
+                                (imp_pred))
 
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
