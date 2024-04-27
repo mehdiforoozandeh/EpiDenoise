@@ -15,6 +15,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExec
 import multiprocessing
 from multiprocessing import Pool
 
+def process_bios(bios, instance, locus, DSF, f_format):
+    try:
+        loaded_data, loaded_metadata = instance.load_bios(bios, locus, DSF=DSF, f_format=f_format)
+        return instance.make_bios_tensor(loaded_data, loaded_metadata)
+    except Exception as e:
+        print(f"Failed to process {bios}: {str(e)}")
+        return None
+
 
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
@@ -1297,35 +1305,21 @@ class ExtendedEncodeDataHandler:
     #     return data, metadata, availability
 
     def make_region_tensor(self, list_bios, locus, DSF):
-        # Helper function to be executed in a separate process
-        def process_bios(bios):
-            try:
-                loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-                return self.make_bios_tensor(loaded_data, loaded_metadata)
-            except Exception as e:
-                print(f"Failed to process {bios}: {str(e)}")
-                return None
-
         # Use multiprocessing.Pool to process each biosample in parallel
-        with Pool(processes=multiprocessing.cpu_count()) as pool:
-            results = pool.map(process_bios, list_bios)
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+            # Pool.map now references the global process_bios function
+            # We pass 'self' as an additional argument to provide necessary context
+            results = pool.starmap(process_bios, [(bios, self, locus, DSF, 'npz') for bios in list_bios])
 
-        # Filter out None results in case of failures
+        # The rest of your code for processing results...
         results = [result for result in results if result is not None]
-
-        # If there are successful results, stack them
         if results:
             data = torch.stack([r[0] for r in results])
             metadata = torch.stack([r[1] for r in results])
             availability = torch.stack([r[2] for r in results])
         else:
-            # Handle the case where no data was successfully processed
             print("No data was processed successfully.")
-            # Initialize tensors as empty or with a default value depending on requirements
-            data = torch.tensor([])
-            metadata = torch.tensor([])
-            availability = torch.tensor([])
-
+            # Handle empty results if necessary
         return data, metadata, availability
 
     def initialize_EED(self,
