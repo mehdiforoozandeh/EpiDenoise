@@ -1469,6 +1469,9 @@ if __name__ == "__main__":
         top_k_keys = [key for key, value in sorted(avail.items(), key=lambda item: item[1], reverse=True)[:k]]
 
         print(top_k_keys)
+        dataset.new_nav = {}
+        for k in top_k_keys:
+            dataset.new_nav[k] = dataset.navigation[k]
 
     else:
         d = GET_DATA()
