@@ -1297,12 +1297,8 @@ class ExtendedEncodeDataHandler:
     def make_region_tensor(self, list_bios, locus, DSF):
         # This function will be executed in parallel
         def process_bios(bios):
-            try:
-                loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-                return self.make_bios_tensor(loaded_data, loaded_metadata)
-            except Exception as e:
-                print(f"Failed to process {bios}: {str(e)}")
-                return None
+            loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+            return self.make_bios_tensor(loaded_data, loaded_metadata)
 
         data = []
         metadata = []
