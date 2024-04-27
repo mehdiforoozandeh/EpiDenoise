@@ -1454,7 +1454,9 @@ if __name__ == "__main__":
             bios_batchsize=50, loci_batchsize=1, ccre=False, 
             bios_min_exp_avail_threshold=1, check_completeness=True)
 
-        print(dataset.navigation)
+        avail = {}
+        for k, v in dataset.navigation:
+            avail[k] = len(v)
 
     else:
         d = GET_DATA()
