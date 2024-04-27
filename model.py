@@ -4244,8 +4244,8 @@ if __name__ == "__main__":
             "mask_percentage": 0.2,
             "context_length": 200,
             "batch_size": 50,
-            "learning_rate": 5e-4,
-            "num_loci": 100,
+            "learning_rate": 2e-4,
+            "num_loci": 50,
             "lr_halflife":2
         }
         train_epidenoise30a(
