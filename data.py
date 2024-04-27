@@ -1447,6 +1447,14 @@ if __name__ == "__main__":
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} ")
 
+    elif sys.argv[1] == "test_solar":
+        dataset = ExtendedEncodeDataHandler(data_path)
+        dataset.initialize_EED(
+            m=num_training_loci, context_length=context_length*resolution, 
+            bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
+            bios_min_exp_avail_threshold=1, check_completeness=True)
+
+        print(dataset.navigation)
 
     else:
         d = GET_DATA()
