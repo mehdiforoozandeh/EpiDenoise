@@ -1462,6 +1462,13 @@ if __name__ == "__main__":
         sorted_dict = dict(sorted(avail.items(), key=lambda item: item[1], reverse=True))
         print(sorted_dict)
         print(len(sorted_dict))
+        # Specify the number of top elements you want
+        k = 400
+
+        # Sort the dictionary by values and extract the top k keys
+        top_k_keys = [key for key, value in sorted(data.items(), key=lambda item: item[1], reverse=True)[:k]]
+
+        print(top_k_keys)
 
     else:
         d = GET_DATA()
