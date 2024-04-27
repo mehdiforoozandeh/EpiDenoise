@@ -1470,12 +1470,15 @@ if __name__ == "__main__":
 
         print(top_k_keys)
         dataset.new_nav = {}
+        dataset.new_avail = {}
         for k in top_k_keys:
             dataset.new_nav[k] = dataset.navigation[k]
+            dataset.new_avail[k] = avail[k]
 
         dataset.navigation = dataset.new_nav
         print(dataset.navigation)
         print(len(dataset.navigation))
+        print(len(dataset.new_avail))
 
     else:
         d = GET_DATA()
