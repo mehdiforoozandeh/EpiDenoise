@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.model_selection import train_test_split
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+import multiprocessing
+from multiprocessing import Pool
 
 
 def extract_donor_information(json_data):
