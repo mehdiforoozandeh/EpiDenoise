@@ -1305,7 +1305,7 @@ class ExtendedEncodeDataHandler:
         availability = []
 
         # Use ThreadPoolExecutor to process each biosample in parallel
-        with ThreadPoolExecutor(max_workers=len(list_bios)) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             # Map the processing function to each biosample
             futures = {executor.submit(process_bios, bios): bios for bios in list_bios}
 
