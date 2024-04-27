@@ -1476,8 +1476,7 @@ if __name__ == "__main__":
             dataset.new_avail[k] = avail[k]
 
         dataset.navigation = dataset.new_nav
-        print(dataset.navigation)
-        print(len(dataset.navigation))
+        print(dataset.new_avail)
         print(len(dataset.new_avail))
 
     else:
