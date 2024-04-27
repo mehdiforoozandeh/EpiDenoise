@@ -1457,6 +1457,8 @@ if __name__ == "__main__":
         avail = {}
         for k, v in dataset.navigation:
             avail[k] = len(v)
+        
+        print(avail)
 
     else:
         d = GET_DATA()
