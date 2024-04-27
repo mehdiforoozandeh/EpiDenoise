@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.model_selection import train_test_split
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def extract_donor_information(json_data):
@@ -1276,22 +1276,58 @@ class ExtendedEncodeDataHandler:
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
 
+    # def make_region_tensor(self, list_bios, locus, DSF):
+    #     data = []
+    #     metadata = []
+    #     availability = []
+
+    #     for bios in list_bios:
+    #         try:
+    #             loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+    #             d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
+    #             data.append(d)
+    #             metadata.append(md)
+    #             availability.append(avl)
+    #         except:
+    #             pass
+        
+    #     data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+    #     return data, metadata, availability
+
     def make_region_tensor(self, list_bios, locus, DSF):
+        # This function will be executed in parallel
+        def process_bios(bios):
+            try:
+                loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+                return self.make_bios_tensor(loaded_data, loaded_metadata)
+            except Exception as e:
+                print(f"Failed to process {bios}: {str(e)}")
+                return None
+
         data = []
         metadata = []
         availability = []
 
-        for bios in list_bios:
-            try:
-                loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-                d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
-                data.append(d)
-                metadata.append(md)
-                availability.append(avl)
-            except:
-                pass
-        
-        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        # Use ThreadPoolExecutor to process each biosample in parallel
+        with ThreadPoolExecutor(max_workers=len(list_bios)) as executor:
+            # Map the processing function to each biosample
+            futures = {executor.submit(process_bios, bios): bios for bios in list_bios}
+
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    d, md, avl = result
+                    data.append(d)
+                    metadata.append(md)
+                    availability.append(avl)
+
+        # Stack the results only if there is at least one successful computation
+        if data and metadata and availability:
+            data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        else:
+            # Handle the case where no data was successfully processed
+            print("No data was processed successfully.")
+
         return data, metadata, availability
 
     def initialize_EED(self,
