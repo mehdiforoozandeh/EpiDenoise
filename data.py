@@ -1459,7 +1459,7 @@ if __name__ == "__main__":
             avail[k] = len(v)
         
         # Sorting the dictionary based on values in descending order
-        sorted_dict = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
+        sorted_dict = dict(sorted(avail.items(), key=lambda item: item[1], reverse=True))
         print(sorted_dict)
 
     else:
