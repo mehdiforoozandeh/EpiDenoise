@@ -1455,7 +1455,7 @@ if __name__ == "__main__":
             bios_min_exp_avail_threshold=1, check_completeness=True)
 
         avail = {}
-        for k, v in dataset.navigation:
+        for k, v in dataset.navigation.items():
             avail[k] = len(v)
         
         print(avail)
