@@ -4243,7 +4243,7 @@ if __name__ == "__main__":
             "epochs": 5,
             "mask_percentage": 0.2,
             "context_length": 200,
-            "batch_size": 200,
+            "batch_size": 50,
             "learning_rate": 5e-4,
             "num_loci": 100,
             "lr_halflife":2
