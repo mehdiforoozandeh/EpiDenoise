@@ -1473,6 +1473,10 @@ if __name__ == "__main__":
         for k in top_k_keys:
             dataset.new_nav[k] = dataset.navigation[k]
 
+        dataset.navigation = dataset.new_nav
+        print(dataset.navigation)
+        print(len(dataset.navigation))
+
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
