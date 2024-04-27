@@ -1461,6 +1461,7 @@ if __name__ == "__main__":
         # Sorting the dictionary based on values in descending order
         sorted_dict = dict(sorted(avail.items(), key=lambda item: item[1], reverse=True))
         print(sorted_dict)
+        print(len(sorted_dict))
 
     else:
         d = GET_DATA()
