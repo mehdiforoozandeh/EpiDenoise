@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.model_selection import train_test_split
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
 
 
 def extract_donor_information(json_data):
@@ -1305,7 +1305,7 @@ class ExtendedEncodeDataHandler:
         availability = []
 
         # Use ThreadPoolExecutor to process each biosample in parallel
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ProcessPoolExecutor(max_workers=10) as executor:
             # Map the processing function to each biosample
             futures = {executor.submit(process_bios, bios): bios for bios in list_bios}
 
