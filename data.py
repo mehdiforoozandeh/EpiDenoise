@@ -1437,8 +1437,6 @@ if __name__ == "__main__":
         t0 = datetime.datetime.now()
 
         eed.generate_random_loci(m=10, context_length=20000)
-        # loaded_data, loaded_metadata = eed.load_bios("ENCBS075PNA", eed.m_regions[0], DSF=1, f_format="npz")
-        # d, md, avl = eed.make_bios_tensor(loaded_data, loaded_metadata)
 
         batch_data, batch_metadata, batch_availability = eed.make_region_tensor(["ENCBS075PNA" for _ in range(5)], eed.m_regions[0], DSF=1)
         batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
