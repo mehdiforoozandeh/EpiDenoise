@@ -1458,7 +1458,9 @@ if __name__ == "__main__":
         for k, v in dataset.navigation.items():
             avail[k] = len(v)
         
-        print(avail)
+        # Sorting the dictionary based on values in descending order
+        sorted_dict = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
+        print(sorted_dict)
 
     else:
         d = GET_DATA()
