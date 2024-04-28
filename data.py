@@ -1355,7 +1355,7 @@ class ExtendedEncodeDataHandler:
         self.current_bios_batch_pointer = 0
         self.current_loci_batch_pointer = 0
     
-    def update_batch_pointers(self, cycle_biosamples_first=False):
+    def update_batch_pointers(self, cycle_biosamples_first=True):
         if cycle_biosamples_first:
             # Cycle through all biosamples for each loci before moving to the next loci
             if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
