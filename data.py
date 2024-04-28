@@ -1378,7 +1378,7 @@ class ExtendedEncodeDataHandler:
                     return True
             else:
                 self.current_loci_batch_pointer += self.loci_batchsize
-                
+
         return False
 
     def get_batch(self, dsf):
@@ -1455,11 +1455,18 @@ if __name__ == "__main__":
 
         eed.generate_random_loci(m=10, context_length=20000)
 
-        batch_data, batch_metadata, batch_availability = eed.make_region_tensor(["ENCBS075PNA" for _ in range(5)], eed.m_regions[0], DSF=1)
+        batch_data, batch_metadata, batch_availability = eed.make_region_tensor(
+            ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=1)
         batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
 
         print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
         # print(d, md, avl)
+        for f in range(batch_data.shape[2]):
+            print(f, batch_data[:,:,f].eq(-1).all(), batch_metadata[:,:,f].eq(-1).all(), batch_availability[:,f])
+            if not batch_data[:,:,f].eq(-1).all().item():
+                print(len(batch_data[:,:,f]))
+
+        
 
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} ")
