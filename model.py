@@ -4014,8 +4014,8 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
-        bios_min_exp_avail_threshold=4, check_completeness=True)
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
+        bios_min_exp_avail_threshold=5, check_completeness=True)
 
     model_name = f"EpiDenoise30a_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
@@ -4241,11 +4241,11 @@ if __name__ == "__main__":
             "d_model": 192,
             "nlayers": 2,
             "epochs": 5,
-            "mask_percentage": 0.2,
+            "mask_percentage": 0.25,
             "context_length": 200,
-            "batch_size": 50,
+            "batch_size": 25,
             "learning_rate": 2e-4,
-            "num_loci": 50,
+            "num_loci": 1000,
             "lr_halflife":1
         }
         train_epidenoise30a(
