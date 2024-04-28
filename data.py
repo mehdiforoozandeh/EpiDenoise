@@ -1297,7 +1297,8 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=True, shuffle_bios=True):
+        bios_min_exp_avail_threshold=1, check_completeness=True, shuffle_bios=True, 
+        top_k_bios = True, k=300):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1326,6 +1327,21 @@ class ExtendedEncodeDataHandler:
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
+
+        if k != -1:
+            avail = {}
+            for key, v in self.navigation.items():
+                avail[key] = len(v)
+
+            # Sort the dictionary by values and extract the top k keys
+            top_k_keys = [key for key, value in sorted(avail.items(), key=lambda item: item[1], reverse=True)[:k]]
+
+            print(top_k_keys)
+            new_nav = {}
+            for key in top_k_keys:
+                new_nav[key] = dataset.navigation[key]
+
+            self.navigation = new_nav
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
@@ -1453,31 +1469,13 @@ if __name__ == "__main__":
             m=10, context_length=200*25, 
             bios_batchsize=50, loci_batchsize=1, ccre=False, 
             bios_min_exp_avail_threshold=1, check_completeness=True)
-
+        
         avail = {}
         for k, v in dataset.navigation.items():
             avail[k] = len(v)
         
-        # Sorting the dictionary based on values in descending order
-        sorted_dict = dict(sorted(avail.items(), key=lambda item: item[1], reverse=True))
-        print(sorted_dict)
-        print(len(sorted_dict))
-        # Specify the number of top elements you want
-        k = 400
-
-        # Sort the dictionary by values and extract the top k keys
-        top_k_keys = [key for key, value in sorted(avail.items(), key=lambda item: item[1], reverse=True)[:k]]
-
-        print(top_k_keys)
-        dataset.new_nav = {}
-        dataset.new_avail = {}
-        for k in top_k_keys:
-            dataset.new_nav[k] = dataset.navigation[k]
-            dataset.new_avail[k] = avail[k]
-
-        dataset.navigation = dataset.new_nav
-        print(dataset.new_avail)
-        print(len(dataset.new_avail))
+        print(avail)
+        print(len(avail))
 
     else:
         d = GET_DATA()
