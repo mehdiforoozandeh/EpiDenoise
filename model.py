@@ -1305,17 +1305,21 @@ class EpiDenoise30a(nn.Module):
         super(EpiDenoise30a, self).__init__()
         self.pos_enc = pos_enc
         self.context_length = context_length
-
+        
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        else:
-            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
+        self.fc1 = nn.Linear(d_model, d_model)
+        self.fc2 = nn.Linear(d_model, d_model)
+        self.fc3 = nn.Linear(d_model, d_model)
+
+        # if self.pos_enc == "relative":
+        #     self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        # else:
+        #     self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        #     self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
         
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -1325,12 +1329,15 @@ class EpiDenoise30a(nn.Module):
 
         src = torch.cat([src, md_embedding], dim=-1)
         src = self.embedding_linear(src)
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = F.relu(self.fc1(src))
+        src = F.relu(self.fc2(src))
+        src = F.relu(self.fc3(src))
+        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
-        if self.pos_enc != "relative":
-            src = src + self.position(src)
+        # if self.pos_enc != "relative":
+        #     src = src + self.position(src)
         
-        src = self.transformer_encoder(src) 
+        # src = self.transformer_encoder(src) 
         p, n = self.neg_binom_layer(src)
 
         p = torch.permute(p, (1, 0, 2))  # to N, L, F

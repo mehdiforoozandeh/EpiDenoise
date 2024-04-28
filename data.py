@@ -1460,14 +1460,6 @@ if __name__ == "__main__":
         batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
 
         print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
-        # print(d, md, avl)
-        for f in range(batch_data.shape[2]):
-            if not batch_data[:,:,f].eq(-1).all().item():
-                sig = batch_data[0, :, f].tolist()
-                plt.hist(sig, bins=150)
-                plt.show()
-
-        
 
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} ")
