@@ -1327,10 +1327,10 @@ class EpiDenoise30a(nn.Module):
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         src = torch.cat([src, md_embedding], dim=-1)
-        src = self.embedding_linear(src)
+        src = F.relu(self.embedding_linear(src))
 
         # src = torch.permute(src, (1, 0, 2)) # to L, N, F
-        src = self.lstm(src)
+        src, (hn, cn) = self.lstm(src)
 
         # if self.pos_enc != "relative":
         #     src = src + self.position(src)
