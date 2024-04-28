@@ -1297,8 +1297,8 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
-        bios_min_exp_avail_threshold=1, check_completeness=True, shuffle_bios=True, 
-        top_k_bios = True, k=300):
+        bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
+        top_k_bios = False, k=300):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1328,15 +1328,13 @@ class ExtendedEncodeDataHandler:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
 
-        if k != -1:
+        if top_k_bios:
             avail = {}
             for key, v in self.navigation.items():
                 avail[key] = len(v)
 
             # Sort the dictionary by values and extract the top k keys
             top_k_keys = [key for key, value in sorted(avail.items(), key=lambda item: item[1], reverse=True)[:k]]
-
-            print(top_k_keys)
             new_nav = {}
             for key in top_k_keys:
                 new_nav[key] = dataset.navigation[key]
