@@ -1309,9 +1309,8 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        self.fc1 = nn.Linear(d_model, d_model)
-        self.fc2 = nn.Linear(d_model, d_model)
-        self.fc3 = nn.Linear(d_model, d_model)
+        self.lstm = nn.LSTM(input_size=10, hidden_size=20, num_layers=4, batch_first=True)
+
 
         # if self.pos_enc == "relative":
         #     self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -1329,10 +1328,9 @@ class EpiDenoise30a(nn.Module):
 
         src = torch.cat([src, md_embedding], dim=-1)
         src = self.embedding_linear(src)
-        src = F.relu(self.fc1(src))
-        src = F.relu(self.fc2(src))
-        src = F.relu(self.fc3(src))
-        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
+
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = self.lstm(src)
 
         # if self.pos_enc != "relative":
         #     src = src + self.position(src)
@@ -1340,8 +1338,8 @@ class EpiDenoise30a(nn.Module):
         # src = self.transformer_encoder(src) 
         p, n = self.neg_binom_layer(src)
 
-        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        n = torch.permute(n, (1, 0, 2))  # to N, L, F
 
         return p, n
 
