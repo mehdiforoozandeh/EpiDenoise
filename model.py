@@ -1309,7 +1309,7 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        self.lstm = nn.LSTM(input_size=10, hidden_size=20, num_layers=4, batch_first=True)
+        self.lstm = nn.LSTM(input_size=d_model, hidden_size=d_model, num_layers=4, batch_first=True)
 
 
         # if self.pos_enc == "relative":
