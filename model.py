@@ -3281,16 +3281,16 @@ class PRE_TRAINER(object):
 
                 logstr = [
                     f"Epoch {epoch}",
-                    f"Loci Progress {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                    f"Bios Progress {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                    f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                    f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
                     f"Imp_Loss {pred_loss.item():.2f}",
                     f"Ups_Loss {obs_loss.item():.2f}",
                     f"Imp_R2 {ups_r2:.2f}",
                     f"Ups_R2 {imp_r2:.2f}",
+                    f"Imp_Sp.r {imp_spearman:.2f}",
+                    f"Ups_Sp.r {ups_spearman:.2f}",
                     f"Imp_MSE {ups_mse:.2f}",
                     f"Ups_MSE {imp_mse:.2f}",
-                    f"Imp_SpCorr {imp_spearman:.2f}",
-                    f"Ups_SpCorr {ups_spearman:.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
                 logfile = open("models/EPD30a_log.txt", "w")
