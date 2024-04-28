@@ -3260,6 +3260,9 @@ class PRE_TRAINER(object):
                 ups_mse = ((ups_true - ups_pred)**2).mean()
                 imp_mse = ((imp_true - imp_pred)**2).mean()
 
+                ups_spearman = spearmanr(ups_pred, ups_true)[0]
+                imp_spearman = spearmanr(imp_pred, imp_true)[0]
+
                 if torch.isnan(pred_loss).any():
                     loss = obs_loss
                 else:
@@ -3286,6 +3289,8 @@ class PRE_TRAINER(object):
                     f"Ups_R2 {imp_r2:.2f}",
                     f"Imp_MSE {ups_mse:.2f}",
                     f"Ups_MSE {imp_mse:.2f}",
+                    f"Imp_SpCorr {imp_spearman:.2f}",
+                    f"Ups_SpCorr {ups_spearman:.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
                 logfile = open("models/EPD30a_log.txt", "w")
@@ -4253,7 +4258,7 @@ if __name__ == "__main__":
         }
         train_epidenoise30a(
             hyper_parameters30a, 
-            checkpoint_path="models/EPD30a_model_checkpoint_epoch4.pth")
+            checkpoint_path="")
     
     elif sys.argv[1] == "epd30b":
         hyper_parameters30b = {
