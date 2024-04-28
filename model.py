@@ -3304,6 +3304,8 @@ class PRE_TRAINER(object):
                 torch.save(self.model.state_dict(), f'models/EPD30a_model_checkpoint_epoch{epoch}.pth')
             except:
                 pass
+                
+        return self.model
 
 #========================================================================================================#
 #==========================================  Loader  ====================================================#
@@ -4251,7 +4253,7 @@ if __name__ == "__main__":
         }
         train_epidenoise30a(
             hyper_parameters30a, 
-            checkpoint_path=None)
+            checkpoint_path="models/EPD30a_model_checkpoint_epoch4.pth")
     
     elif sys.argv[1] == "epd30b":
         hyper_parameters30b = {
