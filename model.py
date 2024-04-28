@@ -3238,7 +3238,6 @@ class PRE_TRAINER(object):
                 observed_map = observed_map.to(self.device) # upsampling targets
 
                 output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-
                 pred_loss, obs_loss = self.criterion(output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
                 
                 ups_pred = NegativeBinomial(
@@ -4005,6 +4004,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
     lr_halflife = hyper_parameters["lr_halflife"]
+    min_avail = hyper_parameters["min_avail"]
 
     # end of hyperparameters
     model = EpiDenoise30a(input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
@@ -4023,7 +4023,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
-        bios_min_exp_avail_threshold=10, check_completeness=True)
+        bios_min_exp_avail_threshold=min_avail, check_completeness=True)
 
     model_name = f"EpiDenoise30a_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
@@ -4254,7 +4254,8 @@ if __name__ == "__main__":
             "batch_size": 25,
             "learning_rate": 2e-4,
             "num_loci": 5,
-            "lr_halflife":1
+            "lr_halflife":1,
+            "min_avail":5
         }
         train_epidenoise30a(
             hyper_parameters30a, 
