@@ -1282,15 +1282,28 @@ class ExtendedEncodeDataHandler:
         metadata = []
         availability = []
 
-        for bios in list_bios:
-            try:
-                loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-                d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
+        def load_and_process(bios):
+            loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+            return self.make_bios_tensor(loaded_data, loaded_metadata)
+
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(load_and_process, list_bios)
+
+        for d, md, avl in results:
+            if d is not None:  # Ensure valid data was returned
                 data.append(d)
                 metadata.append(md)
                 availability.append(avl)
-            except:
-                pass
+
+        # for bios in list_bios:
+        #     try:
+        #         loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
+        #         d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
+        #         data.append(d)
+        #         metadata.append(md)
+        #         availability.append(avl)
+        #     except:
+        #         pass
         
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
