@@ -1340,8 +1340,8 @@ class EpiDenoise30a(nn.Module):
         # src = self.transformer_encoder(src) 
         p, n = self.neg_binom_layer(src)
 
-        p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
 
         return p, n
 
