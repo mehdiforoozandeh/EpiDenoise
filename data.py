@@ -1443,7 +1443,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "test":
         eed = ExtendedEncodeDataHandler("data/")
         eed.set_alias()
-        eed.coords()
+        eed.coords(mode="eval")
 
         if os.path.exists(eed.navigation_path) == False:
             eed.navigate_bios_exps()
@@ -1456,15 +1456,16 @@ if __name__ == "__main__":
         eed.generate_random_loci(m=10, context_length=20000)
 
         batch_data, batch_metadata, batch_availability = eed.make_region_tensor(
-            ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=1)
+            ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=8)
         batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
 
         print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
         # print(d, md, avl)
         for f in range(batch_data.shape[2]):
-            print(f, batch_data[:,:,f].eq(-1).all(), batch_metadata[:,:,f].eq(-1).all(), batch_availability[:,f])
             if not batch_data[:,:,f].eq(-1).all().item():
-                print(len(batch_data[:,:,f]))
+                sig = batch_data[0, :, f].tolist()
+                plt.hist(sig, bins=150)
+                plt.show()
 
         
 
