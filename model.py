@@ -1309,16 +1309,13 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        self.lstm = nn.LSTM(input_size=d_model, hidden_size=d_model, num_layers=4, batch_first=True)
-
-
-        # if self.pos_enc == "relative":
-        #     self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        # else:
-        #     self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-        #     self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        else:
+            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
         
-        # self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -4247,10 +4244,10 @@ if __name__ == "__main__":
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
-            "metadata_embedding_dim":50,
+            "metadata_embedding_dim":25,
             "dropout": 0.1,
-            "nhead": 2,
-            "d_model": 192,
+            "nhead": 4,
+            "d_model": 384,
             "nlayers": 2,
             "epochs": 5,
             "mask_percentage": 0.25,
