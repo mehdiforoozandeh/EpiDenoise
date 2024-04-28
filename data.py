@@ -1317,7 +1317,6 @@ class ExtendedEncodeDataHandler:
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            to_del = False
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
@@ -1466,7 +1465,7 @@ if __name__ == "__main__":
         dataset.initialize_EED(
             m=10, context_length=200*25, 
             bios_batchsize=50, loci_batchsize=1, ccre=False, 
-            bios_min_exp_avail_threshold=1, check_completeness=True)
+            bios_min_exp_avail_threshold=4, check_completeness=True)
         
         avail = {}
         for k, v in dataset.navigation.items():
