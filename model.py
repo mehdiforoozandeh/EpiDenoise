@@ -4258,7 +4258,7 @@ if __name__ == "__main__":
         }
         train_epidenoise30a(
             hyper_parameters30a, 
-            checkpoint_path="")
+            checkpoint_path=None)
     
     elif sys.argv[1] == "epd30b":
         hyper_parameters30b = {
