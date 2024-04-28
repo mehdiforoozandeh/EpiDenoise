@@ -3206,8 +3206,9 @@ class PRE_TRAINER(object):
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
+            next_epoch = False
 
-            while self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios:
+            while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
                 t0 = datetime.now()
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
@@ -3294,7 +3295,7 @@ class PRE_TRAINER(object):
                 logfile.close()
                 print(logstr)
 
-                self.dataset.update_batch_pointers()
+                next_epoch = self.dataset.update_batch_pointers()
                 loss.backward()  
                 self.optimizer.step()
                 
@@ -4245,7 +4246,7 @@ if __name__ == "__main__":
             "context_length": 200,
             "batch_size": 25,
             "learning_rate": 2e-4,
-            "num_loci": 10,
+            "num_loci": 5,
             "lr_halflife":1
         }
         train_epidenoise30a(

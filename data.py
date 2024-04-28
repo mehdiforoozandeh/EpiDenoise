@@ -1364,6 +1364,7 @@ class ExtendedEncodeDataHandler:
                     self.current_loci_batch_pointer += self.loci_batchsize
                 else:
                     self.current_loci_batch_pointer = 0  # Reset loci pointer after the last one
+                    return True
             else:
                 self.current_bios_batch_pointer += self.bios_batchsize
         else:
@@ -1374,8 +1375,11 @@ class ExtendedEncodeDataHandler:
                     self.current_bios_batch_pointer += self.bios_batchsize
                 else:
                     self.current_bios_batch_pointer = 0  # Reset biosample pointer after the last one
+                    return True
             else:
                 self.current_loci_batch_pointer += self.loci_batchsize
+                
+        return False
 
     def get_batch(self, dsf):
         batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
