@@ -4254,7 +4254,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 400,
             "batch_size": 30,
-            "learning_rate": 1e-3,
+            "learning_rate": 1e-4,
             "num_loci": 200,
             "lr_halflife":1,
             "min_avail":5
