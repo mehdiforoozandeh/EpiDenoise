@@ -66,7 +66,6 @@ class MetadataEmbeddingModule(nn.Module):
         availability = torch.where(
             availability == -2, torch.tensor(2, device=availability.device), availability)
 
-
         availability_embed = self.avail_embedding(availability)
         return availability_embed
 
@@ -1301,7 +1300,7 @@ class EpiDenoise22(nn.Module):
 class EpiDenoise30a(nn.Module):
     def __init__(
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
-        dropout=0.1, context_length=2000, pos_enc="relative"):
+        dropout=0.1, context_length=2000, pos_enc="abs"):
         super(EpiDenoise30a, self).__init__()
         self.pos_enc = pos_enc
         self.context_length = context_length
@@ -3194,7 +3193,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1,2,4,8]
+        dsf_list = [1, 2, 4, 8]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
@@ -3239,7 +3238,8 @@ class PRE_TRAINER(object):
                 observed_map = observed_map.to(self.device) # upsampling targets
 
                 output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                pred_loss, obs_loss = self.criterion(output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
+                pred_loss, obs_loss = self.criterion(
+                    output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
                 
                 ups_pred = NegativeBinomial(
                     output_p[observed_map].cpu().detach().numpy(), 
@@ -3305,10 +3305,11 @@ class PRE_TRAINER(object):
                 self.optimizer.step()
                 
             self.scheduler.step()
-            try:
-                torch.save(self.model.state_dict(), f'models/EPD30a_model_checkpoint_epoch{epoch}.pth')
-            except:
-                pass
+            if epoch%2==0:
+                try:
+                    torch.save(self.model.state_dict(), f'models/EPD30a_model_checkpoint_epoch{epoch}.pth')
+                except:
+                    pass
                 
         return self.model
 
@@ -4244,14 +4245,14 @@ if __name__ == "__main__":
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 50,
-            "metadata_embedding_dim":25,
+            "metadata_embedding_dim": 25,
             "dropout": 0.1,
             "nhead": 4,
             "d_model": 384,
-            "nlayers": 2,
-            "epochs": 5,
+            "nlayers": 4,
+            "epochs": 10,
             "mask_percentage": 0.25,
-            "context_length": 200,
+            "context_length": 400,
             "batch_size": 30,
             "learning_rate": 2e-4,
             "num_loci": 200,
