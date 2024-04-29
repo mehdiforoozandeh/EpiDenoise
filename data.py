@@ -1017,7 +1017,7 @@ class ExtendedEncodeDataHandler:
         
         return sum(is_comp) / len(is_comp)
 
-    def set_alias(self, donor=False):
+    def set_alias(self, donor=False, excludes=["ChIA-PET", "CAGE", "RNA-seq"]):
         if os.path.exists(self.alias_path):
             with open(self.alias_path, 'r') as file:
                 self.aliases = json.load(file)
@@ -1035,7 +1035,9 @@ class ExtendedEncodeDataHandler:
         # Alias for experiments
         experiment_counts = self.df1.count().sort_values(ascending=False)
         num_experiments = len(experiment_counts)
-        experiment_alias = {experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(experiment_counts.index)}
+        experiment_alias = {
+            experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(
+                experiment_counts.index) if experiment not in excludes}
 
         if donor:
             # # Alias for donors
