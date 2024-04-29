@@ -1201,77 +1201,77 @@ class ExtendedEncodeDataHandler:
         with np.load(file_name, allow_pickle=True) as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
         
-    # def load_bios(self, bios_name, locus, DSF, f_format="npz"):
-    #     """Load all available experiments for a given biosample and locus."""
-        
-    #     exps = list(self.navigation[bios_name].keys())
-
-    #     loaded_data = {}
-    #     loaded_metadata = {}
-
-    #     npz_files = []
-    #     for e in exps:
-    #         l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
-    #         npz_files.append(l)
-
-    #         jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
-    #         with open(jsn1, 'r') as jsnfile:
-    #             md1 = json.load(jsnfile)
-
-    #         jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
-    #         with open(jsn2, 'r') as jsnfile:
-    #             md2 = json.load(jsnfile)
-
-    #         md = {
-    #             "depth":md1["depth"], "coverage":md1["coverage"], 
-    #             "read_length":md2["read_length"], "run_type":md2["run_type"] 
-    #         }
-    #         loaded_metadata[e] = md
-            
-    #     # Load files in parallel
-    #     with ThreadPoolExecutor() as executor:
-    #         loaded = list(executor.map(self.load_npz, npz_files))
-        
-    #     start_bin = int(locus[1]) // self.resolution
-    #     end_bin = int(locus[2]) // self.resolution
-    #     for l in loaded:
-    #         for exp, data in l.items():
-    #             loaded_data[exp] = data[start_bin:end_bin]
-        
-    #     return loaded_data, loaded_metadata
-
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
+        
         exps = list(self.navigation[bios_name].keys())
+
         loaded_data = {}
         loaded_metadata = {}
 
+        npz_files = []
         for e in exps:
-            npz_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
-            jsn1_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
-            jsn2_path = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
-            
-            # Load npz and json files
-            data = self.load_npz(npz_path)
-            with open(jsn1_path, 'r') as jsnfile:
+            l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+            npz_files.append(l)
+
+            jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+            with open(jsn1, 'r') as jsnfile:
                 md1 = json.load(jsnfile)
-            with open(jsn2_path, 'r') as jsnfile:
+
+            jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
+            with open(jsn2, 'r') as jsnfile:
                 md2 = json.load(jsnfile)
-            
+
             md = {
-                "depth": md1["depth"], 
-                "coverage": md1["coverage"], 
-                "read_length": md2["read_length"], 
-                "run_type": md2["run_type"]
+                "depth":md1["depth"], "coverage":md1["coverage"], 
+                "read_length":md2["read_length"], "run_type":md2["run_type"] 
             }
             loaded_metadata[e] = md
             
-            # Slice data according to locus
-            start_bin = int(locus[1]) // self.resolution
-            end_bin = int(locus[2]) // self.resolution
-            loaded_data[e] = data[e][start_bin:end_bin]
-
+        # Load files in parallel
+        with ThreadPoolExecutor() as executor:
+            loaded = list(executor.map(self.load_npz, npz_files))
+        
+        start_bin = int(locus[1]) // self.resolution
+        end_bin = int(locus[2]) // self.resolution
+        for l in loaded:
+            for exp, data in l.items():
+                loaded_data[exp] = data[start_bin:end_bin]
+        
         return loaded_data, loaded_metadata
+
+    # def load_bios(self, bios_name, locus, DSF, f_format="npz"):
+    #     """Load all available experiments for a given biosample and locus."""
+    #     exps = list(self.navigation[bios_name].keys())
+    #     loaded_data = {}
+    #     loaded_metadata = {}
+
+    #     for e in exps:
+    #         npz_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+    #         jsn1_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+    #         jsn2_path = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
+            
+    #         # Load npz and json files
+    #         data = self.load_npz(npz_path)
+    #         with open(jsn1_path, 'r') as jsnfile:
+    #             md1 = json.load(jsnfile)
+    #         with open(jsn2_path, 'r') as jsnfile:
+    #             md2 = json.load(jsnfile)
+            
+    #         md = {
+    #             "depth": md1["depth"], 
+    #             "coverage": md1["coverage"], 
+    #             "read_length": md2["read_length"], 
+    #             "run_type": md2["run_type"]
+    #         }
+    #         loaded_metadata[e] = md
+            
+    #         # Slice data according to locus
+    #         start_bin = int(locus[1]) // self.resolution
+    #         end_bin = int(locus[2]) // self.resolution
+    #         loaded_data[e] = data[e][start_bin:end_bin]
+
+    #     return loaded_data, loaded_metadata
 
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
