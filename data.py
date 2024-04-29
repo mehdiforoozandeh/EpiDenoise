@@ -1339,7 +1339,7 @@ class ExtendedEncodeDataHandler:
                 return None
 
         # Use ThreadPoolExecutor to handle biosamples in parallel
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=self.bios_batchsize) as executor:
             results = list(executor.map(load_and_process, list_bios))
 
         # Aggregate results
