@@ -1269,7 +1269,7 @@ class ExtendedEncodeDataHandler:
             # Slice data according to locus
             start_bin = int(locus[1]) // self.resolution
             end_bin = int(locus[2]) // self.resolution
-            loaded_data[e] = data[start_bin:end_bin]
+            loaded_data[e] = data[e][start_bin:end_bin]
 
         return loaded_data, loaded_metadata
 
