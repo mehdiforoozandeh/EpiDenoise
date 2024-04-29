@@ -1034,12 +1034,13 @@ class ExtendedEncodeDataHandler:
 
         # Alias for experiments
         experiment_counts = self.df1.count().sort_values(ascending=False)
+        experiment_counts = experiment_counts.drop(excludes)
         print(experiment_counts)
         exit()
         num_experiments = len(experiment_counts)
         experiment_alias = {
             experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(
-                experiment_counts.index) if experiment not in excludes}
+                experiment_counts.index)}
 
         if donor:
             # # Alias for donors
