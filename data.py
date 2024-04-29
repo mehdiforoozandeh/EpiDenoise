@@ -1034,6 +1034,8 @@ class ExtendedEncodeDataHandler:
 
         # Alias for experiments
         experiment_counts = self.df1.count().sort_values(ascending=False)
+        print(experiment_counts)
+        exit()
         num_experiments = len(experiment_counts)
         experiment_alias = {
             experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(
