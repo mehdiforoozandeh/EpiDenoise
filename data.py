@@ -1240,39 +1240,6 @@ class ExtendedEncodeDataHandler:
         
         return loaded_data, loaded_metadata
 
-    # def load_bios(self, bios_name, locus, DSF, f_format="npz"):
-    #     """Load all available experiments for a given biosample and locus."""
-    #     exps = list(self.navigation[bios_name].keys())
-    #     loaded_data = {}
-    #     loaded_metadata = {}
-
-    #     for e in exps:
-    #         npz_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
-    #         jsn1_path = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
-    #         jsn2_path = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
-            
-    #         # Load npz and json files
-    #         data = self.load_npz(npz_path)
-    #         with open(jsn1_path, 'r') as jsnfile:
-    #             md1 = json.load(jsnfile)
-    #         with open(jsn2_path, 'r') as jsnfile:
-    #             md2 = json.load(jsnfile)
-            
-    #         md = {
-    #             "depth": md1["depth"], 
-    #             "coverage": md1["coverage"], 
-    #             "read_length": md2["read_length"], 
-    #             "run_type": md2["run_type"]
-    #         }
-    #         loaded_metadata[e] = md
-            
-    #         # Slice data according to locus
-    #         start_bin = int(locus[1]) // self.resolution
-    #         end_bin = int(locus[2]) // self.resolution
-    #         loaded_data[e] = data[e][start_bin:end_bin]
-
-    #     return loaded_data, loaded_metadata
-
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
         mdtensor = []
@@ -1309,24 +1276,6 @@ class ExtendedEncodeDataHandler:
         mdtensor = torch.tensor(np.array(mdtensor)).permute(1, 0)
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
-
-    # def make_region_tensor(self, list_bios, locus, DSF):
-    #     data = []
-    #     metadata = []
-    #     availability = []
-
-    #     for bios in list_bios:
-    #         try:
-    #             loaded_data, loaded_metadata= self.load_bios(bios, locus, DSF=DSF, f_format="npz")
-    #             d, md, avl = self.make_bios_tensor(loaded_data, loaded_metadata)
-    #             data.append(d)
-    #             metadata.append(md)
-    #             availability.append(avl)
-    #         except:
-    #             pass
-        
-    #     data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
-    #     return data, metadata, availability
     
     def make_region_tensor(self, list_bios, locus, DSF):
         """Load and process data for multiple biosamples in parallel."""
@@ -1351,11 +1300,8 @@ class ExtendedEncodeDataHandler:
                 metadata.append(md)
                 availability.append(avl)
 
-        if data:
-            data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
-            return data, metadata, availability
-        else:
-            return None, None, None
+        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        return data, metadata, availability
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
