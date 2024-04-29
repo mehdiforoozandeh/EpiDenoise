@@ -4244,7 +4244,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "epd30a":
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
-            "input_dim": 50,
+            "input_dim": 47,
             "metadata_embedding_dim": 25,
             "dropout": 0.1,
             "nhead": 4,
