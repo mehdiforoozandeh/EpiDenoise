@@ -1229,7 +1229,7 @@ class ExtendedEncodeDataHandler:
             loaded_metadata[e] = md
             
         # Load files in parallel
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             loaded = list(executor.map(self.load_npz, npz_files))
         
         start_bin = int(locus[1]) // self.resolution
@@ -1339,7 +1339,7 @@ class ExtendedEncodeDataHandler:
                 return None
 
         # Use ThreadPoolExecutor to handle biosamples in parallel
-        with ThreadPoolExecutor(max_workers=None) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             results = list(executor.map(load_and_process, list_bios))
 
         # Aggregate results
