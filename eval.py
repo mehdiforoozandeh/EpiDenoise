@@ -1993,6 +1993,10 @@ class EVAL_EED(object):
         p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         for leave_one_out in available_indices:
             n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+
+            print(n[:, :, leave_one_out])
+            print(p[:, :, leave_one_out])
+            
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
             print(f"got imputations for feature #{leave_one_out+1}")
