@@ -278,8 +278,12 @@ class RelativePosition(nn.Module):
         distance_mat = range_vec_k[None, :] - range_vec_q[:, None]
         distance_mat_clipped = torch.clamp(distance_mat, -self.max_relative_position, self.max_relative_position)
         final_mat = distance_mat_clipped + self.max_relative_position
-        final_mat = torch.LongTensor(final_mat).cuda()
-        embeddings = self.embeddings_table[final_mat].cuda()
+        if torch.cuda.is_available():
+            final_mat = torch.LongTensor(final_mat).cuda()
+            embeddings = self.embeddings_table[final_mat].cuda()
+        else:
+            final_mat = torch.LongTensor(final_mat)
+            embeddings = self.embeddings_table[final_mat]
 
         return embeddings
 
@@ -3347,13 +3351,13 @@ class MODEL_LOADER(object):
             kernel_size = self.hyper_parameters["kernel_size"]
         
         elif version in ["30a"]:
-            input_dim = output_dim = hyper_parameters["input_dim"]
-            dropout = hyper_parameters["dropout"]
-            nhead = hyper_parameters["nhead"]
-            d_model = hyper_parameters["d_model"]
-            nlayers = hyper_parameters["nlayers"]
-            metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
-            context_length = hyper_parameters["context_length"]
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            d_model = self.hyper_parameters["d_model"]
+            nlayers = self.hyper_parameters["nlayers"]
+            metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
+            context_length = self.hyper_parameters["context_length"]
         
         # Assuming model is an instance of the correct class
         if version == "10":
@@ -3392,7 +3396,7 @@ class MODEL_LOADER(object):
                 input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
                 dropout=dropout, context_length=context_length, pos_enc="relative")
 
-        model.load_state_dict(torch.load(self.model_path))
+        model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
         model = model.to(self.device)
         return model
 

@@ -747,8 +747,8 @@ class VISUALS(object):
         plt.clf()
 
     def BIOS_signal_track(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
         example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
@@ -798,11 +798,11 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_tracks.png", dpi=200)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=200)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -852,11 +852,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters.png", dpi=150)
 
     def BIOS_signal_scatter_with_marginals(self, eval_res, share_axes=True):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
         num_rows = len(eval_res)
@@ -913,11 +913,11 @@ class VISUALS(object):
                     ax.set_ylim(common_range)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_scatters_with_marginals.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.png", dpi=150)
 
     def BIOS_signal_heatmap(self, eval_res, share_axes=True, bins=50):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -964,11 +964,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | arcsinh(-log10(pval))")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_heatmaps.png", dpi=150)
         
     def BIOS_signal_scatter_rank(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -1025,11 +1025,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_rank_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_scatters.png", dpi=150)
     
     def BIOS_signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
 
@@ -1080,11 +1080,11 @@ class VISUALS(object):
                 ax.set_ylabel("Imp | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/signal_rank_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
 
     def BIOS_corresp_curve(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -1116,11 +1116,11 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/corresp_curve.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve.png", dpi=150)
 
     def BIOS_corresp_curve_deriv(self, eval_res):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
             
         num_assays = len(eval_res)
         n_cols = math.floor(math.sqrt(num_assays))
@@ -1152,11 +1152,11 @@ class VISUALS(object):
                 axs[i,j].set_ylabel("psi'")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/corresp_curve_deriv.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve_deriv.png", dpi=150)
     
     def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
-        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")==False:
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
 
@@ -1203,7 +1203,7 @@ class VISUALS(object):
                 ax.set_ylabel(m)
         
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available train assays']}/context.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/context.png", dpi=150)
 
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
@@ -1839,19 +1839,26 @@ class EVAL_EED(object):
         results = []
         
         for j in availability:  # for each feature i.e. assay
+            j = j.item()
             for comparison in ['imputed', 'upsampled']:
-                pred = P[:, j].numpy()
-                target = Y[:, j].numpy()
+                if comparison == "imputed":
+                    pred = P_imp[:, j].numpy()
+                elif comparison == "upsampled":
+                    pred = P_ups[:, j].numpy()
 
+                target = Y[:, j].numpy()
                 metrics_list = []
+
+                if np.var(pred) == 0: 
+                    print(f'skipped {self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]} due to constant pred.')
+                    continue
 
                 # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                 metrics = {
                     'bios':bios_name,
                     'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
                     'comparison': comparison,
-                    'available train assays': len(self.all_assays) - len(missing_x_i),
-                    'available eval assays': len(self.all_assays) - len(missing_y_i),
+                    'available assays': len(availability),
 
                     "obs":target,
                     "imp":pred,
@@ -1899,11 +1906,13 @@ class EVAL_EED(object):
         Returns:
         tuple: A tuple containing the tensors for X, mX, avX, Y, mY, and avY.
         """
-        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        # temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], x_dsf)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
         del temp_x, temp_mx
 
-        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        # temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], y_dsf)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
         del temp_y, temp_my
 
@@ -1920,13 +1929,8 @@ class EVAL_EED(object):
         return X, mX, avX, Y, mY, avY
 
     def pred(self, X, mX, mY, avail, imp_target=[]):
-
         # Initialize a tensor to store all predictions
         P = torch.empty_like(X, device="cpu") 
-
-        if len(imp_target)>0:
-            X[:,:,imp_target] = self.token_dict["cloze_mask"]
-            mX_batch[:,:,imp_target] = self.token_dict["missing_mask"]
 
         # make predictions in batches
         for i in range(0, len(X), self.batch_size):
@@ -1939,21 +1943,37 @@ class EVAL_EED(object):
 
             with torch.no_grad():
                 x_batch = x_batch.to(self.device)
+
+                if len(imp_target)>0:
+                    x_batch = x_batch.clone()
+                    x_batch[:,:,imp_target] = self.token_dict["cloze_mask"]
+                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
+
+                    avail_batch = avail_batch.clone()
+                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch_missing_vals = (avail_batch == 0)
+                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                    mX_batch = mX_batch.clone()
+                    mX_batch[:,:,imp_target] = self.token_dict["missing_mask"]
                 
-                # change missing token to cloze token to force prediction
-                x_batch_missing_vals = (x_batch == -1)
-                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
+                else:
+                    # change missing token to cloze token to force prediction
+                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch = x_batch.clone()
+                    x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
 
-                avail_batch_missing_vals = (avail_batch == -1)
-                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"] 
-
-                # outputs = self.model(x_batch, mX_batch, mY_batch, avail_batch)
+                    avail_batch_missing_vals = (avail_batch == 0)
+                    avail_batch = avail_batch.clone()
+                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
                 outputs = NegativeBinomial(outputs_p, outputs_n).expect(stat="median")
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs.cpu()
+            print("one batch completed")
 
         return P
 
@@ -1966,7 +1986,7 @@ class EVAL_EED(object):
         for leave_one_out in available_indices:
             P_imp[:, :, leave_one_out] = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])[:, :, leave_one_out]
         
-        P_ups = self.pred(X, mX, mY, avail, imp_target=[])
+        P_ups = self.pred(X, mX, mY, avX, imp_target=[])
 
         P_imp = P_imp.view((P_imp.shape[0] * P_imp.shape[1]), P_imp.shape[-1]) # imp_preds
         P_ups = P_ups.view((P_ups.shape[0] * P_ups.shape[1]), P_ups.shape[-1]) # ups_preds
@@ -1993,47 +2013,47 @@ class EVAL_EED(object):
             selected regions' signals
         """
 
-        try: 
-            print("plotting signal tracks")
-            self.viz.BIOS_signal_track(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot signal tracks")
+        # try: 
+        # print("plotting signal tracks")
+        # self.viz.BIOS_signal_track(eval_res)
+        # self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot signal tracks")
 
-        try:
-            print("plotting context_specific performance")
-            self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot context_specific performance")
+        # try:
+        # print("plotting context_specific performance")
+        # self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+        # self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot context_specific performance")
             
-        try:
-            print("plotting signal scatter")
-            self.viz.BIOS_signal_scatter(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot  signal scatter")
+        # try:
+        print("plotting signal scatter")
+        self.viz.BIOS_signal_scatter(eval_res)
+        self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot  signal scatter")
 
-        try:
-            print("plotting signal scatter with marginals")
-            self.viz.BIOS_signal_scatter_with_marginals(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot scatter with marginals")
+        # try:
+        print("plotting signal scatter with marginals")
+        self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+        self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot scatter with marginals")
 
-        try:
-            print("plotting signal heatmap")
-            self.viz.BIOS_signal_heatmap(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot  signal heatmap")
+        # try:
+        print("plotting signal heatmap")
+        self.viz.BIOS_signal_heatmap(eval_res)
+        self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot  signal heatmap")
 
-        try:
-            print("plotting signal rank heatmap")
-            self.viz.BIOS_signal_rank_heatmap(eval_res)
-            self.viz.clear_pallete()
-        except:
-            print("faild to plot  signal rank heatmap")
+        # try:
+        print("plotting signal rank heatmap")
+        self.viz.BIOS_signal_rank_heatmap(eval_res)
+        self.viz.clear_pallete()
+        # except:
+        #     print("faild to plot  signal rank heatmap")
 
         # try:
         #     print("plotting corresp_curve")
@@ -2092,14 +2112,19 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
-        model="", 
-        data_path="data/", 
-        context_length=200, batch_size=50, hyper_parameters_path="",
+        model="models/EPD30a_model_checkpoint_epoch0.pth", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=400, batch_size=100, 
+        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240428232813_params9408914.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30a", resolution=25, 
-        savedir="models/evals/", mode="dev"
+        savedir="models/eval_30a/", mode="eval"
     )
-    e.bios_pipeline("ENCBS075PNA", 2)
+    evres = e.bios_pipeline("ENCBS708DHS", 2)
+    print(evres)
+    exit()
+    # df.to_csv("models/eval_30a/eval.csv")
+    # e.viz_bios(evres)
 
     exit()
 
