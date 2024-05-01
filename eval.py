@@ -2037,6 +2037,10 @@ class EVAL_EED(object):
         ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
         ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
 
+        print(ups_upper_95.min(), ups_upper_95.max())
+        print(imp_upper_95.min(), imp_upper_95.max())
+        exit()
+
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
         eval_res = self.get_metrics(imp_upper_95, ups_upper_95, Y, bios_name, available_indices)
