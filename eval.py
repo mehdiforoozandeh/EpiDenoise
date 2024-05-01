@@ -2002,7 +2002,11 @@ class EVAL_EED(object):
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
-        
+
+        for av in available_indices:
+            print(imp_dist.interval(confidence=0.95))
+            print(ups_dist.interval(confidence=0.95))
+            
         # imp_median = imp_dist.expect(stat="median")
         # ups_median = ups_dist.expect(stat="median")
 
