@@ -2006,7 +2006,8 @@ class EVAL_EED(object):
         for av in available_indices:
             print(imp_dist.interval(confidence=0.95))
             print(ups_dist.interval(confidence=0.95))
-            
+        
+        exit()
         # imp_median = imp_dist.expect(stat="median")
         # ups_median = ups_dist.expect(stat="median")
 
