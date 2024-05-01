@@ -1893,7 +1893,7 @@ class EVAL_EED(object):
                 }
                 results.append(metrics)
             
-            return results
+        return results
 
     def load_bios(self, bios_name, x_dsf, y_dsf=1):
         """
