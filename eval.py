@@ -2039,6 +2039,7 @@ class EVAL_EED(object):
 
         for av in available_indices:
             print(av)
+            print(imp_median[:,av].min(), ups_median[:,av].max())
             print(ups_upper_50[:,av].min(), ups_upper_50[:,av].max())
             print(imp_upper_50[:,av].min(), imp_upper_50[:,av].max())
         exit()
