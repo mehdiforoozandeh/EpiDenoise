@@ -1989,8 +1989,8 @@ class EVAL_EED(object):
 
         available_indices = torch.where(avX[0, :] == 1)[0]
 
-        n_imp = torch.empty_like(X, device="cpu") 
-        p_imp = torch.empty_like(X, device="cpu") 
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         for leave_one_out in available_indices:
             n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
