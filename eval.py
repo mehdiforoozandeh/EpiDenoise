@@ -1906,13 +1906,13 @@ class EVAL_EED(object):
         Returns:
         tuple: A tuple containing the tensors for X, mX, avX, Y, mY, and avY.
         """
-        # temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
-        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], x_dsf)
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        # temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], x_dsf)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
         del temp_x, temp_mx
 
-        # temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
-        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], y_dsf)
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        # temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", self.chr_sizes["chr21"]//4, self.chr_sizes["chr21"]//2], y_dsf)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
         del temp_y, temp_my
 
