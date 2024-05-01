@@ -800,6 +800,41 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=200)
 
+    def BIOS_signal_confidence(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        plt.figure(figsize=(20, 10))  # Adjust the figure size as needed
+
+        for i, result in enumerate(eval_res):
+            ax = plt.subplot(len(eval_res), 1, i + 1)
+
+            # Define the x values (time or position)
+            x_values = np.arange(len(result['obs']))
+
+            # Plot the actual observations
+            ax.plot(x_values, result['obs'], label='Actual', color='black', linewidth=2)
+
+            # Plot the median predictions
+            ax.plot(x_values, result['imp'], label='Median', color='blue', linewidth=2)
+
+            # Fill between for confidence intervals
+            ax.fill_between(x_values, result['lower_60'], result['upper_60'], color='skyblue', alpha=0.3, label='60% Confidence')
+            ax.fill_between(x_values, result['lower_80'], result['upper_80'], color='orange', alpha=0.5, label='80% Confidence')
+            ax.fill_between(x_values, result['lower_95'], result['upper_95'], color='salmon', alpha=0.7, label='95% Confidence')
+
+            # Set plot titles and labels
+            ax.set_title(f"Sensor {result['feature']} - {result['comparison']}")
+            ax.set_ylabel("Values")
+            ax.set_xlabel("Time/Position")
+
+            # Only show legend in the first subplot to avoid redundancy
+            if i == 0:
+                ax.legend(loc='upper left')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=150)
+
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -2060,6 +2095,10 @@ class EVAL_EED(object):
 
             selected regions' signals
         """
+
+        print("plotting signal confidence")
+        self.viz.BIOS_signal_confidence(eval_res)
+        self.viz.clear_pallete()
 
         # try: 
         print("plotting signal tracks")
