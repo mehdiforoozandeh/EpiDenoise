@@ -2006,8 +2006,8 @@ class EVAL_EED(object):
         imp_median = imp_dist.expect(stat="median")
         ups_median = ups_dist.expect(stat="median")
 
-        imp_lower_50, imp_upper_50 = imp_dist.interval(confidence=0.6)
-        ups_lower_50, ups_upper_50 = ups_dist.interval(confidence=0.6)
+        imp_lower_50, imp_upper_50 = imp_dist.interval(confidence=0.5)
+        ups_lower_50, ups_upper_50 = ups_dist.interval(confidence=0.5)
 
         imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
         ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
@@ -2037,8 +2037,8 @@ class EVAL_EED(object):
         ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
         ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
 
-        print(ups_upper_80.min(), ups_upper_80.max())
-        print(imp_upper_80.min(), imp_upper_80.max())
+        print(ups_upper_50.min(), ups_upper_50.max())
+        print(imp_upper_50.min(), imp_upper_50.max())
         exit()
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
