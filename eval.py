@@ -1931,8 +1931,8 @@ class EVAL_EED(object):
 
     def pred(self, X, mX, mY, avail, imp_target=[]):
         # Initialize a tensor to store all predictions
-        n = torch.empty_like(X, device="cpu") 
-        p = torch.empty_like(X, device="cpu") 
+        n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
 
         # make predictions in batches
         for i in range(0, len(X), self.batch_size):
@@ -2001,6 +2001,7 @@ class EVAL_EED(object):
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
+        exit()
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
