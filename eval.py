@@ -1979,7 +1979,6 @@ class EVAL_EED(object):
 
             # Store the predictions in the large tensor
             P[i:i+outputs.shape[0], :, :] = outputs
-            print("one batch completed")
 
         return P
 
@@ -1991,8 +1990,10 @@ class EVAL_EED(object):
         P_imp = torch.empty_like(X, device="cpu") 
         for leave_one_out in available_indices:
             P_imp[:, :, leave_one_out] = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])[:, :, leave_one_out]
+            print(f"got imputations for feature #{leave_one_out+1} from {len(available_indices)}")
         
         P_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        print("got upsampled")
 
         P_imp = P_imp.view((P_imp.shape[0] * P_imp.shape[1]), P_imp.shape[-1]) # imp_preds
         P_ups = P_ups.view((P_ups.shape[0] * P_ups.shape[1]), P_ups.shape[-1]) # ups_preds
@@ -2020,16 +2021,16 @@ class EVAL_EED(object):
         """
 
         # try: 
-        # print("plotting signal tracks")
-        # self.viz.BIOS_signal_track(eval_res)
-        # self.viz.clear_pallete()
+        print("plotting signal tracks")
+        self.viz.BIOS_signal_track(eval_res)
+        self.viz.clear_pallete()
         # except:
         #     print("faild to plot signal tracks")
 
         # try:
-        # print("plotting context_specific performance")
-        # self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
-        # self.viz.clear_pallete()
+        print("plotting context_specific performance")
+        self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+        self.viz.clear_pallete()
         # except:
         #     print("faild to plot context_specific performance")
             
@@ -2128,9 +2129,8 @@ if __name__=="__main__":
     )
     evres = e.bios_pipeline("ENCBS708DHS", 2)
     print(evres)
-    exit()
     # df.to_csv("models/eval_30a/eval.csv")
-    # e.viz_bios(evres)
+    e.viz_bios(evres)
 
     exit()
 
