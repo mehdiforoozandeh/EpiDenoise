@@ -2006,9 +2006,7 @@ class EVAL_EED(object):
         ups_dist = NegativeBinomial(p_ups, n_ups)
 
         for av in available_indices:
-            print(av)
-            print(imp_dist.expect(stat="median")[:,:,av].max())
-            print(ups_dist.expect(stat="median")[:,:,av].max())
+            print(av, imp_dist.interval(confidence=0.5)[:,:,av].max(), ups_dist.interval(confidence=0.5)[:,:,av].max())
         
         exit()
         # imp_median = imp_dist.expect(stat="median")
