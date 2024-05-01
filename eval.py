@@ -1982,8 +1982,6 @@ class EVAL_EED(object):
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
 
-        print(p.min(), p.mean(), p.max())
-        print(n.min(), n.mean(), n.max())
         return n, p
 
     def bios_pipeline(self, bios_name, x_dsf):
@@ -2001,7 +1999,6 @@ class EVAL_EED(object):
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
-        exit()
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
