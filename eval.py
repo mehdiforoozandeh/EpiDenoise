@@ -1982,8 +1982,8 @@ class EVAL_EED(object):
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
 
-        print(p.min(dim=-1), p.mean(dim=-1), p.max(dim=-1))
-        print(n.min(dim=-1), n.mean(dim=-1), n.max(dim=-1))
+        print(p.min(), p.mean(), p.max())
+        print(n.min(), n.mean(), n.max())
         return n, p
 
     def bios_pipeline(self, bios_name, x_dsf):
