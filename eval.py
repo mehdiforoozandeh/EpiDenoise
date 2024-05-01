@@ -1931,7 +1931,8 @@ class EVAL_EED(object):
 
     def pred(self, X, mX, mY, avail, imp_target=[]):
         # Initialize a tensor to store all predictions
-        P = torch.empty_like(X, device="cpu") 
+        n = torch.empty_like(X, device="cpu") 
+        p = torch.empty_like(X, device="cpu") 
 
         # make predictions in batches
         for i in range(0, len(X), self.batch_size):
@@ -1975,33 +1976,70 @@ class EVAL_EED(object):
                 avail_batch = avail_batch.to(self.device)
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
-                outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
+                # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
-            P[i:i+outputs.shape[0], :, :] = outputs
+            n[i:i+outputs.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs.shape[0], :, :] = outputs_p.cpu()
 
-        return P
+        return n, p
 
     def bios_pipeline(self, bios_name, x_dsf):
         X, mX, avX, Y, mY, avY = self.load_bios(bios_name, x_dsf)  
 
         available_indices = torch.where(avX[0, :] == 1)[0]
 
-        P_imp = torch.empty_like(X, device="cpu") 
+        n_imp = torch.empty_like(X, device="cpu") 
+        p_imp = torch.empty_like(X, device="cpu") 
         for leave_one_out in available_indices:
-            P_imp[:, :, leave_one_out] = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])[:, :, leave_one_out]
-            print(f"got imputations for feature #{leave_one_out+1} from {len(available_indices)}")
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            print(f"got imputations for feature #{leave_one_out+1}")
         
-        P_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
 
-        P_imp = P_imp.view((P_imp.shape[0] * P_imp.shape[1]), P_imp.shape[-1]) # imp_preds
-        P_ups = P_ups.view((P_ups.shape[0] * P_ups.shape[1]), P_ups.shape[-1]) # ups_preds
+        imp_dist = NegativeBinomial(p_imp.cpu(), n_imp.cpu())
+        ups_dist = NegativeBinomial(p_ups.cpu(), n_ups.cpu())
+        
+        imp_median = imp_dist.expect(stat="median")
+        ups_median = ups_dist.expect(stat="median")
+
+        imp_lower_50, imp_upper_50 = imp_dist.expect(confidence=0.6)
+        ups_lower_50, ups_upper_50 = ups_dist.expect(confidence=0.6)
+
+        imp_lower_80, imp_upper_80 = imp_dist.expect(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.expect(confidence=0.8)
+
+        imp_lower_95, imp_upper_95 = imp_dist.expect(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.expect(confidence=0.95)
+
+        # Flatten the tensors to (batch_size * sequence_length, features)
+        imp_median = imp_median.view((imp_median.shape[0] * imp_median.shape[1]), imp_median.shape[-1])
+        ups_median = ups_median.view((ups_median.shape[0] * ups_median.shape[1]), ups_median.shape[-1])
+
+        imp_lower_50 = imp_lower_50.view((imp_lower_50.shape[0] * imp_lower_50.shape[1]), imp_lower_50.shape[-1])
+        imp_upper_50 = imp_upper_50.view((imp_upper_50.shape[0] * imp_upper_50.shape[1]), imp_upper_50.shape[-1])
+
+        ups_lower_50 = ups_lower_50.view((ups_lower_50.shape[0] * ups_lower_50.shape[1]), ups_lower_50.shape[-1])
+        ups_upper_50 = ups_upper_50.view((ups_upper_50.shape[0] * ups_upper_50.shape[1]), ups_upper_50.shape[-1])
+
+        imp_lower_80 = imp_lower_80.view((imp_lower_80.shape[0] * imp_lower_80.shape[1]), imp_lower_80.shape[-1])
+        imp_upper_80 = imp_upper_80.view((imp_upper_80.shape[0] * imp_upper_80.shape[1]), imp_upper_80.shape[-1])
+
+        ups_lower_80 = ups_lower_80.view((ups_lower_80.shape[0] * ups_lower_80.shape[1]), ups_lower_80.shape[-1])
+        ups_upper_80 = ups_upper_80.view((ups_upper_80.shape[0] * ups_upper_80.shape[1]), ups_upper_80.shape[-1])
+
+        imp_lower_95 = imp_lower_95.view((imp_lower_95.shape[0] * imp_lower_95.shape[1]), imp_lower_95.shape[-1])
+        imp_upper_95 = imp_upper_95.view((imp_upper_95.shape[0] * imp_upper_95.shape[1]), imp_upper_95.shape[-1])
+
+        ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
+        ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
-        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1]) 
 
-        eval_res = self.get_metrics(P_imp, P_ups, Y, bios_name, available_indices)
+        eval_res = self.get_metrics(imp_upper_95, ups_upper_95, Y, bios_name, available_indices)
         return eval_res
 
     def viz_bios(self, eval_res):

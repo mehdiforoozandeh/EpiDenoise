@@ -660,8 +660,8 @@ class NegativeBinomial(object):
         return torch.tensor(mean_value, dtype=torch.float32)
 
     def interval(self, confidence):
-        interval_value = nbinom.interval(confidence, self.n, self.p)
-        return torch.tensor(interval_value, dtype=torch.float32)
+        lower, upper = nbinom.interval(confidence, self.n, self.p)
+        return torch.tensor(lower, dtype=torch.float32), torch.tensor(upper, dtype=torch.float32)
     
     def std(self):
         std_value = nbinom.std(self.n, self.p)
