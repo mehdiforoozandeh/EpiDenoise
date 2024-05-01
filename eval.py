@@ -1975,10 +1975,10 @@ class EVAL_EED(object):
                 avail_batch = avail_batch.to(self.device)
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
-                outputs = NegativeBinomial(outputs_p, outputs_n).expect(stat="median")
+                outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
-            P[i:i+outputs.shape[0], :, :] = outputs.cpu()
+            P[i:i+outputs.shape[0], :, :] = outputs
             print("one batch completed")
 
         return P
