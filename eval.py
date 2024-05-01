@@ -1976,14 +1976,14 @@ class EVAL_EED(object):
                 avail_batch = avail_batch.to(self.device)
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
-                print(outputs_p.min(), outputs_p.mean(), outputs_p.max())
-                print(outputs_n.min(), outputs_n.mean(), outputs_n.max())
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
 
+        print(p.min(dim=-1), p.mean(dim=-1), p.max(dim=-1))
+        print(n.min(dim=-1), n.mean(dim=-1), n.max(dim=-1))
         return n, p
 
     def bios_pipeline(self, bios_name, x_dsf):
