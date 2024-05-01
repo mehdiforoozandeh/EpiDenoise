@@ -2002,17 +2002,17 @@ class EVAL_EED(object):
 
             print(n_imp[:, :, leave_one_out])
             print(p_imp[:, :, leave_one_out])
-            print(f"got imputations for feature #{leave_one_out+1}")
+            print(f"\n\ngot imputations for feature #{leave_one_out+1}")
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
 
-        imp_dist = NegativeBinomial(p_imp, n_imp)
-        ups_dist = NegativeBinomial(p_ups, n_ups)
+        # imp_dist = NegativeBinomial(p_imp, n_imp)
+        # ups_dist = NegativeBinomial(p_ups, n_ups)
 
-        for av in available_indices:
-            print(imp_dist.expect(stat="median"))
-            print(ups_dist.expect(stat="median"))
+        # for av in available_indices:
+        #     print(imp_dist.expect(stat="median"))
+        #     print(ups_dist.expect(stat="median"))
         
         exit()
         # imp_median = imp_dist.expect(stat="median")
