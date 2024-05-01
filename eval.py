@@ -1824,7 +1824,7 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    def get_metrics(self, P_imp, P_ups, Y, bios_name, availability):
+    def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
         reportoir of metrics -- per_bios:
 
@@ -1836,23 +1836,44 @@ class EVAL_EED(object):
             gene: MSE, Pearson, Spearman
             prom: MSE, Pearson, Spearman
         """
+        imp_median = imp_dist.expect(stat="median")
+        ups_median = ups_dist.expect(stat="median")
 
-        results = []
+        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+
+        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
+        results = []
         for j in availability:  # for each feature i.e. assay
             j = j.item()
             for comparison in ['imputed', 'upsampled']:
                 if comparison == "imputed":
-                    pred = P_imp[:, j].numpy()
+                    pred = imp_median[:, j].numpy()
+                    lower_60 = imp_lower_60[:, j].numpy()
+                    lower_80 = imp_lower_80[:, j].numpy()
+                    lower_95 = imp_lower_95[:, j].numpy()
+
+                    upper_60 = imp_upper_60[:, j].numpy()
+                    upper_80 = imp_upper_80[:, j].numpy()
+                    upper_95 = imp_upper_95[:, j].numpy()
+                    
                 elif comparison == "upsampled":
-                    pred = P_ups[:, j].numpy()
+                    pred = ups_median[:, j].numpy()
+                    lower_60 = ups_lower_60[:, j].numpy()
+                    lower_80 = ups_lower_80[:, j].numpy()
+                    lower_95 = ups_lower_95[:, j].numpy()
+
+                    upper_60 = ups_upper_60[:, j].numpy()
+                    upper_80 = ups_upper_80[:, j].numpy()
+                    upper_95 = ups_upper_95[:, j].numpy()
 
                 target = Y[:, j].numpy()
                 metrics_list = []
-
-                # if np.var(pred) == 0: 
-                #     print(f'skipped {self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]} due to constant pred.')
-                #     continue
 
                 # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                 metrics = {
@@ -1863,6 +1884,14 @@ class EVAL_EED(object):
 
                     "obs":target,
                     "imp":pred,
+
+                    "lower_60" : lower_60,
+                    "lower_80" : lower_80,
+                    "lower_95" : lower_95,
+
+                    "upper_60": upper_60,
+                    "upper_80": upper_80,
+                    "upper_95": upper_95,
 
                     'MSE-GW': self.metrics.mse(target, pred),
                     'Pearson-GW': self.metrics.pearson(target, pred),
@@ -2002,52 +2031,18 @@ class EVAL_EED(object):
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
 
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
 
-        for av in available_indices:
-            limp, himp = imp_dist.interval(confidence=0.95)
-            lups, hups = ups_dist.interval(confidence=0.95)
-            print(av, himp[:,:,av].max(), hups[:,:,av].max())
-        
-        exit()
-        # imp_median = imp_dist.expect(stat="median")
-        # ups_median = ups_dist.expect(stat="median")
-
-        # imp_lower_50, imp_upper_50 = imp_dist.interval(confidence=0.5)
-        # ups_lower_50, ups_upper_50 = ups_dist.interval(confidence=0.5)
-
-        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
-
-        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
-
-        # # Flatten the tensors to (batch_size * sequence_length, features)
-        # imp_median = imp_median.view((imp_median.shape[0] * imp_median.shape[1]), imp_median.shape[-1])
-        # ups_median = ups_median.view((ups_median.shape[0] * ups_median.shape[1]), ups_median.shape[-1])
-
-        # imp_lower_50 = imp_lower_50.view((imp_lower_50.shape[0] * imp_lower_50.shape[1]), imp_lower_50.shape[-1])
-        # imp_upper_50 = imp_upper_50.view((imp_upper_50.shape[0] * imp_upper_50.shape[1]), imp_upper_50.shape[-1])
-
-        # ups_lower_50 = ups_lower_50.view((ups_lower_50.shape[0] * ups_lower_50.shape[1]), ups_lower_50.shape[-1])
-        # ups_upper_50 = ups_upper_50.view((ups_upper_50.shape[0] * ups_upper_50.shape[1]), ups_upper_50.shape[-1])
-
-        # imp_lower_80 = imp_lower_80.view((imp_lower_80.shape[0] * imp_lower_80.shape[1]), imp_lower_80.shape[-1])
-        # imp_upper_80 = imp_upper_80.view((imp_upper_80.shape[0] * imp_upper_80.shape[1]), imp_upper_80.shape[-1])
-
-        # ups_lower_80 = ups_lower_80.view((ups_lower_80.shape[0] * ups_lower_80.shape[1]), ups_lower_80.shape[-1])
-        # ups_upper_80 = ups_upper_80.view((ups_upper_80.shape[0] * ups_upper_80.shape[1]), ups_upper_80.shape[-1])
-
-        # imp_lower_95 = imp_lower_95.view((imp_lower_95.shape[0] * imp_lower_95.shape[1]), imp_lower_95.shape[-1])
-        # imp_upper_95 = imp_upper_95.view((imp_upper_95.shape[0] * imp_upper_95.shape[1]), imp_upper_95.shape[-1])
-
-        # ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
-        # ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
-
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
-        eval_res = self.get_metrics(imp_upper_95, ups_upper_95, Y, bios_name, available_indices)
+        eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
         return eval_res
 
     def viz_bios(self, eval_res):
@@ -2174,7 +2169,8 @@ if __name__=="__main__":
         savedir="models/eval_30a/", mode="eval"
     )
     evres = e.bios_pipeline("ENCBS708DHS", 2)
-    print(evres)
+    for i in range(len(evres)):
+        print(evres[i])
     # df.to_csv("models/eval_30a/eval.csv")
     e.viz_bios(evres)
 

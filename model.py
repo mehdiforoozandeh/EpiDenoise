@@ -641,23 +641,16 @@ class NegativeBinomial(object):
         
     def expect(self, stat="median"):
         if stat == "median":
-            median_value = nbinom.median(self.n, self.p)
-            return torch.tensor(median_value, dtype=torch.float32)
+            self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
+            return self.median_value
 
         elif stat == "mean":
-            mean_value = nbinom.mean(self.n, self.p)
-            return torch.tensor(mean_value, dtype=torch.float32)
-
-        elif stat == "mode":
-            if self.n <= 1:
-                return 0
-            else:
-                mode_value = math.floor((self.n - 1) * (1 - self.p) / self.p)
-                return torch.tensor(mode_value, dtype=torch.float32)
+            self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+            return self.mean_value
     
     def mean(self):
-        mean_value = nbinom.mean(self.n, self.p)
-        return torch.tensor(mean_value, dtype=torch.float32)
+        self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+        return self.mean_value
 
     def interval(self, confidence):
         lower, upper = nbinom.interval(confidence, self.n, self.p)
