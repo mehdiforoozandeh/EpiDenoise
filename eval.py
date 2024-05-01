@@ -1999,6 +1999,9 @@ class EVAL_EED(object):
             
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+
+            print(n_imp[:, :, leave_one_out])
+            print(p_imp[:, :, leave_one_out])
             print(f"got imputations for feature #{leave_one_out+1}")
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
