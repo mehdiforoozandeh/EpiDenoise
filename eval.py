@@ -1850,9 +1850,9 @@ class EVAL_EED(object):
                 target = Y[:, j].numpy()
                 metrics_list = []
 
-                if np.var(pred) == 0: 
-                    print(f'skipped {self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]} due to constant pred.')
-                    continue
+                # if np.var(pred) == 0: 
+                #     print(f'skipped {self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]} due to constant pred.')
+                #     continue
 
                 # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                 metrics = {
