@@ -1993,12 +1993,16 @@ class EVAL_EED(object):
         p_imp = torch.empty_like(X, device="cpu") 
         for leave_one_out in available_indices:
             n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            print(n[:, :, leave_one_out].shape, p[:, :, leave_one_out].shape)
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
             print(f"got imputations for feature #{leave_one_out+1}")
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
+
+        print(n_imp.shape, p_imp.shape, n_ups.shape, p_ups.shape)
+        exit()
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
