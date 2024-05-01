@@ -2003,51 +2003,39 @@ class EVAL_EED(object):
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
         
-        imp_median = imp_dist.expect(stat="median")
-        ups_median = ups_dist.expect(stat="median")
+        # imp_median = imp_dist.expect(stat="median")
+        # ups_median = ups_dist.expect(stat="median")
 
-        imp_lower_50, imp_upper_50 = imp_dist.interval(confidence=0.5)
-        ups_lower_50, ups_upper_50 = ups_dist.interval(confidence=0.5)
+        # imp_lower_50, imp_upper_50 = imp_dist.interval(confidence=0.5)
+        # ups_lower_50, ups_upper_50 = ups_dist.interval(confidence=0.5)
 
-        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
-        # Flatten the tensors to (batch_size * sequence_length, features)
-        imp_median = imp_median.view((imp_median.shape[0] * imp_median.shape[1]), imp_median.shape[-1])
-        ups_median = ups_median.view((ups_median.shape[0] * ups_median.shape[1]), ups_median.shape[-1])
+        # # Flatten the tensors to (batch_size * sequence_length, features)
+        # imp_median = imp_median.view((imp_median.shape[0] * imp_median.shape[1]), imp_median.shape[-1])
+        # ups_median = ups_median.view((ups_median.shape[0] * ups_median.shape[1]), ups_median.shape[-1])
 
-        imp_lower_50 = imp_lower_50.view((imp_lower_50.shape[0] * imp_lower_50.shape[1]), imp_lower_50.shape[-1])
-        imp_upper_50 = imp_upper_50.view((imp_upper_50.shape[0] * imp_upper_50.shape[1]), imp_upper_50.shape[-1])
+        # imp_lower_50 = imp_lower_50.view((imp_lower_50.shape[0] * imp_lower_50.shape[1]), imp_lower_50.shape[-1])
+        # imp_upper_50 = imp_upper_50.view((imp_upper_50.shape[0] * imp_upper_50.shape[1]), imp_upper_50.shape[-1])
 
-        ups_lower_50 = ups_lower_50.view((ups_lower_50.shape[0] * ups_lower_50.shape[1]), ups_lower_50.shape[-1])
-        ups_upper_50 = ups_upper_50.view((ups_upper_50.shape[0] * ups_upper_50.shape[1]), ups_upper_50.shape[-1])
+        # ups_lower_50 = ups_lower_50.view((ups_lower_50.shape[0] * ups_lower_50.shape[1]), ups_lower_50.shape[-1])
+        # ups_upper_50 = ups_upper_50.view((ups_upper_50.shape[0] * ups_upper_50.shape[1]), ups_upper_50.shape[-1])
 
-        imp_lower_80 = imp_lower_80.view((imp_lower_80.shape[0] * imp_lower_80.shape[1]), imp_lower_80.shape[-1])
-        imp_upper_80 = imp_upper_80.view((imp_upper_80.shape[0] * imp_upper_80.shape[1]), imp_upper_80.shape[-1])
+        # imp_lower_80 = imp_lower_80.view((imp_lower_80.shape[0] * imp_lower_80.shape[1]), imp_lower_80.shape[-1])
+        # imp_upper_80 = imp_upper_80.view((imp_upper_80.shape[0] * imp_upper_80.shape[1]), imp_upper_80.shape[-1])
 
-        ups_lower_80 = ups_lower_80.view((ups_lower_80.shape[0] * ups_lower_80.shape[1]), ups_lower_80.shape[-1])
-        ups_upper_80 = ups_upper_80.view((ups_upper_80.shape[0] * ups_upper_80.shape[1]), ups_upper_80.shape[-1])
+        # ups_lower_80 = ups_lower_80.view((ups_lower_80.shape[0] * ups_lower_80.shape[1]), ups_lower_80.shape[-1])
+        # ups_upper_80 = ups_upper_80.view((ups_upper_80.shape[0] * ups_upper_80.shape[1]), ups_upper_80.shape[-1])
 
-        imp_lower_95 = imp_lower_95.view((imp_lower_95.shape[0] * imp_lower_95.shape[1]), imp_lower_95.shape[-1])
-        imp_upper_95 = imp_upper_95.view((imp_upper_95.shape[0] * imp_upper_95.shape[1]), imp_upper_95.shape[-1])
+        # imp_lower_95 = imp_lower_95.view((imp_lower_95.shape[0] * imp_lower_95.shape[1]), imp_lower_95.shape[-1])
+        # imp_upper_95 = imp_upper_95.view((imp_upper_95.shape[0] * imp_upper_95.shape[1]), imp_upper_95.shape[-1])
 
-        ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
-        ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
-
-        for av in available_indices:
-            print(av)
-            print(p_ups[:, :, av].min(), p_ups[:, :, av].max())
-            print(n_ups[:, :, av].min(), n_ups[:, :, av].max())
-            print(p_imp[:, :, av].min(), p_imp[:, :, av].max())
-            print(n_imp[:, :, av].min(), n_imp[:, :, av].max())
-
-            print(imp_median[:,av].min(), ups_median[:,av].max())
-            print(ups_upper_50[:,av].min(), ups_upper_50[:,av].max())
-            print(imp_upper_50[:,av].min(), imp_upper_50[:,av].max())
-        exit()
+        # ups_lower_95 = ups_lower_95.view((ups_lower_95.shape[0] * ups_lower_95.shape[1]), ups_lower_95.shape[-1])
+        # ups_upper_95 = ups_upper_95.view((ups_upper_95.shape[0] * ups_upper_95.shape[1]), ups_upper_95.shape[-1])
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
