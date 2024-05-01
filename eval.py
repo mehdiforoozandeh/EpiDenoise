@@ -2004,8 +2004,8 @@ class EVAL_EED(object):
         ups_dist = NegativeBinomial(p_ups, n_ups)
 
         for av in available_indices:
-            print(imp_dist.interval(confidence=0.95))
-            print(ups_dist.interval(confidence=0.95))
+            print(imp_dist.expect(stat="median"))
+            print(ups_dist.expect(stat="median"))
         
         exit()
         # imp_median = imp_dist.expect(stat="median")
