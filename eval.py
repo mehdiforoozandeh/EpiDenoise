@@ -827,10 +827,10 @@ class VISUALS(object):
                 x_values = range(gene_coord[0], gene_coord[1])
 
                 # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='black', linewidth=2)
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='black', linewidth=0.5, alpha=0.5)
 
                 # Plot the median predictions
-                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='blue', linewidth=2)
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='blue', linewidth=0.5, alpha=0.5)
 
                 # Fill between for confidence intervals
                 ax.fill_between(
@@ -858,7 +858,7 @@ class VISUALS(object):
                     ax.legend(loc='upper left')
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
