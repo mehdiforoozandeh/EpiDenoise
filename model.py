@@ -636,8 +636,8 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
 
 class NegativeBinomial(object):
     def __init__(self, p, n):
-        self.p = p
-        self.n = n
+        self.p = p.numpy()
+        self.n = n.numpy()
         
     def expect(self, stat="median"):
         if stat == "median":
@@ -646,7 +646,7 @@ class NegativeBinomial(object):
 
         elif stat == "mean":
             mean_value = nbinom.mean(self.n, self.p)
-            return torch.tensor(math.floor(mean_value), dtype=torch.float32)
+            return torch.tensor(mean_value, dtype=torch.float32)
 
         elif stat == "mode":
             if self.n <= 1:
