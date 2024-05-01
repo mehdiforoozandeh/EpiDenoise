@@ -1976,6 +1976,7 @@ class EVAL_EED(object):
                 avail_batch = avail_batch.to(self.device)
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
+                print(outputs_p.sum())
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
@@ -1999,10 +2000,6 @@ class EVAL_EED(object):
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
-
-        print(n_imp[:, :, leave_one_out].sum(), p_imp[:, :, leave_one_out].sum(), n_ups[:, :, leave_one_out].sum(), p_ups[:, :, leave_one_out].sum())
-
-        exit()
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
