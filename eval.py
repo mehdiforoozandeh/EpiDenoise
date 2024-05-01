@@ -2000,8 +2000,8 @@ class EVAL_EED(object):
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
 
-        imp_dist = NegativeBinomial(p_imp.cpu(), n_imp.cpu())
-        ups_dist = NegativeBinomial(p_ups.cpu(), n_ups.cpu())
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
         
         imp_median = imp_dist.expect(stat="median")
         ups_median = ups_dist.expect(stat="median")
@@ -2039,6 +2039,11 @@ class EVAL_EED(object):
 
         for av in available_indices:
             print(av)
+            print(p_ups[:, :, av].min(), p_ups[:, :, av].max())
+            print(n_ups[:, :, av].min(), n_ups[:, :, av].max())
+            print(p_imp[:, :, av].min(), p_imp[:, :, av].max())
+            print(n_imp[:, :, av].min(), n_imp[:, :, av].max())
+
             print(imp_median[:,av].min(), ups_median[:,av].max())
             print(ups_upper_50[:,av].min(), ups_upper_50[:,av].max())
             print(imp_upper_50[:,av].min(), imp_upper_50[:,av].max())
