@@ -2007,7 +2007,7 @@ class EVAL_EED(object):
 
         for av in available_indices:
             limp, himp = imp_dist.interval(confidence=0.95)
-            lups, hups = imp_dist.interval(confidence=0.95)
+            lups, hups = ups_dist.interval(confidence=0.95)
             print(av, himp[:,:,av].max(), hups[:,:,av].max())
         
         exit()
