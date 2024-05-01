@@ -1991,6 +1991,7 @@ class EVAL_EED(object):
 
         n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
         for leave_one_out in available_indices:
             n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
             
@@ -2000,14 +2001,13 @@ class EVAL_EED(object):
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
-        print(n_ups[:,:,available_indices], p_ups[:,:,available_indices])
 
         imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
 
         for av in available_indices:
-            print(imp_dist.expect(stat="median"))
-            print(ups_dist.expect(stat="median"))
+            print(imp_dist.expect(stat="median")[:,:,av])
+            print(ups_dist.expect(stat="median")[:,:,av])
         
         exit()
         # imp_median = imp_dist.expect(stat="median")
