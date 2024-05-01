@@ -1510,6 +1510,7 @@ class EVAL_EIC(object): # on chr21
 
                     mask = mask.to(self.device)
 
+
                     # outputs, aggrmean, aggrstd = self.model(x_batch, mask, None)
                     outputs = self.model(x_batch, mask, None)
 
@@ -1967,6 +1968,11 @@ class EVAL_EED(object):
                     avail_batch_missing_vals = (avail_batch == 0)
                     avail_batch = avail_batch.clone()
                     avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
                 outputs = NegativeBinomial(outputs_p, outputs_n).expect(stat="median")
