@@ -1977,6 +1977,7 @@ class EVAL_EED(object):
 
                 outputs_p, outputs_n = self.model(x_batch, mX_batch, mY_batch, avail_batch)
                 print(outputs_p.min(), outputs_p.mean(), outputs_p.max())
+                print(outputs_n.min(), outputs_n.mean(), outputs_n.max())
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
