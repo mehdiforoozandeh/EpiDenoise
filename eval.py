@@ -2118,7 +2118,7 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch0.pth", 
+        model="models/EPD30a_model_checkpoint_epoch2.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=100, 
         hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240428232813_params9408914.pkl",
