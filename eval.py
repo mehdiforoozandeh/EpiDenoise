@@ -788,7 +788,7 @@ class VISUALS(object):
                 end_coord = gene_coord[1] * self.resolution
                 # Set title and labels for the top row and first column to avoid clutter
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-                ax.set_ylabel("arcsinh(-log10(pval))")
+                ax.set_ylabel("Signal")
 
                 ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
                 ax.set_xticklabels([])
@@ -801,36 +801,61 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=200)
 
     def BIOS_signal_confidence(self, eval_res):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
-            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
-        plt.figure(figsize=(20, 10))  # Adjust the figure size as needed
+        example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
+        example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
+        example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
+        example_gene_coord4 = (39526359//self.resolution, 39802081//self.resolution) # B3GALT5
+        example_gene_coord5 = (33577551//self.resolution, 33919338//self.resolution) # ITSN1
 
-        for i, result in enumerate(eval_res):
-            ax = plt.subplot(len(eval_res), 1, i + 1)
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            example_gene_coord, example_gene_coord2, example_gene_coord3,
+            example_gene_coord4, example_gene_coord5]
 
-            # Define the x values (time or position)
-            x_values = np.arange(len(result['obs']))
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
 
-            # Plot the actual observations
-            ax.plot(x_values, result['obs'], label='Actual', color='black', linewidth=2)
+        for j, result in enumerate(eval_res):
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
 
-            # Plot the median predictions
-            ax.plot(x_values, result['imp'], label='Median', color='blue', linewidth=2)
+                # Plot the actual observations
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='black', linewidth=2)
 
-            # Fill between for confidence intervals
-            ax.fill_between(x_values, result['lower_60'], result['upper_60'], color='skyblue', alpha=0.3, label='60% Confidence')
-            ax.fill_between(x_values, result['lower_80'], result['upper_80'], color='orange', alpha=0.5, label='80% Confidence')
-            ax.fill_between(x_values, result['lower_95'], result['upper_95'], color='salmon', alpha=0.7, label='95% Confidence')
+                # Plot the median predictions
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='blue', linewidth=2)
 
-            # Set plot titles and labels
-            ax.set_title(f"Sensor {result['feature']} - {result['comparison']}")
-            ax.set_ylabel("Values")
-            ax.set_xlabel("Time/Position")
+                # Fill between for confidence intervals
+                ax.fill_between(
+                    x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
+                    color='skyblue', alpha=0.3, label='60% Confidence')
 
-            # Only show legend in the first subplot to avoid redundancy
-            if i == 0:
-                ax.legend(loc='upper left')
+                ax.fill_between(
+                    x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
+                    color='orange', alpha=0.5, label='80% Confidence')
+
+                ax.fill_between(
+                    x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
+                    color='salmon', alpha=0.7, label='95% Confidence')
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+
+                # Set plot titles and labels
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("Signal")
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+
+                # Only show legend in the first subplot to avoid redundancy
+                if i == 0:
+                    ax.legend(loc='upper left')
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=150)
