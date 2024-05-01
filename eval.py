@@ -1979,8 +1979,8 @@ class EVAL_EED(object):
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
-            n[i:i+outputs.shape[0], :, :] = outputs_n.cpu()
-            p[i:i+outputs.shape[0], :, :] = outputs_p.cpu()
+            n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
 
         return n, p
 
@@ -2039,7 +2039,7 @@ class EVAL_EED(object):
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
-        eval_res = self.get_metrics(imp_upper_95, ups_upper_95, Y, bios_name, available_indices)
+        eval_res = self.get_metrics(P_imp, P_ups, Y, bios_name, available_indices)
         return eval_res
 
     def viz_bios(self, eval_res):
