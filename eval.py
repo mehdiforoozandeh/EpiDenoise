@@ -826,24 +826,25 @@ class VISUALS(object):
                 # Calculate x_values based on the current gene's coordinates
                 x_values = range(gene_coord[0], gene_coord[1])
 
-                # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='black', linewidth=0.5, alpha=0.5)
-
-                # Plot the median predictions
-                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='blue', linewidth=0.5, alpha=0.5)
-
                 # Fill between for confidence intervals
                 ax.fill_between(
-                    x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
-                    color='skyblue', alpha=0.3, label='60% Confidence')
+                    x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
+                    color='coral', alpha=0.3, label='95% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
-                    color='orange', alpha=0.5, label='80% Confidence')
+                    color='coral', alpha=0.5, label='80% Confidence')
 
                 ax.fill_between(
-                    x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='salmon', alpha=0.7, label='95% Confidence')
+                    x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
+                    color='coral', alpha=0.8, label='60% Confidence')
+
+                # Plot the median predictions
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='coral', linewidth=1)
+
+                # Plot the actual observations
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=1)
+
 
                 start_coord = gene_coord[0] * self.resolution
                 end_coord = gene_coord[1] * self.resolution
