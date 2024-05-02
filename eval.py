@@ -1977,9 +1977,9 @@ class EVAL_EED(object):
                     'Pearson_prom': self.metrics.pearson_prom(target, pred),
                     'Spearman_prom': self.metrics.spearman_prom(target, pred),
 
-                    # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                    # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                    # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+                    "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                    "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                    "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
                 #     "corresp_curve": corresp,
                 #     "corresp_curve_deriv": corresp_deriv
