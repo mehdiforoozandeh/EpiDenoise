@@ -830,21 +830,21 @@ class VISUALS(object):
                 # Fill between for confidence intervals
                 ax.fill_between(
                     x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.3, label='95% Confidence')
+                    color='coral', alpha=0.2, label='95% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.5, label='80% Confidence')
+                    color='coral', alpha=0.4, label='80% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.8, label='60% Confidence')
+                    color='coral', alpha=0.7, label='60% Confidence')
 
                 # Plot the median predictions
                 ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='red', linewidth=0.5)
 
                 # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.2, alpha=0.5)
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.2, alpha=0.8)
 
 
                 start_coord = gene_coord[0] * self.resolution
