@@ -816,7 +816,7 @@ class VISUALS(object):
             example_gene_coord4, example_gene_coord5]
 
         # Define the size of the figure
-        plt.figure(figsize=(12 * len(example_gene_coords), len(eval_res) * 1))
+        plt.figure(figsize=(8 * len(example_gene_coords), len(eval_res) * 2))
         # plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
         for j, result in enumerate(eval_res):
@@ -1899,8 +1899,8 @@ class EVAL_EED(object):
             gene: MSE, Pearson, Spearman
             prom: MSE, Pearson, Spearman
         """
-        imp_median = imp_dist.expect(stat="mean")
-        ups_median = ups_dist.expect(stat="mean")
+        imp_mean = imp_dist.expect(stat="mean")
+        ups_mean = ups_dist.expect(stat="mean")
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
@@ -1916,7 +1916,7 @@ class EVAL_EED(object):
             j = j.item()
             for comparison in ['imputed', 'upsampled']:
                 if comparison == "imputed":
-                    pred = imp_median[:, j].numpy()
+                    pred = imp_mean[:, j].numpy()
                     lower_60 = imp_lower_60[:, j].numpy()
                     lower_80 = imp_lower_80[:, j].numpy()
                     lower_95 = imp_lower_95[:, j].numpy()
@@ -1926,7 +1926,7 @@ class EVAL_EED(object):
                     upper_95 = imp_upper_95[:, j].numpy()
                     
                 elif comparison == "upsampled":
-                    pred = ups_median[:, j].numpy()
+                    pred = ups_mean[:, j].numpy()
                     lower_60 = ups_lower_60[:, j].numpy()
                     lower_80 = ups_lower_80[:, j].numpy()
                     lower_95 = ups_lower_95[:, j].numpy()
@@ -2127,6 +2127,8 @@ class EVAL_EED(object):
         print("plotting signal confidence")
         self.viz.BIOS_signal_confidence(eval_res)
         self.viz.clear_pallete()
+
+        exit()
 
         # try: 
         print("plotting signal tracks")
