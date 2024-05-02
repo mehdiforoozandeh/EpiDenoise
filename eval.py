@@ -841,10 +841,10 @@ class VISUALS(object):
                     color='coral', alpha=0.8, label='60% Confidence')
 
                 # Plot the median predictions
-                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='coral', linewidth=0.5)
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='red', linewidth=0.5)
 
                 # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.5)
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.2, alpha=0.5)
 
 
                 start_coord = gene_coord[0] * self.resolution
@@ -853,6 +853,7 @@ class VISUALS(object):
                 # Set plot titles and labels
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
                 ax.set_ylabel("Signal")
+                ax.set_yscale('log') 
                 ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
                 ax.set_xticklabels([])
 
