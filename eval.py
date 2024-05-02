@@ -816,7 +816,8 @@ class VISUALS(object):
             example_gene_coord4, example_gene_coord5]
 
         # Define the size of the figure
-        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 4))
+        plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
         for j, result in enumerate(eval_res):
             for i, gene_coord in enumerate(example_gene_coords):
@@ -829,21 +830,21 @@ class VISUALS(object):
                 # Fill between for confidence intervals
                 ax.fill_between(
                     x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.3, label='95% Confidence')
+                    color='salmon', alpha=0.3, label='95% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.5, label='80% Confidence')
+                    color='salmon', alpha=0.5, label='80% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.8, label='60% Confidence')
+                    color='salmon', alpha=0.7, label='60% Confidence')
 
                 # Plot the median predictions
-                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='coral', linewidth=1)
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='darkred', linewidth=1.5, alpha=1)
 
                 # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=1)
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='navy', linewidth=1.5)
 
 
                 start_coord = gene_coord[0] * self.resolution
@@ -853,9 +854,10 @@ class VISUALS(object):
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
                 ax.set_ylabel("Signal")
                 ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
 
                 # Only show legend in the first subplot to avoid redundancy
-                if i == 0:
+                if i == 0 and j ==0:
                     ax.legend(loc='upper left')
 
         plt.tight_layout()
@@ -2225,7 +2227,7 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch2.pth", 
+        model="models/EPD30a_model_checkpoint_epoch4.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=100, 
         hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240428232813_params9408914.pkl",
