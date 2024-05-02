@@ -829,22 +829,22 @@ class VISUALS(object):
 
                 # Fill between for confidence intervals
                 ax.fill_between(
-                    x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='salmon', alpha=0.3, label='95% Confidence')
+                    x_values, np.log2(1+result['lower_95'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_95'][gene_coord[0]:gene_coord[1]]), 
+                    color='coral', alpha=0.3, label='95% Confidence')
 
                 ax.fill_between(
-                    x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
-                    color='salmon', alpha=0.5, label='80% Confidence')
+                    x_values, np.log2(1+result['lower_80'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_80'][gene_coord[0]:gene_coord[1]]), 
+                    color='coral', alpha=0.5, label='80% Confidence')
 
                 ax.fill_between(
-                    x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
-                    color='salmon', alpha=0.7, label='60% Confidence')
+                    x_values, np.log2(1+result['lower_60'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_60'][gene_coord[0]:gene_coord[1]]), 
+                    color='coral', alpha=0.8, label='60% Confidence')
 
                 # Plot the median predictions
-                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='darkred', linewidth=1.5, alpha=1)
+                ax.plot(x_values, np.log2(1+result['imp'][gene_coord[0]:gene_coord[1]]), label='Median', color='coral', linewidth=0.7, alpha=1)
 
                 # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='navy', linewidth=1.5)
+                ax.plot(x_values, np.log2(1+result['obs'][gene_coord[0]:gene_coord[1]]), label='Observed', color='royalblue', linewidth=0.7)
 
 
                 start_coord = gene_coord[0] * self.resolution
@@ -852,7 +852,7 @@ class VISUALS(object):
 
                 # Set plot titles and labels
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-                ax.set_ylabel("Signal")
+                ax.set_ylabel("log2(read_count)")
                 ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
                 ax.set_xticklabels([])
 
@@ -861,7 +861,7 @@ class VISUALS(object):
                     ax.legend(loc='upper left')
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=600)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
