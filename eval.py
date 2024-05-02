@@ -816,7 +816,7 @@ class VISUALS(object):
             example_gene_coord4, example_gene_coord5]
 
         # Define the size of the figure
-        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+        plt.figure(figsize=(12 * len(example_gene_coords), len(eval_res) * 2))
         # plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
         for j, result in enumerate(eval_res):
