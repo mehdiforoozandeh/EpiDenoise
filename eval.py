@@ -816,8 +816,8 @@ class VISUALS(object):
             example_gene_coord4, example_gene_coord5]
 
         # Define the size of the figure
-        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 4))
-        plt.subplots_adjust(hspace=0.4, wspace=0.3)
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+        # plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
         for j, result in enumerate(eval_res):
             for i, gene_coord in enumerate(example_gene_coords):
@@ -829,22 +829,22 @@ class VISUALS(object):
 
                 # Fill between for confidence intervals
                 ax.fill_between(
-                    x_values, np.log2(1+result['lower_95'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_95'][gene_coord[0]:gene_coord[1]]), 
+                    x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
                     color='coral', alpha=0.3, label='95% Confidence')
 
                 ax.fill_between(
-                    x_values, np.log2(1+result['lower_80'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_80'][gene_coord[0]:gene_coord[1]]), 
+                    x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
                     color='coral', alpha=0.5, label='80% Confidence')
 
                 ax.fill_between(
-                    x_values, np.log2(1+result['lower_60'][gene_coord[0]:gene_coord[1]]), np.log2(1+result['upper_60'][gene_coord[0]:gene_coord[1]]), 
+                    x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
                     color='coral', alpha=0.8, label='60% Confidence')
 
                 # Plot the median predictions
-                ax.plot(x_values, np.log2(1+result['imp'][gene_coord[0]:gene_coord[1]]), label='Median', color='coral', linewidth=0.7, alpha=1)
+                ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='coral', linewidth=0.5)
 
                 # Plot the actual observations
-                ax.plot(x_values, np.log2(1+result['obs'][gene_coord[0]:gene_coord[1]]), label='Observed', color='royalblue', linewidth=0.7)
+                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.5)
 
 
                 start_coord = gene_coord[0] * self.resolution
@@ -852,7 +852,7 @@ class VISUALS(object):
 
                 # Set plot titles and labels
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-                ax.set_ylabel("log2(read_count)")
+                ax.set_ylabel("Signal")
                 ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
                 ax.set_xticklabels([])
 
@@ -1899,8 +1899,8 @@ class EVAL_EED(object):
             gene: MSE, Pearson, Spearman
             prom: MSE, Pearson, Spearman
         """
-        imp_median = imp_dist.expect(stat="median")
-        ups_median = ups_dist.expect(stat="median")
+        imp_median = imp_dist.expect(stat="mean")
+        ups_median = ups_dist.expect(stat="mean")
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
