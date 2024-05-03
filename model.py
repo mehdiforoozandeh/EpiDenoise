@@ -44,7 +44,7 @@ class MetadataEmbeddingModule(nn.Module):
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Final layer to combine all embeddings
-        self.final_embedding = nn.Linear(self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
+        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
 
     def embed_metadata(self, metadata, side="x"):
         depth = metadata[:, 0, :].unsqueeze(-1).float() 
@@ -92,12 +92,9 @@ class MetadataEmbeddingModule(nn.Module):
 
         # Concatenate all embeddings along the last dimension
         full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
-        print(full_embed.shape)
 
         full_embed = full_embed.view(full_embed.shape[0], -1)
-        print(full_embed.shape)
         full_embed = self.final_embedding(full_embed)
-        print(full_embed.shape)
 
         return full_embed
 
