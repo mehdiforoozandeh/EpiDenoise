@@ -92,9 +92,12 @@ class MetadataEmbeddingModule(nn.Module):
 
         # Concatenate all embeddings along the last dimension
         full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
+        print(full_embed.shape)
 
         full_embed = full_embed.view(full_embed.shape[0], -1)
+        print(full_embed.shape)
         full_embed = self.final_embedding(full_embed)
+        print(full_embed.shape)
 
         return full_embed
 
