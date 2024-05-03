@@ -3206,7 +3206,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4, 8]
+        dsf_list = [1, 2, 4]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
@@ -4285,7 +4285,7 @@ if __name__ == "__main__":
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
-            "metadata_embedding_dim": 25,
+            "metadata_embedding_dim": 47,
             "dropout": 0.1,
             "nhead": 4,
             "d_model": 384,
