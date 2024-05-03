@@ -3206,7 +3206,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4]
+        dsf_list = [1, 2, 4] # skipping dsf8
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
@@ -4295,7 +4295,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 400,
             "batch_size": 50,
-            "learning_rate": 5e-4,
+            "learning_rate": 1e-4,
             "num_loci": 500,
             "lr_halflife":1,
             "min_avail":5
