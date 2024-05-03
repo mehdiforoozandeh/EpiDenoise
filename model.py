@@ -3229,7 +3229,7 @@ class PRE_TRAINER(object):
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)
 
-                if X_batch.shape != Y_batch.shape or mX_batch.shape != mY_batch.shape or avX_batch.shape != avY_batch.shape:
+                if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     self.dataset.update_batch_pointers()
                     print("mismatch in shapes! skipped batch...")
                     continue
