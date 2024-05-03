@@ -20,42 +20,58 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 class MetadataEmbeddingModule(nn.Module):
     def __init__(self, input_dim, embedding_dim, non_linearity=True):
+
         super().__init__()
         self.embedding_dim = embedding_dim
         self.input_dim = input_dim 
         self.non_linearity = non_linearity
-        self.continuous_size = 1 # Simplified for demonstration
+        self.continuous_size = embedding_dim // 3
 
-        self.runtype_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: single_end, pair_end, missing
         self.avail_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: available, missing, cloze_masked
 
+        # X metadata embedding parameters
+        self.xruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
         # Dense layers for continuous metadata
-        self.depth_transform = nn.Linear(1, self.continuous_size) 
-        self.coverage_transform = nn.Linear(1, self.continuous_size)
-        self.read_length_transform = nn.Linear(1, self.continuous_size)
+        self.xdepth_transform = nn.Linear(1, self.continuous_size) 
+        self.xcoverage_transform = nn.Linear(1, self.continuous_size)
+        self.xread_length_transform = nn.Linear(1, self.continuous_size)
+
+        # Y metadata embedding parameters
+        self.yruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
+        # Dense layers for continuous metadata
+        self.ydepth_transform = nn.Linear(1, self.continuous_size) 
+        self.ycoverage_transform = nn.Linear(1, self.continuous_size)
+        self.yread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Final layer to combine all embeddings
-        self.final_embedding = nn.Linear(self.input_dim * 9, embedding_dim)  # Adjusted for all inputs
+        self.final_embedding = nn.Linear(self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
 
-    def embed_metadata(self, metadata):
+    def embed_metadata(self, metadata, side="x"):
         depth = metadata[:, 0, :].unsqueeze(-1).float() 
         coverage = metadata[:, 1, :].unsqueeze(-1).float() 
         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
         runtype = metadata[:, 3, :].long() 
         
-        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
+        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
+        runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
 
-        # Transform continuous metadata
-        depth_embed = self.depth_transform(depth)
-        coverage_embed = self.coverage_transform(coverage)
-        read_length_embed = self.read_length_transform(read_length)
+        if side == "x":
+            # Transform continuous metadata
+            depth_embed = self.xdepth_transform(depth)
+            coverage_embed = self.xcoverage_transform(coverage)
+            read_length_embed = self.xread_length_transform(read_length)
+            runtype_embed = self.xruntype_embedding(runtype)
+
+        elif side == "y":
+            depth_embed = self.ydepth_transform(depth)
+            coverage_embed = self.ycoverage_transform(coverage)
+            read_length_embed = self.yread_length_transform(read_length)
+            runtype_embed = self.yruntype_embedding(runtype)
 
         if self.non_linearity:
             depth_embed = F.relu(depth_embed)
             coverage_embed = F.relu(coverage_embed)
             read_length_embed = F.relu(read_length_embed)
-
-        runtype_embed = self.runtype_embedding(runtype)
 
         # Concatenate all embeddings
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
@@ -639,7 +655,7 @@ class NegativeBinomial(object):
         self.p = p.numpy()
         self.n = n.numpy()
         
-    def expect(self, stat="median"):
+    def expect(self, stat="mean"):
         if stat == "median":
             self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
             return self.median_value
@@ -1297,7 +1313,7 @@ class EpiDenoise22(nn.Module):
 class EpiDenoise30a(nn.Module):
     def __init__(
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
-        dropout=0.1, context_length=2000, pos_enc="abs"):
+        dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
         self.pos_enc = pos_enc
         self.context_length = context_length
@@ -3177,7 +3193,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_30a(self, 
-        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"# model_parameters: {count_parameters(self.model)}")
@@ -3207,70 +3223,98 @@ class PRE_TRAINER(object):
 
             while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
                 t0 = datetime.now()
-                self.optimizer.zero_grad()
-                torch.cuda.empty_cache()
-
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
 
-                X_batch, mX_batch, avX_batch = self.dataset.get_batch(dsf_X)
-                Y_batch, mY_batch, avY_batch = self.dataset.get_batch(dsf_Y)
+                _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
+                _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)
 
                 if X_batch.shape != Y_batch.shape or mX_batch.shape != mY_batch.shape or avX_batch.shape != avY_batch.shape:
                     self.dataset.update_batch_pointers()
                     print("mismatch in shapes! skipped batch...")
                     continue
-
-                # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
-                X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-                masked_map = (X_batch == token_dict["cloze_mask"])
-                observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
-
-                X_batch = X_batch.to(self.device)
-                mX_batch = mX_batch.to(self.device)
-                avail_batch = avail_batch.to(self.device)
-                mY_batch = mY_batch.to(self.device)
-                Y_batch = Y_batch.to(self.device)
-                masked_map = masked_map.to(self.device) # imputation targets
-                observed_map = observed_map.to(self.device) # upsampling targets
-
-                output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                pred_loss, obs_loss = self.criterion(
-                    output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
                 
-                ups_pred = NegativeBinomial(
-                    output_p[observed_map].cpu().detach().numpy(), 
-                    output_n[observed_map].cpu().detach().numpy()
-                    ).expect().cpu().detach().numpy()
-
-                imp_pred = NegativeBinomial(
-                    output_p[masked_map].cpu().detach().numpy(), 
-                    output_n[masked_map].cpu().detach().numpy()
-                    ).expect().cpu().detach().numpy()
-
-                ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                imp_true = Y_batch[masked_map].cpu().detach().numpy()
                 
-                ups_r2 = r2_score(ups_true, ups_pred)
-                imp_r2 = r2_score(imp_true, imp_pred)
+                batch_rec = {
+                    "imp_loss":[],
+                    "ups_loss":[],
+                    "ups_r2":[],
+                    "imp_r2":[],
+                    "imp_spearman":[],
+                    "ups_spearman":[],
+                    "ups_mse":[],
+                    "imp_mse":[]
+                }
 
-                ups_mse = ((ups_true - ups_pred)**2).mean()
-                imp_mse = ((imp_true - imp_pred)**2).mean()
+                for _ in range(inner_epochs):
+                    self.optimizer.zero_grad()
+                    torch.cuda.empty_cache()
 
-                ups_spearman = spearmanr(ups_pred, ups_true)[0]
-                imp_spearman = spearmanr(imp_pred, imp_true)[0]
+                    X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                    Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
-                if torch.isnan(pred_loss).any():
-                    loss = obs_loss
-                else:
-                    loss = pred_loss+obs_loss  
+                    # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
+                    X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                    masked_map = (X_batch == token_dict["cloze_mask"])
+                    observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
-                if torch.isnan(loss).sum() > 0:
-                    skipmessage = "Encountered nan loss! Skipping batch..."
-                    log_strs.append(skipmessage)
-                    print(skipmessage)
-                    torch.cuda.empty_cache() 
-                    continue
+                    X_batch = X_batch.to(self.device)
+                    mX_batch = mX_batch.to(self.device)
+                    avail_batch = avail_batch.to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+                    Y_batch = Y_batch.to(self.device)
+                    masked_map = masked_map.to(self.device) # imputation targets
+                    observed_map = observed_map.to(self.device) # upsampling targets
+
+                    output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                    pred_loss, obs_loss = self.criterion(
+                        output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
+                    
+                    ups_pred = NegativeBinomial(
+                        output_p[observed_map].cpu().detach().numpy(), 
+                        output_n[observed_map].cpu().detach().numpy()
+                        ).expect().cpu().detach().numpy()
+
+                    imp_pred = NegativeBinomial(
+                        output_p[masked_map].cpu().detach().numpy(), 
+                        output_n[masked_map].cpu().detach().numpy()
+                        ).expect().cpu().detach().numpy()
+
+                    ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                    imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                    
+                    ups_r2 = r2_score(ups_true, ups_pred)
+                    imp_r2 = r2_score(imp_true, imp_pred)
+
+                    ups_mse = ((ups_true - ups_pred)**2).mean()
+                    imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                    ups_spearman = spearmanr(ups_pred, ups_true)[0]
+                    imp_spearman = spearmanr(imp_pred, imp_true)[0]
+
+                    if torch.isnan(pred_loss).any():
+                        loss = obs_loss
+                    else:
+                        loss = pred_loss+obs_loss  
+
+                    if torch.isnan(loss).sum() > 0:
+                        skipmessage = "Encountered nan loss! Skipping batch..."
+                        log_strs.append(skipmessage)
+                        print(skipmessage)
+                        torch.cuda.empty_cache() 
+                        continue
+                    
+                    loss.backward()  
+                    self.optimizer.step()
+
+                    batch_rec["imp_loss"].append(pred_loss.item())
+                    batch_rec["ups_loss"].append(obs_loss.item())
+                    batch_rec["ups_r2"].append(ups_r2)
+                    batch_rec["imp_r2"].append(imp_r2)
+                    batch_rec["imp_spearman"].append(imp_spearman)
+                    batch_rec["ups_spearman"].append(ups_spearman)
+                    batch_rec["ups_mse"].append(ups_mse)
+                    batch_rec["imp_mse"].append(imp_mse)
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -3280,14 +3324,14 @@ class PRE_TRAINER(object):
                     f"Epoch {epoch}",
                     f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
                     f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                    f"Imp_Loss {pred_loss.item():.2f}",
-                    f"Ups_Loss {obs_loss.item():.2f}",
-                    f"Imp_R2 {ups_r2:.2f}",
-                    f"Ups_R2 {imp_r2:.2f}",
-                    f"Imp_Sp.r {imp_spearman:.2f}",
-                    f"Ups_Sp.r {ups_spearman:.2f}",
-                    f"Imp_MSE {ups_mse:.2f}",
-                    f"Ups_MSE {imp_mse:.2f}",
+                    f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                    f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                    f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                    f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                    f"Imp_Sp.r {np.mean(batch_rec['imp_spearman']):.2f}",
+                    f"Ups_Sp.r {np.mean(batch_rec['ups_spearman']):.2f}",
+                    f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
                 logfile = open("models/EPD30a_log.txt", "w")
@@ -3298,11 +3342,9 @@ class PRE_TRAINER(object):
                 print(logstr)
 
                 next_epoch = self.dataset.update_batch_pointers()
-                loss.backward()  
-                self.optimizer.step()
                 
             self.scheduler.step()
-            if epoch%2==0:
+            if epoch%1==0:
                 try:
                     torch.save(self.model.state_dict(), f'models/EPD30a_model_checkpoint_epoch{epoch}.pth')
                 except:
@@ -4004,6 +4046,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     learning_rate = hyper_parameters["learning_rate"]
     lr_halflife = hyper_parameters["lr_halflife"]
     min_avail = hyper_parameters["min_avail"]
+    inner_epochs = hyper_parameters["inner_epochs"]
 
     # end of hyperparameters
     model = EpiDenoise30a(input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
@@ -4028,14 +4071,14 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss_NBNLL()
+    criterion = ComboLoss_NBNLL(alpha=mask_percentage)
 
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_epidenoise_30a(
         num_epochs=epochs, mask_percentage=mask_percentage, 
-        context_length=context_length, batch_size=batch_size)
+        context_length=context_length, batch_size=batch_size, inner_epochs=inner_epochs)
 
     end_time = time.time()
 
@@ -4247,12 +4290,13 @@ if __name__ == "__main__":
             "nhead": 4,
             "d_model": 384,
             "nlayers": 6,
-            "epochs": 10,
-            "mask_percentage": 0.25,
+            "epochs": 5,
+            "inner_epochs": 5,
+            "mask_percentage": 0.15,
             "context_length": 400,
-            "batch_size": 30,
+            "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 200,
+            "num_loci": 500,
             "lr_halflife":1,
             "min_avail":5
         }

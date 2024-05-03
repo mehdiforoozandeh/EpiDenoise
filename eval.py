@@ -2128,7 +2128,7 @@ class EVAL_EED(object):
         print("plotting signal confidence")
         self.viz.BIOS_signal_confidence(eval_res)
         self.viz.clear_pallete()
-        
+
         # try: 
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
@@ -2267,8 +2267,8 @@ if __name__=="__main__":
     exit()
 
     
-    
 
 
-
-   
+genome_annotation and segway
+SAGAconf
+EpiDenoise
