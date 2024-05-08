@@ -1370,7 +1370,7 @@ class EpiDenoise30a(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-        
+
         b, l = src.shape[0], src.shape[1]
         src = torch.cat([src, md_embedding], dim=-1)
         src = src.view(b*l, src.shape[2])
@@ -4319,6 +4319,24 @@ if __name__ == "__main__":
             start_ds=0)
 
     elif sys.argv[1] == "epd30a":
+        # hyper_parameters30a = {
+        #     "data_path": "/project/compbio-lab/encode_data/",
+        #     "input_dim": 47,
+        #     "metadata_embedding_dim": 47,
+        #     "dropout": 0.1,
+        #     "nhead": 4,
+        #     "d_model": 384,
+        #     "nlayers": 6,
+        #     "epochs": 5,
+        #     "inner_epochs": 10,
+        #     "mask_percentage": 0.25,
+        #     "context_length": 400,
+        #     "batch_size": 50,
+        #     "learning_rate": 1e-4,
+        #     "num_loci": 500,
+        #     "lr_halflife":1,
+        #     "min_avail":5
+        # }
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
@@ -4331,7 +4349,7 @@ if __name__ == "__main__":
             "inner_epochs": 10,
             "mask_percentage": 0.25,
             "context_length": 400,
-            "batch_size": 50,
+            "batch_size": 300,
             "learning_rate": 1e-4,
             "num_loci": 500,
             "lr_halflife":1,
