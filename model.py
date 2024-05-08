@@ -431,7 +431,7 @@ class RelativeDecoderLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, trg, enc_src, trg_mask):
+    def forward(self, trg, enc_src):
         # trg = [batch size, trg len, hid dim]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, trg len]
@@ -443,7 +443,7 @@ class RelativeDecoderLayer(nn.Module):
         value = enc_src
 
         # Using the decoder input as the query, and the encoder output as key and value
-        _trg = self.encoder_attention(query, key, value, None)# trg_mask)
+        _trg = self.encoder_attention(query, key, value, None)
 
         # Residual connection and layer norm
         trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
@@ -1261,7 +1261,7 @@ class EpiDenoise22(nn.Module):
         self.linear_output = nn.Linear(d_model, output_dim)
         self.softplus = nn.Softplus()
 
-    def forward(self, seq, mask, pad):
+    def forward(self, seq, mask):
         mask = mask.permute(0, 2, 1) # to N, F, L
         mask = mask.float()
         src = seq.permute(0, 2, 1) # to N, F, L
@@ -1349,24 +1349,40 @@ class EpiDenoise22(nn.Module):
 #         return p, n
 
 class EpiDenoise30a(nn.Module):
-    def __init__(
-        self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+    def __init__(self, 
+        input_dim, conv_out_channels, conv_kernel_sizes, metadata_embedding_dim, nhead, 
+        d_model, nlayers, output_dim, n_decoder_layers=1, 
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
-        self.context_length = context_length
-        
+
+        conv_kernel_sizes = [9, 9, 9]
+        conv_out_channels = [d_model//4, d_model//2, d_model]
+
+        stride = 1
+        dilation=1
+        n_cnn_layers = len(conv_out_channels)
+
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model//8)
+        self.conv0 = ConvTower(
+                input_dim + metadata_embedding_dim, conv_out_channels[0],
+                conv_kernel_sizes[0], stride, dilation, 
+                pool_type="max", residuals=True)
 
-        self.conv0 = ConvTower(input_dim + metadata_embedding_dim, d_model//8, 9, pool_type="no", residuals=False)
-        self.conv1 = ConvTower(d_model//8, d_model//4, 9, pool_type="no", residuals=False)
-        self.conv2 = ConvTower(d_model//4, d_model//2, 9, pool_type="no", residuals=False)
-        self.conv3 = ConvTower(d_model//2, d_model, 9, pool_type="no", residuals=False)
+        self.convtower = nn.ModuleList([ConvTower(
+                conv_out_channels[i], conv_out_channels[i + 1],
+                conv_kernel_sizes[i + 1], stride, dilation, 
+                pool_type="max", residuals=True
+            ) for i in range(n_cnn_layers - 1)])
 
-        # self.lin2 = nn.Linear(d_model, d_model)
-        # self.lin3 = nn.Linear(d_model, d_model)
-        # self.lin4 = nn.Linear(d_model, d_model)
+        self.transformer_encoder = nn.ModuleList([RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, 
+                feed_forward_hidden=2*d_model, 
+                dropout=dropout) for _ in range(nlayers)])
 
+        self.transformer_decoder = nn.ModuleList([RelativeDecoderLayer(
+            hid_dim=d_model, n_heads=nhead, 
+            pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
+        
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
@@ -1374,28 +1390,26 @@ class EpiDenoise30a(nn.Module):
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         # b, l = src.shape[0], src.shape[1]
+        print("src", src.shape)
         src = torch.cat([src, md_embedding], dim=-1)
-        # src = src.view(b*l, src.shape[2])
 
-        # src = F.relu(self.embedding_linear(src))
-        # src = self.embedding_linear(src)
+        e_src = src.permute(0, 2, 1) # to N, F, L
+        for conv in self.convtower:
+            print("e_src",e_src.shape)
+            e_src = conv(e_src)
+        
+        e_src = e_src.permute(0, 2, 1)  # to N, L, F
+        for enc in self.transformer_encoder:
+            print("e_src",e_src.shape)
+            e_src = enc(e_src)
 
-        src = src.permute(0, 2, 1) 
-        src = self.conv0(src)
-        src = self.conv1(src)
-        src = self.conv2(src)
-        src = self.conv3(src)
-
-        # src = F.relu(self.lin2(src))
-        # src = F.relu(self.lin3(src))
-        # src = F.relu(self.lin4(src))
-        src = src.permute(0, 2, 1)
+        print(src)
+        for dec in self.transformer_decoder:
+            print("src",src)
+            src = dec(src, e_src, pad)
+        exit()
 
         p, n = self.neg_binom_layer(src)
-        
-        # p = p.view(b, l, p.shape[1])
-        # n = n.view(b, l, n.shape[1])
-
         return p, n
 
 
