@@ -1369,29 +1369,21 @@ class EpiDenoise30a(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        print(md_embedding.shape)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-        print(md_embedding.shape)
+        
         b, l = src.shape[0], src.shape[1]
         src = torch.cat([src, md_embedding], dim=-1)
         src = src.view(b*l, src.shape[2])
-        print(src.shape)
 
         src = F.relu(self.embedding_linear(src))
-        print(src.shape)
         src = F.relu(self.lin2(src))
         src = F.relu(self.lin3(src))
         src = F.relu(self.lin4(src))
-        print(src.shape)
 
         p, n = self.neg_binom_layer(src)
         
         p = p.view(b, l, p.shape[1])
         n = n.view(b, l, n.shape[1])
-
-        print(n.shape, p.shape)
-        exit()
-
 
         return p, n
 
