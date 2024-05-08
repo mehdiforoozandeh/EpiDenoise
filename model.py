@@ -1356,8 +1356,9 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model//8)
+        # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model//8)
 
+        self.conv0 = ConvTower(input_dim + metadata_embedding_dim, d_model//8, 9, pool_type="no", residuals=True)
         self.conv1 = ConvTower(d_model//8, d_model//4, 9, pool_type="no", residuals=True)
         self.conv2 = ConvTower(d_model//4, d_model//2, 9, pool_type="no", residuals=True)
         self.conv3 = ConvTower(d_model//2, d_model, 9, pool_type="no", residuals=True)
@@ -1376,9 +1377,11 @@ class EpiDenoise30a(nn.Module):
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src.view(b*l, src.shape[2])
 
-        src = F.relu(self.embedding_linear(src))
+        # src = F.relu(self.embedding_linear(src))
+        # src = self.embedding_linear(src)
 
-        src = src.permute(0, 2, 1)
+        src = src.permute(0, 2, 1) 
+        src = self.conv0(src)
         src = self.conv1(src)
         src = self.conv2(src)
         src = self.conv3(src)
