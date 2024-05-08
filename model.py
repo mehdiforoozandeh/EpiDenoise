@@ -4108,7 +4108,7 @@ def train_epidenoise30a(hyper_parameters, checkpoint_path=None):
     with open(f'models/hyper_parameters30a_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss_NBNLL(alpha=mask_percentage)
+    criterion = ComboLoss_NBNLL()
 
     start_time = time.time()
 
