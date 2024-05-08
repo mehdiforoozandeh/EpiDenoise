@@ -1280,7 +1280,7 @@ class ExtendedEncodeDataHandler:
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
     
-    def make_region_tensor(self, list_bios, locus, DSF, max_workers=40):
+    def make_region_tensor(self, list_bios, locus, DSF, max_workers=-1):
         """Load and process data for multiple biosamples in parallel."""
         def load_and_process(bios):
             try:
