@@ -1358,10 +1358,10 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model//8)
 
-        self.conv0 = ConvTower(input_dim + metadata_embedding_dim, d_model//8, 9, pool_type="no", residuals=True)
-        self.conv1 = ConvTower(d_model//8, d_model//4, 9, pool_type="no", residuals=True)
-        self.conv2 = ConvTower(d_model//4, d_model//2, 9, pool_type="no", residuals=True)
-        self.conv3 = ConvTower(d_model//2, d_model, 9, pool_type="no", residuals=True)
+        self.conv0 = ConvTower(input_dim + metadata_embedding_dim, d_model//8, 9, pool_type="no", residuals=False)
+        self.conv1 = ConvTower(d_model//8, d_model//4, 9, pool_type="no", residuals=False)
+        self.conv2 = ConvTower(d_model//4, d_model//2, 9, pool_type="no", residuals=False)
+        self.conv3 = ConvTower(d_model//2, d_model, 9, pool_type="no", residuals=False)
 
         # self.lin2 = nn.Linear(d_model, d_model)
         # self.lin3 = nn.Linear(d_model, d_model)
