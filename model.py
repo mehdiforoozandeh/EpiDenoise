@@ -1372,9 +1372,9 @@ class EpiDenoise30a(nn.Module):
         print(md_embedding.shape)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
         print(md_embedding.shape)
-
+        b, l = src.shape[0], src.shape[1]
         src = torch.cat([src, md_embedding], dim=-1)
-        src = src.view(src.shape[0]*src.shape[1], src.shape[2])
+        src = src.view(b*l, src.shape[2])
         print(src.shape)
 
         src = F.relu(self.embedding_linear(src))
@@ -1385,7 +1385,13 @@ class EpiDenoise30a(nn.Module):
         print(src.shape)
 
         p, n = self.neg_binom_layer(src)
+        
+        p = p.view(b, l, src.shape[2])
+        n = n.view(b, l, src.shape[2])
+
+        print(n.shape, p.shape)
         exit()
+
 
         return p, n
 
