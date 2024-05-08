@@ -1,7 +1,8 @@
 from model import *
 from data import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
+
 import scipy.stats
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -79,6 +80,38 @@ class METRICS(object):
         return y_true[perc_99_pos], y_pred[perc_99_pos]
     
     ################################################################################
+    def r2(self, y_true, y_pred):
+        return r2_score(y_true, y_pred)
+
+    def r2_gene(self, y_true, y_pred):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+
+        return self.r2(y_true=gt_vals, y_pred=pred_vals)
+
+    def r2_prom(self, y_true, y_pred):
+        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=prom_df)
+
+        return self.r2(y_true=gt_vals, y_pred=pred_vals)
+
+    def r2_1obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def r2_1imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return self.r2(y_true[perc_99_pos], y_pred[perc_99_pos])
 
     def mse(self, y_true, y_pred):
         """
@@ -1960,22 +1993,27 @@ class EVAL_EED(object):
                     'MSE-GW': self.metrics.mse(target, pred),
                     'Pearson-GW': self.metrics.pearson(target, pred),
                     'Spearman-GW': self.metrics.spearman(target, pred),
+                    'r2_GW': self.metrics.r2(target, pred),
 
                     'MSE-1obs': self.metrics.mse1obs(target, pred),
                     'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
                     'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+                    'r2_1obs': self.metrics.r2_1obs(target, pred),
 
                     'MSE-1imp': self.metrics.mse1imp(target, pred),
                     'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
                     'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+                    'r2_1imp': self.metrics.r2_1imp(target, pred),
 
                     'MSE-gene': self.metrics.mse_gene(target, pred),
                     'Pearson_gene': self.metrics.pearson_gene(target, pred),
                     'Spearman_gene': self.metrics.spearman_gene(target, pred),
+                    'r2_gene': self.metrics.r2_gene(target, pred),
 
                     'MSE-prom': self.metrics.mse_prom(target, pred),
                     'Pearson_prom': self.metrics.pearson_prom(target, pred),
                     'Spearman_prom': self.metrics.spearman_prom(target, pred),
+                    'r2_prom': self.metrics.r2_prom(target, pred),
 
                     "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
                     "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
