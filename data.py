@@ -1280,7 +1280,7 @@ class ExtendedEncodeDataHandler:
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
     
-    def make_region_tensor(self, list_bios, locus, DSF):
+    def make_region_tensor(self, list_bios, locus, DSF, max_workers=40):
         """Load and process data for multiple biosamples in parallel."""
         def load_and_process(bios):
             try:
@@ -1290,8 +1290,11 @@ class ExtendedEncodeDataHandler:
                 print(f"Failed to process {bios}: {e}")
                 return None
 
+        if max_workers == -1:
+            max_workers = self.bios_batchsize//2
+
         # Use ThreadPoolExecutor to handle biosamples in parallel
-        with ThreadPoolExecutor(max_workers=self.bios_batchsize//2) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             results = list(executor.map(load_and_process, list_bios))
 
         # Aggregate results
