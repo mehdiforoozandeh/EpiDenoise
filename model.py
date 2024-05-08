@@ -20,7 +20,6 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 class MetadataEmbeddingModule(nn.Module):
     def __init__(self, input_dim, embedding_dim, non_linearity=True):
-
         super().__init__()
         self.embedding_dim = embedding_dim
         self.input_dim = input_dim 
@@ -31,14 +30,12 @@ class MetadataEmbeddingModule(nn.Module):
 
         # X metadata embedding parameters
         self.xruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
-        # Dense layers for continuous metadata
         self.xdepth_transform = nn.Linear(1, self.continuous_size) 
         self.xcoverage_transform = nn.Linear(1, self.continuous_size)
         self.xread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Y metadata embedding parameters
         self.yruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
-        # Dense layers for continuous metadata
         self.ydepth_transform = nn.Linear(1, self.continuous_size) 
         self.ycoverage_transform = nn.Linear(1, self.continuous_size)
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
@@ -86,8 +83,8 @@ class MetadataEmbeddingModule(nn.Module):
         return availability_embed
 
     def forward(self, x_metadata, y_metadata, availability):
-        Xmd_embed = self.embed_metadata(x_metadata)
-        Ymd_embed = self.embed_metadata(y_metadata)
+        Xmd_embed = self.embed_metadata(x_metadata, side="x")
+        Ymd_embed = self.embed_metadata(y_metadata, side="y")
         av_embed = self.embed_avail(availability)
 
         # Concatenate all embeddings along the last dimension
@@ -3271,7 +3268,6 @@ class PRE_TRAINER(object):
                     print("mismatch in shapes! skipped batch...")
                     continue
                 
-                
                 batch_rec = {
                     "imp_loss":[],
                     "ups_loss":[],
@@ -3306,6 +3302,21 @@ class PRE_TRAINER(object):
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
+
+                    if torch.isnan(pred_loss).any():
+                        loss = obs_loss
+                    else:
+                        loss = pred_loss+obs_loss  
+
+                    if torch.isnan(loss).sum() > 0:
+                        skipmessage = "Encountered nan loss! Skipping batch..."
+                        log_strs.append(skipmessage)
+                        print(skipmessage)
+                        torch.cuda.empty_cache() 
+                        continue
+                    
+                    loss.backward()  
+                    self.optimizer.step()
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3328,22 +3339,7 @@ class PRE_TRAINER(object):
 
                     ups_spearman = spearmanr(ups_pred, ups_true)[0]
                     imp_spearman = spearmanr(imp_pred, imp_true)[0]
-
-                    if torch.isnan(pred_loss).any():
-                        loss = obs_loss
-                    else:
-                        loss = pred_loss+obs_loss  
-
-                    if torch.isnan(loss).sum() > 0:
-                        skipmessage = "Encountered nan loss! Skipping batch..."
-                        log_strs.append(skipmessage)
-                        print(skipmessage)
-                        torch.cuda.empty_cache() 
-                        continue
                     
-                    loss.backward()  
-                    self.optimizer.step()
-
                     batch_rec["imp_loss"].append(pred_loss.item())
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
