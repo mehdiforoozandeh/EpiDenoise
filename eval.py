@@ -2228,7 +2228,7 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch1.pth", 
+        model="models/EPD30a_model_checkpoint_epoch2.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=100, 
         hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240503144734_params9705357.pkl",
@@ -2236,7 +2236,7 @@ if __name__=="__main__":
         version="30a", resolution=25, 
         savedir="models/eval_30a/", mode="eval"
     )
-    evres = e.bios_pipeline("ENCBS708DHS", 8)
+    evres = e.bios_pipeline("ENCBS708DHS", 1)
     for i in range(len(evres)):
         print(evres[i])
     # df.to_csv("models/eval_30a/eval.csv")
