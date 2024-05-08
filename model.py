@@ -1358,9 +1358,9 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        # self.lin2 = nn.Linear(d_model, d_model)
-        # self.lin3 = nn.Linear(d_model, d_model)
-        # self.lin4 = nn.Linear(d_model, d_model)
+        self.lin2 = nn.Linear(d_model, d_model)
+        self.lin3 = nn.Linear(d_model, d_model)
+        self.lin4 = nn.Linear(d_model, d_model)
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -1373,9 +1373,9 @@ class EpiDenoise30a(nn.Module):
         src = src.view(b*l, src.shape[2])
 
         src = F.relu(self.embedding_linear(src))
-        # src = F.relu(self.lin2(src))
-        # src = F.relu(self.lin3(src))
-        # src = F.relu(self.lin4(src))
+        src = F.relu(self.lin2(src))
+        src = F.relu(self.lin3(src))
+        src = F.relu(self.lin4(src))
 
         p, n = self.neg_binom_layer(src)
         
