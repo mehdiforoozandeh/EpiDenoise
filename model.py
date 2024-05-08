@@ -1386,8 +1386,8 @@ class EpiDenoise30a(nn.Module):
 
         p, n = self.neg_binom_layer(src)
         
-        p = p.view(b, l, src.shape[2])
-        n = n.view(b, l, src.shape[2])
+        p = p.view(b, l, src.shape[1])
+        n = n.view(b, l, src.shape[1])
 
         print(n.shape, p.shape)
         exit()
