@@ -1350,13 +1350,13 @@ class EpiDenoise22(nn.Module):
 
 class EpiDenoise30a(nn.Module):
     def __init__(self, 
-        input_dim, conv_out_channels, conv_kernel_sizes, metadata_embedding_dim, nhead, 
-        d_model, nlayers, output_dim, n_decoder_layers=1, 
+        input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim,
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
         conv_kernel_sizes = [9, 9, 9]
         conv_out_channels = [d_model//4, d_model//2, d_model]
+        n_decoder_layers = 1
 
         stride = 1
         dilation=1
