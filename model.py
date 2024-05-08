@@ -221,7 +221,7 @@ class DeconvBlock(nn.Module):
         return x
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, pool_type="max", residuals=False):
+    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=False):
         super(ConvTower, self).__init__()
         self.resid = residuals
         self.conv  = ConvBlock(in_C, out_C, W, S, D)
