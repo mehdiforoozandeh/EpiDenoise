@@ -83,7 +83,7 @@ class METRICS(object):
     def r2(self, y_true, y_pred):
         return r2_score(y_true, y_pred)
 
-    def r2_gene(self, y_true, y_pred):
+    def r2_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
         gene_df = self.get_gene_positions(chrom, bin_size)
@@ -92,7 +92,7 @@ class METRICS(object):
 
         return self.r2(y_true=gt_vals, y_pred=pred_vals)
 
-    def r2_prom(self, y_true, y_pred):
+    def r2_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
         prom_df = self.get_prom_positions(chrom, bin_size)
