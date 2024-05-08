@@ -1318,9 +1318,12 @@ class ExtendedEncodeDataHandler:
         self.train_val_test_split()
         self.coords(mode="train")
 
+        
         if ccre:
+            print("generating cCRE loci")
             self.generate_ccre_loci(m, context_length)
         else:
+            print("generating random loci")
             self.generate_random_loci(m, context_length)
         
         if os.path.exists(self.navigation_path) == False:
