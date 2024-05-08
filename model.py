@@ -1392,7 +1392,8 @@ class EpiDenoise30a(nn.Module):
         # src = F.relu(self.lin2(src))
         # src = F.relu(self.lin3(src))
         # src = F.relu(self.lin4(src))
-
+        src = src.permute(0, 2, 1)
+        
         p, n = self.neg_binom_layer(src)
         
         # p = p.view(b, l, p.shape[1])
