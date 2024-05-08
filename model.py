@@ -1310,83 +1310,83 @@ class EpiDenoise22(nn.Module):
         else:
             return trg
 
-class EpiDenoise30a(nn.Module):
-    def __init__(
-        self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
-        dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30a, self).__init__()
-        self.pos_enc = pos_enc
-        self.context_length = context_length
-        
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        else:
-            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
-        
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
-
-        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-    
-    def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-
-        src = torch.cat([src, md_embedding], dim=-1)
-        src = F.relu(self.embedding_linear(src))
-
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
-
-        if self.pos_enc != "relative":
-            src = src + self.position(src)
-        
-        src = self.transformer_encoder(src) 
-        p, n = self.neg_binom_layer(src)
-
-        p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        n = torch.permute(n, (1, 0, 2))  # to N, L, F
-
-        return p, n
-
 # class EpiDenoise30a(nn.Module):
 #     def __init__(
 #         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
 #         dropout=0.1, context_length=2000, pos_enc="relative"):
 #         super(EpiDenoise30a, self).__init__()
+#         self.pos_enc = pos_enc
+#         self.context_length = context_length
         
 #         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
 #         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-#         self.lin2 = nn.Linear(d_model, d_model)
-#         self.lin3 = nn.Linear(d_model, d_model)
-#         self.lin4 = nn.Linear(d_model, d_model)
+#         if self.pos_enc == "relative":
+#             self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+#         else:
+#             self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+#             self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+        
+#         self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
 #         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
 #     def forward(self, src, x_metadata, y_metadata, availability):
 #         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-#         print(md_embedding.shape)
 #         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-#         print(md_embedding.shape)
 
 #         src = torch.cat([src, md_embedding], dim=-1)
-#         src = src.view(src.shape[0]*src.shape[1], src.shape[2])
-#         print(src.shape)
-
 #         src = F.relu(self.embedding_linear(src))
-#         print(src.shape)
-#         src = F.relu(self.lin2(src))
-#         src = F.relu(self.lin3(src))
-#         src = F.relu(self.lin4(src))
-#         print(src.shape)
 
+#         src = torch.permute(src, (1, 0, 2)) # to L, N, F
+
+#         if self.pos_enc != "relative":
+#             src = src + self.position(src)
+        
+#         src = self.transformer_encoder(src) 
 #         p, n = self.neg_binom_layer(src)
-#         exit()
+
+#         p = torch.permute(p, (1, 0, 2))  # to N, L, F
+#         n = torch.permute(n, (1, 0, 2))  # to N, L, F
 
 #         return p, n
+
+class EpiDenoise30a(nn.Module):
+    def __init__(
+        self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+        dropout=0.1, context_length=2000, pos_enc="relative"):
+        super(EpiDenoise30a, self).__init__()
+        
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
+        self.lin2 = nn.Linear(d_model, d_model)
+        self.lin3 = nn.Linear(d_model, d_model)
+        self.lin4 = nn.Linear(d_model, d_model)
+
+        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+    
+    def forward(self, src, x_metadata, y_metadata, availability):
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        print(md_embedding.shape)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        print(md_embedding.shape)
+
+        src = torch.cat([src, md_embedding], dim=-1)
+        src = src.view(src.shape[0]*src.shape[1], src.shape[2])
+        print(src.shape)
+
+        src = F.relu(self.embedding_linear(src))
+        print(src.shape)
+        src = F.relu(self.lin2(src))
+        src = F.relu(self.lin3(src))
+        src = F.relu(self.lin4(src))
+        print(src.shape)
+
+        p, n = self.neg_binom_layer(src)
+        exit()
+
+        return p, n
 
 
 class EpiDenoise30b(nn.Module):
