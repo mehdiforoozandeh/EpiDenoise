@@ -1334,7 +1334,6 @@ class ExtendedEncodeDataHandler:
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            print(bios)
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
