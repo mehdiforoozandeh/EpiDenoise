@@ -1406,9 +1406,9 @@ class EpiDenoise30a(nn.Module):
             print("e_src", e_src.shape)
             e_src = enc(e_src)
 
-        print(src.shape)
+        print("src", src.shape)
         for dec in self.transformer_decoder:
-            print("src",src)
+            print("src", src.shape)
             src = dec(src, e_src)
         exit()
 
