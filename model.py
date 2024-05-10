@@ -1395,6 +1395,7 @@ class EpiDenoise30a(nn.Module):
         src = torch.cat([src, md_embedding], dim=-1)
 
         e_src = src.permute(0, 2, 1) # to N, F, L
+        print("e_src", e_src.shape)
         e_src = self.conv0(e_src)
         for conv in self.convtower:
             print("e_src", e_src.shape)
