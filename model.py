@@ -240,13 +240,15 @@ class ConvTower(nn.Module):
         self.conv2 = ConvBlock(out_C, out_C, W, S, D)
 
         self.resid = residuals
+        if self.resid:
+            self.rconv = nn.Conv1d(in_C, out_C, kernel_size=1)
         
     def forward(self, x):
         y = self.conv1(x)
         y = self.conv2(y)
 
         if self.resid:
-            y = y + x
+            y = y + self.rconv(x)
 
         if self.do_pool:
             y = self.pool(y)
