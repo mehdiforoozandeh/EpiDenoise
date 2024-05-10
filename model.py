@@ -195,13 +195,13 @@ class ConvBlock(nn.Module):
             self.batch_norm = nn.BatchNorm1d(out_C)
 
         self.conv = nn.Conv1d(
-            in_C, out_C, kernel_size=1, dilation=1, stride=1, padding="same")
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
         x = self.conv(x)
         if self.do_batchnorm:
             x = self.batch_norm(x)
-        x = F.gelu(x)
+        x = F.relu(x)
         return x
 
 class DeconvBlock(nn.Module):
@@ -221,18 +221,13 @@ class DeconvBlock(nn.Module):
         return x
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=False):
+    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=True):
         super(ConvTower, self).__init__()
-        self.resid = residuals
-        self.conv  = ConvBlock(in_C, out_C, W, S, D)
         
         if pool_type == "max" or pool_type == "attn" or pool_type == "avg":
             self.do_pool = True
         else:
             self.do_pool = False
-
-        if self.resid:
-            self.rconv = ConvBlock(out_C, out_C, 1, S, D)
 
         if pool_type == "attn":
             self.pool = SoftmaxPooling1D(2)
@@ -240,14 +235,23 @@ class ConvTower(nn.Module):
             self.pool  = nn.MaxPool1d(2)
         elif pool_type == "avg":
             self.pool  = nn.AvgPool1d(2)
-    
+
+        self.conv1 = ConvBlock(in_C, out_C, W, S, D)
+        self.conv2 = ConvBlock(out_C, out_C, W, S, D)
+
+        self.resid = residuals
+        
     def forward(self, x):
-        x = self.conv(x)
+        y = self.conv1(x)
+        y = self.conv2(y)
+
         if self.resid:
-            x = self.rconv(x) + x
+            y = y + x
+
         if self.do_pool:
-            x = self.pool(x)
-        return x
+            y = self.pool(y)
+        
+        return y
 
 class FeedForwardNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
@@ -1354,7 +1358,7 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        conv_kernel_sizes = [9, 9, 9]
+        conv_kernel_sizes = [7, 7, 7]
         conv_out_channels = [d_model//4, d_model//2, d_model]
         n_decoder_layers = 1
 
@@ -1395,10 +1399,15 @@ class EpiDenoise30a(nn.Module):
         src = torch.cat([src, md_embedding], dim=-1)
 
         e_src = src.permute(0, 2, 1) # to N, F, L
+        print(e_src.shape)
         e_src = self.conv0(e_src)
+        print(e_src.shape)
         for conv in self.convtower:
+            print(e_src.shape)
             e_src = conv(e_src)
         
+        print(e_src.shape)
+        exit()
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
@@ -4366,7 +4375,7 @@ if __name__ == "__main__":
             "dropout": 0.1,
             "nhead": 4,
             "d_model": 384,
-            "nlayers": 2,
+            "nlayers": 4,
             "epochs": 5,
             "inner_epochs": 10,
             "mask_percentage": 0.25,
