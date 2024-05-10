@@ -1402,9 +1402,8 @@ class EpiDenoise30a(nn.Module):
 
         e_src = src.permute(0, 2, 1) # to N, F, L
         e_src = self.conv0(e_src)
-        
+
         for conv in self.convtower:
-            print(e_src.shape)
             e_src = conv(e_src)
         
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
