@@ -1364,6 +1364,8 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
         self.conv0 = ConvTower(
                 input_dim + metadata_embedding_dim, conv_out_channels[0],
                 conv_kernel_sizes[0], stride, dilation, 
@@ -1405,8 +1407,9 @@ class EpiDenoise30a(nn.Module):
         for enc in self.transformer_encoder:
             print("e_src", e_src.shape)
             e_src = enc(e_src)
-
+        
         print("src", src.shape)
+        src = self.lin(src)
         for dec in self.transformer_decoder:
             print("src", src.shape)
             src = dec(src, e_src)
