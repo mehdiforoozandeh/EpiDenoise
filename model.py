@@ -1392,28 +1392,20 @@ class EpiDenoise30a(nn.Module):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        # b, l = src.shape[0], src.shape[1]
-        print("src", src.shape)
         src = torch.cat([src, md_embedding], dim=-1)
 
         e_src = src.permute(0, 2, 1) # to N, F, L
-        print("e_src", e_src.shape)
         e_src = self.conv0(e_src)
         for conv in self.convtower:
-            print("e_src", e_src.shape)
             e_src = conv(e_src)
         
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
         for enc in self.transformer_encoder:
-            print("e_src", e_src.shape)
             e_src = enc(e_src)
         
-        print("src", src.shape)
         src = self.lin(src)
         for dec in self.transformer_decoder:
-            print("src", src.shape)
             src = dec(src, e_src)
-        exit()
 
         p, n = self.neg_binom_layer(src)
         return p, n
