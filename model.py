@@ -1361,6 +1361,7 @@ class EpiDenoise30a(nn.Module):
         stride = 1
         dilation=1
         n_cnn_layers = len(conv_out_channels)
+        self.context_length = context_length
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.conv0 = ConvTower(
