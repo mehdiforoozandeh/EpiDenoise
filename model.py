@@ -1406,10 +1406,10 @@ class EpiDenoise30a(nn.Module):
             print("e_src", e_src.shape)
             e_src = enc(e_src)
 
-        print(src)
+        print(src.shape)
         for dec in self.transformer_decoder:
             print("src",src)
-            src = dec(src, e_src, pad)
+            src = dec(src, e_src)
         exit()
 
         p, n = self.neg_binom_layer(src)
