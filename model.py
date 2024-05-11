@@ -3308,12 +3308,12 @@ class PRE_TRAINER(object):
                     batch_rec["imp_mse"].append(imp_mse)
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100)
-                if lopr > 1 and int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100) % 25 == 0:
+                if lopr > 1 and lopr % 25 == 0:
                     self.scheduler.step()
                     try:
                         torch.save(
                             self.model.state_dict(), 
-                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}.pth')
+                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
                     except:
                         pass
 
