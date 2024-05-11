@@ -1372,12 +1372,12 @@ class EpiDenoise30b(nn.Module):
 
         self.conv0 = ConvTower(
                 input_dim + metadata_embedding_dim, conv_out_channels[0],
-                conv_kernel_sizes[0], stride, dilation, 
+                conv_kernel_size[0], stride, dilation, 
                 pool_type="max", residuals=True)
 
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_sizes[i + 1], stride, dilation, 
+                conv_kernel_size[i + 1], stride, dilation, 
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
