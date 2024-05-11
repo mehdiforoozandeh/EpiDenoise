@@ -139,6 +139,14 @@ random.seed(73)
 #         )
 #         return self.__class__.__name__ + "(" + args_string + ")"
 
+def exponential_linspace_int(start, end, num, divisible_by=1):
+    """Exponentially increasing values of integers."""
+    def _round(x):
+        return int(np.round(x / divisible_by) * divisible_by)
+
+    base = np.exp(np.log(end / start) / (num - 1))
+    return [_round(start * base**i) for i in range(num)]
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
