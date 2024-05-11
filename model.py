@@ -1415,7 +1415,6 @@ class EpiDenoise30b(nn.Module):
         p, n = self.neg_binom_layer(src)
         return p, n
 
-
 #========================================================================================================#
 #=========================================Pretraining====================================================#
 #========================================================================================================#
@@ -3199,7 +3198,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4, 8]
+        dsf_list = [1, 2, 4]#, 8]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
@@ -3307,11 +3306,7 @@ class PRE_TRAINER(object):
                     batch_rec["ups_spearman"].append(ups_spearman)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
-
-                elapsed_time = datetime.now() - t0
-                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                minutes, seconds = divmod(remainder, 60)
-
+                
                 if int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100) % 25 == 0:
                     self.scheduler.step()
                     try:
@@ -3320,6 +3315,10 @@ class PRE_TRAINER(object):
                             f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}.pth')
                     except:
                         pass
+
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
 
                 logstr = [
                     f"Ep. {epoch}",
@@ -4089,7 +4088,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_epidenoise_30(
         num_epochs=epochs, mask_percentage=mask_percentage, 
-        context_length=context_length, batch_size=batch_size, inner_epochs=inner_epochs)
+        context_length=context_length, batch_size=batch_size, inner_epochs=inner_epochs, arch=arch)
 
     end_time = time.time()
 
@@ -4224,17 +4223,17 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.1,
+            "dropout": 0.05,
             "nhead": 4,
             "d_model": 384,
-            "nlayers": 4,
-            "epochs": 5,
-            "inner_epochs": 10,
+            "nlayers": 6,
+            "epochs": 2,
+            "inner_epochs": 15,
             "mask_percentage": 0.25,
-            "context_length": 800,
+            "context_length": 400,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 500,
+            "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":5
         }
@@ -4247,17 +4246,17 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.1,
+            "dropout": 0.05,
 
             "n_cnn_layers": 5,
-            "conv_kernel_size" : 5,
-            "n_decoder_layers" : 1,
+            "conv_kernel_size" : 7,
+            "n_decoder_layers" : 2,
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 4,
+            "nlayers": 6,
             "epochs": 2,
-            "inner_epochs": 10,
+            "inner_epochs": 15,
             "mask_percentage": 0.25,
             "context_length": 1600,
             "batch_size": 50,
