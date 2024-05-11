@@ -4087,7 +4087,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
-    model = trainer.pretrain_epidenoise_30a(
+    model = trainer.pretrain_epidenoise_30(
         num_epochs=epochs, mask_percentage=mask_percentage, 
         context_length=context_length, batch_size=batch_size, inner_epochs=inner_epochs)
 
