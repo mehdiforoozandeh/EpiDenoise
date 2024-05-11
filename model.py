@@ -3307,7 +3307,8 @@ class PRE_TRAINER(object):
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
                 
-                if int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100) % 25 == 0:
+                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100)
+                if lopr > 1 and int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100) % 25 == 0:
                     self.scheduler.step()
                     try:
                         torch.save(
