@@ -2274,7 +2274,7 @@ if __name__=="__main__":
         version="30b", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
     )
-    evres = e.bios_pipeline("ENCBS373AAA", 1)
+    evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
         print(evres[i])
 
@@ -2289,7 +2289,7 @@ if __name__=="__main__":
         version="30a", resolution=25, 
         savedir="models/eval_30a/", mode="eval"
     )
-    evres = e.bios_pipeline("ENCBS373AAA", 1)
+    evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
         print(evres[i])
 
