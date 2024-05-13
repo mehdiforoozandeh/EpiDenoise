@@ -53,7 +53,6 @@ class MetadataEmbeddingModule(nn.Module):
         runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
 
         if side == "x":
-            # Transform continuous metadata
             depth_embed = self.xdepth_transform(depth)
             coverage_embed = self.xcoverage_transform(coverage)
             read_length_embed = self.xread_length_transform(read_length)
@@ -838,7 +837,7 @@ class ComboLoss22(nn.Module):
 
         return self.alpha*mse_pred_loss, (1-self.alpha)*mse_obs_loss#, mse_aggrmean_loss, mse_aggrstd_loss
 
-class ComboLoss30a_PoissonNLL(nn.Module):
+class ComboLoss_PoissonNLL(nn.Module):
     def __init__(self, alpha=0.5):
         super(ComboLoss30a_PoissonNLL, self).__init__()
         self.alpha = alpha
@@ -863,6 +862,7 @@ class ComboLoss_NBNLL(nn.Module):
 
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        
 
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
@@ -870,28 +870,27 @@ class ComboLoss_NBNLL(nn.Module):
         
         return self.alpha * imputation_loss, (1-self.alpha) * upsampling_loss
 
-class ComboLoss30b(nn.Module):
-    def __init__(self, alpha=0.75):
-        super(ComboLoss30b, self).__init__()
+class ComboLoss_NBNLL_msk(nn.Module):
+    def __init__(self):
+        super(ComboLoss_NBNLL_msk, self).__init__()
         self.alpha = alpha
-        self.mse_loss = nn.MSELoss(reduction='mean')
+        self.reduction = 'mean'
+        self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, pred_signals, true_signals, cloze_mask, union_mask):#, aggrmean, aggrstd, aggr_mask):
+    def forward(self, p_pred, n_pred, pred_mask, true_signals, masked_map, obs_map):
+        ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
+        imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        # true_seq_mean = true_signals.mean(dim=1)
-        # true_seq_std = true_signals.std(dim=1)
+        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
 
-        # mse_aggrmean_loss = self.mse_loss(aggrmean[aggr_mask], true_seq_mean[aggr_mask]) 
-        # mse_aggrstd_loss  = self.mse_loss(aggrstd[aggr_mask], true_seq_std[aggr_mask]) 
+        if self.reduction == "mean":
+            upsampling_loss = upsampling_loss.mean()
+            imputation_loss = imputation_loss.mean()
 
-        mse_obs_loss =  self.mse_loss(pred_signals[~union_mask], true_signals[~union_mask])
-        mse_pred_loss = self.mse_loss(pred_signals[cloze_mask], true_signals[cloze_mask])
+        bce_mask_loss = self.bce_loss(pred_mask, obs_map.float())
 
-        if torch.isnan(mse_pred_loss).any() or torch.isnan(mse_obs_loss).any():
-            print("NaN value encountered in loss components.")
-            return torch.tensor(float('nan')).to(mse_pred_loss.device), torch.tensor(float('nan')).to(mse_pred_loss.device)
-
-        return self.alpha*mse_pred_loss, (1-self.alpha)*mse_obs_loss
+        return imputation_loss, upsampling_loss, bce_mask_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -3371,29 +3370,6 @@ class MODEL_LOADER(object):
             d_model = self.hyper_parameters["d_model"]
             nlayers = self.hyper_parameters["nlayers"]
             context_length = self.hyper_parameters["context_length"]
-
-        elif version in ["22"]:
-            input_dim = output_dim = self.hyper_parameters["input_dim"]
-            dropout = self.hyper_parameters["dropout"]
-            nhead = self.hyper_parameters["nhead"]
-            n_enc_layers = self.hyper_parameters["n_enc_layers"]
-            n_dec_layers = self.hyper_parameters["n_dec_layers"]
-            context_length = self.hyper_parameters["context_length"]
-
-            conv_out_channels = self.hyper_parameters["conv_out_channels"]
-            d_model = conv_out_channels[-1]
-
-            dilation = self.hyper_parameters["dilation"]
-            kernel_size = self.hyper_parameters["kernel_size"]
-        
-        elif version in ["30a"]:
-            input_dim = output_dim = self.hyper_parameters["input_dim"]
-            dropout = self.hyper_parameters["dropout"]
-            nhead = self.hyper_parameters["nhead"]
-            d_model = self.hyper_parameters["d_model"]
-            nlayers = self.hyper_parameters["nlayers"]
-            metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
-            context_length = self.hyper_parameters["context_length"]
         
         # Assuming model is an instance of the correct class
         if version == "10":
@@ -3422,14 +3398,44 @@ class MODEL_LOADER(object):
                 output_dim=output_dim, dropout=dropout, context_length=context_length)
 
         elif version == "22":
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            n_enc_layers = self.hyper_parameters["n_enc_layers"]
+            n_dec_layers = self.hyper_parameters["n_dec_layers"]
+            context_length = self.hyper_parameters["context_length"]
+
+            conv_out_channels = self.hyper_parameters["conv_out_channels"]
+            d_model = conv_out_channels[-1]
+
+            dilation = self.hyper_parameters["dilation"]
+            kernel_size = self.hyper_parameters["kernel_size"]
+
             model = EpiDenoise22(
                 input_dim, conv_out_channels, kernel_size, nhead, 
                 d_model, n_enc_layers, n_dec_layers, output_dim, 
                 dilation=dilation, dropout=dropout, context_length=context_length)
         
         elif version == "30a":
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            d_model = self.hyper_parameters["d_model"]
+            nlayers = self.hyper_parameters["nlayers"]
+            metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
+            context_length = self.hyper_parameters["context_length"]
+
             model = EpiDenoise30a(
                 input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+                dropout=dropout, context_length=context_length, pos_enc="relative")
+        
+        elif version == "30b":            
+            n_cnn_layers = hyper_parameters["n_cnn_layers"]
+            conv_kernel_size = hyper_parameters["conv_kernel_size"]
+            n_decoder_layers = hyper_parameters["n_decoder_layers"]
+
+            model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
+                n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
                 dropout=dropout, context_length=context_length, pos_enc="relative")
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 

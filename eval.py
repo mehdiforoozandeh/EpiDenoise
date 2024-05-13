@@ -2266,10 +2266,10 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch2.pth", 
+        model="models/EPD30a_model_checkpoint_epoch0_LociProg75.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=100, 
-        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240503144734_params9705357.pkl",
+        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240510190506_params9705357.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30a", resolution=25, 
         savedir="models/eval_30a/", mode="eval"
@@ -2277,36 +2277,20 @@ if __name__=="__main__":
     evres = e.bios_pipeline("ENCBS708DHS", 1)
     for i in range(len(evres)):
         print(evres[i])
-    # df.to_csv("models/eval_30a/eval.csv")
+
     e.viz_bios(evres)
 
-    exit()
+    e = EVAL_EED(
+        model="models/EPD30b_model_checkpoint_epoch0_LociProg75.pth", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=1600, batch_size=100, 
+        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240510190452_params47416229.pkl",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30b", resolution=25, 
+        savedir="models/eval_30b/", mode="eval"
+    )
+    evres = e.bios_pipeline("ENCBS708DHS", 1)
+    for i in range(len(evres)):
+        print(evres[i])
 
-    e = EVAL(
-        model= "models/EpiDenoise22_20240309024015_params1382403.pt", 
-        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240309024015_params1382403.pkl",
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=300, is_arcsin=True,
-        version="22", savedir="models/epd22_evals/")
-
-    e.viz_all()
-    exit()
-
-    e = EVAL(
-        model= "models/EpiDenoise22_20240301194644_params1048755.pt", 
-        hyper_parameters_path="models/hyper_parameters22_EpiDenoise22_20240301194644_params1048755.pkl",
-        traindata_path="/project/compbio-lab/EIC/training_data/", 
-        evaldata_path="/project/compbio-lab/EIC/validation_data/", 
-        context_length=200, batch_size=300,
-        version="22", savedir="models/testevals/", mode="dev")
-    
-    e.bios_test()
-    exit()
-
-    
-
-
-genome_annotation and segway
-SAGAconf
-EpiDenoise
+    e.viz_bios(evres)
