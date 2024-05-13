@@ -2274,12 +2274,12 @@ if __name__=="__main__":
         version="30b", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
     )
-    evres = e.bios_pipeline("ENCBS708DHS", 1)
+    evres = e.bios_pipeline("ENCBS373AAA", 1)
     for i in range(len(evres)):
         print(evres[i])
 
     e.viz_bios(evres)
-    
+
     e = EVAL_EED(
         model="models/EPD30a_model_checkpoint_epoch0_LociProg75.pth", 
         data_path="/project/compbio-lab/encode_data/", 
@@ -2289,7 +2289,7 @@ if __name__=="__main__":
         version="30a", resolution=25, 
         savedir="models/eval_30a/", mode="eval"
     )
-    evres = e.bios_pipeline("ENCBS708DHS", 1)
+    evres = e.bios_pipeline("ENCBS373AAA", 1)
     for i in range(len(evres)):
         print(evres[i])
 
