@@ -3429,10 +3429,18 @@ class MODEL_LOADER(object):
                 input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
                 dropout=dropout, context_length=context_length, pos_enc="relative")
         
-        elif version == "30b":            
-            n_cnn_layers = hyper_parameters["n_cnn_layers"]
-            conv_kernel_size = hyper_parameters["conv_kernel_size"]
-            n_decoder_layers = hyper_parameters["n_decoder_layers"]
+        elif version == "30b":          
+            input_dim = output_dim = self.hyper_parameters["input_dim"]
+            dropout = self.hyper_parameters["dropout"]
+            nhead = self.hyper_parameters["nhead"]
+            d_model = self.hyper_parameters["d_model"]
+            nlayers = self.hyper_parameters["nlayers"]
+            metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
+            context_length = self.hyper_parameters["context_length"]
+              
+            n_cnn_layers = self.hyper_parameters["n_cnn_layers"]
+            conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
+            n_decoder_layers = self.hyper_parameters["n_decoder_layers"]
 
             model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
                 n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
