@@ -371,6 +371,8 @@ class RelativeEncoderLayer(nn.Module):
         )
         self.dropout = nn.Dropout(dropout)
 
+        self.deconv = DeconvBlock(d_model, d_model, 1, 2, 1)
+
     def forward(self, src, src_mask=None):
         # src = [batch size, src len, hid dim]
         # src_mask = [batch size, src len]
