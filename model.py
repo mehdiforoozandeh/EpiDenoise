@@ -1371,13 +1371,9 @@ class EpiDenoise30b(nn.Module):
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         src = torch.cat([src, md_embedding], dim=-1)
-        print(src.mean().item())
 
         e_src = src.permute(0, 2, 1) # to N, F, L
-        print(src.mean().item(), e_src.mean().item())
         e_src = self.conv0(e_src)
-        print(src.mean().item(), e_src.mean().item())
-        exit()
 
         for conv in self.convtower:
             e_src = conv(e_src)
@@ -4244,7 +4240,7 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 6,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 2,
+            "n_decoder_layers" : 6,
 
             "nhead": 8,
             "d_model": 768,
