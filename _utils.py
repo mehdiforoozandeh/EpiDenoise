@@ -75,7 +75,7 @@ class DataMasker:
             if num_available[b] == 1:
                 num_to_mask.append(0)
             else:
-                num_to_mask.append(int(num_available[b] * self.mask_percentage) + 1)
+                num_to_mask.append(max(1, int(num_available[b] * self.mask_percentage)))
 
         # Prepare the new availability tensor
         new_A = availability.clone().float()

@@ -35,7 +35,7 @@ class MetadataEmbeddingModule(nn.Module):
         self.xread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Y metadata embedding parameters
-        self.yruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
+        self.yruntype_embedding = nn.Embedding(3, self.continuous_size)  # 4 classes: single_end, pair_end, missing
         self.ydepth_transform = nn.Linear(1, self.continuous_size) 
         self.ycoverage_transform = nn.Linear(1, self.continuous_size)
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
@@ -3220,7 +3220,6 @@ class PRE_TRAINER(object):
 
                     # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
                     X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-                    mY_batch[(mX_batch == token_dict["cloze_mask"])] = token_dict["cloze_mask"]
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
