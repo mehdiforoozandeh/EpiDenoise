@@ -2080,7 +2080,7 @@ class EVAL_EED(object):
                 if len(imp_target)>0:
                     x_batch = x_batch.clone()
                     x_batch[:,:,imp_target] = self.token_dict["cloze_mask"]
-                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch_missing_vals = (self.token_dict["missing_mask"])
                     x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
 
                     avail_batch = avail_batch.clone()
@@ -2089,11 +2089,11 @@ class EVAL_EED(object):
                     avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
 
                     mX_batch = mX_batch.clone()
-                    mX_batch[:,:,imp_target] = self.token_dict["missing_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                 
                 else:
                     # change missing token to cloze token to force prediction
-                    x_batch_missing_vals = (x_batch == -1)
+                    x_batch_missing_vals = (self.token_dict["missing_mask"])
                     x_batch = x_batch.clone()
                     x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
 
