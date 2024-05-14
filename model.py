@@ -252,33 +252,6 @@ class ConvTower(nn.Module):
         
         return y
 
-class FeedForwardNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_hidden_layers):
-        super(FeedForwardNN, self).__init__()
-        self.hidden_layers = nn.ModuleList()
-        
-        # Input Layer
-        self.hidden_layers.append(nn.Linear(input_size, hidden_size))
-        
-        # Hidden Layers
-        for _ in range(n_hidden_layers):
-            self.hidden_layers.append(nn.Linear(hidden_size, hidden_size))
-        
-        # Output Layer
-        self.output_layer = nn.Linear(hidden_size, output_size)
-        
-        # Activation Function
-        self.relu = nn.ReLU()
-        
-    def forward(self, x):
-        # Pass through each layer
-        for hidden_layer in self.hidden_layers:
-            x = self.relu(hidden_layer(x))
-        
-        x = self.output_layer(x)
-        
-        return x
-
 class RelativePosition(nn.Module):
 
     def __init__(self, num_units, max_relative_position):
@@ -1380,14 +1353,16 @@ class EpiDenoise30b(nn.Module):
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
-        self.transformer_encoder = nn.ModuleList([RelativeEncoderLayer(
+        self.transformer_encoder = nn.ModuleList(
+            [RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, 
                 feed_forward_hidden=2*d_model, 
                 dropout=dropout) for _ in range(nlayers)])
 
-        self.transformer_decoder = nn.ModuleList([RelativeDecoderLayer(
-            hid_dim=d_model, n_heads=nhead, 
-            pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
+        self.transformer_decoder = nn.ModuleList(
+            [RelativeDecoderLayer(
+                hid_dim=d_model, n_heads=nhead, 
+                pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -1396,9 +1371,13 @@ class EpiDenoise30b(nn.Module):
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         src = torch.cat([src, md_embedding], dim=-1)
+        print(src.mean().item())
 
         e_src = src.permute(0, 2, 1) # to N, F, L
+        print(src.mean().item(), e_src.mean().item())
         e_src = self.conv0(e_src)
+        print(src.mean().item(), e_src.mean().item())
+        exit()
 
         for conv in self.convtower:
             e_src = conv(e_src)
@@ -3437,7 +3416,7 @@ class MODEL_LOADER(object):
             nlayers = self.hyper_parameters["nlayers"]
             metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
             context_length = self.hyper_parameters["context_length"]
-              
+
             n_cnn_layers = self.hyper_parameters["n_cnn_layers"]
             conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
             n_decoder_layers = self.hyper_parameters["n_decoder_layers"]
@@ -4263,7 +4242,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.05,
 
-            "n_cnn_layers": 5,
+            "n_cnn_layers": 6,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 2,
 
@@ -4273,7 +4252,7 @@ if __name__ == "__main__":
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
-            "context_length": 1600,
+            "context_length": 6400,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 600,
