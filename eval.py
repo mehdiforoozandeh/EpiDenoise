@@ -2075,31 +2075,26 @@ class EVAL_EED(object):
             avail_batch = avail[i:i+ self.batch_size]
 
             with torch.no_grad():
-                x_batch = x_batch.to(self.device)
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                mY_batch_missing_vals = (mY_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
+                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
 
                 if len(imp_target)>0:
-                    x_batch = x_batch.clone()
-                    x_batch[:,:,imp_target] = self.token_dict["cloze_mask"]
-                    x_batch_missing_vals = (self.token_dict["missing_mask"])
-                    x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
-
-                    avail_batch = avail_batch.clone()
-                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
-                    avail_batch_missing_vals = (avail_batch == 0)
-                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
-
-                    mX_batch = mX_batch.clone()
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                     mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
-                
-                else:
-                    # change missing token to cloze token to force prediction
-                    x_batch_missing_vals = (self.token_dict["missing_mask"])
-                    x_batch = x_batch.clone()
-                    x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"] 
-
-                    avail_batch_missing_vals = (avail_batch == 0)
-                    avail_batch = avail_batch.clone()
-                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+                    mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
 
                 x_batch = x_batch.to(self.device)
                 mX_batch = mX_batch.to(self.device)

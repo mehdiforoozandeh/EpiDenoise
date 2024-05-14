@@ -371,8 +371,6 @@ class RelativeEncoderLayer(nn.Module):
         )
         self.dropout = nn.Dropout(dropout)
 
-        self.deconv = DeconvBlock(d_model, d_model, 1, 2, 1)
-
     def forward(self, src, src_mask=None):
         # src = [batch size, src len, hid dim]
         # src_mask = [batch size, src len]
@@ -1301,7 +1299,8 @@ class EpiDenoise30a(nn.Module):
             self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
             self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
         
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -1371,7 +1370,7 @@ class EpiDenoise30b(nn.Module):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        src = torch.cat([src, md_embedding], dim=-1)
+        src = F.relu(torch.cat([src, md_embedding], dim=-1))
 
         e_src = src.permute(0, 2, 1) # to N, F, L
         e_src = self.conv0(e_src)
@@ -1383,7 +1382,7 @@ class EpiDenoise30b(nn.Module):
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
         
-        src = F.relu(self.lin(src))
+        src = self.lin(src)
         for dec in self.transformer_decoder:
             src = dec(src, e_src)
 
@@ -3221,6 +3220,8 @@ class PRE_TRAINER(object):
 
                     # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
                     X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                    mY_batch[(mX_batch == token_dict["cloze_mask"])] = token_dict["cloze_mask"]
+
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
@@ -3282,7 +3283,7 @@ class PRE_TRAINER(object):
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
                 
-                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions)*100)
+                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 25 == 0:
                     self.scheduler.step()
                     try:
@@ -4250,11 +4251,11 @@ if __name__ == "__main__":
             "inner_epochs": 15,
             "mask_percentage": 0.25,
             "context_length": 4800,
-            "batch_size": 25,
+            "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 600,
+            "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":5
+            "min_avail":4
         }
         train_epidenoise30(
             hyper_parameters30b, 
