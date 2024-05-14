@@ -4239,17 +4239,17 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 6,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 4,
+            "n_decoder_layers" : 2,
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 1,
+            "nlayers": 6,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 25,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-3,
             "num_loci": 600,
             "lr_halflife":1,
             "min_avail":5
