@@ -4237,13 +4237,13 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.05,
 
-            "n_cnn_layers": 6,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 2,
+            "n_decoder_layers" : 1,
 
-            "nhead": 8,
-            "d_model": 512,
-            "nlayers": 6,
+            "nhead": 4,
+            "d_model": 384,
+            "nlayers": 12,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
