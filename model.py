@@ -361,6 +361,7 @@ class RelativeEncoderLayer(nn.Module):
         
         self.layer_norm_1 = nn.LayerNorm(d_model)
         self.layer_norm_2 = nn.LayerNorm(d_model)
+
         self.relative_multihead_attn = RelativeMultiHeadAttentionLayer(d_model, heads, dropout)
         self.positionwise_feedforward = nn.Sequential(
             nn.Linear(d_model, feed_forward_hidden),
@@ -369,10 +370,8 @@ class RelativeEncoderLayer(nn.Module):
             nn.Linear(feed_forward_hidden, d_model)
         )
         self.dropout = nn.Dropout(dropout)
-        self.relu = nn.ReLU()
-        self.deconv = DeconvBlock(d_model, d_model, 1, 2, 1)
 
-    def forward(self, src, src_key_padding_mask=None, src_mask=None, mask=None, is_causal=None):
+    def forward(self, src, src_mask=None):
         # src = [batch size, src len, hid dim]
         # src_mask = [batch size, src len]
 
@@ -407,7 +406,7 @@ class RelativeDecoderLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, trg, enc_src):
+    def forward(self, trg, enc_src, src_mask=None):
         # trg = [batch size, trg len, hid dim]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, trg len]
@@ -419,7 +418,7 @@ class RelativeDecoderLayer(nn.Module):
         value = enc_src
 
         # Using the decoder input as the query, and the encoder output as key and value
-        _trg = self.encoder_attention(query, key, value, None)
+        _trg = self.encoder_attention(query, key, value, src_mask)
 
         # Residual connection and layer norm
         trg = self.layer_norm_cross_attn(trg + self.dropout(_trg))
@@ -4240,11 +4239,11 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 6,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 6,
+            "n_decoder_layers" : 1,
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 2,
+            "nlayers": 12,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
