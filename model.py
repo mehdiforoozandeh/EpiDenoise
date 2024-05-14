@@ -4244,7 +4244,7 @@ if __name__ == "__main__":
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 6,
+            "nlayers": 2,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
