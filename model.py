@@ -4251,10 +4251,10 @@ if __name__ == "__main__":
             "inner_epochs": 15,
             "mask_percentage": 0.25,
             "context_length": 4800,
-            "batch_size": 50,
+            "batch_size": 40,
             "learning_rate": 1e-4,
             "num_loci": 1200,
-            "lr_halflife":1,
+            "lr_halflife":2,
             "min_avail":4
         }
         train_epidenoise30(
