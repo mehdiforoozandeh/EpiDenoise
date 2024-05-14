@@ -4239,11 +4239,11 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 6,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 2,
+            "n_decoder_layers" : 4,
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 6,
+            "nlayers": 1,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
