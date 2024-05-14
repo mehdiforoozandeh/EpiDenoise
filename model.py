@@ -4242,7 +4242,7 @@ if __name__ == "__main__":
             "n_decoder_layers" : 2,
 
             "nhead": 8,
-            "d_model": 768,
+            "d_model": 512,
             "nlayers": 6,
             "epochs": 2,
             "inner_epochs": 15,
