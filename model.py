@@ -3254,9 +3254,16 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     if X_batch.grad is not None:
-                        masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
-                        observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                        print(f"msk_grad: {masked_grad} | obs_grad: {observed_grad}")
+                        inp_masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
+                        inp_observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
+
+                        p_masked_grad = output_p.grad[masked_map].mean().item() if output_p.grad[masked_map].numel() > 0 else float('nan')
+                        p_observed_grad = output_p.grad[observed_map].mean().item() if output_p.grad[observed_map].numel() > 0 else float('nan')
+
+                        n_masked_grad = output_n.grad[masked_map].mean().item() if output_n.grad[masked_map].numel() > 0 else float('nan')
+                        n_observed_grad = output_n.grad[observed_map].mean().item() if output_n.grad[observed_map].numel() > 0 else float('nan')
+
+                        print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | outn_msk_grad: {n_masked_grad:.3f} | outn_obs_grad: {n_observed_grad:.3f} | outp_msk_grad: {p_masked_grad:.3f} | outp_obs_grad: {p_observed_grad:.3f}")
                     else:
                         print("Gradients not computed for X_batch")
                         
