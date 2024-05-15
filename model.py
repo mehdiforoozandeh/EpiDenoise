@@ -3257,8 +3257,7 @@ class PRE_TRAINER(object):
                     # Access and print gradients of the masked and observed features
                     masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
                     observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                    print("Mean gradient for masked features:", masked_grad)
-                    print("Mean gradient for observed features:", observed_grad)
+                    print(f"msk_grad: {masked_grad} | obs_grad: {observed_grad}")
                     
                     self.optimizer.step()
                     
