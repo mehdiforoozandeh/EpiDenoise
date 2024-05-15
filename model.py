@@ -3237,7 +3237,6 @@ class PRE_TRAINER(object):
 
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
-                    print(X_batch[masked_map].grad.mean().item(), X_batch[observed_map].grad.mean().item())
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
@@ -3254,6 +3253,13 @@ class PRE_TRAINER(object):
                         continue
                     
                     loss.backward()  
+
+                    # Access and print gradients of the masked and observed features
+                    masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
+                    observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
+                    print("Mean gradient for masked features:", masked_grad)
+                    print("Mean gradient for observed features:", observed_grad)
+                    
                     self.optimizer.step()
                     
                     ups_pred = NegativeBinomial(
