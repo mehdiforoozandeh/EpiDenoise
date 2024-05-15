@@ -3236,6 +3236,12 @@ class PRE_TRAINER(object):
                     observed_map = observed_map.to(self.device) # upsampling targets
 
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+
+                    # Retain gradients for intermediate tensors
+                    output_p.retain_grad()
+                    output_n.retain_grad()
+
+
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
