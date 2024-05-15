@@ -826,13 +826,11 @@ class ComboLoss_NBNLL(nn.Module):
     def __init__(self, alpha=0.5):
         super(ComboLoss_NBNLL, self).__init__()
         self.alpha = alpha
-        self.reduction = 'mean'
+        self.reduction = 'sum'
 
     def forward(self, p_pred, n_pred, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
-
-        print(ups_y_true.shape, imp_y_true.shape)
 
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
@@ -841,6 +839,9 @@ class ComboLoss_NBNLL(nn.Module):
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
             imputation_loss = imputation_loss.mean()
+        else:
+            upsampling_loss = upsampling_loss.sum()
+            imputation_loss = imputation_loss.sum()
         
         return self.alpha * imputation_loss, (1-self.alpha) * upsampling_loss
 
