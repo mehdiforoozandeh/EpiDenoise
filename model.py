@@ -3236,7 +3236,6 @@ class PRE_TRAINER(object):
                     observed_map = observed_map.to(self.device) # upsampling targets
 
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
@@ -3254,11 +3253,13 @@ class PRE_TRAINER(object):
                     
                     loss.backward()  
 
-                    # Access and print gradients of the masked and observed features
-                    masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
-                    observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                    print(f"msk_grad: {masked_grad} | obs_grad: {observed_grad}")
-                    
+                    if X_batch.grad is not None:
+                        masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
+                        observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
+                        print(f"msk_grad: {masked_grad} | obs_grad: {observed_grad}")
+                    else:
+                        print("Gradients not computed for X_batch")
+                        
                     self.optimizer.step()
                     
                     ups_pred = NegativeBinomial(
