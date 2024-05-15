@@ -3261,12 +3261,12 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     if X_batch.grad is not None:
-                        inp_masked_grad = X_batch.grad[masked_map].mean().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
-                        inp_observed_grad = X_batch.grad[observed_map].mean().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                        inp_missing_grad = X_batch.grad[missing_map].mean().item() if X_batch.grad[missing_map].numel() > 0 else float('nan')
+                        inp_masked_grad = X_batch.grad[masked_map].max().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
+                        inp_observed_grad = X_batch.grad[observed_map].max().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
+                        inp_missing_grad = X_batch.grad[missing_map].max().item() if X_batch.grad[missing_map].numel() > 0 else float('nan')
                         
 
-                        print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | inp_mis_grad: {inp_observed_grad:.3f} ")
+                        print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | inp_mis_grad: {inp_missing_grad:.3f} ")
                     else:
                         print("Gradients not computed for X_batch")
                         
