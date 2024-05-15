@@ -3227,7 +3227,7 @@ class PRE_TRAINER(object):
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
 
-                    X_batch = X_batch.to(self.device).requires_grad_(True)
+                    X_batch = X_batch.float().to(self.device).requires_grad_(True)
                     mX_batch = mX_batch.to(self.device)
                     avail_batch = avail_batch.to(self.device)
                     mY_batch = mY_batch.to(self.device)
