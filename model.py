@@ -3237,7 +3237,7 @@ class PRE_TRAINER(object):
 
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
-                    print(X_batch.grad[masked_map].mean().item())
+                    print(X_batch.grad[masked_map].mean().item(), X_batch.grad[observed_map].mean().item())
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
