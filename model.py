@@ -3225,7 +3225,8 @@ class PRE_TRAINER(object):
                     "imp_mse":[]
                 }
 
-                for _ in range(inner_epochs):
+                # for _ in range(inner_epochs):
+                while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3270,50 +3271,33 @@ class PRE_TRAINER(object):
                     
                     loss.backward()  
 
-                    # inp_masked_grad = X_batch.grad[masked_map].max().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
-                    # inp_observed_grad = X_batch.grad[observed_map].max().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                    # inp_missing_grad = X_batch.grad[missing_map].max().item() if X_batch.grad[missing_map].numel() > 0 else float('nan')
-                    
-
-                    # print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | inp_mis_grad: {inp_missing_grad:.3f}")
-
-                    # out_masked_grad = output_p.grad[masked_map].max().item() if output_p.grad[masked_map].numel() > 0 else float('nan')
-                    # out_observed_grad = output_p.grad[observed_map].max().item() if output_p.grad[observed_map].numel() > 0 else float('nan')
-                    # out_missing_grad = output_p.grad[missing_map].max().item() if output_p.grad[missing_map].numel() > 0 else float('nan')
-                    
-
-                    # print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
-                    # print("\n\n")
-
                     # Initialize variables to store maximum gradient norms and corresponding layer names
-                    max_weight_grad_norm = 0
-                    max_weight_grad_layer = None
-                    max_bias_grad_norm = 0
-                    max_bias_grad_layer = None
+                    # max_weight_grad_norm = 0
+                    # max_weight_grad_layer = None
+                    # max_bias_grad_norm = 0
+                    # max_bias_grad_layer = None
 
-                    # Check and update maximum gradient norms
-                    for name, module in self.model.named_modules():
-                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                            if module.weight.grad_norm > max_weight_grad_norm:
-                                max_weight_grad_norm = module.weight.grad_norm
-                                max_weight_grad_layer = name
+                    # # Check and update maximum gradient norms
+                    # for name, module in self.model.named_modules():
+                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                    #         if module.weight.grad_norm > max_weight_grad_norm:
+                    #             max_weight_grad_norm = module.weight.grad_norm
+                    #             max_weight_grad_layer = name
 
-                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                            if module.bias.grad_norm > max_bias_grad_norm:
-                                max_bias_grad_norm = module.bias.grad_norm
-                                max_bias_grad_layer = name
+                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                    #         if module.bias.grad_norm > max_bias_grad_norm:
+                    #             max_bias_grad_norm = module.bias.grad_norm
+                    #             max_bias_grad_layer = name
 
-                    # Print the layers with the maximum weight and bias gradients
-                    if max_weight_grad_layer:
-                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                    if max_bias_grad_layer:
-                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
+                    # # Print the layers with the maximum weight and bias gradients
+                    # if max_weight_grad_layer:
+                    #     print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    # if max_bias_grad_layer:
+                    #     print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
-
-       
-
-                        
+                    print(loss.item())
                     self.optimizer.step()
+                    continue
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -4314,7 +4298,7 @@ if __name__ == "__main__":
             "inner_epochs": 50,
             "mask_percentage": 0.25,
             "context_length": 3200,
-            "batch_size": 50,
+            "batch_size": 5,
             "learning_rate": 1e-4,
             "num_loci": 1200,
             "lr_halflife":2,
