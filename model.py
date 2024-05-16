@@ -41,7 +41,8 @@ class MetadataEmbeddingModule(nn.Module):
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Final layer to combine all embeddings
-        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
+        # self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
+        self.final_embedding = FeedForwardNN(self.input_dim * self.continuous_size * 9, embedding_dim, embedding_dim, 3)
 
     def embed_metadata(self, metadata, side="x"):
         depth = metadata[:, 0, :].unsqueeze(-1).float() 
@@ -4289,7 +4290,7 @@ if __name__ == "__main__":
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
-            "metadata_embedding_dim": 92,
+            "metadata_embedding_dim": 47,
             "dropout": 0.05,
 
             "n_cnn_layers": 5,
