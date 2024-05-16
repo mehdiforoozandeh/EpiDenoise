@@ -18,10 +18,15 @@ random.seed(73)
 
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:
-        module.weight.grad_norm = grad_input[0].norm().item()
+        if grad_input[0] is not None:
+            module.weight.grad_norm = grad_input[0].norm().item()
+        else:
+            module.weight.grad_norm = 0  # Assign a default value if grad_input[0] is None
     if hasattr(module, 'bias') and module.bias is not None:
         if len(grad_input) > 1 and grad_input[1] is not None:
             module.bias.grad_norm = grad_input[1].norm().item()
+        else:
+            module.bias.grad_norm = 0  # Assign a default value if grad_input[1] is None
 
 def register_hooks(model):
     for name, module in model.named_modules():
