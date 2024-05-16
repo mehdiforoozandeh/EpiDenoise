@@ -832,9 +832,6 @@ class ComboLoss_NBNLL(nn.Module):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        print("obs", true_signals[obs_map].min().item(), true_signals[obs_map].max().item())
-        print("clz", true_signals[masked_map].min().item(), true_signals[masked_map].max().item())
-
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
         
@@ -3244,7 +3241,6 @@ class PRE_TRAINER(object):
                     output_p.retain_grad()
                     output_n.retain_grad()
 
-
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
 
@@ -3262,20 +3258,27 @@ class PRE_TRAINER(object):
                     
                     loss.backward()  
 
-                    inp_masked_grad = X_batch.grad[masked_map].max().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
-                    inp_observed_grad = X_batch.grad[observed_map].max().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
-                    inp_missing_grad = X_batch.grad[missing_map].max().item() if X_batch.grad[missing_map].numel() > 0 else float('nan')
+                    # inp_masked_grad = X_batch.grad[masked_map].max().item() if X_batch.grad[masked_map].numel() > 0 else float('nan')
+                    # inp_observed_grad = X_batch.grad[observed_map].max().item() if X_batch.grad[observed_map].numel() > 0 else float('nan')
+                    # inp_missing_grad = X_batch.grad[missing_map].max().item() if X_batch.grad[missing_map].numel() > 0 else float('nan')
                     
 
-                    print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | inp_mis_grad: {inp_missing_grad:.3f}")
+                    # print(f"inp_msk_grad: {inp_masked_grad:.3f} | inp_obs_grad: {inp_observed_grad:.3f} | inp_mis_grad: {inp_missing_grad:.3f}")
 
-                    out_masked_grad = output_p.grad[masked_map].max().item() if output_p.grad[masked_map].numel() > 0 else float('nan')
-                    out_observed_grad = output_p.grad[observed_map].max().item() if output_p.grad[observed_map].numel() > 0 else float('nan')
-                    out_missing_grad = output_p.grad[missing_map].max().item() if output_p.grad[missing_map].numel() > 0 else float('nan')
+                    # out_masked_grad = output_p.grad[masked_map].max().item() if output_p.grad[masked_map].numel() > 0 else float('nan')
+                    # out_observed_grad = output_p.grad[observed_map].max().item() if output_p.grad[observed_map].numel() > 0 else float('nan')
+                    # out_missing_grad = output_p.grad[missing_map].max().item() if output_p.grad[missing_map].numel() > 0 else float('nan')
                     
 
-                    print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
-                    print("\n\n")
+                    # print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
+                    # print("\n\n")
+
+                    for name, module in model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            print(f"Epoch {epoch}, Layer {name}, Weight Grad Norm: {module.weight.grad_norm}")
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm'):
+                            print(f"Epoch {epoch}, Layer {name}, Bias Grad Norm: {module.bias.grad_norm}")
+
                         
                     self.optimizer.step()
                     
