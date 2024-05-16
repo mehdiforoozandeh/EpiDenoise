@@ -4267,7 +4267,7 @@ if __name__ == "__main__":
             "input_dim": 47,
             "metadata_embedding_dim": 47,
             "dropout": 0.05,
-            "nhead": 4,
+            "nhead": 2,
             "d_model": 64,
             "nlayers": 2,
             "epochs": 2,
