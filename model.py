@@ -1298,12 +1298,11 @@ class EpiDenoise30a(nn.Module):
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
-        self.pos_enc = "abs"#pos_enc
+        self.pos_enc = pos_enc
         self.context_length = context_length
         
-        # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-        self.embedding_linear = nn.Linear(input_dim, d_model)
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
@@ -1317,10 +1316,10 @@ class EpiDenoise30a(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
-        # md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        # src = torch.cat([src, md_embedding], dim=-1)
+        src = torch.cat([src, md_embedding], dim=-1)
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -4265,13 +4264,12 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.05,
             "nhead": 4,
-            "d_model": 384,
+            "d_model": 32,
             "nlayers": 6,
             "epochs": 2,
             "inner_epochs": 15,
             "mask_percentage": 0.25,
-            "context_length": 200,
-            # "context_length": 400,
+            "context_length": 100,
             "batch_size": 5,
             "learning_rate": 1e-5,
             "num_loci": 1200,
