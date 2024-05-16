@@ -3190,7 +3190,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4]#, 8]
+        dsf_list = [1]#, 2, 4]#, 8]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
