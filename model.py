@@ -3272,28 +3272,28 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     # Initialize variables to store maximum gradient norms and corresponding layer names
-                    # max_weight_grad_norm = 0
-                    # max_weight_grad_layer = None
-                    # max_bias_grad_norm = 0
-                    # max_bias_grad_layer = None
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
 
-                    # # Check and update maximum gradient norms
-                    # for name, module in self.model.named_modules():
-                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                    #         if module.weight.grad_norm > max_weight_grad_norm:
-                    #             max_weight_grad_norm = module.weight.grad_norm
-                    #             max_weight_grad_layer = name
+                    # Check and update maximum gradient norms
+                    for name, module in self.model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
 
-                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                    #         if module.bias.grad_norm > max_bias_grad_norm:
-                    #             max_bias_grad_norm = module.bias.grad_norm
-                    #             max_bias_grad_layer = name
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
 
-                    # # Print the layers with the maximum weight and bias gradients
-                    # if max_weight_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                    # if max_bias_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
+                    # Print the layers with the maximum weight and bias gradients
+                    if max_weight_grad_layer:
+                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    if max_bias_grad_layer:
+                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
                     print(obs_loss.item(), pred_loss.item())
                     self.optimizer.step()
