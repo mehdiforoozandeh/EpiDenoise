@@ -3273,7 +3273,7 @@ class PRE_TRAINER(object):
                     # print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
                     # print("\n\n")
 
-                    for name, module in model.named_modules():
+                    for name, module in self.model.named_modules():
                         if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
                             print(f"Epoch {epoch}, Layer {name}, Weight Grad Norm: {module.weight.grad_norm}")
                         if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm'):
