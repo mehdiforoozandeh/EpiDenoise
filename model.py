@@ -1304,6 +1304,8 @@ class EpiDenoise30a(nn.Module):
         super(EpiDenoise30a, self).__init__()
         self.pos_enc = pos_enc
         self.context_length = context_length
+
+        self.batch_norm = nn.BatchNorm1d(input_dim)
         
         # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
@@ -1325,6 +1327,7 @@ class EpiDenoise30a(nn.Module):
         # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         # src = torch.cat([src, md_embedding], dim=-1)
+        src = self.batch_norm(src)
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -3190,7 +3193,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1]#, 2, 4]#, 8]
+        dsf_list = [1, 2, 4]#, 8]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
