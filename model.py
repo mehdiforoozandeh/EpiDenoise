@@ -191,19 +191,24 @@ class AttentionPooling1D(nn.Module):
         return pooled
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, do_batchnorm=False):
+    def __init__(self, in_C, out_C, W, S, D, norm="layer"):
         super(ConvBlock, self).__init__()
-        self.do_batchnorm = do_batchnorm
-        if self.do_batchnorm:
-            self.batch_norm = nn.BatchNorm1d(out_C)
+        self.norm = norm
+
+        if self.norm == "batch":
+            self.norm = nn.BatchNorm1d(out_C)
+        elif self.norm == "layer":
+            self.norm = nn.LayerNorm(out_C)
 
         self.conv = nn.Conv1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same")
         
     def forward(self, x):
         x = self.conv(x)
-        if self.do_batchnorm:
-            x = self.batch_norm(x)
+
+        if self.norm in ["batch", "layer"]:
+            x = self.norm(x)
+            
         x = F.relu(x)
         return x
 
