@@ -4272,7 +4272,7 @@ if __name__ == "__main__":
             "context_length": 200,
             # "context_length": 400,
             "batch_size": 50,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-2,
             "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":5
