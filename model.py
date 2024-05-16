@@ -1319,7 +1319,9 @@ class EpiDenoise30a(nn.Module):
         if self.pos_enc != "relative":
             src = src + self.position(src)
         
-        src = self.transformer_encoder(src) 
+        for enc in self.transformer_encoder:
+            src = enc(src)
+
         p, n = self.neg_binom_layer(src)
 
         p = torch.permute(p, (1, 0, 2))  # to N, L, F
