@@ -1341,7 +1341,7 @@ class EpiDenoise30b(nn.Module):
         self.context_length = context_length
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=False)
         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
         self.conv0 = ConvTower(
