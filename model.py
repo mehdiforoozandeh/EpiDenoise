@@ -3274,6 +3274,12 @@ class PRE_TRAINER(object):
                     # print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
                     # print("\n\n")
 
+                    # Initialize variables to store maximum gradient norms and corresponding layer names
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
+
                     for name, module in self.model.named_modules():
                         if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
                             if module.weight.grad_norm > max_weight_grad_norm:
