@@ -1352,7 +1352,7 @@ class EpiDenoise30b(nn.Module):
         self.context_length = context_length
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=False)
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
         self.conv0 = ConvTower(
@@ -4265,9 +4265,9 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 6,
             "epochs": 2,
-            "inner_epochs": 15,
+            "inner_epochs": 50,
             "mask_percentage": 0.25,
-            "context_length": 50,
+            "context_length": 400,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 1200,
@@ -4297,7 +4297,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 50,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-3,
             "num_loci": 1200,
             "lr_halflife":2,
             "min_avail":4
