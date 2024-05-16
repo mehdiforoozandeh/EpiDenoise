@@ -3183,6 +3183,7 @@ class PRE_TRAINER(object):
         - total number of training samples in each epoch is  len(dataset.m_regions) * len(dataset.navigation)
             - each batch consists of batch_size number of biosamples for 1 region
         """
+        register_hooks(self.model)
             
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
