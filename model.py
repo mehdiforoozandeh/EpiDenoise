@@ -4278,7 +4278,7 @@ if __name__ == "__main__":
             "learning_rate": 1e-2,
             "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":5
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30a, 
