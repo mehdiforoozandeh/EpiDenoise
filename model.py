@@ -3287,7 +3287,7 @@ class PRE_TRAINER(object):
                                 max_weight_grad_norm = module.weight.grad_norm
                                 max_weight_grad_layer = name
 
-                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm'):
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
                             if module.bias.grad_norm > max_bias_grad_norm:
                                 max_bias_grad_norm = module.bias.grad_norm
                                 max_bias_grad_layer = name
@@ -4122,7 +4122,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     with open(f'models/hyper_parameters30{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss_NBNLL()
+    criterion = ComboLoss_NBNLL(alpha=1-mask_percentage)
 
     start_time = time.time()
 

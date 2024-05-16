@@ -19,12 +19,12 @@ random.seed(73)
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:
         module.weight.grad_norm = grad_input[0].norm().item()
-    if hasattr(module, 'bias') and module.bias is not None:
-        module.bias.grad_norm = grad_input[1].norm().item() if len(grad_input) > 1 else None
+    if hasattr(module, 'bias') and module.bias is not None and grad_input[1] is not None:
+        module.bias.grad_norm = grad_input[1].norm().item()
 
 def register_hooks(model):
     for name, module in model.named_modules():
-        module.register_backward_hook(capture_gradients_hook)
+        module.register_full_backward_hook(capture_gradients_hook)
 
 def exponential_linspace_int(start, end, num, divisible_by=1):
     """Exponentially increasing values of integers."""
