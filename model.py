@@ -1298,7 +1298,7 @@ class EpiDenoise30a(nn.Module):
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
-        self.pos_enc = pos_enc
+        self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
         
         # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
