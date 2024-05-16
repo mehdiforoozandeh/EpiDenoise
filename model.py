@@ -191,7 +191,7 @@ class AttentionPooling1D(nn.Module):
         return pooled
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, do_batchnorm=True):
+    def __init__(self, in_C, out_C, W, S, D, do_batchnorm=False):
         super(ConvBlock, self).__init__()
         self.do_batchnorm = do_batchnorm
         if self.do_batchnorm:
