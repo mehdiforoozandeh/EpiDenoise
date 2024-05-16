@@ -837,23 +837,19 @@ class ComboLoss_NBNLL(nn.Module):
         self.alpha = alpha
         self.reduction = 'sum'
 
-        self.mse_loss = nn.MSELoss(reduction='mean')
-
     def forward(self, p_pred, n_pred, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        upsampling_loss = self.mse_loss(ups_n_pred.float(), ups_y_true.float())
-        imputation_loss = self.mse_loss(imp_n_pred.float(), imp_y_true.float())
-        # upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
-        # imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
         
-        # if self.reduction == "mean":
-        #     upsampling_loss = upsampling_loss.mean()
-        #     imputation_loss = imputation_loss.mean()
-        # else:
-        #     upsampling_loss = upsampling_loss.sum()
-        #     imputation_loss = imputation_loss.sum()
+        if self.reduction == "mean":
+            upsampling_loss = upsampling_loss.mean()
+            imputation_loss = imputation_loss.mean()
+        else:
+            upsampling_loss = upsampling_loss.sum()
+            imputation_loss = imputation_loss.sum()
         
         return self.alpha * imputation_loss, (1-self.alpha) * upsampling_loss
 
@@ -4289,7 +4285,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.05,
+            "dropout": 0.00,
 
             "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
@@ -4303,10 +4299,10 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 5,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-5,
             "num_loci": 1200,
             "lr_halflife":2,
-            "min_avail":4
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30b, 
