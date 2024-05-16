@@ -4260,7 +4260,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.01,
+            "dropout": 0.05,
             "nhead": 4,
             "d_model": 384,
             "nlayers": 6,
@@ -4283,7 +4283,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.00,
+            "dropout": 0.05,
 
             "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
