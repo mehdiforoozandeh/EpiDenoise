@@ -3224,17 +3224,18 @@ class PRE_TRAINER(object):
                     "ups_mse":[],
                     "imp_mse":[]
                 }
-
+                X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
+                X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                 # for _ in range(inner_epochs):
                 while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
-                    X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
-                    Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
+                    # X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                    # Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
-                    # avail_batch (B, F) where each F is either 0, 1, or token_dict["cloze_mask"]
-                    X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                    # X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
