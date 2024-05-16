@@ -4300,7 +4300,7 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 12,
             "epochs": 1,
-            "inner_epochs": 15,
+            "inner_epochs": 50,
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 50,
