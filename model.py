@@ -1301,7 +1301,7 @@ class EpiDenoise30a(nn.Module):
         self.pos_enc = pos_enc
         self.context_length = context_length
         
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
         if self.pos_enc == "relative":
@@ -1316,10 +1316,10 @@ class EpiDenoise30a(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        # md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        src = torch.cat([src, md_embedding], dim=-1)
+        # src = torch.cat([src, md_embedding], dim=-1)
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
