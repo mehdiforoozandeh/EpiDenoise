@@ -3224,8 +3224,8 @@ class PRE_TRAINER(object):
                     "ups_mse":[],
                     "imp_mse":[]
                 }
-                # for _ in range(inner_epochs):
-                while True:
+                for _ in range(inner_epochs):
+                # while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3249,8 +3249,8 @@ class PRE_TRAINER(object):
                     output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
                     # Retain gradients for intermediate tensors
-                    output_p.retain_grad()
-                    output_n.retain_grad()
+                    # output_p.retain_grad()
+                    # output_n.retain_grad()
 
                     pred_loss, obs_loss = self.criterion(
                         output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
@@ -3295,7 +3295,7 @@ class PRE_TRAINER(object):
 
                     print(obs_loss.item(), pred_loss.item())
                     self.optimizer.step()
-                    continue
+                    # continue
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -4269,7 +4269,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 50,
             "batch_size": 50,
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-4,
             "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":15
@@ -4285,19 +4285,19 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.00,
 
-            "n_cnn_layers": 2,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
-            "nhead": 2,
-            "d_model": 192,
-            "nlayers": 2,
+            "nhead": 4,
+            "d_model": 384,
+            "nlayers": 12,
             "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.25,
-            "context_length": 200,
+            "context_length": 3200,
             "batch_size": 5,
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-4,
             "num_loci": 1200,
             "lr_halflife":2,
             "min_avail":15
