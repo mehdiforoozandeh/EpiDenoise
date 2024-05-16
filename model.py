@@ -3274,11 +3274,22 @@ class PRE_TRAINER(object):
                     # print(f"out_msk_grad: {out_masked_grad:.3f} | out_obs_grad: {out_observed_grad:.3f} | out_missing_grad: {inp_missing_grad:.3f}")
                     # print("\n\n")
 
-                    for name, module in self.model.named_modules():
+                    for name, module in model.named_modules():
                         if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                            print(f"Epoch {epoch}, Layer {name}, Weight Grad Norm: {module.weight.grad_norm}")
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
+
                         if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm'):
-                            print(f"Epoch {epoch}, Layer {name}, Bias Grad Norm: {module.bias.grad_norm}")
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
+
+                    # Print the layers with the maximum weight and bias gradients
+                    if max_weight_grad_layer:
+                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    if max_bias_grad_layer:
+                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
                         
                     self.optimizer.step()
