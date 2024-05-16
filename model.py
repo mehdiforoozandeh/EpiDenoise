@@ -3281,7 +3281,7 @@ class PRE_TRAINER(object):
                     max_bias_grad_layer = None
 
                     # Check and update maximum gradient norms
-                    for name, module in model.named_modules():
+                    for name, module in self.model.named_modules():
                         if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
                             if module.weight.grad_norm > max_weight_grad_norm:
                                 max_weight_grad_norm = module.weight.grad_norm
