@@ -3285,7 +3285,8 @@ class PRE_TRAINER(object):
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
                     # X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-
+                    avail_batch = avX_batch
+                    
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
                     missing_map = (X_batch == token_dict["missing_mask"])
