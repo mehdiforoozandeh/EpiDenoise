@@ -840,7 +840,7 @@ class ComboLoss_NBNLL(nn.Module):
     def forward(self, p_pred, n_pred, true_signals, masked_map, obs_map):
         obs_map = obs_map.clone()
         obs_map[:,:,:] = False
-        obs_map[0,:,:] = True
+        obs_map[0,0,:] = True
         masked_map = obs_map
 
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
