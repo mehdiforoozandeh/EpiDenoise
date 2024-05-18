@@ -851,7 +851,7 @@ class ComboLoss_NBNLL(nn.Module):
         #     upsampling_loss = upsampling_loss.sum()
         #     imputation_loss = imputation_loss.sum()
 
-        upsampling_loss = negative_binomial_loss(true_signals[obs_map], n_pred[obs_map], p_pred[obs_map])
+        upsampling_loss = negative_binomial_loss(true_signals, n_pred, p_pred)
         imputation_loss = upsampling_loss
         
         return self.alpha * imputation_loss, (1-self.alpha) * upsampling_loss
