@@ -4313,7 +4313,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.5,
             "context_length": 50,
             "batch_size": 5,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-2,
             "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":15
