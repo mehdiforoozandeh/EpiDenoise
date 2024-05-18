@@ -3383,7 +3383,7 @@ class PRE_TRAINER(object):
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 10 == 0:
-                    self.scheduler.step()
+                    # self.scheduler.step()
                     try:
                         torch.save(
                             self.model.state_dict(), 
@@ -4154,7 +4154,8 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
+    scheduler = None
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -4323,7 +4324,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.5,
             "context_length": 50,
             "batch_size": 5,
-            "learning_rate": 9e-1,
+            "learning_rate": 1e-1,
             "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":15
