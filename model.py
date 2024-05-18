@@ -1293,6 +1293,50 @@ class EpiDenoise22(nn.Module):
         else:
             return trg
 
+# class EpiDenoise30a(nn.Module):
+#     def __init__(
+#         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+#         dropout=0.1, context_length=2000, pos_enc="relative"):
+#         super(EpiDenoise30a, self).__init__()
+#         self.pos_enc = pos_enc
+#         self.context_length = context_length
+        
+#         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+#         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
+#         if self.pos_enc == "relative":
+#             self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+#         else:
+#             self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+#             self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+        
+#         self.transformer_encoder = nn.ModuleList(
+#             [self.encoder_layer for _ in range(nlayers)])
+
+#         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+    
+#     def forward(self, src, x_metadata, y_metadata, availability):
+#         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+
+#         src = torch.cat([src, md_embedding], dim=-1)
+#         src = F.relu(self.embedding_linear(src))
+
+#         src = torch.permute(src, (1, 0, 2)) # to L, N, F
+
+#         if self.pos_enc != "relative":
+#             src = src + self.position(src)
+        
+#         for enc in self.transformer_encoder:
+#             src = enc(src)
+
+#         p, n = self.neg_binom_layer(src)
+
+#         p = torch.permute(p, (1, 0, 2))  # to N, L, F
+#         n = torch.permute(n, (1, 0, 2))  # to N, L, F
+
+#         return p, n
+
 class EpiDenoise30a(nn.Module):
     def __init__(
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
@@ -1304,14 +1348,14 @@ class EpiDenoise30a(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
-        else:
-            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+        # if self.pos_enc == "relative":
+        #     self.encoder_layer = RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=2*d_model, dropout=dropout)
+        # else:
+        #     self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+        #     self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
         
-        self.transformer_encoder = nn.ModuleList(
-            [self.encoder_layer for _ in range(nlayers)])
+        # self.transformer_encoder = nn.ModuleList(
+        #     [self.encoder_layer for _ in range(nlayers)])
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
@@ -1322,18 +1366,18 @@ class EpiDenoise30a(nn.Module):
         src = torch.cat([src, md_embedding], dim=-1)
         src = F.relu(self.embedding_linear(src))
 
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
-        if self.pos_enc != "relative":
-            src = src + self.position(src)
+        # if self.pos_enc != "relative":
+        #     src = src + self.position(src)
         
-        for enc in self.transformer_encoder:
-            src = enc(src)
+        # for enc in self.transformer_encoder:
+        #     src = enc(src)
 
         p, n = self.neg_binom_layer(src)
 
-        p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
 
         return p, n
 
@@ -3224,8 +3268,8 @@ class PRE_TRAINER(object):
                     "ups_mse":[],
                     "imp_mse":[]
                 }
-                for _ in range(inner_epochs):
-                # while True:
+                # for _ in range(inner_epochs):
+                while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3270,32 +3314,32 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     # Initialize variables to store maximum gradient norms and corresponding layer names
-                    # max_weight_grad_norm = 0
-                    # max_weight_grad_layer = None
-                    # max_bias_grad_norm = 0
-                    # max_bias_grad_layer = None
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
 
-                    # # Check and update maximum gradient norms
-                    # for name, module in self.model.named_modules():
-                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                    #         if module.weight.grad_norm > max_weight_grad_norm:
-                    #             max_weight_grad_norm = module.weight.grad_norm
-                    #             max_weight_grad_layer = name
+                    # Check and update maximum gradient norms
+                    for name, module in self.model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
 
-                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                    #         if module.bias.grad_norm > max_bias_grad_norm:
-                    #             max_bias_grad_norm = module.bias.grad_norm
-                    #             max_bias_grad_layer = name
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
 
-                    # # Print the layers with the maximum weight and bias gradients
-                    # if max_weight_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                    # if max_bias_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
+                    # Print the layers with the maximum weight and bias gradients
+                    if max_weight_grad_layer:
+                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    if max_bias_grad_layer:
+                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
-                    # print(obs_loss.item(), pred_loss.item())
+                    print(obs_loss.item(), pred_loss.item())
                     self.optimizer.step()
-                    # continue
+                    continue
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -4263,16 +4307,16 @@ if __name__ == "__main__":
             "dropout": 0.05,
             "nhead": 4,
             "d_model": 384,
-            "nlayers": 6,
+            "nlayers": 2,
             "epochs": 2,
             "inner_epochs": 50,
-            "mask_percentage": 0.25,
-            "context_length": 400,
-            "batch_size": 50,
+            "mask_percentage": 0.5,
+            "context_length": 50,
+            "batch_size": 5,
             "learning_rate": 1e-4,
             "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":4
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30a, 
