@@ -3344,7 +3344,7 @@ class PRE_TRAINER(object):
                     if max_bias_grad_layer:
                         print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
-                    print(obs_loss.item(), pred_loss.item())
+                    print(obs_loss.item(), pred_loss.item(), msk_loss.item())
                     self.optimizer.step()
                     continue
                     
