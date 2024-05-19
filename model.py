@@ -1356,7 +1356,7 @@ class EpiDenoise30a(nn.Module):
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_size[i + 1], 1, 1, 
                 pool_type="non", residuals=True
-            ) for i in range(n_cnn_layers - 1)])
+            ) for i in range(5 - 1)])
         
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
 
