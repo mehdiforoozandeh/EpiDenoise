@@ -43,7 +43,8 @@ class MetadataEmbeddingModule(nn.Module):
         # Final layer to combine all embeddings
         self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
         # self.final_embedding = FeedForwardNN(self.input_dim * self.continuous_size * 9, embedding_dim, embedding_dim, 3)
-        # self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
+
+        self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
 
     def embed_metadata(self, metadata, side="x"):
         depth = metadata[:, 0, :].unsqueeze(-1).float() 
@@ -94,7 +95,7 @@ class MetadataEmbeddingModule(nn.Module):
         full_embed = full_embed.view(full_embed.shape[0], -1)
         full_embed = self.final_embedding(full_embed)
 
-        # full_embed = self.final_emb_layer_norm(full_embed)
+        full_embed = self.final_emb_layer_norm(full_embed)
 
         return full_embed
 
@@ -4159,7 +4160,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
