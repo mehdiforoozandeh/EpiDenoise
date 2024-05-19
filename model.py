@@ -874,7 +874,7 @@ class ComboLoss_NBNLL_msk(nn.Module):
             upsampling_loss = upsampling_loss.sum()
             imputation_loss = imputation_loss.sum()
 
-        bce_mask_loss = self.bce_loss(pred_mask, obs_map.float())
+        bce_mask_loss = self.bce_loss(pred_mask, masked_map.float())
 
         return imputation_loss, upsampling_loss, bce_mask_loss
 
@@ -3314,7 +3314,7 @@ class PRE_TRAINER(object):
                     #     loss = pred_loss+obs_loss  
 
                     # loss = pred_loss+obs_loss+msk_loss
-                    loss = obs_loss
+                    loss = msk_loss + pred_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
