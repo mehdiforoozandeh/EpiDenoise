@@ -857,7 +857,6 @@ class ComboLoss_NBNLL(nn.Module):
 class ComboLoss_NBNLL_msk(nn.Module):
     def __init__(self):
         super(ComboLoss_NBNLL_msk, self).__init__()
-        self.alpha = alpha
         self.reduction = 'mean'
         self.bce_loss = nn.BCELoss(reduction='mean')
 
@@ -1344,70 +1343,49 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        # self.FF = FeedForwardNN(input_dim, d_model, output_dim, 10)
-        conv_kernel_size = [7,7,7,7,7]
-        conv_out_channels = [d_model,d_model,d_model,d_model,d_model]
-        self.conv0 = ConvTower(
-                input_dim, conv_out_channels[0],
-                conv_kernel_size[0], 1, 1, 
-                pool_type="non", residuals=True)
-
-        self.convtower = nn.ModuleList([ConvTower(
-                conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_size[i + 1], 1, 1, 
-                pool_type="non", residuals=True
-            ) for i in range(5 - 1)])
+        self.pos_enc = pos_enc
+        self.context_length = context_length
         
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.embedding_linear = nn.Linear(input_dim, d_model)
+
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        else:
+            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+        
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
+
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-
-        # self.pos_enc = pos_enc
-        # self.context_length = context_length
-        
-        # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        # self.embedding_linear = nn.Linear(input_dim, d_model)
-
-        # if self.pos_enc == "relative":
-        #     self.encoder_layer = RelativeEncoderLayer(
-        #         d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-        # else:
-        #     self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-        #     self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
-        
-        # self.transformer_encoder = nn.ModuleList(
-        #     [self.encoder_layer for _ in range(nlayers)])
-
-        # self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+        self.mask_pred_layer = nn.Linear(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
-        # md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        # # src = torch.cat([src, md_embedding], dim=-1)
-        # src = src + md_embedding
-        # src = F.relu(self.embedding_linear(src))
+        # src = torch.cat([src, md_embedding], dim=-1)
+        src = src + md_embedding
+        src = F.relu(self.embedding_linear(src))
 
-        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
-        # if self.pos_enc != "relative":
-        #     src = src + self.position(src)
+        if self.pos_enc != "relative":
+            src = src + self.position(src)
         
-        # for enc in self.transformer_encoder:
-        #     src = enc(src)
-
-        src = src.permute(0, 2, 1) # to N, F, L
-        src = self.conv0(src)
-
-        for conv in self.convtower:
-            src = conv(src)
-        
-        src = src.permute(0, 2, 1)  # to N, L, F
+        for enc in self.transformer_encoder:
+            src = enc(src)
 
         p, n = self.neg_binom_layer(src)
+        m = self.mask_pred_layer(src)
 
-        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        m = torch.permute(m, (1, 0, 2))  # to N, L, F
 
-        return p, n
+        return p, n, m
 
 class EpiDenoise30b(nn.Module):
     def __init__(self, 
@@ -3318,14 +3296,14 @@ class PRE_TRAINER(object):
                     masked_map = masked_map.to(self.device) # imputation targets
                     observed_map = observed_map.to(self.device) # upsampling targets
 
-                    output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                    output_p, output_n, output_m = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
                     # Retain gradients for intermediate tensors
                     # output_p.retain_grad()
                     # output_n.retain_grad()
 
                     pred_loss, obs_loss = self.criterion(
-                        output_p, output_n, Y_batch, masked_map, observed_map) # p_pred, n_pred, true_signals, masked_map, obs_map
+                        output_p, output_n, output_m, Y_batch, masked_map, observed_map) 
 
                     if torch.isnan(pred_loss).any():
                         loss = obs_loss
@@ -4191,7 +4169,8 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     with open(f'models/hyper_parameters30{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = ComboLoss_NBNLL(alpha=1-mask_percentage)
+    # criterion = ComboLoss_NBNLL(alpha=1-mask_percentage)
+    criterion = ComboLoss_NBNLL_msk()
 
     start_time = time.time()
 
