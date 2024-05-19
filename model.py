@@ -1379,7 +1379,7 @@ class EpiDenoise30a(nn.Module):
             src = enc(src)
 
         p, n = self.neg_binom_layer(src)
-        m = self.mask_pred_layer(src)
+        m = torch.sigmoid(self.mask_pred_layer(src))
 
         p = torch.permute(p, (1, 0, 2))  # to N, L, F
         n = torch.permute(n, (1, 0, 2))  # to N, L, F
@@ -3302,13 +3302,15 @@ class PRE_TRAINER(object):
                     # output_p.retain_grad()
                     # output_n.retain_grad()
 
-                    pred_loss, obs_loss = self.criterion(
+                    pred_loss, obs_loss, msk_loss = self.criterion(
                         output_p, output_n, output_m, Y_batch, masked_map, observed_map) 
 
-                    if torch.isnan(pred_loss).any():
-                        loss = obs_loss
-                    else:
-                        loss = pred_loss+obs_loss  
+                    # if torch.isnan(pred_loss).any():
+                    #     loss = obs_loss
+                    # else:
+                    #     loss = pred_loss+obs_loss  
+
+                    loss = pred_loss+obs_loss+msk_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
