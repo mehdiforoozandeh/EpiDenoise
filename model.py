@@ -3334,7 +3334,6 @@ class PRE_TRAINER(object):
                                 max_bias_grad_norm = module.bias.grad_norm
                                 max_bias_grad_layer = name
 
-                    Print the layers with the maximum weight and bias gradients
                     if max_weight_grad_layer:
                         print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
                     if max_bias_grad_layer:
