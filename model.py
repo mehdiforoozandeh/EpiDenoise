@@ -1365,7 +1365,8 @@ class EpiDenoise30a(nn.Module):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        src = torch.cat([src, md_embedding], dim=-1)
+        # src = torch.cat([src, md_embedding], dim=-1)
+        src = src + md_embedding
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -4308,7 +4309,7 @@ if __name__ == "__main__":
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
-            "metadata_embedding_dim": 10,
+            "metadata_embedding_dim": 47,
             "dropout": 0.00,
             "nhead": 2,
             "d_model": 32,
