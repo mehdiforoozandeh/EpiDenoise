@@ -1346,7 +1346,7 @@ class EpiDenoise30a(nn.Module):
         self.pos_enc = pos_enc
         self.context_length = context_length
         
-        # self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim, d_model)
 
         if self.pos_enc == "relative":
@@ -1362,11 +1362,11 @@ class EpiDenoise30a(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
-        # md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
         # src = torch.cat([src, md_embedding], dim=-1)
-        # src = src + md_embedding
+        src = src + md_embedding
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -3279,8 +3279,7 @@ class PRE_TRAINER(object):
                     X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
-                    # X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-                    avail_batch = avX_batch
+                    X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
@@ -3318,28 +3317,28 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     # Initialize variables to store maximum gradient norms and corresponding layer names
-                    # max_weight_grad_norm = 0
-                    # max_weight_grad_layer = None
-                    # max_bias_grad_norm = 0
-                    # max_bias_grad_layer = None
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
 
-                    # # Check and update maximum gradient norms
-                    # for name, module in self.model.named_modules():
-                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                    #         if module.weight.grad_norm > max_weight_grad_norm:
-                    #             max_weight_grad_norm = module.weight.grad_norm
-                    #             max_weight_grad_layer = name
+                    # Check and update maximum gradient norms
+                    for name, module in self.model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
 
-                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                    #         if module.bias.grad_norm > max_bias_grad_norm:
-                    #             max_bias_grad_norm = module.bias.grad_norm
-                    #             max_bias_grad_layer = name
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
 
-                    # Print the layers with the maximum weight and bias gradients
-                    # if max_weight_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                    # if max_bias_grad_layer:
-                    #     print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
+                    Print the layers with the maximum weight and bias gradients
+                    if max_weight_grad_layer:
+                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    if max_bias_grad_layer:
+                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
                     print(obs_loss.item(), pred_loss.item())
                     self.optimizer.step()
