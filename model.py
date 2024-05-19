@@ -1344,8 +1344,21 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        self.FF = FeedForwardNN(input_dim, d_model, output_dim, 10)
-        self.neg_binom_layer = NegativeBinomialLayer(output_dim, output_dim)
+        # self.FF = FeedForwardNN(input_dim, d_model, output_dim, 10)
+        conv_kernel_size = [7,7,7,7,7]
+        conv_out_channels = [d_model,d_model,d_model,d_model,d_model]
+        self.conv0 = ConvTower(
+                input_dim, conv_out_channels[0],
+                conv_kernel_size[0], stride, dilation, 
+                pool_type="non", residuals=True)
+
+        self.convtower = nn.ModuleList([ConvTower(
+                conv_out_channels[i], conv_out_channels[i + 1],
+                conv_kernel_size[i + 1], stride, dilation, 
+                pool_type="non", residuals=True
+            ) for i in range(n_cnn_layers - 1)])
+        
+        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
 
         # self.pos_enc = pos_enc
         # self.context_length = context_length
