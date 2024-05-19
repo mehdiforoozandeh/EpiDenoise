@@ -4319,7 +4319,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.00,
             "nhead": 2,
-            "d_model": 32,
+            "d_model": 512,
             "nlayers": 4,
             "epochs": 2,
             "inner_epochs": 50,
