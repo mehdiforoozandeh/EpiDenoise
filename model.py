@@ -1347,6 +1347,8 @@ class EpiDenoise30a(nn.Module):
 
         self.pos_enc = pos_enc
         self.context_length = context_length
+
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
@@ -1370,6 +1372,8 @@ class EpiDenoise30a(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+
+        src = self.signal_layer_norm(src)
 
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src + md_embedding
@@ -4155,7 +4159,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adagrad(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
