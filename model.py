@@ -1375,7 +1375,7 @@ class EpiDenoise30a(nn.Module):
 
         md_embedding = F.relu(md_embedding)
 
-        src = self.signal_layer_norm(F.relu(src))
+        src = self.signal_layer_norm(src)
 
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src + md_embedding
@@ -4176,7 +4176,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -4327,15 +4327,15 @@ if __name__ == "__main__":
             "input_dim": 47,
             "metadata_embedding_dim": 47,
             "dropout": 0.01,
-            "nhead": 4,
-            "d_model": 384,
-            "nlayers": 3,
+            "nhead": 8,
+            "d_model": 768,
+            "nlayers": 6,
             "epochs": 2,
             "inner_epochs": 1000,
             "mask_percentage": 0.1,
             "context_length": 400,
             "batch_size": 5,
-            "learning_rate": 1e-3,
+            "learning_rate": 1e-4,
             "num_loci": 1200,
             "lr_halflife":1,
             "min_avail":15
