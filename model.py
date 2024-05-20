@@ -3283,8 +3283,8 @@ class PRE_TRAINER(object):
                     "ups_mse":[],
                     "imp_mse":[]
                 }
-                # for _ in range(inner_epochs):
-                while True:
+                for _ in range(inner_epochs):
+                # while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3355,7 +3355,7 @@ class PRE_TRAINER(object):
 
                     print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
-                    continue
+                    # continue
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
