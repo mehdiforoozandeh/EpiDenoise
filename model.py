@@ -93,7 +93,7 @@ class MetadataEmbeddingModule(nn.Module):
         full_embed = full_embed.view(full_embed.shape[0], -1)
         full_embed = self.final_embedding(full_embed)
 
-        full_embed = F.relu(self.final_emb_layer_norm(full_embed))
+        full_embed = self.final_emb_layer_norm(full_embed)
 
         return full_embed
 
@@ -4155,7 +4155,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
@@ -4319,12 +4319,12 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.05,
-            "nhead": 4,
-            "d_model": 384,
-            "nlayers": 3,
+            "dropout": 0.01,
+            "nhead": 8,
+            "d_model": 768,
+            "nlayers": 6,
             "epochs": 2,
-            "inner_epochs": 1000,
+            "inner_epochs": 500,
             "mask_percentage": 0.1,
             "context_length": 400,
             "batch_size": 5,
