@@ -1359,7 +1359,7 @@ class EpiDenoise30a(nn.Module):
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         else:
             self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout)
+            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
         
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
