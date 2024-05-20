@@ -1345,7 +1345,7 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        self.pos_enc = pos_enc
+        self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
