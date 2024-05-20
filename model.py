@@ -42,8 +42,6 @@ class MetadataEmbeddingModule(nn.Module):
 
         # Final layer to combine all embeddings
         self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
-        # self.final_embedding = FeedForwardNN(self.input_dim * self.continuous_size * 9, embedding_dim, embedding_dim, 3)
-
         self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
 
     def embed_metadata(self, metadata, side="x"):
@@ -4159,7 +4157,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
@@ -4327,8 +4325,8 @@ if __name__ == "__main__":
             "nhead": 4,
             "d_model": 384,
             "nlayers": 3,
-            "epochs": 1000,
-            "inner_epochs": 50,
+            "epochs": 2,
+            "inner_epochs": 1000,
             "mask_percentage": 0.1,
             "context_length": 400,
             "batch_size": 5,
