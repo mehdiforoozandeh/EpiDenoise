@@ -1375,7 +1375,7 @@ class EpiDenoise30a(nn.Module):
 
         md_embedding = F.relu(md_embedding)
 
-        src = self.signal_layer_norm(src)
+        src = self.signal_layer_norm(F.relu(src))
 
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src + md_embedding
