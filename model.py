@@ -858,7 +858,7 @@ class ComboLoss_NBNLL_msk(nn.Module):
     def __init__(self):
         super(ComboLoss_NBNLL_msk, self).__init__()
         self.reduction = 'sum'
-        self.bce_loss = nn.BCELoss(reduction='mean')
+        self.bce_loss = nn.BCELoss(reduction='sum')
 
     def forward(self, p_pred, n_pred, pred_mask, obs_mask, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
