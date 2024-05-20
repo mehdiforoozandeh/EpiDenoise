@@ -1377,6 +1377,7 @@ class EpiDenoise30a(nn.Module):
 
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src + md_embedding
+
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
@@ -4159,7 +4160,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adagrad(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
