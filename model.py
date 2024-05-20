@@ -3251,7 +3251,7 @@ class PRE_TRAINER(object):
         - total number of training samples in each epoch is  len(dataset.m_regions) * len(dataset.navigation)
             - each batch consists of batch_size number of biosamples for 1 region
         """
-        # register_hooks(self.model)
+        register_hooks(self.model)
             
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
@@ -3317,7 +3317,7 @@ class PRE_TRAINER(object):
                     # else:
                     #     loss = pred_loss+obs_loss  
 
-                    loss = obs_loss + pred_loss + msk_p_loss + msk_o_loss
+                    loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -3347,9 +3347,7 @@ class PRE_TRAINER(object):
                                 max_bias_grad_layer = name
 
                     if max_weight_grad_layer:
-                        print(f"Epoch {epoch}, Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                    if max_bias_grad_layer:
-                        print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
+                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
