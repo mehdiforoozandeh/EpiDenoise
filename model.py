@@ -3313,8 +3313,7 @@ class PRE_TRAINER(object):
                     # else:
                     #     loss = pred_loss+obs_loss  
 
-                    # loss = pred_loss+obs_loss+msk_loss
-                    loss = msk_loss + pred_loss
+                    loss = obs_loss + msk_loss + pred_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
