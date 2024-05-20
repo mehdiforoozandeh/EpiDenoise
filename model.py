@@ -1351,7 +1351,8 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        self.embedding_linear = nn.Linear(input_dim, d_model)
+        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+        # self.embedding_linear = nn.Linear(input_dim, d_model)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
