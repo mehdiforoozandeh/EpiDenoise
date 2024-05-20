@@ -860,7 +860,7 @@ class ComboLoss_NBNLL_msk(nn.Module):
         self.reduction = 'sum'
         self.bce_loss = nn.BCELoss(reduction='mean')
 
-    def forward(self, p_pred, n_pred, pred_mask, true_signals, masked_map, obs_map):
+    def forward(self, p_pred, n_pred, pred_mask, obs_mask, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
@@ -874,9 +874,10 @@ class ComboLoss_NBNLL_msk(nn.Module):
             upsampling_loss = upsampling_loss.sum()
             imputation_loss = imputation_loss.sum()
 
-        bce_mask_loss = self.bce_loss(pred_mask, masked_map.float())
+        bce_mask_prd_loss = self.bce_loss(pred_mask, masked_map.float())
+        bce_mask_obs_loss = self.bce_loss(obs_mask, obs_map.float())
 
-        return imputation_loss, upsampling_loss, bce_mask_loss
+        return imputation_loss, upsampling_loss, bce_mask_prd_loss, bce_mask_obs_loss
 
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
@@ -1363,7 +1364,9 @@ class EpiDenoise30a(nn.Module):
             [self.encoder_layer for _ in range(nlayers)])
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
+        self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
@@ -1382,13 +1385,14 @@ class EpiDenoise30a(nn.Module):
             src = enc(src)
 
         p, n = self.neg_binom_layer(src)
-        m = torch.sigmoid(self.mask_pred_layer(src))
+        mp = torch.sigmoid(self.mask_pred_layer(src))
+        mo = torch.sigmoid(self.mask_obs_layer(src))
 
         p = torch.permute(p, (1, 0, 2))  # to N, L, F
         n = torch.permute(n, (1, 0, 2))  # to N, L, F
         m = torch.permute(m, (1, 0, 2))  # to N, L, F
 
-        return p, n, m
+        return p, n, mp, mo
 
 class EpiDenoise30b(nn.Module):
     def __init__(self, 
@@ -3299,21 +3303,21 @@ class PRE_TRAINER(object):
                     masked_map = masked_map.to(self.device) # imputation targets
                     observed_map = observed_map.to(self.device) # upsampling targets
 
-                    output_p, output_n, output_m = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                    output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
 
                     # Retain gradients for intermediate tensors
                     # output_p.retain_grad()
                     # output_n.retain_grad()
 
-                    pred_loss, obs_loss, msk_loss = self.criterion(
-                        output_p, output_n, output_m, Y_batch, masked_map, observed_map) 
+                    pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                        output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
                     # if torch.isnan(pred_loss).any():
                     #     loss = obs_loss
                     # else:
                     #     loss = pred_loss+obs_loss  
 
-                    loss = obs_loss + msk_loss + pred_loss
+                    loss = obs_loss + pred_loss + msk_p_loss + msk_o_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -3347,7 +3351,7 @@ class PRE_TRAINER(object):
                     if max_bias_grad_layer:
                         print(f"Epoch {epoch}, Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
 
-                    print(obs_loss.item(), pred_loss.item(), msk_loss.item())
+                    print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
                     continue
                     
