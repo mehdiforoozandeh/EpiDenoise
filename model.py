@@ -1349,6 +1349,7 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
+        self.embedd_layer_norm = nn.LayerNorm(d_model)
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
@@ -1380,7 +1381,7 @@ class EpiDenoise30a(nn.Module):
         src = torch.cat([src, md_embedding], dim=-1)
         # src = src + md_embedding
 
-        src = F.relu(self.embedding_linear(src))
+        src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
