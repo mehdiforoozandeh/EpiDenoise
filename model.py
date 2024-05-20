@@ -1390,7 +1390,8 @@ class EpiDenoise30a(nn.Module):
 
         p = torch.permute(p, (1, 0, 2))  # to N, L, F
         n = torch.permute(n, (1, 0, 2))  # to N, L, F
-        m = torch.permute(m, (1, 0, 2))  # to N, L, F
+        mp = torch.permute(m, (1, 0, 2))  # to N, L, F
+        mo = torch.permute(m, (1, 0, 2))  # to N, L, F
 
         return p, n, mp, mo
 
