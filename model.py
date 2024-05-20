@@ -1372,8 +1372,8 @@ class EpiDenoise30a(nn.Module):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        # src = torch.cat([src, md_embedding], dim=-1)
-        src = src + md_embedding
+        src = torch.cat([src, md_embedding], dim=-1)
+        # src = src + md_embedding
         src = F.relu(self.embedding_linear(src))
 
         src = torch.permute(src, (1, 0, 2)) # to L, N, F
