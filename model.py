@@ -3320,10 +3320,17 @@ class PRE_TRAINER(object):
                     pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                         output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
-                    # if torch.isnan(pred_loss).any():
-                    #     loss = obs_loss
-                    # else:
-                    #     loss = pred_loss+obs_loss  
+                    if torch.isnan(pred_loss).any():
+                        if len(batch_rec["imp_loss"]) > 0:
+                            pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                        else:
+                            pred_loss = torch.Tensor(1e5)
+
+                    if torch.isnan(obs_loss).any():
+                        if len(batch_rec["ups_loss"]) > 0:
+                            obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                        else:
+                            obs_loss = torch.Tensor(1e5)
 
                     loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
 
@@ -4338,7 +4345,7 @@ if __name__ == "__main__":
             "learning_rate": 5e-4,
             "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":10
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30a, 
