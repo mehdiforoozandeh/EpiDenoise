@@ -3250,7 +3250,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4]#, 8]
+        dsf_list = [1, 2, 4, 8]
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
@@ -3270,6 +3270,7 @@ class PRE_TRAINER(object):
                 t0 = datetime.now()
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
+                dsf_Y = 1
 
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)

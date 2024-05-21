@@ -806,15 +806,15 @@ class VISUALS(object):
                 
                 # Calculate x_values based on the current gene's coordinates
                 x_values = range(gene_coord[0], gene_coord[1])
-                observed_values = eval_res[j]["obs"][gene_coord[0]:gene_coord[1]]
                 imputed_values = eval_res[j]["imp"][gene_coord[0]:gene_coord[1]]
 
                 # Plot the lines
-                ax.plot(x_values, observed_values, color="blue", alpha=0.7, label="Observed", linewidth=0.1)
-                ax.plot(x_values, imputed_values, "--", color="red", alpha=0.5, label="Imputed", linewidth=0.1)
+                if "obs" in eval_res[j].keys():
+                    observed_values = eval_res[j]["obs"][gene_coord[0]:gene_coord[1]]
+                    ax.plot(x_values, observed_values, color="blue", alpha=0.7, label="Observed", linewidth=0.1)
+                    ax.fill_between(x_values, 0, observed_values, alpha=0.7, color="blue")
 
-                # Shade under the curves
-                ax.fill_between(x_values, 0, observed_values, alpha=0.7, color="blue")
+                ax.plot(x_values, imputed_values, "--", color="red", alpha=0.5, label="Imputed", linewidth=0.1)
                 ax.fill_between(x_values, 0, imputed_values, color="red", alpha=0.5)
 
                 start_coord = gene_coord[0] * self.resolution
@@ -831,7 +831,7 @@ class VISUALS(object):
                 ax.legend(handles=custom_lines)
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=200)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=300)
 
     def BIOS_signal_confidence(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -863,21 +863,24 @@ class VISUALS(object):
                 # Fill between for confidence intervals
                 ax.fill_between(
                     x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.2, label='95% Confidence')
+                    color='coral', alpha=0.1, label='95% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.4, label='80% Confidence')
+                    color='coral', alpha=0.2, label='80% Confidence')
 
                 ax.fill_between(
                     x_values, result['lower_60'][gene_coord[0]:gene_coord[1]], result['upper_60'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.7, label='60% Confidence')
+                    color='coral', alpha=0.4, label='60% Confidence')
 
                 # Plot the median predictions
                 ax.plot(x_values, result['imp'][gene_coord[0]:gene_coord[1]], label='Median', color='red', linewidth=0.5)
 
-                # Plot the actual observations
-                ax.plot(x_values, result['obs'][gene_coord[0]:gene_coord[1]], label='Observed', color='royalblue', linewidth=0.2, alpha=0.8)
+                if "obs" in result.keys():
+                    # Plot the actual observations
+                    ax.plot(
+                        x_values, result['obs'][gene_coord[0]:gene_coord[1]], 
+                        label='Observed', color='royalblue', linewidth=0.4, alpha=0.8)
 
 
                 start_coord = gene_coord[0] * self.resolution
@@ -908,6 +911,8 @@ class VISUALS(object):
 
         for j in range(len(eval_res)):
             # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
             for i, c in enumerate(cols):
                 # Create subplot for each result and gene combination
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
@@ -962,6 +967,8 @@ class VISUALS(object):
         fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5 * num_rows))
 
         for j, result in enumerate(eval_res):
+            if "obs" not in eval_res[j]:
+                continue
             for i, c in enumerate(cols):
                 ax = axes[j, i] if num_rows > 1 else axes[i]
 
@@ -1022,6 +1029,8 @@ class VISUALS(object):
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
 
         for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                continue
             for i, c in enumerate(cols):
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
@@ -1073,6 +1082,8 @@ class VISUALS(object):
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
 
         for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                continue
             # Loop over each gene
             for i, c in enumerate(cols):
                 # Create subplot for each result and gene combination
@@ -1134,6 +1145,8 @@ class VISUALS(object):
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
 
         for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                continue
             for i, c in enumerate(cols):
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
@@ -1194,6 +1207,9 @@ class VISUALS(object):
         for i in range(n_rows):
             for j in range(n_cols):
 
+                if "obs" not in eval_res[c]:
+                    continue
+
                 if c>=num_assays:
                     continue
                 
@@ -1230,6 +1246,9 @@ class VISUALS(object):
         for i in range(n_rows):
             for j in range(n_cols):
 
+                if "obs" not in eval_res[c]:
+                    continue
+
                 if c>=num_assays:
                     continue
                     
@@ -1263,6 +1282,9 @@ class VISUALS(object):
         # Loop over each result
         for j in range(len(eval_res)):
             # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
+
             observed_values = eval_res[j]["obs"]
             imputed_values = eval_res[j]["imp"]
 
@@ -1946,40 +1968,102 @@ class EVAL_EED(object):
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
-        for j in availability:  # for each feature i.e. assay
-            j = j.item()
-            for comparison in ['imputed', 'upsampled']:
-                if comparison == "imputed":
-                    pred = imp_mean[:, j].numpy()
-                    lower_60 = imp_lower_60[:, j].numpy()
-                    lower_80 = imp_lower_80[:, j].numpy()
-                    lower_95 = imp_lower_95[:, j].numpy()
+        # for j in availability:  # for each feature i.e. assay
+        for j in range(Y.shape[2]):
 
-                    upper_60 = imp_upper_60[:, j].numpy()
-                    upper_80 = imp_upper_80[:, j].numpy()
-                    upper_95 = imp_upper_95[:, j].numpy()
-                    
-                elif comparison == "upsampled":
-                    pred = ups_mean[:, j].numpy()
-                    lower_60 = ups_lower_60[:, j].numpy()
-                    lower_80 = ups_lower_80[:, j].numpy()
-                    lower_95 = ups_lower_95[:, j].numpy()
+            if j in list(availability):
+                # j = j.item()
+                for comparison in ['imputed', 'upsampled']:
+                    if comparison == "imputed":
+                        pred = imp_mean[:, j].numpy()
+                        lower_60 = imp_lower_60[:, j].numpy()
+                        lower_80 = imp_lower_80[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
 
-                    upper_60 = ups_upper_60[:, j].numpy()
-                    upper_80 = ups_upper_80[:, j].numpy()
-                    upper_95 = ups_upper_95[:, j].numpy()
+                        upper_60 = imp_upper_60[:, j].numpy()
+                        upper_80 = imp_upper_80[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
+                        
+                    elif comparison == "upsampled":
+                        pred = ups_mean[:, j].numpy()
+                        lower_60 = ups_lower_60[:, j].numpy()
+                        lower_80 = ups_lower_80[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
 
-                target = Y[:, j].numpy()
-                metrics_list = []
+                        upper_60 = ups_upper_60[:, j].numpy()
+                        upper_80 = ups_upper_80[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
 
-                # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
+                    target = Y[:, j].numpy()
+
+                    # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
+                    metrics = {
+                        'bios':bios_name,
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'comparison': comparison,
+                        'available assays': len(availability),
+
+                        "obs":target,
+                        "imp":pred,
+
+                        "lower_60" : lower_60,
+                        "lower_80" : lower_80,
+                        "lower_95" : lower_95,
+
+                        "upper_60": upper_60,
+                        "upper_80": upper_80,
+                        "upper_95": upper_95,
+
+                        'MSE-GW': self.metrics.mse(target, pred),
+                        'Pearson-GW': self.metrics.pearson(target, pred),
+                        'Spearman-GW': self.metrics.spearman(target, pred),
+                        'r2_GW': self.metrics.r2(target, pred),
+
+                        'MSE-1obs': self.metrics.mse1obs(target, pred),
+                        'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
+                        'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+                        'r2_1obs': self.metrics.r2_1obs(target, pred),
+
+                        'MSE-1imp': self.metrics.mse1imp(target, pred),
+                        'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
+                        'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+                        'r2_1imp': self.metrics.r2_1imp(target, pred),
+
+                        'MSE-gene': self.metrics.mse_gene(target, pred),
+                        'Pearson_gene': self.metrics.pearson_gene(target, pred),
+                        'Spearman_gene': self.metrics.spearman_gene(target, pred),
+                        'r2_gene': self.metrics.r2_gene(target, pred),
+
+                        'MSE-prom': self.metrics.mse_prom(target, pred),
+                        'Pearson_prom': self.metrics.pearson_prom(target, pred),
+                        'Spearman_prom': self.metrics.spearman_prom(target, pred),
+                        'r2_prom': self.metrics.r2_prom(target, pred),
+
+                        # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                        # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                        # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+
+                    #     "corresp_curve": corresp,
+                    #     "corresp_curve_deriv": corresp_deriv
+                    }
+                    results.append(metrics)
+
+            else:
+                pred = ups_mean[:, j].numpy()
+                lower_60 = ups_lower_60[:, j].numpy()
+                lower_80 = ups_lower_80[:, j].numpy()
+                lower_95 = ups_lower_95[:, j].numpy()
+
+                upper_60 = ups_upper_60[:, j].numpy()
+                upper_80 = ups_upper_80[:, j].numpy()
+                upper_95 = ups_upper_95[:, j].numpy()
+
                 metrics = {
                     'bios':bios_name,
                     'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
-                    'comparison': comparison,
+                    'comparison': "None",
                     'available assays': len(availability),
 
-                    "obs":target,
                     "imp":pred,
 
                     "lower_60" : lower_60,
@@ -1988,40 +2072,8 @@ class EVAL_EED(object):
 
                     "upper_60": upper_60,
                     "upper_80": upper_80,
-                    "upper_95": upper_95,
-
-                    'MSE-GW': self.metrics.mse(target, pred),
-                    'Pearson-GW': self.metrics.pearson(target, pred),
-                    'Spearman-GW': self.metrics.spearman(target, pred),
-                    'r2_GW': self.metrics.r2(target, pred),
-
-                    'MSE-1obs': self.metrics.mse1obs(target, pred),
-                    'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
-                    'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
-                    'r2_1obs': self.metrics.r2_1obs(target, pred),
-
-                    'MSE-1imp': self.metrics.mse1imp(target, pred),
-                    'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
-                    'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
-                    'r2_1imp': self.metrics.r2_1imp(target, pred),
-
-                    'MSE-gene': self.metrics.mse_gene(target, pred),
-                    'Pearson_gene': self.metrics.pearson_gene(target, pred),
-                    'Spearman_gene': self.metrics.spearman_gene(target, pred),
-                    'r2_gene': self.metrics.r2_gene(target, pred),
-
-                    'MSE-prom': self.metrics.mse_prom(target, pred),
-                    'Pearson_prom': self.metrics.pearson_prom(target, pred),
-                    'Spearman_prom': self.metrics.spearman_prom(target, pred),
-                    'r2_prom': self.metrics.r2_prom(target, pred),
-
-                    # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                    # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                    # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
-
-                #     "corresp_curve": corresp,
-                #     "corresp_curve_deriv": corresp_deriv
-                }
+                    "upper_95": upper_95
+                    }
                 results.append(metrics)
             
         return results
@@ -2161,16 +2213,16 @@ class EVAL_EED(object):
             selected regions' signals
         """
 
-        print("plotting signal confidence")
-        self.viz.BIOS_signal_confidence(eval_res)
-        self.viz.clear_pallete()
-
         # try: 
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
         self.viz.clear_pallete()
         # except:
         #     print("faild to plot signal tracks")
+
+        print("plotting signal confidence")
+        self.viz.BIOS_signal_confidence(eval_res)
+        self.viz.clear_pallete()
 
         # try:
         print("plotting context_specific performance")
@@ -2283,7 +2335,7 @@ if __name__=="__main__":
     except:
         pass
 
-    
+
     e = EVAL_EED(
         model="models/EPD30a_model_checkpoint_epoch0_LociProg30.pth", 
         data_path="/project/compbio-lab/encode_data/", 
