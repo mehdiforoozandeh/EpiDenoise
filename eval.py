@@ -2180,16 +2180,16 @@ class EVAL_EED(object):
         #     print("faild to plot context_specific performance")
             
         # try:
-        print("plotting signal scatter")
-        self.viz.BIOS_signal_scatter(eval_res)
-        self.viz.clear_pallete()
+        # print("plotting signal scatter")
+        # self.viz.BIOS_signal_scatter(eval_res)
+        # self.viz.clear_pallete()
         # except:
         #     print("faild to plot  signal scatter")
 
         # try:
-        print("plotting signal scatter with marginals")
-        self.viz.BIOS_signal_scatter_with_marginals(eval_res)
-        self.viz.clear_pallete()
+        # print("plotting signal scatter with marginals")
+        # self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+        # self.viz.clear_pallete()
         # except:
         #     print("faild to plot scatter with marginals")
 
