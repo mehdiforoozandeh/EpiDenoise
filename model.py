@@ -4341,7 +4341,7 @@ if __name__ == "__main__":
             "inner_epochs": 1000,
             "mask_percentage": 0.1,
             "context_length": 200,
-            "batch_size": 18,
+            "batch_size": 36,
             "learning_rate": 5e-4,
             "num_loci": 1200,
             "lr_halflife":1,
