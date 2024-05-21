@@ -847,8 +847,8 @@ class VISUALS(object):
         example_gene_coords = [
             (33481539//self.resolution, 33588914//self.resolution), # GART
             (25800151//self.resolution, 26235914//self.resolution), # APP
-            # (31589009//self.resolution, 31745788//self.resolution), # SOD1
-            # (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
             (33577551//self.resolution, 33919338//self.resolution) # ITSN1
             ]
             # example_gene_coord, example_gene_coord2, example_gene_coord3,
