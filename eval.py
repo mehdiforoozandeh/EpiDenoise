@@ -837,7 +837,7 @@ class VISUALS(object):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
-        example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
+        example_gene_coord =  (33481539//self.resolution, 33588914//self.resolution) # GART
         example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
         example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
         example_gene_coord4 = (39526359//self.resolution, 39802081//self.resolution) # B3GALT5
@@ -845,8 +845,14 @@ class VISUALS(object):
 
         # Create a list of example gene coordinates for iteration
         example_gene_coords = [
-            example_gene_coord, example_gene_coord2, example_gene_coord3,
-            example_gene_coord4, example_gene_coord5]
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            # (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            # (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            ]
+            # example_gene_coord, example_gene_coord2, example_gene_coord3,
+            # example_gene_coord4, example_gene_coord5]
 
         # Define the size of the figure
         plt.figure(figsize=(8 * len(example_gene_coords), len(eval_res) * 2))
