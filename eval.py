@@ -1969,7 +1969,7 @@ class EVAL_EED(object):
         
         results = []
         # for j in availability:  # for each feature i.e. assay
-        for j in range(Y.shape[2]):
+        for j in range(Y.shape[1]):
 
             if j in list(availability):
                 # j = j.item()
