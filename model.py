@@ -4177,7 +4177,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
