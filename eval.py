@@ -2101,7 +2101,7 @@ class EVAL_EED(object):
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
