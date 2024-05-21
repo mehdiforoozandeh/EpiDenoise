@@ -3259,7 +3259,7 @@ class PRE_TRAINER(object):
         - total number of training samples in each epoch is  len(dataset.m_regions) * len(dataset.navigation)
             - each batch consists of batch_size number of biosamples for 1 region
         """
-        register_hooks(self.model)
+        # register_hooks(self.model)
             
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
@@ -3337,25 +3337,25 @@ class PRE_TRAINER(object):
                     loss.backward()  
 
                     # Initialize variables to store maximum gradient norms and corresponding layer names
-                    max_weight_grad_norm = 0
-                    max_weight_grad_layer = None
-                    max_bias_grad_norm = 0
-                    max_bias_grad_layer = None
+                    # max_weight_grad_norm = 0
+                    # max_weight_grad_layer = None
+                    # max_bias_grad_norm = 0
+                    # max_bias_grad_layer = None
 
-                    # Check and update maximum gradient norms
-                    for name, module in self.model.named_modules():
-                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                            if module.weight.grad_norm > max_weight_grad_norm:
-                                max_weight_grad_norm = module.weight.grad_norm
-                                max_weight_grad_layer = name
+                    # # Check and update maximum gradient norms
+                    # for name, module in self.model.named_modules():
+                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                    #         if module.weight.grad_norm > max_weight_grad_norm:
+                    #             max_weight_grad_norm = module.weight.grad_norm
+                    #             max_weight_grad_layer = name
 
-                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                            if module.bias.grad_norm > max_bias_grad_norm:
-                                max_bias_grad_norm = module.bias.grad_norm
-                                max_bias_grad_layer = name
+                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                    #         if module.bias.grad_norm > max_bias_grad_norm:
+                    #             max_bias_grad_norm = module.bias.grad_norm
+                    #             max_bias_grad_layer = name
 
-                    if max_weight_grad_layer:
-                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
+                    # if max_weight_grad_layer:
+                    #     print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     # print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
@@ -4338,7 +4338,7 @@ if __name__ == "__main__":
             "learning_rate": 5e-4,
             "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":15
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30a, 
