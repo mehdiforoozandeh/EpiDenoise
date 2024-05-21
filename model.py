@@ -3282,10 +3282,11 @@ class PRE_TRAINER(object):
                 batch_rec = {
                     "imp_loss":[],
                     "ups_loss":[],
+                    "msk_loss":[],
                     "ups_r2":[],
                     "imp_r2":[],
-                    "imp_spearman":[],
-                    "ups_spearman":[],
+                    # "imp_spearman":[],
+                    # "ups_spearman":[],
                     "ups_mse":[],
                     "imp_mse":[]
                 }
@@ -3387,15 +3388,16 @@ class PRE_TRAINER(object):
                     ups_mse = ((ups_true - ups_pred)**2).mean()
                     imp_mse = ((imp_true - imp_pred)**2).mean()
 
-                    ups_spearman = spearmanr(ups_pred, ups_true)[0]
-                    imp_spearman = spearmanr(imp_pred, imp_true)[0]
+                    # ups_spearman = spearmanr(ups_pred, ups_true)[0]
+                    # imp_spearman = spearmanr(imp_pred, imp_true)[0]
                     
                     batch_rec["imp_loss"].append(pred_loss.item())
                     batch_rec["ups_loss"].append(obs_loss.item())
+                    batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["imp_r2"].append(imp_r2)
-                    batch_rec["imp_spearman"].append(imp_spearman)
-                    batch_rec["ups_spearman"].append(ups_spearman)
+                    # batch_rec["imp_spearman"].append(imp_spearman)
+                    # batch_rec["ups_spearman"].append(ups_spearman)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
                 
@@ -3420,10 +3422,11 @@ class PRE_TRAINER(object):
                     f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
                     f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
                     f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                    f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
                     f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
                     f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                    f"Imp_Sp.r {np.mean(batch_rec['imp_spearman']):.2f}",
-                    f"Ups_Sp.r {np.mean(batch_rec['ups_spearman']):.2f}",
+                    # f"Imp_Sp.r {np.mean(batch_rec['imp_spearman']):.2f}",
+                    # f"Ups_Sp.r {np.mean(batch_rec['ups_spearman']):.2f}",
                     f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
                     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
