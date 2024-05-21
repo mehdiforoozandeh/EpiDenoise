@@ -1955,8 +1955,8 @@ class EVAL_EED(object):
             gene: MSE, Pearson, Spearman
             prom: MSE, Pearson, Spearman
         """
-        imp_mean = imp_dist.expect(stat="mean")
-        ups_mean = ups_dist.expect(stat="mean")
+        imp_mean = imp_dist.expect(stat="median")
+        ups_mean = ups_dist.expect(stat="median")
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
