@@ -895,7 +895,7 @@ class VISUALS(object):
                     ax.legend(loc='upper left')
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=600)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.png", dpi=300)
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -2015,9 +2015,9 @@ class EVAL_EED(object):
                     'Spearman_prom': self.metrics.spearman_prom(target, pred),
                     'r2_prom': self.metrics.r2_prom(target, pred),
 
-                    "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                    "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                    "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+                    # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                    # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                    # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
                 #     "corresp_curve": corresp,
                 #     "corresp_curve_deriv": corresp_deriv
@@ -2101,7 +2101,10 @@ class EVAL_EED(object):
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                if self.version == "30a":
+                    outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                else:
+                    outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
 
             # Store the predictions in the large tensor
