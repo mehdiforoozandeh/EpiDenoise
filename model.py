@@ -4402,7 +4402,7 @@ if __name__ == "__main__":
             "context_length": 200,
             "batch_size": 36,
             "learning_rate": 5e-4,
-            "num_loci": 1200,
+            "num_loci": 100,
             "lr_halflife":1,
             "min_avail":15
         }
@@ -4430,7 +4430,7 @@ if __name__ == "__main__":
             "context_length": 800,
             "batch_size": 50,
             "learning_rate": 5e-4,
-            "num_loci": 1200,
+            "num_loci": 100,
             "lr_halflife":2,
             "min_avail":15
         }
