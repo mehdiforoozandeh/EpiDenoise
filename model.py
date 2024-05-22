@@ -3484,7 +3484,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 2 == 0:
+                if lopr % 5 == 0:
                     validation_set_eval = val_eval.get_validation(self.model)
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
