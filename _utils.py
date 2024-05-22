@@ -15,6 +15,35 @@ from torch.distributions.utils import (
     probs_to_logits,
 )
 
+class NegativeBinomial(object):
+    def __init__(self, p, n):
+        self.p = p.numpy()
+        self.n = n.numpy()
+        
+    def expect(self, stat="mean"):
+        if stat == "median":
+            self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
+            return self.median_value
+
+        elif stat == "mean":
+            self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+            return self.mean_value
+    
+    def mean(self):
+        self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+        return self.mean_value
+
+    def interval(self, confidence):
+        lower, upper = nbinom.interval(confidence, self.n, self.p)
+        return torch.tensor(lower, dtype=torch.float32), torch.tensor(upper, dtype=torch.float32)
+    
+    def std(self):
+        std_value = nbinom.std(self.n, self.p)
+        return torch.tensor(std_value, dtype=torch.float32)
+
+    def var(self):
+        var_value = nbinom.var(self.n, self.p)
+        return torch.tensor(var_value, dtype=torch.float32)
 
 
 class MONITOR_VALIDATION(object):

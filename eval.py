@@ -1,5 +1,6 @@
 from model import *
 from data import *
+from _utils import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score
 
