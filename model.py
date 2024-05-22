@@ -1485,7 +1485,7 @@ class EpiDenoise30b(nn.Module):
         if self.pos_enc != "relative":
             trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
             src = src + trgpos
-            
+
         for dec in self.transformer_decoder:
             src = dec(src, e_src)
 
@@ -1495,8 +1495,8 @@ class EpiDenoise30b(nn.Module):
 
         mp = torch.sigmoid(self.mask_pred_layer(src))
         mo = torch.sigmoid(self.mask_obs_layer(src))
-        mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
-        mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
+        # mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
+        # mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
 
         return p, n, mp, mo
 
