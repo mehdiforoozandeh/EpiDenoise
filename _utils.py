@@ -120,6 +120,7 @@ class MONITOR_VALIDATION(object):
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
+        print(X.shape, Y.shape)
 
         subsets_X = []
         subsets_Y = []
@@ -135,6 +136,8 @@ class MONITOR_VALIDATION(object):
         # Concatenate the subsets along the sequence length dimension (second dimension)
         X = torch.cat(subsets_X, dim=1)
         Y = torch.cat(subsets_Y, dim=1)
+        print(X.shape, Y.shape)
+        exit()
 
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
