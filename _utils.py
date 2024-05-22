@@ -5,6 +5,7 @@ import numpy as np
 import multiprocessing as mp
 import torch
 from eval import METRICS
+from data import ExtendedEncodeDataHandler
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions import Poisson as PoissonTorch
 from torch.distributions.utils import (
