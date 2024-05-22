@@ -3479,14 +3479,19 @@ class PRE_TRAINER(object):
                     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
-                logfile = open(f"models/EPD30{arch}_log.txt", "w")
+                
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
+                print(logstr)
+                
+                if lopr % 2 == 0:
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+
+                logfile = open(f"models/EPD30{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
                 logfile.close()
-                print(logstr)
-
-                val_eval.get_validation(self.model)
 
                 next_epoch = self.dataset.update_batch_pointers()
                 
@@ -4223,7 +4228,8 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
 
@@ -4236,7 +4242,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"

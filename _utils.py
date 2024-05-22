@@ -303,7 +303,7 @@ class MONITOR_VALIDATION(object):
         - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
         """
 
-        print(print_statement)
+        return print_statement
 
 
 random.seed(73)
