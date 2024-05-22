@@ -4460,8 +4460,8 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
-            "nhead": 4,
-            "d_model": 384,
+            "nhead": 2,
+            "d_model": 192,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 500,
