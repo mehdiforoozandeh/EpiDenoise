@@ -3462,9 +3462,6 @@ class PRE_TRAINER(object):
                     # batch_rec["ups_spearman"].append(ups_spearman)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
-
-                    val_eval.get_validation(self.model)
-                    exit()
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 10 == 0:
@@ -3502,6 +3499,9 @@ class PRE_TRAINER(object):
                 logfile.write("\n".join(log_strs))
                 logfile.close()
                 print(logstr)
+
+                val_eval.get_validation(self.model)
+                exit()
 
                 next_epoch = self.dataset.update_batch_pointers()
                 

@@ -60,7 +60,7 @@ class MONITOR_VALIDATION(object):
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=10)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -151,7 +151,6 @@ class MONITOR_VALIDATION(object):
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y = X[:num_rows, :], Y[:num_rows, :]
-        print(X.shape, Y.shape)
 
         subsets_X = []
         subsets_Y = []
