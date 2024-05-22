@@ -201,8 +201,8 @@ class MONITOR_VALIDATION(object):
         return imp_dist, ups_dist, Y, bios_name, available_indices
     
     def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
-        imp_mean = imp_dist.expect(stat="mean")
-        ups_mean = ups_dist.expect(stat="mean")
+        imp_mean = imp_dist.expect(stat="median")
+        ups_mean = ups_dist.expect(stat="median")
 
         # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
