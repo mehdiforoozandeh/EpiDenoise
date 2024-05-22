@@ -130,8 +130,8 @@ class MONITOR_VALIDATION(object):
             adjusted_length = (segment_length // self.context_length) * self.context_length
             adjusted_end = start + adjusted_length
 
-            subsets_X.append(X[:, start:adjusted_end])
-            subsets_Y.append(Y[:, start:adjusted_end])
+            subsets_X.append(X[start:adjusted_end, :])
+            subsets_Y.append(Y[start:adjusted_end, :])
 
         # Concatenate the subsets along the sequence length dimension (second dimension)
         X = torch.cat(subsets_X, dim=1)
