@@ -40,7 +40,6 @@ def exponential_linspace_int(start, end, num, divisible_by=1):
     base = np.exp(np.log(end / start) / (num - 1))
     return [_round(start * base**i) for i in range(num)]
 
-
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 

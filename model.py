@@ -1467,22 +1467,24 @@ class EpiDenoise30b(nn.Module):
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
 
+        ### CONV ENCODER ###
+
         e_src = src.permute(0, 2, 1) # to N, F, L
         e_src = self.conv0(e_src)
-
         for conv in self.convtower:
             e_src = conv(e_src)
-        
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
-        if self.pos_enc != "relative":
-            encpos = torch.permute(self.enc_position(src), (1, 0, 2))
-            e_src = e_src + encpos
-            
 
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
+            e_src = e_src + encpos
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
         
         src = F.relu(self.embedd_layer_norm(self.lin(src)))
+
+        ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
             src = src + trgpos
@@ -3345,16 +3347,11 @@ class PRE_TRAINER(object):
             "pad": -3
         }
         dsf_list = [1, 2, 4, 8]
-
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
-
-        """
-        - each epoch consists of going through all dataset.m_regions and all biosamples in the dataset.navigation
-        - total number of training samples in each epoch is  len(dataset.m_regions) * len(dataset.navigation)
-            - each batch consists of batch_size number of biosamples for 1 region
-        """
         register_hooks(self.model)
             
+        val_eval = MONITOR_VALIDATION(self.model, self.dataset.base_path, context_length, batch_size)
+        
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
@@ -3495,6 +3492,9 @@ class PRE_TRAINER(object):
                     # batch_rec["ups_spearman"].append(ups_spearman)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
+
+                    val_eval.get_validation(self.model)
+                    exit()
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 10 == 0:
