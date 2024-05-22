@@ -4263,7 +4263,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         conv_kernel_size = hyper_parameters["conv_kernel_size"]
         n_decoder_layers = hyper_parameters["n_decoder_layers"]
 
-        model = EpiDenoise30b( input_dim, metadata_embedding_dim, conv_kernel_size, 
+        model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
@@ -4280,7 +4280,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
