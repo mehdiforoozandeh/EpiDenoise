@@ -204,8 +204,8 @@ class MONITOR_VALIDATION(object):
         imp_mean = imp_dist.expect(stat="mean")
         ups_mean = ups_dist.expect(stat="mean")
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -216,21 +216,21 @@ class MONITOR_VALIDATION(object):
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
-                        lower_95 = imp_lower_95[:, j].numpy()
-                        upper_95 = imp_upper_95[:, j].numpy()
+                        # lower_95 = imp_lower_95[:, j].numpy()
+                        # upper_95 = imp_upper_95[:, j].numpy()
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
-                        lower_95 = ups_lower_95[:, j].numpy()
-                        upper_95 = ups_upper_95[:, j].numpy()
+                        # lower_95 = ups_lower_95[:, j].numpy()
+                        # upper_95 = ups_upper_95[:, j].numpy()
 
                     target = Y[:, j].numpy()
 
                     # Check if the target values fall within the intervals
-                    within_interval = (target >= lower_95) & (target <= upper_95)
+                    # within_interval = (target >= lower_95) & (target <= upper_95)
                     
                     # Calculate the fraction
-                    fraction = within_interval.mean()
+                    # fraction = within_interval.mean()
                     metrics = {
                         'bios':bios_name,
                         'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
@@ -241,7 +241,7 @@ class MONITOR_VALIDATION(object):
                         'Pearson': self.metrics.pearson(target, pred),
                         'Spearman': self.metrics.spearman(target, pred),
                         'r2': self.metrics.r2(target, pred),
-                        "frac_95_confidence": fraction
+                        # "frac_95_confidence": fraction
                     }
                     results.append(metrics)
 
@@ -274,14 +274,14 @@ class MONITOR_VALIDATION(object):
         imp_pearson_stats = calculate_stats(imputed_df, 'Pearson')
         imp_spearman_stats = calculate_stats(imputed_df, 'Spearman')
         imp_r2_stats = calculate_stats(imputed_df, 'r2')
-        imp_frac95conf_stats = calculate_stats(imputed_df, 'frac_95_confidence')
+        # imp_frac95conf_stats = calculate_stats(imputed_df, 'frac_95_confidence')
 
         # Upsampled statistics
         ups_mse_stats = calculate_stats(upsampled_df, 'MSE')
         ups_pearson_stats = calculate_stats(upsampled_df, 'Pearson')
         ups_spearman_stats = calculate_stats(upsampled_df, 'Spearman')
         ups_r2_stats = calculate_stats(upsampled_df, 'r2')
-        ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
+        # ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
 
         elapsed_time = datetime.datetime.now() - t0
         hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -289,20 +289,18 @@ class MONITOR_VALIDATION(object):
 
         # Create the compact print statement
         print_statement = f"""
-        f"took {int(minutes)}:{int(seconds)}"]
+        Took {int(minutes)}:{int(seconds)}
         For Imputed:
         - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
         - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
         - SRCC: mean={imp_spearman_stats[0]:.2f}, min={imp_spearman_stats[1]:.2f}, max={imp_spearman_stats[2]:.2f}
         - R2: mean={imp_r2_stats[0]:.2f}, min={imp_r2_stats[1]:.2f}, max={imp_r2_stats[2]:.2f}
-        - 95Conf: mean={imp_frac95conf_stats[0]:.2f}, min={imp_frac95conf_stats[1]:.2f}, max={imp_frac95conf_stats[2]:.2f}
 
         For Upsampled:
         - MSE: mean={ups_mse_stats[0]:.2f}, min={ups_mse_stats[1]:.2f}, max={ups_mse_stats[2]:.2f}
         - PCC: mean={ups_pearson_stats[0]:.2f}, min={ups_pearson_stats[1]:.2f}, max={ups_pearson_stats[2]:.2f}
         - SRCC: mean={ups_spearman_stats[0]:.2f}, min={ups_spearman_stats[1]:.2f}, max={ups_spearman_stats[2]:.2f}
         - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
-        - 95Conf: mean={ups_frac95conf_stats[0]:.2f}, min={ups_frac95conf_stats[1]:.2f}, max={ups_frac95conf_stats[2]:.2f}
         """
 
         print(print_statement)
