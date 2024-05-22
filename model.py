@@ -1398,11 +1398,6 @@ class EpiDenoise30a(nn.Module):
         mp = torch.sigmoid(self.mask_pred_layer(src))
         mo = torch.sigmoid(self.mask_obs_layer(src))
 
-        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
-        # mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
-        # mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
-
         return p, n, mp, mo
 
 class EpiDenoise30b(nn.Module):
@@ -1423,6 +1418,9 @@ class EpiDenoise30b(nn.Module):
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
+        self.embedd_layer_norm = nn.LayerNorm(d_model)
 
         self.conv0 = ConvTower(
                 input_dim + metadata_embedding_dim, conv_out_channels[0],
@@ -1464,6 +1462,9 @@ class EpiDenoise30b(nn.Module):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
+        md_embedding = F.relu(md_embedding)
+        src = self.signal_layer_norm(src)
+
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
 
         e_src = src.permute(0, 2, 1) # to N, F, L
@@ -1481,7 +1482,7 @@ class EpiDenoise30b(nn.Module):
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
         
-        src = self.lin(src)
+        src = F.relu(self.embedd_layer_norm(self.lin(src)))
         if self.pos_enc != "relative":
             trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
             src = src + trgpos
@@ -1490,13 +1491,8 @@ class EpiDenoise30b(nn.Module):
             src = dec(src, e_src)
 
         p, n = self.neg_binom_layer(src)
-        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
-
         mp = torch.sigmoid(self.mask_pred_layer(src))
         mo = torch.sigmoid(self.mask_obs_layer(src))
-        # mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
-        # mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
 
         return p, n, mp, mo
 
@@ -4468,11 +4464,11 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 12,
             "epochs": 1,
-            "inner_epochs": 50,
-            "mask_percentage": 0.25,
-            "context_length": 3200,
+            "inner_epochs": 500,
+            "mask_percentage": 0.1,
+            "context_length": 1600,
             "batch_size": 50,
-            "learning_rate": 1e-3,
+            "learning_rate": 5e-4,
             "num_loci": 1200,
             "lr_halflife":2,
             "min_avail":15
