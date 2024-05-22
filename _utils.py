@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 import torch
-
+from eval import METRICS
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions import Poisson as PoissonTorch
 from torch.distributions.utils import (
@@ -13,6 +13,216 @@ from torch.distributions.utils import (
     logits_to_probs,
     probs_to_logits,
 )
+
+
+
+class MONITOR_VALIDATION(object):
+    def __init__(
+        self, model, data_path, context_length, batch_size,
+        chr_sizes_file="data/hg38.chrom.sizes", 
+        resolution=25, split="val"):
+
+        self.data_path = data_path
+        self.context_length = context_length
+        self.batch_size = batch_size
+        self.resolution = resolution
+
+        self.model = model
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=15)
+
+        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.example_coords = [
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            ]
+
+        self.token_dict = {
+                    "missing_mask": -1, 
+                    "cloze_mask": -2,
+                    "pad": -3
+                }
+
+        self.chr_sizes = {}
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        with open(chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+    
+    def pred(self, X, mX, mY, avail, imp_target=[]):
+        # Initialize a tensor to store all predictions
+        n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        # make predictions in batches
+        for i in range(0, len(X), self.batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+ self.batch_size]
+            mX_batch = mX[i:i+ self.batch_size]
+            mY_batch = mY[i:i+ self.batch_size]
+            avail_batch = avail[i:i+ self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                # mY_batch_missing_vals = (mY_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+                # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
+                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                if len(imp_target)>0:
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+
+                # outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
+
+            # Store the predictions in the large tensor
+            n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
+
+        return n, p
+
+    def get_bios(self, bios_name, x_dsf=1, y_dsf=1):
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        for start, end in self.example_coords:
+            segment_length = end - start
+            adjusted_length = (segment_length // self.context_length) * self.context_length
+            adjusted_end = start + adjusted_length
+
+            subsets_X.append(X[:, start:adjusted_end])
+            subsets_Y.append(Y[:, start:adjusted_end])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=1)
+        Y = torch.cat(subsets_Y, dim=1)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        for leave_one_out in available_indices:
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            print(f"got imputations for feature #{leave_one_out+1}")
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        print("got upsampled")
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return imp_dist, ups_dist, Y, bios_name, available_indices
+    
+    def get_metric(self, imp_dist, ups_dist, Y, bios_name, available_indices):
+        imp_mean = imp_dist.expect(stat="mean")
+        ups_mean = ups_dist.expect(stat="mean")
+
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        
+        results = []
+        # for j in availability:  # for each feature i.e. assay
+        for j in range(Y.shape[1]):
+
+            if j in list(availability):
+                # j = j.item()
+                for comparison in ['imputed', 'upsampled']:
+                    if comparison == "imputed":
+                        pred = imp_mean[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
+                        
+                    elif comparison == "upsampled":
+                        pred = ups_mean[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
+
+                    target = Y[:, j].numpy()
+
+                    # Check if the target values fall within the intervals
+                    within_interval = (target >= lower_95) & (target <= upper_95)
+                    
+                    # Calculate the fraction
+                    fraction = within_interval.mean()
+                    metrics = {
+                        'bios':bios_name,
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'comparison': comparison,
+                        'available assays': len(availability),
+
+                        'MSE': self.metrics.mse(target, pred),
+                        'Pearson': self.metrics.pearson(target, pred),
+                        'Spearman': self.metrics.spearman(target, pred),
+                        'r2': self.metrics.r2(target, pred),
+                        "frac_95_confidence": fraction
+                    }
+                    results.append(metrics)
+
+        return results
+    
+    def get_validation(self, model, x_dsf=1, y_dsf=1):
+        self.model = model
+        full_res = []
+        for bios_name in self.dataset.navigation.keys():
+            imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+            full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+        print(pd.DataFrame(full_res))
 
 random.seed(73)
 
