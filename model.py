@@ -1442,8 +1442,8 @@ class EpiDenoise30b(nn.Module):
             self.decoder_layer = RelativeDecoderLayer(
                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
         else:
-            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
+            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length/(2*n_cnn_layers))
 
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
@@ -1474,8 +1474,10 @@ class EpiDenoise30b(nn.Module):
         
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
         if self.pos_enc != "relative":
-            e_src = e_src + self.enc_position(e_src)
-            src = src + self.dec_position(src)
+            encpos = torch.permute(self.enc_position(src), (1, 0, 2))
+            trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
+            e_src = e_src + encpos
+            src = src + trgpos
 
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
