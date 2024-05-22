@@ -1442,8 +1442,8 @@ class EpiDenoise30b(nn.Module):
             self.decoder_layer = RelativeDecoderLayer(
                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
         else:
-            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
-            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length/(2*n_cnn_layers))
+            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length/(2*n_cnn_layers))
+            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
 
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
