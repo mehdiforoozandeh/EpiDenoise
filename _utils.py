@@ -248,11 +248,12 @@ class MONITOR_VALIDATION(object):
         return results
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
+        t0 = datetime.now()
         self.model = model
         self.model.eval()
         full_res = []
-        bioses = [self.dataset.navigation.keys()[0]]
-        
+        bioses = [list(self.dataset.navigation.keys())[0]]
+
         for bios_name in bioses:
             imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
             full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
@@ -282,8 +283,13 @@ class MONITOR_VALIDATION(object):
         ups_r2_stats = calculate_stats(upsampled_df, 'r2')
         ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
 
+        elapsed_time = datetime.now() - t0
+        hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+
         # Create the compact print statement
         print_statement = f"""
+        f"took {int(minutes)}:{int(seconds)}"]
         For Imputed:
         - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
         - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
