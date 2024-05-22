@@ -134,8 +134,8 @@ class MONITOR_VALIDATION(object):
             subsets_Y.append(Y[start:adjusted_end, :])
 
         # Concatenate the subsets along the sequence length dimension (second dimension)
-        X = torch.cat(subsets_X, dim=1)
-        Y = torch.cat(subsets_Y, dim=1)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
         print(X.shape, Y.shape)
         exit()
 
