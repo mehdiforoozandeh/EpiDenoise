@@ -1359,8 +1359,11 @@ class EpiDenoise30a(nn.Module):
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         else:
-            self.position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
-            self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout)
+            self.position = AbsPositionalEmbedding15(
+                d_model=d_model, max_len=context_length)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, 
+                dropout=dropout, batch_first=True)
         
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
@@ -1383,7 +1386,7 @@ class EpiDenoise30a(nn.Module):
 
         src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
 
-        src = torch.permute(src, (1, 0, 2)) # to L, N, F
+        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
 
         if self.pos_enc != "relative":
             src = src + self.position(src)
@@ -1395,8 +1398,8 @@ class EpiDenoise30a(nn.Module):
         mp = torch.sigmoid(self.mask_pred_layer(src))
         mo = torch.sigmoid(self.mask_obs_layer(src))
 
-        p = torch.permute(p, (1, 0, 2))  # to N, L, F
-        n = torch.permute(n, (1, 0, 2))  # to N, L, F
+        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
         mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
         mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
 
@@ -1408,6 +1411,7 @@ class EpiDenoise30b(nn.Module):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30b, self).__init__()
+        self.pos_enc = "abs"#pos_enc
 
         conv_out_channels = exponential_linspace_int(
             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
@@ -1431,24 +1435,36 @@ class EpiDenoise30b(nn.Module):
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+
+            self.decoder_layer = RelativeDecoderLayer(
+                hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
+        else:
+            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=context_length)
+
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+            self.decoder_layer = nn.TransformerDecoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+
         self.transformer_encoder = nn.ModuleList(
-            [RelativeEncoderLayer(
-                d_model=d_model, heads=nhead, 
-                feed_forward_hidden=2*d_model, 
-                dropout=dropout) for _ in range(nlayers)])
+            [self.encoder_layer for _ in range(nlayers)])
 
         self.transformer_decoder = nn.ModuleList(
-            [RelativeDecoderLayer(
-                hid_dim=d_model, n_heads=nhead, 
-                pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
+            [self.decoder_layer for _ in range(n_decoder_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+        self.mask_pred_layer = nn.Linear(d_model, output_dim)
+        self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        src = F.relu(torch.cat([src, md_embedding], dim=-1))
+        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
 
         e_src = src.permute(0, 2, 1) # to N, F, L
         e_src = self.conv0(e_src)
@@ -1457,6 +1473,10 @@ class EpiDenoise30b(nn.Module):
             e_src = conv(e_src)
         
         e_src = e_src.permute(0, 2, 1)  # to N, L, F
+        if self.pos_enc != "relative":
+            e_src = e_src + self.enc_position(e_src)
+            src = src + self.dec_position(src)
+
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
         
@@ -1465,7 +1485,80 @@ class EpiDenoise30b(nn.Module):
             src = dec(src, e_src)
 
         p, n = self.neg_binom_layer(src)
-        return p, n
+        # p = torch.permute(p, (1, 0, 2))  # to N, L, F
+        # n = torch.permute(n, (1, 0, 2))  # to N, L, F
+
+        mp = torch.sigmoid(self.mask_pred_layer(src))
+        mo = torch.sigmoid(self.mask_obs_layer(src))
+        mp = torch.permute(mp, (1, 0, 2))  # to N, L, F
+        mo = torch.permute(mo, (1, 0, 2))  # to N, L, F
+
+        return p, n, mp, mo
+
+# class EpiDenoise30b(nn.Module):
+#     def __init__(self, 
+#         input_dim, metadata_embedding_dim, conv_kernel_size, 
+#         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+#         dropout=0.1, context_length=2000, pos_enc="relative"):
+#         super(EpiDenoise30b, self).__init__()
+
+#         conv_out_channels = exponential_linspace_int(
+#             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
+
+#         stride = 1
+#         dilation=1
+#         self.context_length = context_length
+#         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+#         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+#         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
+#         self.conv0 = ConvTower(
+#                 input_dim + metadata_embedding_dim, conv_out_channels[0],
+#                 conv_kernel_size[0], stride, dilation, 
+#                 pool_type="max", residuals=True)
+
+#         self.convtower = nn.ModuleList([ConvTower(
+#                 conv_out_channels[i], conv_out_channels[i + 1],
+#                 conv_kernel_size[i + 1], stride, dilation, 
+#                 pool_type="max", residuals=True
+#             ) for i in range(n_cnn_layers - 1)])
+
+#         self.transformer_encoder = nn.ModuleList(
+#             [RelativeEncoderLayer(
+#                 d_model=d_model, heads=nhead, 
+#                 feed_forward_hidden=2*d_model, 
+#                 dropout=dropout) for _ in range(nlayers)])
+
+#         self.transformer_decoder = nn.ModuleList(
+#             [RelativeDecoderLayer(
+#                 hid_dim=d_model, n_heads=nhead, 
+#                 pf_dim=2*d_model, dropout=dropout) for _ in range(n_decoder_layers)])
+        
+#         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+    
+#     def forward(self, src, x_metadata, y_metadata, availability):
+#         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+
+#         src = F.relu(torch.cat([src, md_embedding], dim=-1))
+
+#         e_src = src.permute(0, 2, 1) # to N, F, L
+#         e_src = self.conv0(e_src)
+
+#         for conv in self.convtower:
+#             e_src = conv(e_src)
+        
+#         e_src = e_src.permute(0, 2, 1)  # to N, L, F
+#         for enc in self.transformer_encoder:
+#             e_src = enc(e_src)
+        
+#         src = self.lin(src)
+#         for dec in self.transformer_decoder:
+#             src = dec(src, e_src)
+
+#         p, n = self.neg_binom_layer(src)
+#         return p, n
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
