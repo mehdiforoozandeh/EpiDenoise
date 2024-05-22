@@ -3303,7 +3303,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_30(self, 
-        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a"):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
@@ -3318,7 +3318,9 @@ class PRE_TRAINER(object):
         }
         dsf_list = [1, 2, 4, 8]
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
-        register_hooks(self.model)
+
+        if hook:
+            register_hooks(self.model)
             
         val_eval = MONITOR_VALIDATION(self.model, self.dataset.base_path, context_length, batch_size)
         
@@ -3347,13 +3349,10 @@ class PRE_TRAINER(object):
                     "msk_loss":[],
                     "ups_r2":[],
                     "imp_r2":[],
-                    # "imp_spearman":[],
-                    # "ups_spearman":[],
                     "ups_mse":[],
                     "imp_mse":[]
                 }
                 for _ in range(inner_epochs):
-                # while True:
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3375,10 +3374,6 @@ class PRE_TRAINER(object):
                     observed_map = observed_map.to(self.device) # upsampling targets
 
                     output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-
-                    # Retain gradients for intermediate tensors
-                    # output_p.retain_grad()
-                    # output_n.retain_grad()
 
                     pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                         output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
@@ -3406,30 +3401,29 @@ class PRE_TRAINER(object):
                     
                     loss.backward()  
 
-                    # Initialize variables to store maximum gradient norms and corresponding layer names
-                    max_weight_grad_norm = 0
-                    max_weight_grad_layer = None
-                    max_bias_grad_norm = 0
-                    max_bias_grad_layer = None
+                    if hook:
+                        # Initialize variables to store maximum gradient norms and corresponding layer names
+                        max_weight_grad_norm = 0
+                        max_weight_grad_layer = None
+                        max_bias_grad_norm = 0
+                        max_bias_grad_layer = None
 
-                    # Check and update maximum gradient norms
-                    for name, module in self.model.named_modules():
-                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                            if module.weight.grad_norm > max_weight_grad_norm:
-                                max_weight_grad_norm = module.weight.grad_norm
-                                max_weight_grad_layer = name
+                        # Check and update maximum gradient norms
+                        for name, module in self.model.named_modules():
+                            if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                                if module.weight.grad_norm > max_weight_grad_norm:
+                                    max_weight_grad_norm = module.weight.grad_norm
+                                    max_weight_grad_layer = name
 
-                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                            if module.bias.grad_norm > max_bias_grad_norm:
-                                max_bias_grad_norm = module.bias.grad_norm
-                                max_bias_grad_layer = name
+                            if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                                if module.bias.grad_norm > max_bias_grad_norm:
+                                    max_bias_grad_norm = module.bias.grad_norm
+                                    max_bias_grad_layer = name
 
-                    if max_weight_grad_layer:
-                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
+                        if max_weight_grad_layer:
+                            print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
-                    # print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
-                    # continue
                     
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3449,17 +3443,12 @@ class PRE_TRAINER(object):
 
                     ups_mse = ((ups_true - ups_pred)**2).mean()
                     imp_mse = ((imp_true - imp_pred)**2).mean()
-
-                    # ups_spearman = spearmanr(ups_pred, ups_true)[0]
-                    # imp_spearman = spearmanr(imp_pred, imp_true)[0]
                     
                     batch_rec["imp_loss"].append(pred_loss.item())
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["imp_r2"].append(imp_r2)
-                    # batch_rec["imp_spearman"].append(imp_spearman)
-                    # batch_rec["ups_spearman"].append(ups_spearman)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
                 
