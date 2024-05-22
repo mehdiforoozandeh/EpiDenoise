@@ -1387,8 +1387,8 @@ class EpiDenoise30a(nn.Module):
         src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
 
         # src = torch.permute(src, (1, 0, 2)) # to L, N, F
-
         if self.pos_enc != "relative":
+            print(self.position(src).shape)
             src = src + self.position(src)
         
         for enc in self.transformer_encoder:
