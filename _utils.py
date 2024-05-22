@@ -80,6 +80,7 @@ class MONITOR_VALIDATION(object):
                 }
 
         self.chr_sizes = {}
+        self.metrics = METRICS()
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
         with open(chr_sizes_file, 'r') as f:
             for line in f:
