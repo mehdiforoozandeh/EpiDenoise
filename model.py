@@ -10,7 +10,7 @@ from _utils import *
 from sklearn.metrics import r2_score
 from datetime import datetime
 from scipy.stats import nbinom
-from eval import MONITOR_VALIDATION
+from .eval import MONITOR_VALIDATION
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
