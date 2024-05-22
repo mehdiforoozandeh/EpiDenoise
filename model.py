@@ -3501,7 +3501,6 @@ class PRE_TRAINER(object):
                 print(logstr)
 
                 val_eval.get_validation(self.model)
-                exit()
 
                 next_epoch = self.dataset.update_batch_pointers()
                 

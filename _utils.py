@@ -254,7 +254,50 @@ class MONITOR_VALIDATION(object):
         for bios_name in self.dataset.navigation.keys():
             imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
             full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
-        print(pd.DataFrame(full_res))
+        
+        df = pd.DataFrame(full_res)
+
+        # Separate the data based on comparison type
+        imputed_df = df[df['comparison'] == 'imputed']
+        upsampled_df = df[df['comparison'] == 'upsampled']
+
+        # Function to calculate mean, min, and max for a given metric
+        def calculate_stats(df, metric):
+            return df[metric].mean(), df[metric].min(), df[metric].max()
+
+        # Imputed statistics
+        imp_mse_stats = calculate_stats(imputed_df, 'MSE')
+        imp_pearson_stats = calculate_stats(imputed_df, 'Pearson')
+        imp_spearman_stats = calculate_stats(imputed_df, 'Spearman')
+        imp_r2_stats = calculate_stats(imputed_df, 'r2')
+        imp_frac95conf_stats = calculate_stats(imputed_df, 'frac_95_confidence')
+
+        # Upsampled statistics
+        ups_mse_stats = calculate_stats(upsampled_df, 'MSE')
+        ups_pearson_stats = calculate_stats(upsampled_df, 'Pearson')
+        ups_spearman_stats = calculate_stats(upsampled_df, 'Spearman')
+        ups_r2_stats = calculate_stats(upsampled_df, 'r2')
+        ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
+
+        # Create the compact print statement
+        print_statement = f"""
+        For Imputed:
+        - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
+        - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
+        - SRCC: mean={imp_spearman_stats[0]:.2f}, min={imp_spearman_stats[1]:.2f}, max={imp_spearman_stats[2]:.2f}
+        - R2: mean={imp_r2_stats[0]:.2f}, min={imp_r2_stats[1]:.2f}, max={imp_r2_stats[2]:.2f}
+        - 95Conf: mean={imp_frac95conf_stats[0]:.2f}, min={imp_frac95conf_stats[1]:.2f}, max={imp_frac95conf_stats[2]:.2f}
+
+        For Upsampled:
+        - MSE: mean={ups_mse_stats[0]:.2f}, min={ups_mse_stats[1]:.2f}, max={ups_mse_stats[2]:.2f}
+        - PCC: mean={ups_pearson_stats[0]:.2f}, min={ups_pearson_stats[1]:.2f}, max={ups_pearson_stats[2]:.2f}
+        - SRCC: mean={ups_spearman_stats[0]:.2f}, min={ups_spearman_stats[1]:.2f}, max={ups_spearman_stats[2]:.2f}
+        - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
+        - 95Conf: mean={ups_frac95conf_stats[0]:.2f}, min={ups_frac95conf_stats[1]:.2f}, max={ups_frac95conf_stats[2]:.2f}
+        """
+
+        print(print_statement)
+
 
 random.seed(73)
 
