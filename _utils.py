@@ -49,7 +49,7 @@ class NegativeBinomial(object):
 
 class MONITOR_VALIDATION(object):
     def __init__(
-        self, model, data_path, context_length, batch_size,
+        self, data_path, context_length, batch_size,
         chr_sizes_file="data/hg38.chrom.sizes", 
         resolution=25, split="val"):
 
@@ -58,7 +58,6 @@ class MONITOR_VALIDATION(object):
         self.batch_size = batch_size
         self.resolution = resolution
 
-        self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
 
@@ -250,11 +249,13 @@ class MONITOR_VALIDATION(object):
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
         self.model = model
+        self.model.eval()
         full_res = []
         for bios_name in self.dataset.navigation.keys():
             imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
             full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
         
+        self.model.train()
         df = pd.DataFrame(full_res)
 
         # Separate the data based on comparison type

@@ -3322,7 +3322,7 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
             
-        val_eval = MONITOR_VALIDATION(self.model, self.dataset.base_path, context_length, batch_size)
+        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size)
         
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
@@ -3476,8 +3476,6 @@ class PRE_TRAINER(object):
                     f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
                     f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
                     f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                    # f"Imp_Sp.r {np.mean(batch_rec['imp_spearman']):.2f}",
-                    # f"Ups_Sp.r {np.mean(batch_rec['ups_spearman']):.2f}",
                     f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
                     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
