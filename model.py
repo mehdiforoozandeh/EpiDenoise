@@ -4399,12 +4399,12 @@ if __name__ == "__main__":
             "epochs": 2,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
-            "context_length": 200,
+            "context_length": 400,
             "batch_size": 36,
             "learning_rate": 5e-4,
             "num_loci": 100,
             "lr_halflife":1,
-            "min_avail":15
+            "min_avail":13
         }
         train_epidenoise30(
             hyper_parameters30a, 
@@ -4415,24 +4415,24 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 47,
-            "dropout": 0.050,
+            "dropout": 0.01,
 
-            "n_cnn_layers": 3,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 1,
+            "n_decoder_layers" : 2,
 
-            "nhead": 2,
-            "d_model": 192,
+            "nhead": 4,
+            "d_model": 384,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
-            "context_length": 800,
+            "context_length": 1600,
             "batch_size": 50,
             "learning_rate": 5e-4,
             "num_loci": 100,
             "lr_halflife":2,
-            "min_avail":15
+            "min_avail":13
         }
         train_epidenoise30(
             hyper_parameters30b, 
