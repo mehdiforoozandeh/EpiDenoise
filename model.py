@@ -4470,7 +4470,7 @@ if __name__ == "__main__":
             "learning_rate": 1e-3,
             "num_loci": 1200,
             "lr_halflife":2,
-            "min_avail":4
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30b, 
