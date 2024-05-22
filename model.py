@@ -1356,7 +1356,6 @@ class EpiDenoise30a(nn.Module):
 
         src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
 
-        # src = torch.permute(src, (1, 0, 2)) # to L, N, F
         if self.pos_enc != "relative":
             pos = torch.permute(self.position(src), (1, 0, 2))
             src = src + pos
@@ -4399,7 +4398,7 @@ if __name__ == "__main__":
             "learning_rate": 5e-4,
             "num_loci": 1200,
             "lr_halflife":1,
-            "min_avail":10
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30a, 
