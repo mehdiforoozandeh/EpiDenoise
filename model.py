@@ -1388,8 +1388,8 @@ class EpiDenoise30a(nn.Module):
 
         # src = torch.permute(src, (1, 0, 2)) # to L, N, F
         if self.pos_enc != "relative":
-            print(self.position(src).shape)
-            src = src + self.position(src)
+            pos = torch.permute(self.position(src), (1,0,2))
+            src = src + pos
         
         for enc in self.transformer_encoder:
             src = enc(src)
