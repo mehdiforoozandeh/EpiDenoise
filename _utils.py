@@ -136,8 +136,6 @@ class MONITOR_VALIDATION(object):
         # Concatenate the subsets along the sequence length dimension (second dimension)
         X = torch.cat(subsets_X, dim=0)
         Y = torch.cat(subsets_Y, dim=0)
-        print(X.shape, Y.shape)
-        exit()
 
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
