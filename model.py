@@ -3459,7 +3459,7 @@ class PRE_TRAINER(object):
                     if max_weight_grad_layer:
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
-                    print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
+                    # print(obs_loss.item(), pred_loss.item(), msk_p_loss.item(), msk_o_loss.item())
                     self.optimizer.step()
                     # continue
                     
