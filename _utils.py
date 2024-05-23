@@ -137,6 +137,9 @@ class MONITOR_VALIDATION(object):
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
 
+            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n  # Free up memory
+            torch.cuda.empty_cache()  # Free up GPU memory
+
         return n, p
 
     def get_bios(self, bios_name, x_dsf=1, y_dsf=1):
@@ -183,8 +186,10 @@ class MONITOR_VALIDATION(object):
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
             # print(f"got imputations for feature #{leave_one_out+1}")
+            del n, p  # Free up memory
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
         # print("got upsampled")
 
         p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
