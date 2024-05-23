@@ -1382,9 +1382,7 @@ class EpiDenoise30a(nn.Module):
 
         if self.pos_enc != "relative":
             # pos = torch.permute(self.position(src), (1, 0, 2))
-            print(src)
             src = self.position(src)
-            print(src)
         
         for enc in self.transformer_encoder:
             src = enc(src)
@@ -1435,8 +1433,9 @@ class EpiDenoise30b(nn.Module):
             self.decoder_layer = RelativeDecoderLayer(
                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
         else:
-            self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
-            self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
+            self.position = PositionalEncoding(d_model, dropout, context_length)
+            # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
+            # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
 
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
@@ -1472,8 +1471,10 @@ class EpiDenoise30b(nn.Module):
 
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
-            encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
-            e_src = e_src + encpos
+            # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
+            e_src = self.position(e_src)
+            # e_src = e_src + encpos
+
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
         
@@ -1481,8 +1482,9 @@ class EpiDenoise30b(nn.Module):
 
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
-            trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
-            src = src + trgpos
+            # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
+            src = self.position(src)
+            # src = src + trgpos
 
         for dec in self.transformer_decoder:
             src = dec(src, e_src)
