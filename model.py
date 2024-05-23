@@ -513,7 +513,7 @@ class PositionalEncoding(nn.Module):
         pe[:, 0, 0::2] = torch.sin(position * div_term)
         pe[:, 0, 1::2] = torch.cos(position * div_term)
 
-        pe = torch.permute(pe, (1, 0, 2))
+        self.pe = torch.permute(pe, (1, 0, 2))
 
     def forward(self, x):
         """
