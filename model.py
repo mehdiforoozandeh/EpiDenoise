@@ -517,8 +517,6 @@ class PositionalEncoding(nn.Module):
         # pe = pe.unsqueeze(0).transpose(0, 1)
         # self.register_buffer('pe', pe)
         self.pe = pe
-        print(self.pe.shape)
-        exit()
 
     def forward(self, x):
         """
