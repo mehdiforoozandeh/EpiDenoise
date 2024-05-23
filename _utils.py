@@ -252,7 +252,7 @@ class MONITOR_VALIDATION(object):
     def get_validation(self, model, x_dsf=1, y_dsf=1):
         t0 = datetime.datetime.now()
         self.model = model
-        self.model.eval()
+        # self.model.eval()
         full_res = []
         bioses = [list(self.dataset.navigation.keys())[0]]
 
@@ -261,7 +261,7 @@ class MONITOR_VALIDATION(object):
             full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
             del imp_dist, ups_dist, Y
         
-        self.model.train()
+        # self.model.train()
         df = pd.DataFrame(full_res)
 
         # Separate the data based on comparison type
