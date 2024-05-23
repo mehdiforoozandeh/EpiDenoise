@@ -502,6 +502,28 @@ class MaskedLinear(nn.Module):
         output = torch.matmul(x, masked_weight) + self.bias
         return output
 
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+
+        pe = torch.permute(pe, (1, 0, 2))
+        self.register_buffer('pe', pe)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """
+        Arguments:
+            x: Tensor, shape ``[batch_size, seq_len, embedding_dim]``
+        """
+        x = x + self.pe[:, :x.size(0), :]
+        return self.dropout(x)
+
 class AbsPositionalEmbedding15(nn.Module):
     def __init__(self, d_model, max_len=128):
         super().__init__()
@@ -1329,8 +1351,10 @@ class EpiDenoise30a(nn.Module):
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         else:
-            self.position = AbsPositionalEmbedding15(
-                d_model=d_model, max_len=context_length)
+            # self.position = AbsPositionalEmbedding15(
+            #     d_model=d_model, max_len=context_length)
+            self.position = PositionalEncoding(d_model, dropout, context_length)
+
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, 
                 dropout=dropout, batch_first=True)
@@ -1357,8 +1381,10 @@ class EpiDenoise30a(nn.Module):
         src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
 
         if self.pos_enc != "relative":
-            pos = torch.permute(self.position(src), (1, 0, 2))
-            src = src + pos
+            # pos = torch.permute(self.position(src), (1, 0, 2))
+            print(src)
+            src = self.position(src)
+            print(src)
         
         for enc in self.transformer_encoder:
             src = enc(src)
@@ -4419,7 +4445,7 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 5,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 2,
+            "n_decoder_layers" : 3,
 
             "nhead": 4,
             "d_model": 384,
