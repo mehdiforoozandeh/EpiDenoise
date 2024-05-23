@@ -247,7 +247,6 @@ class MONITOR_VALIDATION(object):
                     }
                     results.append(metrics)
 
-        del imp_mean, ups_mean, Y
         return results
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
@@ -260,6 +259,7 @@ class MONITOR_VALIDATION(object):
         for bios_name in bioses:
             imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
             full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+            del imp_dist, ups_dist, Y
         
         self.model.train()
         df = pd.DataFrame(full_res)
