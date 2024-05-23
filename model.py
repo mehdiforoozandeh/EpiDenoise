@@ -3512,10 +3512,10 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                # if lopr % 5 == 0:
-                #     validation_set_eval = val_eval.get_validation(self.model)
-                #     log_strs.append(validation_set_eval)
-                #     print(validation_set_eval)
+                if lopr % 5 == 0:
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
 
                 logfile = open(f"models/EPD30{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
