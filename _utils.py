@@ -46,7 +46,6 @@ class NegativeBinomial(object):
         var_value = nbinom.var(self.n, self.p)
         return torch.tensor(var_value, dtype=torch.float32)
 
-
 class MONITOR_VALIDATION(object):
     def __init__(
         self, data_path, context_length, batch_size,
@@ -235,7 +234,6 @@ class MONITOR_VALIDATION(object):
                     # within_interval = (target >= lower_95) & (target <= upper_95)
                     
                     # Calculate the fraction
-                    # fraction = within_interval.mean()
                     metrics = {
                         'bios':bios_name,
                         'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
@@ -245,11 +243,11 @@ class MONITOR_VALIDATION(object):
                         'MSE': self.metrics.mse(target, pred),
                         'Pearson': self.metrics.pearson(target, pred),
                         'Spearman': self.metrics.spearman(target, pred),
-                        'r2': self.metrics.r2(target, pred),
-                        # "frac_95_confidence": fraction
+                        'r2': self.metrics.r2(target, pred)
                     }
                     results.append(metrics)
 
+        del imp_mean, ups_mean, Y
         return results
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
@@ -309,7 +307,6 @@ class MONITOR_VALIDATION(object):
         """
 
         return print_statement
-
 
 random.seed(73)
 
