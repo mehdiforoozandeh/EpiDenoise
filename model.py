@@ -514,8 +514,6 @@ class PositionalEncoding(nn.Module):
         pe[:, 0, 1::2] = torch.cos(position * div_term)
 
         pe = torch.permute(pe, (1, 0, 2))
-        # pe = pe.unsqueeze(0).transpose(0, 1)
-        # self.register_buffer('pe', pe)
         self.pe = pe
 
     def forward(self, x):
@@ -523,7 +521,7 @@ class PositionalEncoding(nn.Module):
         Arguments:
             x: Tensor, shape ``[batch_size, seq_len, embedding_dim]``
         """
-        x = x + self.pe[:, :x.size(0), :]
+        x = x + self.pe[:, :x.size(1), :]
         return self.dropout(x)
 
 class AbsPositionalEmbedding15(nn.Module):
