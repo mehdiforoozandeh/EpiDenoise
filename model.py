@@ -515,6 +515,8 @@ class PositionalEncoding(nn.Module):
 
         pe = torch.permute(pe, (1, 0, 2))
         self.register_buffer('pe', pe)
+        print(self.pe.shape)
+        exit()
 
     def forward(self, x):
         """
