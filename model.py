@@ -14,6 +14,272 @@ from scipy.stats import nbinom
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
+
+
+class MONITOR_VALIDATION(object):
+    def __init__(
+        self, data_path, context_length, batch_size,
+        chr_sizes_file="data/hg38.chrom.sizes", 
+        resolution=25, split="val"):
+
+        self.data_path = data_path
+        self.context_length = context_length
+        self.batch_size = batch_size
+        self.resolution = resolution
+
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
+
+        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.example_coords = [
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            ]
+
+        self.token_dict = {
+                    "missing_mask": -1, 
+                    "cloze_mask": -2,
+                    "pad": -3
+                }
+
+        self.chr_sizes = {}
+        self.metrics = METRICS()
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        with open(chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+    
+    def pred(self, X, mX, mY, avail, imp_target=[]):
+        # Initialize a tensor to store all predictions
+        n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        # make predictions in batches
+        for i in range(0, len(X), self.batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+ self.batch_size]
+            mX_batch = mX[i:i+ self.batch_size]
+            mY_batch = mY[i:i+ self.batch_size]
+            avail_batch = avail[i:i+ self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                # mY_batch_missing_vals = (mY_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+                # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
+                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                if len(imp_target)>0:
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+
+                # outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
+
+            # Store the predictions in the large tensor
+            n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
+
+            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n  # Free up memory
+            torch.cuda.empty_cache()  # Free up GPU memory
+
+        return n, p
+
+    def get_bios(self, bios_name, x_dsf=1, y_dsf=1):
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        for start, end in self.example_coords:
+            segment_length = end - start
+            adjusted_length = (segment_length // self.context_length) * self.context_length
+            adjusted_end = start + adjusted_length
+
+            subsets_X.append(X[start:adjusted_end, :])
+            subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        for leave_one_out in available_indices:
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            # print(f"got imputations for feature #{leave_one_out+1}")
+            del n, p  # Free up memory
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
+        # print("got upsampled")
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return imp_dist, ups_dist, Y, bios_name, available_indices
+    
+    def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
+        imp_mean = imp_dist.expect(stat="median")
+        ups_mean = ups_dist.expect(stat="median")
+
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        
+        results = []
+        # for j in availability:  # for each feature i.e. assay
+        for j in range(Y.shape[1]):
+
+            if j in list(availability):
+                # j = j.item()
+                for comparison in ['imputed', 'upsampled']:
+                    if comparison == "imputed":
+                        pred = imp_mean[:, j].numpy()
+                        # lower_95 = imp_lower_95[:, j].numpy()
+                        # upper_95 = imp_upper_95[:, j].numpy()
+                        
+                    elif comparison == "upsampled":
+                        pred = ups_mean[:, j].numpy()
+                        # lower_95 = ups_lower_95[:, j].numpy()
+                        # upper_95 = ups_upper_95[:, j].numpy()
+
+                    target = Y[:, j].numpy()
+
+                    # Check if the target values fall within the intervals
+                    # within_interval = (target >= lower_95) & (target <= upper_95)
+                    
+                    # Calculate the fraction
+                    metrics = {
+                        'bios':bios_name,
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'comparison': comparison,
+                        'available assays': len(availability),
+
+                        'MSE': self.metrics.mse(target, pred),
+                        'Pearson': self.metrics.pearson(target, pred),
+                        'Spearman': self.metrics.spearman(target, pred),
+                        'r2': self.metrics.r2(target, pred)
+                    }
+                    results.append(metrics)
+
+        return results
+    
+    def get_validation(self, model, x_dsf=1, y_dsf=1):
+        t0 = datetime.datetime.now()
+        self.model = model
+        # self.model.eval()
+        full_res = []
+        bioses = [list(self.dataset.navigation.keys())[0]]
+
+        for bios_name in bioses:
+            imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+            full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+            del imp_dist, ups_dist, Y
+        del self.model
+        
+        # self.model.train()
+        df = pd.DataFrame(full_res)
+
+        # Separate the data based on comparison type
+        imputed_df = df[df['comparison'] == 'imputed']
+        upsampled_df = df[df['comparison'] == 'upsampled']
+
+        # Function to calculate mean, min, and max for a given metric
+        def calculate_stats(df, metric):
+            return df[metric].mean(), df[metric].min(), df[metric].max()
+
+        # Imputed statistics
+        imp_mse_stats = calculate_stats(imputed_df, 'MSE')
+        imp_pearson_stats = calculate_stats(imputed_df, 'Pearson')
+        imp_spearman_stats = calculate_stats(imputed_df, 'Spearman')
+        imp_r2_stats = calculate_stats(imputed_df, 'r2')
+        # imp_frac95conf_stats = calculate_stats(imputed_df, 'frac_95_confidence')
+
+        # Upsampled statistics
+        ups_mse_stats = calculate_stats(upsampled_df, 'MSE')
+        ups_pearson_stats = calculate_stats(upsampled_df, 'Pearson')
+        ups_spearman_stats = calculate_stats(upsampled_df, 'Spearman')
+        ups_r2_stats = calculate_stats(upsampled_df, 'r2')
+        # ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
+
+        elapsed_time = datetime.datetime.now() - t0
+        hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # Create the compact print statement
+        print_statement = f"""
+        Took {int(minutes)}:{int(seconds)}
+        For Imputed:
+        - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
+        - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
+        - SRCC: mean={imp_spearman_stats[0]:.2f}, min={imp_spearman_stats[1]:.2f}, max={imp_spearman_stats[2]:.2f}
+        - R2: mean={imp_r2_stats[0]:.2f}, min={imp_r2_stats[1]:.2f}, max={imp_r2_stats[2]:.2f}
+
+        For Upsampled:
+        - MSE: mean={ups_mse_stats[0]:.2f}, min={ups_mse_stats[1]:.2f}, max={ups_mse_stats[2]:.2f}
+        - PCC: mean={ups_pearson_stats[0]:.2f}, min={ups_pearson_stats[1]:.2f}, max={ups_pearson_stats[2]:.2f}
+        - SRCC: mean={ups_spearman_stats[0]:.2f}, min={ups_spearman_stats[1]:.2f}, max={ups_spearman_stats[2]:.2f}
+        - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
+        """
+
+        return print_statement
+
+
 #========================================================================================================#
 #===========================================Building Blocks==============================================#
 #========================================================================================================#
