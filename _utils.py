@@ -1,4 +1,4 @@
-import os, pyBigWig, pybedtools, random, datetime, gzip, pickle
+import os, pyBigWig, pybedtools, random, datetime, gzip, pickle, psutil
 from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
@@ -15,6 +15,14 @@ from torch.distributions.utils import (
     logits_to_probs,
     probs_to_logits,
 )
+
+def log_resource_usage():
+    print(f"CPU Usage: {psutil.cpu_percent()}%")
+    print(f"Memory Usage: {psutil.virtual_memory().percent}%")
+    if torch.cuda.is_available():
+        gpu_stats = torch.cuda.memory_stats()
+        print(f"GPU Memory Allocated: {gpu_stats['allocated_bytes.all.current'] / (1024 ** 2)} MB")
+        print(f"GPU Memory Reserved: {gpu_stats['reserved_bytes.all.current'] / (1024 ** 2)} MB")
 
 class NegativeBinomial(object):
     def __init__(self, p, n):
@@ -46,7 +54,9 @@ class NegativeBinomial(object):
         var_value = nbinom.var(self.n, self.p)
         return torch.tensor(var_value, dtype=torch.float32)
 
-def monitor_validation(model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, split="val"):
+def monitor_validation(
+    model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, 
+    chr_sizes_file="data/hg38.chrom.sizes", resolution=25, split="val"):
     dataset = ExtendedEncodeDataHandler(data_path, resolution=resolution)
     dataset.init_eval(context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
     mark_dict = {v: k for k, v in dataset.aliases["experiment_aliases"].items()}
@@ -76,10 +86,11 @@ def monitor_validation(model, data_path, context_length, batch_size, x_dsf=1, y_
                 chr_sizes[chr_name] = int(chr_size)
 
     def pred(X, mX, mY, avail, imp_target=[]):
+        print("getting preds")
         n = torch.empty_like(X, device="cpu", dtype=torch.float32)
         p = torch.empty_like(X, device="cpu", dtype=torch.float32)
         for i in range(0, len(X), batch_size):
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
             x_batch = X[i:i + batch_size]
             mX_batch = mX[i:i + batch_size]
             mY_batch = mY[i:i + batch_size]
@@ -104,7 +115,8 @@ def monitor_validation(model, data_path, context_length, batch_size, x_dsf=1, y_
             n[i:i + outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i + outputs_p.shape[0], :, :] = outputs_p.cpu()
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
+        print("got preds")
         return n, p
 
     def get_bios(bios_name, x_dsf=1, y_dsf=1):

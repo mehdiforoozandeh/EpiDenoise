@@ -3512,7 +3512,8 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 5 == 0:
+                if lopr % 2 == 0:
+                    log_resource_usage()
                     validation_set_eval = monitor_validation(
                             self.model, self.dataset.base_path, context_length, batch_size,
                             x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
