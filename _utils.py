@@ -237,7 +237,7 @@ def log_resource_usage():
 #     return print_statement
 
 class NegativeBinomial:
-    def __init__(self, n, p):
+    def __init__(self, p, n):
         self.n = n
         self.p = p
         self.dist = dist.NegativeBinomial(total_count=n, probs=p)
