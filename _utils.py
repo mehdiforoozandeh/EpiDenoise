@@ -247,27 +247,27 @@ class NegativeBinomial:
             return self.dist.sample(size)
         else:
             return self.dist.sample()
-
+    
     def pmf(self, x):
-        x = torch.tensor(x, dtype=torch.float32)
-        n_tensor = torch.tensor(self.n, dtype=torch.float32)
-        comb = torch.lgamma(x + n_tensor) - torch.lgamma(x + 1) - torch.lgamma(n_tensor)
-        return torch.exp(comb + n_tensor * torch.log(torch.tensor(self.p)) + x * torch.log(torch.tensor(1 - self.p))).item()
+        if not torch.is_tensor(x):
+            x = torch.tensor(x, dtype=torch.float32)
+        comb = torch.lgamma(x + self.n) - torch.lgamma(x + 1) - torch.lgamma(self.n)
+        return torch.exp(comb + self.n * torch.log(self.p) + x * torch.log(1 - self.p))
     
     def logpmf(self, x):
-        x = torch.tensor(x, dtype=torch.float32)
-        n_tensor = torch.tensor(self.n, dtype=torch.float32)
-        comb = torch.lgamma(x + n_tensor) - torch.lgamma(x + 1) - torch.lgamma(n_tensor)
-        return (comb + n_tensor * torch.log(torch.tensor(self.p)) + x * torch.log(torch.tensor(1 - self.p))).item()
+        if not torch.is_tensor(x):
+            x = torch.tensor(x, dtype=torch.float32)
+        comb = torch.lgamma(x + self.n) - torch.lgamma(x + 1) - torch.lgamma(self.n)
+        return comb + self.n * torch.log(self.p) + x * torch.log(1 - self.p)
     
     def cdf(self, x):
-        x_values = torch.arange(0, x + 1, dtype=torch.float32)
+        x_values = torch.arange(0, x + 1, dtype=torch.float32).reshape(-1, *([1] * len(self.n.shape)))
         pmf_values = torch.exp(self.dist.log_prob(x_values))
-        return torch.sum(pmf_values).item()
+        return torch.sum(pmf_values, dim=0)
     
     def logcdf(self, x):
         cdf_value = self.cdf(x)
-        return math.log(cdf_value)
+        return torch.log(cdf_value)
     
     def sf(self, x):
         return 1 - self.cdf(x)
@@ -276,27 +276,29 @@ class NegativeBinomial:
         return self.ppf(1 - x)
     
     def ppf(self, q):
+        if not torch.is_tensor(q):
+            q = torch.tensor(q, dtype=torch.float32)
         x = 0
-        cumulative_prob = 0.0
-        while cumulative_prob < q:
+        cumulative_prob = torch.zeros_like(self.n)
+        while torch.any(cumulative_prob < q):
             cumulative_prob += self.pmf(x)
             x += 1
         return x - 1
     
     def interval(self, confidence=0.95):
         alpha = 1 - confidence
-        lower_bound = scipy_nbinom.ppf(alpha / 2, self.n, self.p)
-        upper_bound = scipy_nbinom.ppf(1 - alpha / 2, self.n, self.p)
+        lower_bound = scipy_nbinom.ppf(alpha / 2, self.n.numpy(), self.p.numpy())
+        upper_bound = scipy_nbinom.ppf(1 - alpha / 2, self.n.numpy(), self.p.numpy())
         return lower_bound, upper_bound
     
     def std(self):
-        return math.sqrt(self.var())
+        return torch.sqrt(self.var())
     
     def var(self):
-        return self.dist.variance.item()
+        return self.dist.variance
     
     def mean(self):
-        return self.dist.mean.item()
+        return self.dist.mean
     
     def median(self):
         return self.ppf(0.5)
