@@ -3349,7 +3349,7 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
             
-        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size)
+        # val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size)
         
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
@@ -3513,7 +3513,12 @@ class PRE_TRAINER(object):
                 print(logstr)
                 
                 if lopr % 5 == 0:
-                    validation_set_eval = val_eval.get_validation(self.model)
+                    validation_set_eval = monitor_validation(
+                        monitor_validation(
+                            self.model, self.dataset.base_path, context_length, batch_size,
+                            x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
+                            resolution=25, split="val")
+                    )
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
 
