@@ -149,7 +149,7 @@ def monitor_validation(model, data_path, context_length, batch_size,  x_dsf=1, y
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         return imp_dist, ups_dist, Y, bios_name, available_indices
 
-    def get_metric(imp_dist, ups_dist, Y, bios_name, availability, metrics=metrics):
+    def get_metric(imp_dist, ups_dist, Y, bios_name, availability):
         imp_mean = imp_dist.expect(stat="median")
         ups_mean = ups_dist.expect(stat="median")
         results = []
