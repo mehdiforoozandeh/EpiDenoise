@@ -161,7 +161,7 @@ def monitor_validation(model, data_path, context_length, batch_size,  x_dsf=1, y
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
                     target = Y[:, j].numpy()
-                    metrics = {
+                    mm = {
                         'bios': bios_name,
                         'feature': mark_dict[f"M{str(j + 1).zfill(len(str(len(mark_dict))))}"],
                         'comparison': comparison,
@@ -171,7 +171,7 @@ def monitor_validation(model, data_path, context_length, batch_size,  x_dsf=1, y
                         'Spearman': metrics.spearman(target, pred),
                         'r2': metrics.r2(target, pred)
                     }
-                    results.append(metrics)
+                    results.append(mm)
         return results
 
     t0 = datetime.datetime.now()
