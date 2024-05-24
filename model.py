@@ -4430,7 +4430,7 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 3,
             "epochs": 2,
-            "inner_epochs": 100,
+            "inner_epochs": 200,
             "mask_percentage": 0.1,
             "context_length": 200,
             "batch_size": 50,
