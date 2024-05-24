@@ -401,6 +401,7 @@ class MONITOR_VALIDATION(object):
         imp_mean = imp_dist.expect(stat="median")
         ups_mean = ups_dist.expect(stat="median")
 
+        print(f"got nbinom stuff")
         # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
@@ -427,6 +428,8 @@ class MONITOR_VALIDATION(object):
                     # within_interval = (target >= lower_95) & (target <= upper_95)
                     
                     # Calculate the fraction
+                    print(
+                        f"adding {bios_name} | {self.mark_dict[f'M{str(j+1).zfill(len(str(len(self.mark_dict))))}']} | {comparison}")
                     metrics = {
                         'bios':bios_name,
                         'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
