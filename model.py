@@ -220,7 +220,7 @@ class MONITOR_VALIDATION(object):
         return results
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
-        t0 = datetime.datetime.now()
+        t0 = datetime.now()
         self.model = model
         # self.model.eval()
         full_res = []
@@ -257,7 +257,7 @@ class MONITOR_VALIDATION(object):
         ups_r2_stats = calculate_stats(upsampled_df, 'r2')
         # ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
 
-        elapsed_time = datetime.datetime.now() - t0
+        elapsed_time = datetime.now() - t0
         hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
         minutes, seconds = divmod(remainder, 60)
 
