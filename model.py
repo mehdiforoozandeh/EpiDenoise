@@ -3380,8 +3380,12 @@ class PRE_TRAINER(object):
                     "imp_mse":[]
                 }
                 for _ in range(inner_epochs):
+                    print("before zero grad")
+                    log_resource_usage()
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
+                    print("after zero grad")
+                    log_resource_usage()
 
                     X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
@@ -3451,7 +3455,8 @@ class PRE_TRAINER(object):
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     self.optimizer.step()
-                    
+                    print("after step")
+                    log_resource_usage()
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
                         output_n[observed_map].cpu().detach()
@@ -3513,6 +3518,7 @@ class PRE_TRAINER(object):
                 print(logstr)
                 
                 if lopr % 2 == 0:
+                    print("before validation")
                     log_resource_usage()
                     validation_set_eval = monitor_validation(
                             self.model, self.dataset.base_path, context_length, batch_size,
@@ -3521,6 +3527,8 @@ class PRE_TRAINER(object):
 
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
+                    print("after validation")
+                    log_resource_usage()
 
                 logfile = open(f"models/EPD30{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))

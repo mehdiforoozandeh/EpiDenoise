@@ -86,7 +86,7 @@ def monitor_validation(
                 chr_sizes[chr_name] = int(chr_size)
 
     def pred(X, mX, mY, avail, imp_target=[]):
-        print("getting preds")
+        # print("getting preds")
         n = torch.empty_like(X, device="cpu", dtype=torch.float32)
         p = torch.empty_like(X, device="cpu", dtype=torch.float32)
         for i in range(0, len(X), batch_size):
@@ -116,7 +116,7 @@ def monitor_validation(
             p[i:i + outputs_p.shape[0], :, :] = outputs_p.cpu()
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n
             # torch.cuda.empty_cache()
-        print("got preds")
+        # print("got preds")
         return n, p
 
     def get_bios(bios_name, x_dsf=1, y_dsf=1):
