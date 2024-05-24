@@ -177,7 +177,7 @@ def monitor_validation(model, data_path, context_length, batch_size,  x_dsf=1, y
     t0 = datetime.datetime.now()
     full_res = []
 
-    bioses = [list(self.dataset.navigation.keys())[0]]
+    bioses = [list(dataset.navigation.keys())[0]]
     for bios_name in bioses:
         imp_dist, ups_dist, Y, _, available_indices = get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
         full_res += get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
