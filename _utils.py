@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 import torch
-from scipy.stats import nbinom
+# from scipy.stats import nbinom
+import torch.distributions as dist
 from eval import METRICS
 from data import ExtendedEncodeDataHandler
 from torch.distributions import Distribution, Gamma, constraints
@@ -27,35 +28,35 @@ def log_resource_usage():
         print(f"GPU Memory Allocated (peak): {gpu_stats['allocated_bytes.all.peak'] / (1024 ** 2)} MB")
         print(f"GPU Memory Reserved (peak): {gpu_stats['reserved_bytes.all.peak'] / (1024 ** 2)} MB")
 
-class NegativeBinomial(object):
-    def __init__(self, p, n):
-        self.p = p.numpy()
-        self.n = n.numpy()
+# class NegativeBinomial(object):
+#     def __init__(self, p, n):
+#         self.p = p.numpy()
+#         self.n = n.numpy()
         
-    def expect(self, stat="mean"):
-        if stat == "median":
-            self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
-            return self.median_value
+#     def expect(self, stat="mean"):
+#         if stat == "median":
+#             self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
+#             return self.median_value
 
-        elif stat == "mean":
-            self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
-            return self.mean_value
+#         elif stat == "mean":
+#             self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+#             return self.mean_value
     
-    def mean(self):
-        self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
-        return self.mean_value
+#     def mean(self):
+#         self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
+#         return self.mean_value
 
-    def interval(self, confidence):
-        lower, upper = nbinom.interval(confidence, self.n, self.p)
-        return torch.tensor(lower, dtype=torch.float32), torch.tensor(upper, dtype=torch.float32)
+#     def interval(self, confidence):
+#         lower, upper = nbinom.interval(confidence, self.n, self.p)
+#         return torch.tensor(lower, dtype=torch.float32), torch.tensor(upper, dtype=torch.float32)
     
-    def std(self):
-        std_value = nbinom.std(self.n, self.p)
-        return torch.tensor(std_value, dtype=torch.float32)
+#     def std(self):
+#         std_value = nbinom.std(self.n, self.p)
+#         return torch.tensor(std_value, dtype=torch.float32)
 
-    def var(self):
-        var_value = nbinom.var(self.n, self.p)
-        return torch.tensor(var_value, dtype=torch.float32)
+#     def var(self):
+#         var_value = nbinom.var(self.n, self.p)
+#         return torch.tensor(var_value, dtype=torch.float32)
 
 # def monitor_validation(
 #     model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, 
@@ -235,6 +236,77 @@ class NegativeBinomial(object):
 
 #     return print_statement
 
+class NegativeBinomial:
+    def __init__(self, n, p):
+        self.n = n
+        self.p = p
+        self.dist = dist.NegativeBinomial(total_count=n, probs=p)
+    
+    def rvs(self, size=None):
+        if size:
+            return self.dist.sample(size)
+        else:
+            return self.dist.sample()
+
+    def pmf(self, x):
+        coeff = math.comb(x + self.n - 1, self.n - 1)
+        return coeff * (self.p ** self.n) * ((1 - self.p) ** x)
+    
+    def logpmf(self, x):
+        coeff = math.lgamma(self.n + x) - math.lgamma(x + 1) - math.lgamma(self.n)
+        return coeff + self.n * math.log(self.p) + x * math.log(1 - self.p)
+    
+    def cdf(self, x):
+        # Cumulative distribution function
+        x_values = torch.arange(0, x + 1, dtype=torch.float32)
+        pmf_values = torch.exp(self.dist.log_prob(x_values))
+        return torch.sum(pmf_values).item()
+    
+    def logcdf(self, x):
+        cdf_value = self.cdf(x)
+        return math.log(cdf_value)
+    
+    def sf(self, x):
+        # Survival function (1 - CDF)
+        return 1 - self.cdf(x)
+    
+    def isf(self, x):
+        # Inverse survival function (Quantile function for 1 - x)
+        return self.ppf(1 - x)
+    
+    def ppf(self, q):
+        # Percent point function (Inverse of CDF)
+        x = 0
+        cumulative_prob = 0.0
+        while cumulative_prob < q:
+            cumulative_prob += self.pmf(x)
+            x += 1
+        return x - 1
+    
+    def interval(self, confidence=0.95):
+        alpha = 1 - confidence
+        lower_bound = scipy_nbinom.ppf(alpha / 2, self.n, self.p)
+        upper_bound = scipy_nbinom.ppf(1 - alpha / 2, self.n, self.p)
+        return lower_bound, upper_bound
+    
+    def std(self):
+        return math.sqrt(self.var())
+    
+    def var(self):
+        return self.dist.variance.item()
+    
+    def mean(self):
+        return self.dist.mean.item()
+    
+    def median(self):
+        return self.ppf(0.5)
+    
+    def expect(self, stat="mean"):
+        if stat == "median":
+            return self.mean()
+
+        elif stat == "mean":
+            return self.median()
 
 class MONITOR_VALIDATION(object):
     def __init__(
