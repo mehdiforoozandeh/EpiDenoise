@@ -3513,18 +3513,16 @@ class PRE_TRAINER(object):
                 print(logstr)
                 
                 if lopr % 2 == 0:
-                    print("after validation")
-                    log_resource_usage()
                     validation_set_eval = monitor_validation(
                             self.model, self.dataset.base_path, context_length, batch_size,
                             x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
                             resolution=25, split="val")
-
+                    
+                    torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
-                    print("after validation")
                     log_resource_usage()
-
+                    
                 logfile = open(f"models/EPD30{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
                 logfile.close()
