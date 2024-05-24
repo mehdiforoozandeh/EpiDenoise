@@ -23,6 +23,9 @@ def log_resource_usage():
         gpu_stats = torch.cuda.memory_stats()
         print(f"GPU Memory Allocated: {gpu_stats['allocated_bytes.all.current'] / (1024 ** 2)} MB")
         print(f"GPU Memory Reserved: {gpu_stats['reserved_bytes.all.current'] / (1024 ** 2)} MB")
+        print(f"GPU Active Memory Allocations: {gpu_stats['active.all.current']}")
+        print(f"GPU Memory Allocated (peak): {gpu_stats['allocated_bytes.all.peak'] / (1024 ** 2)} MB")
+        print(f"GPU Memory Reserved (peak): {gpu_stats['reserved_bytes.all.peak'] / (1024 ** 2)} MB")
 
 class NegativeBinomial(object):
     def __init__(self, p, n):
