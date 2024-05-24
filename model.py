@@ -4432,12 +4432,12 @@ if __name__ == "__main__":
             "epochs": 2,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
-            "context_length": 400,
+            "context_length": 200,
             "batch_size": 50,
             "learning_rate": 1e-5,
             "num_loci": 400,
             "lr_halflife":1,
-            "min_avail":13
+            "min_avail":15
         }
         train_epidenoise30(
             hyper_parameters30a, 
