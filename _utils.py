@@ -247,17 +247,20 @@ class NegativeBinomial:
             return self.dist.sample(size)
         else:
             return self.dist.sample()
-
+    
     def pmf(self, x):
-        coeff = math.comb(x + self.n - 1, self.n - 1)
-        return coeff * (self.p ** self.n) * ((1 - self.p) ** x)
+        x = torch.tensor(x, dtype=torch.float32)
+        n_tensor = torch.tensor(self.n, dtype=torch.float32)
+        comb = torch.lgamma(x + n_tensor) - torch.lgamma(x + 1) - torch.lgamma(n_tensor)
+        return torch.exp(comb + n_tensor * torch.log(torch.tensor(self.p)) + x * torch.log(torch.tensor(1 - self.p)))
     
     def logpmf(self, x):
-        coeff = math.lgamma(self.n + x) - math.lgamma(x + 1) - math.lgamma(self.n)
-        return coeff + self.n * math.log(self.p) + x * math.log(1 - self.p)
+        x = torch.tensor(x, dtype=torch.float32)
+        n_tensor = torch.tensor(self.n, dtype=torch.float32)
+        comb = torch.lgamma(x + n_tensor) - torch.lgamma(x + 1) - torch.lgamma(n_tensor)
+        return comb + n_tensor * torch.log(torch.tensor(self.p)) + x * torch.log(torch.tensor(1 - self.p))
     
     def cdf(self, x):
-        # Cumulative distribution function
         x_values = torch.arange(0, x + 1, dtype=torch.float32)
         pmf_values = torch.exp(self.dist.log_prob(x_values))
         return torch.sum(pmf_values).item()
@@ -267,19 +270,16 @@ class NegativeBinomial:
         return math.log(cdf_value)
     
     def sf(self, x):
-        # Survival function (1 - CDF)
         return 1 - self.cdf(x)
     
     def isf(self, x):
-        # Inverse survival function (Quantile function for 1 - x)
         return self.ppf(1 - x)
     
     def ppf(self, q):
-        # Percent point function (Inverse of CDF)
         x = 0
         cumulative_prob = 0.0
         while cumulative_prob < q:
-            cumulative_prob += self.pmf(x)
+            cumulative_prob += self.pmf(x).item()
             x += 1
         return x - 1
     
