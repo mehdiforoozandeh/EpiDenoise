@@ -3517,7 +3517,7 @@ class PRE_TRAINER(object):
                             self.model, self.dataset.base_path, context_length, batch_size,
                             x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
                             resolution=25, split="val")
-                    )
+
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
 
