@@ -277,6 +277,7 @@ class MONITOR_VALIDATION(object):
                     self.chr_sizes[chr_name] = int(chr_size)
     
     def pred(self, X, mX, mY, avail, imp_target=[]):
+        print("making preds")
         # Initialize a tensor to store all predictions
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
@@ -332,6 +333,7 @@ class MONITOR_VALIDATION(object):
         return n, p
 
     def get_bios(self, bios_name, x_dsf=1, y_dsf=1):
+        print(f"getting bios vals for {bios_name}")
         temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
         del temp_x, temp_mx
@@ -395,6 +397,7 @@ class MONITOR_VALIDATION(object):
         return imp_dist, ups_dist, Y, bios_name, available_indices
     
     def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
+        print(f"getting metrics")
         imp_mean = imp_dist.expect(stat="median")
         ups_mean = ups_dist.expect(stat="median")
 
@@ -440,6 +443,7 @@ class MONITOR_VALIDATION(object):
         return results
     
     def get_validation(self, model, x_dsf=1, y_dsf=1):
+        
         t0 = datetime.datetime.now()
         self.model = model
         # self.model.eval()
@@ -452,6 +456,7 @@ class MONITOR_VALIDATION(object):
             del imp_dist, ups_dist, Y
         del self.model
         
+        print(f"got results.. generating text output")
         # self.model.train()
         df = pd.DataFrame(full_res)
 
