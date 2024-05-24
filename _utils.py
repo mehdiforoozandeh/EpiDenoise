@@ -46,7 +46,7 @@ class NegativeBinomial(object):
         var_value = nbinom.var(self.n, self.p)
         return torch.tensor(var_value, dtype=torch.float32)
 
-def monitor_validation(model, data_path, context_length, batch_size,  x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, split="val"):
+def monitor_validation(model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, split="val"):
     dataset = ExtendedEncodeDataHandler(data_path, resolution=resolution)
     dataset.init_eval(context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
     mark_dict = {v: k for k, v in dataset.aliases["experiment_aliases"].items()}

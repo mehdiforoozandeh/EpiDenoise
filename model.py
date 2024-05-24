@@ -3514,7 +3514,6 @@ class PRE_TRAINER(object):
                 
                 if lopr % 5 == 0:
                     validation_set_eval = monitor_validation(
-                        monitor_validation(
                             self.model, self.dataset.base_path, context_length, batch_size,
                             x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
                             resolution=25, split="val")
