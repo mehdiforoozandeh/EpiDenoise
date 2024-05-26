@@ -415,8 +415,8 @@ class MONITOR_VALIDATION(object):
     
     def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
         print(f"getting metrics")
-        imp_mean = imp_dist.expect(stat="median")
-        ups_mean = ups_dist.expect(stat="median")
+        imp_mean = imp_dist.expect()
+        ups_mean = ups_dist.expect()
 
         print(f"got nbinom stuff")
         # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
