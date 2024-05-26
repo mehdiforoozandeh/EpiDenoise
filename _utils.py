@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 import torch
-# from scipy.stats import nbinom
+from scipy.stats import nbinom
 import torch.distributions as dist
 from eval import METRICS
 from data import ExtendedEncodeDataHandler
@@ -28,35 +28,51 @@ def log_resource_usage():
         print(f"GPU Memory Allocated (peak): {gpu_stats['allocated_bytes.all.peak'] / (1024 ** 2)} MB")
         print(f"GPU Memory Reserved (peak): {gpu_stats['reserved_bytes.all.peak'] / (1024 ** 2)} MB")
 
-# class NegativeBinomial(object):
-#     def __init__(self, p, n):
-#         self.p = p.numpy()
-#         self.n = n.numpy()
-        
-#     def expect(self, stat="mean"):
-#         if stat == "median":
-#             self.median_value = torch.tensor(nbinom.median(self.n, self.p), dtype=torch.float32)
-#             return self.median_value
+class NegativeBinomial:
+    def __init__(self, p, n):
+        self.n = n
+        self.p = p
 
-#         elif stat == "mean":
-#             self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
-#             return self.mean_value
-    
-#     def mean(self):
-#         self.mean_value = torch.tensor(nbinom.mean(self.n, self.p), dtype=torch.float32)
-#         return self.mean_value
+    def mean(self):
+        return self.n * (1 - self.p) / self.p
 
-#     def interval(self, confidence):
-#         lower, upper = nbinom.interval(confidence, self.n, self.p)
-#         return torch.tensor(lower, dtype=torch.float32), torch.tensor(upper, dtype=torch.float32)
-    
-#     def std(self):
-#         std_value = nbinom.std(self.n, self.p)
-#         return torch.tensor(std_value, dtype=torch.float32)
+    def median(self):
+        return self.icdf(torch.tensor(0.5))
 
-#     def var(self):
-#         var_value = nbinom.var(self.n, self.p)
-#         return torch.tensor(var_value, dtype=torch.float32)
+    def mode(self):
+        mode = torch.floor(((self.n - 1) * (1 - self.p)) / self.p)
+        mode[mode < 0] = 0  # Mode is 0 if the computed value is negative
+        return mode
+
+    def var(self):
+        return self.n * (1 - self.p) / (self.p ** 2)
+
+    def std(self):
+        return self.var.sqrt()
+
+    def cdf(self, k):
+        return torch.Tensor(nbinom.cdf(k, self.n, self.p))
+
+    def pmf(self, k):
+        k = torch.tensor(k, dtype=torch.float32)
+        comb = torch.lgamma(k + self.n) - torch.lgamma(k + 1) - torch.lgamma(self.n)
+        return torch.exp(comb) * (self.p ** self.n) * ((1 - self.p) ** k)
+
+    def icdf(self, q):
+        return torch.Tensor(nbinom.ppf(q, self.n, self.p))
+
+    def expect(self, stat="mean"):
+        if stat == "mean":
+            return self.mean()
+        elif stat == "mode":
+            return self.mode()
+        else:
+            return self.median()
+
+    def interval(self, confidence=0.95):
+        lower = self.icdf(q=(1-confidence)/2)
+        upper = self.icdf(q=(1+confidence)/2)
+        return lower, upper
 
 # def monitor_validation(
 #     model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, 
@@ -887,6 +903,7 @@ class COORD(object):
         print(f"number of foreground bins: {len(self.fg_bins)} | number of background bins: {len(self.bg_bins)}")
 
     # def random_genome_subset(self, max_seq_len, stratified=True)
+
 
 class PROCESS_EIC_DATA(object):
     def __init__(self, path, max_len=8000, resolution=25, stratified=False):
