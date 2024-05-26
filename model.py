@@ -3455,7 +3455,7 @@ class PRE_TRAINER(object):
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     self.optimizer.step()
-                    print("updated params")
+                    # print("updated params")
 
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3483,7 +3483,7 @@ class PRE_TRAINER(object):
                     batch_rec["imp_r2"].append(imp_r2)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["imp_mse"].append(imp_mse)
-                    print("got inner epoch stats")
+                    # print("got inner epoch stats")
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 10 == 0:
@@ -3513,7 +3513,7 @@ class PRE_TRAINER(object):
                     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
                 
-                print("got batch stats")
+                # print("got batch stats")
                 
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
@@ -4472,7 +4472,7 @@ if __name__ == "__main__":
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 1600,
-            "batch_size": 15,
+            "batch_size": 18,
             "learning_rate": 1e-5,
             "num_loci": 400,
             "lr_halflife":2,
