@@ -294,7 +294,7 @@ class MONITOR_VALIDATION(object):
                     self.chr_sizes[chr_name] = int(chr_size)
     
     def pred(self, X, mX, mY, avail, imp_target=[]):
-        print("making preds")
+        # print("making preds")
         # Initialize a tensor to store all predictions
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
