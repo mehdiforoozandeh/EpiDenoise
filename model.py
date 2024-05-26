@@ -3359,7 +3359,7 @@ class PRE_TRAINER(object):
 
             while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
                 t0 = datetime.now()
-                print("new batch")
+                # print("new batch")
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
                 dsf_Y = 1
@@ -3382,7 +3382,7 @@ class PRE_TRAINER(object):
                     "imp_mse":[]
                 }
                 for _ in range(inner_epochs):
-                    print("new inner epoch")
+                    # print("new inner epoch")
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
@@ -3404,7 +3404,7 @@ class PRE_TRAINER(object):
                     observed_map = observed_map.to(self.device) # upsampling targets
 
                     output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                    print("forward pass completed")
+                    # print("forward pass completed")
                     pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                         output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
@@ -3430,7 +3430,7 @@ class PRE_TRAINER(object):
                         continue
                     
                     loss.backward()  
-                    print("backward pass completed")
+                    # print("backward pass completed")
 
                     if hook:
                         # Initialize variables to store maximum gradient norms and corresponding layer names
@@ -3524,9 +3524,9 @@ class PRE_TRAINER(object):
                     #         self.model, self.dataset.base_path, context_length, batch_size,
                     #         x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
                     #         resolution=25, split="val")
-                    print("running val")
+                    # print("running val")
                     validation_set_eval = val_eval.get_validation(self.model)
-                    print("got val")
+                    # print("got val")
                     
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
@@ -4286,7 +4286,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, ccre=False, 
+        bios_batchsize=batch_size, loci_batchsize=1, ccre=True, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -4438,17 +4438,17 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 47,
             "dropout": 0.01,
             "nhead": 4,
-            "d_model": 384,
+            "d_model": 768,
             "nlayers": 3,
             "epochs": 2,
-            "inner_epochs": 200,
+            "inner_epochs": 100,
             "mask_percentage": 0.1,
-            "context_length": 200,
+            "context_length": 400,
             "batch_size": 50,
             "learning_rate": 1e-5,
-            "num_loci": 400,
+            "num_loci": 1600,
             "lr_halflife":1,
-            "min_avail":15
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30a, 
@@ -4465,18 +4465,18 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 3,
 
-            "nhead": 4,
-            "d_model": 384,
+            "nhead": 8,
+            "d_model": 768,
             "nlayers": 3,
             "epochs": 2,
-            "inner_epochs": 100,
+            "inner_epochs": 768,
             "mask_percentage": 0.1,
             "context_length": 1600,
             "batch_size": 50,
-            "learning_rate": 1e-4,
-            "num_loci": 100,
+            "learning_rate": 1e-5,
+            "num_loci": 400,
             "lr_halflife":2,
-            "min_avail":13
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30b, 

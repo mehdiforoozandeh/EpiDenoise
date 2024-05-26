@@ -414,11 +414,11 @@ class MONITOR_VALIDATION(object):
         return imp_dist, ups_dist, Y, bios_name, available_indices
     
     def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
-        print(f"getting metrics")
+        # print(f"getting metrics")
         imp_mean = imp_dist.expect()
         ups_mean = ups_dist.expect()
 
-        print(f"got nbinom stuff")
+        # print(f"got nbinom stuff")
         # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
@@ -445,8 +445,8 @@ class MONITOR_VALIDATION(object):
                     # within_interval = (target >= lower_95) & (target <= upper_95)
                     
                     # Calculate the fraction
-                    print(
-                        f"adding {bios_name} | {self.mark_dict[f'M{str(j+1).zfill(len(str(len(self.mark_dict))))}']} | {comparison}")
+                    # print(
+                    #     f"adding {bios_name} | {self.mark_dict[f'M{str(j+1).zfill(len(str(len(self.mark_dict))))}']} | {comparison}")
                     metrics = {
                         'bios':bios_name,
                         'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
@@ -476,7 +476,7 @@ class MONITOR_VALIDATION(object):
             del imp_dist, ups_dist, Y
         del self.model
         
-        print(f"got results.. generating text output")
+        # print(f"got results.. generating text output")
         # self.model.train()
         df = pd.DataFrame(full_res)
 
