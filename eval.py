@@ -2442,7 +2442,6 @@ class EVAL_EED(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
         eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
-        exit()
         return eval_res
 
     def viz_bios(self, eval_res):
