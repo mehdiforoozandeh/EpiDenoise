@@ -912,6 +912,237 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.pdf", dpi=300)
 
+    def BIOS_quantile_scatter(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                ax.scatter(xs, ys, color="black", s=5, alpha=0.7, edgecolor='b')
+                # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
+
+                if share_axes:
+                    # Determine the range for x and y axes
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    
+                    # Set the same range for x and y axes
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_xlabel("Observed Values")
+                ax.set_ylabel("Predicted Quantile")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_scatter.png", dpi=150)
+
+    def BIOS_quantile_density_scatter(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                sns.kdeplot(x=xs, y=ys, cmap="Blues", fill=True, ax=ax)
+                ax.scatter(xs, ys, color='red', alpha=0.3)
+                # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
+                
+                if share_axes:
+                    # Determine the range for x and y axes
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    
+                    # Set the same range for x and y axes
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"Obs. vs. Pred. Quantile w/ Density {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_xlabel("Observed Values")
+                ax.set_ylabel("Predicted Quantile")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_density_scatter.png", dpi=150)
+
+    def BIOS_quantile_hist(self, eval_res, b=20):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+
+                ax.hist(ys, bins=b, color='blue', alpha=0.7, densnity=True)
+                # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
+
+                if share_axes:
+                    # Determine the range for x and y axes
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    
+                    # Set the same range for x and y axes
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}")
+                ax.set_xlabel("Predicted CDF Quantile")
+                ax.set_ylabel("Density")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_hist.png", dpi=150)
+
+    def BIOS_quantile_heatmap(self, eval_res, b=20):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                heatmap, xedges, yedges = np.histogram2d(xs, ys, bins=b)
+                extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+                ax.imshow(heatmap.T, extent=extent, origin='lower', cmap='viridis')
+                plt.colorbar()
+
+                if share_axes:
+                    # Determine the range for x and y axes
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    
+                    # Set the same range for x and y axes
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted Quantiles")
+                
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.png", dpi=150)
+
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1986,6 +2217,8 @@ class EVAL_EED(object):
             if j in list(availability):
                 # j = j.item()
                 for comparison in ['imputed', 'upsampled']:
+                    target = Y[:, j].numpy()
+
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         # lower_60 = imp_lower_60[:, j].numpy()
@@ -1995,6 +2228,7 @@ class EVAL_EED(object):
                         # upper_60 = imp_upper_60[:, j].numpy()
                         # upper_80 = imp_upper_80[:, j].numpy()
                         # upper_95 = imp_upper_95[:, j].numpy()
+                        quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
@@ -2005,12 +2239,8 @@ class EVAL_EED(object):
                         # upper_60 = ups_upper_60[:, j].numpy()
                         # upper_80 = ups_upper_80[:, j].numpy()
                         # upper_95 = ups_upper_95[:, j].numpy()
+                        quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
 
-                    target = Y[:, j].numpy()
-
-                    print(self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target).mean())
-                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target).mean())
-                    continue
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
@@ -2020,14 +2250,15 @@ class EVAL_EED(object):
 
                         "obs":target,
                         "imp":pred,
+                        "pred_quantile":quantile,
 
-                        "lower_60" : lower_60,
-                        "lower_80" : lower_80,
-                        "lower_95" : lower_95,
+                        # "lower_60" : lower_60,
+                        # "lower_80" : lower_80,
+                        # "lower_95" : lower_95,
 
-                        "upper_60": upper_60,
-                        "upper_80": upper_80,
-                        "upper_95": upper_95,
+                        # "upper_60": upper_60,
+                        # "upper_80": upper_80,
+                        # "upper_95": upper_95,
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),
@@ -2064,15 +2295,15 @@ class EVAL_EED(object):
                     results.append(metrics)
 
             else:
-                continue
+                # continue
                 pred = ups_mean[:, j].numpy()
-                lower_60 = ups_lower_60[:, j].numpy()
-                lower_80 = ups_lower_80[:, j].numpy()
-                lower_95 = ups_lower_95[:, j].numpy()
+                # lower_60 = ups_lower_60[:, j].numpy()
+                # lower_80 = ups_lower_80[:, j].numpy()
+                # lower_95 = ups_lower_95[:, j].numpy()
 
-                upper_60 = ups_upper_60[:, j].numpy()
-                upper_80 = ups_upper_80[:, j].numpy()
-                upper_95 = ups_upper_95[:, j].numpy()
+                # upper_60 = ups_upper_60[:, j].numpy()
+                # upper_80 = ups_upper_80[:, j].numpy()
+                # upper_95 = ups_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -2082,13 +2313,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    "lower_60" : lower_60,
-                    "lower_80" : lower_80,
-                    "lower_95" : lower_95,
+                    # "lower_60" : lower_60,
+                    # "lower_80" : lower_80,
+                    # "lower_95" : lower_95,
 
-                    "upper_60": upper_60,
-                    "upper_80": upper_80,
-                    "upper_95": upper_95
+                    # "upper_60": upper_60,
+                    # "upper_80": upper_80,
+                    # "upper_95": upper_95
                     }
                 results.append(metrics)
             
@@ -2229,7 +2460,20 @@ class EVAL_EED(object):
 
             selected regions' signals
         """
+        print("plotting quantile plots")
+        self.viz.BIOS_quantile_scatter(eval_res)
+        self.viz.clear_pallete()
 
+        self.viz.BIOS_quantile_density_scatter(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_quantile_hist(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_quantile_heatmap(eval_res)
+        self.viz.clear_pallete()
+
+        exit()
         # try: 
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
