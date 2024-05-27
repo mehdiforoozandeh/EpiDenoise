@@ -286,6 +286,11 @@ class METRICS(object):
 
         return curve, derivatives
 
+    def confidence_quantile(self, nbinom_p, nbinom_n, y_true):
+        nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
+        return nbinom_dist.cdf(y_true)
+
+
 class Evaluation: # on chr21
     def __init__(
         self, model_path, hyper_parameters_path, 
@@ -2003,6 +2008,9 @@ class EVAL_EED(object):
 
                     target = Y[:, j].numpy()
 
+                    print(self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target).mean())
+                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target).mean())
+
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
@@ -2202,6 +2210,7 @@ class EVAL_EED(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
         eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
+        exit()
         return eval_res
 
     def viz_bios(self, eval_res):
@@ -2344,12 +2353,12 @@ if __name__=="__main__":
     #     pass
 
     e = EVAL_EED(
-        model="models/EPD30b_model_checkpoint_epoch1_LociProg90.pth", 
+        model="models/EPD30a_model_checkpoint_epoch1_LociProg10.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=1600, batch_size=50, 
-        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240522234155_params5969560.pkl",
+        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240525184756_params2182872.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30b", resolution=25, 
+        version="30a", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
     )
     evres = e.bios_pipeline("ENCBS596CTT", 1)
