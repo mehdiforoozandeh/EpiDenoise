@@ -1970,14 +1970,14 @@ class EVAL_EED(object):
         imp_mean = imp_dist.expect()
         ups_mean = ups_dist.expect()
 
-        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -1988,29 +1988,29 @@ class EVAL_EED(object):
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
-                        lower_60 = imp_lower_60[:, j].numpy()
-                        lower_80 = imp_lower_80[:, j].numpy()
-                        lower_95 = imp_lower_95[:, j].numpy()
+                        # lower_60 = imp_lower_60[:, j].numpy()
+                        # lower_80 = imp_lower_80[:, j].numpy()
+                        # lower_95 = imp_lower_95[:, j].numpy()
 
-                        upper_60 = imp_upper_60[:, j].numpy()
-                        upper_80 = imp_upper_80[:, j].numpy()
-                        upper_95 = imp_upper_95[:, j].numpy()
+                        # upper_60 = imp_upper_60[:, j].numpy()
+                        # upper_80 = imp_upper_80[:, j].numpy()
+                        # upper_95 = imp_upper_95[:, j].numpy()
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
-                        lower_60 = ups_lower_60[:, j].numpy()
-                        lower_80 = ups_lower_80[:, j].numpy()
-                        lower_95 = ups_lower_95[:, j].numpy()
+                        # lower_60 = ups_lower_60[:, j].numpy()
+                        # lower_80 = ups_lower_80[:, j].numpy()
+                        # lower_95 = ups_lower_95[:, j].numpy()
 
-                        upper_60 = ups_upper_60[:, j].numpy()
-                        upper_80 = ups_upper_80[:, j].numpy()
-                        upper_95 = ups_upper_95[:, j].numpy()
+                        # upper_60 = ups_upper_60[:, j].numpy()
+                        # upper_80 = ups_upper_80[:, j].numpy()
+                        # upper_95 = ups_upper_95[:, j].numpy()
 
                     target = Y[:, j].numpy()
 
                     print(self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target).mean())
                     print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target).mean())
-
+                    continue
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
