@@ -48,7 +48,7 @@ class NegativeBinomial:
         return self.n * (1 - self.p) / (self.p ** 2)
 
     def std(self):
-        return self.var.sqrt()
+        return self.var().sqrt()
 
     def cdf(self, k):
         return torch.Tensor(nbinom.cdf(k, self.n, self.p))
