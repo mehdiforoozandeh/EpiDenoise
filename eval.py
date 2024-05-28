@@ -1073,7 +1073,7 @@ class VISUALS(object):
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
 
-                ax.hist(ys, bins=b, color='blue', alpha=0.7, densnity=True)
+                ax.hist(ys, bins=b, color='blue', alpha=0.7, density=True)
                 # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
 
                 if share_axes:
