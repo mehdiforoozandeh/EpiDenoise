@@ -620,7 +620,7 @@ class VISUALS(object):
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
                 h = h.T  # Transpose to correct the orientation
-                ax.imshow(
+                im = ax.imshow(
                     h, interpolation='nearest', origin='lower', 
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
                     aspect='auto', norm=LogNorm(), cmap='viridis')
@@ -634,6 +634,18 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.png", dpi=150)
+
+    def BIOS_mean_std_scatter(self, eval_res):
+        # Scatter plot with color encoding
+        plt.figure(figsize=(10, 8))
+        sc = plt.scatter(mu_pred, mu_obs, c=sigma_pred, cmap='viridis', alpha=0.6)
+        plt.colorbar(sc, label='Predicted Standard Deviation')
+        plt.plot([mu_pred.min(), mu_pred.max()], [mu_pred.min(), mu_pred.max()], 'k--')
+        plt.title('Scatter Plot of Predicted vs Observed Means with Color Encoding for Predicted Standard Deviation')
+        plt.xlabel('Predicted Mean')
+        plt.ylabel('Observed Mean')
+        plt.grid(True)
+        plt.show()
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
