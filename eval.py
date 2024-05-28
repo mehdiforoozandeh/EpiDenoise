@@ -18,8 +18,9 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 class METRICS(object):
-    def __init__(self):
-        pass
+    def __init__(self, chrom='chr21', bin_size=25):
+        self.prom_df = self.get_prom_positions(chrom, bin_size)
+        self.gene_df = self.get_gene_positions(chrom, bin_size)
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
@@ -40,31 +41,36 @@ class METRICS(object):
 
         return chrom_subset
 
-    def get_signals(self, array, df):
-        signals = []
-        for idx, row in df.iterrows():
-            gene_bins = slice(row['start'], row['end'])
-            signals += array[gene_bins].tolist()
+    # def get_signals(self, array, df):
+    #     signals = []
+    #     for idx, row in df.iterrows():
+    #         gene_bins = slice(row['start'], row['end'])
+    #         signals += array[gene_bins].tolist()
 
+    #     return signals
+        # Calculate indices for slicing
+        
+    def get_signals(self, array, df):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in df.iterrows()])
+        # Use advanced indexing to extract all necessary elements at once
+        signals = array[indices]
         return signals
 
     ################################################################################
 
-    def get_gene_signals(self, y_true, y_pred, chrom='chr21', bin_size=25):
+    def get_gene_signals(self, y_true, y_pred, bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
-        gene_df = self.get_gene_positions(chrom, bin_size)
-        gt_vals = self.get_signals(array=y_true, df=gene_df)
-        pred_vals = self.get_signals(array=y_pred, df=gene_df)
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
 
         return gt_vals, pred_vals
     
-    def get_prom_signals(self, y_true, y_pred, chrom='chr21', bin_size=25):
+    def get_prom_signals(self, y_true, y_pred, bin_size=25):
         assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
-        prom_df = self.get_prom_positions(chrom, bin_size)
-        gt_vals = self.get_signals(array=y_true, df=prom_df)
-        pred_vals = self.get_signals(array=y_pred, df=prom_df)
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
 
         return gt_vals, pred_vals
     
@@ -289,7 +295,6 @@ class METRICS(object):
     def confidence_quantile(self, nbinom_p, nbinom_n, y_true):
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         return nbinom_dist.cdf(y_true)
-
 
 class Evaluation: # on chr21
     def __init__(
