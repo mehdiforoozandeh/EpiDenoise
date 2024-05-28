@@ -1961,7 +1961,7 @@ class EVAL_EED(object):
 
         self.viz.BIOS_quantile_hist(eval_res)
         self.viz.clear_pallete()
-        exit(/)
+        exit()
 
         # self.viz.BIOS_quantile_scatter(eval_res)
         # self.viz.clear_pallete()
