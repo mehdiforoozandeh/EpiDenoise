@@ -617,9 +617,13 @@ class VISUALS(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
                     pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
 
-                heatmap, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
-                extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-                im = ax.imshow(heatmap.T, extent=extent, origin='lower', cmap='viridis')
+                # Create the heatmap
+                h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(
+                    h, interpolation='nearest', origin='lower', 
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
+                    aspect='auto', norm=LogNorm(), cmap='viridis')
                 
                 # Set title and labels for the top row and first column to avoid clutter
                 ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
