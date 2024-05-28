@@ -935,6 +935,8 @@ class VISUALS(object):
                 # Create subplot for each result and gene combination
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
+                print(f"scatter for {eval_res[j]['feature']}")
+
                 if c == "GW":
                     xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
                     pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
@@ -992,6 +994,8 @@ class VISUALS(object):
             for i, c in enumerate(cols):
                 # Create subplot for each result and gene combination
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                print(f"dens scatter for {eval_res[j]['feature']}")
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
@@ -1052,6 +1056,8 @@ class VISUALS(object):
                 # Create subplot for each result and gene combination
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
+                print(f"hist for {eval_res[j]['feature']}")
+
                 if c == "GW":
                     xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
 
@@ -1104,6 +1110,8 @@ class VISUALS(object):
             for i, c in enumerate(cols):
                 # Create subplot for each result and gene combination
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                print(f"heatmap for {eval_res[j]['feature']}")
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs"], eval_res[j]["pred_quantile"]
@@ -2465,8 +2473,6 @@ class EVAL_EED(object):
             selected regions' signals
         """
         print("plotting quantile plots")
-        self.viz.BIOS_quantile_scatter(eval_res)
-        self.viz.clear_pallete()
 
         self.viz.BIOS_quantile_density_scatter(eval_res)
         self.viz.clear_pallete()
@@ -2475,6 +2481,9 @@ class EVAL_EED(object):
         self.viz.clear_pallete()
 
         self.viz.BIOS_quantile_heatmap(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_quantile_scatter(eval_res)
         self.viz.clear_pallete()
 
         exit()
