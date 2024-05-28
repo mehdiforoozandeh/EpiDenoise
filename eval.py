@@ -625,7 +625,7 @@ class VISUALS(object):
                 im = ax.imshow(
                     h, interpolation='nearest', origin='lower', 
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
-                    aspect='auto', norm=LogNorm(), cmap='viridis')
+                    aspect='auto', cmap='viridis')
                 
                 # Set title and labels for the top row and first column to avoid clutter
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
@@ -638,17 +638,61 @@ class VISUALS(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.png", dpi=150)
 
     def BIOS_mean_std_scatter(self, eval_res):
-        # Scatter plot with color encoding
-        plt.figure(figsize=(10, 8))
-        sc = plt.scatter(mu_pred, mu_obs, c=sigma_pred, cmap='viridis', alpha=0.6)
-        plt.colorbar(sc, label='Predicted Standard Deviation')
-        plt.plot([mu_pred.min(), mu_pred.max()], [mu_pred.min(), mu_pred.max()], 'k--')
-        plt.title('Scatter Plot of Predicted vs Observed Means with Color Encoding for Predicted Standard Deviation')
-        plt.xlabel('Predicted Mean')
-        plt.ylabel('Observed Mean')
-        plt.grid(True)
-        plt.show()
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+            sc = ax.scatter(observed, pred_mean, c=pred_std, cmap='viridis', alpha=0.6)
+            plt.colorbar(sc, ax=ax, label='Predicted std')
+            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
+            ax.set_xlabel('Observed')
+            ax.set_ylabel('Predicted Mean')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
+    
+    def BIOS_mean_std_hexbin(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+            hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
+            plt.colorbar(hb, ax=ax, label='Predicted std')
+            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
+            ax.set_xlabel('Observed')
+            ax.set_ylabel('Predicted Mean')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_hexbin.png", dpi=150)
+        
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1708,6 +1752,9 @@ class EVAL_EED(object):
         imp_mean = imp_dist.expect()
         ups_mean = ups_dist.expect()
 
+        imp_std = imp_dist.std()
+        ups_std = ups_dist.std()
+
         # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
@@ -1728,6 +1775,7 @@ class EVAL_EED(object):
 
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
+                        pred_std = imp_std[:, j].numpy()
                         # lower_60 = imp_lower_60[:, j].numpy()
                         # lower_80 = imp_lower_80[:, j].numpy()
                         # lower_95 = imp_lower_95[:, j].numpy()
@@ -1739,6 +1787,7 @@ class EVAL_EED(object):
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
+                        pred_std = ups_std[:, j].numpy()
                         # lower_60 = ups_lower_60[:, j].numpy()
                         # lower_80 = ups_lower_80[:, j].numpy()
                         # lower_95 = ups_lower_95[:, j].numpy()
@@ -1758,6 +1807,7 @@ class EVAL_EED(object):
                         "obs":target,
                         "imp":pred,
                         "pred_quantile":quantile,
+                        "pred_std":pred_std,
 
                         # "lower_60" : lower_60,
                         # "lower_80" : lower_80,
@@ -1972,6 +2022,15 @@ class EVAL_EED(object):
         # self.viz.clear_pallete()
 
         self.viz.BIOS_quantile_heatmap(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_mean_std_scatter(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_mean_std_hexbin(eval_res)
+        self.viz.clear_pallete()
+
+        self.viz.BIOS_quantile_scatter(eval_res)
         self.viz.clear_pallete()
 
         # self.viz.BIOS_quantile_hist(eval_res)
