@@ -59,7 +59,7 @@ class METRICS(object):
     ################################################################################
 
     def get_gene_signals(self, y_true, y_pred, bin_size=25):
-        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
         gt_vals = self.get_signals(array=y_true, df=self.gene_df)
         pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
@@ -67,7 +67,7 @@ class METRICS(object):
         return gt_vals, pred_vals
     
     def get_prom_signals(self, y_true, y_pred, bin_size=25):
-        assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 
         gt_vals = self.get_signals(array=y_true, df=self.prom_df)
         pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
