@@ -620,13 +620,15 @@ class VISUALS(object):
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
                 h = h.T  # Transpose to correct the orientation
+                h = h / h.sum(axis=1, keepdims=True)  # Normalize rows
+
                 im = ax.imshow(
                     h, interpolation='nearest', origin='lower', 
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
                     aspect='auto', norm=LogNorm(), cmap='viridis')
                 
                 # Set title and labels for the top row and first column to avoid clutter
-                ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
                 ax.set_xlabel("Observed")
                 ax.set_ylabel("Predicted Quantiles")
                 plt.colorbar(im, ax=ax, orientation='vertical')
