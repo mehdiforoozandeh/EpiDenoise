@@ -1136,7 +1136,10 @@ class VISUALS(object):
                 heatmap, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b)
                 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
                 ax.imshow(heatmap.T, extent=extent, origin='lower', cmap='viridis')
-                plt.colorbar()
+                
+
+                if i == 0 and j ==0:
+                    ax.colorbar()
 
                 if share_axes:
                     # Determine the range for x and y axes
