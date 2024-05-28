@@ -617,7 +617,7 @@ class VISUALS(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
                     pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
 
-                heatmap, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, normed=True)
+                heatmap, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
                 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
                 im = ax.imshow(heatmap.T, extent=extent, origin='lower', cmap='viridis')
                 
