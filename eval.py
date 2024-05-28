@@ -1953,8 +1953,8 @@ class EVAL_EED(object):
         """
         print("plotting quantile plots")
 
-        self.viz.BIOS_quantile_density(eval_res)
-        self.viz.clear_pallete()
+        # self.viz.BIOS_quantile_density(eval_res)
+        # self.viz.clear_pallete()
 
         self.viz.BIOS_quantile_heatmap(eval_res)
         self.viz.clear_pallete()
