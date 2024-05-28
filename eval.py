@@ -1133,7 +1133,7 @@ class VISUALS(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
                     pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
 
-                heatmap, xedges, yedges = np.histogram2d(xs, ys, bins=b)
+                heatmap, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b)
                 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
                 ax.imshow(heatmap.T, extent=extent, origin='lower', cmap='viridis')
                 plt.colorbar()
@@ -2477,14 +2477,14 @@ class EVAL_EED(object):
         # self.viz.BIOS_quantile_density_scatter(eval_res)
         # self.viz.clear_pallete()
 
-        self.viz.BIOS_quantile_hist(eval_res)
-        self.viz.clear_pallete()
-
         self.viz.BIOS_quantile_heatmap(eval_res)
         self.viz.clear_pallete()
 
-        self.viz.BIOS_quantile_scatter(eval_res)
-        self.viz.clear_pallete()
+        # self.viz.BIOS_quantile_hist(eval_res)
+        # self.viz.clear_pallete()
+
+        # self.viz.BIOS_quantile_scatter(eval_res)
+        # self.viz.clear_pallete()
 
         exit()
         # try: 
