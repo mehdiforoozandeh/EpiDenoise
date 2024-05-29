@@ -2002,20 +2002,6 @@ class EVAL_EED(object):
         return eval_res
 
     def viz_bios(self, eval_res):
-        """
-        visualizations -- per_bios:
-
-            highlight imputed vs denoised
-            corresp curve + deriv
-
-            scatter_gewi: value, rank 
-            scatter_gene: value, rank 
-            scatter_prom: value, rank 
-            scatter_1imp: value, rank 
-            scatter_1obs: value, rank 
-
-            selected regions' signals
-        """
 
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
@@ -2138,6 +2124,26 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
     e = EVAL_EED(
+        model="models/EpiDenoise30a_20240525184756_params2182872.pt", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=400, batch_size=200, 
+        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240525184756_params2182872.pkl",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30a", resolution=25, 
+        savedir="models/eval_30a/", mode="eval"
+    )
+    evres = e.bios_pipeline("ENCBS596CTT", 1)
+    for i in range(len(evres)):
+        print(evres[i])
+
+    e.viz_bios(evres)
+    try:
+        evres = pd.DataFrame(evres)
+        evres.to_csv("models/eval_30a/res.csv")
+    except:
+        pass
+    
+    e = EVAL_EED(
         model="models/EpiDenoise30b_20240526123547_params5969560.pt", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=1600, batch_size=50, 
@@ -2157,25 +2163,7 @@ if __name__=="__main__":
     except:
         pass
 
-    e = EVAL_EED(
-        model="models/EpiDenoise30a_20240525184756_params2182872.pt", 
-        data_path="/project/compbio-lab/encode_data/", 
-        context_length=400, batch_size=200, 
-        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240525184756_params2182872.pkl",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30a", resolution=25, 
-        savedir="models/eval_30a/", mode="eval"
-    )
-    evres = e.bios_pipeline("ENCBS596CTT", 1)
-    for i in range(len(evres)):
-        print(evres[i])
-
-    e.viz_bios(evres)
-    try:
-        evres = pd.DataFrame(evres)
-        evres.to_csv("models/eval_30a/res.csv")
-    except:
-        pass
+    
 
     
     
