@@ -3357,6 +3357,7 @@ class PRE_TRAINER(object):
             self.dataset.new_epoch()
             next_epoch = False
 
+            last_lopr = -1
             while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
                 t0 = datetime.now()
                 # print("new batch")
@@ -3486,7 +3487,7 @@ class PRE_TRAINER(object):
                     # print("got inner epoch stats")
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
-                if lopr > 1 and lopr % 10 == 0:
+                if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
                     # self.scheduler.step()
                     try:
                         torch.save(
@@ -3519,7 +3520,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 5 == 0:
+                if lopr % 5 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
                     
                     torch.cuda.empty_cache()
@@ -3531,6 +3532,7 @@ class PRE_TRAINER(object):
                 logfile.write("\n".join(log_strs))
                 logfile.close()
 
+                last_lopr = lopr
                 next_epoch = self.dataset.update_batch_pointers()
                 
             if epoch%1==0:
@@ -4435,7 +4437,7 @@ if __name__ == "__main__":
             "nhead": 4,
             "d_model": 384,
             "nlayers": 6,
-            "epochs": 2,
+            "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 400,
@@ -4464,7 +4466,7 @@ if __name__ == "__main__":
             "nhead": 4,
             "d_model": 384,
             "nlayers": 3,
-            "epochs": 2,
+            "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 1600,
