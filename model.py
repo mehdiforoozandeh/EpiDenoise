@@ -3344,7 +3344,7 @@ class PRE_TRAINER(object):
             "cloze_mask": -2,
             "pad": -3
         }
-        dsf_list = [1, 2, 4, 8]
+        dsf_list = [1, 2, 4]#, 8]
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
         if hook:
@@ -4441,14 +4441,14 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 6,
             "epochs": 2,
-            "inner_epochs": 100,
+            "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 400,
-            "batch_size": 50,
-            "learning_rate": 1e-5,
+            "batch_size": 36,
+            "learning_rate": 1e-6,
             "num_loci": 1600,
             "lr_halflife":1,
-            "min_avail":10
+            "min_avail":5
         }
         train_epidenoise30(
             hyper_parameters30a, 
@@ -4469,14 +4469,14 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 3,
             "epochs": 2,
-            "inner_epochs": 100,
+            "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 1600,
             "batch_size": 18,
-            "learning_rate": 1e-5,
+            "learning_rate": 1e-6,
             "num_loci": 400,
             "lr_halflife":2,
-            "min_avail":10
+            "min_avail":5
         }
         train_epidenoise30(
             hyper_parameters30b, 

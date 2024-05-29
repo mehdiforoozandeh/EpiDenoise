@@ -620,7 +620,7 @@ class VISUALS(object):
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
                 h = h.T  # Transpose to correct the orientation
-                h = h / h.sum(axis=1, keepdims=True)  # Normalize rows
+                h = h / h.sum(axis=0, keepdims=True)  # Normalize cols
 
                 im = ax.imshow(
                     h, interpolation='nearest', origin='lower', 
@@ -2142,7 +2142,7 @@ if __name__=="__main__":
         evres.to_csv("models/eval_30a/res.csv")
     except:
         pass
-    
+
     e = EVAL_EED(
         model="models/EpiDenoise30b_20240526123547_params5969560.pt", 
         data_path="/project/compbio-lab/encode_data/", 
