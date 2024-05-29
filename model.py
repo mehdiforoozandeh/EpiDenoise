@@ -4452,7 +4452,8 @@ if __name__ == "__main__":
         }
         train_epidenoise30(
             hyper_parameters30a, 
-            checkpoint_path=None, arch="a")
+            checkpoint_path="models/EpiDenoise30a_20240525184756_params2182872.pt", 
+            arch="a")
     
     elif sys.argv[1] == "epd30b":
         hyper_parameters30b = {
@@ -4480,4 +4481,5 @@ if __name__ == "__main__":
         }
         train_epidenoise30(
             hyper_parameters30b, 
-            checkpoint_path=None, arch="b")
+            checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+            arch="b")
