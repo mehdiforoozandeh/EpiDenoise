@@ -474,7 +474,7 @@ class VISUALS(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["pred_quantile"])
                     pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
 
-                ax.scatter(xs, ys, color="black", s=5, alpha=0.7, edgecolor='b')
+                ax.scatter(xs, ys, color="black", s=5, alpha=0.7)
                 # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
                 
                 # Set title and labels for the top row and first column to avoid clutter
@@ -625,7 +625,7 @@ class VISUALS(object):
                 im = ax.imshow(
                     h, interpolation='nearest', origin='lower', 
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
-                    aspect='auto', cmap='viridis')
+                    aspect='auto', cmap='viridis', norm=LogNorm())
                 
                 # Set title and labels for the top row and first column to avoid clutter
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
@@ -654,7 +654,7 @@ class VISUALS(object):
             observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
             pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
 
-            sc = ax.scatter(observed, pred_mean, c=pred_std, cmap='viridis', alpha=0.6)
+            sc = ax.scatter(observed, pred_mean, c=pred_std, cmap='viridis', alpha=0.6, s=5)
             plt.colorbar(sc, ax=ax, label='Predicted std')
             ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
             ax.set_xlabel('Observed')
@@ -1755,14 +1755,14 @@ class EVAL_EED(object):
         imp_std = imp_dist.std()
         ups_std = ups_dist.std()
 
-        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -1776,25 +1776,25 @@ class EVAL_EED(object):
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         pred_std = imp_std[:, j].numpy()
-                        # lower_60 = imp_lower_60[:, j].numpy()
-                        # lower_80 = imp_lower_80[:, j].numpy()
-                        # lower_95 = imp_lower_95[:, j].numpy()
+                        lower_60 = imp_lower_60[:, j].numpy()
+                        lower_80 = imp_lower_80[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
 
-                        # upper_60 = imp_upper_60[:, j].numpy()
-                        # upper_80 = imp_upper_80[:, j].numpy()
-                        # upper_95 = imp_upper_95[:, j].numpy()
+                        upper_60 = imp_upper_60[:, j].numpy()
+                        upper_80 = imp_upper_80[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
                         quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
                         pred_std = ups_std[:, j].numpy()
-                        # lower_60 = ups_lower_60[:, j].numpy()
-                        # lower_80 = ups_lower_80[:, j].numpy()
-                        # lower_95 = ups_lower_95[:, j].numpy()
+                        lower_60 = ups_lower_60[:, j].numpy()
+                        lower_80 = ups_lower_80[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
 
-                        # upper_60 = ups_upper_60[:, j].numpy()
-                        # upper_80 = ups_upper_80[:, j].numpy()
-                        # upper_95 = ups_upper_95[:, j].numpy()
+                        upper_60 = ups_upper_60[:, j].numpy()
+                        upper_80 = ups_upper_80[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
@@ -1809,13 +1809,13 @@ class EVAL_EED(object):
                         "pred_quantile":quantile,
                         "pred_std":pred_std,
 
-                        # "lower_60" : lower_60,
-                        # "lower_80" : lower_80,
-                        # "lower_95" : lower_95,
+                        "lower_60" : lower_60,
+                        "lower_80" : lower_80,
+                        "lower_95" : lower_95,
 
-                        # "upper_60": upper_60,
-                        # "upper_80": upper_80,
-                        # "upper_95": upper_95,
+                        "upper_60": upper_60,
+                        "upper_80": upper_80,
+                        "upper_95": upper_95,
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),
@@ -1854,13 +1854,13 @@ class EVAL_EED(object):
             else:
                 # continue
                 pred = ups_mean[:, j].numpy()
-                # lower_60 = ups_lower_60[:, j].numpy()
-                # lower_80 = ups_lower_80[:, j].numpy()
-                # lower_95 = ups_lower_95[:, j].numpy()
+                lower_60 = ups_lower_60[:, j].numpy()
+                lower_80 = ups_lower_80[:, j].numpy()
+                lower_95 = ups_lower_95[:, j].numpy()
 
-                # upper_60 = ups_upper_60[:, j].numpy()
-                # upper_80 = ups_upper_80[:, j].numpy()
-                # upper_95 = ups_upper_95[:, j].numpy()
+                upper_60 = ups_upper_60[:, j].numpy()
+                upper_80 = ups_upper_80[:, j].numpy()
+                upper_95 = ups_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -1870,13 +1870,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    # "lower_60" : lower_60,
-                    # "lower_80" : lower_80,
-                    # "lower_95" : lower_95,
+                    "lower_60" : lower_60,
+                    "lower_80" : lower_80,
+                    "lower_95" : lower_95,
 
-                    # "upper_60": upper_60,
-                    # "upper_80": upper_80,
-                    # "upper_95": upper_95
+                    "upper_60": upper_60,
+                    "upper_80": upper_80,
+                    "upper_95": upper_95
                     }
                 results.append(metrics)
             
@@ -2016,10 +2016,23 @@ class EVAL_EED(object):
 
             selected regions' signals
         """
-        print("plotting quantile plots")
+
+        print("plotting signal tracks")
+        self.viz.BIOS_signal_track(eval_res)
+        self.viz.clear_pallete()
+
+        print("plotting signal confidence")
+        self.viz.BIOS_signal_confidence(eval_res)
+        self.viz.clear_pallete()
+
+        eval_res = [res for res in eval_res if "obs" in res]
 
         # self.viz.BIOS_quantile_density(eval_res)
         # self.viz.clear_pallete()
+        
+        # self.viz.BIOS_mean_std_hexbin(eval_res)
+        # self.viz.clear_pallete()
+        
 
         self.viz.BIOS_quantile_heatmap(eval_res)
         self.viz.clear_pallete()
@@ -2027,28 +2040,10 @@ class EVAL_EED(object):
         self.viz.BIOS_mean_std_scatter(eval_res)
         self.viz.clear_pallete()
 
-        self.viz.BIOS_mean_std_hexbin(eval_res)
+        self.viz.BIOS_quantile_hist(eval_res)
         self.viz.clear_pallete()
 
         self.viz.BIOS_quantile_scatter(eval_res)
-        self.viz.clear_pallete()
-
-        # self.viz.BIOS_quantile_hist(eval_res)
-        # self.viz.clear_pallete()
-        exit()
-
-        # self.viz.BIOS_quantile_scatter(eval_res)
-        # self.viz.clear_pallete()
-
-        # try: 
-        print("plotting signal tracks")
-        self.viz.BIOS_signal_track(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot signal tracks")
-
-        print("plotting signal confidence")
-        self.viz.BIOS_signal_confidence(eval_res)
         self.viz.clear_pallete()
 
         # try:
@@ -2059,16 +2054,16 @@ class EVAL_EED(object):
         #     print("faild to plot context_specific performance")
             
         # try:
-        # print("plotting signal scatter")
-        # self.viz.BIOS_signal_scatter(eval_res)
-        # self.viz.clear_pallete()
+        print("plotting signal scatter")
+        self.viz.BIOS_signal_scatter(eval_res)
+        self.viz.clear_pallete()
         # except:
         #     print("faild to plot  signal scatter")
 
         # try:
-        # print("plotting signal scatter with marginals")
-        # self.viz.BIOS_signal_scatter_with_marginals(eval_res)
-        # self.viz.clear_pallete()
+        print("plotting signal scatter with marginals")
+        self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+        self.viz.clear_pallete()
         # except:
         #     print("faild to plot scatter with marginals")
 
@@ -2141,32 +2136,31 @@ class EVAL_EED(object):
             self.viz.MODEL_regplot_overall(self.model_res, metric=m)
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
-
 if __name__=="__main__":
-    # e = EVAL_EED(
-    #     model="models/EPD30a_model_checkpoint_epoch1_LociProg90.pth", 
-    #     data_path="/project/compbio-lab/encode_data/", 
-    #     context_length=400, batch_size=200, 
-    #     hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240522234201_params2182872.pkl",
-    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-    #     version="30a", resolution=25, 
-    #     savedir="models/eval_30a/", mode="eval"
-    # )
-    # evres = e.bios_pipeline("ENCBS596CTT", 1)
-    # for i in range(len(evres)):
-    #     print(evres[i])
+    e = EVAL_EED(
+        model="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=1600, batch_size=50, 
+        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240526123547_params5969560.pkl",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30b", resolution=25, 
+        savedir="models/eval_30b/", mode="eval"
+    )
+    evres = e.bios_pipeline("ENCBS596CTT", 1)
+    for i in range(len(evres)):
+        print(evres[i])
 
-    # e.viz_bios(evres)
-    # try:
-    #     evres = pd.DataFrame(evres)
-    #     evres.to_csv("models/eval_30a/res.csv")
-    # except:
-    #     pass
+    e.viz_bios(evres)
+    try:
+        evres = pd.DataFrame(evres)
+        evres.to_csv("models/eval_30b/res.csv")
+    except:
+        pass
 
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch1_LociProg10.pth", 
+        model="models/EpiDenoise30a_20240525184756_params2182872.pt", 
         data_path="/project/compbio-lab/encode_data/", 
-        context_length=400, batch_size=50, 
+        context_length=400, batch_size=200, 
         hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240525184756_params2182872.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30a", resolution=25, 
@@ -2179,8 +2173,10 @@ if __name__=="__main__":
     e.viz_bios(evres)
     try:
         evres = pd.DataFrame(evres)
-        evres.to_csv("models/eval_30b/res.csv")
+        evres.to_csv("models/eval_30a/res.csv")
     except:
         pass
+
+    
     
 
