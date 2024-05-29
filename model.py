@@ -3519,14 +3519,8 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 2 == 0:
-                    # validation_set_eval = val_eval.get_validation(
-                    #         self.model, self.dataset.base_path, context_length, batch_size,
-                    #         x_dsf=1, y_dsf=1, chr_sizes_file="data/hg38.chrom.sizes", 
-                    #         resolution=25, split="val")
-                    # print("running val")
+                if lopr % 5 == 0:
                     validation_set_eval = val_eval.get_validation(self.model)
-                    # print("got val")
                     
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
@@ -4279,6 +4273,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
+        print("loading pretrained model...")
         model.load_state_dict(torch.load(checkpoint_path))
 
     print(f"EPD30{arch} # model_parameters: {count_parameters(model)}")

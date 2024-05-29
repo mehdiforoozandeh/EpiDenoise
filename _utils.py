@@ -275,7 +275,11 @@ class MONITOR_VALIDATION(object):
             (25800151//self.resolution, 26235914//self.resolution), # APP
             (31589009//self.resolution, 31745788//self.resolution), # SOD1
             (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
-            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            (33577551//self.resolution, 33919338//self.resolution), # ITSN1
+            (36260000//self.resolution, 36450000//self.resolution), # RUNX1
+            (45000000//self.resolution, 45250000//self.resolution), # COL18A1
+            (36600000//self.resolution, 36850000//self.resolution), # MX1
+            (39500000//self.resolution, 40000000//self.resolution) # Highly Conserved Non-Coding Sequences (HCNS)
             ]
 
         self.token_dict = {
@@ -468,7 +472,8 @@ class MONITOR_VALIDATION(object):
         self.model = model
         # self.model.eval()
         full_res = []
-        bioses = [list(self.dataset.navigation.keys())[0]]
+        bioses = list(self.dataset.navigation.keys())
+        # bioses = [list(self.dataset.navigation.keys())[0]]
 
         for bios_name in bioses:
             imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
