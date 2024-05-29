@@ -3520,7 +3520,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 5 == 0 and lopr != last_lopr:
+                if lopr % 1 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
                     
                     torch.cuda.empty_cache()
@@ -4438,7 +4438,7 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 50,
+            "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 400,
             "batch_size": 36,
@@ -4467,7 +4467,7 @@ if __name__ == "__main__":
             "d_model": 384,
             "nlayers": 3,
             "epochs": 1,
-            "inner_epochs": 50,
+            "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 1600,
             "batch_size": 18,
