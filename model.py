@@ -1478,7 +1478,7 @@ class EpiDenoise30b(nn.Module):
                 input_dim,# + metadata_embedding_dim, #outp
                 conv_kernel_size[0], stride, dilation, 
                 pool_type="none", residuals=True, 
-                groups=input_dim + metadata_embedding_dim)
+                groups=input_dim)# + metadata_embedding_dim)
 
         self.conv0 = ConvTower(
                 input_dim,# + metadata_embedding_dim, 
