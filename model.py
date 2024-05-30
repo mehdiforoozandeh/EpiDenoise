@@ -1503,7 +1503,7 @@ class EpiDenoise30b(nn.Module):
                 d_model=context_length // (2**n_cnn_layers), nhead=2, dim_feedforward=2*d_model, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
 
-        # self.transD_emb = nn.Linear(, d_model)
+        self.transD_emb = nn.Linear(context_length // (2**n_cnn_layers), d_model)
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.embedd_layer_norm = nn.LayerNorm(d_model)
@@ -1520,9 +1520,8 @@ class EpiDenoise30b(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-        src = self.lin(src)
         
-        W = src
+        W = self.lin(src)
         for encL in self.transL:
             W = encL(W)
         print(W.shape)
@@ -1539,6 +1538,7 @@ class EpiDenoise30b(nn.Module):
         for encD in self.transD:
             H = encD(H)
 
+        H = self.transD_emb(H)
         print(H.shape)
 
         exit()
@@ -4502,18 +4502,18 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 3,
 
-            "nhead": 4,
-            "d_model": 384,
+            "nhead": 2,
+            "d_model": 192,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
-            "context_length": 1600,
+            "context_length": 400,
             "batch_size": 18,
-            "learning_rate": 1e-6,
-            "num_loci": 400,
+            "learning_rate": 1e-4,
+            "num_loci": 20,
             "lr_halflife":2,
-            "min_avail":5
+            "min_avail":15
         }
 
         train_epidenoise30(
