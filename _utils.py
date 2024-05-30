@@ -548,13 +548,31 @@ def register_hooks(model):
     for name, module in model.named_modules():
         module.register_full_backward_hook(capture_gradients_hook)
 
-def exponential_linspace_int(start, end, num, divisible_by=1):
-    """Exponentially increasing values of integers."""
-    def _round(x):
-        return int(np.round(x / divisible_by) * divisible_by)
+# def exponential_linspace_int(start, end, num, divisible_by=1):
+#     """Exponentially increasing values of integers."""
+#     def _round(x):
+#         return int(np.round(x / divisible_by) * divisible_by)
+
+#     base = np.exp(np.log(end / start) / (num - 1))
+#     return [_round(start * base**i) for i in range(num)]
+
+def exponential_linspace_int(start, end, num, divisible_by=1, divisible_by_previous=False):
+    """Exponentially increasing values of integers, with options to ensure divisibility constraints."""
+    values = [start]
+
+    def _round(x, base=divisible_by):
+        return int(np.round(x / base) * base)
 
     base = np.exp(np.log(end / start) / (num - 1))
-    return [_round(start * base**i) for i in range(num)]
+    for i in range(1, num):
+        next_value = start * base**i
+        if divisible_by_previous:
+            # Ensure the next_value is a multiple of the previous value
+            prev_value = values[-1]
+            next_value = np.ceil(next_value / prev_value) * prev_value
+        values.append(_round(next_value, values[-1] if divisible_by_previous else divisible_by))
+
+    return values
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
