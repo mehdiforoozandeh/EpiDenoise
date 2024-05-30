@@ -556,7 +556,7 @@ def register_hooks(model):
 #     base = np.exp(np.log(end / start) / (num - 1))
 #     return [_round(start * base**i) for i in range(num)]
 
-def exponential_linspace_int(start, end, num, divisible_by=1, divisible_by_previous=False):
+def exponential_linspace_int(start, end, num, divisible_by=1, divisible_by_previous=True):
     """Exponentially increasing values of integers, with options to ensure divisibility constraints."""
     values = [start]
 
