@@ -1502,7 +1502,7 @@ class EpiDenoise30b(nn.Module):
 
         self.transD = nn.ModuleList(
             [nn.TransformerEncoderLayer(
-                d_model=context_length // (2**n_cnn_layers), nhead=nhead, dim_feedforward=2*d_model, 
+                d_model=context_length // (2**n_cnn_layers), nhead=2, dim_feedforward=2*d_model, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, F, d_model)
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
