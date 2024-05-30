@@ -1519,17 +1519,20 @@ class EpiDenoise30b(nn.Module):
 
         # src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
         src = src + md_embedding
-        print(src.shape)
+        
+        W = self.transL(src)
+        print(W.shape)
 
+        ### CONV ENCODER ###
+
+        H = src.permute(0, 2, 1) # to N, F, L
+        H = self.convD(H)
+        H = self.conv0(H)
+        for conv in self.convtower:
+            H = conv(H)
+        H = H.permute(0, 2, 1)  # to N, L, F
+        print(H.shape)
         exit()
-
-        # ### CONV ENCODER ###
-
-        # e_src = src.permute(0, 2, 1) # to N, F, L
-        # e_src = self.conv0(e_src)
-        # for conv in self.convtower:
-        #     e_src = conv(e_src)
-        # e_src = e_src.permute(0, 2, 1)  # to N, L, F
 
         # ### TRANSFORMER ENCODER ###
         # if self.pos_enc != "relative":
