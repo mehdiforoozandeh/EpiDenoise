@@ -4473,7 +4473,11 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":5
         }
+        # train_epidenoise30(
+        #     hyper_parameters30b, 
+        #     checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+        #     arch="b")
         train_epidenoise30(
             hyper_parameters30b, 
-            checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+            checkpoint_path="", 
             arch="b")
