@@ -4479,5 +4479,5 @@ if __name__ == "__main__":
         #     arch="b")
         train_epidenoise30(
             hyper_parameters30b, 
-            checkpoint_path="", 
+            checkpoint_path=None, 
             arch="b")
