@@ -1523,8 +1523,8 @@ class EpiDenoise30b(nn.Module):
         src = src + md_embedding
         
         W = self.transL_emb(src)
-        for enc in self.transL:
-            W = enc(W)
+        for encL in self.transL:
+            W = encL(W)
         print(W.shape)
 
         ### CONV ENCODER ###
@@ -1534,7 +1534,11 @@ class EpiDenoise30b(nn.Module):
         H = self.conv0(H)
         for conv in self.convtower:
             H = conv(H)
-        H = H.permute(0, 2, 1)  # to N, L, F
+        # H = H.permute(0, 2, 1)  # to N, L, F
+
+        for encD in self.transD:
+            H = encD(H)
+
         print(H.shape)
 
         exit()
