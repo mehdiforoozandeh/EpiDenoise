@@ -1465,6 +1465,8 @@ class EpiDenoise30b(nn.Module):
 
         conv_out_channels = exponential_linspace_int(
             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
+        print(conv_out_channels)
+        exit()
 
         stride = 1
         dilation=1
