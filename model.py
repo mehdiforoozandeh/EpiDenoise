@@ -1474,14 +1474,14 @@ class EpiDenoise30b(nn.Module):
         self.position = PositionalEncoding(d_model, dropout, context_length)
 
         self.convD = ConvTower(
-                input_dim,# + metadata_embedding_dim, #inp
-                input_dim,# + metadata_embedding_dim, #outp
+                input_dim + metadata_embedding_dim, #inp
+                input_dim + metadata_embedding_dim, #outp
                 conv_kernel_size[0], stride, dilation, 
                 pool_type="none", residuals=True, 
-                groups=input_dim)# + metadata_embedding_dim)
+                groups=input_dim + metadata_embedding_dim)
 
         self.conv0 = ConvTower(
-                input_dim,# + metadata_embedding_dim, 
+                input_dim + metadata_embedding_dim, 
                 conv_out_channels[0],
                 conv_kernel_size[0], stride, dilation, 
                 pool_type="max", residuals=True)
@@ -1491,10 +1491,8 @@ class EpiDenoise30b(nn.Module):
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
-        # self.transL_emb = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-        self.transL_emb = nn.Linear(input_dim, d_model)
-        # self.transD_emb = nn.Linear(, d_model)
-
+        self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+        
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, 
@@ -1503,7 +1501,9 @@ class EpiDenoise30b(nn.Module):
         self.transD = nn.ModuleList(
             [nn.TransformerEncoderLayer(
                 d_model=context_length // (2**n_cnn_layers), nhead=2, dim_feedforward=2*d_model, 
-                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, F, d_model)
+                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
+
+        # self.transD_emb = nn.Linear(, d_model)
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.embedd_layer_norm = nn.LayerNorm(d_model)
@@ -1519,10 +1519,10 @@ class EpiDenoise30b(nn.Module):
         md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
 
-        # src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-        src = src + md_embedding
+        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+        src = self.lin(src)
         
-        W = self.transL_emb(src)
+        W = src
         for encL in self.transL:
             W = encL(W)
         print(W.shape)
