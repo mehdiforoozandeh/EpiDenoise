@@ -1474,14 +1474,15 @@ class EpiDenoise30b(nn.Module):
         self.position = PositionalEncoding(d_model, dropout, context_length)
 
         self.convD = ConvTower(
-                input_dim + metadata_embedding_dim, #inp
-                input_dim + metadata_embedding_dim, #outp
+                input_dim,# + metadata_embedding_dim, #inp
+                input_dim,# + metadata_embedding_dim, #outp
                 conv_kernel_size[0], stride, dilation, 
                 pool_type="none", residuals=True, 
                 groups=input_dim + metadata_embedding_dim)
 
         self.conv0 = ConvTower(
-                input_dim + metadata_embedding_dim, conv_out_channels[0],
+                input_dim,# + metadata_embedding_dim, 
+                conv_out_channels[0],
                 conv_kernel_size[0], stride, dilation, 
                 pool_type="max", residuals=True)
         self.convtower = nn.ModuleList([ConvTower(
@@ -1490,7 +1491,8 @@ class EpiDenoise30b(nn.Module):
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
-        self.transL_emb = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+        # self.transL_emb = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+        self.transL_emb = nn.Linear(input_dim, d_model)
         # self.transD_emb = nn.Linear(context_length // (2**n_cnn_layers), d_model)
 
         self.transL = nn.ModuleList(
@@ -1517,8 +1519,8 @@ class EpiDenoise30b(nn.Module):
         md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
 
-        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-        # src = src + md_embedding
+        # src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+        src = src + md_embedding
         
         W = src
         for enc in self.transL:
