@@ -1521,7 +1521,7 @@ class EpiDenoise30b(nn.Module):
         src = src + md_embedding
         
         W = src
-        for enc in self.transformer_encoder:
+        for enc in self.transL:
             W = enc(W)
         print(W.shape)
 
