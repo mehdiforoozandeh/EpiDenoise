@@ -1541,6 +1541,9 @@ class EpiDenoise30b(nn.Module):
         H = self.transD_emb(H)
         print(H.shape)
 
+        Z = torch.matmul(W, H)
+        print(Z.shape)
+
         exit()
 
         # ### TRANSFORMER ENCODER ###
