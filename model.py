@@ -1544,6 +1544,8 @@ class EpiDenoise30b(nn.Module):
         Z = torch.matmul(W, H)
         print(Z.shape)
 
+        p, n = self.neg_binom_layer(src)
+        print(p.shape, n.shape)
         exit()
 
         # ### TRANSFORMER ENCODER ###
@@ -1566,7 +1568,7 @@ class EpiDenoise30b(nn.Module):
         # for dec in self.transformer_decoder:
         #     src = dec(src, e_src)
 
-        # p, n = self.neg_binom_layer(src)
+        # 
         # mp = torch.sigmoid(self.mask_pred_layer(src))
         # mo = torch.sigmoid(self.mask_obs_layer(src))
 
