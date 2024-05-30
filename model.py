@@ -1520,7 +1520,9 @@ class EpiDenoise30b(nn.Module):
         # src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
         src = src + md_embedding
         
-        W = self.transL(src)
+        W = src
+        for enc in self.transformer_encoder:
+            W = enc(W)
         print(W.shape)
 
         ### CONV ENCODER ###
