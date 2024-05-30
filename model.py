@@ -1517,8 +1517,10 @@ class EpiDenoise30b(nn.Module):
         md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
 
-        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+        # src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+        src = src + md_embedding
         print(src.shape)
+
         exit()
 
         # ### CONV ENCODER ###
@@ -4450,6 +4452,34 @@ if __name__ == "__main__":
             arch="a")
     
     elif sys.argv[1] == "epd30b":
+        # hyper_parameters30b = {
+        #     "data_path": "/project/compbio-lab/encode_data/",
+        #     "input_dim": 47,
+        #     "metadata_embedding_dim": 47,
+        #     "dropout": 0.01,
+
+        #     "n_cnn_layers": 5,
+        #     "conv_kernel_size" : 7,
+        #     "n_decoder_layers" : 3,
+
+        #     "nhead": 4,
+        #     "d_model": 384,
+        #     "nlayers": 3,
+        #     "epochs": 1,
+        #     "inner_epochs": 100,
+        #     "mask_percentage": 0.1,
+        #     "context_length": 1600,
+        #     "batch_size": 18,
+        #     "learning_rate": 1e-6,
+        #     "num_loci": 400,
+        #     "lr_halflife":2,
+        #     "min_avail":5
+        # }
+        # train_epidenoise30(
+        #     hyper_parameters30b, 
+        #     checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+        #     arch="b")
+
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
@@ -4473,10 +4503,7 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":5
         }
-        # train_epidenoise30(
-        #     hyper_parameters30b, 
-        #     checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
-        #     arch="b")
+
         train_epidenoise30(
             hyper_parameters30b, 
             checkpoint_path=None, 
