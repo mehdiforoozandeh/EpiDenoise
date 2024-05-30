@@ -4510,7 +4510,7 @@ if __name__ == "__main__":
             "n_decoder_layers" : 3,
 
             "nhead": 2,
-            "d_model": 192,
+            "d_model": 256,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,

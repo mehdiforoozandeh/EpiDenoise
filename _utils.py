@@ -548,35 +548,14 @@ def register_hooks(model):
     for name, module in model.named_modules():
         module.register_full_backward_hook(capture_gradients_hook)
 
-# def exponential_linspace_int(start, end, num, divisible_by=1):
-#     """Exponentially increasing values of integers."""
-#     def _round(x):
-#         return int(np.round(x / divisible_by) * divisible_by)
+def exponential_linspace_int(start, end, num, divisible_by=1):
+    """Exponentially increasing values of integers."""
+    def _round(x):
+        return int(np.round(x / divisible_by) * divisible_by)
 
-#     base = np.exp(np.log(end / start) / (num - 1))
-#     return [_round(start * base**i) for i in range(num)]
+    base = np.exp(np.log(end / start) / (num - 1))
+    return [_round(start * base**i) for i in range(num)]
 
-def exponential_linspace_int(start, end, num, divisible_by=1, divisible_by_previous=True):
-    """Exponentially increasing values of integers, ensuring each value is divisible by the previous."""
-    values = [start]
-    factor_increase = np.exp(np.log(end / start) / (num - 1))
-
-    for i in range(1, num):
-        target = start * factor_increase ** i
-        if divisible_by_previous:
-            # Adjust target to be divisible by the last value in the list
-            base = values[-1]
-            target = max(base, np.ceil(target / base) * base)
-
-        if i == num - 1 and target != end:
-            # Ensure the last element is exactly `end` and adjust if necessary
-            target = end
-
-        # Ensure the target is rounded properly as per divisible_by, if required
-        target = int(np.round(target / divisible_by) * divisible_by)
-        values.append(target)
-
-    return values
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
