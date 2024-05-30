@@ -1544,7 +1544,7 @@ class EpiDenoise30b(nn.Module):
         Z = torch.matmul(W, H)
         print(Z.shape)
 
-        p, n = self.neg_binom_layer(src)
+        p, n = self.neg_binom_layer(Z)
         print(p.shape, n.shape)
         exit()
 
