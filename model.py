@@ -1468,7 +1468,7 @@ class EpiDenoise30b(nn.Module):
 
 
         conv_out_channels = linear_divisible_linspace(
-           src, md_embedding, d_model, n_cnn_layers)
+           input_dim + metadata_embedding_dim, d_model, n_cnn_layers)
 
         print(conv_out_channels)
         exit()
