@@ -288,6 +288,9 @@ class MONITOR_VALIDATION(object):
                     "cloze_mask": -2,
                     "pad": -3
                 }
+        
+        if self.arch in ["c", "d"]:
+            self.token_dict["cloze_mask"] = self.token_dict["missing_mask"]
 
         self.chr_sizes = {}
         self.metrics = METRICS()
