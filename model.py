@@ -3544,32 +3544,34 @@ class PRE_TRAINER(object):
                     self.optimizer.step()
                     # print("updated params")
 
+                    if arch in ["a", "b"]:
+                        imp_pred = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(), 
+                            output_n[masked_map].cpu().detach()
+                            ).expect().cpu().detach().numpy()
+
+                        imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                        imp_r2 = r2_score(imp_true, imp_pred)
+                        imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                        batch_rec["imp_loss"].append(pred_loss.item())
+                        batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                        batch_rec["imp_mse"].append(imp_mse)
+                        batch_rec["imp_r2"].append(imp_r2)
+
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
                         output_n[observed_map].cpu().detach()
                         ).expect().cpu().detach().numpy()
 
-                    imp_pred = NegativeBinomial(
-                        output_p[masked_map].cpu().detach(), 
-                        output_n[masked_map].cpu().detach()
-                        ).expect().cpu().detach().numpy()
-
                     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                    imp_true = Y_batch[masked_map].cpu().detach().numpy()
-                    
                     ups_r2 = r2_score(ups_true, ups_pred)
-                    imp_r2 = r2_score(imp_true, imp_pred)
-
                     ups_mse = ((ups_true - ups_pred)**2).mean()
-                    imp_mse = ((imp_true - imp_pred)**2).mean()
-                    
-                    batch_rec["imp_loss"].append(pred_loss.item())
+                
                     batch_rec["ups_loss"].append(obs_loss.item())
-                    batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
-                    batch_rec["imp_r2"].append(imp_r2)
                     batch_rec["ups_mse"].append(ups_mse)
-                    batch_rec["imp_mse"].append(imp_mse)
+                    
                     # print("got inner epoch stats")
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
@@ -3586,21 +3588,31 @@ class PRE_TRAINER(object):
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
 
-                logstr = [
-                    f"Ep. {epoch}",
-                    f"DSF{dsf_X}->{dsf_Y}",
-                    f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                    f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                    f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                    f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                    f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
-                    f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                    f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                    f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                    f"took {int(minutes)}:{int(seconds)}"]
-                
-                # print("got batch stats")
+                if arch in ["a", "b"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
+
+                elif arch in ["c", "d"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
                 
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
