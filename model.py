@@ -877,8 +877,9 @@ class MatrixFactor_NBLL(nn.Module):
 
     def forward(self, p_pred, n_pred, true_signals, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
-
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+
+        print(ups_y_true.mean(), ups_n_pred.mean(), ups_p_pred.mean(), upsampling_loss.mean())
         
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
@@ -1558,7 +1559,6 @@ class EpiDenoise30c(nn.Module):
 
         p, n = self.neg_binom_layer(Z)
         return p, n
-
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
