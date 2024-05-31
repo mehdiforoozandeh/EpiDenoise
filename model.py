@@ -4535,7 +4535,7 @@ if __name__ == "__main__":
             "context_length": 1536,
             "batch_size": 18,
             "learning_rate": 1e-4,
-            "num_loci": 20,
+            "num_loci": 500,
             "lr_halflife":2,
             "min_avail":15
         }
