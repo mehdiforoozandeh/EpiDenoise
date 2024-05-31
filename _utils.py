@@ -291,8 +291,6 @@ class MONITOR_VALIDATION(object):
         
         if self.arch in ["c", "d"]:
             self.token_dict["cloze_mask"] = self.token_dict["missing_mask"]
-            print(self.token_dict)
-            exit()
 
         self.chr_sizes = {}
         self.metrics = METRICS()
@@ -338,7 +336,10 @@ class MONITOR_VALIDATION(object):
                     x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                     mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                     # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
-                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    if self.arch in ["a", "b"]:
+                        avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    elif self.arch in ["c", "d"]:
+                        avail_batch[:, imp_target] = 0
 
                 x_batch = x_batch.to(self.device)
                 mX_batch = mX_batch.to(self.device)
