@@ -1524,7 +1524,7 @@ class EpiDenoise30b(nn.Module):
         W = self.linL(src)
         for encL in self.transL:
             W = encL(W)
-        print(W.shape) # to N, L, F
+        
 
         ### CONV ENCODER ###
 
@@ -1544,7 +1544,11 @@ class EpiDenoise30b(nn.Module):
         
         # H ->  N, F', F
         H = src.permute(0, 2, 1) # to N, F, F'
-        print(H.shape)
+
+        print("W", W.shape) # to N, L, F
+        print("H", H.shape)
+
+        exit()
         
         Z = torch.matmul(W, H)
         print(Z.shape)
