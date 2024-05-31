@@ -671,7 +671,7 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
         nll : torch.Tensor
             Negative log likelihood.
     """
-    p_pred = torch.clamp(p_pred, min=1e-9, max=1-1e-9)
+    p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
     
     # Debugging checks
     if torch.any(torch.isnan(y_true)):
