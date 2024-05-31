@@ -1521,9 +1521,12 @@ class EpiDenoise30c(nn.Module):
         ### CONV ENCODER ###
 
         H = src.permute(0, 2, 1) # to N, F, L
+        print(H.shape)
         H = self.conv0(H)
+        print(H.shape)
         for conv in self.convtower:
             H = conv(H)
+            print(H.shape)
 
         # H ->  N, F', L'
 
