@@ -1527,9 +1527,14 @@ class EpiDenoise30c(nn.Module):
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # B, L, F
 
+        print(src.shape)
+
         W = src.permute(0, 2, 1) # to B, F, L
+        print(W.shape)
         W = self.convL(src)
         W = src.permute(0, 2, 1) # to B, L, F'
+        print(W.shape)
+        exit()
 
         if self.pos_enc != "relative":
             W = self.position(W) 
@@ -1540,8 +1545,7 @@ class EpiDenoise30c(nn.Module):
         # W.shape = B, L, F'
         
         H = src.permute(0, 2, 1) # to B, F, L
-        H = self.conv0(H)
-        for conv in self.convtower:
+        for conv in self.convD:
             H = conv(H)
 
         for encD in self.transD:
