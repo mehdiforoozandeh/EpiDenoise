@@ -1467,6 +1467,9 @@ class EpiDenoise30b(nn.Module):
             input_dim + metadata_embedding_dim, 
             input_dim + metadata_embedding_dim * (2**n_cnn_layers), 
             n_cnn_layers, divisible_by=2)
+        
+        print(conv_out_channels)
+        exit()
 
         stride = 1
         dilation=1
