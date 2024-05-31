@@ -330,7 +330,8 @@ class MONITOR_VALIDATION(object):
                 x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
                 mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
                 # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
-                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+                if self.arch in ["a", "b"]:
+                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
 
                 if len(imp_target)>0:
                     x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
