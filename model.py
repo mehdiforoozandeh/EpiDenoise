@@ -1350,7 +1350,7 @@ class EpiDenoise30a(nn.Module):
 
         return p, n, mp, mo
 
-# class EpiDenoise30b(nn.Module):
+class EpiDenoise30b(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
@@ -1452,21 +1452,16 @@ class EpiDenoise30a(nn.Module):
 
         return p, n, mp, mo
 
-
 ### testing matrix factorization
-class EpiDenoise30b(nn.Module):
+class EpiDenoise30c(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30b, self).__init__()
+        super(EpiDenoise30c, self).__init__()
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
-        # conv_out_channels = exponential_linspace_int(
-        #     input_dim + metadata_embedding_dim, 
-        #     input_dim + metadata_embedding_dim * (2**n_cnn_layers), 
-        #     n_cnn_layers, divisible_by=2)
         conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
         
         stride = 1
@@ -1505,10 +1500,8 @@ class EpiDenoise30b(nn.Module):
         self.transD_emb = nn.Linear(context_length // (2**n_cnn_layers), d_model)
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        # self.embedd_layer_norm = nn.LayerNorm(d_model)
         
         self.neg_binom_layer = NegativeBinomialLayer(conv_out_channels[-1], output_dim)
-        # self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
         self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
@@ -1547,34 +1540,7 @@ class EpiDenoise30b(nn.Module):
         print(Z.shape)
 
         p, n = self.neg_binom_layer(Z)
-        print(p.shape, n.shape)
-        exit()
-
-        # ### TRANSFORMER ENCODER ###
-        # if self.pos_enc != "relative":
-        #     # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
-        #     e_src = self.position(e_src)
-        #     # e_src = e_src + encpos
-
-        # for enc in self.transformer_encoder:
-        #     e_src = enc(e_src)
-        
-        # src = F.relu(self.embedd_layer_norm(self.lin(src)))
-
-        # ### TRANSFORMER DECODER ###
-        # if self.pos_enc != "relative":
-        #     # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
-        #     src = self.position(src)
-        #     # src = src + trgpos
-
-        # for dec in self.transformer_decoder:
-        #     src = dec(src, e_src)
-
-        # 
-        # mp = torch.sigmoid(self.mask_pred_layer(src))
-        # mo = torch.sigmoid(self.mask_obs_layer(src))
-
-        # return p, n, mp, mo
+        return p, n
 
 
 
@@ -4471,34 +4437,6 @@ if __name__ == "__main__":
             arch="a")
     
     elif sys.argv[1] == "epd30b":
-        # hyper_parameters30b = {
-        #     "data_path": "/project/compbio-lab/encode_data/",
-        #     "input_dim": 47,
-        #     "metadata_embedding_dim": 47,
-        #     "dropout": 0.01,
-
-        #     "n_cnn_layers": 5,
-        #     "conv_kernel_size" : 7,
-        #     "n_decoder_layers" : 3,
-
-        #     "nhead": 4,
-        #     "d_model": 384,
-        #     "nlayers": 3,
-        #     "epochs": 1,
-        #     "inner_epochs": 100,
-        #     "mask_percentage": 0.1,
-        #     "context_length": 1600,
-        #     "batch_size": 18,
-        #     "learning_rate": 1e-6,
-        #     "num_loci": 400,
-        #     "lr_halflife":2,
-        #     "min_avail":5
-        # }
-        # train_epidenoise30(
-        #     hyper_parameters30b, 
-        #     checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
-        #     arch="b")
-
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
@@ -4509,21 +4447,50 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 3,
 
-            "nhead": 2,
-            "d_model": 192,
+            "nhead": 4,
+            "d_model": 384,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 1600,
             "batch_size": 18,
-            "learning_rate": 1e-4,
-            "num_loci": 20,
+            "learning_rate": 1e-6,
+            "num_loci": 400,
             "lr_halflife":2,
-            "min_avail":15
+            "min_avail":5
         }
-
         train_epidenoise30(
             hyper_parameters30b, 
-            checkpoint_path=None, 
+            checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
             arch="b")
+
+    # elif sys.argv[1] == "epd30c":
+    #     hyper_parameters30c = {
+    #         "data_path": "/project/compbio-lab/encode_data/",
+    #         "input_dim": 47,
+    #         "metadata_embedding_dim": 47,
+    #         "dropout": 0.01,
+
+    #         "n_cnn_layers": 5,
+    #         "conv_kernel_size" : 7,
+    #         "n_decoder_layers" : 3,
+
+    #         "nhead": 2,
+    #         "d_model": 192,
+    #         "nlayers": 3,
+    #         "epochs": 1,
+    #         "inner_epochs": 100,
+    #         "mask_percentage": 0.1,
+    #         "context_length": 1600,
+    #         "batch_size": 18,
+    #         "learning_rate": 1e-4,
+    #         "num_loci": 20,
+    #         "lr_halflife":2,
+    #         "min_avail":15
+    #     }
+
+        # train_epidenoise30(
+        #     hyper_parameters30b, 
+        #     checkpoint_path=None, 
+        #     arch="b")
