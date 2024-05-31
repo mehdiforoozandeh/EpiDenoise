@@ -1527,6 +1527,8 @@ class EpiDenoise30c(nn.Module):
 
         # H ->  N, F', L'
 
+        print(H.shape)
+        exit()
         for encD in self.transD:
             H = encD(H)
 
