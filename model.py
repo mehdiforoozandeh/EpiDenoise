@@ -1462,7 +1462,7 @@ class EpiDenoise30c(nn.Module):
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
-        conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
+        conv_out_channels = [(input_dim + metadata_embedding_dim)*(pool_size**l) for l in range(n_cnn_layers)]
 
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
@@ -1530,8 +1530,6 @@ class EpiDenoise30c(nn.Module):
 
         # H ->  N, F', L'
 
-        print(H.shape)
-        exit()
         for encD in self.transD:
             H = encD(H)
 
