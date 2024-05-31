@@ -1528,30 +1528,21 @@ class EpiDenoise30b(nn.Module):
         ### CONV ENCODER ###
 
         H = src.permute(0, 2, 1) # to N, F, L
-        print("H", H.shape)
         H = self.conv0(H)
         for conv in self.convtower:
             H = conv(H)
-            print("H", H.shape)
-        print("H", H.shape)
 
         # H ->  N, F', L'
 
         for encD in self.transD:
             H = encD(H)
-            print("H", H.shape)
 
         # H ->  N, F', L'
 
         H = self.transD_emb(H) 
-        print("H", H.shape)
         # H ->  N, F', F
         H = H.permute(0, 2, 1) # to N, F, F'
-        print("H", H.shape)
-        print("W", W.shape) # to N, L, F
-
-        exit()
-        
+    
         Z = torch.matmul(W, H)
         print(Z.shape)
 
