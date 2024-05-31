@@ -1475,8 +1475,93 @@ class EpiDenoise30c(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
-        dropout=0.1, context_length=2000, pos_enc="relative"):
+        dropout=0.1, context_length=2000):
         super(EpiDenoise30c, self).__init__()
+
+        self.pos_enc = "abs" #pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = input_dim + metadata_embedding_dim
+        self.f2 = self.f1 * (2**(n_cnn_layers))
+        assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
+
+        conv_out_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
+        self.position = PositionalEncoding(d_model, dropout, self.l1)
+        
+        self.convL = ConvTower(self.f1, self.f2,
+                W=1, S=1, D=1, 
+                pool_type="none", residuals=True, 
+                groups=self.f1)
+
+        self.convD = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=conv_channels[i],
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.transL = nn.ModuleList(
+            [nn.TransformerEncoderLayer(
+                d_model=self.f2, nhead=nhead, dim_feedforward=2*self.f2, 
+                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, L, F) -> output (B, L, d_model)
+
+        self.transD = nn.ModuleList(
+            [nn.TransformerEncoderLayer(
+                d_model=self.l2, nhead=nhead, dim_feedforward=2*d_model, 
+                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
+        
+        self.neg_binom_layer = NegativeBinomialLayer(self.l2, output_dim)
+    
+    def forward(self, src, x_metadata, y_metadata, availability):
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+
+        md_embedding = F.relu(md_embedding)
+        src = self.signal_layer_norm(src)
+
+        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # B, L, F
+
+        W = src.permute(0, 2, 1) # to B, F, L
+        W = self.convL(src)
+        W = src.permute(0, 2, 1) # to B, L, F'
+
+        if self.pos_enc != "relative":
+            W = self.position(W) 
+
+        for encL in self.transL:
+            W = encL(W)
+        
+        # W.shape = B, L, F'
+        
+        H = src.permute(0, 2, 1) # to B, F, L
+        H = self.conv0(H)
+        for conv in self.convtower:
+            H = conv(H)
+
+        for encD in self.transD:
+            H = encD(H)
+
+        # H.shape =  N, F', L'
+    
+        Z = torch.matmul(W, H)
+
+        # Z.shape = B, L, L'
+
+        p, n = self.neg_binom_layer(Z)
+        return p, n
+
+class EpiDenoise30d(nn.Module):
+    def __init__(self, 
+        input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
+        dropout=0.1, context_length=2000, pos_enc="relative"):
+        super(EpiDenoise30d, self).__init__()
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
@@ -4511,7 +4596,7 @@ if __name__ == "__main__":
             arch="b")
 
     elif sys.argv[1] == "epd30c":
-        hyper_parameters30c = {
+        hyper_parameters30cd = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 49,
@@ -4521,7 +4606,7 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "pool_size" : 3,
 
-            "nhead": 2,
+            "nhead": 6,
             "d_model": 192,
             "nlayers": 3,
             "epochs": 1,
@@ -4536,6 +4621,6 @@ if __name__ == "__main__":
         }
 
         train_epidenoise30(
-            hyper_parameters30c, 
+            hyper_parameters30cd, 
             checkpoint_path=None, 
             arch="c")
