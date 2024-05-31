@@ -870,6 +870,24 @@ class ComboLoss_NBNLL_msk(nn.Module):
 
         return imputation_loss, upsampling_loss, bce_mask_prd_loss, bce_mask_obs_loss
 
+class MatrixFactor_NBLL(nn.Module):
+    def __init__(self):
+        super(MatrixFactor_NBLL, self).__init__()
+        self.reduction = 'sum'
+
+    def forward(self, p_pred, n_pred, true_signals, obs_map):
+        ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
+
+        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        
+        if self.reduction == "mean":
+            upsampling_loss = upsampling_loss.mean()
+        else:
+            upsampling_loss = upsampling_loss.sum()
+
+        return upsampling_loss
+
+
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
 #========================================================================================================#
@@ -1521,12 +1539,9 @@ class EpiDenoise30c(nn.Module):
         ### CONV ENCODER ###
 
         H = src.permute(0, 2, 1) # to N, F, L
-        print(H.shape)
         H = self.conv0(H)
-        print(H.shape)
         for conv in self.convtower:
             H = conv(H)
-            print(H.shape)
 
         # H ->  N, F', L'
 
@@ -3374,12 +3389,16 @@ class PRE_TRAINER(object):
                     X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
-                    X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                    if arch in ["a", "b"]:
+                        X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
 
-                    masked_map = (X_batch == token_dict["cloze_mask"])
-                    observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
-                    missing_map = (X_batch == token_dict["missing_mask"])
-
+                        masked_map = (X_batch == token_dict["cloze_mask"])
+                        observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
+                        missing_map = (X_batch == token_dict["missing_mask"])
+                    
+                    elif arch in ["c", "d"]:
+                        observed_map = (X_batch != token_dict["missing_mask"])
+                        
                     X_batch = X_batch.float().to(self.device).requires_grad_(True)
                     mX_batch = mX_batch.to(self.device)
                     avail_batch = avail_batch.to(self.device)
@@ -3388,24 +3407,28 @@ class PRE_TRAINER(object):
                     masked_map = masked_map.to(self.device) # imputation targets
                     observed_map = observed_map.to(self.device) # upsampling targets
 
-                    output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
-                    # print("forward pass completed")
-                    pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
-                        output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
+                    if arch in ["a", "b"]:
+                        output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                        pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                            output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
-                    if torch.isnan(pred_loss).any():
-                        if len(batch_rec["imp_loss"]) > 0:
-                            pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
-                        else:
-                            pred_loss = torch.Tensor(1e5)
+                        if torch.isnan(pred_loss).any():
+                            if len(batch_rec["imp_loss"]) > 0:
+                                pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                            else:
+                                pred_loss = torch.Tensor(1e5)
 
-                    if torch.isnan(obs_loss).any():
-                        if len(batch_rec["ups_loss"]) > 0:
-                            obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
-                        else:
-                            obs_loss = torch.Tensor(1e5)
+                        if torch.isnan(obs_loss).any():
+                            if len(batch_rec["ups_loss"]) > 0:
+                                obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                            else:
+                                obs_loss = torch.Tensor(1e5)
 
-                    loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+
+                    elif arch in ["c", "d"]:
+                        output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                        loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -4286,8 +4309,10 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     with open(f'models/hyper_parameters30{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    # criterion = ComboLoss_NBNLL(alpha=1-mask_percentage)
-    criterion = ComboLoss_NBNLL_msk()
+    if arch in ["a", "b"]:
+        criterion = ComboLoss_NBNLL_msk()
+    elif arch in ["c", "d"]
+        criterion = MatrixFactor_NBLL()
 
     start_time = time.time()
 
