@@ -1520,7 +1520,7 @@ class EpiDenoise30c(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
 
         md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
