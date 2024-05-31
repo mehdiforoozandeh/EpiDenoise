@@ -1469,8 +1469,6 @@ class EpiDenoise30b(nn.Module):
         #     n_cnn_layers, divisible_by=2)
         conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
         
-        print(conv_out_channels)
-
         stride = 1
         dilation=1
 
@@ -1509,7 +1507,7 @@ class EpiDenoise30b(nn.Module):
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         # self.embedd_layer_norm = nn.LayerNorm(d_model)
         
-        self.neg_binom_layer = NegativeBinomialLayer(input_dim + metadata_embedding_dim * (2**n_cnn_layers), output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(conv_out_channels[-1], output_dim)
         # self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
         self.mask_obs_layer = nn.Linear(d_model, output_dim)
