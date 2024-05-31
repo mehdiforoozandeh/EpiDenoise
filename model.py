@@ -3390,7 +3390,7 @@ class PRE_TRAINER(object):
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
                     if arch in ["a", "b"]:
-                        X_batch, mX_batch, avail_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                        X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
 
                         masked_map = (X_batch == token_dict["cloze_mask"])
                         observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
@@ -3401,14 +3401,14 @@ class PRE_TRAINER(object):
                         
                     X_batch = X_batch.float().to(self.device).requires_grad_(True)
                     mX_batch = mX_batch.to(self.device)
-                    avail_batch = avail_batch.to(self.device)
+                    avX_batch = avX_batch.to(self.device)
                     mY_batch = mY_batch.to(self.device)
                     Y_batch = Y_batch.to(self.device)
                     masked_map = masked_map.to(self.device) # imputation targets
                     observed_map = observed_map.to(self.device) # upsampling targets
 
                     if arch in ["a", "b"]:
-                        output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                        output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
                         pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
@@ -3427,7 +3427,7 @@ class PRE_TRAINER(object):
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
 
                     elif arch in ["c", "d"]:
-                        output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avail_batch)
+                        output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
                         loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
 
                     if torch.isnan(loss).sum() > 0:
