@@ -879,7 +879,7 @@ class MatrixFactor_NBLL(nn.Module):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
 
-        print(ups_n_pred.mean(), ups_p_pred.mean(), upsampling_loss.max())
+        print(ups_n_pred.mean(), ups_p_pred.mean(), ups_y_true.float().mean())
         
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
