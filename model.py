@@ -1486,7 +1486,7 @@ class EpiDenoise30b(nn.Module):
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_size[i + 1], stride, dilation, 
                 pool_type="max", residuals=True,
-                # groups=input_dim + metadata_embedding_dim
+                groups=conv_out_channels[i+1]
             ) for i in range(n_cnn_layers - 1)])
 
         self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
