@@ -1463,13 +1463,13 @@ class EpiDenoise30b(nn.Module):
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
-        conv_out_channels = exponential_linspace_int(
-            input_dim + metadata_embedding_dim, 
-            input_dim + metadata_embedding_dim * (2**n_cnn_layers), 
-            n_cnn_layers, divisible_by=2)
+        # conv_out_channels = exponential_linspace_int(
+        #     input_dim + metadata_embedding_dim, 
+        #     input_dim + metadata_embedding_dim * (2**n_cnn_layers), 
+        #     n_cnn_layers, divisible_by=2)
+        conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
         
         print(conv_out_channels)
-        exit()
 
         stride = 1
         dilation=1
