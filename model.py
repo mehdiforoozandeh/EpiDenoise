@@ -1486,7 +1486,7 @@ class EpiDenoise30c(nn.Module):
         self.f2 = self.f1 * (2**(n_cnn_layers))
         assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
 
-        conv_out_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
