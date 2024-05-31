@@ -229,7 +229,7 @@ class DeconvBlock(nn.Module):
         return x
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=True, groups=1):
+    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=True, groups=1, pool_size=2):
         super(ConvTower, self).__init__()
         
         if pool_type == "max" or pool_type == "attn" or pool_type == "avg":
@@ -238,11 +238,11 @@ class ConvTower(nn.Module):
             self.do_pool = False
 
         if pool_type == "attn":
-            self.pool = SoftmaxPooling1D(2)
+            self.pool = SoftmaxPooling1D(pool_size)
         elif pool_type == "max":
-            self.pool  = nn.MaxPool1d(2)
+            self.pool  = nn.MaxPool1d(pool_size)
         elif pool_type == "avg":
-            self.pool  = nn.AvgPool1d(2)
+            self.pool  = nn.AvgPool1d(pool_sizes)
 
         self.conv1 = ConvBlock(in_C, out_C, W, S, D, groups=groups)
 
@@ -1456,16 +1456,13 @@ class EpiDenoise30b(nn.Module):
 class EpiDenoise30c(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30c, self).__init__()
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
         conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
-        
-        stride = 1
-        dilation=1
 
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
@@ -1474,16 +1471,17 @@ class EpiDenoise30c(nn.Module):
         self.conv0 = ConvTower(
                 input_dim + metadata_embedding_dim, 
                 conv_out_channels[0],
-                conv_kernel_size[0], stride, dilation, 
-                pool_type="max", residuals=True,
-                groups=input_dim + metadata_embedding_dim)
+                conv_kernel_size[0], stride=1, dilation=1, 
+                pool_type="max", residuals=True, 
+                groups=input_dim + metadata_embedding_dim, 
+                pool_size=pool_size)
 
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_size[i + 1], stride, dilation, 
+                conv_kernel_size[i + 1], stride=1, dilation=1, 
                 pool_type="max", residuals=True,
-                groups=conv_out_channels[i]
-            ) for i in range(n_cnn_layers - 1)])
+                groups=conv_out_channels[i], 
+                pool_size=pool_size) for i in range(n_cnn_layers - 1)])
 
         self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
         
@@ -1513,6 +1511,9 @@ class EpiDenoise30c(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+
+        if self.pos_enc != "relative":
+            src = self.position(src)
         
         W = self.linL(src)
         for encL in self.transL:
@@ -1537,12 +1538,9 @@ class EpiDenoise30c(nn.Module):
         H = H.permute(0, 2, 1) # to N, F, F'
     
         Z = torch.matmul(W, H)
-        print(Z.shape)
 
         p, n = self.neg_binom_layer(Z)
         return p, n
-
-
 
 
 #========================================================================================================#
@@ -4252,6 +4250,18 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
+    elif arch == "c":
+        n_cnn_layers = hyper_parameters["n_cnn_layers"]
+        conv_kernel_size = hyper_parameters["conv_kernel_size"]
+        pool_size = hyper_parameters["pool_size"]
+
+        model = EpiDenoise30c(input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size, 
+        dropout=dropout, context_length=context_length)
+
+    elif arch == "d":
+        pass
+
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
@@ -4465,32 +4475,32 @@ if __name__ == "__main__":
             checkpoint_path="models/EpiDenoise30b_20240526123547_params5969560.pt", 
             arch="b")
 
-    # elif sys.argv[1] == "epd30c":
-    #     hyper_parameters30c = {
-    #         "data_path": "/project/compbio-lab/encode_data/",
-    #         "input_dim": 47,
-    #         "metadata_embedding_dim": 47,
-    #         "dropout": 0.01,
+    elif sys.argv[1] == "epd30c":
+        hyper_parameters30c = {
+            "data_path": "/project/compbio-lab/encode_data/",
+            "input_dim": 47,
+            "metadata_embedding_dim": 47,
+            "dropout": 0.01,
 
-    #         "n_cnn_layers": 5,
-    #         "conv_kernel_size" : 7,
-    #         "n_decoder_layers" : 3,
+            "n_cnn_layers": 5,
+            "conv_kernel_size" : 7,
+            "pool_size" : 3,
 
-    #         "nhead": 2,
-    #         "d_model": 192,
-    #         "nlayers": 3,
-    #         "epochs": 1,
-    #         "inner_epochs": 100,
-    #         "mask_percentage": 0.1,
-    #         "context_length": 1600,
-    #         "batch_size": 18,
-    #         "learning_rate": 1e-4,
-    #         "num_loci": 20,
-    #         "lr_halflife":2,
-    #         "min_avail":15
-    #     }
+            "nhead": 2,
+            "d_model": 192,
+            "nlayers": 3,
+            "epochs": 1,
+            "inner_epochs": 100,
+            "mask_percentage": 0.1,
+            "context_length": 1600,
+            "batch_size": 18,
+            "learning_rate": 1e-4,
+            "num_loci": 20,
+            "lr_halflife":2,
+            "min_avail":15
+        }
 
-        # train_epidenoise30(
-        #     hyper_parameters30b, 
-        #     checkpoint_path=None, 
-        #     arch="b")
+        train_epidenoise30(
+            hyper_parameters30c, 
+            checkpoint_path=None, 
+            arch="c")
