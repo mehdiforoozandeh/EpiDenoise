@@ -1513,7 +1513,7 @@ class EpiDenoise30c(nn.Module):
 
         self.transD = nn.ModuleList(
             [nn.TransformerEncoderLayer(
-                d_model=self.l2, nhead=nhead, dim_feedforward=2*d_model, 
+                d_model=self.l2, nhead=1, dim_feedforward=2*d_model, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
         
         self.neg_binom_layer = NegativeBinomialLayer(self.l2, output_dim)
