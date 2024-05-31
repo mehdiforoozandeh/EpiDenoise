@@ -3439,7 +3439,6 @@ class PRE_TRAINER(object):
                         continue
                     
                     loss.backward()  
-                    # print("backward pass completed")
 
                     if hook:
                         # Initialize variables to store maximum gradient norms and corresponding layer names
@@ -3464,7 +3463,6 @@ class PRE_TRAINER(object):
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     self.optimizer.step()
-                    # print("updated params")
 
                     if arch in ["a", "b"]:
                         imp_pred = NegativeBinomial(
@@ -3493,12 +3491,9 @@ class PRE_TRAINER(object):
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["ups_mse"].append(ups_mse)
-                    
-                    # print("got inner epoch stats")
                 
                 lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
                 if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
-                    # self.scheduler.step()
                     try:
                         torch.save(
                             self.model.state_dict(), 
@@ -3540,7 +3535,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 1 == 0 and lopr != last_lopr:
+                if lopr % 5 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
                     
                     torch.cuda.empty_cache()
