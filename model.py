@@ -690,6 +690,7 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
     
     if torch.any((p_pred <= 0) | (p_pred >= 1)):
         print("p_pred contains values not strictly between 0 and 1")
+        print(p_pred.min(), p_pred.max())
     
     if torch.any(n_pred <= 0):
         print("n_pred contains non-positive values")
