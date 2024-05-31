@@ -4311,7 +4311,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     if arch in ["a", "b"]:
         criterion = ComboLoss_NBNLL_msk()
-    elif arch in ["c", "d"]
+    elif arch in ["c", "d"]:
         criterion = MatrixFactor_NBLL()
 
     start_time = time.time()
