@@ -4607,7 +4607,7 @@ if __name__ == "__main__":
             "pool_size" : 3,
 
             "nhead": 6,
-            "d_model": 192,
+            "d_model": (47+49)*(2**3),
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,
