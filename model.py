@@ -1511,11 +1511,10 @@ class EpiDenoise30c(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-
-        if self.pos_enc != "relative":
-            src = self.position(src)
         
         W = self.linL(src)
+        if self.pos_enc != "relative":
+            src = self.position(src)
         for encL in self.transL:
             W = encL(W)
 
