@@ -1486,7 +1486,7 @@ class EpiDenoise30b(nn.Module):
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_size[i + 1], stride, dilation, 
                 pool_type="max", residuals=True,
-                groups=conv_out_channels[i+1]
+                groups=conv_out_channels[i]
             ) for i in range(n_cnn_layers - 1)])
 
         self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
@@ -1504,9 +1504,10 @@ class EpiDenoise30b(nn.Module):
         self.transD_emb = nn.Linear(context_length // (2**n_cnn_layers), d_model)
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.embedd_layer_norm = nn.LayerNorm(d_model)
+        # self.embedd_layer_norm = nn.LayerNorm(d_model)
         
-        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(input_dim + metadata_embedding_dim * (2**n_cnn_layers), output_dim)
+        # self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
         self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
@@ -1522,7 +1523,7 @@ class EpiDenoise30b(nn.Module):
         W = self.linL(src)
         for encL in self.transL:
             W = encL(W)
-        print(W.shape)
+        print(W.shape) # to N, L, F
 
         ### CONV ENCODER ###
 
@@ -1530,14 +1531,20 @@ class EpiDenoise30b(nn.Module):
         H = self.conv0(H)
         for conv in self.convtower:
             H = conv(H)
-        # H = H.permute(0, 2, 1)  # to N, L, F
+
+        # H ->  N, F', L'
 
         for encD in self.transD:
             H = encD(H)
 
-        H = self.transD_emb(H)
-        print(H.shape)
+        # H ->  N, F', L'
 
+        H = self.transD_emb(H) 
+        
+        # H ->  N, F', F
+        H = src.permute(0, 2, 1) # to N, F, F'
+        print(H.shape)
+        
         Z = torch.matmul(W, H)
         print(Z.shape)
 
