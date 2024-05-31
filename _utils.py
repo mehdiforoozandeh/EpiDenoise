@@ -555,6 +555,26 @@ def exponential_linspace_int(start, end, num, divisible_by=1):
 
     base = np.exp(np.log(end / start) / (num - 1))
     return [_round(start * base**i) for i in range(num)]
+    
+def linear_divisible_linspace(start_size, end_size, layers):
+    """Generate channel sizes where each size is divisible by the previous size."""
+    sizes = [start_size]
+    step = (end_size - start_size) / (layers - 1)
+
+    for i in range(1, layers):
+        # Calculate the next size
+        next_size = start_size + i * step
+        # Ensure the next_size is a multiple of the last size in the list
+        last_size = sizes[-1]
+        next_size = np.ceil(next_size / last_size) * last_size
+
+        # Ensure not to exceed the end_size on the last step
+        if i == layers - 1 and next_size != end_size:
+            next_size = end_size
+
+        sizes.append(int(next_size))
+
+    return sizes
 
 
 def count_parameters(model):

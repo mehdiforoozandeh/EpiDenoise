@@ -1463,8 +1463,13 @@ class EpiDenoise30b(nn.Module):
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
-        conv_out_channels = exponential_linspace_int(
-            d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
+        # conv_out_channels = exponential_linspace_int(
+        #     d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
+
+
+        conv_out_channels = linear_divisible_linspace(
+           src, md_embedding, d_model, n_cnn_layers)
+
         print(conv_out_channels)
         exit()
 
@@ -1475,25 +1480,20 @@ class EpiDenoise30b(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.position = PositionalEncoding(d_model, dropout, context_length)
 
-        self.convD = ConvTower(
-                input_dim + metadata_embedding_dim, #inp
-                input_dim + metadata_embedding_dim, #outp
-                conv_kernel_size[0], stride, dilation, 
-                pool_type="none", residuals=True, 
-                groups=input_dim + metadata_embedding_dim)
-
         self.conv0 = ConvTower(
                 input_dim + metadata_embedding_dim, 
                 conv_out_channels[0],
                 conv_kernel_size[0], stride, dilation, 
-                pool_type="max", residuals=True)
+                pool_type="max", residuals=True,
+                groups=input_dim + metadata_embedding_dim)
+
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_size[i + 1], stride, dilation, 
                 pool_type="max", residuals=True
             ) for i in range(n_cnn_layers - 1)])
 
-        self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+        self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1523,7 +1523,7 @@ class EpiDenoise30b(nn.Module):
 
         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
         
-        W = self.lin(src)
+        W = self.linL(src)
         for encL in self.transL:
             W = encL(W)
         print(W.shape)
@@ -1531,7 +1531,6 @@ class EpiDenoise30b(nn.Module):
         ### CONV ENCODER ###
 
         H = src.permute(0, 2, 1) # to N, F, L
-        H = self.convD(H)
         H = self.conv0(H)
         for conv in self.convtower:
             H = conv(H)
