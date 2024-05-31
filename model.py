@@ -1546,7 +1546,7 @@ class EpiDenoise30b(nn.Module):
         H = self.transD_emb(H) 
         print("H", H.shape)
         # H ->  N, F', F
-        H = src.permute(0, 2, 1) # to N, F, F'
+        H = H.permute(0, 2, 1) # to N, F, F'
         print("H", H.shape)
         print("W", W.shape) # to N, L, F
 
