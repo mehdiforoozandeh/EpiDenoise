@@ -1507,7 +1507,7 @@ class EpiDenoise30b(nn.Module):
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         # self.embedd_layer_norm = nn.LayerNorm(d_model)
         
-        self.neg_binom_layer = NegativeBinomialLayer(conv_out_channels[-1], output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
         # self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
         self.mask_obs_layer = nn.Linear(d_model, output_dim)
