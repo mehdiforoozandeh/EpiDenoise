@@ -1528,24 +1528,27 @@ class EpiDenoise30b(nn.Module):
         ### CONV ENCODER ###
 
         H = src.permute(0, 2, 1) # to N, F, L
+        print("H", H.shape)
         H = self.conv0(H)
         for conv in self.convtower:
             H = conv(H)
+            print("H", H.shape)
+        print("H", H.shape)
 
         # H ->  N, F', L'
 
         for encD in self.transD:
             H = encD(H)
+            print("H", H.shape)
 
         # H ->  N, F', L'
 
         H = self.transD_emb(H) 
-        
+        print("H", H.shape)
         # H ->  N, F', F
         H = src.permute(0, 2, 1) # to N, F, F'
-
-        print("W", W.shape) # to N, L, F
         print("H", H.shape)
+        print("W", W.shape) # to N, L, F
 
         exit()
         
@@ -4516,7 +4519,7 @@ if __name__ == "__main__":
             "n_decoder_layers" : 3,
 
             "nhead": 2,
-            "d_model": 256,
+            "d_model": 192,
             "nlayers": 3,
             "epochs": 1,
             "inner_epochs": 100,
