@@ -1514,7 +1514,7 @@ class EpiDenoise30c(nn.Module):
         
         W = self.linL(src)
         if self.pos_enc != "relative":
-            src = self.position(src)
+            W = self.position(W)
         for encL in self.transL:
             W = encL(W)
 
