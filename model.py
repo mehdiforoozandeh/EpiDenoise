@@ -1463,15 +1463,8 @@ class EpiDenoise30b(nn.Module):
         self.pos_enc = "abs"#pos_enc
         self.context_length = context_length
 
-        # conv_out_channels = exponential_linspace_int(
-        #     d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
-
-
-        conv_out_channels = linear_divisible_linspace(
-           input_dim + metadata_embedding_dim, d_model, n_cnn_layers)
-
-        print(conv_out_channels)
-        exit()
+        conv_out_channels = exponential_linspace_int(
+            d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
 
         stride = 1
         dilation=1
@@ -1490,7 +1483,8 @@ class EpiDenoise30b(nn.Module):
         self.convtower = nn.ModuleList([ConvTower(
                 conv_out_channels[i], conv_out_channels[i + 1],
                 conv_kernel_size[i + 1], stride, dilation, 
-                pool_type="max", residuals=True
+                pool_type="max", residuals=True,
+                # groups=input_dim + metadata_embedding_dim
             ) for i in range(n_cnn_layers - 1)])
 
         self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
