@@ -3395,17 +3395,18 @@ class PRE_TRAINER(object):
                         masked_map = (X_batch == token_dict["cloze_mask"])
                         observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
                         missing_map = (X_batch == token_dict["missing_mask"])
+                        masked_map = masked_map.to(self.device) # imputation targets
+                        observed_map = observed_map.to(self.device) # upsampling targets
                     
                     elif arch in ["c", "d"]:
                         observed_map = (X_batch != token_dict["missing_mask"])
+                        observed_map = observed_map.to(self.device) # upsampling targets
                         
                     X_batch = X_batch.float().to(self.device).requires_grad_(True)
                     mX_batch = mX_batch.to(self.device)
                     avX_batch = avX_batch.to(self.device)
                     mY_batch = mY_batch.to(self.device)
                     Y_batch = Y_batch.to(self.device)
-                    masked_map = masked_map.to(self.device) # imputation targets
-                    observed_map = observed_map.to(self.device) # upsampling targets
 
                     if arch in ["a", "b"]:
                         output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
