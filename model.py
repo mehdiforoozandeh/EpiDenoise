@@ -623,36 +623,6 @@ class NegativeBinomialLayer(nn.Module):
 
         return p, n
 
-# def negative_binomial_loss(y_true, n_pred, p_pred):
-#     """
-#         Negative binomial loss function for PyTorch.
-        
-#         Parameters
-#         ----------
-#         y_true : torch.Tensor
-#             Ground truth values of the predicted variable.
-#         n_pred : torch.Tensor
-#             Tensor containing n values of the predicted distribution.
-#         p_pred : torch.Tensor
-#             Tensor containing p values of the predicted distribution.
-            
-#         Returns
-#         -------
-#         nll : torch.Tensor
-#             Negative log likelihood.
-#     """
-    
-#     # Calculate the negative log likelihood using PyTorch functions
-#     nll = (
-#         torch.lgamma(n_pred)
-#         + torch.lgamma(y_true + 1)
-#         - torch.lgamma(n_pred + y_true)
-#         - n_pred * torch.log(p_pred)
-#         - y_true * torch.log(1 - p_pred)
-#     )
-    
-#     return nll
-
 def negative_binomial_loss(y_true, n_pred, p_pred):
     """
         Negative binomial loss function for PyTorch.
@@ -673,61 +643,14 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
     """
     p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
     
-    # # Debugging checks
-    # if torch.any(torch.isnan(y_true)):
-    #     print("y_true contains NaN values")
-    # if torch.any(torch.isnan(n_pred)):
-    #     print("n_pred contains NaN values")
-    # if torch.any(torch.isnan(p_pred)):
-    #     print("p_pred contains NaN values")
-    
-    # if torch.any(torch.isinf(y_true)):
-    #     print("y_true contains Inf values")
-    # if torch.any(torch.isinf(n_pred)):
-    #     print("n_pred contains Inf values")
-    # if torch.any(torch.isinf(p_pred)):
-    #     print("p_pred contains Inf values")
-    
-    # if torch.any((p_pred <= 0) | (p_pred >= 1)):
-    #     print("p_pred contains values not strictly between 0 and 1")
-    #     print(p_pred.min(), p_pred.max())
-    
-    # if torch.any(n_pred <= 0):
-    #     print("n_pred contains non-positive values")
-    
-    # # Check intermediate calculations for NaN
-    # lgamma_n_pred = torch.lgamma(n_pred)
-    # if torch.any(torch.isnan(lgamma_n_pred)):
-    #     print("lgamma(n_pred) contains NaN values")
-    
-    # lgamma_y_true_plus_1 = torch.lgamma(y_true + 1)
-    # if torch.any(torch.isnan(lgamma_y_true_plus_1)):
-    #     print("lgamma(y_true + 1) contains NaN values")
-    
-    # lgamma_n_pred_plus_y_true = torch.lgamma(n_pred + y_true)
-    # if torch.any(torch.isnan(lgamma_n_pred_plus_y_true)):
-    #     print("lgamma(n_pred + y_true) contains NaN values")
-    
-    # log_p_pred = torch.log(p_pred)
-    # if torch.any(torch.isnan(log_p_pred)):
-    #     print("log(p_pred) contains NaN values")
-    
-    # log_1_minus_p_pred = torch.log(1 - p_pred)
-    # if torch.any(torch.isnan(log_1_minus_p_pred)):
-    #     print("log(1 - p_pred) contains NaN values")
-    
     # Calculate the negative log likelihood using PyTorch functions
     nll = (
-        lgamma_n_pred
-        + lgamma_y_true_plus_1
-        - lgamma_n_pred_plus_y_true
-        - n_pred * log_p_pred
-        - y_true * log_1_minus_p_pred
+        torch.lgamma(n_pred)
+        + torch.lgamma(y_true + 1)
+        - torch.lgamma(n_pred + y_true)
+        - n_pred * torch.log(p_pred)
+        - y_true * torch.log(1 - p_pred)
     )
-    
-    # Final check for NaN in nll
-    if torch.any(torch.isnan(nll)):
-        print("nll contains NaN values")
     
     return nll
 
