@@ -3507,7 +3507,8 @@ class PRE_TRAINER(object):
 
                     elif arch in ["c", "d"]:
                         output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
-                        loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
+                        obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
+                        loss = obs_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
