@@ -673,48 +673,48 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
     """
     p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
     
-    # Debugging checks
-    if torch.any(torch.isnan(y_true)):
-        print("y_true contains NaN values")
-    if torch.any(torch.isnan(n_pred)):
-        print("n_pred contains NaN values")
-    if torch.any(torch.isnan(p_pred)):
-        print("p_pred contains NaN values")
+    # # Debugging checks
+    # if torch.any(torch.isnan(y_true)):
+    #     print("y_true contains NaN values")
+    # if torch.any(torch.isnan(n_pred)):
+    #     print("n_pred contains NaN values")
+    # if torch.any(torch.isnan(p_pred)):
+    #     print("p_pred contains NaN values")
     
-    if torch.any(torch.isinf(y_true)):
-        print("y_true contains Inf values")
-    if torch.any(torch.isinf(n_pred)):
-        print("n_pred contains Inf values")
-    if torch.any(torch.isinf(p_pred)):
-        print("p_pred contains Inf values")
+    # if torch.any(torch.isinf(y_true)):
+    #     print("y_true contains Inf values")
+    # if torch.any(torch.isinf(n_pred)):
+    #     print("n_pred contains Inf values")
+    # if torch.any(torch.isinf(p_pred)):
+    #     print("p_pred contains Inf values")
     
-    if torch.any((p_pred <= 0) | (p_pred >= 1)):
-        print("p_pred contains values not strictly between 0 and 1")
-        print(p_pred.min(), p_pred.max())
+    # if torch.any((p_pred <= 0) | (p_pred >= 1)):
+    #     print("p_pred contains values not strictly between 0 and 1")
+    #     print(p_pred.min(), p_pred.max())
     
-    if torch.any(n_pred <= 0):
-        print("n_pred contains non-positive values")
+    # if torch.any(n_pred <= 0):
+    #     print("n_pred contains non-positive values")
     
-    # Check intermediate calculations for NaN
-    lgamma_n_pred = torch.lgamma(n_pred)
-    if torch.any(torch.isnan(lgamma_n_pred)):
-        print("lgamma(n_pred) contains NaN values")
+    # # Check intermediate calculations for NaN
+    # lgamma_n_pred = torch.lgamma(n_pred)
+    # if torch.any(torch.isnan(lgamma_n_pred)):
+    #     print("lgamma(n_pred) contains NaN values")
     
-    lgamma_y_true_plus_1 = torch.lgamma(y_true + 1)
-    if torch.any(torch.isnan(lgamma_y_true_plus_1)):
-        print("lgamma(y_true + 1) contains NaN values")
+    # lgamma_y_true_plus_1 = torch.lgamma(y_true + 1)
+    # if torch.any(torch.isnan(lgamma_y_true_plus_1)):
+    #     print("lgamma(y_true + 1) contains NaN values")
     
-    lgamma_n_pred_plus_y_true = torch.lgamma(n_pred + y_true)
-    if torch.any(torch.isnan(lgamma_n_pred_plus_y_true)):
-        print("lgamma(n_pred + y_true) contains NaN values")
+    # lgamma_n_pred_plus_y_true = torch.lgamma(n_pred + y_true)
+    # if torch.any(torch.isnan(lgamma_n_pred_plus_y_true)):
+    #     print("lgamma(n_pred + y_true) contains NaN values")
     
-    log_p_pred = torch.log(p_pred)
-    if torch.any(torch.isnan(log_p_pred)):
-        print("log(p_pred) contains NaN values")
+    # log_p_pred = torch.log(p_pred)
+    # if torch.any(torch.isnan(log_p_pred)):
+    #     print("log(p_pred) contains NaN values")
     
-    log_1_minus_p_pred = torch.log(1 - p_pred)
-    if torch.any(torch.isnan(log_1_minus_p_pred)):
-        print("log(1 - p_pred) contains NaN values")
+    # log_1_minus_p_pred = torch.log(1 - p_pred)
+    # if torch.any(torch.isnan(log_1_minus_p_pred)):
+    #     print("log(1 - p_pred) contains NaN values")
     
     # Calculate the negative log likelihood using PyTorch functions
     nll = (
@@ -956,8 +956,6 @@ class MatrixFactor_NBLL(nn.Module):
     def forward(self, p_pred, n_pred, true_signals, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
-
-        print(ups_n_pred.mean(), ups_p_pred.mean(), ups_y_true.float().mean())
         
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
@@ -3427,7 +3425,7 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
             
-        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size)
+        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch)
         
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):

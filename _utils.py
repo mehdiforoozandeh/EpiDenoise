@@ -257,12 +257,13 @@ class MONITOR_VALIDATION(object):
     def __init__(
         self, data_path, context_length, batch_size,
         chr_sizes_file="data/hg38.chrom.sizes", 
-        resolution=25, split="val"):
+        resolution=25, split="val", arch="a"):
 
         self.data_path = data_path
         self.context_length = context_length
         self.batch_size = batch_size
         self.resolution = resolution
+        self.arch = arch
 
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
@@ -339,7 +340,10 @@ class MONITOR_VALIDATION(object):
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                if self.arch in ["a", "b"]:
+                    outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                elif self.arch in ["c", "d"]:
+                    outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
 
                 # outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
                 # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
@@ -555,7 +559,7 @@ def exponential_linspace_int(start, end, num, divisible_by=1):
 
     base = np.exp(np.log(end / start) / (num - 1))
     return [_round(start * base**i) for i in range(num)]
-    
+
 def linear_divisible_linspace(start_size, end_size, layers):
     """Generate channel sizes where each size is divisible by the previous size."""
     sizes = [start_size]
