@@ -1531,8 +1531,8 @@ class EpiDenoise30c(nn.Module):
 
         W = src.permute(0, 2, 1) # to B, F, L
         print(W.shape)
-        W = self.convL(src)
-        W = src.permute(0, 2, 1) # to B, L, F'
+        W = self.convL(W)
+        W = W.permute(0, 2, 1) # to B, L, F'
         print(W.shape)
         exit()
 
