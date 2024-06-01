@@ -4612,7 +4612,7 @@ if __name__ == "__main__":
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 1536,
-            "batch_size": 24,
+            "batch_size": 18,
             "learning_rate": 5e-5,
             "num_loci": 800,
             "lr_halflife":2,
