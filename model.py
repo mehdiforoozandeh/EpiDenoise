@@ -3619,7 +3619,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 5 == 0 and lopr != last_lopr:
+                if lopr % 1 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
                     
                     torch.cuda.empty_cache()
