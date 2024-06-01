@@ -252,7 +252,6 @@ class NegativeBinomial:
 
 #     return print_statement
 
-
 class MONITOR_VALIDATION(object):
     def __init__(
         self, data_path, context_length, batch_size,
@@ -540,7 +539,6 @@ class MONITOR_VALIDATION(object):
 
         return print_statement
 
-
 random.seed(73)
 
 def capture_gradients_hook(module, grad_input, grad_output):
@@ -586,7 +584,6 @@ def linear_divisible_linspace(start_size, end_size, layers):
         sizes.append(int(next_size))
 
     return sizes
-
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -865,9 +862,6 @@ class COORD(object):
             self.bg_bins = pd.read_csv(f"{self.outdir}/background_bins_{self.resolution}bp.csv").drop("Unnamed: 0", axis=1)
 
         print(f"number of foreground bins: {len(self.fg_bins)} | number of background bins: {len(self.bg_bins)}")
-
-    # def random_genome_subset(self, max_seq_len, stratified=True)
-
 
 class PROCESS_EIC_DATA(object):
     def __init__(self, path, max_len=8000, resolution=25, stratified=False):

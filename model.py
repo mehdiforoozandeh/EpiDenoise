@@ -4599,7 +4599,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
             "metadata_embedding_dim": 49,
-            "dropout": 0.01,
+            "dropout": 0.05,
 
             "n_cnn_layers": 3,
             "conv_kernel_size" : 7,
@@ -4612,11 +4612,11 @@ if __name__ == "__main__":
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 1536,
-            "batch_size": 18,
-            "learning_rate": 1e-4,
-            "num_loci": 500,
+            "batch_size": 24,
+            "learning_rate": 5e-5,
+            "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":15
+            "min_avail":5
         }
 
         train_epidenoise30(
