@@ -248,7 +248,7 @@ class ConvTower(nn.Module):
 
         self.resid = residuals
         if self.resid:
-            self.rconv = nn.Conv1d(in_C, out_C, kernel_size=1)
+            self.rconv = nn.Conv1d(in_C, out_C, kernel_size=1, groups=groups)
         
     def forward(self, x):
         y = self.conv1(x)
@@ -1555,93 +1555,6 @@ class EpiDenoise30c(nn.Module):
         p, n = self.neg_binom_layer(Z)
         return p, n
 
-class EpiDenoise30d(nn.Module):
-    def __init__(self, 
-        input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
-        dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30d, self).__init__()
-        self.pos_enc = "abs"#pos_enc
-        self.context_length = context_length
-
-        conv_out_channels = [(input_dim + metadata_embedding_dim)*(2**l) for l in range(n_cnn_layers)]
-
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
-        self.position = PositionalEncoding(d_model, dropout, context_length)
-
-        self.conv0 = ConvTower(
-                input_dim + metadata_embedding_dim, 
-                conv_out_channels[0],
-                conv_kernel_size[0], S=1, D=1, 
-                pool_type="max", residuals=True, 
-                groups=input_dim + metadata_embedding_dim, 
-                pool_size=pool_size)
-
-        self.convtower = nn.ModuleList([ConvTower(
-                conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_size[i + 1], S=1, D=1, 
-                pool_type="max", residuals=True,
-                groups=conv_out_channels[i], 
-                pool_size=pool_size) for i in range(n_cnn_layers - 1)])
-
-        self.linL = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-        
-        self.transL = nn.ModuleList(
-            [nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, 
-                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, L, F) -> output (B, L, d_model)
-
-        self.transD = nn.ModuleList(
-            [nn.TransformerEncoderLayer(
-                d_model=context_length // (pool_size**n_cnn_layers), nhead=2, dim_feedforward=2*d_model, 
-                dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
-
-        self.transD_emb = nn.Linear(context_length // (pool_size**n_cnn_layers), d_model)
-
-        self.signal_layer_norm = nn.LayerNorm(input_dim)
-        
-        self.neg_binom_layer = NegativeBinomialLayer(conv_out_channels[-1], output_dim)
-        self.mask_pred_layer = nn.Linear(d_model, output_dim)
-        self.mask_obs_layer = nn.Linear(d_model, output_dim)
-    
-    def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-
-        md_embedding = F.relu(md_embedding)
-        src = self.signal_layer_norm(src)
-
-        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-        
-        W = self.linL(src)
-        if self.pos_enc != "relative":
-            W = self.position(W)
-        for encL in self.transL:
-            W = encL(W)
-
-        ### CONV ENCODER ###
-
-        H = src.permute(0, 2, 1) # to N, F, L
-        H = self.conv0(H)
-        for conv in self.convtower:
-            H = conv(H)
-
-        # H ->  N, F', L'
-
-        for encD in self.transD:
-            H = encD(H)
-
-        # H ->  N, F', L'
-
-        H = self.transD_emb(H) 
-        # H ->  N, F', F
-        H = H.permute(0, 2, 1) # to N, F, F'
-    
-        Z = torch.matmul(W, H)
-
-        p, n = self.neg_binom_layer(Z)
-        return p, n
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -3619,7 +3532,7 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 1 == 0 and lopr != last_lopr:
+                if lopr % 2 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
                     
                     torch.cuda.empty_cache()
@@ -4613,10 +4526,10 @@ if __name__ == "__main__":
             "mask_percentage": 0.1,
             "context_length": 1536,
             "batch_size": 15,
-            "learning_rate": 5e-5,
-            "num_loci": 800,
+            "learning_rate": 1e-5,
+            "num_loci": 400,
             "lr_halflife":2,
-            "min_avail":5
+            "min_avail":10
         }
 
         train_epidenoise30(
