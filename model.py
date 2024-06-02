@@ -4538,5 +4538,5 @@ if __name__ == "__main__":
 
         train_epidenoise30(
             hyper_parameters30cd, 
-            checkpoint_path="EPD30c_model_checkpoint_epoch0_LociProg40.pth", 
+            checkpoint_path="models/EPD30c_model_checkpoint_epoch0_LociProg40.pth", 
             arch="c")
