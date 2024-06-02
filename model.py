@@ -3482,8 +3482,12 @@ class PRE_TRAINER(object):
                         ).expect().cpu().detach().numpy()
 
                     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                    ups_r2 = r2_score(ups_true, ups_pred)
-                    ups_mse = ((ups_true - ups_pred)**2).mean()
+                    try:
+                        ups_r2 = r2_score(ups_true, ups_pred)
+                        ups_mse = ((ups_true - ups_pred)**2).mean()
+                    except:
+                        ups_r2 = np.nan
+                        ups_mse = np.nan
                 
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
