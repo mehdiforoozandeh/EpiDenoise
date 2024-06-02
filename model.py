@@ -4530,13 +4530,13 @@ if __name__ == "__main__":
             "mask_percentage": 0.1,
             "context_length": 1536,
             "batch_size": 12,
-            "learning_rate": 1e-4,
-            "num_loci": 800,
+            "learning_rate": 1e-5,
+            "num_loci": 400,
             "lr_halflife":2,
-            "min_avail":10
+            "min_avail":5
         }
 
         train_epidenoise30(
             hyper_parameters30cd, 
-            checkpoint_path=None, 
+            checkpoint_path="EPD30c_model_checkpoint_epoch0_LociProg40.pth", 
             arch="c")
