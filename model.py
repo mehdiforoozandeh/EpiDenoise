@@ -4530,8 +4530,8 @@ if __name__ == "__main__":
             "mask_percentage": 0.1,
             "context_length": 1536,
             "batch_size": 12,
-            "learning_rate": 1e-5,
-            "num_loci": 400,
+            "learning_rate": 1e-4,
+            "num_loci": 800,
             "lr_halflife":2,
             "min_avail":10
         }
