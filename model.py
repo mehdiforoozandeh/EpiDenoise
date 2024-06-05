@@ -1555,7 +1555,7 @@ class EpiDenoise30c(nn.Module):
     
         Z = torch.matmul(W, H)
 
-        Z = torch.cat([Z, md_embedding], dim=-1)
+        Z = torch.cat([Z, md_embedding], dim=-1) 
 
         # Z.shape = B, L, L'+metadata_dim
 
