@@ -2128,33 +2128,10 @@ class EVAL_EED(object):
 if __name__=="__main__":
 
     e = EVAL_EED(
-        model="models/EPD30c_model_checkpoint_epoch0_LociProg20.pth", 
-        data_path="/project/compbio-lab/encode_data/", 
-        context_length=1536, batch_size=50, 
-        hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240603115718_params15099287.pkl",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30c", resolution=25, 
-        savedir="models/eval_30c/", mode="eval"
-    )
-    evres = e.bios_pipeline("ENCBS596CTT", 1)
-    for i in range(len(evres)):
-        print(evres[i])
-
-    e.viz_bios(evres)
-    try:
-        evres = pd.DataFrame(evres)
-        evres.to_csv("models/eval_30a/res.csv")
-    except:
-        pass
-    
-
-    exit()
-
-    e = EVAL_EED(
-        model="models/EpiDenoise30a_20240525184756_params2182872.pt", 
+        model="models/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=200, 
-        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240525184756_params2182872.pkl",
+        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30a", resolution=25, 
         savedir="models/eval_30a/", mode="eval"
@@ -2171,10 +2148,10 @@ if __name__=="__main__":
         pass
 
     e = EVAL_EED(
-        model="models/EpiDenoise30b_20240526123547_params5969560.pt", 
+        model="models/EpiDenoise30b_20240529133959_params5969560.pt", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=1600, batch_size=50, 
-        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240526123547_params5969560.pkl",
+        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30b", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
@@ -2189,6 +2166,28 @@ if __name__=="__main__":
         evres.to_csv("models/eval_30b/res.csv")
     except:
         pass
+
+
+    # e = EVAL_EED(
+    #     model="models/EPD30c_model_checkpoint_epoch0_LociProg20.pth", 
+    #     data_path="/project/compbio-lab/encode_data/", 
+    #     context_length=1536, batch_size=50, 
+    #     hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240603115718_params15099287.pkl",
+    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+    #     version="30c", resolution=25, 
+    #     savedir="models/eval_30c/", mode="eval"
+    # )
+    # evres = e.bios_pipeline("ENCBS596CTT", 1)
+    # for i in range(len(evres)):
+    #     print(evres[i])
+
+    # e.viz_bios(evres)
+    # try:
+    #     evres = pd.DataFrame(evres)
+    #     evres.to_csv("models/eval_30a/res.csv")
+    # except:
+    #     pass
+    
 
     
 
