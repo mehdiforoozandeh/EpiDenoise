@@ -1534,7 +1534,7 @@ class EpiDenoise30b(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
 
         md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
@@ -1543,7 +1543,6 @@ class EpiDenoise30b(nn.Module):
         src = F.relu(self.fusion(src)) # N, L, F
 
         ### CONV ENCODER ###
-
         e_src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
             e_src = conv(e_src)
@@ -1557,7 +1556,6 @@ class EpiDenoise30b(nn.Module):
             e_src = enc(e_src)
 
         ### Conv DECODER ###
-        
         src = src.permute(0, 2, 1) # to N, F1, L
         src = self.convDec(src)
         src = src.permute(0, 2, 1) # to N, L, F2
@@ -1568,11 +1566,9 @@ class EpiDenoise30b(nn.Module):
 
         for dec in self.transformer_decoder:
             src = dec(src, e_src)
-        
         # src.shape = N, L, F2
 
         src = torch.cat([src, md_embedding], dim=-1) 
-
         # src.shape = N, L, F3
 
         p, n = self.neg_binom_layer(src)
