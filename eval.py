@@ -1961,9 +1961,9 @@ class EVAL_EED(object):
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                if self.version == ["30a", "30b"]:
+                if self.version in ["30a", "30b"]:
                     outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-                elif self.version == ["30c", "30d"]:
+                elif self.version in ["30c", "30d"]:
                     outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
 
             # Store the predictions in the large tensor
