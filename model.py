@@ -1516,10 +1516,10 @@ class EpiDenoise30b(nn.Module):
             self.posDec = PositionalEncoding(d_model, dropout, self.l1)
 
             self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
 
             self.decoder_layer = nn.TransformerDecoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
 
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
@@ -4650,7 +4650,7 @@ if __name__ == "__main__":
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 2,
 
-            "nhead": 6,
+            "nhead": 8,
             "d_model": 768,
             "nlayers": 4,
             "epochs": 1,
@@ -4658,7 +4658,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.1,
             "context_length": 1620,
             "batch_size": 18,
-            "learning_rate": 1e-5,
+            "learning_rate": 5e-5,
             "num_loci": 400,
             "lr_halflife":2,
             "min_avail":5
