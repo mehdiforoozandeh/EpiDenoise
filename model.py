@@ -36,7 +36,7 @@ class MetadataEmbeddingModule(nn.Module):
         self.xread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Y metadata embedding parameters
-        self.yruntype_embedding = nn.Embedding(3, self.continuous_size)  # 4 classes: single_end, pair_end, missing
+        self.yruntype_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: single_end, pair_end, missing
         self.ydepth_transform = nn.Linear(1, self.continuous_size) 
         self.ycoverage_transform = nn.Linear(1, self.continuous_size)
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
@@ -4657,7 +4657,7 @@ if __name__ == "__main__":
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 1620,
-            "batch_size": 25,
+            "batch_size": 30,
             "learning_rate": 5e-5,
             "num_loci": 400,
             "lr_halflife":2,
