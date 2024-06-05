@@ -1555,7 +1555,6 @@ class EpiDenoise30c(nn.Module):
         p, n = self.neg_binom_layer(Z)
         return p, n
 
-
 #========================================================================================================#
 #=========================================Pretraining====================================================#
 #========================================================================================================#
@@ -3652,6 +3651,15 @@ class MODEL_LOADER(object):
             model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
                 n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
                 dropout=dropout, context_length=context_length, pos_enc="relative")
+        
+        elif version == "30c":
+            n_cnn_layers = hyper_parameters["n_cnn_layers"]
+            conv_kernel_size = hyper_parameters["conv_kernel_size"]
+            pool_size = hyper_parameters["pool_size"]
+
+            model = EpiDenoise30c(input_dim, metadata_embedding_dim, conv_kernel_size, 
+            n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size, 
+            dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
         model = model.to(self.device)

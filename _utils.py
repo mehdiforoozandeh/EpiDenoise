@@ -351,9 +351,6 @@ class MONITOR_VALIDATION(object):
                 elif self.arch in ["c", "d"]:
                     outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
 
-                # outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-                # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
-
             # Store the predictions in the large tensor
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()

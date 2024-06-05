@@ -1944,24 +1944,27 @@ class EVAL_EED(object):
                 x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
                 mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
                 # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
-                avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+                if self.version in ["a", "b"]:
+                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
 
                 if len(imp_target)>0:
                     x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                     mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
                     # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
-                    avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    if self.version in ["a", "b"]:
+                        avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    elif self.version in ["c", "d"]:
+                        avail_batch[:, imp_target] = 0
 
                 x_batch = x_batch.to(self.device)
                 mX_batch = mX_batch.to(self.device)
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                # if self.version == "30a":
-                outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-                # else:
-                    # outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-                # outputs = NegativeBinomial(outputs_p.cpu(), outputs_n.cpu()).expect(stat="median")
+                if self.version == ["30a", "30b"]:
+                    outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                elif self.version == ["30c", "30d"]:
+                    outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
 
             # Store the predictions in the large tensor
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
@@ -2123,6 +2126,30 @@ class EVAL_EED(object):
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
 if __name__=="__main__":
+
+    e = EVAL_EED(
+        model="models/EPD30c_model_checkpoint_epoch0_LociProg20.pth", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=1536, batch_size=50, 
+        hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240603115718_params15099287.pkl",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30c", resolution=25, 
+        savedir="models/eval_30c/", mode="eval"
+    )
+    evres = e.bios_pipeline("ENCBS596CTT", 1)
+    for i in range(len(evres)):
+        print(evres[i])
+
+    e.viz_bios(evres)
+    try:
+        evres = pd.DataFrame(evres)
+        evres.to_csv("models/eval_30a/res.csv")
+    except:
+        pass
+    
+
+    exit()
+
     e = EVAL_EED(
         model="models/EpiDenoise30a_20240525184756_params2182872.pt", 
         data_path="/project/compbio-lab/encode_data/", 
