@@ -4318,9 +4318,12 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     elif arch == "d":
         pass
-
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    
+    if arch in ["a", "b"]:
+        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    elif arch in ["c", "d"]:
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
 
