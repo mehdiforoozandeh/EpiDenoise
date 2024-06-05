@@ -3653,9 +3653,9 @@ class MODEL_LOADER(object):
                 dropout=dropout, context_length=context_length, pos_enc="relative")
         
         elif version == "30c":
-            n_cnn_layers = hyper_parameters["n_cnn_layers"]
-            conv_kernel_size = hyper_parameters["conv_kernel_size"]
-            pool_size = hyper_parameters["pool_size"]
+            n_cnn_layers = self.hyper_parameters["n_cnn_layers"]
+            conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
+            pool_size = self.hyper_parameters["pool_size"]
 
             model = EpiDenoise30c(input_dim, metadata_embedding_dim, conv_kernel_size, 
             n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size, 
