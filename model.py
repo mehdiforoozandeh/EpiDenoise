@@ -4648,11 +4648,11 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 3,
             "conv_kernel_size" : 7,
-            "n_decoder_layers" : 2,
+            "n_decoder_layers" : 1,
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 4,
+            "nlayers": 6,
             "epochs": 1,
             "inner_epochs": 100,
             "mask_percentage": 0.1,
