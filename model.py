@@ -1490,7 +1490,7 @@ class EpiDenoise30b(nn.Module):
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.fusion = nn.Linear(self.f1, self.f1)
+        # self.fusion = nn.Linear(self.f1, self.f1)
         
         self.convDec = ConvTower(self.f1, self.f2,
                 W=1, S=1, D=1, 
@@ -1540,7 +1540,7 @@ class EpiDenoise30b(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = torch.cat([src, md_embedding], dim=-1)
-        src = F.relu(self.fusion(src)) # N, L, F
+        # src = F.relu(self.fusion(src)) # N, L, F
 
         ### CONV ENCODER ###
         e_src = src.permute(0, 2, 1) # to N, F1, L
@@ -1600,7 +1600,7 @@ class EpiDenoise30c(nn.Module):
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.position = PositionalEncoding(d_model, dropout, self.l1)
 
-        self.fusion = nn.Linear(self.f1, self.f1)
+        # self.fusion = nn.Linear(self.f1, self.f1)
         
         self.convL = ConvTower(self.f1, self.f2,
                 W=1, S=1, D=1, 
@@ -1637,7 +1637,7 @@ class EpiDenoise30c(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = torch.cat([src, md_embedding], dim=-1)
-        src = F.relu(self.fusion(src)) # B, L, F
+        # src = F.relu(self.fusion(src)) # B, L, F
 
         W = src.permute(0, 2, 1) # to B, F, L
         W = self.convL(W)
@@ -4654,7 +4654,7 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 100,
+            "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 1620,
             "batch_size": 18,
