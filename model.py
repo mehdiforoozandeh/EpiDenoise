@@ -1675,6 +1675,27 @@ class EpiDenoise30c(nn.Module):
         for conv in self.convD:
             H = conv(H)
 
+        print(H.shape)
+        # Aggregating the sequence representation
+        H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
+        H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
+
+        print(H_avg_pool.shape)
+        print(H_max_pool.shape)
+
+        H = torch.cat((H_avg_pool, H_max_pool), dim=-1)  # Concatenate pooled features
+
+        print(H.shape)
+
+        # Transforming the aggregated representation
+        H = H.unsqueeze(-1).expand(-1, -1, self.l2)
+
+        print(H.shape)
+        exit()
+
+        for encD in self.transD:
+            H = encD(H)
+
         # H.shape =  N, F', L'
         for encD in self.transD:
             H = encD(H)
