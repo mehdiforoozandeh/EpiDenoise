@@ -3578,7 +3578,7 @@ class PRE_TRAINER(object):
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
                         log_strs.append(skipmessage)
-                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch
+                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, 
                         print(skipmessage)
                         torch.cuda.empty_cache() 
                         continue
