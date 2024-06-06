@@ -1637,6 +1637,7 @@ class EpiDenoise30c(nn.Module):
         # Learnable weights for the average and max pooled features (per feature)
         self.alpha = nn.Parameter(torch.ones(self.f2))
         self.beta = nn.Parameter(torch.ones(self.f2))
+        self.normD = nn.LayerNorm(self.f2)
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1686,7 +1687,7 @@ class EpiDenoise30c(nn.Module):
         H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
 
         H = (self.alpha * H_avg_pool) + (self.beta * H_max_pool)  # Shape: (batch_size, feature_dim)
-
+        H = self.normD(H) 
         # Transforming the aggregated representation
         H = H.unsqueeze(-1).expand(-1, -1, self.l2)
 
