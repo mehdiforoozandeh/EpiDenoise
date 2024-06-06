@@ -1633,11 +1633,6 @@ class EpiDenoise30c(nn.Module):
             nn.LayerNorm(self.f2),
             nn.ReLU()
         )
-        # self.fusionD = nn.Sequential(
-        #     nn.Linear(2*self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
 
         # Learnable weights for the average and max pooled features (per feature)
         self.alpha = nn.Parameter(torch.ones(self.f2))
@@ -3585,6 +3580,7 @@ class PRE_TRAINER(object):
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
                         log_strs.append(skipmessage)
+                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch
                         print(skipmessage)
                         torch.cuda.empty_cache() 
                         continue
@@ -4727,7 +4723,7 @@ if __name__ == "__main__":
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 810,
-            "batch_size": 20,
+            "batch_size": 30,
             "learning_rate": 1e-4,
             "num_loci": 400,
             "lr_halflife":2,
