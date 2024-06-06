@@ -1505,6 +1505,17 @@ class EpiDenoise30b(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
+        self.fusionEnc = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
+        self.fusionDec = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
+
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
@@ -1548,6 +1559,7 @@ class EpiDenoise30b(nn.Module):
             e_src = conv(e_src)
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
 
+        e_src = self.fusionEnc(e_src)
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             e_src = self.posEnc(e_src)
@@ -1560,6 +1572,7 @@ class EpiDenoise30b(nn.Module):
         src = self.convDec(src)
         src = src.permute(0, 2, 1) # to N, L, F2
 
+        src = self.fusionDec(src)
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             src = self.posDec(src)
@@ -1614,6 +1627,12 @@ class EpiDenoise30c(nn.Module):
                 pool_type="max", residuals=True,
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.fusionL = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1643,9 +1662,10 @@ class EpiDenoise30c(nn.Module):
         W = self.convL(W)
         W = W.permute(0, 2, 1) # to B, L, F'
 
+        W = self.fusionL(W)
         if self.pos_enc != "relative":
             W = self.position(W) 
-
+        
         for encL in self.transL:
             W = encL(W)
         
@@ -1655,6 +1675,7 @@ class EpiDenoise30c(nn.Module):
         for conv in self.convD:
             H = conv(H)
 
+        # H.shape =  N, F', L'
         for encD in self.transD:
             H = encD(H)
 
