@@ -1674,7 +1674,6 @@ class EpiDenoise30c(nn.Module):
             W = encL(W)
         # W.shape = B, L, F'
         
-
         H = src.permute(0, 2, 1) # to B, F, L
         for conv in self.convD:
             H = conv(H)
@@ -1701,6 +1700,8 @@ class EpiDenoise30c(nn.Module):
         # Z.shape = B, L, L'+metadata_dim
 
         p, n = self.neg_binom_layer(Z)
+
+        print(n.max(), p.max(), n.min(), p.min())
         return p, n
 
 #========================================================================================================#
