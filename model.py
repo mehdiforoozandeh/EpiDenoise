@@ -1693,7 +1693,7 @@ class EpiDenoise30c(nn.Module):
         print(H_max_pool.shape)
 
         # H = torch.cat((H_avg_pool, H_max_pool), dim=-1)  # Concatenate pooled features
-        H_agg = self.alpha * H_avg_pool + self.beta * H_max_pool  # Shape: (batch_size, feature_dim)
+        H = self.alpha * H_avg_pool + self.beta * H_max_pool  # Shape: (batch_size, feature_dim)
         # print(H.shape)
         # H = self.fusionD(H)
         print(H.shape)
