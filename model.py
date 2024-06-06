@@ -1680,7 +1680,7 @@ class EpiDenoise30c(nn.Module):
         # H.shape =  N, F', L'
 
         # Aggregating the sequence representation
-        # H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
+        H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
         # H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
 
         # H = (self.alpha * H_avg_pool)  # Shape: (batch_size, feature_dim)
