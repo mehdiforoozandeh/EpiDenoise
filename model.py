@@ -1635,8 +1635,8 @@ class EpiDenoise30c(nn.Module):
         )
 
         # Learnable weights for the average and max pooled features (per feature)
-        self.alpha = nn.Parameter(torch.ones(self.f2))
-        self.beta = nn.Parameter(torch.ones(self.f2))
+        self.alpha = nn.Parameter(torch.normal(mean=0.5, std=0.1, size=(self.f2)))
+        self.beta = nn.Parameter(torch.normal(mean=0.5, std=0.1, size=(self.f2)))
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -4718,7 +4718,7 @@ if __name__ == "__main__":
             "d_model": (47+49)*(2**3),
             "nlayers": 3,
             "epochs": 1,
-            "inner_epochs": 100,
+            "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 810,
             "batch_size": 10,
