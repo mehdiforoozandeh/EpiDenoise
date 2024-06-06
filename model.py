@@ -1633,11 +1633,15 @@ class EpiDenoise30c(nn.Module):
             nn.LayerNorm(self.f2),
             nn.ReLU()
         )
-        self.fusionD = nn.Sequential(
-            nn.Linear(2*self.f2, self.f2),
-            nn.LayerNorm(self.f2),
-            nn.ReLU()
-        )
+        # self.fusionD = nn.Sequential(
+        #     nn.Linear(2*self.f2, self.f2),
+        #     nn.LayerNorm(self.f2),
+        #     nn.ReLU()
+        # )
+
+        # Learnable weights for the average and max pooled features (per feature)
+        self.alpha = nn.Parameter(torch.ones(self.f2))
+        self.beta = nn.Parameter(torch.ones(self.f2))
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1688,10 +1692,10 @@ class EpiDenoise30c(nn.Module):
         print(H_avg_pool.shape)
         print(H_max_pool.shape)
 
-        H = torch.cat((H_avg_pool, H_max_pool), dim=-1)  # Concatenate pooled features
-        
-        print(H.shape)
-        H = self.fusionD(H)
+        # H = torch.cat((H_avg_pool, H_max_pool), dim=-1)  # Concatenate pooled features
+        H_agg = self.alpha * H_avg_pool + self.beta * H_max_pool  # Shape: (batch_size, feature_dim)
+        # print(H.shape)
+        # H = self.fusionD(H)
         print(H.shape)
 
         # Transforming the aggregated representation
