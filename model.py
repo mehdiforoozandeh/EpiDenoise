@@ -1701,7 +1701,6 @@ class EpiDenoise30c(nn.Module):
 
         p, n = self.neg_binom_layer(Z)
 
-        print(n.max(), p.max(), n.min(), p.min())
         return p, n
 
 #========================================================================================================#
@@ -4722,7 +4721,7 @@ if __name__ == "__main__":
             "inner_epochs": 100,
             "mask_percentage": 0.1,
             "context_length": 810,
-            "batch_size": 30,
+            "batch_size": 10,
             "learning_rate": 1e-4,
             "num_loci": 400,
             "lr_halflife":2,
