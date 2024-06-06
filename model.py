@@ -1633,6 +1633,11 @@ class EpiDenoise30c(nn.Module):
             nn.LayerNorm(self.f2),
             nn.ReLU()
         )
+        self.fusionD = nn.Sequential(
+            nn.Linear(2*self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1684,7 +1689,9 @@ class EpiDenoise30c(nn.Module):
         print(H_max_pool.shape)
 
         H = torch.cat((H_avg_pool, H_max_pool), dim=-1)  # Concatenate pooled features
-
+        
+        print(H.shape)
+        H = self.fusionD(H)
         print(H.shape)
 
         # Transforming the aggregated representation
@@ -1692,9 +1699,6 @@ class EpiDenoise30c(nn.Module):
 
         print(H.shape)
         exit()
-
-        for encD in self.transD:
-            H = encD(H)
 
         # H.shape =  N, F', L'
         for encD in self.transD:
