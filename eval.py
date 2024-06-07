@@ -49,22 +49,7 @@ def binarize_and_analyze(data, assay_name, threshold=0.0001):
     # Step 3: Binarize the Data
     binarized_data = (probabilities < threshold).astype(int)
 
-    # Step 4: Separate the data into two groups based on binary classification
-    class_0 = data[binarized_data == 0]
-    class_1 = data[binarized_data == 1]
-
-    # Step 5: Calculate Mean and Standard Deviation for each group
-    mean_class_0 = np.mean(class_0) if len(class_0) > 0 else np.nan
-    std_class_0 = np.std(class_0) if len(class_0) > 0 else np.nan
-    mean_class_1 = np.mean(class_1) if len(class_1) > 0 else np.nan
-    std_class_1 = np.std(class_1) if len(class_1) > 0 else np.nan
-
-    # Print results
-    print(f"Negative Binomial Distribution Parameters: r = {r:.2f}, p = {p:.2f}")
-    print(f"Threshold for binarization: {threshold}")
-    print(f"{assay_name} | Class 0 (Binary 0) - Mean: {mean_class_0:.2f}, Std Dev: {std_class_0:.2f}, Count: {len(class_0)}")
-    print(f"{assay_name} | Class 1 (Binary 1) - Mean: {mean_class_1:.2f}, Std Dev: {std_class_1:.2f}, Count: {len(class_1)}")
-
+    return binarized_data
 
 class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
