@@ -22,7 +22,7 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 
-def binarize_and_analyze(data, assay_name, threshold=0.05):
+def binarize_and_analyze(data, assay_name, threshold=0.0001):
     """
     Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold,
     and prints the mean and standard deviation of the original values based on their binary class.
