@@ -3,6 +3,7 @@ from data import *
 from _utils import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score
+import statsmodels.api as sm
 
 import scipy.stats
 import seaborn as sns
@@ -664,6 +665,39 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
+
+    def BIOS_error_std_scatter(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        for j in range(len(eval_res)):
+            if "obs" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+            error = np.abs(observed - pred_mean)
+
+            sc = ax.scatter(error, pred_std, color="black", s=5, alpha=0.5, label='genomic bins')
+
+            # Add LOESS smoothing line
+            lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
+            ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
+
+            ax.set_xlabel('Absolute Error')
+            ax.set_ylabel('Predicted Std Dev')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/error_std_scatter.png", dpi=150)
     
     def BIOS_mean_std_hexbin(self, eval_res):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1910,6 +1944,10 @@ class EVAL_EED(object):
 
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        print(X.shape)
+        print(Y.shape)
+        exit()
 
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
