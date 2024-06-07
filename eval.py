@@ -1980,7 +1980,7 @@ class EVAL_EED(object):
         for i in range(X.shape[1]):
             if avX[i] == 1:
                 a = binarize_and_analyze(X[:,i].numpy(), self.mark_dict[f"M{str(i+1).zfill(len(str(len(self.mark_dict))))}"])
-                print(a.shape)
+                print(a)
         exit()
 
 
