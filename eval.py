@@ -1980,7 +1980,7 @@ class EVAL_EED(object):
 
         print(X.shape)
         print(avX.shape)
-        for i in X.shape[1]:
+        for i in range(X.shape[1]):
             if avX[i] == 1:
                 check_poisson_vs_nbinom(X[:,i].numpy())
         exit()
