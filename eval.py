@@ -18,6 +18,42 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
+
+def check_poisson_vs_nbinom(data):
+    import numpy as np
+    import scipy.stats as stats
+    import matplotlib.pyplot as plt
+    from scipy.optimize import minimize
+
+    # Fit Negative Binomial Distribution
+    def negbinom_loglik(params, data):
+        r, p = params
+        return -np.sum(stats.nbinom.logpmf(data, r, p))
+
+    initial_params = [1, 0.5]  # Initial guess for r and p
+    result_nbinom = minimize(negbinom_loglik, initial_params, args=(data), bounds=[(1e-5, None), (1e-5, 1-1e-5)])
+    r, p = result_nbinom.x
+
+    # Fit Poisson Distribution
+    lambda_poisson = np.mean(data)
+
+    # Calculate Log-Likelihoods
+    log_likelihood_nbinom = -negbinom_loglik([r, p], data)
+    log_likelihood_poisson = np.sum(stats.poisson.logpmf(data, lambda_poisson))
+
+    # Calculate AIC and BIC
+    def aic_bic(log_likelihood, num_params, num_samples):
+        aic = 2 * num_params - 2 * log_likelihood
+        bic = num_params * np.log(num_samples) - 2 * log_likelihood
+        return aic, bic
+
+    aic_nbinom, bic_nbinom = aic_bic(log_likelihood_nbinom, 2, len(data))
+    aic_poisson, bic_poisson = aic_bic(log_likelihood_poisson, 1, len(data))
+
+    print(f"Negative Binomial - AIC: {aic_nbinom}, BIC: {bic_nbinom}")
+    print(f"Poisson - AIC: {aic_poisson}, BIC: {bic_poisson}")
+
+
 class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
@@ -1942,13 +1978,17 @@ class EVAL_EED(object):
 
         X, Y = X[:num_rows, :], Y[:num_rows, :]
 
+        print(X.shape)
+        print(avX.shape)
+        # for i in X.shape[1]:
+        #     if 
+        exit()
+
+
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
 
-        print(X.shape)
-        print(Y.shape)
-        exit()
-
+        
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
 
