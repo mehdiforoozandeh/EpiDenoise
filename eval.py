@@ -14,6 +14,9 @@ from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
 import pyBigWig
 
+import scipy.stats as stats
+from scipy.optimize import minimize
+
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
