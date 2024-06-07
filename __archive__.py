@@ -1495,4 +1495,51 @@ class Evaluation: # on chr21
         self.overlap_percent = overlap / top_p_percent 
 
         return self.overlap_percent
-    
+
+
+def check_poisson_vs_nbinom(data, assay_name):
+    import numpy as np
+    import scipy.stats as stats
+    import matplotlib.pyplot as plt
+    from scipy.optimize import minimize
+
+    # Fit Negative Binomial Distribution
+    def negbinom_loglik(params, data):
+        r, p = params
+        return -np.sum(stats.nbinom.logpmf(data, r, p))
+
+    initial_params = [1, 0.5]  # Initial guess for r and p
+    result_nbinom = minimize(negbinom_loglik, initial_params, args=(data), bounds=[(1e-5, None), (1e-5, 1-1e-5)])
+    r, p = result_nbinom.x
+
+    # Fit Poisson Distribution
+    lambda_poisson = np.mean(data)
+
+    # Calculate Log-Likelihoods
+    log_likelihood_nbinom = -negbinom_loglik([r, p], data)
+    log_likelihood_poisson = np.sum(stats.poisson.logpmf(data, lambda_poisson))
+
+    # Calculate AIC and BIC
+    def aic_bic(log_likelihood, num_params, num_samples):
+        aic = 2 * num_params - 2 * log_likelihood
+        bic = num_params * np.log(num_samples) - 2 * log_likelihood
+        return aic, bic
+
+    aic_nbinom, bic_nbinom = aic_bic(log_likelihood_nbinom, 2, len(data))
+    aic_poisson, bic_poisson = aic_bic(log_likelihood_poisson, 1, len(data))
+
+    print(f"Negative Binomial - AIC: {aic_nbinom}, BIC: {bic_nbinom}")
+    print(f"Poisson - AIC: {aic_poisson}, BIC: {bic_poisson}")
+
+    # Plot the fit
+    x = np.arange(0, max(data)+1)
+    plt.hist(data, bins=x-0.5, density=True, alpha=0.6, color='g', label='Data')
+
+    plt.plot(x, stats.nbinom.pmf(x, r, p), 'o-', label=f'Negative Binomial (r={r:.2f}, p={p:.2f})')
+    plt.plot(x, stats.poisson.pmf(x, lambda_poisson), 'o-', label=f'Poisson ($\lambda$={lambda_poisson:.2f})')
+
+    plt.legend()
+    plt.xlabel('Data')
+    plt.ylabel('Frequency')
+    plt.title('Fit Comparison')
+    plt.savefig(f"models/evals/examples/{assay_name}", dpi=150)

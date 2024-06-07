@@ -19,13 +19,19 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 
-def check_poisson_vs_nbinom(data, assay_name):
-    import numpy as np
-    import scipy.stats as stats
-    import matplotlib.pyplot as plt
-    from scipy.optimize import minimize
+def binarize_and_analyze(data, assay_name, threshold=0.05):
+    """
+    Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold,
+    and prints the mean and standard deviation of the original values based on their binary class.
 
-    # Fit Negative Binomial Distribution
+    Parameters:
+    data (numpy array): The input data array to analyze.
+    threshold (float): The probability threshold for binarization. Default is 0.05.
+    """
+    # Ensure the data is a NumPy array
+    data = np.asarray(data)
+
+    # Step 1: Fit Negative Binomial Distribution
     def negbinom_loglik(params, data):
         r, p = params
         return -np.sum(stats.nbinom.logpmf(data, r, p))
@@ -34,37 +40,27 @@ def check_poisson_vs_nbinom(data, assay_name):
     result_nbinom = minimize(negbinom_loglik, initial_params, args=(data), bounds=[(1e-5, None), (1e-5, 1-1e-5)])
     r, p = result_nbinom.x
 
-    # Fit Poisson Distribution
-    lambda_poisson = np.mean(data)
+    # Step 2: Calculate Probabilities under the Negative Binomial distribution
+    probabilities = stats.nbinom.pmf(data, r, p)
 
-    # Calculate Log-Likelihoods
-    log_likelihood_nbinom = -negbinom_loglik([r, p], data)
-    log_likelihood_poisson = np.sum(stats.poisson.logpmf(data, lambda_poisson))
+    # Step 3: Binarize the Data
+    binarized_data = (probabilities > threshold).astype(int)
 
-    # Calculate AIC and BIC
-    def aic_bic(log_likelihood, num_params, num_samples):
-        aic = 2 * num_params - 2 * log_likelihood
-        bic = num_params * np.log(num_samples) - 2 * log_likelihood
-        return aic, bic
+    # Step 4: Separate the data into two groups based on binary classification
+    class_0 = data[binarized_data == 0]
+    class_1 = data[binarized_data == 1]
 
-    aic_nbinom, bic_nbinom = aic_bic(log_likelihood_nbinom, 2, len(data))
-    aic_poisson, bic_poisson = aic_bic(log_likelihood_poisson, 1, len(data))
+    # Step 5: Calculate Mean and Standard Deviation for each group
+    mean_class_0 = np.mean(class_0) if len(class_0) > 0 else np.nan
+    std_class_0 = np.std(class_0) if len(class_0) > 0 else np.nan
+    mean_class_1 = np.mean(class_1) if len(class_1) > 0 else np.nan
+    std_class_1 = np.std(class_1) if len(class_1) > 0 else np.nan
 
-    print(f"Negative Binomial - AIC: {aic_nbinom}, BIC: {bic_nbinom}")
-    print(f"Poisson - AIC: {aic_poisson}, BIC: {bic_poisson}")
-
-    # Plot the fit
-    x = np.arange(0, max(data)+1)
-    plt.hist(data, bins=x-0.5, density=True, alpha=0.6, color='g', label='Data')
-
-    plt.plot(x, stats.nbinom.pmf(x, r, p), 'o-', label=f'Negative Binomial (r={r:.2f}, p={p:.2f})')
-    plt.plot(x, stats.poisson.pmf(x, lambda_poisson), 'o-', label=f'Poisson ($\lambda$={lambda_poisson:.2f})')
-
-    plt.legend()
-    plt.xlabel('Data')
-    plt.ylabel('Frequency')
-    plt.title('Fit Comparison')
-    plt.savefig(f"models/evals/examples/{assay_name}", dpi=150)
+    # Print results
+    print(f"Negative Binomial Distribution Parameters: r = {r:.2f}, p = {p:.2f}")
+    print(f"Threshold for binarization: {threshold}")
+    print(f"Class 0 (Binary 0) - Mean: {mean_class_0:.2f}, Std Dev: {std_class_0:.2f}, Count: {len(class_0)}")
+    print(f"Class 1 (Binary 1) - Mean: {mean_class_1:.2f}, Std Dev: {std_class_1:.2f}, Count: {len(class_1)}")
 
 
 class METRICS(object):
@@ -1995,7 +1991,7 @@ class EVAL_EED(object):
         print(avX.shape)
         for i in range(X.shape[1]):
             if avX[i] == 1:
-                check_poisson_vs_nbinom(X[:,i].numpy(), self.mark_dict[f"M{str(i+1).zfill(len(str(len(self.mark_dict))))}"])
+                binarize_and_analyze(X[:,i].numpy(), self.mark_dict[f"M{str(i+1).zfill(len(str(len(self.mark_dict))))}"])
         exit()
 
 
