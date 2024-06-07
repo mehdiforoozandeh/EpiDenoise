@@ -47,7 +47,7 @@ def binarize_and_analyze(data, assay_name, threshold=0.0001):
     probabilities = stats.nbinom.pmf(data, r, p)
 
     # Step 3: Binarize the Data
-    binarized_data = (probabilities > threshold).astype(int)
+    binarized_data = (probabilities < threshold).astype(int)
 
     # Step 4: Separate the data into two groups based on binary classification
     class_0 = data[binarized_data == 0]
