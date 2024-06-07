@@ -19,7 +19,7 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 
-def check_poisson_vs_nbinom(data):
+def check_poisson_vs_nbinom(data, assay_name):
     import numpy as np
     import scipy.stats as stats
     import matplotlib.pyplot as plt
@@ -52,6 +52,19 @@ def check_poisson_vs_nbinom(data):
 
     print(f"Negative Binomial - AIC: {aic_nbinom}, BIC: {bic_nbinom}")
     print(f"Poisson - AIC: {aic_poisson}, BIC: {bic_poisson}")
+
+    # Plot the fit
+    x = np.arange(0, max(data)+1)
+    plt.hist(data, bins=x-0.5, density=True, alpha=0.6, color='g', label='Data')
+
+    plt.plot(x, stats.nbinom.pmf(x, r, p), 'o-', label=f'Negative Binomial (r={r:.2f}, p={p:.2f})')
+    plt.plot(x, stats.poisson.pmf(x, lambda_poisson), 'o-', label=f'Poisson ($\lambda$={lambda_poisson:.2f})')
+
+    plt.legend()
+    plt.xlabel('Data')
+    plt.ylabel('Frequency')
+    plt.title('Fit Comparison')
+    plt.savefig(f"models/evals/examples/{assay_name}", dpi=150)
 
 
 class METRICS(object):
@@ -1982,7 +1995,7 @@ class EVAL_EED(object):
         print(avX.shape)
         for i in range(X.shape[1]):
             if avX[i] == 1:
-                check_poisson_vs_nbinom(X[:,i].numpy())
+                check_poisson_vs_nbinom(X[:,i].numpy(), self.mark_dict[f"M{str(i+1).zfill(len(str(len(self.mark_dict))))}"])
         exit()
 
 
