@@ -59,8 +59,8 @@ def binarize_and_analyze(data, assay_name, threshold=0.05):
     # Print results
     print(f"Negative Binomial Distribution Parameters: r = {r:.2f}, p = {p:.2f}")
     print(f"Threshold for binarization: {threshold}")
-    print(f"Class 0 (Binary 0) - Mean: {mean_class_0:.2f}, Std Dev: {std_class_0:.2f}, Count: {len(class_0)}")
-    print(f"Class 1 (Binary 1) - Mean: {mean_class_1:.2f}, Std Dev: {std_class_1:.2f}, Count: {len(class_1)}")
+    print(f"{assay_name} | Class 0 (Binary 0) - Mean: {mean_class_0:.2f}, Std Dev: {std_class_0:.2f}, Count: {len(class_0)}")
+    print(f"{assay_name} | Class 1 (Binary 1) - Mean: {mean_class_1:.2f}, Std Dev: {std_class_1:.2f}, Count: {len(class_1)}")
 
 
 class METRICS(object):
