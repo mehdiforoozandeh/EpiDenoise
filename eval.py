@@ -2166,13 +2166,13 @@ class EVAL_EED(object):
 if __name__=="__main__":
 
     e = EVAL_EED(
-        model="models/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
+        model="models/pretrained/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=400, batch_size=200, 
-        hyper_parameters_path="models/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
+        hyper_parameters_path="models/pretrained/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30a", resolution=25, 
-        savedir="models/eval_30a/", mode="eval"
+        savedir="models/evals/eval_30a/", mode="eval"
     )
     evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
