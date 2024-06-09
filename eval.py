@@ -320,7 +320,7 @@ class METRICS(object):
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         return nbinom_dist.cdf(y_true)
 
-    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true):
+    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true, intervals=False):
         """
         inputs: 1) nbinom_p, nbinom_n -> two arrays with length L -> negative binomial dist parameters for each position
                 2) y_true -> one array of true observed signal
@@ -341,39 +341,58 @@ class METRICS(object):
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         binarized_y = binarize_nbinom(y_true)
 
-        for conf in conf_levels:
-            lower, upper = nbinom_dist.interval(conf)
-            intervals[conf].append((lower, upper))
+        pmf_zero = (nbinom_dist.pmf(0))
 
-        for conf in conf_levels:
-            intervals[conf] = np.array(intervals[conf])
+        if intervals:
+            for conf in conf_levels:
+                lower, upper = nbinom_dist.interval(conf)
+                intervals[conf].append((lower, upper))
 
-        # Step 4: Analyze peaks and background
-        analysis = {
-            "confidence_level": [],
-            "background_fraction": [],
-            "peak_fraction": []
-        }
+            for conf in conf_levels:
+                intervals[conf] = np.array(intervals[conf])
 
-        for conf in conf_levels:
-            lower_bounds, upper_bounds = intervals[conf][:, 0], intervals[conf][:, 1]
+            # Step 4: Analyze peaks and background
+            analysis = {
+                "confidence_level": [],
+                "background_fraction": [],
+                "peak_fraction": []
+            }
+
+            for conf in conf_levels:
+                lower_bounds, upper_bounds = intervals[conf][:, 0], intervals[conf][:, 1]
+
+                # Positions outside peaks (background)
+                background_overlap_zero = ((lower_bounds[binarized_y == 0] <= 0) & (upper_bounds[binarized_y == 0] >= 0)).mean()
+
+                # Positions within peaks
+                peak_overlap_zero = ((lower_bounds[binarized_y == 1] <= 0) & (upper_bounds[binarized_y == 1] >= 0)).mean()
+
+
+                analysis["confidence_level"].append(conf)
+                analysis["background_fraction"].append(background_overlap_zero)
+                analysis["peak_fraction"].append(peak_overlap_zero)
+
+            return analysis
+
+        else:
+            # Step 3: Analyze peaks and background
+            analysis = {
+                "background_fraction": [],
+                "peak_fraction": []
+            }
 
             # Positions outside peaks (background)
-            background_overlap_zero = (upper_bounds[binarized_y == 0] >= 0).mean()
+            background_pmf_zero = pmf_zero[binarized_y == 0]
+            background_fraction = (background_pmf_zero > 0).mean()  # Fraction of background positions with PMF(0) > 0
 
             # Positions within peaks
-            peak_overlap_zero = (upper_bounds[binarized_y == 1] >= 0).mean()
+            peak_pmf_zero = pmf_zero[binarized_y == 1]
+            peak_fraction = (peak_pmf_zero > 0).mean()  # Fraction of peak positions with PMF(0) > 0
 
-            analysis["confidence_level"].append(conf)
-            analysis["background_fraction"].append(background_overlap_zero)
-            analysis["peak_fraction"].append(peak_overlap_zero)
+            analysis["background_fraction"] = background_fraction
+            analysis["peak_fraction"] = peak_fraction
 
-            print(f"Confidence Level {conf*100:.0f}%:")
-            print(f"  Fraction of background positions with CI overlapping 0: {background_overlap_zero:.2%}")
-            print(f"  Fraction of peak positions with CI overlapping 0: {peak_overlap_zero:.2%}")
-
-        return analysis
-        
+            return analysis
 
 
     ################################################################################
@@ -1877,14 +1896,14 @@ class EVAL_EED(object):
         imp_std = imp_dist.std()
         ups_std = ups_dist.std()
 
-        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -1894,6 +1913,10 @@ class EVAL_EED(object):
                 # j = j.item()
                 for comparison in ['imputed', 'upsampled']:
                     target = Y[:, j].numpy()
+
+                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=False))
+                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=True))
+                    exit()
 
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
