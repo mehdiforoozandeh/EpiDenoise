@@ -320,7 +320,7 @@ class METRICS(object):
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         return nbinom_dist.cdf(y_true)
 
-    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true, intervals=False):
+    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true):
         """
         inputs: 1) nbinom_p, nbinom_n -> two arrays with length L -> negative binomial dist parameters for each position
                 2) y_true -> one array of true observed signal
@@ -340,56 +340,15 @@ class METRICS(object):
 
         pmf_zero = (nbinom_dist.pmf(0))
 
-        if intervals:
-            conf_levels = [0.90, 0.95, 0.99]
-            c_intervals = {conf: [] for conf in conf_levels}
-            for conf in conf_levels:
-                lower, upper = nbinom_dist.interval(conf)
-                c_intervals[conf].append((lower.numpy(), upper.numpy()))
+        analysis = {}
 
-            for conf in conf_levels:
-                c_intervals[conf] = np.array(c_intervals[conf])
+        background_pmf_zero = pmf_zero[binarized_y == 0].mean() 
+        peak_pmf_zero = pmf_zero[binarized_y == 1].mean() 
 
-            # Step 4: Analyze peaks and background
-            analysis = {
-                "confidence_level": [],
-                "background_fraction": [],
-                "peak_fraction": []
-            }
+        analysis["p0_bg"] = background_pmf_zero.item()
+        analysis["p0_fg"] = peak_pmf_zero.item()
 
-            for conf in conf_levels:
-                lower_bounds, upper_bounds = c_intervals[conf][:, 0], c_intervals[conf][:, 1]
-
-                # Positions outside peaks (background)
-                background_overlap_zero = ((lower_bounds[binarized_y == 0] <= 0) & (upper_bounds[binarized_y == 0] >= 0)).float().mean()
-
-                # Positions within peaks
-                peak_overlap_zero = ((lower_bounds[binarized_y == 1] <= 0) & (upper_bounds[binarized_y == 1] >= 0)).float().mean()
-
-
-                analysis["confidence_level"].append(conf)
-                analysis["background_fraction"].append(background_overlap_zero)
-                analysis["peak_fraction"].append(peak_overlap_zero)
-
-            return analysis
-
-        else:
-            # Step 3: Analyze peaks and background
-            analysis = {
-                "background_fraction": [],
-                "peak_fraction": []
-            }
-
-            # Positions outside peaks (background)
-            background_pmf_zero = pmf_zero[binarized_y == 0].mean() 
-
-            # Positions within peaks
-            peak_pmf_zero = pmf_zero[binarized_y == 1].mean() 
-
-            analysis["p0_bg"] = background_pmf_zero.item()
-            analysis["p0_fg"] = peak_pmf_zero.item()
-
-            return analysis
+        return analysis
 
 
     ################################################################################
@@ -1893,14 +1852,14 @@ class EVAL_EED(object):
         imp_std = imp_dist.std()
         ups_std = ups_dist.std()
 
-        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
         
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -1910,10 +1869,6 @@ class EVAL_EED(object):
                 # j = j.item()
                 for comparison in ['imputed', 'upsampled']:
                     target = Y[:, j].numpy()
-
-                    print(self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=False))
-                    print(self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=True))
-                    exit()
 
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
@@ -1925,7 +1880,9 @@ class EVAL_EED(object):
                         upper_60 = imp_upper_60[:, j].numpy()
                         upper_80 = imp_upper_80[:, j].numpy()
                         upper_95 = imp_upper_95[:, j].numpy()
+
                         quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
+                        p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
@@ -1937,7 +1894,9 @@ class EVAL_EED(object):
                         upper_60 = ups_upper_60[:, j].numpy()
                         upper_80 = ups_upper_80[:, j].numpy()
                         upper_95 = ups_upper_95[:, j].numpy()
+
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
+                        p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
@@ -1958,6 +1917,9 @@ class EVAL_EED(object):
                         "upper_60": upper_60,
                         "upper_80": upper_80,
                         "upper_95": upper_95,
+
+                        "p0_bg":p0bgdf["p0_bg"],
+                        "p0_fg":p0bgdf["p0_fg"],
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),
@@ -1994,7 +1956,7 @@ class EVAL_EED(object):
                     results.append(metrics)
 
             else:
-                continue
+                # continue
                 pred = ups_mean[:, j].numpy()
                 lower_60 = ups_lower_60[:, j].numpy()
                 lower_80 = ups_lower_80[:, j].numpy()
