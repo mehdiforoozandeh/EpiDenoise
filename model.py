@@ -4693,14 +4693,14 @@ if __name__ == "__main__":
             "mask_percentage": 0.1,
             "context_length": 1620,
             "batch_size": 25,
-            "learning_rate": 5e-5,
-            "num_loci": 400,
+            "learning_rate": 1e-4,
+            "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":5
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30b, 
-            checkpoint_path=None, 
+            checkpoint_path="models/EpiDenoise30b_20240605194137_params13507449.pt", 
             arch="b")
 
     elif sys.argv[1] == "epd30c":
@@ -4723,12 +4723,12 @@ if __name__ == "__main__":
             "context_length": 810,
             "batch_size": 30,
             "learning_rate": 1e-4,
-            "num_loci": 400,
+            "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":5
+            "min_avail":10
         }
 
         train_epidenoise30(
             hyper_parameters30cd, 
-            checkpoint_path=None, 
+            checkpoint_path="models/EpiDenoise30c_20240605205217_params15426427.pt", 
             arch="c")

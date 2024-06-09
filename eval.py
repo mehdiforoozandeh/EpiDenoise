@@ -22,14 +22,13 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 
-def binarize_and_analyze(data, assay_name, threshold=0.0001):
+def binarize_nbinom(data, threshold=0.0001):
     """
-    Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold,
-    and prints the mean and standard deviation of the original values based on their binary class.
+    Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold.
 
     Parameters:
     data (numpy array): The input data array to analyze.
-    threshold (float): The probability threshold for binarization. Default is 0.05.
+    threshold (float): The probability threshold for binarization. Default is 0.0001.
     """
     # Ensure the data is a NumPy array
     data = np.asarray(data)
@@ -320,6 +319,61 @@ class METRICS(object):
     def confidence_quantile(self, nbinom_p, nbinom_n, y_true):
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         return nbinom_dist.cdf(y_true)
+
+    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true):
+        """
+        inputs: 1) nbinom_p, nbinom_n -> two arrays with length L -> negative binomial dist parameters for each position
+                2) y_true -> one array of true observed signal
+
+        task:
+
+            - NEW 2: peak vs. background comparison
+            - binarize each observed experiment according to some threshold.
+            - measure the two following
+                - what fraction of positions outside peaks have overlap (confidence interval) with zero
+                - for peaks, for what fraction, the confidence interval overlap with 0. this should ideally be low since otherwise the model is not sure about the peak
+            - intervals 90 95 99 percent
+        """
+
+        conf_levels = [0.90, 0.95, 0.99]
+        intervals = {conf: [] for conf in conf_levels}
+
+        nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
+        binarized_y = binarize_nbinom(y_true)
+
+        for conf in conf_levels:
+            lower, upper = nbinom_dist.interval(conf)
+            intervals[conf].append((lower, upper))
+
+        for conf in conf_levels:
+            intervals[conf] = np.array(intervals[conf])
+
+        # Step 4: Analyze peaks and background
+        analysis = {
+            "confidence_level": [],
+            "background_fraction": [],
+            "peak_fraction": []
+        }
+
+        for conf in conf_levels:
+            lower_bounds, upper_bounds = intervals[conf][:, 0], intervals[conf][:, 1]
+
+            # Positions outside peaks (background)
+            background_overlap_zero = (upper_bounds[binarized_y == 0] >= 0).mean()
+
+            # Positions within peaks
+            peak_overlap_zero = (upper_bounds[binarized_y == 1] >= 0).mean()
+
+            analysis["confidence_level"].append(conf)
+            analysis["background_fraction"].append(background_overlap_zero)
+            analysis["peak_fraction"].append(peak_overlap_zero)
+
+            print(f"Confidence Level {conf*100:.0f}%:")
+            print(f"  Fraction of background positions with CI overlapping 0: {background_overlap_zero:.2%}")
+            print(f"  Fraction of peak positions with CI overlapping 0: {peak_overlap_zero:.2%}")
+
+        return analysis
+        
 
 
     ################################################################################
@@ -1816,6 +1870,7 @@ class EVAL_EED(object):
             gene: MSE, Pearson, Spearman
             prom: MSE, Pearson, Spearman
         """
+
         imp_mean = imp_dist.expect()
         ups_mean = ups_dist.expect()
 
@@ -1974,14 +2029,6 @@ class EVAL_EED(object):
         num_rows = (X.shape[0] // self.context_length) * self.context_length
 
         X, Y = X[:num_rows, :], Y[:num_rows, :]
-
-        print(X.shape)
-        print(avX.shape)
-        for i in range(X.shape[1]):
-            if avX[i] == 1:
-                a = binarize_and_analyze(X[:,i].numpy(), self.mark_dict[f"M{str(i+1).zfill(len(str(len(self.mark_dict))))}"])
-                print(a)
-        exit()
 
 
         X = X.view(-1, self.context_length, X.shape[-1])
