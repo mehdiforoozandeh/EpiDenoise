@@ -1914,8 +1914,8 @@ class EVAL_EED(object):
                 for comparison in ['imputed', 'upsampled']:
                     target = Y[:, j].numpy()
 
-                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=False))
-                    print(self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=True))
+                    print(self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=False))
+                    print(self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target, intervals=True))
                     exit()
 
                     if comparison == "imputed":
