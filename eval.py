@@ -345,7 +345,7 @@ class METRICS(object):
             c_intervals = {conf: [] for conf in conf_levels}
             for conf in conf_levels:
                 lower, upper = nbinom_dist.interval(conf)
-                c_intervals[conf].append((lower, upper))
+                c_intervals[conf].append((lower.numpy(), upper.numpy()))
 
             for conf in conf_levels:
                 c_intervals[conf] = np.array(c_intervals[conf])
@@ -386,8 +386,8 @@ class METRICS(object):
             # Positions within peaks
             peak_pmf_zero = pmf_zero[binarized_y == 1].mean() 
 
-            analysis["background_fraction"] = background_pmf_zero.item()
-            analysis["peak_fraction"] = peak_pmf_zero.item()
+            analysis["p0_bg"] = background_pmf_zero.item()
+            analysis["p0_fg"] = peak_pmf_zero.item()
 
             return analysis
 
