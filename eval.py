@@ -361,10 +361,10 @@ class METRICS(object):
                 lower_bounds, upper_bounds = c_intervals[conf][:, 0], c_intervals[conf][:, 1]
 
                 # Positions outside peaks (background)
-                background_overlap_zero = ((lower_bounds[binarized_y == 0] <= 0) & (upper_bounds[binarized_y == 0] >= 0)).astype(float).mean()
+                background_overlap_zero = ((lower_bounds[binarized_y == 0] <= 0) & (upper_bounds[binarized_y == 0] >= 0)).float().mean()
 
                 # Positions within peaks
-                peak_overlap_zero = ((lower_bounds[binarized_y == 1] <= 0) & (upper_bounds[binarized_y == 1] >= 0)).astype(float).mean()
+                peak_overlap_zero = ((lower_bounds[binarized_y == 1] <= 0) & (upper_bounds[binarized_y == 1] >= 0)).float().mean()
 
 
                 analysis["confidence_level"].append(conf)
@@ -382,11 +382,11 @@ class METRICS(object):
 
             # Positions outside peaks (background)
             background_pmf_zero = pmf_zero[binarized_y == 0]
-            background_fraction = (background_pmf_zero > 0).dtype(float).mean()  # Fraction of background positions with PMF(0) > 0
+            background_fraction = (background_pmf_zero > 0).float().mean()  # Fraction of background positions with PMF(0) > 0
 
             # Positions within peaks
             peak_pmf_zero = pmf_zero[binarized_y == 1]
-            peak_fraction = (peak_pmf_zero > 0).dtype(float).mean()  # Fraction of peak positions with PMF(0) > 0
+            peak_fraction = (peak_pmf_zero > 0).float().mean()  # Fraction of peak positions with PMF(0) > 0
 
             analysis["background_fraction"] = background_fraction
             analysis["peak_fraction"] = peak_fraction
