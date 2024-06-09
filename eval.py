@@ -381,15 +381,13 @@ class METRICS(object):
             }
 
             # Positions outside peaks (background)
-            background_pmf_zero = pmf_zero[binarized_y == 0]
-            background_fraction = (background_pmf_zero > 0).float().mean()  # Fraction of background positions with PMF(0) > 0
+            background_pmf_zero = pmf_zero[binarized_y == 0].mean() 
 
             # Positions within peaks
-            peak_pmf_zero = pmf_zero[binarized_y == 1]
-            peak_fraction = (peak_pmf_zero > 0).float().mean()  # Fraction of peak positions with PMF(0) > 0
+            peak_pmf_zero = pmf_zero[binarized_y == 1].mean() 
 
-            analysis["background_fraction"] = background_fraction
-            analysis["peak_fraction"] = peak_fraction
+            analysis["background_fraction"] = background_pmf_zero.item()
+            analysis["peak_fraction"] = peak_pmf_zero.item()
 
             return analysis
 
