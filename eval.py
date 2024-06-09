@@ -335,8 +335,7 @@ class METRICS(object):
             - intervals 90 95 99 percent
         """
 
-        conf_levels = [0.90, 0.95, 0.99]
-        intervals = {conf: [] for conf in conf_levels}
+        
 
         nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
         binarized_y = binarize_nbinom(y_true)
@@ -344,12 +343,14 @@ class METRICS(object):
         pmf_zero = (nbinom_dist.pmf(0))
 
         if intervals:
+            conf_levels = [0.90, 0.95, 0.99]
+            c_intervals = {conf: [] for conf in conf_levels}
             for conf in conf_levels:
                 lower, upper = nbinom_dist.interval(conf)
-                intervals[conf].append((lower, upper))
+                c_intervals[conf].append((lower, upper))
 
             for conf in conf_levels:
-                intervals[conf] = np.array(intervals[conf])
+                c_intervals[conf] = np.array(c_intervals[conf])
 
             # Step 4: Analyze peaks and background
             analysis = {
@@ -359,7 +360,7 @@ class METRICS(object):
             }
 
             for conf in conf_levels:
-                lower_bounds, upper_bounds = intervals[conf][:, 0], intervals[conf][:, 1]
+                lower_bounds, upper_bounds = c_intervals[conf][:, 0], c_intervals[conf][:, 1]
 
                 # Positions outside peaks (background)
                 background_overlap_zero = ((lower_bounds[binarized_y == 0] <= 0) & (upper_bounds[binarized_y == 0] >= 0)).mean()
