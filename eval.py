@@ -1997,7 +1997,7 @@ class EVAL_EED(object):
                     results.append(metrics)
 
             else:
-                # continue
+                continue
                 pred = ups_mean[:, j].numpy()
                 lower_60 = ups_lower_60[:, j].numpy()
                 lower_80 = ups_lower_80[:, j].numpy()
