@@ -1793,7 +1793,7 @@ class EVAL_EED(object):
     def __init__(
         self, model, data_path, context_length, batch_size, hyper_parameters_path="",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", version="30a", resolution=25, 
-        savedir="models/evals/", mode="eval", split="test"):
+        savedir="models/evals/", mode="eval", split="val"):
 
         self.savedir = savedir
         if os.path.exists(self.savedir) == False:
