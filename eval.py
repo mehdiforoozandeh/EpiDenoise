@@ -1860,7 +1860,7 @@ class EVAL_EED(object):
                 assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
 
                 if a in list(availability):
-                    true_signal_a = y_true[:, j].numpy()
+                    true_signal_a = y_true[:, a].numpy()
                     f = signal_feature_extraction(
                         rna_seq_data["start"][i], rna_seq_data["end"][i], 
                         rna_seq_data["strand"][i], true_signal_a
@@ -1870,7 +1870,7 @@ class EVAL_EED(object):
                     f["FPKM"] = rna_seq_data["FPKM"][i]
                     true_features[assay_name] = f
                 
-                pred_signal_a = y_pred[:, j].numpy()
+                pred_signal_a = y_pred[:, a].numpy()
                 f = signal_feature_extraction(
                         rna_seq_data["start"][i], rna_seq_data["end"][i], 
                         rna_seq_data["strand"][i], pred_signal_a
