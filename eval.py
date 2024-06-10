@@ -1807,7 +1807,7 @@ class EVAL_EED(object):
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(self.context_length, check_completeness=False, split=split)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
 
