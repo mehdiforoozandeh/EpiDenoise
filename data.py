@@ -1432,7 +1432,7 @@ class ExtendedEncodeDataHandler:
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != split:
+            elif self.split_dict[bios] != split and self.has_rnaseq(bios)==False:
                 del self.navigation[bios]
 
             elif check_completeness:
@@ -1447,7 +1447,7 @@ class ExtendedEncodeDataHandler:
                     self.test_bios.append(b)
 
     def has_rnaseq(self, bios_name):
-        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq/")):
+        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
             return True
         else:
             return False
