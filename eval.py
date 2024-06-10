@@ -2303,7 +2303,7 @@ class EVAL_EED(object):
         """
         
         self.model_res = []
-        for bios in self.dataset.test_bios:
+        for bios in list(self.dataset.navigation.keys()):
             if self.dataset.has_rnaseq(bios):
                 print("got rnaseq for ", bios)
             else:
