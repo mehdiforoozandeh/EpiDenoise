@@ -1427,12 +1427,16 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
+        print(self.navigation)
+        exit()
+
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
             elif self.split_dict[bios] != split and self.has_rnaseq(bios)==False:
+
                 del self.navigation[bios]
 
             elif check_completeness:
@@ -1450,9 +1454,7 @@ class ExtendedEncodeDataHandler:
         print(len(self.test_bios))
 
     def has_rnaseq(self, bios_name):
-        bios_name="ENCBS768KGZ"
         if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
-            print("found")
             return True
         else:
             return False
