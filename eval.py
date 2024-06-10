@@ -2306,7 +2306,7 @@ class EVAL_EED(object):
         self.model_res = []
         for bios in self.dataset.test_bios:
             if self.dataset.has_rnaseq(bios):
-                pass
+                print("got rnaseq for ", bios)
             else:
                 continue
            
