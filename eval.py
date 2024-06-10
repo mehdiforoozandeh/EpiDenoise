@@ -1831,7 +1831,7 @@ class EVAL_EED(object):
         self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
 
         self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
-        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"]
+        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
 
         if mode == "dev":
             return
@@ -1846,10 +1846,6 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    # def rna_seq_eval(self, bios_name):
-
-
-        
 
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
