@@ -2393,10 +2393,10 @@ if __name__=="__main__":
     #     pass
 
     e = EVAL_EED(
-        model="models/EpiDenoise30b_20240529133959_params5969560.pt", 
+        model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=1600, batch_size=50, 
-        hyper_parameters_path="models/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
+        hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30b", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
