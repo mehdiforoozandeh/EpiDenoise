@@ -1208,6 +1208,8 @@ class ExtendedEncodeDataHandler:
         """Load all available experiments for a given biosample and locus."""
         
         exps = list(self.navigation[bios_name].keys())
+        if "RNA-seq" in exps:
+            exps.remove("RNA-seq")
 
         loaded_data = {}
         loaded_metadata = {}
@@ -1431,7 +1433,7 @@ class ExtendedEncodeDataHandler:
         for bios in list(self.navigation.keys()):
             if bios == "ENCBS899TTJ":
                 continue
-            
+
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
