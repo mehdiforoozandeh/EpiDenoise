@@ -1853,14 +1853,12 @@ class EVAL_EED(object):
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
         print(rna_seq_data)
         
-        pred_features = {}
-        true_features = {}
+        pred_features = []
+        true_features = []
         available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
         print(available_assays)
         
         for i in range(len(rna_seq_data)):
-            gene_i_true = []
-            gene_i_pred = []
             for a in range(y_pred.shape[1]):
                 assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
 
@@ -1874,7 +1872,7 @@ class EVAL_EED(object):
                     f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
                         f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
 
-                    gene_i_true.append(f)
+                    true_features.append(f)
                 
                 pred_signal_a = y_pred[:, a].numpy()
                 f = signal_feature_extraction(
@@ -1885,13 +1883,11 @@ class EVAL_EED(object):
                 f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
                     f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
 
-                gene_i_pred.append(f)
+                pred_features.append(f)
             
-            pred_features[f"gene{i}"] = gene_i_pred
-            true_features[f"gene{i}"] = gene_i_true
         
-        true_features = pd.DataFrame(true_features)#, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        pred_features = pd.DataFrame(pred_features)#, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
 
         print(pred_features)
         print(true_features)
