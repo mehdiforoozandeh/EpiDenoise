@@ -1884,6 +1884,9 @@ class EVAL_EED(object):
         pred_features = pd.DataFrame(pred_features)
         true_features = pd.DataFrame(true_features)
 
+        print(pred_features)
+        print(true_features)
+
         # Cross-validation setup
         kf = KFold(n_splits=k_fold, shuffle=True, random_state=42)
         
@@ -1956,9 +1959,9 @@ class EVAL_EED(object):
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
         if self.dataset.has_rnaseq(bios_name):
+            print("got rna-seq data")
             self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=5)
             
-        
         results = []
         # for j in availability:  # for each feature i.e. assay
         for j in range(Y.shape[1]):
@@ -2346,11 +2349,11 @@ if __name__=="__main__":
         version="30a", resolution=25, 
         savedir="models/evals/eval_30a/", mode="eval"
     )
-    e.viz_all()
-    exit()
-    evres = e.bios_pipeline("ENCBS596CTT", 1)
+    evres = e.bios_pipeline("ENCBS899TTJ", 1)
     for i in range(len(evres)):
         print(evres[i])
+    
+    exit()
 
     e.viz_bios(evres)
     try:
