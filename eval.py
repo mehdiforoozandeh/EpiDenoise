@@ -1855,6 +1855,8 @@ class EVAL_EED(object):
         
         pred_features = {}
         true_features = {}
+        available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
+        print(available_assays)
         
         for i in range(len(rna_seq_data)):
             gene_i_true = []
