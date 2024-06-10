@@ -1453,22 +1453,10 @@ class ExtendedEncodeDataHandler:
             return False
 
     def load_rna_seq_data(self, bios_name, gene_coord):
+        directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
+        tsv_files = glob.glob(os.path.join(directory, '*.tsv'))
 
-        def find_tsv_file(directory):
-            # Search for .tsv files in the given directory
-            tsv_files = glob.glob(os.path.join(directory, '*.tsv'))
-            
-            # Check if there's exactly one .tsv file
-            if len(tsv_files) == 1:
-                return tsv_files[0]
-            elif len(tsv_files) == 0:
-                print("No .tsv files found in the directory.")
-            else:
-                print("Multiple .tsv files found in the directory.")
-            
-            return None
-
-        file = os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq/", find_tsv_file(bios_name)))
+        file = os.path.join(directory, tsv_files[0])
         trn_data = pd.read_csv(file, sep="\t")
 
         for j in range(len(trn_data)):
