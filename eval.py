@@ -1949,6 +1949,10 @@ class EVAL_EED(object):
         imp_std = imp_dist.std()
         ups_std = ups_dist.std()
 
+        if self.dataset.has_rnaseq(bios_name):
+            print("got rna-seq data")
+            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=5)
+
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
@@ -1958,10 +1962,6 @@ class EVAL_EED(object):
         imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
-        if self.dataset.has_rnaseq(bios_name):
-            print("got rna-seq data")
-            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=5)
-            
         results = []
         # for j in availability:  # for each feature i.e. assay
         for j in range(Y.shape[1]):
