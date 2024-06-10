@@ -3,6 +3,8 @@ from data import *
 from _utils import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import KFold
+from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 
 import scipy.stats
@@ -1846,6 +1848,85 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=5):
+        # columns=  chr, start, end, geneID, length, TPM, FPKM
+        rna_seq_data = self.dataset.load_rna_seq_data(bios, self.gene_coords) 
+        
+        pred_features = {}
+        true_features = {}
+        
+        for i in range(len(rna_seq_data)):
+            for a in range(y_pred.shape[1]):
+                assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
+
+                if a in list(availability):
+                    true_signal_a = y_true[:, j].numpy()
+                    f = signal_feature_extraction(
+                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
+                        rna_seq_data["strand"][i], true_signal_a
+                        )
+                    f["gene_name"] = rna_seq_data["geneID"][i]
+                    f["TPM"] = rna_seq_data["TPM"][i]
+                    f["FPKM"] = rna_seq_data["FPKM"][i]
+                    true_features[assay_name] = f
+                
+                pred_signal_a = y_pred[:, j].numpy()
+                f = signal_feature_extraction(
+                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
+                        rna_seq_data["strand"][i], pred_signal_a
+                        )
+                f["gene_name"] = rna_seq_data["geneID"][i]
+                f["TPM"] = rna_seq_data["TPM"][i]
+                f["FPKM"] = rna_seq_data["FPKM"][i]
+
+                pred_features[assay_name] = f
+        
+        pred_features = pd.DataFrame(pred_features)
+        true_features = pd.DataFrame(true_features)
+
+        # Cross-validation setup
+        kf = KFold(n_splits=k_fold, shuffle=True, random_state=42)
+        
+        def prepare_data(features_df, available_only):
+            features = features_df.drop(columns=["geneID", "TPM"])
+            if available_only:
+                available_columns = [col for col in features.columns if any(assay in col for assay in availability)]
+                features = features[available_columns]
+            labels = features_df["TPM"]
+            return features, labels
+
+        def cross_validate(features, labels, kf):
+            mse_scores = []
+            r2_scores = []
+
+            for train_index, test_index in kf.split(features):
+                X_train, X_test = features.iloc[train_index], features.iloc[test_index]
+                y_train, y_test = labels.iloc[train_index], labels.iloc[test_index]
+
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+
+                mse_scores.append(mean_squared_error(y_test, y_pred))
+                r2_scores.append(r2_score(y_test, y_pred))
+
+            return np.mean(mse_scores), np.mean(r2_scores)
+
+        # True signal performance
+        true_features_no_TPM, true_labels = prepare_data(true_features_df, available_only=False)
+        true_mse, true_r2 = cross_validate(true_features_no_TPM, true_labels, kf)
+        print(f"True Signal Performance: MSE = {true_mse:.4f}, R² = {true_r2:.4f}")
+
+        # Predicted signal performance (only available assays)
+        pred_features_avail_no_TPM, pred_labels_avail = prepare_data(pred_features_df, available_only=True)
+        pred_avail_mse, pred_avail_r2 = cross_validate(pred_features_avail_no_TPM, pred_labels_avail, kf)
+        print(f"Predicted Signal Performance (Available Assays): MSE = {pred_avail_mse:.4f}, R² = {pred_avail_r2:.4f}")
+
+        # Predicted signal performance (all assays)
+        pred_features_all_no_TPM, pred_labels_all = prepare_data(pred_features_df, available_only=False)
+        pred_all_mse, pred_all_r2 = cross_validate(pred_features_all_no_TPM, pred_labels_all, kf)
+        print(f"Predicted Signal Performance (All Assays): MSE = {pred_all_mse:.4f}, R² = {pred_all_r2:.4f}")   
+
 
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
@@ -1874,16 +1955,20 @@ class EVAL_EED(object):
 
         imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+
+        if self.dataset.has_rnaseq(bios_name):
+            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=5)
+            
         
         results = []
         # for j in availability:  # for each feature i.e. assay
         for j in range(Y.shape[1]):
 
             if j in list(availability):
-                # j = j.item()
-                for comparison in ['imputed', 'upsampled']:
-                    target = Y[:, j].numpy()
+                target = Y[:, j].numpy()
 
+                for comparison in ['imputed', 'upsampled']:
+                    
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         pred_std = imp_std[:, j].numpy()
@@ -2204,7 +2289,7 @@ class EVAL_EED(object):
         # except:
         #     print("faild to plot corresp_curve_deriv")
 
-    def viz_all(self):
+    def viz_all(self, dsf=1):
         """
         visualizations -- all_bios:
         
@@ -2221,14 +2306,12 @@ class EVAL_EED(object):
         self.model_res = []
         for bios in self.dataset.test_bios:
             if self.dataset.has_rnaseq(bios):
-                print("yes for ", bios)
-                print(self.dataset.load_rna_seq_data(bios, self.gene_coords))
-                exit()
+                pass
             else:
                 continue
-            
+           
             print("evaluating ", bios)
-            eval_res_bios = self.bios_pipeline(bios)
+            eval_res_bios = self.bios_pipeline(bios, dsf)
             print("got results for ", bios)
             self.viz_bios(eval_res_bios)
 
@@ -2237,7 +2320,7 @@ class EVAL_EED(object):
                 self.model_res.append(f)
 
         self.model_res = pd.DataFrame(self.model_res)
-        self.model_res.to_csv(f"{self.savedir}/model_eval.csv", index=False)
+        self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
         boxplot_metrics = [
             'MSE-GW', 'Pearson-GW', 'Spearman-GW',

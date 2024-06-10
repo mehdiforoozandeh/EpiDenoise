@@ -388,6 +388,58 @@ def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
 
     return gene_coords
 
+def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25):
+    """
+    Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
+
+    Parameters:
+    - chr: Chromosome (string)
+    - start: Start position of the gene (int)
+    - end: End position of the gene (int)
+    - strand: Strand information ('+' or '-') (string)
+    - chip_seq_signal: A numpy array representing ChIP-seq signal binned at 25-bp resolution (1D array)
+
+    Returns:
+    - dict: Dictionary containing mean signals for the specified regions
+    """
+
+    # Define TSS and TES based on the strand
+    tss = start if strand == '+' else end
+    tes = end if strand == '+' else start
+
+    # Define the regions
+    promoter_start = tss - 1000
+    promoter_end = tss + 1000
+    gene_body_start = start
+    gene_body_end = end
+    tes_region_start = tes - 1000
+    tes_region_end = tes + 1000
+
+    # Convert regions to bin indices
+    promoter_start_bin = max(promoter_start // bin_size, 0)
+    promoter_end_bin = min(promoter_end // bin_size, len(chip_seq_signal))
+    gene_body_start_bin = max(gene_body_start // bin_size, 0)
+    gene_body_end_bin = min(gene_body_end // bin_size, len(chip_seq_signal))
+    tes_region_start_bin = max(tes_region_start // bin_size, 0)
+    tes_region_end_bin = min(tes_region_end // bin_size, len(chip_seq_signal))
+
+    # Extract signal for each region
+    promoter_signal = chip_seq_signal[promoter_start_bin:promoter_end_bin]
+    gene_body_signal = chip_seq_signal[gene_body_start_bin:gene_body_end_bin]
+    tes_region_signal = chip_seq_signal[tes_region_start_bin:tes_region_end_bin]
+
+    # Calculate mean signal for each region
+    mean_signal_promoter = np.mean(promoter_signal) if len(promoter_signal) > 0 else 0
+    mean_signal_gene_body = np.mean(gene_body_signal) if len(gene_body_signal) > 0 else 0
+    mean_signal_tes_region = np.mean(tes_region_signal) if len(tes_region_signal) > 0 else 0
+
+    # Return the calculated mean signals in a dictionary
+    return {
+        'mean_sig_promoter': mean_signal_promoter,
+        'mean_sig_gene_body': mean_signal_gene_body,
+        'mean_sig_around_TES': mean_signal_tes_region
+    }
+
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:
         if grad_input[0] is not None:

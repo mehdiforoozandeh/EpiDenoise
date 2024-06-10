@@ -1472,10 +1472,10 @@ class ExtendedEncodeDataHandler:
 
             if len(subset) > 0:
                 mapped_trn_data.append([
-                    gene_coord["chr"][i], gene_coord["start"][i], gene_coord["end"][i], geneID, subset["length"][0], subset["TPM"][0], subset["FPKM"][0]
+                    gene_coord["chr"][i], gene_coord["start"][i], gene_coord["end"][i], gene_coord["strand"][i], geneID, subset["length"][0], subset["TPM"][0], subset["FPKM"][0]
                 ])
 
-        mapped_trn_data = pd.DataFrame(mapped_trn_data, columns=["chr", "start", "end", "geneID", "length", "TPM", "FPKM"])
+        mapped_trn_data = pd.DataFrame(mapped_trn_data, columns=["chr", "start", "end", "strand", "geneID", "length", "TPM", "FPKM"])
         return mapped_trn_data
 
 
