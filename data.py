@@ -1428,7 +1428,6 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
 
         # filter biosamples
-        # filter biosamples
         for bios in list(self.navigation.keys()):
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
@@ -1445,6 +1444,11 @@ class ExtendedEncodeDataHandler:
         for b, s in self.split_dict.items():
             if s == split:
                 self.test_bios.append(b)
+        
+        print(self.navigation.keys())
+        print(self.test_bios.keys())
+        exit()
+
 
     def has_rnaseq(self, bios_name):
         if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq/")):
