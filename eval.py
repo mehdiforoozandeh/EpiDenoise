@@ -1942,16 +1942,19 @@ class EVAL_EED(object):
         
         true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
         pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        # pred_features_avail = pred_features_avail[assay in available_assays]
+        pred_features_avail = pred_features_all[pred_features_all["assay"].isin(available_assays)]
 
         # Perform K-Fold Cross Validation for both true and predicted data
-        print("Evaluating True Data")
+        print("Evaluating Experimental Data")
         avg_mse_true, avg_r2_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM')  # or 'FPKM'
         
-        print("Evaluating Predicted Data")
-        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features, k=k_fold, target='TPM')  # or 'FPKM'
+        print("Evaluating Denoised + Imputed Data")
+        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM')  # or 'FPKM'
 
-        return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
+        print("Evaluating Denoised Data")
+        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM')  # or 'FPKM'
+
+        # return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
         
 
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
