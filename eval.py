@@ -23,6 +23,61 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
+def k_fold_cross_validation(data, k=5, target='TPM'):
+    """
+    Perform k-fold cross-validation for linear regression on the provided data.
+    
+    Args:
+        data (pd.DataFrame): The DataFrame containing features and labels.
+        k (int): The number of folds for cross-validation.
+        target (str): The label to predict ('TPM' or 'FPKM'). Default is 'TPM'.
+        
+    Returns:
+        avg_mse (float): The average Mean Squared Error across all folds.
+        avg_r2 (float): The average R-squared value across all folds.
+    """
+    # Get unique gene IDs
+    unique_gene_ids = data["geneID"].unique()
+    kf = KFold(n_splits=k, shuffle=True, random_state=42)
+    
+    mse_scores = []
+    r2_scores = []
+
+    # Perform K-Fold Cross Validation
+    for train_index, test_index in kf.split(unique_gene_ids):
+        train_gene_ids = unique_gene_ids[train_index]
+        test_gene_ids = unique_gene_ids[test_index]
+
+        # Split the data into training and testing sets
+        train_data = data[data["geneID"].isin(train_gene_ids)]
+        test_data = data[data["geneID"].isin(test_gene_ids)]
+
+        # Extract features and labels
+        X_train = train_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
+        y_train = train_data[target]
+        
+        X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
+        y_test = test_data[target]
+
+        # Train and evaluate the linear regression model
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        
+        mse_scores.append(mse)
+        r2_scores.append(r2)
+
+    # Compute average metrics
+    avg_mse = np.mean(mse_scores)
+    avg_r2 = np.mean(r2_scores)
+
+    print(f"Average MSE for {target}: {avg_mse}")
+    print(f"Average R² for {target}: {avg_r2}")
+
+    return avg_mse, avg_r2
 
 def binarize_nbinom(data, threshold=0.0001):
     """
@@ -1856,7 +1911,6 @@ class EVAL_EED(object):
         pred_features = []
         true_features = []
         available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
-        print(available_assays)
         
         for i in range(len(rna_seq_data)):
             for a in range(y_pred.shape[1]):
@@ -1887,53 +1941,18 @@ class EVAL_EED(object):
             
         
         true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        pred_features = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        # pred_features_avail = pred_features_avail[assay in available_assays]
 
-        print(pred_features)
-        print(true_features)
-
-        # Cross-validation setup
-        kf = KFold(n_splits=k_fold, shuffle=False, random_state=42)
+        # Perform K-Fold Cross Validation for both true and predicted data
+        print("Evaluating True Data")
+        avg_mse_true, avg_r2_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM')  # or 'FPKM'
         
-        def prepare_data(features_df, available_only):
-            features = features_df.drop(columns=["geneID", "TPM"])
-            if available_only:
-                available_columns = [col for col in features.columns if any(assay in col for assay in availability)]
-                features = features[available_columns]
-            labels = features_df["TPM"]
-            return features, labels
+        print("Evaluating Predicted Data")
+        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features, k=k_fold, target='TPM')  # or 'FPKM'
 
-        def cross_validate(features, labels, kf):
-            mse_scores = []
-            r2_scores = []
-
-            for train_index, test_index in kf.split(features):
-                X_train, X_test = features.iloc[train_index], features.iloc[test_index]
-                y_train, y_test = labels.iloc[train_index], labels.iloc[test_index]
-
-                model = LinearRegression()
-                model.fit(X_train, y_train)
-                y_pred = model.predict(X_test)
-
-                mse_scores.append(mean_squared_error(y_test, y_pred))
-                r2_scores.append(r2_score(y_test, y_pred))
-
-            return np.mean(mse_scores), np.mean(r2_scores)
-
-        # True signal performance
-        true_features_no_TPM, true_labels = prepare_data(true_features_df, available_only=False)
-        true_mse, true_r2 = cross_validate(true_features_no_TPM, true_labels, kf)
-        print(f"True Signal Performance: MSE = {true_mse:.4f}, R² = {true_r2:.4f}")
-
-        # Predicted signal performance (only available assays)
-        pred_features_avail_no_TPM, pred_labels_avail = prepare_data(pred_features_df, available_only=True)
-        pred_avail_mse, pred_avail_r2 = cross_validate(pred_features_avail_no_TPM, pred_labels_avail, kf)
-        print(f"Predicted Signal Performance (Available Assays): MSE = {pred_avail_mse:.4f}, R² = {pred_avail_r2:.4f}")
-
-        # Predicted signal performance (all assays)
-        pred_features_all_no_TPM, pred_labels_all = prepare_data(pred_features_df, available_only=False)
-        pred_all_mse, pred_all_r2 = cross_validate(pred_features_all_no_TPM, pred_labels_all, kf)
-        print(f"Predicted Signal Performance (All Assays): MSE = {pred_all_mse:.4f}, R² = {pred_all_r2:.4f}")   
+        return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
+        
 
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
