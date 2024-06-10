@@ -1445,10 +1445,9 @@ class ExtendedEncodeDataHandler:
             if s == split:
                 if b in list(self.navigation.keys()):
                     self.test_bios.append(b)
-        
-        # print(self.navigation.keys())
-        # print(self.test_bios)
-        # exit()
+
+        print(len(self.navigation.keys()))
+        print(len(self.test_bios))
 
 
     def has_rnaseq(self, bios_name):
