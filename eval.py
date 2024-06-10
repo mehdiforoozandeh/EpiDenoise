@@ -1978,7 +1978,7 @@ class EVAL_EED(object):
 
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
-            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=5)
+            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=20)
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
