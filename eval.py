@@ -23,7 +23,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
-def k_fold_cross_validation(data, k=5, target='TPM'):
+def k_fold_cross_validation(data, k=5, target='FPKM'):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -51,13 +51,16 @@ def k_fold_cross_validation(data, k=5, target='TPM'):
         # Split the data into training and testing sets
         train_data = data[data["geneID"].isin(train_gene_ids)]
         test_data = data[data["geneID"].isin(test_gene_ids)]
-
+    
         # Extract features and labels
         X_train = train_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
         y_train = train_data[target]
         
         X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
         y_test = test_data[target]
+
+        print(X_train)
+        print(X_test)
 
         # Train and evaluate the linear regression model
         model = LinearRegression()
