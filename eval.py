@@ -407,16 +407,6 @@ class METRICS(object):
 
         return analysis
 
-    def pred_rna_seq(self, rnaseq_data, y_true, y_pred):
-        """
-        - or those biosamples with RNA-seq:
-        - train a linear probe with as many assays available
-        - show how well the denoised version predicts the gene_expression compared to experimental data (not-denoised)
-        - somehow show how many assays were available
-            - the more the assays are, we would expect better denoising and thus better performance here
-        """
-        pass
-
 
     ################################################################################
 
@@ -856,6 +846,16 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_hexbin.png", dpi=150)
         
+    # def BIOS_fg_vs_bg_histogram(self, eval_res, share_axes=True):
+    #     if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+    #         os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+    #     for j in range(len(eval_res)):
+    #         if "obs" not in eval_res[j]:
+    #             # skip rows without observed signal
+    #             continue
+
+
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1148,7 +1148,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
-
+        
     def BIOS_corresp_curve(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1956,7 +1956,6 @@ class EVAL_EED(object):
 
         # return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
         
-
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
         reportoir of metrics -- per_bios:
@@ -2239,7 +2238,11 @@ class EVAL_EED(object):
         return eval_res
 
     def viz_bios(self, eval_res):
+        print("plotting error std")
+        self.viz.BIOS_error_std_scatter(eval_res)
+        self.viz.clear_pallete()
 
+        exit()
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
         self.viz.clear_pallete()
@@ -2367,27 +2370,27 @@ class EVAL_EED(object):
 
 if __name__=="__main__":
 
-    e = EVAL_EED(
-        model="models/pretrained/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
-        data_path="/project/compbio-lab/encode_data/", 
-        context_length=400, batch_size=200, 
-        hyper_parameters_path="models/pretrained/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30a", resolution=25, 
-        savedir="models/evals/eval_30a/", mode="eval"
-    )
-    evres = e.bios_pipeline("ENCBS899TTJ", 1)
-    for i in range(len(evres)):
-        print(evres[i])
+    # e = EVAL_EED(
+    #     model="models/pretrained/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
+    #     data_path="/project/compbio-lab/encode_data/", 
+    #     context_length=400, batch_size=200, 
+    #     hyper_parameters_path="models/pretrained/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
+    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+    #     version="30a", resolution=25, 
+    #     savedir="models/evals/eval_30a/", mode="eval"
+    # )
+    # evres = e.bios_pipeline("ENCBS899TTJ", 1)
+    # for i in range(len(evres)):
+    #     print(evres[i])
     
-    exit()
+    # exit()
 
-    e.viz_bios(evres)
-    try:
-        evres = pd.DataFrame(evres)
-        evres.to_csv("models/eval_30a/res.csv")
-    except:
-        pass
+    # e.viz_bios(evres)
+    # try:
+    #     evres = pd.DataFrame(evres)
+    #     evres.to_csv("models/eval_30a/res.csv")
+    # except:
+    #     pass
 
     e = EVAL_EED(
         model="models/EpiDenoise30b_20240529133959_params5969560.pt", 
