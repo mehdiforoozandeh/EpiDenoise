@@ -1850,7 +1850,7 @@ class EVAL_EED(object):
 
     def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=5):
         # columns=  chr, start, end, geneID, length, TPM, FPKM
-        rna_seq_data = self.dataset.load_rna_seq_data(bios, self.gene_coords) 
+        rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
         
         pred_features = {}
         true_features = {}
