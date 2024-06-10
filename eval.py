@@ -1893,8 +1893,8 @@ class EVAL_EED(object):
         print(pred_features)
         print(true_features)
         exit()
-        true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        pred_features = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        true_features = pd.DataFrame(true_features)#, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features = pd.DataFrame(pred_features)#, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
 
         print(pred_features)
         print(true_features)
