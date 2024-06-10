@@ -1851,11 +1851,14 @@ class EVAL_EED(object):
     def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=5):
         # columns=  chr, start, end, geneID, length, TPM, FPKM
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
+        print(rna_seq_data)
         
         pred_features = {}
         true_features = {}
         
         for i in range(len(rna_seq_data)):
+            gene_i_true = {}
+            gene_i_pred = {}
             for a in range(y_pred.shape[1]):
                 assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
 
@@ -1868,7 +1871,7 @@ class EVAL_EED(object):
                     f["gene_name"] = rna_seq_data["geneID"][i]
                     f["TPM"] = rna_seq_data["TPM"][i]
                     f["FPKM"] = rna_seq_data["FPKM"][i]
-                    true_features[assay_name] = f
+                    gene_i_true[assay_name] = f
                 
                 pred_signal_a = y_pred[:, a].numpy()
                 f = signal_feature_extraction(
@@ -1878,8 +1881,10 @@ class EVAL_EED(object):
                 f["gene_name"] = rna_seq_data["geneID"][i]
                 f["TPM"] = rna_seq_data["TPM"][i]
                 f["FPKM"] = rna_seq_data["FPKM"][i]
-
-                pred_features[assay_name] = f
+                gene_i_pred[assay_name] = f
+            
+            pred_features[i] = gene_i_pred
+            true_features[i] = gene_i_true
         
         pred_features = pd.DataFrame(pred_features)
         true_features = pd.DataFrame(true_features)
@@ -1887,6 +1892,7 @@ class EVAL_EED(object):
         print(pred_features)
         print(true_features)
 
+        exit()
         # Cross-validation setup
         kf = KFold(n_splits=k_fold, shuffle=True, random_state=42)
         
