@@ -1061,9 +1061,7 @@ class PROCESS_EIC_DATA(object):
             os.system(f"gzip {file_path}")
 
 if __name__ == "__main__":
-    a = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
-    print(a[a["chr"] == "chr21"])
-    exit()
+
     # solar_path = "/project/compbio-lab/EIC/"
     # sample = "/project/compbio-lab/EIC/training_data/C01_m2000_25bp.pkl.gz"
     # traineic = PROCESS_EIC_DATA(solar_path+"training_data/", stratified=True)

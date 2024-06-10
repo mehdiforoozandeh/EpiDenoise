@@ -1830,6 +1830,9 @@ class EVAL_EED(object):
         self.metrics = METRICS()
         self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
 
+        self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
+        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"]
+
         if mode == "dev":
             return
 
@@ -1842,6 +1845,11 @@ class EVAL_EED(object):
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
+
+    # def rna_seq_eval(self, bios_name):
+
+
+        
 
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
@@ -1995,7 +2003,7 @@ class EVAL_EED(object):
                 results.append(metrics)
             
         return results
-
+    
     def load_bios(self, bios_name, x_dsf, y_dsf=1):
         """
         Load biosample data for a specified biosample at given downsampling factors for X and Y.
@@ -2213,12 +2221,16 @@ class EVAL_EED(object):
                     gene: MSE, Pearson, Spearman
                     prom: MSE, Pearson, Spearman
         """
+        
         self.model_res = []
         for bios in self.dataset.test_bios:
             if self.dataset.has_rnaseq(bios):
                 print("yes for ", bios)
+                print(self.dataset.load_rna_seq_data(bios, self.gene_coords))
+                exit()
             else:
                 continue
+            
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
             print("got results for ", bios)
