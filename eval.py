@@ -1857,8 +1857,8 @@ class EVAL_EED(object):
         true_features = {}
         
         for i in range(len(rna_seq_data)):
-            gene_i_true = {}
-            gene_i_pred = {}
+            gene_i_true = []
+            gene_i_pred = []
             for a in range(y_pred.shape[1]):
                 assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
 
@@ -1868,33 +1868,34 @@ class EVAL_EED(object):
                         rna_seq_data["start"][i], rna_seq_data["end"][i], 
                         rna_seq_data["strand"][i], true_signal_a
                         )
-                    f["gene_name"] = rna_seq_data["geneID"][i]
-                    f["TPM"] = rna_seq_data["TPM"][i]
-                    f["FPKM"] = rna_seq_data["FPKM"][i]
-                    gene_i_true[assay_name] = f
+
+                    f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+                        f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+
+                    gene_i_true.append(f)
                 
                 pred_signal_a = y_pred[:, a].numpy()
                 f = signal_feature_extraction(
                         rna_seq_data["start"][i], rna_seq_data["end"][i], 
                         rna_seq_data["strand"][i], pred_signal_a
                         )
-                f["gene_name"] = rna_seq_data["geneID"][i]
-                f["TPM"] = rna_seq_data["TPM"][i]
-                f["FPKM"] = rna_seq_data["FPKM"][i]
-                gene_i_pred[assay_name] = f
+                    
+                f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+                    f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+
+                gene_i_pred.append(f)
             
-            pred_features[i] = gene_i_pred
-            true_features[i] = gene_i_true
+            pred_features[f"gene{i}"] = gene_i_pred
+            true_features[f"gene{i}"] = gene_i_true
         
-        pred_features = pd.DataFrame(pred_features)
-        true_features = pd.DataFrame(true_features)
+        true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
 
         print(pred_features)
         print(true_features)
 
-        exit()
         # Cross-validation setup
-        kf = KFold(n_splits=k_fold, shuffle=True, random_state=42)
+        kf = KFold(n_splits=k_fold, shuffle=False, random_state=42)
         
         def prepare_data(features_df, available_only):
             features = features_df.drop(columns=["geneID", "TPM"])
