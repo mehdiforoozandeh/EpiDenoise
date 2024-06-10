@@ -350,6 +350,16 @@ class METRICS(object):
 
         return analysis
 
+    def pred_rna_seq(self, rnaseq_data, y_true, y_pred):
+        """
+        - or those biosamples with RNA-seq:
+        - train a linear probe with as many assays available
+        - show how well the denoised version predicts the gene_expression compared to experimental data (not-denoised)
+        - somehow show how many assays were available
+            - the more the assays are, we would expect better denoising and thus better performance here
+        """
+        pass
+
 
     ################################################################################
 
@@ -2205,6 +2215,10 @@ class EVAL_EED(object):
         """
         self.model_res = []
         for bios in self.dataset.test_bios:
+            if dataset.has_rnaseq(bios):
+                print("yes for ", bios)
+            else:
+                continue
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios)
             print("got results for ", bios)
@@ -2242,6 +2256,8 @@ if __name__=="__main__":
         version="30a", resolution=25, 
         savedir="models/evals/eval_30a/", mode="eval"
     )
+    e.viz_all()
+    exit()
     evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
         print(evres[i])

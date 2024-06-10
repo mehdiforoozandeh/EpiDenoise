@@ -1446,6 +1446,35 @@ class ExtendedEncodeDataHandler:
             if s == split:
                 self.test_bios.append(b)
 
+    def has_rnaseq(self, bios_name):
+        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq/")):
+            return True
+        else:
+            return False
+
+    def load_rna_seq_data(self, bios_name, gene_coord):
+        trn_data = pd.read_csv(file, sep="\t")
+
+        for j in range(len(trn_data)):
+            trn_data.at[j, "gene_id"] = trn_data["gene_id"][j].split(".")[0]
+        
+        for i in range(len(gene_coord)):
+            gene_coord.at[i, "gene_id"] = gene_coord["gene_id"][i].split(".")[0]
+
+        mapped_trn_data = []
+        for i in range(len(gene_coord)):
+            geneID = gene_coord["gene_id"][i]
+            subset = trn_data.loc[trn_data["gene_id"] == geneID, :].reset_index(drop=True)
+
+            if len(subset) > 0:
+                mapped_trn_data.append([
+                    gene_coord["chr"][i], gene_coord["start"][i], gene_coord["end"][i], geneID, subset["length"][0], subset["TPM"][0], subset["FPKM"][0]
+                ])
+
+        mapped_trn_data = pd.DataFrame(mapped_trn_data, columns=["chr", "start", "end", "geneID", "length", "TPM", "FPKM"])
+        return mapped_trn_data
+
+
 if __name__ == "__main__": 
 
     solar_data_path = "/project/compbio-lab/encode_data/"

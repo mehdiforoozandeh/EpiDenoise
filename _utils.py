@@ -6,7 +6,7 @@ import multiprocessing as mp
 import torch
 from scipy.stats import nbinom
 import torch.distributions as dist
-from eval import METRICS
+# from eval import METRICS
 from data import ExtendedEncodeDataHandler
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions import Poisson as PoissonTorch
@@ -73,184 +73,6 @@ class NegativeBinomial:
         lower = self.icdf(q=(1-confidence)/2)
         upper = self.icdf(q=(1+confidence)/2)
         return lower, upper
-
-# def monitor_validation(
-#     model, data_path, context_length, batch_size, x_dsf=1, y_dsf=1, 
-#     chr_sizes_file="data/hg38.chrom.sizes", resolution=25, split="val"):
-#     dataset = ExtendedEncodeDataHandler(data_path, resolution=resolution)
-#     dataset.init_eval(context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=13)
-#     mark_dict = {v: k for k, v in dataset.aliases["experiment_aliases"].items()}
-#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-#     example_coords = [
-#         (33481539 // resolution, 33588914 // resolution),  # GART
-#         (25800151 // resolution, 26235914 // resolution),  # APP
-#         (31589009 // resolution, 31745788 // resolution),  # SOD1
-#         (39526359 // resolution, 39802081 // resolution),  # B3GALT5
-#         (33577551 // resolution, 33919338 // resolution)   # ITSN1
-#     ]
-
-#     token_dict = {
-#         "missing_mask": -1,
-#         "cloze_mask": -2,
-#         "pad": -3
-#     }
-
-#     chr_sizes = {}
-#     metrics = METRICS()
-#     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
-#     with open(chr_sizes_file, 'r') as f:
-#         for line in f:
-#             chr_name, chr_size = line.strip().split('\t')
-#             if chr_name in main_chrs:
-#                 chr_sizes[chr_name] = int(chr_size)
-
-#     def pred(X, mX, mY, avail, imp_target=[]):
-#         # print("getting preds")
-#         n = torch.empty_like(X, device="cpu", dtype=torch.float32)
-#         p = torch.empty_like(X, device="cpu", dtype=torch.float32)
-#         for i in range(0, len(X), batch_size):
-#             # torch.cuda.empty_cache()
-#             x_batch = X[i:i + batch_size]
-#             mX_batch = mX[i:i + batch_size]
-#             mY_batch = mY[i:i + batch_size]
-#             avail_batch = avail[i:i + batch_size]
-#             with torch.no_grad():
-#                 x_batch = x_batch.clone()
-#                 avail_batch = avail_batch.clone()
-#                 mX_batch = mX_batch.clone()
-#                 mY_batch = mY_batch.clone()
-#                 x_batch[x_batch == token_dict["missing_mask"]] = token_dict["cloze_mask"]
-#                 mX_batch[mX_batch == token_dict["missing_mask"]] = token_dict["cloze_mask"]
-#                 avail_batch[avail_batch == 0] = token_dict["cloze_mask"]
-#                 if len(imp_target) > 0:
-#                     x_batch[:, :, imp_target] = token_dict["cloze_mask"]
-#                     mX_batch[:, :, imp_target] = token_dict["cloze_mask"]
-#                     avail_batch[:, imp_target] = token_dict["cloze_mask"]
-#                 x_batch = x_batch.to(device)
-#                 mX_batch = mX_batch.to(device)
-#                 mY_batch = mY_batch.to(device)
-#                 avail_batch = avail_batch.to(device)
-#                 outputs_p, outputs_n, _, _ = model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-#             n[i:i + outputs_n.shape[0], :, :] = outputs_n.cpu()
-#             p[i:i + outputs_p.shape[0], :, :] = outputs_p.cpu()
-#             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n
-#             # torch.cuda.empty_cache()
-#         # print("got preds")
-#         return n, p
-
-#     def get_bios(bios_name, x_dsf=1, y_dsf=1):
-#         temp_x, temp_mx = dataset.load_bios(bios_name, ["chr21", 0, chr_sizes["chr21"]], x_dsf)
-#         X, mX, avX = dataset.make_bios_tensor(temp_x, temp_mx)
-#         del temp_x, temp_mx
-#         temp_y, temp_my = dataset.load_bios(bios_name, ["chr21", 0, chr_sizes["chr21"]], y_dsf)
-#         Y, mY, avY = dataset.make_bios_tensor(temp_y, temp_my)
-#         del temp_y, temp_my
-#         num_rows = (X.shape[0] // context_length) * context_length
-#         X, Y = X[:num_rows, :], Y[:num_rows, :]
-#         subsets_X = []
-#         subsets_Y = []
-#         for start, end in example_coords:
-#             segment_length = end - start
-#             adjusted_length = (segment_length // context_length) * context_length
-#             adjusted_end = start + adjusted_length
-#             subsets_X.append(X[start:adjusted_end, :])
-#             subsets_Y.append(Y[start:adjusted_end, :])
-#         X = torch.cat(subsets_X, dim=0)
-#         Y = torch.cat(subsets_Y, dim=0)
-#         X = X.view(-1, context_length, X.shape[-1])
-#         Y = Y.view(-1, context_length, Y.shape[-1])
-#         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
-#         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
-#         available_indices = torch.where(avX[0, :] == 1)[0]
-#         n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-#         p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-#         for leave_one_out in available_indices:
-#             n, p = pred(X, mX, mY, avX, imp_target=[leave_one_out])
-#             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
-#             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
-#             del n, p
-#         n_ups, p_ups = pred(X, mX, mY, avX, imp_target=[])
-#         del X, mX, mY, avX, avY
-#         p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
-#         n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
-#         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
-#         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
-#         imp_dist = NegativeBinomial(p_imp, n_imp)
-#         ups_dist = NegativeBinomial(p_ups, n_ups)
-#         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
-#         return imp_dist, ups_dist, Y, bios_name, available_indices
-
-#     def get_metric(imp_dist, ups_dist, Y, bios_name, availability):
-#         imp_mean = imp_dist.expect(stat="median")
-#         ups_mean = ups_dist.expect(stat="median")
-#         results = []
-#         for j in range(Y.shape[1]):
-#             if j in list(availability):
-#                 for comparison in ['imputed', 'upsampled']:
-#                     if comparison == "imputed":
-#                         pred = imp_mean[:, j].numpy()
-#                     elif comparison == "upsampled":
-#                         pred = ups_mean[:, j].numpy()
-#                     target = Y[:, j].numpy()
-#                     mm = {
-#                         'bios': bios_name,
-#                         'feature': mark_dict[f"M{str(j + 1).zfill(len(str(len(mark_dict))))}"],
-#                         'comparison': comparison,
-#                         'available assays': len(availability),
-#                         'MSE': metrics.mse(target, pred),
-#                         'Pearson': metrics.pearson(target, pred),
-#                         'Spearman': metrics.spearman(target, pred),
-#                         'r2': metrics.r2(target, pred)
-#                     }
-#                     results.append(mm)
-#         return results
-
-#     t0 = datetime.datetime.now()
-#     full_res = []
-
-#     bioses = [list(dataset.navigation.keys())[0]]
-#     for bios_name in bioses:
-#         imp_dist, ups_dist, Y, _, available_indices = get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-#         full_res += get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
-#         del imp_dist, ups_dist, Y
-
-#     df = pd.DataFrame(full_res)
-
-#     imputed_df = df[df['comparison'] == 'imputed']
-#     upsampled_df = df[df['comparison'] == 'upsampled']
-
-#     def calculate_stats(df, metric):
-#         return df[metric].mean(), df[metric].min(), df[metric].max()
-
-#     imp_mse_stats = calculate_stats(imputed_df, 'MSE')
-#     imp_pearson_stats = calculate_stats(imputed_df, 'Pearson')
-#     imp_spearman_stats = calculate_stats(imputed_df, 'Spearman')
-#     imp_r2_stats = calculate_stats(imputed_df, 'r2')
-#     ups_mse_stats = calculate_stats(upsampled_df, 'MSE')
-#     ups_pearson_stats = calculate_stats(upsampled_df, 'Pearson')
-#     ups_spearman_stats = calculate_stats(upsampled_df, 'Spearman')
-#     ups_r2_stats = calculate_stats(upsampled_df, 'r2')
-#     elapsed_time = datetime.datetime.now() - t0
-#     hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-#     minutes, seconds = divmod(remainder, 60)
-
-#     print_statement = f"""
-#     Took {int(minutes)}:{int(seconds)}
-#     For Imputed:
-#     - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
-#     - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
-#     - SRCC: mean={imp_spearman_stats[0]:.2f}, min={imp_spearman_stats[1]:.2f}, max={imp_spearman_stats[2]:.2f}
-#     - R2: mean={imp_r2_stats[0]:.2f}, min={imp_r2_stats[1]:.2f}, max={imp_r2_stats[2]:.2f}
-    
-#     For Upsampled:
-#     - MSE: mean={ups_mse_stats[0]:.2f}, min={ups_mse_stats[1]:.2f}, max={ups_mse_stats[2]:.2f}
-#     - PCC: mean={ups_pearson_stats[0]:.2f}, min={ups_pearson_stats[1]:.2f}, max={ups_pearson_stats[2]:.2f}
-#     - SRCC: mean={ups_spearman_stats[0]:.2f}, min={ups_spearman_stats[1]:.2f}, max={ups_spearman_stats[2]:.2f}
-#     - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
-#     """
-
-#     return print_statement
 
 class MONITOR_VALIDATION(object):
     def __init__(
@@ -537,6 +359,34 @@ class MONITOR_VALIDATION(object):
         return print_statement
 
 random.seed(73)
+def get_overlap(tup1, tup2):
+
+    x = range(tup1[0], tup1[1])
+    y = range(tup2[0], tup2[1])
+
+    return len( range(max(x[0], y[0]), min(x[-1], y[-1])+1))    
+
+def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
+    gene_coords = pd.read_csv(file)
+    gene_coords = gene_coords.drop(["Unnamed: 0"], axis=1)
+
+    gene_coords["start"] = gene_coords["start"].astype("int")
+    gene_coords["end"] = gene_coords["end"].astype("int")
+
+    if drop_negative_strand:
+        gene_coords = gene_coords.loc[gene_coords["strand"]=="+", :].reset_index(drop=True)
+    
+    if drop_overlapping:
+        todrop = []
+        for i in range(len(gene_coords)-1):
+            if get_overlap((gene_coords["start"][i], gene_coords["end"][i]),(gene_coords["start"][i+1], gene_coords["end"][i+1])) >0:
+                if (gene_coords["end"][i] - gene_coords["start"][i]) <= gene_coords["end"][i+1] - gene_coords["start"][i+1]:
+                    todrop.append(i)
+                else:
+                    todrop.append(i+1)
+        gene_coords = gene_coords.drop(todrop).reset_index(drop=True)
+
+    return gene_coords
 
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:
@@ -1211,6 +1061,9 @@ class PROCESS_EIC_DATA(object):
             os.system(f"gzip {file_path}")
 
 if __name__ == "__main__":
+    a = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
+    print(a[a["chr"] == "chr21"])
+    exit()
     # solar_path = "/project/compbio-lab/EIC/"
     # sample = "/project/compbio-lab/EIC/training_data/C01_m2000_25bp.pkl.gz"
     # traineic = PROCESS_EIC_DATA(solar_path+"training_data/", stratified=True)
