@@ -1427,21 +1427,20 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-        print(self.navigation)
-        exit()
-
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != split and self.has_rnaseq(bios)==False:
-
-                del self.navigation[bios]
+            # elif self.split_dict[bios] != split and self.has_rnaseq(bios)==False:
+            #     del self.navigation[bios]
 
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
+        
+        print(self.navigation)
+        exit()
 
         self.num_bios = len(self.navigation)
         self.test_bios = []
