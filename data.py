@@ -1450,7 +1450,9 @@ class ExtendedEncodeDataHandler:
         print(len(self.test_bios))
 
     def has_rnaseq(self, bios_name):
+        bios_name="ENCBS768KGZ"
         if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
+            print("found")
             return True
         else:
             return False
