@@ -23,7 +23,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
-def k_fold_cross_validation(data, k=5, target='FPKM'):
+def k_fold_cross_validation(data, k=5, target='TPM'):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -58,9 +58,6 @@ def k_fold_cross_validation(data, k=5, target='FPKM'):
         
         X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
         y_test = test_data[target]
-
-        print(X_train)
-        print(X_test)
 
         # Train and evaluate the linear regression model
         model = LinearRegression()
@@ -1906,7 +1903,7 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=5):
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=20):
         # columns=  chr, start, end, geneID, length, TPM, FPKM
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
         print(rna_seq_data)
