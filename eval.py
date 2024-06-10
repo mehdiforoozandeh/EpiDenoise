@@ -1927,7 +1927,6 @@ class EVAL_EED(object):
         pred_all_mse, pred_all_r2 = cross_validate(pred_features_all_no_TPM, pred_labels_all, kf)
         print(f"Predicted Signal Performance (All Assays): MSE = {pred_all_mse:.4f}, R² = {pred_all_r2:.4f}")   
 
-
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
         reportoir of metrics -- per_bios:
@@ -2308,6 +2307,7 @@ class EVAL_EED(object):
             if self.dataset.has_rnaseq(bios):
                 print("got rnaseq for ", bios)
             else:
+                print("no rnaseq for ", bios)
                 continue
            
             print("evaluating ", bios)
