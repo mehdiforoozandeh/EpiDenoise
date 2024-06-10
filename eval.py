@@ -2307,7 +2307,6 @@ class EVAL_EED(object):
             if self.dataset.has_rnaseq(bios):
                 print("got rnaseq for ", bios)
             else:
-                print("no rnaseq for ", bios)
                 continue
            
             print("evaluating ", bios)
