@@ -408,12 +408,12 @@ def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, 
     tes = end if strand == '+' else start
 
     # Define the regions
-    promoter_start = tss - margin
-    promoter_end = tss + margin
+    promoter_start = tss - int(margin)
+    promoter_end = tss + int(margin)
     gene_body_start = start
     gene_body_end = end
-    tes_region_start = tes - margin
-    tes_region_end = tes + margin
+    tes_region_start = tes - int(margin)
+    tes_region_end = tes + int(margin)
 
     # Convert regions to bin indices
     promoter_start_bin = max(promoter_start // bin_size, 0)
