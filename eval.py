@@ -876,7 +876,7 @@ class VISUALS(object):
             
             # Add LOESS smoothing line
             # lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
-            ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
+            # ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
 
             ax.set_xlabel('Absolute Error')
             ax.set_ylabel('Predicted Std Dev')
