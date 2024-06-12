@@ -2011,14 +2011,14 @@ class EVAL_EED(object):
         avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
 
         # Perform K-Fold Cross Validation for both true and predicted data
-        print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        # print("Evaluating Experimental Data")
+        # avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='loess')
         
-        print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        # print("Evaluating Denoised + Imputed Data")
+        # avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='loess')
 
-        print("Evaluating Denoised Data")
-        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        # print("Evaluating Denoised Data")
+        # avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='loess')
 
         
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
@@ -2308,7 +2308,6 @@ class EVAL_EED(object):
         self.viz.BIOS_error_std_scatter(eval_res)
         self.viz.clear_pallete()
 
-        exit()
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
         self.viz.clear_pallete()
@@ -2468,11 +2467,13 @@ if __name__=="__main__":
         savedir="models/eval_30b/", mode="eval"
     )
 
+    e.viz_all()
+    exit()
     evres = e.bios_pipeline("ENCBS899TTJ", 1)
     for i in range(len(evres)):
         print(evres[i])
 
-    exit()
+    
 
     evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
