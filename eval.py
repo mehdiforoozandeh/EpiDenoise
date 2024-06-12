@@ -2,7 +2,7 @@ from model import *
 from data import *
 from _utils import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
@@ -23,7 +23,22 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
-def k_fold_cross_validation(data, k=5, target='TPM'):
+def auc_rec(y_true, y_pred):
+    # Calculate absolute errors
+    errors = np.abs(y_true - y_pred)
+    
+    # Sort the errors
+    sorted_errors = np.sort(errors)
+    
+    # Calculate cumulative proportion of points within error tolerance
+    cumulative_proportion = np.arange(1, len(sorted_errors) + 1) / len(sorted_errors)
+    
+    # Calculate AUC-REC
+    auc_rec = auc(sorted_errors, cumulative_proportion)
+
+    return auc_rec
+
+def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -39,9 +54,13 @@ def k_fold_cross_validation(data, k=5, target='TPM'):
     # Get unique gene IDs
     unique_gene_ids = data["geneID"].unique()
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
+
+    if logscale:
+        data["TPM"] = np.log(data["TPM"])
     
     mse_scores = []
     r2_scores = []
+    auc_recs = []
 
     # Perform K-Fold Cross Validation
     for train_index, test_index in kf.split(unique_gene_ids):
@@ -66,18 +85,22 @@ def k_fold_cross_validation(data, k=5, target='TPM'):
         
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
+        aucrec = auc_rec(y_test, y_pred)
         
         mse_scores.append(mse)
         r2_scores.append(r2)
+        auc_recs.append(aucrec)
 
     # Compute average metrics
     avg_mse = np.mean(mse_scores)
     avg_r2 = np.mean(r2_scores)
+    avg_aucrec = np.mean(auc_recs)
 
     print(f"Average MSE for {target}: {avg_mse}")
     print(f"Average R² for {target}: {avg_r2}")
+    print(f"Average AUC-REC for {target}: {avg_r2}")
 
-    return avg_mse, avg_r2
+    return avg_mse, avg_r2, avg_aucrec
 
 def binarize_nbinom(data, threshold=0.0001):
     """
@@ -1938,7 +1961,6 @@ class EVAL_EED(object):
                     f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
 
                 pred_features.append(f)
-            
         
         true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
         pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
@@ -1946,13 +1968,13 @@ class EVAL_EED(object):
 
         # Perform K-Fold Cross Validation for both true and predicted data
         print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM')  # or 'FPKM'
+        avg_mse_true, avg_r2_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
         
         print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM')  # or 'FPKM'
+        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
 
         print("Evaluating Denoised Data")
-        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM')  # or 'FPKM'
+        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
 
         # return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
         
@@ -2401,6 +2423,13 @@ if __name__=="__main__":
         version="30b", resolution=25, 
         savedir="models/eval_30b/", mode="eval"
     )
+
+    evres = e.bios_pipeline("ENCBS899TTJ", 1)
+    for i in range(len(evres)):
+        print(evres[i])
+
+    exit()
+
     evres = e.bios_pipeline("ENCBS596CTT", 1)
     for i in range(len(evres)):
         print(evres[i])
