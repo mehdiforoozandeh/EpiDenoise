@@ -2069,7 +2069,7 @@ class EVAL_EED(object):
             plt.grid(True)
             
             plt.tight_layout()
-            savepath = os.path.join(self.savedir, bios_name)
+            savepath = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
             if os.path.exists(savepath) ==False:
                 os.mkdir(savepath)
 
@@ -2099,16 +2099,15 @@ class EVAL_EED(object):
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
-            # return
 
-        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -2122,13 +2121,13 @@ class EVAL_EED(object):
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         pred_std = imp_std[:, j].numpy()
-                        # lower_60 = imp_lower_60[:, j].numpy()
-                        # lower_80 = imp_lower_80[:, j].numpy()
-                        # lower_95 = imp_lower_95[:, j].numpy()
+                        lower_60 = imp_lower_60[:, j].numpy()
+                        lower_80 = imp_lower_80[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
 
-                        # upper_60 = imp_upper_60[:, j].numpy()
-                        # upper_80 = imp_upper_80[:, j].numpy()
-                        # upper_95 = imp_upper_95[:, j].numpy()
+                        upper_60 = imp_upper_60[:, j].numpy()
+                        upper_80 = imp_upper_80[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
@@ -2136,13 +2135,13 @@ class EVAL_EED(object):
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
                         pred_std = ups_std[:, j].numpy()
-                        # lower_60 = ups_lower_60[:, j].numpy()
-                        # lower_80 = ups_lower_80[:, j].numpy()
-                        # lower_95 = ups_lower_95[:, j].numpy()
+                        lower_60 = ups_lower_60[:, j].numpy()
+                        lower_80 = ups_lower_80[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
 
-                        # upper_60 = ups_upper_60[:, j].numpy()
-                        # upper_80 = ups_upper_80[:, j].numpy()
-                        # upper_95 = ups_upper_95[:, j].numpy()
+                        upper_60 = ups_upper_60[:, j].numpy()
+                        upper_80 = ups_upper_80[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
@@ -2159,13 +2158,13 @@ class EVAL_EED(object):
                         "pred_quantile":quantile,
                         "pred_std":pred_std,
 
-                        # "lower_60" : lower_60,
-                        # "lower_80" : lower_80,
-                        # "lower_95" : lower_95,
+                        "lower_60" : lower_60,
+                        "lower_80" : lower_80,
+                        "lower_95" : lower_95,
 
-                        # "upper_60": upper_60,
-                        # "upper_80": upper_80,
-                        # "upper_95": upper_95,
+                        "upper_60": upper_60,
+                        "upper_80": upper_80,
+                        "upper_95": upper_95,
 
                         "p0_bg":p0bgdf["p0_bg"],
                         "p0_fg":p0bgdf["p0_fg"],
@@ -2175,28 +2174,28 @@ class EVAL_EED(object):
                         'Spearman-GW': self.metrics.spearman(target, pred),
                         'r2_GW': self.metrics.r2(target, pred),
 
-                        # 'MSE-1obs': self.metrics.mse1obs(target, pred),
-                        # 'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
-                        # 'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
-                        # 'r2_1obs': self.metrics.r2_1obs(target, pred),
+                        'MSE-1obs': self.metrics.mse1obs(target, pred),
+                        'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
+                        'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+                        'r2_1obs': self.metrics.r2_1obs(target, pred),
 
-                        # 'MSE-1imp': self.metrics.mse1imp(target, pred),
-                        # 'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
-                        # 'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
-                        # 'r2_1imp': self.metrics.r2_1imp(target, pred),
+                        'MSE-1imp': self.metrics.mse1imp(target, pred),
+                        'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
+                        'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+                        'r2_1imp': self.metrics.r2_1imp(target, pred),
 
-                        # 'MSE-gene': self.metrics.mse_gene(target, pred),
-                        # 'Pearson_gene': self.metrics.pearson_gene(target, pred),
-                        # 'Spearman_gene': self.metrics.spearman_gene(target, pred),
-                        # 'r2_gene': self.metrics.r2_gene(target, pred),
+                        'MSE-gene': self.metrics.mse_gene(target, pred),
+                        'Pearson_gene': self.metrics.pearson_gene(target, pred),
+                        'Spearman_gene': self.metrics.spearman_gene(target, pred),
+                        'r2_gene': self.metrics.r2_gene(target, pred),
 
-                        # 'MSE-prom': self.metrics.mse_prom(target, pred),
-                        # 'Pearson_prom': self.metrics.pearson_prom(target, pred),
-                        # 'Spearman_prom': self.metrics.spearman_prom(target, pred),
-                        # 'r2_prom': self.metrics.r2_prom(target, pred),
+                        'MSE-prom': self.metrics.mse_prom(target, pred),
+                        'Pearson_prom': self.metrics.pearson_prom(target, pred),
+                        'Spearman_prom': self.metrics.spearman_prom(target, pred),
+                        'r2_prom': self.metrics.r2_prom(target, pred),
 
-                        # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                        # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                        "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                        "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
                         # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
                     #     "corresp_curve": corresp,
@@ -2221,13 +2220,13 @@ class EVAL_EED(object):
             else:
                 # continue
                 pred = ups_mean[:, j].numpy()
-                # lower_60 = ups_lower_60[:, j].numpy()
-                # lower_80 = ups_lower_80[:, j].numpy()
-                # lower_95 = ups_lower_95[:, j].numpy()
+                lower_60 = ups_lower_60[:, j].numpy()
+                lower_80 = ups_lower_80[:, j].numpy()
+                lower_95 = ups_lower_95[:, j].numpy()
 
-                # upper_60 = ups_upper_60[:, j].numpy()
-                # upper_80 = ups_upper_80[:, j].numpy()
-                # upper_95 = ups_upper_95[:, j].numpy()
+                upper_60 = ups_upper_60[:, j].numpy()
+                upper_80 = ups_upper_80[:, j].numpy()
+                upper_95 = ups_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -2237,13 +2236,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    # "lower_60" : lower_60,
-                    # "lower_80" : lower_80,
-                    # "lower_95" : lower_95,
+                    "lower_60" : lower_60,
+                    "lower_80" : lower_80,
+                    "lower_95" : lower_95,
 
-                    # "upper_60": upper_60,
-                    # "upper_80": upper_80,
-                    # "upper_95": upper_95
+                    "upper_60": upper_60,
+                    "upper_80": upper_80,
+                    "upper_95": upper_95
                     }
                 results.append(metrics)
             
@@ -2374,88 +2373,99 @@ class EVAL_EED(object):
         return eval_res
 
     def viz_bios(self, eval_res):
-        print("plotting error std")
-        self.viz.BIOS_error_std_hexbin(eval_res)
-        self.viz.clear_pallete()
-        exit()
-
         print("plotting signal tracks")
-        self.viz.BIOS_signal_track(eval_res)
-        self.viz.clear_pallete()
+        try:
+            self.viz.BIOS_signal_track(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot signal tracks: {e}")
 
         print("plotting signal confidence")
-        self.viz.BIOS_signal_confidence(eval_res)
-        self.viz.clear_pallete()
+        try:
+            self.viz.BIOS_signal_confidence(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot signal confidence: {e}")
 
+        # Filter out results without 'obs'
         eval_res = [res for res in eval_res if "obs" in res]
 
-        # self.viz.BIOS_quantile_density(eval_res)
-        # self.viz.clear_pallete()
-        
-        # self.viz.BIOS_mean_std_hexbin(eval_res)
-        # self.viz.clear_pallete()
-        
+        print("plotting mean vs. std hexbin")
+        try:
+            self.viz.BIOS_mean_std_hexbin(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot mean vs. std hexbin: {e}")
 
-        self.viz.BIOS_quantile_heatmap(eval_res)
-        self.viz.clear_pallete()
+        print("plotting quantile heatmap")
+        try:
+            self.viz.BIOS_quantile_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot quantile heatmap: {e}")
 
-        self.viz.BIOS_mean_std_scatter(eval_res)
-        self.viz.clear_pallete()
+        print("plotting error vs. std hexbin")
+        try:
+            self.viz.BIOS_error_std_hexbin(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot error vs. std hexbin: {e}")
 
-        self.viz.BIOS_quantile_hist(eval_res)
-        self.viz.clear_pallete()
+        print("plotting quantile histogram")
+        try:
+            self.viz.BIOS_quantile_hist(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot quantile histogram: {e}")
 
-        self.viz.BIOS_quantile_scatter(eval_res)
-        self.viz.clear_pallete()
+        print("plotting context-specific performance")
+        try:
+            self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot context-specific performance: {e}")
 
-        # try:
-        print("plotting context_specific performance")
-        self.viz.BIOS_context_length_specific_performance(eval_res, self.context_length, bins=10)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot context_specific performance")
-            
-        # try:
-        print("plotting signal scatter")
-        self.viz.BIOS_signal_scatter(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot  signal scatter")
-
-        # try:
         print("plotting signal scatter with marginals")
-        self.viz.BIOS_signal_scatter_with_marginals(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot scatter with marginals")
+        try:
+            self.viz.BIOS_signal_scatter_with_marginals(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot signal scatter with marginals: {e}")
 
-        # try:
         print("plotting signal heatmap")
-        self.viz.BIOS_signal_heatmap(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot  signal heatmap")
+        try:
+            self.viz.BIOS_signal_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot signal heatmap: {e}")
 
-        # try:
         print("plotting signal rank heatmap")
-        self.viz.BIOS_signal_rank_heatmap(eval_res)
-        self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot  signal rank heatmap")
+        try:
+            self.viz.BIOS_signal_rank_heatmap(eval_res)
+            self.viz.clear_pallete()
+        except Exception as e:
+            print(f"Failed to plot signal rank heatmap: {e}")
 
+        # Uncomment the following blocks if you want to include these plots as well:
+        # print("plotting mean vs. std scatter")
         # try:
-        #     print("plotting corresp_curve")
+        #     self.viz.BIOS_mean_std_scatter(eval_res)
+        #     self.viz.clear_pallete()
+        # except Exception as e:
+        #     print(f"Failed to plot mean vs. std scatter: {e}")
+        # print("plotting correspondence curve")
+        # try:
         #     self.viz.BIOS_corresp_curve(eval_res)
         #     self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot corresp_curve")
+        # except Exception as e:
+        #     print(f"Failed to plot correspondence curve: {e}")
 
+        # print("plotting correspondence curve derivative")
         # try:
-        #     print("plotting corresp_curve_deriv")
         #     self.viz.BIOS_corresp_curve_deriv(eval_res)
         #     self.viz.clear_pallete()
-        # except:
-        #     print("faild to plot corresp_curve_deriv")
+        # except Exception as e:
+        #     print(f"Failed to plot correspondence curve derivative: {e}")
 
     def viz_all(self, dsf=1):
         """
