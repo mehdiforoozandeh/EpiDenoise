@@ -98,7 +98,7 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
 
     print(f"Average MSE for {target}: {avg_mse}")
     print(f"Average R² for {target}: {avg_r2}")
-    print(f"Average AUC-REC for {target}: {avg_r2}")
+    print(f"Average AUC-REC for {target}: {avg_aucrec}")
 
     return avg_mse, avg_r2, avg_aucrec
 
