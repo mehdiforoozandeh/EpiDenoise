@@ -56,7 +56,7 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
 
     if logscale:
-        data["TPM"] = np.log(data["TPM"])
+        data["TPM"] = np.log(data["TPM"]+1e-4)
     
     mse_scores = []
     r2_scores = []

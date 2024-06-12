@@ -1431,19 +1431,18 @@ class ExtendedEncodeDataHandler:
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            if bios == "ENCBS899TTJ":
+            if self.has_rnaseq(bios):
                 continue
 
-            if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+            elif len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != split and self.has_rnaseq(bios)==False:
+            elif self.split_dict[bios] != split:
                 del self.navigation[bios]
 
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
-        
         
         self.num_bios = len(self.navigation)
         self.test_bios = []
