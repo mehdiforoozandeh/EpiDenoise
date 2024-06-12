@@ -875,7 +875,7 @@ class VISUALS(object):
             hb = ax.hexbin(error, pred_std, gridsize=50, cmap='inferno', mincnt=1)
             
             # Add LOESS smoothing line
-            lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
+            # lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
             ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
 
             ax.set_xlabel('Absolute Error')
