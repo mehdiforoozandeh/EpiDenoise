@@ -2064,11 +2064,11 @@ class EVAL_EED(object):
             plt.grid(True)
             
             plt.tight_layout()
-            savepath = os.path.join(self.savedir, bios_name, "RNAseq_REC.svg")
+            savepath = os.path.join(self.savedir, bios_name)
             if os.path.exists(savepath) ==False:
                 os.mkdir(savepath)
 
-            plt.savefig(savepath, format="svg")
+            plt.savefig(savepath+"/RNAseq_REC.svg", format="svg")
 
         return report
             
