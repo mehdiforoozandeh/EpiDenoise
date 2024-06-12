@@ -2550,19 +2550,10 @@ if __name__=="__main__":
         savedir="models/eval_30b/", mode="eval"
     )
 
-    # e = EVAL_EED(
-    #     model="models/EpiDenoise30c_20240609115448_params15426427.pt", 
-    #     data_path="/project/compbio-lab/encode_data/", 
-    #     context_length=810, batch_size=50, 
-    #     hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240609115448_params15426427.pkl",
-    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-    #     version="30c", resolution=25, 
-    #     savedir="models/eval_30c/", mode="eval"
-    # )
-
     e.viz_all()
+
+
     exit()
-    evres = e.bios_pipeline("ENCBS899TTJ", 1)
     for i in range(len(evres)):
         print(evres[i])
 
