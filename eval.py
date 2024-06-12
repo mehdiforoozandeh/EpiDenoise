@@ -50,7 +50,7 @@ def auc_rec(y_true, y_pred):
 
     return normalized_auc_rec
 
-def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear'):
+def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear', plot_REC=True, plot_savedir=""):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -75,6 +75,8 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type=
     auc_recs = []
     pearsonrs = []
     spearmanrs = []
+
+    all_errors = []
 
     # Perform K-Fold Cross Validation
     for train_index, test_index in kf.split(unique_gene_ids):
@@ -109,6 +111,10 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type=
             # For LOESS, we use an averaging of predictions as there is no direct fit/predict method
             y_pred = lowess_predictions[:, 1]
         
+        # Collect errors from this fold
+        errors = np.abs(y_test - y_pred)
+        all_errors.extend(errors)
+        
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
         aucrec = auc_rec(y_test, y_pred)
@@ -128,14 +134,16 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type=
     avg_pcc = np.mean(pearsonrs)
     avg_srcc = np.mean(spearmanrs)
 
-    print(f"Average MSE for {target} by {model_type}: {avg_mse}")
-    print(f"Average R² for {target} by {model_type}: {avg_r2}")
-    print(f"Average AUC-REC for {target} by {model_type}: {avg_aucrec}")
-    print(f"Average PCC for {target} by {model_type}: {avg_pcc}")
-    print(f"Average SRCC for {target} by {model_type}: {avg_srcc}")
-    print("\n\n")
+    all_errors = np.array(all_errors)
 
-    return avg_mse, avg_r2, avg_aucrec, avg_pcc, avg_srcc
+    return {
+        'avg_mse': avg_mse,
+        'avg_r2': avg_r2,
+        'avg_aucrec': avg_aucrec,
+        'avg_pcc': avg_pcc,
+        'avg_srcc': avg_srcc,
+        "errors": all_errors
+    }
 
 def binarize_nbinom(data, threshold=0.0001):
     """
@@ -1951,7 +1959,7 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10):
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10, plot_REC=True):
         # columns=  chr, start, end, geneID, length, TPM, FPKM
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
         print(rna_seq_data)
@@ -1992,37 +2000,78 @@ class EVAL_EED(object):
         pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
         pred_features_avail = pred_features_all[pred_features_all["assay"].isin(available_assays)]
 
+        report = {}
         # Perform K-Fold Cross Validation for both true and predicted data
-        print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
+        # print("Evaluating Experimental Data")
+        report['true_linear'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
         
-        print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
+        # print("Evaluating Denoised + Imputed Data")
+        report['denoised_imputed_linear'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
 
-        print("Evaluating Denoised Data")
-        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
-
-        # Perform K-Fold Cross Validation for both true and predicted data
-        print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
-        
-        print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
-
-        print("Evaluating Denoised Data")
-        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        # print("Evaluating Denoised Data")
+        report['denoised_linear'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
 
         # Perform K-Fold Cross Validation for both true and predicted data
         # print("Evaluating Experimental Data")
-        # avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        report['true_svr'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
         
         # print("Evaluating Denoised + Imputed Data")
-        # avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        report['denoised_imputed_svr'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
 
         # print("Evaluating Denoised Data")
-        # avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='loess')
-
+        report['denoised_svr'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
         
+        # Plotting REC curves for comparison
+        if plot_REC:
+            plt.figure(figsize=(14, 7))
+            
+            # Plot REC for SVR models
+            plt.subplot(1, 2, 1)
+            true_errors_svr = report['true_svr']['errors']
+            denoised_errors_svr = report['denoised_svr']['errors']
+            
+            sorted_true_errors_svr = np.sort(true_errors_svr)
+            cumulative_true_svr = np.arange(1, len(sorted_true_errors_svr) + 1) / len(sorted_true_errors_svr)
+            
+            sorted_denoised_errors_svr = np.sort(denoised_errors_svr)
+            cumulative_denoised_svr = np.arange(1, len(sorted_denoised_errors_svr) + 1) / len(sorted_denoised_errors_svr)
+            
+            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='True SVR', color='blue', alpha=0.7)
+            plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised SVR', color='orange', alpha=0.7)
+            plt.xlabel('Error Tolerance')
+            plt.ylabel('Proportion of Points within Tolerance')
+            plt.title('REC Curve - SVR')
+            plt.legend()
+            plt.grid(True)
+            
+            # Plot REC for Linear models
+            plt.subplot(1, 2, 2)
+            true_errors_linear = report['true_linear']['errors']
+            denoised_errors_linear = report['denoised_linear']['errors']
+            
+            sorted_true_errors_linear = np.sort(true_errors_linear)
+            cumulative_true_linear = np.arange(1, len(sorted_true_errors_linear) + 1) / len(sorted_true_errors_linear)
+            
+            sorted_denoised_errors_linear = np.sort(denoised_errors_linear)
+            cumulative_denoised_linear = np.arange(1, len(sorted_denoised_errors_linear) + 1) / len(sorted_denoised_errors_linear)
+            
+            plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='True Linear', color='blue', alpha=0.7)
+            plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised Linear', color='orange', alpha=0.7)
+            plt.xlabel('Error Tolerance')
+            plt.ylabel('Proportion of Points within Tolerance')
+            plt.title('REC Curve - Linear Regression')
+            plt.legend()
+            plt.grid(True)
+            
+            plt.tight_layout()
+            savepath = os.path.join(self.savedir, bios_name, "RNAseq_REC.svg")
+            if os.path.exists(savepath) ==False:
+                os.mkdir(savepath)
+
+            plt.savefig(savepath, format="svg")
+
+        return report
+            
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
         reportoir of metrics -- per_bios:
@@ -2044,7 +2093,7 @@ class EVAL_EED(object):
 
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
-            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10)
+            rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
             return
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
@@ -2461,25 +2510,25 @@ if __name__=="__main__":
     # except:
     #     pass
 
-    # e = EVAL_EED(
-    #     model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
-    #     data_path="/project/compbio-lab/encode_data/", 
-    #     context_length=1600, batch_size=50, 
-    #     hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
-    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-    #     version="30b", resolution=25, 
-    #     savedir="models/eval_30b/", mode="eval"
-    # )
-
     e = EVAL_EED(
-        model="models/EpiDenoise30c_20240609115448_params15426427.pt", 
+        model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
         data_path="/project/compbio-lab/encode_data/", 
-        context_length=810, batch_size=50, 
-        hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240609115448_params15426427.pkl",
+        context_length=1600, batch_size=50, 
+        hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30c", resolution=25, 
-        savedir="models/eval_30c/", mode="eval"
+        version="30b", resolution=25, 
+        savedir="models/eval_30b/", mode="eval"
     )
+
+    # e = EVAL_EED(
+    #     model="models/EpiDenoise30c_20240609115448_params15426427.pt", 
+    #     data_path="/project/compbio-lab/encode_data/", 
+    #     context_length=810, batch_size=50, 
+    #     hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240609115448_params15426427.pkl",
+    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+    #     version="30c", resolution=25, 
+    #     savedir="models/eval_30c/", mode="eval"
+    # )
 
     e.viz_all()
     exit()
