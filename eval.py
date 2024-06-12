@@ -872,7 +872,7 @@ class VISUALS(object):
             error = np.abs(observed - pred_mean)
 
             # Hexbin plot
-            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=plt.colors.LogNorm())
+            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
             
             # Add LOESS smoothing line
             # lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
