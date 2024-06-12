@@ -872,7 +872,7 @@ class VISUALS(object):
             error = np.abs(observed - pred_mean)
 
             # Hexbin plot
-            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='inferno', mincnt=1)
+            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=plt.colors.LogNorm())
             
             # Add LOESS smoothing line
             # lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
@@ -884,7 +884,7 @@ class VISUALS(object):
 
             # Add color bar
             cb = plt.colorbar(hb, ax=ax)
-            cb.set_label('Counts')
+            cb.set_label('Log10(Counts)')
         
         plt.tight_layout()
         plt.savefig(f"{save_path}/error_std_hexbin.png", dpi=150)
