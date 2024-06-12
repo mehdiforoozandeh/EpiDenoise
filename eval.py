@@ -133,6 +133,7 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type=
     print(f"Average AUC-REC for {target} by {model_type}: {avg_aucrec}")
     print(f"Average PCC for {target} by {model_type}: {avg_pcc}")
     print(f"Average SRCC for {target} by {model_type}: {avg_srcc}")
+    print("\n\n")
 
     return avg_mse, avg_r2, avg_aucrec, avg_pcc, avg_srcc
 
@@ -1958,6 +1959,7 @@ class EVAL_EED(object):
         pred_features = []
         true_features = []
         available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
+        print(available_assays)
         
         for i in range(len(rna_seq_data)):
             for a in range(y_pred.shape[1]):
