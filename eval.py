@@ -95,8 +95,8 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
         aucrec = auc_rec(y_test, y_pred)
-        pcc = pearsonr(y_pred, y_true)[0]
-        scrr = spearmanr(y_pred, y_true)[0]
+        pcc = pearsonr(y_pred, y_test)[0]
+        scrr = spearmanr(y_pred, y_test)[0]
         
         mse_scores.append(mse)
         r2_scores.append(r2)
@@ -1943,7 +1943,7 @@ class EVAL_EED(object):
         self.model.eval()  # set the model to evaluation mode
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=20):
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10):
         # columns=  chr, start, end, geneID, length, TPM, FPKM
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
         print(rna_seq_data)
@@ -2016,7 +2016,7 @@ class EVAL_EED(object):
 
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
-            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=20)
+            self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10)
             exit()
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
