@@ -2043,7 +2043,7 @@ class EVAL_EED(object):
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
             self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10)
-            exit()
+            return
 
         imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
         ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
@@ -2404,6 +2404,8 @@ class EVAL_EED(object):
         for bios in list(self.dataset.navigation.keys()):
             if self.dataset.has_rnaseq(bios):
                 print("got rnaseq for ", bios)
+                eval_res_bios = self.bios_pipeline(bios, dsf)
+                continue
             else:
                 continue
            
