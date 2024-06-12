@@ -50,7 +50,7 @@ def auc_rec(y_true, y_pred):
 
     return normalized_auc_rec
 
-def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear', plot_REC=True, plot_savedir=""):
+def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear'):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -851,18 +851,19 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
 
-    def BIOS_error_std_scatter(self, eval_res):
-        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
-            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
-
+    def BIOS_error_std_hexbin(self, eval_res):
+        save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        
         # Define the size of the figure
         plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
-
+        
         for j in range(len(eval_res)):
             if "obs" not in eval_res[j]:
                 # skip rows without observed signal
                 continue
-
+            
             ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
@@ -870,8 +871,9 @@ class VISUALS(object):
 
             error = np.abs(observed - pred_mean)
 
-            sc = ax.scatter(error, pred_std, color="black", s=5, alpha=0.5, label='genomic bins')
-
+            # Hexbin plot
+            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='inferno', mincnt=1)
+            
             # Add LOESS smoothing line
             lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
             ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
@@ -879,11 +881,14 @@ class VISUALS(object):
             ax.set_xlabel('Absolute Error')
             ax.set_ylabel('Predicted Std Dev')
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
-            # plt.grid(True)
 
+            # Add color bar
+            cb = plt.colorbar(hb, ax=ax)
+            cb.set_label('Counts')
+        
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/error_std_scatter.png", dpi=150)
-    
+        plt.savefig(f"{save_path}/error_std_hexbin.png", dpi=150)
+        
     def BIOS_mean_std_hexbin(self, eval_res):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -2094,16 +2099,16 @@ class EVAL_EED(object):
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
-            return
+            # return
 
-        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -2117,13 +2122,13 @@ class EVAL_EED(object):
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         pred_std = imp_std[:, j].numpy()
-                        lower_60 = imp_lower_60[:, j].numpy()
-                        lower_80 = imp_lower_80[:, j].numpy()
-                        lower_95 = imp_lower_95[:, j].numpy()
+                        # lower_60 = imp_lower_60[:, j].numpy()
+                        # lower_80 = imp_lower_80[:, j].numpy()
+                        # lower_95 = imp_lower_95[:, j].numpy()
 
-                        upper_60 = imp_upper_60[:, j].numpy()
-                        upper_80 = imp_upper_80[:, j].numpy()
-                        upper_95 = imp_upper_95[:, j].numpy()
+                        # upper_60 = imp_upper_60[:, j].numpy()
+                        # upper_80 = imp_upper_80[:, j].numpy()
+                        # upper_95 = imp_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
@@ -2131,13 +2136,13 @@ class EVAL_EED(object):
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
                         pred_std = ups_std[:, j].numpy()
-                        lower_60 = ups_lower_60[:, j].numpy()
-                        lower_80 = ups_lower_80[:, j].numpy()
-                        lower_95 = ups_lower_95[:, j].numpy()
+                        # lower_60 = ups_lower_60[:, j].numpy()
+                        # lower_80 = ups_lower_80[:, j].numpy()
+                        # lower_95 = ups_lower_95[:, j].numpy()
 
-                        upper_60 = ups_upper_60[:, j].numpy()
-                        upper_80 = ups_upper_80[:, j].numpy()
-                        upper_95 = ups_upper_95[:, j].numpy()
+                        # upper_60 = ups_upper_60[:, j].numpy()
+                        # upper_80 = ups_upper_80[:, j].numpy()
+                        # upper_95 = ups_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
@@ -2154,13 +2159,13 @@ class EVAL_EED(object):
                         "pred_quantile":quantile,
                         "pred_std":pred_std,
 
-                        "lower_60" : lower_60,
-                        "lower_80" : lower_80,
-                        "lower_95" : lower_95,
+                        # "lower_60" : lower_60,
+                        # "lower_80" : lower_80,
+                        # "lower_95" : lower_95,
 
-                        "upper_60": upper_60,
-                        "upper_80": upper_80,
-                        "upper_95": upper_95,
+                        # "upper_60": upper_60,
+                        # "upper_80": upper_80,
+                        # "upper_95": upper_95,
 
                         "p0_bg":p0bgdf["p0_bg"],
                         "p0_fg":p0bgdf["p0_fg"],
@@ -2170,25 +2175,25 @@ class EVAL_EED(object):
                         'Spearman-GW': self.metrics.spearman(target, pred),
                         'r2_GW': self.metrics.r2(target, pred),
 
-                        'MSE-1obs': self.metrics.mse1obs(target, pred),
-                        'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
-                        'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
-                        'r2_1obs': self.metrics.r2_1obs(target, pred),
+                        # 'MSE-1obs': self.metrics.mse1obs(target, pred),
+                        # 'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
+                        # 'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+                        # 'r2_1obs': self.metrics.r2_1obs(target, pred),
 
-                        'MSE-1imp': self.metrics.mse1imp(target, pred),
-                        'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
-                        'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
-                        'r2_1imp': self.metrics.r2_1imp(target, pred),
+                        # 'MSE-1imp': self.metrics.mse1imp(target, pred),
+                        # 'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
+                        # 'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+                        # 'r2_1imp': self.metrics.r2_1imp(target, pred),
 
-                        'MSE-gene': self.metrics.mse_gene(target, pred),
-                        'Pearson_gene': self.metrics.pearson_gene(target, pred),
-                        'Spearman_gene': self.metrics.spearman_gene(target, pred),
-                        'r2_gene': self.metrics.r2_gene(target, pred),
+                        # 'MSE-gene': self.metrics.mse_gene(target, pred),
+                        # 'Pearson_gene': self.metrics.pearson_gene(target, pred),
+                        # 'Spearman_gene': self.metrics.spearman_gene(target, pred),
+                        # 'r2_gene': self.metrics.r2_gene(target, pred),
 
-                        'MSE-prom': self.metrics.mse_prom(target, pred),
-                        'Pearson_prom': self.metrics.pearson_prom(target, pred),
-                        'Spearman_prom': self.metrics.spearman_prom(target, pred),
-                        'r2_prom': self.metrics.r2_prom(target, pred),
+                        # 'MSE-prom': self.metrics.mse_prom(target, pred),
+                        # 'Pearson_prom': self.metrics.pearson_prom(target, pred),
+                        # 'Spearman_prom': self.metrics.spearman_prom(target, pred),
+                        # 'r2_prom': self.metrics.r2_prom(target, pred),
 
                         # "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
                         # "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
@@ -2197,18 +2202,32 @@ class EVAL_EED(object):
                     #     "corresp_curve": corresp,
                     #     "corresp_curve_deriv": corresp_deriv
                     }
+                    
+                    if self.dataset.has_rnaseq(bios_name):
+                        metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
+                        metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
+
+                        metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
+                        metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
+
+                        metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
+                        metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
+                        
+                        metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
+                        metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
+
                     results.append(metrics)
 
             else:
                 # continue
                 pred = ups_mean[:, j].numpy()
-                lower_60 = ups_lower_60[:, j].numpy()
-                lower_80 = ups_lower_80[:, j].numpy()
-                lower_95 = ups_lower_95[:, j].numpy()
+                # lower_60 = ups_lower_60[:, j].numpy()
+                # lower_80 = ups_lower_80[:, j].numpy()
+                # lower_95 = ups_lower_95[:, j].numpy()
 
-                upper_60 = ups_upper_60[:, j].numpy()
-                upper_80 = ups_upper_80[:, j].numpy()
-                upper_95 = ups_upper_95[:, j].numpy()
+                # upper_60 = ups_upper_60[:, j].numpy()
+                # upper_80 = ups_upper_80[:, j].numpy()
+                # upper_95 = ups_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -2218,13 +2237,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    "lower_60" : lower_60,
-                    "lower_80" : lower_80,
-                    "lower_95" : lower_95,
+                    # "lower_60" : lower_60,
+                    # "lower_80" : lower_80,
+                    # "lower_95" : lower_95,
 
-                    "upper_60": upper_60,
-                    "upper_80": upper_80,
-                    "upper_95": upper_95
+                    # "upper_60": upper_60,
+                    # "upper_80": upper_80,
+                    # "upper_95": upper_95
                     }
                 results.append(metrics)
             
@@ -2356,8 +2375,9 @@ class EVAL_EED(object):
 
     def viz_bios(self, eval_res):
         print("plotting error std")
-        self.viz.BIOS_error_std_scatter(eval_res)
+        self.viz.BIOS_error_std_hexbin(eval_res)
         self.viz.clear_pallete()
+        exit()
 
         print("plotting signal tracks")
         self.viz.BIOS_signal_track(eval_res)
@@ -2453,12 +2473,12 @@ class EVAL_EED(object):
         
         self.model_res = []
         for bios in list(self.dataset.navigation.keys()):
-            if self.dataset.has_rnaseq(bios):
-                print("got rnaseq for ", bios)
-                eval_res_bios = self.bios_pipeline(bios, dsf)
-                continue
-            else:
-                continue
+            # if self.dataset.has_rnaseq(bios):
+            #     print("got rnaseq for ", bios)
+            #     # eval_res_bios = self.bios_pipeline(bios, dsf)
+            #     # continue
+            # else:
+            #     continue
            
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios, dsf)
