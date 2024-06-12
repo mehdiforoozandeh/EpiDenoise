@@ -7,6 +7,11 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 
+from statsmodels.nonparametric.smoothers_lowess import lowess
+from sklearn.svm import SVR
+
+
+
 import scipy.stats
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -45,7 +50,7 @@ def auc_rec(y_true, y_pred):
 
     return normalized_auc_rec
 
-def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
+def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear'):
     """
     Perform k-fold cross-validation for linear regression on the provided data.
     
@@ -87,10 +92,22 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
         X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
         y_test = test_data[target]
 
-        # Train and evaluate the linear regression model
-        model = LinearRegression()
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
+        # Initialize the model based on the model type
+        if model_type == 'linear':
+            model = LinearRegression()
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+        
+        elif model_type == 'svr':
+            model = SVR(kernel='rbf', C=1.0, epsilon=0.2)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+        
+        elif model_type == 'loess':
+            # LOESS (Local Regression) model
+            lowess_predictions = lowess(y_train, X_train.mean(axis=1), frac=0.3)
+            # For LOESS, we use an averaging of predictions as there is no direct fit/predict method
+            y_pred = lowess_predictions[:, 1]
         
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
@@ -111,11 +128,11 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     avg_pcc = np.mean(pearsonrs)
     avg_srcc = np.mean(spearmanrs)
 
-    print(f"Average MSE for {target}: {avg_mse}")
-    print(f"Average R² for {target}: {avg_r2}")
-    print(f"Average AUC-REC for {target}: {avg_aucrec}")
-    print(f"Average PCC for {target}: {avg_pcc}")
-    print(f"Average SRCC for {target}: {avg_srcc}")
+    print(f"Average MSE for {target} by {model_type}: {avg_mse}")
+    print(f"Average R² for {target} by {model_type}: {avg_r2}")
+    print(f"Average AUC-REC for {target} by {model_type}: {avg_aucrec}")
+    print(f"Average PCC for {target} by {model_type}: {avg_pcc}")
+    print(f"Average SRCC for {target} by {model_type}: {avg_srcc}")
 
     return avg_mse, avg_r2, avg_aucrec, avg_pcc, avg_srcc
 
@@ -885,16 +902,6 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_hexbin.png", dpi=150)
-        
-    # def BIOS_fg_vs_bg_histogram(self, eval_res, share_axes=True):
-    #     if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
-    #         os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
-
-    #     for j in range(len(eval_res)):
-    #         if "obs" not in eval_res[j]:
-    #             # skip rows without observed signal
-    #             continue
-
 
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -1985,15 +1992,34 @@ class EVAL_EED(object):
 
         # Perform K-Fold Cross Validation for both true and predicted data
         print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
         
         print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
 
         print("Evaluating Denoised Data")
-        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
 
-        # return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
+        # Perform K-Fold Cross Validation for both true and predicted data
+        print("Evaluating Experimental Data")
+        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        
+        print("Evaluating Denoised + Imputed Data")
+        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
+
+        print("Evaluating Denoised Data")
+        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
+
+        # Perform K-Fold Cross Validation for both true and predicted data
+        print("Evaluating Experimental Data")
+        avg_mse_true, avg_r2_true, avg_aucrec_true, avg_pcc_true, avg_srcc_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='loess')
+        
+        print("Evaluating Denoised + Imputed Data")
+        avg_mse_pred, avg_r2_pred, avg_aucrec_pred, avg_pcc_pred, avg_srcc_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='loess')
+
+        print("Evaluating Denoised Data")
+        avg_mse_denoised, avg_r2_denoised, avg_aucrec_denoised, avg_pcc_denoised, avg_srcc_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='loess')
+
         
     def get_metrics(self, imp_dist, ups_dist, Y, bios_name, availability):
         """
