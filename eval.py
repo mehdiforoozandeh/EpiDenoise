@@ -36,7 +36,14 @@ def auc_rec(y_true, y_pred):
     # Calculate AUC-REC
     auc_rec = auc(sorted_errors, cumulative_proportion)
 
-    return auc_rec
+    # Determine the maximum possible area under the curve
+    max_error = sorted_errors[-1]  # Maximum error tolerance observed
+    max_area = max_error * 1  # Since the cumulative proportion ranges from 0 to 1
+    
+    # Normalize AUC-REC
+    normalized_auc_rec = auc_rec / max_area if max_area > 0 else 0
+
+    return normalized_auc_rec
 
 def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     """
@@ -61,6 +68,8 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     mse_scores = []
     r2_scores = []
     auc_recs = []
+    pearsonrs = []
+    spearmanrs = []
 
     # Perform K-Fold Cross Validation
     for train_index, test_index in kf.split(unique_gene_ids):
@@ -86,21 +95,29 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
         aucrec = auc_rec(y_test, y_pred)
+        pcc = pearsonr(y_pred, y_true)[0]
+        scrr = spearmanr(y_pred, y_true)[0]
         
         mse_scores.append(mse)
         r2_scores.append(r2)
         auc_recs.append(aucrec)
+        pearsonrs.append(pcc)
+        spearmanrs.append(scrr)
 
     # Compute average metrics
     avg_mse = np.mean(mse_scores)
     avg_r2 = np.mean(r2_scores)
     avg_aucrec = np.mean(auc_recs)
+    avg_pcc = np.mean(pearsonrs)
+    avg_srcc = np.mean(spearmanrs)
 
     print(f"Average MSE for {target}: {avg_mse}")
     print(f"Average R² for {target}: {avg_r2}")
     print(f"Average AUC-REC for {target}: {avg_aucrec}")
+    print(f"Average PCC for {target}: {avg_pcc}")
+    print(f"Average SRCC for {target}: {avg_srcc}")
 
-    return avg_mse, avg_r2, avg_aucrec
+    return avg_mse, avg_r2, avg_aucrec, avg_pcc, avg_srcc
 
 def binarize_nbinom(data, threshold=0.0001):
     """
