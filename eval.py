@@ -2461,14 +2461,24 @@ if __name__=="__main__":
     # except:
     #     pass
 
+    # e = EVAL_EED(
+    #     model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
+    #     data_path="/project/compbio-lab/encode_data/", 
+    #     context_length=1600, batch_size=50, 
+    #     hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
+    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+    #     version="30b", resolution=25, 
+    #     savedir="models/eval_30b/", mode="eval"
+    # )
+
     e = EVAL_EED(
-        model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
+        model="models/EpiDenoise30c_20240609115448_params15426427.pt", 
         data_path="/project/compbio-lab/encode_data/", 
-        context_length=1600, batch_size=50, 
-        hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
+        context_length=810, batch_size=50, 
+        hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240609115448_params15426427.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30b", resolution=25, 
-        savedir="models/eval_30b/", mode="eval"
+        version="30c", resolution=25, 
+        savedir="models/eval_30c/", mode="eval"
     )
 
     e.viz_all()
