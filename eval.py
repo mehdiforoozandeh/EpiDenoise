@@ -56,7 +56,7 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True):
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
 
     if logscale:
-        data["TPM"] = np.log(data["TPM"]+1e-4)
+        data["TPM"] = np.log(data["TPM"]+1)
     
     mse_scores = []
     r2_scores = []
@@ -1968,13 +1968,13 @@ class EVAL_EED(object):
 
         # Perform K-Fold Cross Validation for both true and predicted data
         print("Evaluating Experimental Data")
-        avg_mse_true, avg_r2_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_true, avg_r2_true, avg_aucrec_true = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
         
         print("Evaluating Denoised + Imputed Data")
-        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_pred, avg_r2_pred, avg_aucrec_pred = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
 
         print("Evaluating Denoised Data")
-        avg_mse_pred, avg_r2_pred = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
+        avg_mse_pred_denoised, avg_r2_pred_denoised, avg_aucrec_pred_denoised = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True)  # or 'FPKM'
 
         # return (avg_mse_true, avg_r2_true), (avg_mse_pred, avg_r2_pred)
         

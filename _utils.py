@@ -388,7 +388,7 @@ def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
 
     return gene_coords
 
-def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25):
+def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
     """
     Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
 
@@ -408,12 +408,12 @@ def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25):
     tes = end if strand == '+' else start
 
     # Define the regions
-    promoter_start = tss - 1000
-    promoter_end = tss + 1000
+    promoter_start = tss - margin
+    promoter_end = tss + margin
     gene_body_start = start
     gene_body_end = end
-    tes_region_start = tes - 1000
-    tes_region_end = tes + 1000
+    tes_region_start = tes - margin
+    tes_region_end = tes + margin
 
     # Convert regions to bin indices
     promoter_start_bin = max(promoter_start // bin_size, 0)
