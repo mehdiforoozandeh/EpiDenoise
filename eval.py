@@ -2489,9 +2489,9 @@ class EVAL_EED(object):
             self.viz_bios(eval_res_bios)
             
             to_del = [
-                "obs", "imp", "pred_quantile", 
-                "pred_std", "lower_60", "lower_80", 
-                "lower_95", "upper_60", "upper_80", "upper_95"]
+                "obs", "imp", "pred_quantile", "pred_std", 
+                "lower_60", "lower_80", "lower_95", 
+                "upper_60", "upper_80", "upper_95"]
 
             for f in eval_res_bios:
                 fkeys = list(f.keys())
@@ -2548,9 +2548,7 @@ if __name__=="__main__":
         context_length=1600, batch_size=50, 
         hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30b", resolution=25, 
-        savedir="models/eval_30b/", mode="eval"
-    )
+        version="30b", resolution=25, savedir="models/eval_30b/", mode="eval")
 
     e.viz_all()
 
