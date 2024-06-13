@@ -2196,7 +2196,7 @@ class EVAL_EED(object):
 
                         "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
                         "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                        # "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+                        "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
 
                     #     "corresp_curve": corresp,
                     #     "corresp_curve_deriv": corresp_deriv
@@ -2483,20 +2483,22 @@ class EVAL_EED(object):
         
         self.model_res = []
         for bios in list(self.dataset.navigation.keys()):
-            # if self.dataset.has_rnaseq(bios):
-            #     print("got rnaseq for ", bios)
-            #     # eval_res_bios = self.bios_pipeline(bios, dsf)
-            #     # continue
-            # else:
-            #     continue
-           
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios, dsf)
             print("got results for ", bios)
             self.viz_bios(eval_res_bios)
+            
+            to_del = [
+                "obs", "imp", "pred_quantile", 
+                "pred_std", "lower_60", "lower_80", 
+                "lower_95", "upper_60", "upper_80", "upper_95"]
 
             for f in eval_res_bios:
-                del f["obs"], f["imp"]
+                fkeys = list(f.keys())
+                for d in to_del:
+                    if d in fkeys:
+                        del f[d]
+
                 self.model_res.append(f)
 
         self.model_res = pd.DataFrame(self.model_res)
