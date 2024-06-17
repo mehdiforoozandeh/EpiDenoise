@@ -869,8 +869,8 @@ class VISUALS(object):
             error = np.abs(observed - pred_mean)
 
             # Calculate the percentiles for x-axis limits
-            x_90 = np.percentile(error, 90)
-            x_99 = np.percentile(error, 99)
+            x_90 = np.percentile(error, 99)
+            x_99 = np.percentile(error, 99.9)
 
             # Define the ranges for subsetting
             ranges = [(0, x_90), (0, x_99), (0, error.max())]
