@@ -851,40 +851,44 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
 
+
     def BIOS_error_std_hexbin(self, eval_res):
         save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         if not os.path.exists(save_path):
             os.mkdir(save_path)
         
-        # Define the size of the figure
-        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
-        
+        num_plots = len(eval_res) * 3  # Each evaluation will have 3 subplots
+        plt.figure(figsize=(15, len(eval_res) * 5))  # Adjust width for 3 columns
+
         for j in range(len(eval_res)):
             if "obs" not in eval_res[j]:
                 # skip rows without observed signal
                 continue
-            
-            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["imp"], eval_res[j]["pred_std"]
             pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
-
             error = np.abs(observed - pred_mean)
 
-            # Hexbin plot
-            hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
-            
-            # Add LOESS smoothing line
-            # lowess = sm.nonparametric.lowess(pred_std, error, frac=0.2)
-            # ax.plot(lowess[:, 0], lowess[:, 1], color='blue', label='LOESS fit', linewidth=2)
+            # Calculate the percentiles for x-axis limits
+            x_90 = np.percentile(error, 90)
+            x_99 = np.percentile(error, 99)
 
-            ax.set_xlabel('Absolute Error')
-            ax.set_ylabel('Predicted Std Dev')
-            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            for i, (x_min, x_max) in enumerate([(0, x_90), (x_90, x_99), (0, error.max())]):
+                ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
 
-            # Add color bar
-            cb = plt.colorbar(hb, ax=ax)
-            cb.set_label('Log10(Counts)')
+                # Hexbin plot
+                hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+                
+                # Set x-axis limits
+                ax.set_xlim(x_min, x_max)
+
+                ax.set_xlabel('Absolute Error')
+                ax.set_ylabel('Predicted Std Dev')
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc} (Range: {x_min:.2f}-{x_max:.2f})")
+
+                # Add color bar
+                cb = plt.colorbar(hb, ax=ax)
+                cb.set_label('Log10(Counts)')
         
         plt.tight_layout()
         plt.savefig(f"{save_path}/error_std_hexbin.png", dpi=150)
