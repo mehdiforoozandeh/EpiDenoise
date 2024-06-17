@@ -2556,8 +2556,8 @@ if __name__=="__main__":
     evres = e.bios_pipeline("ENCBS373AAA", 1)
     print("plotting error vs. std hexbin")
     try:
-        self.viz.BIOS_error_std_hexbin(eval_res)
-        self.viz.clear_pallete()
+        e.viz.BIOS_error_std_hexbin(eval_res)
+        e.viz.clear_pallete()
     except Exception as e:
         print(f"Failed to plot error vs. std hexbin: {e}")
     # e.viz_all()
