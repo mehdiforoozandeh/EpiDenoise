@@ -872,14 +872,19 @@ class VISUALS(object):
             x_90 = np.percentile(error, 90)
             x_99 = np.percentile(error, 99)
 
-            for i, (x_min, x_max) in enumerate([(0, x_90), (x_90, x_99), (0, error.max())]):
+            # Define the ranges for subsetting
+            ranges = [(0, x_90), (0, x_99), (0, error.max())]
+
+            for i, (x_min, x_max) in enumerate(ranges):
+                # Subset the data for the current range
+                mask = (error >= x_min) & (error <= x_max)
+                subset_error = error[mask]
+                subset_pred_std = pred_std[mask]
+                
                 ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
 
-                # Hexbin plot
-                hb = ax.hexbin(error, pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
-                
-                # Set x-axis limits
-                ax.set_xlim(x_min, x_max)
+                # Hexbin plot for the subset data
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
