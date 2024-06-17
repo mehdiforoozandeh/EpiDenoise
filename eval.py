@@ -2239,13 +2239,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    "lower_60" : lower_60,
-                    "lower_80" : lower_80,
-                    "lower_95" : lower_95,
+                    # "lower_60" : lower_60,
+                    # "lower_80" : lower_80,
+                    # "lower_95" : lower_95,
 
-                    "upper_60": upper_60,
-                    "upper_80": upper_80,
-                    "upper_95": upper_95
+                    # "upper_60": upper_60,
+                    # "upper_80": upper_80,
+                    # "upper_95": upper_95
                     }
                 results.append(metrics)
             
