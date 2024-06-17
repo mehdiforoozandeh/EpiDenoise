@@ -851,7 +851,6 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
 
-
     def BIOS_error_std_hexbin(self, eval_res):
         save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         if not os.path.exists(save_path):
@@ -2554,7 +2553,14 @@ if __name__=="__main__":
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30b", resolution=25, savedir="models/eval_30b/", mode="eval")
 
-    e.viz_all()
+    evres = e.bios_pipeline("ENCBS373AAA", 1)
+    print("plotting error vs. std hexbin")
+    try:
+        self.viz.BIOS_error_std_hexbin(eval_res)
+        self.viz.clear_pallete()
+    except Exception as e:
+        print(f"Failed to plot error vs. std hexbin: {e}")
+    # e.viz_all()
 
 
     exit()
