@@ -3733,7 +3733,7 @@ class PRE_TRAINER(object):
                 torch.cuda.empty_cache()
                 t0 = datetime.now()
 
-                batch_X, batch_Y, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
+                X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
 
                 if arch in ["a", "b"]:
 
