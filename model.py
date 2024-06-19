@@ -3716,6 +3716,9 @@ class PRE_TRAINER(object):
         logfile.write("\n".join(log_strs))
         logfile.close()
 
+        print(self.model.device)
+        exit()
+
         token_dict = {
             "missing_mask": -1, 
             "cloze_mask": -2,
@@ -3740,12 +3743,6 @@ class PRE_TRAINER(object):
                 t0 = datetime.now()
 
                 X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
-                # print(X_batch.shape)
-                # print(Y_batch.shape)
-                # print(mX_batch.shape)
-                # print(mY_batch.shape)
-                # print(avX_batch.shape)
-                # print(avY_batch.shape)
 
                 if arch in ["a", "b"]:
 
@@ -3767,13 +3764,6 @@ class PRE_TRAINER(object):
                 mY_batch = mY_batch.to(self.device)
                 avY_batch = avY_batch.to(self.device)
 
-                # print(X_batch.device)
-                # print(Y_batch.device)
-                # print(mX_batch.device)
-                # print(mY_batch.device)
-                # print(avX_batch.device)
-                # print(avY_batch.device)
-                # exit()
 
                 if arch in ["a", "b"]:
                     output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
