@@ -4918,7 +4918,7 @@ if __name__ == "__main__":
             "lr_halflife":1,
             "min_avail":5
         }
-        if sys.argv[2] == "synth"
+        if sys.argv[2] == "synth":
             train_epd30_synthdata(
                 hyper_parameters30a, arch="a")
 
@@ -4976,7 +4976,7 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
-        if sys.argv[2] == "synth"
+        if sys.argv[2] == "synth":
             train_epd30_synthdata(
                 hyper_parameters30b, arch="b")
 
@@ -5010,7 +5010,7 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
-        if sys.argv[2] == "synth"
+        if sys.argv[2] == "synth":
             train_epd30_synthdata(
                 hyper_parameters30cd, arch="c")
 
