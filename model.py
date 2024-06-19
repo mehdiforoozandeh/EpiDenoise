@@ -3734,155 +3734,154 @@ class PRE_TRAINER(object):
                 "ups_r2":[], "imp_r2":[],
                 "ups_mse":[], "imp_mse":[]}
 
-            for _ in range(inner_epochs):
-                self.optimizer.zero_grad()
-                torch.cuda.empty_cache()
-                t0 = datetime.now()
+            self.optimizer.zero_grad()
+            torch.cuda.empty_cache()
+            t0 = datetime.now()
 
-                X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
+            X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
 
-                if arch in ["a", "b"]:
+            if arch in ["a", "b"]:
 
-                    masked_map = (X_batch == token_dict["cloze_mask"])
-                    observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
-                    # missing_map = (X_batch == token_dict["missing_mask"])
-                    masked_map = masked_map.to(self.device) # imputation targets
-                    observed_map = observed_map.to(self.device) # upsampling targets
+                masked_map = (X_batch == token_dict["cloze_mask"])
+                observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
+                # missing_map = (X_batch == token_dict["missing_mask"])
+                masked_map = masked_map.to(self.device) # imputation targets
+                observed_map = observed_map.to(self.device) # upsampling targets
+            
+            elif arch in ["c", "d"]:
+                observed_map = (X_batch != token_dict["missing_mask"])
+                observed_map = observed_map.to(self.device) # upsampling targets
                 
-                elif arch in ["c", "d"]:
-                    observed_map = (X_batch != token_dict["missing_mask"])
-                    observed_map = observed_map.to(self.device) # upsampling targets
-                    
-                X_batch = X_batch.float().to(self.device)#.requires_grad_(True)
-                mX_batch = mX_batch.to(self.device)
-                avX_batch = avX_batch.to(self.device)
+            X_batch = X_batch.float().to(self.device)#.requires_grad_(True)
+            mX_batch = mX_batch.to(self.device)
+            avX_batch = avX_batch.to(self.device)
 
-                Y_batch = Y_batch.float().to(self.device)
-                mY_batch = mY_batch.to(self.device)
-                avY_batch = avY_batch.to(self.device)
+            Y_batch = Y_batch.float().to(self.device)
+            mY_batch = mY_batch.to(self.device)
+            avY_batch = avY_batch.to(self.device)
 
 
-                if arch in ["a", "b"]:
-                    output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
-                    pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
-                        output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
+            if arch in ["a", "b"]:
+                output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                    output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
-                    if torch.isnan(pred_loss).any():
-                        if len(batch_rec["imp_loss"]) > 0:
-                            pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
-                        else:
-                            pred_loss = torch.Tensor(1e5)
+                if torch.isnan(pred_loss).any():
+                    if len(batch_rec["imp_loss"]) > 0:
+                        pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                    else:
+                        pred_loss = torch.Tensor(1e5)
 
-                    if torch.isnan(obs_loss).any():
-                        if len(batch_rec["ups_loss"]) > 0:
-                            obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
-                        else:
-                            obs_loss = torch.Tensor(1e5)
+                if torch.isnan(obs_loss).any():
+                    if len(batch_rec["ups_loss"]) > 0:
+                        obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                    else:
+                        obs_loss = torch.Tensor(1e5)
 
-                    loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
 
-                elif arch in ["c", "d"]:
-                    output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
-                    obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
-                    loss = obs_loss
+            elif arch in ["c", "d"]:
+                output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
+                loss = obs_loss
 
-                if torch.isnan(loss).sum() > 0:
-                    skipmessage = "Encountered nan loss! Skipping batch..."
-                    log_strs.append(skipmessage)
-                    del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
-                    print(skipmessage)
-                    torch.cuda.empty_cache() 
-                    continue
-                
-                loss.backward()  
+            if torch.isnan(loss).sum() > 0:
+                skipmessage = "Encountered nan loss! Skipping batch..."
+                log_strs.append(skipmessage)
+                del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
+                print(skipmessage)
+                torch.cuda.empty_cache() 
+                continue
+            
+            loss.backward()  
 
-                if hook:
-                    # Initialize variables to store maximum gradient norms and corresponding layer names
-                    max_weight_grad_norm = 0
-                    max_weight_grad_layer = None
-                    max_bias_grad_norm = 0
-                    max_bias_grad_layer = None
+            if hook:
+                # Initialize variables to store maximum gradient norms and corresponding layer names
+                max_weight_grad_norm = 0
+                max_weight_grad_layer = None
+                max_bias_grad_norm = 0
+                max_bias_grad_layer = None
 
-                    # Check and update maximum gradient norms
-                    for name, module in self.model.named_modules():
-                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                            if module.weight.grad_norm > max_weight_grad_norm:
-                                max_weight_grad_norm = module.weight.grad_norm
-                                max_weight_grad_layer = name
+                # Check and update maximum gradient norms
+                for name, module in self.model.named_modules():
+                    if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                        if module.weight.grad_norm > max_weight_grad_norm:
+                            max_weight_grad_norm = module.weight.grad_norm
+                            max_weight_grad_layer = name
 
-                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                            if module.bias.grad_norm > max_bias_grad_norm:
-                                max_bias_grad_norm = module.bias.grad_norm
-                                max_bias_grad_layer = name
+                    if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                        if module.bias.grad_norm > max_bias_grad_norm:
+                            max_bias_grad_norm = module.bias.grad_norm
+                            max_bias_grad_layer = name
 
-                    if max_weight_grad_layer:
-                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
+                if max_weight_grad_layer:
+                    print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
-                self.optimizer.step()
+            self.optimizer.step()
 
-                if arch in ["a", "b"]:
-                    imp_pred = NegativeBinomial(
-                        output_p[masked_map].cpu().detach(), 
-                        output_n[masked_map].cpu().detach()
-                        ).expect().cpu().detach().numpy()
-
-                    imp_true = Y_batch[masked_map].cpu().detach().numpy()
-                    imp_r2 = r2_score(imp_true, imp_pred)
-                    imp_mse = ((imp_true - imp_pred)**2).mean()
-
-                    batch_rec["imp_loss"].append(pred_loss.item())
-                    batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
-                    batch_rec["imp_mse"].append(imp_mse)
-                    batch_rec["imp_r2"].append(imp_r2)
-
-                ups_pred = NegativeBinomial(
-                    output_p[observed_map].cpu().detach(), 
-                    output_n[observed_map].cpu().detach()
+            if arch in ["a", "b"]:
+                imp_pred = NegativeBinomial(
+                    output_p[masked_map].cpu().detach(), 
+                    output_n[masked_map].cpu().detach()
                     ).expect().cpu().detach().numpy()
 
-                ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                try:
-                    ups_r2 = r2_score(ups_true, ups_pred)
-                    ups_mse = ((ups_true - ups_pred)**2).mean()
-                except:
-                    ups_r2 = np.nan
-                    ups_mse = np.nan
+                imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                imp_r2 = r2_score(imp_true, imp_pred)
+                imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                batch_rec["imp_loss"].append(pred_loss.item())
+                batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                batch_rec["imp_mse"].append(imp_mse)
+                batch_rec["imp_r2"].append(imp_r2)
+
+            ups_pred = NegativeBinomial(
+                output_p[observed_map].cpu().detach(), 
+                output_n[observed_map].cpu().detach()
+                ).expect().cpu().detach().numpy()
+
+            ups_true = Y_batch[observed_map].cpu().detach().numpy()
+            try:
+                ups_r2 = r2_score(ups_true, ups_pred)
+                ups_mse = ((ups_true - ups_pred)**2).mean()
+            except:
+                ups_r2 = np.nan
+                ups_mse = np.nan
+        
+            batch_rec["ups_loss"].append(obs_loss.item())
+            batch_rec["ups_r2"].append(ups_r2)
+            batch_rec["ups_mse"].append(ups_mse)
+
+            elapsed_time = datetime.now() - t0
+            hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+            minutes, seconds = divmod(remainder, 60)
+
+            if arch in ["a", "b"]:
+                logstr = [
+                    f"Ep. {epoch}",
+                    f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                    f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                    f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                    f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                    f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                    f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                    f"took {int(minutes)}:{int(seconds)}"]
+
+            elif arch in ["c", "d"]:
+                logstr = [
+                    f"Ep. {epoch}",
+                    f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                    f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                    f"took {int(minutes)}:{int(seconds)}"]
             
-                batch_rec["ups_loss"].append(obs_loss.item())
-                batch_rec["ups_r2"].append(ups_r2)
-                batch_rec["ups_mse"].append(ups_mse)
-
-                elapsed_time = datetime.now() - t0
-                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                minutes, seconds = divmod(remainder, 60)
-
-                if arch in ["a", "b"]:
-                    logstr = [
-                        f"Ep. {epoch}",
-                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
-                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        f"took {int(minutes)}:{int(seconds)}"]
-
-                elif arch in ["c", "d"]:
-                    logstr = [
-                        f"Ep. {epoch}",
-                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        f"took {int(minutes)}:{int(seconds)}"]
+            logstr = " | ".join(logstr)
+            log_strs.append(logstr)
+            print(logstr)
                 
-                logstr = " | ".join(logstr)
-                log_strs.append(logstr)
-                print(logstr)
-                    
-                logfile = open(f"models/Synth_EPD30{arch}_log.txt", "w")
-                logfile.write("\n".join(log_strs))
-                logfile.close()
+            logfile = open(f"models/Synth_EPD30{arch}_log.txt", "w")
+            logfile.write("\n".join(log_strs))
+            logfile.close()
                 
         return self.model
 
