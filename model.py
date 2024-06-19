@@ -3759,11 +3759,13 @@ class PRE_TRAINER(object):
                     observed_map = (X_batch != token_dict["missing_mask"])
                     observed_map = observed_map.to(self.device) # upsampling targets
                     
-                X_batch = X_batch.float().to(self.device).requires_grad_(True)
+                X_batch = X_batch.float().to(self.device)#.requires_grad_(True)
                 mX_batch = mX_batch.to(self.device)
                 avX_batch = avX_batch.to(self.device)
+
+                Y_batch = Y_batch.float().to(self.device)
                 mY_batch = mY_batch.to(self.device)
-                Y_batch = Y_batch.to(self.device)
+                avY_batch = avY_batch.to(self.device)
 
                 print(X_batch.device)
                 print(Y_batch.device)
