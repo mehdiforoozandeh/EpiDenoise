@@ -1643,8 +1643,6 @@ class SyntheticData:
         md_batch_X, md_batch_Y = torch.Tensor(np.array(md_batch_X)).permute(0, 2, 1), torch.Tensor(np.array(md_batch_Y)).permute(0, 2, 1)
         av_batch_X, av_batch_Y = torch.Tensor(np.array(av_batch_X)).permute(1, 0), torch.Tensor(np.array(av_batch_Y)).permute(1, 0)
 
-        print(batch_X.shape, batch_Y.shape, md_batch_X.shape, md_batch_Y.shape, av_batch_X.shape, av_batch_Y.shape)
-        exit()
         
         return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
