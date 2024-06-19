@@ -3709,6 +3709,7 @@ class PRE_TRAINER(object):
     def pretrain_epd30_synth(self, 
         num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
 
+        num_epochs=100
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
@@ -4996,7 +4997,7 @@ if __name__ == "__main__":
             "nhead": 6,
             "d_model": (47+49)*(2**3),
             "nlayers": 3,
-            "epochs": 100,
+            "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 810,
