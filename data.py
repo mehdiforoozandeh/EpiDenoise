@@ -1630,6 +1630,9 @@ class SyntheticData:
             y_b, ymd_b, yav_b = self.miss(smoothed_sequences, syn_metadata, miss_p_b)
             x_b, xmd_b, xav_b = self.mask(y_b, ymd_b, yav_b, mask_p_b)
 
+            print(ymd_b == xmd_b)
+            exit()
+
             batch_X.append(x_b)
             batch_Y.append(y_b)
 
@@ -1643,7 +1646,6 @@ class SyntheticData:
         md_batch_X, md_batch_Y = torch.Tensor(np.array(md_batch_X)).permute(0, 2, 1), torch.Tensor(np.array(md_batch_Y)).permute(0, 2, 1)
         av_batch_X, av_batch_Y = torch.Tensor(np.array(av_batch_X)).permute(1, 0), torch.Tensor(np.array(av_batch_Y)).permute(1, 0)
 
-        
         return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
 
