@@ -3736,7 +3736,6 @@ class PRE_TRAINER(object):
                 batch_X, batch_Y, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
 
                 if arch in ["a", "b"]:
-                    X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
