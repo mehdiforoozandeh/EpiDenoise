@@ -3716,6 +3716,12 @@ class PRE_TRAINER(object):
         logfile.write("\n".join(log_strs))
         logfile.close()
 
+        token_dict = {
+            "missing_mask": -1, 
+            "cloze_mask": -2,
+            "pad": -3
+        }
+
         if hook:
             register_hooks(self.model)
         
