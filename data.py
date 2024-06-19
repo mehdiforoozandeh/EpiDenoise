@@ -1593,8 +1593,8 @@ class SyntheticData:
         avail = [1 for i in range(self.num_features)]
 
         for miss in to_miss:
-            sequences[:, miss] = -1
-            metadata[:, miss] = -1
+            sequences[miss, :] = -1
+            metadata[miss, :] = -1
             avail[miss] = 0
         
         return sequences, metadata, avail
@@ -1603,8 +1603,8 @@ class SyntheticData:
         to_mask = random.choices([x for x in range(self.num_features) if avail[x]==1], k=int(self.num_features*mask_percentage))
 
         for mask in to_mask:
-            sequences[:, mask] = -2
-            metadata[:, mask] = -2
+            sequences[mask, :] = -2
+            metadata[mask, :] = -2
             avail[mask] = -2
 
         return sequences, metadata, avail
@@ -1627,7 +1627,7 @@ class SyntheticData:
             miss_p_b = random.uniform(miss_perc_range[0], miss_perc_range[1])
             mask_p_b = random.uniform(mask_perc_range[0], mask_perc_range[1])
             
-            y_b, ymd_b, yav_b = self.miss(smoothed_sequences.T, syn_metadata.T, miss_p_b)
+            y_b, ymd_b, yav_b = self.miss(smoothed_sequences, syn_metadata, miss_p_b)
             x_b, xmd_b, xav_b = self.mask(y_b, ymd_b, yav_b, mask_p_b)
 
             batch_X.append(x_b)
@@ -1639,9 +1639,12 @@ class SyntheticData:
             av_batch_X.append(xav_b)
             av_batch_Y.append(yav_b)
         
-        batch_X, batch_Y = torch.Tensor(np.array(batch_X)), torch.Tensor(np.array(batch_Y))
-        md_batch_X, md_batch_Y = torch.Tensor(np.array(md_batch_X)), torch.Tensor(np.array(md_batch_Y))
-        av_batch_X, av_batch_Y = torch.Tensor(np.array(av_batch_X)), torch.Tensor(np.array(av_batch_Y))
+        batch_X, batch_Y = torch.Tensor(np.array(batch_X)).permute(0, 2, 1), torch.Tensor(np.array(batch_Y)).permute(0, 2, 1)
+        md_batch_X, md_batch_Y = torch.Tensor(np.array(md_batch_X)).permute(0, 2, 1), torch.Tensor(np.array(md_batch_Y)).permute(0, 2, 1)
+        av_batch_X, av_batch_Y = torch.Tensor(np.array(av_batch_X)).permute(1, 0), torch.Tensor(np.array(av_batch_Y)).permute(1, 0)
+
+        print(batch_X.shape, batch_Y.shape, md_batch_X.shape, md_batch_Y.shape, av_batch_X.shape, av_batch_Y.shape)
+        exit()
         
         return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
