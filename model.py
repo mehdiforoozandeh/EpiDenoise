@@ -4996,7 +4996,7 @@ if __name__ == "__main__":
             "nhead": 6,
             "d_model": (47+49)*(2**3),
             "nlayers": 3,
-            "epochs": 1,
+            "epochs": 100,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 810,
