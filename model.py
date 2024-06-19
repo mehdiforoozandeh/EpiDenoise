@@ -3719,9 +3719,7 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
         
-        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
-            self.dataset.new_epoch()
             next_epoch = False
             mask_percentage = (0.1 + 0.2)/2
 
@@ -3853,9 +3851,6 @@ class PRE_TRAINER(object):
                 if arch in ["a", "b"]:
                     logstr = [
                         f"Ep. {epoch}",
-                        f"DSF{dsf_X}->{dsf_Y}",
-                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
                         f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
@@ -3868,9 +3863,6 @@ class PRE_TRAINER(object):
                 elif arch in ["c", "d"]:
                     logstr = [
                         f"Ep. {epoch}",
-                        f"DSF{dsf_X}->{dsf_Y}",
-                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
                         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
