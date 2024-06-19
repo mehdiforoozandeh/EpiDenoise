@@ -1630,11 +1630,6 @@ class SyntheticData:
             y_b, ymd_b, yav_b = self.miss(smoothed_sequences, syn_metadata, miss_p_b)
             x_b, xmd_b, xav_b = self.mask(y_b.copy(), ymd_b.copy(), yav_b.copy(), mask_p_b)
 
-            print(y_b == x_b)
-            print(ymd_b == xmd_b)
-            print(yav_b == xav_b)
-            exit()
-
             batch_X.append(x_b)
             batch_Y.append(y_b)
 
