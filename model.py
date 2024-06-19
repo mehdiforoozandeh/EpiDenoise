@@ -3716,11 +3716,6 @@ class PRE_TRAINER(object):
         logfile.write("\n".join(log_strs))
         logfile.close()
 
-        # Check the device of the model
-        device_of_model = next(self.model.parameters()).device
-        print(f"Model is on device: {device_of_model}")
-        exit()
-
         token_dict = {
             "missing_mask": -1, 
             "cloze_mask": -2,
