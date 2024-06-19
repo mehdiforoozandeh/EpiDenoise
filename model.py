@@ -3883,8 +3883,6 @@ class PRE_TRAINER(object):
                 logfile = open(f"models/Synth_EPD30{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
                 logfile.close()
-
-                last_lopr = lopr
                 
         return self.model
 
