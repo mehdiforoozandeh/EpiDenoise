@@ -1616,7 +1616,7 @@ class SyntheticData:
         
         for b in range(batch_size):
             self.generate_base_sequence()
-            transformed_sequences = self..apply_transformations()
+            transformed_sequences = self.apply_transformations()
 
             smoothed_sequences = self.apply_smoothing(transformed_sequences)
             smoothed_sequences = np.array(smoothed_sequences)
