@@ -49,8 +49,6 @@ class MetadataEmbeddingModule(nn.Module):
         coverage = metadata[:, 1, :].unsqueeze(-1).float() 
         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
         runtype = metadata[:, 3, :].long() 
-
-        print(side, torch.unique(runtype))
         
         runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
         runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
@@ -88,6 +86,9 @@ class MetadataEmbeddingModule(nn.Module):
         Xmd_embed = self.embed_metadata(x_metadata, side="x")
         Ymd_embed = self.embed_metadata(y_metadata, side="y")
         av_embed = self.embed_avail(availability)
+
+        print(Xmd_embed.shape, Ymd_embed.shape, av_embed.shape)
+        exit()
 
         # Concatenate all embeddings along the last dimension
         full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
