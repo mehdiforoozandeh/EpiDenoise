@@ -4745,7 +4745,7 @@ def train_epd30_synthdata(hyper_parameters, arch="a"):
     elif arch == "d":
         pass
     
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
 
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
@@ -5046,7 +5046,7 @@ if __name__ == "__main__":
                 "mask_percentage": 0.1,
                 "context_length": 810,
                 "batch_size": 30,
-                "learning_rate": 1e-2,
+                "learning_rate": 1e-3,
                 "num_loci": 800,
                 "lr_halflife":2,
                 "min_avail":8
