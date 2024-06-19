@@ -1367,153 +1367,38 @@ class EpiDenoise30a(nn.Module):
 
         return p, n, mp, mo
 
-class EpiDenoise30b(nn.Module):
-    def __init__(self, 
-        input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
-        dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30b, self).__init__()
-        self.pos_enc = "abs"#pos_enc
-
-        conv_out_channels = exponential_linspace_int(
-            d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
-
-        stride = 1
-        dilation=1
-        self.context_length = context_length
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
-        self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-
-        self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.embedd_layer_norm = nn.LayerNorm(d_model)
-
-        self.conv0 = ConvTower(
-                input_dim + metadata_embedding_dim, conv_out_channels[0],
-                conv_kernel_size[0], stride, dilation, 
-                pool_type="max", residuals=True)
-
-        self.convtower = nn.ModuleList([ConvTower(
-                conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_size[i + 1], stride, dilation, 
-                pool_type="max", residuals=True
-            ) for i in range(n_cnn_layers - 1)])
-
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(
-                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-
-            self.decoder_layer = RelativeDecoderLayer(
-                hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
-        else:
-            self.position = PositionalEncoding(d_model, dropout, context_length)
-            # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
-            # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
-
-            self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-            self.decoder_layer = nn.TransformerDecoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-
-        self.transformer_encoder = nn.ModuleList(
-            [self.encoder_layer for _ in range(nlayers)])
-
-        self.transformer_decoder = nn.ModuleList(
-            [self.decoder_layer for _ in range(n_decoder_layers)])
-        
-        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-        self.mask_pred_layer = nn.Linear(d_model, output_dim)
-        self.mask_obs_layer = nn.Linear(d_model, output_dim)
-    
-    def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-
-        md_embedding = F.relu(md_embedding)
-        src = self.signal_layer_norm(src)
-
-        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-
-        ### CONV ENCODER ###
-
-        e_src = src.permute(0, 2, 1) # to N, F, L
-        e_src = self.conv0(e_src)
-        for conv in self.convtower:
-            e_src = conv(e_src)
-        e_src = e_src.permute(0, 2, 1)  # to N, L, F
-
-        ### TRANSFORMER ENCODER ###
-        if self.pos_enc != "relative":
-            # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
-            e_src = self.position(e_src)
-            # e_src = e_src + encpos
-
-        for enc in self.transformer_encoder:
-            e_src = enc(e_src)
-        
-        src = F.relu(self.embedd_layer_norm(self.lin(src)))
-
-        ### TRANSFORMER DECODER ###
-        if self.pos_enc != "relative":
-            # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
-            src = self.position(src)
-            # src = src + trgpos
-
-        for dec in self.transformer_decoder:
-            src = dec(src, e_src)
-
-        p, n = self.neg_binom_layer(src)
-        mp = torch.sigmoid(self.mask_pred_layer(src))
-        mo = torch.sigmoid(self.mask_obs_layer(src))
-
-        return p, n, mp, mo
-
 # class EpiDenoise30b(nn.Module):
 #     def __init__(self, 
 #         input_dim, metadata_embedding_dim, conv_kernel_size, 
-#         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
+#         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
 #         dropout=0.1, context_length=2000, pos_enc="relative"):
 #         super(EpiDenoise30b, self).__init__()
+#         self.pos_enc = "abs"#pos_enc
 
-#         self.pos_enc = "abs" #pos_enc
-#         self.l1 = context_length
-#         self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-#         self.f1 = input_dim + metadata_embedding_dim
-#         self.f2 = self.f1 * (2**(n_cnn_layers))
-#         assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
+#         conv_out_channels = exponential_linspace_int(
+#             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
 
-#         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+#         stride = 1
+#         dilation=1
+#         self.context_length = context_length
 #         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
 #         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+#         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
 #         self.signal_layer_norm = nn.LayerNorm(input_dim)
-#         # self.fusion = nn.Linear(self.f1, self.f1)
-        
-#         self.convDec = ConvTower(self.f1, self.f2,
-#                 W=1, S=1, D=1, 
-#                 pool_type="none", residuals=False, 
-#                 groups=self.f1)
+#         self.embedd_layer_norm = nn.LayerNorm(d_model)
 
-#         self.convEnc = nn.ModuleList(
-#             [ConvTower(
-#                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
-#                 conv_kernel_size[i], S=1, D=1,
-#                 pool_type="max", residuals=True,
-#                 groups=conv_channels[i],
-#                 pool_size=pool_size) for i in range(n_cnn_layers)])
+#         self.conv0 = ConvTower(
+#                 input_dim + metadata_embedding_dim, conv_out_channels[0],
+#                 conv_kernel_size[0], stride, dilation, 
+#                 pool_type="max", residuals=True)
 
-#         self.fusionEnc = nn.Sequential(
-#             nn.Linear(self.f2, self.f2),
-#             nn.LayerNorm(self.f2),
-#             nn.ReLU()
-#         )
-#         self.fusionDec = nn.Sequential(
-#             nn.Linear(self.f2, self.f2),
-#             nn.LayerNorm(self.f2),
-#             nn.ReLU()
-#         )
+#         self.convtower = nn.ModuleList([ConvTower(
+#                 conv_out_channels[i], conv_out_channels[i + 1],
+#                 conv_kernel_size[i + 1], stride, dilation, 
+#                 pool_type="max", residuals=True
+#             ) for i in range(n_cnn_layers - 1)])
 
 #         if self.pos_enc == "relative":
 #             self.encoder_layer = RelativeEncoderLayer(
@@ -1522,14 +1407,14 @@ class EpiDenoise30b(nn.Module):
 #             self.decoder_layer = RelativeDecoderLayer(
 #                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
 #         else:
-#             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-#             self.posDec = PositionalEncoding(d_model, dropout, self.l1)
+#             self.position = PositionalEncoding(d_model, dropout, context_length)
+#             # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
+#             # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
 
 #             self.encoder_layer = nn.TransformerEncoderLayer(
-#                 d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
-
+#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 #             self.decoder_layer = nn.TransformerDecoderLayer(
-#                 d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
 #         self.transformer_encoder = nn.ModuleList(
 #             [self.encoder_layer for _ in range(nlayers)])
@@ -1537,57 +1422,172 @@ class EpiDenoise30b(nn.Module):
 #         self.transformer_decoder = nn.ModuleList(
 #             [self.decoder_layer for _ in range(n_decoder_layers)])
         
-#         self.f3 = d_model + metadata_embedding_dim
-#         self.neg_binom_layer = NegativeBinomialLayer(self.f3, output_dim)
-#         self.mask_pred_layer = nn.Linear(self.f3, output_dim)
-#         self.mask_obs_layer = nn.Linear(self.f3, output_dim)
+#         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+#         self.mask_pred_layer = nn.Linear(d_model, output_dim)
+#         self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
 #     def forward(self, src, x_metadata, y_metadata, availability):
 #         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
+#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
 #         md_embedding = F.relu(md_embedding)
 #         src = self.signal_layer_norm(src)
 
-#         src = torch.cat([src, md_embedding], dim=-1)
-#         # src = F.relu(self.fusion(src)) # N, L, F
+#         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
 
 #         ### CONV ENCODER ###
-#         e_src = src.permute(0, 2, 1) # to N, F1, L
-#         for conv in self.convEnc:
-#             e_src = conv(e_src)
-#         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
 
-#         e_src = self.fusionEnc(e_src)
+#         e_src = src.permute(0, 2, 1) # to N, F, L
+#         e_src = self.conv0(e_src)
+#         for conv in self.convtower:
+#             e_src = conv(e_src)
+#         e_src = e_src.permute(0, 2, 1)  # to N, L, F
+
 #         ### TRANSFORMER ENCODER ###
 #         if self.pos_enc != "relative":
-#             e_src = self.posEnc(e_src)
+#             # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
+#             e_src = self.position(e_src)
+#             # e_src = e_src + encpos
 
 #         for enc in self.transformer_encoder:
 #             e_src = enc(e_src)
+        
+#         src = F.relu(self.embedd_layer_norm(self.lin(src)))
 
-#         ### Conv DECODER ###
-#         src = src.permute(0, 2, 1) # to N, F1, L
-#         src = self.convDec(src)
-#         src = src.permute(0, 2, 1) # to N, L, F2
-
-#         src = self.fusionDec(src)
 #         ### TRANSFORMER DECODER ###
 #         if self.pos_enc != "relative":
-#             src = self.posDec(src)
+#             # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
+#             src = self.position(src)
+#             # src = src + trgpos
 
 #         for dec in self.transformer_decoder:
 #             src = dec(src, e_src)
-#         # src.shape = N, L, F2
-
-#         src = torch.cat([src, md_embedding], dim=-1) 
-#         # src.shape = N, L, F3
 
 #         p, n = self.neg_binom_layer(src)
 #         mp = torch.sigmoid(self.mask_pred_layer(src))
 #         mo = torch.sigmoid(self.mask_obs_layer(src))
 
 #         return p, n, mp, mo
+
+class EpiDenoise30b(nn.Module):
+    def __init__(self, 
+        input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
+        dropout=0.1, context_length=2000, pos_enc="relative"):
+        super(EpiDenoise30b, self).__init__()
+
+        self.pos_enc = "abs" #pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = input_dim + metadata_embedding_dim
+        self.f2 = self.f1 * (2**(n_cnn_layers))
+        assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
+
+        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
+        # self.fusion = nn.Linear(self.f1, self.f1)
+        
+        self.convDec = ConvTower(self.f1, self.f2,
+                W=1, S=1, D=1, 
+                pool_type="none", residuals=False, 
+                groups=self.f1)
+
+        self.convEnc = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=conv_channels[i],
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.fusionEnc = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
+        self.fusionDec = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
+
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+
+            self.decoder_layer = RelativeDecoderLayer(
+                hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.posDec = PositionalEncoding(d_model, dropout, self.l1)
+
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+
+            self.decoder_layer = nn.TransformerDecoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
+
+        self.transformer_decoder = nn.ModuleList(
+            [self.decoder_layer for _ in range(n_decoder_layers)])
+        
+        self.f3 = d_model + metadata_embedding_dim
+        self.neg_binom_layer = NegativeBinomialLayer(self.f3, output_dim)
+        self.mask_pred_layer = nn.Linear(self.f3, output_dim)
+        self.mask_obs_layer = nn.Linear(self.f3, output_dim)
+    
+    def forward(self, src, x_metadata, y_metadata, availability):
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
+
+        md_embedding = F.relu(md_embedding)
+        src = self.signal_layer_norm(src)
+
+        src = torch.cat([src, md_embedding], dim=-1)
+        # src = F.relu(self.fusion(src)) # N, L, F
+
+        ### CONV ENCODER ###
+        e_src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            e_src = conv(e_src)
+        e_src = e_src.permute(0, 2, 1)  # to N, L', F2
+
+        e_src = self.fusionEnc(e_src)
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            e_src = self.posEnc(e_src)
+
+        for enc in self.transformer_encoder:
+            e_src = enc(e_src)
+
+        ### Conv DECODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        src = self.convDec(src)
+        src = src.permute(0, 2, 1) # to N, L, F2
+
+        src = self.fusionDec(src)
+        ### TRANSFORMER DECODER ###
+        if self.pos_enc != "relative":
+            src = self.posDec(src)
+
+        for dec in self.transformer_decoder:
+            src = dec(src, e_src)
+        # src.shape = N, L, F2
+
+        src = torch.cat([src, md_embedding], dim=-1) 
+        # src.shape = N, L, F3
+
+        p, n = self.neg_binom_layer(src)
+        mp = torch.sigmoid(self.mask_pred_layer(src))
+        mo = torch.sigmoid(self.mask_obs_layer(src))
+
+        return p, n, mp, mo
 
 ### testing matrix factorization
 class EpiDenoise30c(nn.Module):
@@ -3706,6 +3706,188 @@ class PRE_TRAINER(object):
                 
         return self.model
 
+    def pretrain_epd30_synth(self, 
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
+
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
+        logfile = open(f"models/Synth_EPD30{arch}_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        if hook:
+            register_hooks(self.model)
+        
+        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
+        for epoch in range(num_epochs):
+            self.dataset.new_epoch()
+            next_epoch = False
+            mask_percentage = (0.1 + 0.2)/2
+
+            batch_rec = {
+                "imp_loss":[], "ups_loss":[], "msk_loss":[],
+                "ups_r2":[], "imp_r2":[],
+                "ups_mse":[], "imp_mse":[]}
+
+            for _ in range(inner_epochs):
+                self.optimizer.zero_grad()
+                torch.cuda.empty_cache()
+                t0 = datetime.now()
+
+                batch_X, batch_Y, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2))
+
+                if arch in ["a", "b"]:
+                    X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+
+                    masked_map = (X_batch == token_dict["cloze_mask"])
+                    observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
+                    missing_map = (X_batch == token_dict["missing_mask"])
+                    masked_map = masked_map.to(self.device) # imputation targets
+                    observed_map = observed_map.to(self.device) # upsampling targets
+                
+                elif arch in ["c", "d"]:
+                    observed_map = (X_batch != token_dict["missing_mask"])
+                    observed_map = observed_map.to(self.device) # upsampling targets
+                    
+                X_batch = X_batch.float().to(self.device).requires_grad_(True)
+                mX_batch = mX_batch.to(self.device)
+                avX_batch = avX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                Y_batch = Y_batch.to(self.device)
+
+                if arch in ["a", "b"]:
+                    output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                    pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                        output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
+
+                    if torch.isnan(pred_loss).any():
+                        if len(batch_rec["imp_loss"]) > 0:
+                            pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                        else:
+                            pred_loss = torch.Tensor(1e5)
+
+                    if torch.isnan(obs_loss).any():
+                        if len(batch_rec["ups_loss"]) > 0:
+                            obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                        else:
+                            obs_loss = torch.Tensor(1e5)
+
+                    loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+
+                elif arch in ["c", "d"]:
+                    output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                    obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
+                    loss = obs_loss
+
+                if torch.isnan(loss).sum() > 0:
+                    skipmessage = "Encountered nan loss! Skipping batch..."
+                    log_strs.append(skipmessage)
+                    del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
+                    print(skipmessage)
+                    torch.cuda.empty_cache() 
+                    continue
+                
+                loss.backward()  
+
+                if hook:
+                    # Initialize variables to store maximum gradient norms and corresponding layer names
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
+
+                    # Check and update maximum gradient norms
+                    for name, module in self.model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
+
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
+
+                    if max_weight_grad_layer:
+                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
+
+                self.optimizer.step()
+
+                if arch in ["a", "b"]:
+                    imp_pred = NegativeBinomial(
+                        output_p[masked_map].cpu().detach(), 
+                        output_n[masked_map].cpu().detach()
+                        ).expect().cpu().detach().numpy()
+
+                    imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                    imp_r2 = r2_score(imp_true, imp_pred)
+                    imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                    batch_rec["imp_loss"].append(pred_loss.item())
+                    batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                    batch_rec["imp_mse"].append(imp_mse)
+                    batch_rec["imp_r2"].append(imp_r2)
+
+                ups_pred = NegativeBinomial(
+                    output_p[observed_map].cpu().detach(), 
+                    output_n[observed_map].cpu().detach()
+                    ).expect().cpu().detach().numpy()
+
+                ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                try:
+                    ups_r2 = r2_score(ups_true, ups_pred)
+                    ups_mse = ((ups_true - ups_pred)**2).mean()
+                except:
+                    ups_r2 = np.nan
+                    ups_mse = np.nan
+            
+                batch_rec["ups_loss"].append(obs_loss.item())
+                batch_rec["ups_r2"].append(ups_r2)
+                batch_rec["ups_mse"].append(ups_mse)
+
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+
+                if arch in ["a", "b"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
+
+                elif arch in ["c", "d"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
+                
+                logstr = " | ".join(logstr)
+                log_strs.append(logstr)
+                print(logstr)
+                    
+                logfile = open(f"models/Synth_EPD30{arch}_log.txt", "w")
+                logfile.write("\n".join(log_strs))
+                logfile.close()
+
+                last_lopr = lopr
+                
+        return self.model
+
 #========================================================================================================#
 #==========================================  Loader  ====================================================#
 #========================================================================================================#
@@ -4518,6 +4700,98 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     return model
 
+def train_epd30_synthdata(hyper_parameters, arch="a"):
+    # Defining the hyperparameters
+    data_path = hyper_parameters["data_path"]
+    input_dim = output_dim = hyper_parameters["input_dim"]
+    dropout = hyper_parameters["dropout"]
+    nhead = hyper_parameters["nhead"]
+    d_model = hyper_parameters["d_model"]
+    nlayers = hyper_parameters["nlayers"]
+    metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
+    
+    resolution = 25
+    epochs = hyper_parameters["epochs"]
+    num_training_loci = hyper_parameters["num_loci"]
+    mask_percentage = hyper_parameters["mask_percentage"]
+    context_length = hyper_parameters["context_length"]
+    batch_size = hyper_parameters["batch_size"]
+    learning_rate = hyper_parameters["learning_rate"]
+    lr_halflife = hyper_parameters["lr_halflife"]
+    min_avail = hyper_parameters["min_avail"]
+    inner_epochs = hyper_parameters["inner_epochs"]
+
+    # end of hyperparameters
+    if arch == "a":
+        model = EpiDenoise30a(input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
+            dropout=dropout, context_length=context_length, pos_enc="relative")
+            
+    elif arch == "b":
+        n_cnn_layers = hyper_parameters["n_cnn_layers"]
+        conv_kernel_size = hyper_parameters["conv_kernel_size"]
+        n_decoder_layers = hyper_parameters["n_decoder_layers"]
+
+        model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+        dropout=dropout, context_length=context_length, pos_enc="relative")
+
+    elif arch == "c":
+        n_cnn_layers = hyper_parameters["n_cnn_layers"]
+        conv_kernel_size = hyper_parameters["conv_kernel_size"]
+        pool_size = hyper_parameters["pool_size"]
+
+        model = EpiDenoise30c(input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size, 
+        dropout=dropout, context_length=context_length)
+
+    elif arch == "d":
+        pass
+    
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
+    scheduler = None
+
+    print(f"EPD30{arch} # model_parameters: {count_parameters(model)}")
+
+    print(f"initializing data synthesis...")
+    dataset = SyntheticData(n=0.1485, p=0.0203, num_features=input_dim, sequence_length=context_length)
+
+    if arch in ["a", "b"]:
+        criterion = ComboLoss_NBNLL_msk()
+    elif arch in ["c", "d"]:
+        criterion = MatrixFactor_NBLL()
+
+    start_time = time.time()
+
+    trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
+    model = trainer.pretrain_epd30_synth(
+        num_epochs=epochs, mask_percentage=mask_percentage, 
+        context_length=context_length, batch_size=batch_size, 
+        inner_epochs=inner_epochs, arch=arch)
+
+    end_time = time.time()
+    print(f"took {end_time - start_time}")
+
+    # # Save the trained model
+    # model_dir = "models/"
+    # os.makedirs(model_dir, exist_ok=True)
+    # torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+
+    # # Write a description text file
+    # description = {
+    #     "hyper_parameters": hyper_parameters,
+    #     "model_architecture": str(model),
+    #     "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    #     "number_of_model_parameters": count_parameters(model),
+    #     "training_duration": int(end_time - start_time)
+    # }
+    # with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+    #     f.write(json.dumps(description, indent=4))
+
+    # return model
+
+
 #========================================================================================================#
 #================================================Main====================================================#
 #========================================================================================================#
@@ -4644,10 +4918,15 @@ if __name__ == "__main__":
             "lr_halflife":1,
             "min_avail":5
         }
-        train_epidenoise30(
-            hyper_parameters30a, 
-            checkpoint_path="models/EpiDenoise30a_20240525184756_params2182872.pt", 
-            arch="a")
+        if sys.argv[2] == "synth"
+            train_epd30_synthdata(
+                hyper_parameters30a, arch="a")
+
+        else:
+            train_epidenoise30(
+                hyper_parameters30a, 
+                checkpoint_path=None, 
+                arch="a")
     
     elif sys.argv[1] == "epd30b":
         # hyper_parameters30b = {
@@ -4697,10 +4976,15 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
-        train_epidenoise30(
-            hyper_parameters30b, 
-            checkpoint_path="models/EpiDenoise30b_20240605194137_params13507449.pt", 
-            arch="b")
+        if sys.argv[2] == "synth"
+            train_epd30_synthdata(
+                hyper_parameters30b, arch="b")
+
+        else:
+            train_epidenoise30(
+                hyper_parameters30b, 
+                checkpoint_path=None, 
+                arch="b")
 
     elif sys.argv[1] == "epd30c":
         hyper_parameters30cd = {
@@ -4726,8 +5010,12 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
+        if sys.argv[2] == "synth"
+            train_epd30_synthdata(
+                hyper_parameters30cd, arch="c")
 
-        train_epidenoise30(
-            hyper_parameters30cd, 
-            checkpoint_path="models/EpiDenoise30c_20240605205217_params15426427.pt", 
-            arch="c")
+        else:
+            train_epidenoise30(
+                hyper_parameters30cd, 
+                checkpoint_path=None, 
+                arch="c")

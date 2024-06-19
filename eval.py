@@ -2108,14 +2108,14 @@ class EVAL_EED(object):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        # imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
-        # ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
+        imp_lower_60, imp_upper_60 = imp_dist.interval(confidence=0.6)
+        ups_lower_60, ups_upper_60 = ups_dist.interval(confidence=0.6)
 
-        # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
-        # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
+        ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
 
-        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
         results = []
         # for j in availability:  # for each feature i.e. assay
@@ -2129,13 +2129,13 @@ class EVAL_EED(object):
                     if comparison == "imputed":
                         pred = imp_mean[:, j].numpy()
                         pred_std = imp_std[:, j].numpy()
-                        # lower_60 = imp_lower_60[:, j].numpy()
-                        # lower_80 = imp_lower_80[:, j].numpy()
-                        # lower_95 = imp_lower_95[:, j].numpy()
+                        lower_60 = imp_lower_60[:, j].numpy()
+                        lower_80 = imp_lower_80[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
 
-                        # upper_60 = imp_upper_60[:, j].numpy()
-                        # upper_80 = imp_upper_80[:, j].numpy()
-                        # upper_95 = imp_upper_95[:, j].numpy()
+                        upper_60 = imp_upper_60[:, j].numpy()
+                        upper_80 = imp_upper_80[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
@@ -2143,13 +2143,13 @@ class EVAL_EED(object):
                     elif comparison == "upsampled":
                         pred = ups_mean[:, j].numpy()
                         pred_std = ups_std[:, j].numpy()
-                        # lower_60 = ups_lower_60[:, j].numpy()
-                        # lower_80 = ups_lower_80[:, j].numpy()
-                        # lower_95 = ups_lower_95[:, j].numpy()
+                        lower_60 = ups_lower_60[:, j].numpy()
+                        lower_80 = ups_lower_80[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
 
-                        # upper_60 = ups_upper_60[:, j].numpy()
-                        # upper_80 = ups_upper_80[:, j].numpy()
-                        # upper_95 = ups_upper_95[:, j].numpy()
+                        upper_60 = ups_upper_60[:, j].numpy()
+                        upper_80 = ups_upper_80[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
 
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
@@ -2166,13 +2166,13 @@ class EVAL_EED(object):
                         "pred_quantile":quantile,
                         "pred_std":pred_std,
 
-                        # "lower_60" : lower_60,
-                        # "lower_80" : lower_80,
-                        # "lower_95" : lower_95,
+                        "lower_60" : lower_60,
+                        "lower_80" : lower_80,
+                        "lower_95" : lower_95,
 
-                        # "upper_60": upper_60,
-                        # "upper_80": upper_80,
-                        # "upper_95": upper_95,
+                        "upper_60": upper_60,
+                        "upper_80": upper_80,
+                        "upper_95": upper_95,
 
                         "p0_bg":p0bgdf["p0_bg"],
                         "p0_fg":p0bgdf["p0_fg"],
@@ -2228,13 +2228,13 @@ class EVAL_EED(object):
             else:
                 # continue
                 pred = ups_mean[:, j].numpy()
-                # lower_60 = ups_lower_60[:, j].numpy()
-                # lower_80 = ups_lower_80[:, j].numpy()
-                # lower_95 = ups_lower_95[:, j].numpy()
+                lower_60 = ups_lower_60[:, j].numpy()
+                lower_80 = ups_lower_80[:, j].numpy()
+                lower_95 = ups_lower_95[:, j].numpy()
 
-                # upper_60 = ups_upper_60[:, j].numpy()
-                # upper_80 = ups_upper_80[:, j].numpy()
-                # upper_95 = ups_upper_95[:, j].numpy()
+                upper_60 = ups_upper_60[:, j].numpy()
+                upper_80 = ups_upper_80[:, j].numpy()
+                upper_95 = ups_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -2244,13 +2244,13 @@ class EVAL_EED(object):
 
                     "imp":pred,
 
-                    # "lower_60" : lower_60,
-                    # "lower_80" : lower_80,
-                    # "lower_95" : lower_95,
+                    "lower_60" : lower_60,
+                    "lower_80" : lower_80,
+                    "lower_95" : lower_95,
 
-                    # "upper_60": upper_60,
-                    # "upper_80": upper_80,
-                    # "upper_95": upper_95
+                    "upper_60": upper_60,
+                    "upper_80": upper_80,
+                    "upper_95": upper_95
                     }
                 results.append(metrics)
             

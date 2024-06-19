@@ -1542,3 +1542,35 @@ def check_poisson_vs_nbinom(data, assay_name):
     plt.ylabel('Frequency')
     plt.title('Fit Comparison')
     plt.savefig(f"models/evals/examples/{assay_name}", dpi=150)
+
+
+
+import numpy as np
+import scipy.stats as stats
+from scipy.optimize import minimize
+
+def fit_negative_binomial(data):
+    # Estimate the parameters of the negative binomial distribution
+    def negative_binomial_log_likelihood(params):
+        n, p = params
+        return -np.sum(stats.nbinom.logpmf(data, n, p))
+    # Initial guess for n and p
+    mean = np.mean(data)
+    var = np.var(data)
+    p_initial = mean / var
+    n_initial = mean * p_initial / (1 - p_initial)
+    # Bounds and constraints for parameters
+    bounds = [(1e-5, None), (1e-5, 1-1e-5)]  # n > 0, 0 < p < 1
+    # Minimize the negative log-likelihood
+    result = minimize(negative_binomial_log_likelihood, [n_initial, p_initial], bounds=bounds, method='L-BFGS-B')
+    n, p = result.x
+    return n, p
+
+def load_and_fit_nb(file_path):
+    # Load the array from the npz file
+    data = np.load(file_path)['arr_0']
+    # Ensure data is integer
+    data = np.round(data).astype(int)
+    # Fit negative binomial distribution
+    n, p = fit_negative_binomial(data)
+    return n, p
