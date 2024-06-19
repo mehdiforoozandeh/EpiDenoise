@@ -1628,9 +1628,11 @@ class SyntheticData:
             mask_p_b = random.uniform(mask_perc_range[0], mask_perc_range[1])
             
             y_b, ymd_b, yav_b = self.miss(smoothed_sequences, syn_metadata, miss_p_b)
-            x_b, xmd_b, xav_b = self.mask(y_b, ymd_b, yav_b, mask_p_b)
+            x_b, xmd_b, xav_b = self.mask(y_b.clone(), ymd_b.clone(), yav_b.clone(), mask_p_b)
 
+            print(y_b == x_b)
             print(ymd_b == xmd_b)
+            print(yav_b == xav_b)
             exit()
 
             batch_X.append(x_b)
