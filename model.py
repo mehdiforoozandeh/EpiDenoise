@@ -87,9 +87,6 @@ class MetadataEmbeddingModule(nn.Module):
         Ymd_embed = self.embed_metadata(y_metadata, side="y")
         av_embed = self.embed_avail(availability)
 
-        print(Xmd_embed.shape, Ymd_embed.shape, av_embed.shape)
-        exit()
-
         # Concatenate all embeddings along the last dimension
         full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
 
