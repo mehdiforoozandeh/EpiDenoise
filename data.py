@@ -1628,7 +1628,7 @@ class SyntheticData:
             mask_p_b = random.uniform(mask_perc_range[0], mask_perc_range[1])
             
             y_b, ymd_b, yav_b = self.miss(smoothed_sequences.T, syn_metadata.T, miss_p_b)
-            x_b, xmd_b, xav_b = self.mask(smoothed_sequences.T, syn_metadata.T, yav_b, mask_p_b)
+            x_b, xmd_b, xav_b = self.mask(y_b, ymd_b, yav_b, mask_p_b)
 
             batch_X.append(x_b)
             batch_Y.append(y_b)
