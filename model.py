@@ -4923,7 +4923,7 @@ if __name__ == "__main__":
                 "nhead": 4,
                 "d_model": 384,
                 "nlayers": 6,
-                "epochs": 1,
+                "epochs": 200,
                 "inner_epochs": 100,
                 "mask_percentage": 0.1,
                 "context_length": 400,
