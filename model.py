@@ -53,9 +53,6 @@ class MetadataEmbeddingModule(nn.Module):
         runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
         runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
 
-        print(runtype.device)
-        exit()
-
         if side == "x":
             depth_embed = self.xdepth_transform(depth)
             coverage_embed = self.xcoverage_transform(coverage)
