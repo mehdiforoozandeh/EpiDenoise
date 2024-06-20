@@ -1567,7 +1567,7 @@ class SyntheticData:
 
         return transformed_sequences
 
-    def smooth_sequence(self, sequence, sigma=5):
+    def smooth_sequence(self, sequence, sigma=10):
         return gaussian_filter1d(sequence, sigma=sigma)
 
     def apply_smoothing(self, sequences):
