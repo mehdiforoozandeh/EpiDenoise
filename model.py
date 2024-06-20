@@ -3731,7 +3731,8 @@ class PRE_TRAINER(object):
             batch_rec = {
                 "imp_loss":[], "ups_loss":[], "msk_loss":[],
                 "ups_r2":[], "imp_r2":[],
-                "ups_mse":[], "imp_mse":[]}
+                "ups_mse":[], "imp_mse":[],
+                "ups_pmf":[], "imp_pmf":[],}
 
             self.optimizer.zero_grad()
             torch.cuda.empty_cache()
