@@ -850,20 +850,24 @@ class ComboLoss_NBNLL_msk(nn.Module):
         super(ComboLoss_NBNLL_msk, self).__init__()
         self.reduction = 'sum'
         self.bce_loss = nn.BCELoss(reduction='sum')
+        self.mse_loss = nn.MSELoss(reduction='sum')
 
     def forward(self, p_pred, n_pred, pred_mask, obs_mask, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
-        imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        upsampling_loss = self.mse_loss(ups_n_pred, ups_y_true)
+        imputation_loss = self.mse_loss(imp_n_pred, imp_y_true)
 
-        if self.reduction == "mean":
-            upsampling_loss = upsampling_loss.mean()
-            imputation_loss = imputation_loss.mean()
-        else:
-            upsampling_loss = upsampling_loss.sum()
-            imputation_loss = imputation_loss.sum()
+        # upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        # imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+
+        # if self.reduction == "mean":
+        #     upsampling_loss = upsampling_loss.mean()
+        #     imputation_loss = imputation_loss.mean()
+        # else:
+        #     upsampling_loss = upsampling_loss.sum()
+        #     imputation_loss = imputation_loss.sum()
 
         bce_mask_prd_loss = self.bce_loss(pred_mask, masked_map.float())
         bce_mask_obs_loss = self.bce_loss(obs_mask, obs_map.float())
@@ -4988,7 +4992,7 @@ if __name__ == "__main__":
                 "mask_percentage": 0.1,
                 "context_length": 1620,
                 "batch_size": 25,
-                "learning_rate": 1e-5,
+                "learning_rate": 1e-3,
                 "num_loci": 800,
                 "lr_halflife":2,
                 "min_avail":8
