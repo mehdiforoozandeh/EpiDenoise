@@ -1,9 +1,9 @@
 import torch, math, random, time, json, os, pickle, sys
-from scipy.stats import spearmanr
 from torch import nn
 import torch.optim as optim
 from data import ENCODE_IMPUTATION_DATASET, ExtendedEncodeDataHandler, SyntheticData
 import torch.nn.functional as F
+from scipy.stats import spearmanr, pearsonr
 import pandas as pd
 import numpy as np
 from _utils import *
@@ -3732,7 +3732,8 @@ class PRE_TRAINER(object):
                 "imp_loss":[], "ups_loss":[], "msk_loss":[],
                 "ups_r2":[], "imp_r2":[],
                 "ups_mse":[], "imp_mse":[],
-                "ups_pmf":[], "imp_pmf":[],}
+                "ups_pmf":[], "imp_pmf":[],
+                "ups_conf":[], "imp_conf":[],}
 
             self.optimizer.zero_grad()
             torch.cuda.empty_cache()
@@ -3760,7 +3761,6 @@ class PRE_TRAINER(object):
             Y_batch = Y_batch.float().to(self.device)
             mY_batch = mY_batch.to(self.device)
             avY_batch = avY_batch.to(self.device)
-
 
             if arch in ["a", "b"]:
                 output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
@@ -3826,6 +3826,8 @@ class PRE_TRAINER(object):
                     output_n[masked_map].cpu().detach()
                     ).expect().cpu().detach().numpy()
 
+                
+
                 imp_true = Y_batch[masked_map].cpu().detach().numpy()
                 imp_r2 = r2_score(imp_true, imp_pred)
                 imp_pmf = NegativeBinomial(
@@ -3833,11 +3835,19 @@ class PRE_TRAINER(object):
                     output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                 imp_mse = ((imp_true - imp_pred)**2).mean()
 
+                imp_std = NegativeBinomial(
+                    output_p[masked_map].cpu().detach(), 
+                    output_n[masked_map].cpu().detach()
+                    ).std().cpu().detach().numpy()
+                imp_abs_error = torch.abs(imp_true - imp_pred).cpu().detach().numpy()
+                imp_errstd = spearmanr(imp_std, imp_abs_error)
+
                 batch_rec["imp_loss"].append(pred_loss.item())
                 batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                 batch_rec["imp_mse"].append(imp_mse)
                 batch_rec["imp_r2"].append(imp_r2)
                 batch_rec["imp_pmf"].append(imp_pmf)
+                batch_rec["imp_conf"].append(imp_errstd)
 
             ups_pred = NegativeBinomial(
                 output_p[observed_map].cpu().detach(), 
@@ -3848,6 +3858,13 @@ class PRE_TRAINER(object):
             ups_pmf = NegativeBinomial(
                 output_p[observed_map].cpu().detach(), 
                 output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+
+            ups_std = NegativeBinomial(
+                    output_p[masked_map].cpu().detach(), 
+                    output_n[masked_map].cpu().detach()
+                    ).std().cpu().detach().numpy()
+            ups_abs_error = torch.abs(ups_true - ups_pred).cpu().detach().numpy()
+            ups_errstd = spearmanr(ups_std, ups_abs_error)
 
             try:
                 ups_r2 = r2_score(ups_true, ups_pred)
@@ -3860,6 +3877,7 @@ class PRE_TRAINER(object):
             batch_rec["ups_r2"].append(ups_r2)
             batch_rec["ups_mse"].append(ups_mse)
             batch_rec["ups_pmf"].append(ups_pmf)
+            batch_rec["ups_conf"].append(ups_errstd)
 
             elapsed_time = datetime.now() - t0
             hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -3877,6 +3895,8 @@ class PRE_TRAINER(object):
                     f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
                     f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
                     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                    f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                    f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
 
             elif arch in ["c", "d"]:
@@ -3884,8 +3904,9 @@ class PRE_TRAINER(object):
                     f"Ep. {epoch}",
                     f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                     f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                    f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                    f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                     f"took {int(minutes)}:{int(seconds)}"]
             
             logstr = " | ".join(logstr)
