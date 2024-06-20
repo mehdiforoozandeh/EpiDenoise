@@ -3842,7 +3842,9 @@ class PRE_TRAINER(object):
                 ).expect().cpu().detach().numpy()
 
             ups_true = Y_batch[observed_map].cpu().detach().numpy()
-            ups_pmf = NegativeBinomial(output_p[observed_map], output_n[observed_map]).pmf(ups_true).mean()
+            ups_pmf = NegativeBinomial(
+                output_p[observed_map].cpu().detach(), 
+                output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
 
             try:
                 ups_r2 = r2_score(ups_true, ups_pred)
