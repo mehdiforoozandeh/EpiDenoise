@@ -886,7 +886,6 @@ class MatrixFactor_NBLL(nn.Module):
 
         return upsampling_loss
 
-
 #========================================================================================================#
 #=======================================EpiDenoise Versions==============================================#
 #========================================================================================================#
@@ -4929,7 +4928,7 @@ if __name__ == "__main__":
                 "mask_percentage": 0.1,
                 "context_length": 400,
                 "batch_size": 36,
-                "learning_rate": 0.01,
+                "learning_rate": 1e-4,
                 "num_loci": 1600,
                 "lr_halflife":1,
                 "min_avail":5
@@ -5041,12 +5040,12 @@ if __name__ == "__main__":
                 "nhead": 6,
                 "d_model": (47+49)*(2**3),
                 "nlayers": 3,
-                "epochs": 3000,
+                "epochs": 2000,
                 "inner_epochs": 50,
                 "mask_percentage": 0.1,
                 "context_length": 810,
                 "batch_size": 30,
-                "learning_rate": 1e-2,
+                "learning_rate": 1e-4,
                 "num_loci": 800,
                 "lr_halflife":2,
                 "min_avail":8
