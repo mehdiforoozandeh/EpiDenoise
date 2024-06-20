@@ -3826,8 +3826,6 @@ class PRE_TRAINER(object):
                     output_n[masked_map].cpu().detach()
                     ).expect().cpu().detach().numpy()
 
-                
-
                 imp_true = Y_batch[masked_map].cpu().detach().numpy()
                 imp_r2 = r2_score(imp_true, imp_pred)
                 imp_pmf = NegativeBinomial(
@@ -3839,7 +3837,7 @@ class PRE_TRAINER(object):
                     output_p[masked_map].cpu().detach(), 
                     output_n[masked_map].cpu().detach()
                     ).std().cpu().detach().numpy()
-                imp_abs_error = torch.abs(imp_true - imp_pred).cpu().detach().numpy()
+                imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
                 imp_errstd = spearmanr(imp_std, imp_abs_error)
 
                 batch_rec["imp_loss"].append(pred_loss.item())
@@ -3863,7 +3861,7 @@ class PRE_TRAINER(object):
                     output_p[masked_map].cpu().detach(), 
                     output_n[masked_map].cpu().detach()
                     ).std().cpu().detach().numpy()
-            ups_abs_error = torch.abs(ups_true - ups_pred).cpu().detach().numpy()
+            ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
             ups_errstd = spearmanr(ups_std, ups_abs_error)
 
             try:
