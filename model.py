@@ -3858,8 +3858,8 @@ class PRE_TRAINER(object):
                 output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
 
             ups_std = NegativeBinomial(
-                    output_p[masked_map].cpu().detach(), 
-                    output_n[masked_map].cpu().detach()
+                    output_p[observed_map].cpu().detach(), 
+                    output_n[observed_map].cpu().detach()
                     ).std().cpu().detach().numpy()
             ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
             ups_errstd = spearmanr(ups_std, ups_abs_error)
