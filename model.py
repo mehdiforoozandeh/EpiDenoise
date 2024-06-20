@@ -1481,7 +1481,8 @@ class EpiDenoise30b(nn.Module):
         
         self.f1 = input_dim + metadata_embedding_dim
         self.f2 = self.f1 * (2**(n_cnn_layers))
-        assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
+        d_model = self.f2
+        # assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
@@ -3743,7 +3744,6 @@ class PRE_TRAINER(object):
             # X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0, 0), mask_perc_range=(0.3, 0.5))
 
             if arch in ["a", "b"]:
-
                 masked_map = (X_batch == token_dict["cloze_mask"])
                 observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
                 # missing_map = (X_batch == token_dict["missing_mask"])
@@ -5003,11 +5003,11 @@ if __name__ == "__main__":
         if sys.argv[2] == "synth":
             synth_hyper_parameters30b = {
                 "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 47,
-                "metadata_embedding_dim": 49,
+                "input_dim": 24,
+                "metadata_embedding_dim": 24,
                 "dropout": 0.01,
 
-                "n_cnn_layers": 3,
+                "n_cnn_layers": 5,
                 "conv_kernel_size" : 7,
                 "n_decoder_layers" : 1,
 
