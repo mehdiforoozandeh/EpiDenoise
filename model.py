@@ -3838,7 +3838,7 @@ class PRE_TRAINER(object):
                     output_n[masked_map].cpu().detach()
                     ).std().cpu().detach().numpy()
                 imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
-                imp_errstd = spearmanr(imp_std, imp_abs_error)
+                imp_errstd = pearsonr(imp_std, imp_abs_error)
 
                 batch_rec["imp_loss"].append(pred_loss.item())
                 batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
@@ -3862,7 +3862,7 @@ class PRE_TRAINER(object):
                     output_n[observed_map].cpu().detach()
                     ).std().cpu().detach().numpy()
             ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
-            ups_errstd = spearmanr(ups_std, ups_abs_error)
+            ups_errstd = pearsonr(ups_std, ups_abs_error)
 
             try:
                 ups_r2 = r2_score(ups_true, ups_pred)
