@@ -3827,7 +3827,9 @@ class PRE_TRAINER(object):
 
                 imp_true = Y_batch[masked_map].cpu().detach().numpy()
                 imp_r2 = r2_score(imp_true, imp_pred)
-                imp_pmf = NegativeBinomial(output_p[masked_map], output_n[masked_map]).pmf(imp_true).mean()
+                imp_pmf = NegativeBinomial(
+                    output_p[masked_map].cpu().detach(),  
+                    output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                 imp_mse = ((imp_true - imp_pred)**2).mean()
 
                 batch_rec["imp_loss"].append(pred_loss.item())
