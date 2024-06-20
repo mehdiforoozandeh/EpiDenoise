@@ -4983,7 +4983,7 @@ if __name__ == "__main__":
                 "nhead": 8,
                 "d_model": 768,
                 "nlayers": 6,
-                "epochs": 1,
+                "epochs": 1000,
                 "inner_epochs": 50,
                 "mask_percentage": 0.1,
                 "context_length": 1620,
