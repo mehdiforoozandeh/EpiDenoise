@@ -3827,7 +3827,7 @@ class PRE_TRAINER(object):
 
                 imp_true = Y_batch[masked_map].cpu().detach().numpy()
                 imp_r2 = r2_score(imp_true, imp_pred)
-                imp_pmf = imp_pred.pmf(imp_true).mean()
+                imp_pmf = NegativeBinomial(output_p[masked_map], output_n[masked_map]).pmf(imp_true).mean()
                 imp_mse = ((imp_true - imp_pred)**2).mean()
 
                 batch_rec["imp_loss"].append(pred_loss.item())
@@ -3842,7 +3842,7 @@ class PRE_TRAINER(object):
                 ).expect().cpu().detach().numpy()
 
             ups_true = Y_batch[observed_map].cpu().detach().numpy()
-            ups_pmf = ups_pred.pmf(ups_true).mean()
+            ups_pmf = NegativeBinomial(output_p[observed_map], output_n[observed_map]).pmf(ups_true).mean()
 
             try:
                 ups_r2 = r2_score(ups_true, ups_pred)
@@ -3854,7 +3854,7 @@ class PRE_TRAINER(object):
             batch_rec["ups_loss"].append(obs_loss.item())
             batch_rec["ups_r2"].append(ups_r2)
             batch_rec["ups_mse"].append(ups_mse)
-            batch_rec["ups_pmf"].append(imp_pmf)
+            batch_rec["ups_pmf"].append(ups_pmf)
 
             elapsed_time = datetime.now() - t0
             hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
