@@ -1395,107 +1395,107 @@ class EpiDenoise30a(nn.Module):
 
         return p, n, mp, mo
 
-class EpiDenoise30b_old(nn.Module):
-    def __init__(self, 
-        input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
-        dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30b_old, self).__init__()
-        self.pos_enc = "abs"#pos_enc
+# class EpiDenoise30b_old(nn.Module):
+#     def __init__(self, 
+#         input_dim, metadata_embedding_dim, conv_kernel_size, 
+#         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+#         dropout=0.1, context_length=2000, pos_enc="relative"):
+#         super(EpiDenoise30b_old, self).__init__()
+#         self.pos_enc = "abs"#pos_enc
 
-        conv_out_channels = exponential_linspace_int(
-            d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
+#         conv_out_channels = exponential_linspace_int(
+#             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
 
-        stride = 1
-        dilation=1
-        self.context_length = context_length
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+#         stride = 1
+#         dilation=1
+#         self.context_length = context_length
+#         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
-        self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+#         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+#         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
 
-        self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.embedd_layer_norm = nn.LayerNorm(d_model)
+#         self.signal_layer_norm = nn.LayerNorm(input_dim)
+#         self.embedd_layer_norm = nn.LayerNorm(d_model)
 
-        self.conv0 = ConvTower(
-                input_dim + metadata_embedding_dim, conv_out_channels[0],
-                conv_kernel_size[0], stride, dilation, 
-                pool_type="max", residuals=True)
+#         self.conv0 = ConvTower(
+#                 input_dim + metadata_embedding_dim, conv_out_channels[0],
+#                 conv_kernel_size[0], stride, dilation, 
+#                 pool_type="max", residuals=True)
 
-        self.convtower = nn.ModuleList([ConvTower(
-                conv_out_channels[i], conv_out_channels[i + 1],
-                conv_kernel_size[i + 1], stride, dilation, 
-                pool_type="max", residuals=True
-            ) for i in range(n_cnn_layers - 1)])
+#         self.convtower = nn.ModuleList([ConvTower(
+#                 conv_out_channels[i], conv_out_channels[i + 1],
+#                 conv_kernel_size[i + 1], stride, dilation, 
+#                 pool_type="max", residuals=True
+#             ) for i in range(n_cnn_layers - 1)])
 
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(
-                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+#         if self.pos_enc == "relative":
+#             self.encoder_layer = RelativeEncoderLayer(
+#                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
 
-            self.decoder_layer = RelativeDecoderLayer(
-                hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
-        else:
-            self.position = PositionalEncoding(d_model, dropout, context_length)
-            # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
-            # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
+#             self.decoder_layer = RelativeDecoderLayer(
+#                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
+#         else:
+#             self.position = PositionalEncoding(d_model, dropout, context_length)
+#             # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
+#             # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
 
-            self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-            self.decoder_layer = nn.TransformerDecoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+#             self.encoder_layer = nn.TransformerEncoderLayer(
+#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+#             self.decoder_layer = nn.TransformerDecoderLayer(
+#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
-        self.transformer_encoder = nn.ModuleList(
-            [self.encoder_layer for _ in range(nlayers)])
+#         self.transformer_encoder = nn.ModuleList(
+#             [self.encoder_layer for _ in range(nlayers)])
 
-        self.transformer_decoder = nn.ModuleList(
-            [self.decoder_layer for _ in range(n_decoder_layers)])
+#         self.transformer_decoder = nn.ModuleList(
+#             [self.decoder_layer for _ in range(n_decoder_layers)])
         
-        self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-        self.mask_pred_layer = nn.Linear(d_model, output_dim)
-        self.mask_obs_layer = nn.Linear(d_model, output_dim)
+#         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
+#         self.mask_pred_layer = nn.Linear(d_model, output_dim)
+#         self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
-    def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+#     def forward(self, src, x_metadata, y_metadata, availability):
+#         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
+#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        md_embedding = F.relu(md_embedding)
-        src = self.signal_layer_norm(src)
+#         md_embedding = F.relu(md_embedding)
+#         src = self.signal_layer_norm(src)
 
-        src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
+#         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
 
-        ### CONV ENCODER ###
+#         ### CONV ENCODER ###
 
-        e_src = src.permute(0, 2, 1) # to N, F, L
-        e_src = self.conv0(e_src)
-        for conv in self.convtower:
-            e_src = conv(e_src)
-        e_src = e_src.permute(0, 2, 1)  # to N, L, F
+#         e_src = src.permute(0, 2, 1) # to N, F, L
+#         e_src = self.conv0(e_src)
+#         for conv in self.convtower:
+#             e_src = conv(e_src)
+#         e_src = e_src.permute(0, 2, 1)  # to N, L, F
 
-        ### TRANSFORMER ENCODER ###
-        if self.pos_enc != "relative":
-            # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
-            e_src = self.position(e_src)
-            # e_src = e_src + encpos
+#         ### TRANSFORMER ENCODER ###
+#         if self.pos_enc != "relative":
+#             # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
+#             e_src = self.position(e_src)
+#             # e_src = e_src + encpos
 
-        for enc in self.transformer_encoder:
-            e_src = enc(e_src)
+#         for enc in self.transformer_encoder:
+#             e_src = enc(e_src)
         
-        src = F.relu(self.embedd_layer_norm(self.lin(src)))
+#         src = F.relu(self.embedd_layer_norm(self.lin(src)))
 
-        ### TRANSFORMER DECODER ###
-        if self.pos_enc != "relative":
-            # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
-            src = self.position(src)
-            # src = src + trgpos
+#         ### TRANSFORMER DECODER ###
+#         if self.pos_enc != "relative":
+#             # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
+#             src = self.position(src)
+#             # src = src + trgpos
 
-        for dec in self.transformer_decoder:
-            src = dec(src, e_src)
+#         for dec in self.transformer_decoder:
+#             src = dec(src, e_src)
 
-        p, n = self.neg_binom_layer(src)
-        mp = torch.sigmoid(self.mask_pred_layer(src))
-        mo = torch.sigmoid(self.mask_obs_layer(src))
+#         p, n = self.neg_binom_layer(src)
+#         mp = torch.sigmoid(self.mask_pred_layer(src))
+#         mo = torch.sigmoid(self.mask_obs_layer(src))
 
-        return p, n, mp, mo
+#         return p, n, mp, mo
 
 class EpiDenoise30b(nn.Module):
     def __init__(self, 
@@ -5042,11 +5042,11 @@ if __name__ == "__main__":
 
                 "n_cnn_layers": 2,
                 "conv_kernel_size" : 7,
-                "n_decoder_layers" : 3,
+                "n_decoder_layers" : 1,
 
                 "nhead": 8,
                 "d_model": 768,
-                "nlayers": 4,
+                "nlayers": 3,
                 "epochs": 4000,
                 "inner_epochs": 50,
                 "mask_percentage": 0.1,
