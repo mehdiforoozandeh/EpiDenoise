@@ -1316,8 +1316,6 @@ class ExtendedEncodeDataHandler:
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         top_k_bios=False, k=300):
-        if self.synth:
-            return
 
         self.set_alias()
         self.train_val_test_split()
