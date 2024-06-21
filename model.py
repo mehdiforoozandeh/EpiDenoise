@@ -1407,22 +1407,39 @@ class EpiDenoise30a(nn.Module):
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
-
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.SE_block = SE_Block_1D(input_dim)
-        self.lin = nn.Linear(input_dim, input_dim)
+        self.ConvEmb = ConvTower(input_dim, d_model,
+                W=1, S=1, D=1, 
+                pool_type="none", residuals=False, 
+                groups=input_dim)
+
+        self.SE_block = SE_Block_1D(d_model)
+
+        self.FF = nn.Sequential(
+            nn.Linear(d_model, d_model),
+            nn.LayerNorm(d_model),
+            nn.ReLU(),
+            nn.Linear(d_model, d_model),
+            nn.LayerNorm(d_model),
+            nn.ReLU(),
+            nn.Linear(d_model, d_model),
+            nn.LayerNorm(d_model),
+            nn.ReLU()
+        )
         
-        self.neg_binom_layer = NegativeBinomialLayer(input_dim, input_dim)
-        self.mask_pred_layer = nn.Linear(input_dim, input_dim)
-        self.mask_obs_layer = nn.Linear(input_dim, input_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(d_model, input_dim)
+        self.mask_pred_layer = nn.Linear(d_model, input_dim)
+        self.mask_obs_layer = nn.Linear(d_model, input_dim)
 
     def forward(self, src, x_metadata, y_metadata, availability):
         src = self.signal_layer_norm(src)
-        # src = src.permute(0,2,1)
-        # src = self.SE_block(src)
-        # src = src.permute(0,2,1)
-        
-        src = F.relu(self.lin(src))
+
+        src = src.permute(0,2,1)
+        src = self.ConvEmb()
+        src = self.SE_block(src)
+        src = src.permute(0,2,1)
+
+        src = self.FF(src)
 
         p, n = self.neg_binom_layer(src)
         mp = torch.sigmoid(self.mask_pred_layer(src))
