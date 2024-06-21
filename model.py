@@ -3538,7 +3538,7 @@ class PRE_TRAINER(object):
                 # print("new batch")
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
-                dsf_X, dsf_Y = 1
+                # dsf_X, dsf_Y = 1, 1
 
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)
