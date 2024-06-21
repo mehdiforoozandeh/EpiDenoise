@@ -1530,19 +1530,19 @@ class EpiDenoise30b(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        # self.fusionEnc = nn.Sequential(
-        #     nn.Linear(self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
-        # self.fusionDec = nn.Sequential(
-        #     nn.Linear(self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
+        self.fusionEnc = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
+        self.fusionDec = nn.Sequential(
+            nn.Linear(self.f2, self.f2),
+            nn.LayerNorm(self.f2),
+            nn.ReLU()
+        )
 
-        self.SE_enc = SE_Block_1D(self.f2)
-        self.SE_dec = SE_Block_1D(self.f2)
+        # self.SE_enc = SE_Block_1D(self.f2)
+        # self.SE_dec = SE_Block_1D(self.f2)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1588,12 +1588,12 @@ class EpiDenoise30b(nn.Module):
         
 
 
-        e_src = self.SE_enc(e_src)
+        # e_src = self.SE_enc(e_src)
 
 
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
 
-        # e_src = self.fusionEnc(e_src)
+        e_src = self.fusionEnc(e_src)
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             e_src = self.posEnc(e_src)
@@ -1606,12 +1606,12 @@ class EpiDenoise30b(nn.Module):
         src = self.convDec(src)
 
 
-        src = self.SE_dec(src)
+        # src = self.SE_dec(src)
 
 
         src = src.permute(0, 2, 1) # to N, L, F2
 
-        # src = self.fusionDec(src)
+        src = self.fusionDec(src)
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             src = self.posDec(src)
@@ -1673,6 +1673,8 @@ class EpiDenoise30c(nn.Module):
             nn.ReLU()
         )
 
+        self.SE_L = SE_Block_1D(self.f2)
+
         # Learnable weights for the average and max pooled features (per feature)
         self.alpha = nn.Parameter(torch.ones(self.f2) * 0.1)
         self.beta = nn.Parameter(torch.ones(self.f2) * 0.1)
@@ -1716,15 +1718,18 @@ class EpiDenoise30c(nn.Module):
         H = src.permute(0, 2, 1) # to B, F, L
         for conv in self.convD:
             H = conv(H)
+        
+        H = self.SE_L(H)
         # H.shape =  N, F', L'
 
-        # Aggregating the sequence representation
-        H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
-        H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
 
-        H = (self.alpha * H_avg_pool) + (self.beta * H_max_pool)  # Shape: (batch_size, feature_dim)
-        # Transforming the aggregated representation
-        H = H.unsqueeze(-1).expand(-1, -1, self.l2)
+        # Aggregating the sequence representation
+        # H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
+        # H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
+
+        # H = (self.alpha * H_avg_pool) + (self.beta * H_max_pool)  # Shape: (batch_size, feature_dim)
+        # # Transforming the aggregated representation
+        # H = H.unsqueeze(-1).expand(-1, -1, self.l2)
 
         # H.shape =  N, F', L'
         for encD in self.transD:
