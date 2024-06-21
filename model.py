@@ -1418,10 +1418,11 @@ class EpiDenoise30a(nn.Module):
 
     def forward(self, src, x_metadata, y_metadata, availability):
         src = self.signal_layer_norm(src)
-        src = F.relu(self.lin(src))
+        
         src = src.permute(0,2,1)
         src = self.SE_block(src)
         src = src.permute(0,2,1)
+        src = F.relu(self.lin(src))
 
         p, n = self.neg_binom_layer(src)
         mp = torch.sigmoid(self.mask_pred_layer(src))
