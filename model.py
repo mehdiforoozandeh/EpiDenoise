@@ -1506,7 +1506,7 @@ class EpiDenoise30b(nn.Module):
 
         self.fusionEnc = nn.Sequential(
             nn.Linear(self.f2, self.f2//3),
-            nn.LayerNorm(self.f2),
+            nn.LayerNorm(self.f2//3),
             nn.ReLU(),
             nn.Linear(self.f2//3, self.f2),
             nn.LayerNorm(self.f2),
@@ -1514,7 +1514,7 @@ class EpiDenoise30b(nn.Module):
         )
         self.fusionDec = nn.Sequential(
             nn.Linear(self.f2, self.f2//3),
-            nn.LayerNorm(self.f2),
+            nn.LayerNorm(self.f2//3),
             nn.ReLU(),
             nn.Linear(self.f2//3, self.f2),
             nn.LayerNorm(self.f2),
