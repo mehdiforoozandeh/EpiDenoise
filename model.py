@@ -5042,7 +5042,7 @@ if __name__ == "__main__":
 
                 "n_cnn_layers": 3,
                 "conv_kernel_size" : 7,
-                "n_decoder_layers" : 2,
+                "n_decoder_layers" : 1,
 
                 "nhead": 8,
                 "d_model": 768,
