@@ -5040,7 +5040,7 @@ if __name__ == "__main__":
                 "metadata_embedding_dim": 49,
                 "dropout": 0.1,
 
-                "n_cnn_layers": 2,
+                "n_cnn_layers": 3,
                 "conv_kernel_size" : 7,
                 "n_decoder_layers" : 1,
 
