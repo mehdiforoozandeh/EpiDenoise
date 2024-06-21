@@ -1407,6 +1407,8 @@ class EpiDenoise30a(nn.Module):
         self, input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
+        d_model = d_model - metadata_embedding_dim
+
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.ConvEmb = ConvTower(input_dim, d_model,
                 W=1, S=1, D=1, 
@@ -1435,7 +1437,7 @@ class EpiDenoise30a(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = src.permute(0,2,1)
-        src = self.ConvEmb()
+        src = self.ConvEmb(src)
         src = self.SE_block(src)
         src = src.permute(0,2,1)
 
@@ -4911,7 +4913,7 @@ if __name__ == "__main__":
                     "metadata_embedding_dim": 40,
                     "dropout": 0.01,
                     "nhead": 8,
-                    "d_model": 376,
+                    "d_model": 416,
                     "nlayers": 6,
                     "epochs": 2000,
                     "inner_epochs": 100,
