@@ -260,6 +260,32 @@ class ConvTower(nn.Module):
         
         return y
 
+class SE_Block_1D(nn.Module):
+    """
+    Squeeze-and-Excitation block for 1D convolutional layers.
+    This module recalibrates channel-wise feature responses by modeling interdependencies between channels.
+    """
+    def __init__(self, c, r=16):
+        super(SE_Block_1D, self).__init__()
+        # Global average pooling for 1D
+        self.squeeze = nn.AdaptiveAvgPool1d(1)
+        # Excitation network to produce channel-wise weights
+        self.excitation = nn.Sequential(
+            nn.Linear(c, c // r, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(c // r, c, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        bs, c, l = x.shape  # Batch size, number of channels, length
+        # Squeeze: Global average pooling to get the channel-wise statistics
+        y = self.squeeze(x).view(bs, c)  # Shape becomes (bs, c)
+        # Excitation: Fully connected layers to compute weights for each channel
+        y = self.excitation(y).view(bs, c, 1)  # Shape becomes (bs, c, 1)
+        # Recalibrate: Multiply the original input by the computed weights
+        return x * y.expand_as(x)  # Shape matches (bs, c, l)
+
 class RelativePosition(nn.Module):
 
     def __init__(self, num_units, max_relative_position):
@@ -1504,22 +1530,19 @@ class EpiDenoise30b(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.fusionEnc = nn.Sequential(
-            nn.Linear(self.f2, self.f2//3),
-            nn.LayerNorm(self.f2//3),
-            nn.ReLU(),
-            nn.Linear(self.f2//3, self.f2),
-            nn.LayerNorm(self.f2),
-            nn.ReLU()
-        )
-        self.fusionDec = nn.Sequential(
-            nn.Linear(self.f2, self.f2//3),
-            nn.LayerNorm(self.f2//3),
-            nn.ReLU(),
-            nn.Linear(self.f2//3, self.f2),
-            nn.LayerNorm(self.f2),
-            nn.ReLU()
-        )
+        # self.fusionEnc = nn.Sequential(
+        #     nn.Linear(self.f2, self.f2),
+        #     nn.LayerNorm(self.f2),
+        #     nn.ReLU()
+        # )
+        # self.fusionDec = nn.Sequential(
+        #     nn.Linear(self.f2, self.f2),
+        #     nn.LayerNorm(self.f2),
+        #     nn.ReLU()
+        # )
+
+        self.SE_enc = SE_Block_1D(self.f2)
+        self.SE_dec = SE_Block_1D(self.f2)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1562,9 +1585,15 @@ class EpiDenoise30b(nn.Module):
         e_src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
             e_src = conv(e_src)
+        
+
+
+        e_src = self.SE_enc(e_src)
+
+
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
 
-        e_src = self.fusionEnc(e_src)
+        # e_src = self.fusionEnc(e_src)
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             e_src = self.posEnc(e_src)
@@ -1575,9 +1604,14 @@ class EpiDenoise30b(nn.Module):
         ### Conv DECODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         src = self.convDec(src)
+
+
+        src = self.SE_dec(src)
+
+
         src = src.permute(0, 2, 1) # to N, L, F2
 
-        src = self.fusionDec(src)
+        # src = self.fusionDec(src)
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             src = self.posDec(src)
