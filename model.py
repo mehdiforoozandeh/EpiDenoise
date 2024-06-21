@@ -1412,11 +1412,10 @@ class EpiDenoise30a(nn.Module):
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.ConvEmb = ConvTower(input_dim, d_model,
                 W=1, S=1, D=1, 
-                pool_type="none", residuals=False, 
+                pool_type="none", residuals=True, 
                 groups=input_dim)
 
-        # self.SE_block = SE_Block_1D(d_model)
-
+        self.SE_block = SE_Block_1D(d_model)
         self.FF = nn.Sequential(
             nn.Linear(d_model, d_model),
             nn.LayerNorm(d_model),
