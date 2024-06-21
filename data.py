@@ -1705,13 +1705,13 @@ if __name__ == "__main__":
         # Generate and visualize the base sequence
         base_sequence = synthetic_data.generate_base_sequence()
 
-        # plt.figure(figsize=(12, 4))
-        # plt.plot(base_sequence, label='Base Sequence')
-        # plt.title('Base Sequence')
-        # plt.xlabel('Position')
-        # plt.ylabel('Value')
-        # plt.legend()
-        # plt.show()
+        plt.figure(figsize=(12, 4))
+        plt.plot(base_sequence, label='Base Sequence')
+        plt.title('Base Sequence')
+        plt.xlabel('Position')
+        plt.ylabel('Value')
+        plt.legend()
+        plt.show()
 
         # Apply transformations to derive 47 distinct sequences
         transformed_sequences = synthetic_data.apply_transformations()
@@ -1723,24 +1723,22 @@ if __name__ == "__main__":
         syn_metadata = synthetic_data.synth_metadata(transformed_sequences)
         syn_metadata = np.array(syn_metadata)
 
+        num_labels = synthetic_data.num_features
+        n_cols = math.floor(math.sqrt(num_labels))
+        n_rows = math.ceil(num_labels / n_cols)
 
-
-        # num_labels = synthetic_data.num_features
-        # n_cols = math.floor(math.sqrt(num_labels))
-        # n_rows = math.ceil(num_labels / n_cols)
-
-        # # Visualize the smoothed sequences
-        # fig, axs = plt.subplots(n_rows, n_cols, figsize=(15, 8))
-        # fig.suptitle('Smoothed Sequences', fontsize=16)
-        # for i in range(num_labels):
-        #     row, col = divmod(i, n_cols)
-        #     ax = axs[row, col]
-        #     seq, name = smoothed_sequences[i]
-        #     md, _ = syn_metadata[i]
-        #     ax.plot(seq, label=f'F{i+1}: {name} {md[0]:.1f}-{md[1]:.1f}-{md[2]:.1f}-{md[3]:.1f}')
-        #     ax.legend(fontsize=5)
-        # plt.tight_layout(rect=[0, 0, 1, 0.96])
-        # plt.show()
+        # Visualize the smoothed sequences
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=(15, 8))
+        fig.suptitle('Smoothed Sequences', fontsize=16)
+        for i in range(num_labels):
+            row, col = divmod(i, n_cols)
+            ax = axs[row, col]
+            seq = smoothed_sequences[i]
+            md, _ = syn_metadata[i]
+            ax.plot(seq, label=f'F{i+1}: {md[0]:.1f}-{md[1]:.1f}-{md[2]:.1f}-{md[3]:.1f}')
+            ax.legend(fontsize=5)
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
 
 
     else:
