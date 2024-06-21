@@ -1458,9 +1458,9 @@ class EpiDenoise30b(nn.Module):
             [self.decoder_layer for _ in range(n_decoder_layers)])
         
         # self.f3 = d_model + metadata_embedding_dim
-        self.neg_binom_layer = NegativeBinomialLayer(self.f2, output_dim)
-        self.mask_pred_layer = nn.Linear(self.f2, output_dim)
-        self.mask_obs_layer = nn.Linear(self.f2, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f3, output_dim)
+        self.mask_pred_layer = nn.Linear(self.f3, output_dim)
+        self.mask_obs_layer = nn.Linear(self.f3, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
