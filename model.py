@@ -1654,8 +1654,6 @@ class EpiDenoise30c(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.position = PositionalEncoding(d_model, dropout, self.l1)
-
-        # self.fusion = nn.Linear(self.f1, self.f1)
         
         self.convL = ConvTower(self.f1, self.f2,
                 W=1, S=1, D=1, 
@@ -1678,10 +1676,6 @@ class EpiDenoise30c(nn.Module):
 
         self.SE_L = SE_Block_1D(self.f2)
         self.SE_D = SE_Block_1D(self.f2)
-
-        # Learnable weights for the average and max pooled features (per feature)
-        self.alpha = nn.Parameter(torch.ones(self.f2) * 0.1)
-        self.beta = nn.Parameter(torch.ones(self.f2) * 0.1)
         
         self.transL = nn.ModuleList(
             [nn.TransformerEncoderLayer(
@@ -1691,11 +1685,12 @@ class EpiDenoise30c(nn.Module):
 
         self.transD = nn.ModuleList(
             [nn.TransformerEncoderLayer(
-                d_model=self.l2, nhead=(3 if self.l2 % 3 == 0 else 2 if self.l2 % 2 == 0 else 1), 
-                dim_feedforward=2*d_model, 
+                d_model=self.f2, nhead=nhead, 
+                dim_feedforward=2*self.f2, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
         
-        self.neg_binom_layer = NegativeBinomialLayer(self.l2 + metadata_embedding_dim, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f2, output_dim)
+        # self.neg_binom_layer = NegativeBinomialLayer(self.f2 + metadata_embedding_dim, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
@@ -1705,7 +1700,6 @@ class EpiDenoise30c(nn.Module):
         src = self.signal_layer_norm(src)
 
         src = torch.cat([src, md_embedding], dim=-1)
-        # src = F.relu(self.fusion(src)) # B, L, F
 
         W = src.permute(0, 2, 1) # to B, F, L
         W = self.convL(W)
@@ -1735,7 +1729,7 @@ class EpiDenoise30c(nn.Module):
     
         Z = torch.matmul(W, H)
 
-        Z = torch.cat([Z, md_embedding], dim=-1) 
+        # Z = torch.cat([Z, md_embedding], dim=-1) 
 
         # Z.shape = B, L, L'+metadata_dim
 
@@ -5119,7 +5113,7 @@ if __name__ == "__main__":
                 "mask_percentage": 0.1,
                 "context_length": 810,
                 "batch_size": 30,
-                "learning_rate": 1e-5,
+                "learning_rate": 1e-4,
                 "num_loci": 800,
                 "lr_halflife":2,
                 "min_avail":8
