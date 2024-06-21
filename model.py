@@ -5036,12 +5036,12 @@ if __name__ == "__main__":
         if sys.argv[2] == "synth":
             synth_hyper_parameters30b = {
                 "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 24,
-                "metadata_embedding_dim": 24,
-                "dropout": 0.01,
+                "input_dim": 47,
+                "metadata_embedding_dim": 49,
+                "dropout": 0.1,
 
-                "n_cnn_layers": 3,
-                "conv_kernel_size" : 7,
+                "n_cnn_layers": 5,
+                "conv_kernel_size" : 3,
                 "n_decoder_layers" : 1,
 
                 "nhead": 8,
