@@ -3421,14 +3421,12 @@ class PRE_TRAINER(object):
                     continue
                 
                 batch_rec = {
-                    "imp_loss":[],
-                    "ups_loss":[],
-                    "msk_loss":[],
-                    "ups_r2":[],
-                    "imp_r2":[],
-                    "ups_mse":[],
-                    "imp_mse":[]
-                }
+                    "imp_loss":[], "ups_loss":[], "msk_loss":[],
+                    "ups_r2":[], "imp_r2":[],
+                    "ups_mse":[], "imp_mse":[],
+                    "ups_pmf":[], "imp_pmf":[],
+                    "ups_conf":[], "imp_conf":[]
+                    }
                 for _ in range(inner_epochs):
                     # print("new inner epoch")
                     self.optimizer.zero_grad()
