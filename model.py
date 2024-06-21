@@ -1433,7 +1433,7 @@ class EpiDenoise30a(nn.Module):
         self.mask_obs_layer = nn.Linear(d_model, input_dim)
 
     def forward(self, src, x_metadata, y_metadata, availability):
-        src = self.signal_layer_norm(src)
+        # src = self.signal_layer_norm(src)
 
         src = src.permute(0,2,1)
         src = self.ConvEmb(src)
