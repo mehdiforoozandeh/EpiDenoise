@@ -3570,6 +3570,15 @@ class PRE_TRAINER(object):
                     batch_rec["ups_pmf"].append(ups_pmf)
                     batch_rec["ups_conf"].append(ups_errstd)
 
+                    lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
+                    if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
+                        try:
+                            torch.save(
+                                self.model.state_dict(), 
+                                f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
+                        except:
+                            pass
+
                     elapsed_time = datetime.now() - t0
                     hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                     minutes, seconds = divmod(remainder, 60)
