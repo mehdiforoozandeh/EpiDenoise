@@ -1339,22 +1339,27 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        self.pos_enc = "abs"#pos_enc
+        self.pos_enc = "abs"
         self.context_length = context_length
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.embedd_layer_norm = nn.LayerNorm(d_model)
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
-        self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-        # self.embedding_linear = nn.Linear(input_dim, d_model)
+        # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
+
+        self.ConvEmb = ConvTower(input_dim, d_model - metadata_embedding_dim,
+                W=1, S=1, D=1, 
+                pool_type="none", residuals=False, 
+                groups=input_dim)
+
+        self.SE_block = SE_Block_1D(d_model)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
         else:
-            # self.position = AbsPositionalEmbedding15(
-            #     d_model=d_model, max_len=context_length)
+
             self.position = PositionalEncoding(d_model, dropout, context_length)
 
             self.encoder_layer = nn.TransformerEncoderLayer(
@@ -1365,25 +1370,26 @@ class EpiDenoise30a(nn.Module):
             [self.encoder_layer for _ in range(nlayers)])
 
         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-
         self.mask_pred_layer = nn.Linear(d_model, output_dim)
         self.mask_obs_layer = nn.Linear(d_model, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
+        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
 
-        md_embedding = F.relu(md_embedding)
+        # md_embedding = F.relu(md_embedding)
 
         src = self.signal_layer_norm(src)
 
-        src = torch.cat([src, md_embedding], dim=-1)
-        # src = src + md_embedding
+        src = src.permute(0, 2, 1) # to N, F1, L
+        src = self.ConvEmb(src)
 
-        src = F.relu(self.embedd_layer_norm(self.embedding_linear(src)))
+        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.context_length)], dim=1)
+        src = self.SE_block(src)
+
+        src = src.permute(0, 2, 1) # to N, L, F2
 
         if self.pos_enc != "relative":
-            # pos = torch.permute(self.position(src), (1, 0, 2))
             src = self.position(src)
         
         for enc in self.transformer_encoder:
@@ -4854,10 +4860,10 @@ if __name__ == "__main__":
                 synth_hyper_parameters30a = {
                     "data_path": "/project/compbio-lab/encode_data/",
                     "input_dim": 47,
-                    "metadata_embedding_dim": 47,
+                    "metadata_embedding_dim": 40,
                     "dropout": 0.01,
-                    "nhead": 4,
-                    "d_model": 384,
+                    "nhead": 8,
+                    "d_model": 416,
                     "nlayers": 6,
                     "epochs": 2000,
                     "inner_epochs": 100,
