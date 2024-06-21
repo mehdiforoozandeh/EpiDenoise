@@ -3641,8 +3641,8 @@ class PRE_TRAINER(object):
             torch.cuda.empty_cache()
             t0 = datetime.now()
 
-            # X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.2, 0.5), mask_perc_range=(0.1, 0.2))
-            X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0, 0), mask_perc_range=(0.3, 0.5))
+            X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.7, 0.9), mask_perc_range=(0.1, 0.2))
+            # X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0, 0), mask_perc_range=(0.3, 0.5))
 
             if arch in ["a", "b"]:
                 masked_map = (X_batch == token_dict["cloze_mask"])
@@ -4923,7 +4923,7 @@ if __name__ == "__main__":
                     "mask_percentage": 0.1,
                     "context_length": 810,
                     "batch_size": 50,
-                    "learning_rate": 1e-4,
+                    "learning_rate": 5e-4,
                     "num_loci": 800,
                     "lr_halflife":2,
                     "min_avail":8

@@ -1525,13 +1525,13 @@ class SyntheticData:
         return np.clip(sequence * scale, 0, 200)
 
     def transform_exponential(self, sequence, base, scale):
-        return np.clip(np.round(scale * (base ** (sequence))), 0, 200)
+        return np.clip(np.round(scale * (base ** (sequence))), 0, 1000)
 
     def transform_log_scale(self, sequence, scale):
-        return np.clip(np.round(scale * np.log1p(sequence)), 0, 200)
+        return np.clip(np.round(scale * np.log1p(sequence)), 0, 1000)
 
     def transform_sqrt_scale(self, sequence, scale):
-        return np.clip(np.round(scale * np.sqrt(sequence)), 0, 200)
+        return np.clip(np.round(scale * np.sqrt(sequence)), 0, 1000)
 
     def transform_piecewise_linear(self, sequence, scale_factors):
         transformed = np.zeros_like(sequence)
@@ -1542,19 +1542,19 @@ class SyntheticData:
                 transformed[i] = scale_factors[1] + scale_factors[2] * value
             else:
                 transformed[i] = scale_factors[3] + scale_factors[4] * value
-        return np.clip(np.round(transformed), 0, 200)
+        return np.clip(np.round(transformed), 0, 1000)
 
     def transform_scaled_sin(self, sequence, scale):
-        return np.clip(np.round(scale * np.abs(np.sin(sequence))), 0, 200)
+        return np.clip(np.round(scale * np.abs(np.sin(sequence))), 0, 1000)
 
     def transform_scaled_cos(self, sequence, scale):
-        return np.clip(np.round(scale * np.abs(np.cos(sequence))), 0, 200)
+        return np.clip(np.round(scale * np.abs(np.cos(sequence))), 0, 1000)
 
     def transform_hyperbolic_sinh(self, sequence, scale):
-        return np.clip(np.round(scale * np.sinh(sequence / 50)), 0, 200)
+        return np.clip(np.round(scale * np.sinh(sequence / 50)), 0, 1000)
 
     def transform_polynomial(self, sequence, scale, power):
-        return np.clip(np.round(scale * (sequence ** power)), 0, 200)
+        return np.clip(np.round(scale * (sequence ** power)), 0, 1000)
 
     def apply_transformations(self):
         transformed_sequences = []
@@ -1565,7 +1565,7 @@ class SyntheticData:
 
         return transformed_sequences
 
-    def smooth_sequence(self, sequence, sigma=0.1):
+    def smooth_sequence(self, sequence, sigma=0.001):
         return gaussian_filter1d(sequence, sigma=sigma)
 
     def apply_smoothing(self, sequences):
