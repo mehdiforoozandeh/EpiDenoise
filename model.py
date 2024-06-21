@@ -1709,7 +1709,6 @@ class EpiDenoise30c(nn.Module):
         # W = self.fusionL(W)
         if self.pos_enc != "relative":
             W = self.position(W) 
-        
         for encL in self.transL:
             W = encL(W)
         # W.shape = B, L, F'
@@ -1717,16 +1716,16 @@ class EpiDenoise30c(nn.Module):
         H = src.permute(0, 2, 1) # to B, F, L
         for conv in self.convD:
             H = conv(H)
-        
         H = self.SE_D(H, recal=False)
         # Aggregating the sequence representation
-
         # H.shape =  N, F', L'
         for encD in self.transD:
             H = encD(H)
-
         # H.shape =  N, F', L'
-    
+
+        print(W.shape)
+        print(H.shape)
+        exit()
         Z = torch.matmul(W, H)
 
         # Z = torch.cat([Z, md_embedding], dim=-1) 
