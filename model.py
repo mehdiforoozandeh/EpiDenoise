@@ -1409,11 +1409,13 @@ class EpiDenoise30a(nn.Module):
         super(EpiDenoise30a, self).__init__()
         d_model = d_model - metadata_embedding_dim
 
-        # self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.ConvEmb = ConvTower(input_dim, d_model,
-                W=1, S=1, D=1, 
-                pool_type="none", residuals=False, 
-                groups=input_dim)
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
+        # self.ConvEmb = ConvTower(input_dim, d_model,
+        #         W=1, S=1, D=1, 
+        #         pool_type="none", residuals=False, 
+        #         groups=input_dim)
+
+        self.ConvEmb = nn.Linear(input_dim, d_model)
 
         self.SE_block = SE_Block_1D(d_model)
         self.FF = nn.Sequential(
