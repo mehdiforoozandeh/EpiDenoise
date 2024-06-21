@@ -3523,12 +3523,24 @@ class PRE_TRAINER(object):
 
                         imp_true = Y_batch[masked_map].cpu().detach().numpy()
                         imp_r2 = r2_score(imp_true, imp_pred)
+                        imp_pmf = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(),  
+                            output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                         imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                        imp_std = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(), 
+                            output_n[masked_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                        imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
+                        imp_errstd = pearsonr(imp_std, imp_abs_error)
 
                         batch_rec["imp_loss"].append(pred_loss.item())
                         batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                         batch_rec["imp_mse"].append(imp_mse)
                         batch_rec["imp_r2"].append(imp_r2)
+                        batch_rec["imp_pmf"].append(imp_pmf)
+                        batch_rec["imp_conf"].append(imp_errstd)
 
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3536,6 +3548,17 @@ class PRE_TRAINER(object):
                         ).expect().cpu().detach().numpy()
 
                     ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                    ups_pmf = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+
+                    ups_std = NegativeBinomial(
+                            output_p[observed_map].cpu().detach(), 
+                            output_n[observed_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                    ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
+                    ups_errstd = pearsonr(ups_std, ups_abs_error)
+
                     try:
                         ups_r2 = r2_score(ups_true, ups_pred)
                         ups_mse = ((ups_true - ups_pred)**2).mean()
@@ -3546,49 +3569,117 @@ class PRE_TRAINER(object):
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["ups_mse"].append(ups_mse)
+                    batch_rec["ups_pmf"].append(ups_pmf)
+                    batch_rec["ups_conf"].append(ups_errstd)
+
+                    elapsed_time = datetime.now() - t0
+                    hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                    minutes, seconds = divmod(remainder, 60)
+
+                    if arch in ["a", "b"]:
+                        logstr = [
+                            f"Ep. {epoch}",
+                            f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                            f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                            f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                            f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                            f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                            f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
+                            f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                            f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                            f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                            f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                            f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                            f"took {int(minutes)}:{int(seconds)}"]
+
+                    elif arch in ["c", "d"]:
+                        logstr = [
+                            f"Ep. {epoch}",
+                            f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                            f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                            f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                            f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                            f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                            f"took {int(minutes)}:{int(seconds)}"]
+                    
+                    logstr = " | ".join(logstr)
+                    log_strs.append(logstr)
+                    print(logstr)
+
+                #     if arch in ["a", "b"]:
+                #         imp_pred = NegativeBinomial(
+                #             output_p[masked_map].cpu().detach(), 
+                #             output_n[masked_map].cpu().detach()
+                #             ).expect().cpu().detach().numpy()
+
+                #         imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                #         imp_r2 = r2_score(imp_true, imp_pred)
+                #         imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                #         batch_rec["imp_loss"].append(pred_loss.item())
+                #         batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                #         batch_rec["imp_mse"].append(imp_mse)
+                #         batch_rec["imp_r2"].append(imp_r2)
+
+                #     ups_pred = NegativeBinomial(
+                #         output_p[observed_map].cpu().detach(), 
+                #         output_n[observed_map].cpu().detach()
+                #         ).expect().cpu().detach().numpy()
+
+                #     ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                #     try:
+                #         ups_r2 = r2_score(ups_true, ups_pred)
+                #         ups_mse = ((ups_true - ups_pred)**2).mean()
+                #     except:
+                #         ups_r2 = np.nan
+                #         ups_mse = np.nan
                 
-                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
-                if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
-                    try:
-                        torch.save(
-                            self.model.state_dict(), 
-                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
-                    except:
-                        pass
-
-                elapsed_time = datetime.now() - t0
-                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                minutes, seconds = divmod(remainder, 60)
-
-                if arch in ["a", "b"]:
-                    logstr = [
-                        f"Ep. {epoch}",
-                        f"DSF{dsf_X}->{dsf_Y}",
-                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
-                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        f"took {int(minutes)}:{int(seconds)}"]
-
-                elif arch in ["c", "d"]:
-                    logstr = [
-                        f"Ep. {epoch}",
-                        f"DSF{dsf_X}->{dsf_Y}",
-                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        f"took {int(minutes)}:{int(seconds)}"]
+                #     batch_rec["ups_loss"].append(obs_loss.item())
+                #     batch_rec["ups_r2"].append(ups_r2)
+                #     batch_rec["ups_mse"].append(ups_mse)
                 
-                logstr = " | ".join(logstr)
-                log_strs.append(logstr)
-                print(logstr)
+                # lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
+                # if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
+                #     try:
+                #         torch.save(
+                #             self.model.state_dict(), 
+                #             f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
+                #     except:
+                #         pass
+
+                # elapsed_time = datetime.now() - t0
+                # hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                # minutes, seconds = divmod(remainder, 60)
+
+                # if arch in ["a", "b"]:
+                #     logstr = [
+                #         f"Ep. {epoch}",
+                #         f"DSF{dsf_X}->{dsf_Y}",
+                #         f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                #         f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                #         f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                #         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                #         f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                #         f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                #         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                #         f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                #         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                #         f"took {int(minutes)}:{int(seconds)}"]
+
+                # elif arch in ["c", "d"]:
+                #     logstr = [
+                #         f"Ep. {epoch}",
+                #         f"DSF{dsf_X}->{dsf_Y}",
+                #         f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                #         f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                #         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                #         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                #         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                #         f"took {int(minutes)}:{int(seconds)}"]
+                
+                # logstr = " | ".join(logstr)
+                # log_strs.append(logstr)
+                # print(logstr)
                 
                 if lopr % 2 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
@@ -4901,14 +4992,14 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 10,
+            "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 810,
             "batch_size": 25,
             "learning_rate": 1e-4,
-            "num_loci": 200,
+            "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":8
+            "min_avail":12
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
