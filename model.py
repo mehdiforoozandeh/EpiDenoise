@@ -1408,7 +1408,7 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
-        # self.signal_layer_norm = nn.LayerNorm(input_dim)
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.SE_block = SE_Block_1D(input_dim)
         self.lin = nn.Linear(input_dim, input_dim)
         
