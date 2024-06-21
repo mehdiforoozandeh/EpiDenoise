@@ -1473,9 +1473,7 @@ class EpiDenoise30b(nn.Module):
             e_src = conv(e_src)
             print(e_src.shape)
         # e_src.shape = N, F2, L'
-        print(md_embedding.unsqueeze(2).expand(-1, -1, self.l2).shape)
-        exit()
-        e_src = torch.cat([e_src, ], dim=-1)
+        e_src = torch.cat([e_src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
         # print(e_src.shape)
         e_src = self.SE_enc(e_src)
 
@@ -1490,7 +1488,7 @@ class EpiDenoise30b(nn.Module):
         src = src.permute(0, 2, 1) # to N, F1, L
         src = self.convDec(src)
 
-        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l1)], dim=-1)
+        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l1)], dim=1)
         src = self.SE_dec(src)
 
         src = src.permute(0, 2, 1) # to N, L, F2
