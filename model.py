@@ -1430,8 +1430,8 @@ class EpiDenoise30b(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.SE_enc = SE_Block_1D(self.f2)
-        self.SE_dec = SE_Block_1D(self.f2)
+        self.SE_enc = SE_Block_1D(self.f3)
+        self.SE_dec = SE_Block_1D(self.f3)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1475,7 +1475,6 @@ class EpiDenoise30b(nn.Module):
         # e_src.shape = N, F2, L'
         e_src = torch.cat([e_src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
         print(e_src.shape)
-        exit()
         e_src = self.SE_enc(e_src)
 
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
