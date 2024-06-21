@@ -4911,7 +4911,7 @@ if __name__ == "__main__":
                     "metadata_embedding_dim": 40,
                     "dropout": 0.01,
                     "nhead": 8,
-                    "d_model": 416,
+                    "d_model": 376,
                     "nlayers": 6,
                     "epochs": 2000,
                     "inner_epochs": 100,
