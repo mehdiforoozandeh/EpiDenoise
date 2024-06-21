@@ -3740,7 +3740,7 @@ class PRE_TRAINER(object):
             torch.cuda.empty_cache()
             t0 = datetime.now()
 
-            X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.6, 0.9), mask_perc_range=(0.1, 0.2))
+            X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0.5, 0.9), mask_perc_range=(0.1, 0.2))
             # X_batch, Y_batch, mX_batch, mY_batch, avX_batch, avY_batch = self.dataset.get_batch(batch_size, miss_perc_range=(0, 0), mask_perc_range=(0.3, 0.5))
 
             if arch in ["a", "b"]:
@@ -3779,7 +3779,8 @@ class PRE_TRAINER(object):
                     else:
                         obs_loss = torch.Tensor(1e5)
 
-                loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
+                # loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
 
             elif arch in ["c", "d"]:
                 output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
@@ -5003,11 +5004,11 @@ if __name__ == "__main__":
         if sys.argv[2] == "synth":
             synth_hyper_parameters30b = {
                 "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 24,
-                "metadata_embedding_dim": 24,
+                "input_dim": 47,
+                "metadata_embedding_dim": 49,
                 "dropout": 0.01,
 
-                "n_cnn_layers": 5,
+                "n_cnn_layers": 3,
                 "conv_kernel_size" : 7,
                 "n_decoder_layers" : 1,
 
