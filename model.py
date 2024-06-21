@@ -1443,6 +1443,8 @@ class EpiDenoise30b(nn.Module):
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.posDec = PositionalEncoding(d_model, dropout, self.l1)
 
+            print(self.f1, self.f2, self.f3) 
+
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
 
@@ -4908,7 +4910,7 @@ if __name__ == "__main__":
                 synth_hyper_parameters30b = {
                     "data_path": "/project/compbio-lab/encode_data/",
                     "input_dim": 47,
-                    "metadata_embedding_dim": 46,
+                    "metadata_embedding_dim": 4,
                     "dropout": 0.1,
 
                     "n_cnn_layers": 3,
