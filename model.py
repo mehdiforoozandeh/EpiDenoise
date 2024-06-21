@@ -1544,8 +1544,8 @@ class EpiDenoise30b(nn.Module):
             nn.ReLU()
         )
 
-        # self.SE_enc = SE_Block_1D(self.f2)
-        # self.SE_dec = SE_Block_1D(self.f2)
+        self.SE_enc = SE_Block_1D(self.f2)
+        self.SE_dec = SE_Block_1D(self.f2)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1591,12 +1591,12 @@ class EpiDenoise30b(nn.Module):
         
 
 
-        # e_src = self.SE_enc(e_src)
+        e_src = self.SE_enc(e_src)
 
 
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
 
-        e_src = self.fusionEnc(e_src)
+        # e_src = self.fusionEnc(e_src)
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             e_src = self.posEnc(e_src)
@@ -1609,12 +1609,12 @@ class EpiDenoise30b(nn.Module):
         src = self.convDec(src)
 
 
-        # src = self.SE_dec(src)
+        src = self.SE_dec(src)
 
 
         src = src.permute(0, 2, 1) # to N, L, F2
 
-        src = self.fusionDec(src)
+        # src = self.fusionDec(src)
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             src = self.posDec(src)
