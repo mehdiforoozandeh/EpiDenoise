@@ -1719,13 +1719,15 @@ class EpiDenoise30c(nn.Module):
         H = self.SE_D(H, recal=False)
         # Aggregating the sequence representation
         # H.shape =  N, F', L'
+        print(W.shape)
+        print(H.shape)
+        exit()
+        
         for encD in self.transD:
             H = encD(H)
         # H.shape =  N, F', L'
 
-        print(W.shape)
-        print(H.shape)
-        exit()
+        
         Z = torch.matmul(W, H)
 
         # Z = torch.cat([Z, md_embedding], dim=-1) 
