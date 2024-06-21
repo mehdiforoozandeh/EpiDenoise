@@ -5041,7 +5041,7 @@ if __name__ == "__main__":
                 "dropout": 0.1,
 
                 "n_cnn_layers": 3,
-                "conv_kernel_size" : 3,
+                "conv_kernel_size" : 7,
                 "n_decoder_layers" : 2,
 
                 "nhead": 8,
