@@ -1437,8 +1437,9 @@ class EpiDenoise30a(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         # src = self.signal_layer_norm(src)
 
-        src = src.permute(0,2,1)
         src = self.ConvEmb(src)
+        src = src.permute(0,2,1)
+        # src = self.ConvEmb(src)
         # src = self.SE_block(src)
         src = src.permute(0,2,1)
 
