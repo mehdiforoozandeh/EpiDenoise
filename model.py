@@ -1408,6 +1408,7 @@ class EpiDenoise30a(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30a, self).__init__()
 
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
         self.lin = nn.Linear(input_dim, input_dim)
         self.SE_block = SE_Block_1D(input_dim)
 
@@ -1416,6 +1417,7 @@ class EpiDenoise30a(nn.Module):
         self.mask_obs_layer = nn.Linear(input_dim, input_dim)
 
     def forward(self, src, x_metadata, y_metadata, availability):
+        src = self.signal_layer_norm(src)
         src = F.relu(self.lin(src))
         src = src.permute(0,2,1)
         src = self.SE_block(src)
