@@ -1505,12 +1505,18 @@ class EpiDenoise30b(nn.Module):
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.fusionEnc = nn.Sequential(
-            nn.Linear(self.f2, self.f2),
+            nn.Linear(self.f2, self.f2//3),
+            nn.LayerNorm(self.f2),
+            nn.ReLU(),
+            nn.Linear(self.f2//3, self.f2),
             nn.LayerNorm(self.f2),
             nn.ReLU()
         )
         self.fusionDec = nn.Sequential(
-            nn.Linear(self.f2, self.f2),
+            nn.Linear(self.f2, self.f2//3),
+            nn.LayerNorm(self.f2),
+            nn.ReLU(),
+            nn.Linear(self.f2//3, self.f2),
             nn.LayerNorm(self.f2),
             nn.ReLU()
         )
