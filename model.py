@@ -277,14 +277,17 @@ class SE_Block_1D(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward(self, x):
+    def forward(self, x, recal=True):
         bs, c, l = x.shape  # Batch size, number of channels, length
         # Squeeze: Global average pooling to get the channel-wise statistics
         y = self.squeeze(x).view(bs, c)  # Shape becomes (bs, c)
         # Excitation: Fully connected layers to compute weights for each channel
         y = self.excitation(y).view(bs, c, 1)  # Shape becomes (bs, c, 1)
         # Recalibrate: Multiply the original input by the computed weights
-        return x * y.expand_as(x)  # Shape matches (bs, c, l)
+        if recal:
+            return x * y.expand_as(x)  # Shape matches (bs, c, l)
+        else:
+            return y.expand_as(x)  # Shape matches (bs, c, l)
 
 class RelativePosition(nn.Module):
 
@@ -1667,13 +1670,14 @@ class EpiDenoise30c(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.fusionL = nn.Sequential(
-            nn.Linear(self.f2, self.f2),
-            nn.LayerNorm(self.f2),
-            nn.ReLU()
-        )
+        # self.fusionL = nn.Sequential(
+        #     nn.Linear(self.f2, self.f2),
+        #     nn.LayerNorm(self.f2),
+        #     nn.ReLU()
+        # )
 
         self.SE_L = SE_Block_1D(self.f2)
+        self.SE_D = SE_Block_1D(self.f2)
 
         # Learnable weights for the average and max pooled features (per feature)
         self.alpha = nn.Parameter(torch.ones(self.f2) * 0.1)
@@ -1705,9 +1709,10 @@ class EpiDenoise30c(nn.Module):
 
         W = src.permute(0, 2, 1) # to B, F, L
         W = self.convL(W)
+        W = self.SE_L(W, recal=True)
         W = W.permute(0, 2, 1) # to B, L, F'
 
-        W = self.fusionL(W)
+        # W = self.fusionL(W)
         if self.pos_enc != "relative":
             W = self.position(W) 
         
@@ -1719,17 +1724,8 @@ class EpiDenoise30c(nn.Module):
         for conv in self.convD:
             H = conv(H)
         
-        H = self.SE_L(H)
-        # H.shape =  N, F', L'
-
-
+        H = self.SE_D(H, recal=False)
         # Aggregating the sequence representation
-        # H_avg_pool = F.adaptive_avg_pool1d(H, 1).squeeze(-1)  # Global Average Pooling
-        # H_max_pool = F.adaptive_max_pool1d(H, 1).squeeze(-1)  # Global Max Pooling
-
-        # H = (self.alpha * H_avg_pool) + (self.beta * H_max_pool)  # Shape: (batch_size, feature_dim)
-        # # Transforming the aggregated representation
-        # H = H.unsqueeze(-1).expand(-1, -1, self.l2)
 
         # H.shape =  N, F', L'
         for encD in self.transD:
@@ -5123,7 +5119,7 @@ if __name__ == "__main__":
                 "mask_percentage": 0.1,
                 "context_length": 810,
                 "batch_size": 30,
-                "learning_rate": 1e-4,
+                "learning_rate": 1e-5,
                 "num_loci": 800,
                 "lr_halflife":2,
                 "min_avail":8
