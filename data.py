@@ -1616,7 +1616,8 @@ class SyntheticData:
             self.generate_base_sequence()
             transformed_sequences = self.apply_transformations()
 
-            smoothed_sequences = self.apply_smoothing(transformed_sequences)
+            # smoothed_sequences = self.apply_smoothing(transformed_sequences)
+            smoothed_sequences = transformed_sequences#self.apply_smoothing(transformed_sequences)
             smoothed_sequences = np.array(smoothed_sequences)
 
             syn_metadata = self.synth_metadata(transformed_sequences)

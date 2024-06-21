@@ -4912,7 +4912,7 @@ if __name__ == "__main__":
                     "dropout": 0.1,
 
                     "n_cnn_layers": 3,
-                    "conv_kernel_size" : 3,
+                    "conv_kernel_size" : 7,
                     "n_decoder_layers" : 1,
 
                     "nhead": 8,
