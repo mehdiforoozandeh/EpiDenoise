@@ -1508,9 +1508,10 @@ class EpiDenoise30b(nn.Module):
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
-        self.f1 = input_dim + metadata_embedding_dim
-        self.f2 = self.f1 * (2**(n_cnn_layers))
-        d_model = self.f2
+        self.f1 = input_dim 
+        self.f2 = (self.f1 * (2**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f3 
         # assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
@@ -1518,7 +1519,6 @@ class EpiDenoise30b(nn.Module):
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        # self.fusion = nn.Linear(self.f1, self.f1)
         
         self.convDec = ConvTower(self.f1, self.f2,
                 W=1, S=1, D=1, 
@@ -5017,7 +5017,7 @@ if __name__ == "__main__":
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
-            "metadata_embedding_dim": 49,
+            "metadata_embedding_dim": 47,
             "dropout": 0.01,
 
             "n_cnn_layers": 3,
