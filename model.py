@@ -1689,7 +1689,7 @@ class EpiDenoise30c(nn.Module):
                 dim_feedforward=2*self.f2, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
         
-        self.neg_binom_layer = NegativeBinomialLayer(self.f2, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(self.l2, output_dim)
         # self.neg_binom_layer = NegativeBinomialLayer(self.f2 + metadata_embedding_dim, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
