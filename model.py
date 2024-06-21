@@ -1443,13 +1443,11 @@ class EpiDenoise30b(nn.Module):
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.posDec = PositionalEncoding(d_model, dropout, self.l1)
 
-            print(self.f1, self.f2, self.f3, self.l1, self.l2) 
-
             self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
             self.decoder_layer = nn.TransformerDecoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
@@ -1468,13 +1466,10 @@ class EpiDenoise30b(nn.Module):
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         e_src = src.permute(0, 2, 1) # to N, F1, L
-        print(e_src.shape)
         for conv in self.convEnc:
             e_src = conv(e_src)
-            print(e_src.shape)
         # e_src.shape = N, F2, L'
         e_src = torch.cat([e_src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
-        print(e_src.shape)
         e_src = self.SE_enc(e_src)
 
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
