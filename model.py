@@ -4979,28 +4979,29 @@ if __name__ == "__main__":
             "lr_halflife":1,
             "min_avail":5
         }
-        if sys.argv[2] == "synth":
-            synth_hyper_parameters30a = {
-                "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 47,
-                "metadata_embedding_dim": 47,
-                "dropout": 0.01,
-                "nhead": 4,
-                "d_model": 384,
-                "nlayers": 6,
-                "epochs": 2000,
-                "inner_epochs": 100,
-                "mask_percentage": 0.1,
-                "context_length": 400,
-                "batch_size": 36,
-                "learning_rate": 1e-4,
-                "num_loci": 1600,
-                "lr_halflife":1,
-                "min_avail":5
-            }
-        
-            train_epd30_synthdata(
-                synth_hyper_parameters30a, arch="a")
+        if len(sys.argv) >= 3:
+            if sys.argv[2] == "synth":
+                synth_hyper_parameters30a = {
+                    "data_path": "/project/compbio-lab/encode_data/",
+                    "input_dim": 47,
+                    "metadata_embedding_dim": 47,
+                    "dropout": 0.01,
+                    "nhead": 4,
+                    "d_model": 384,
+                    "nlayers": 6,
+                    "epochs": 2000,
+                    "inner_epochs": 100,
+                    "mask_percentage": 0.1,
+                    "context_length": 400,
+                    "batch_size": 36,
+                    "learning_rate": 1e-4,
+                    "num_loci": 1600,
+                    "lr_halflife":1,
+                    "min_avail":5
+                }
+            
+                train_epd30_synthdata(
+                    synth_hyper_parameters30a, arch="a")
 
         else:
             train_epidenoise30(
@@ -5033,32 +5034,33 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
-        if sys.argv[2] == "synth":
-            synth_hyper_parameters30b = {
-                "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 47,
-                "metadata_embedding_dim": 49,
-                "dropout": 0.1,
+        if len(sys.argv) >= 3:
+            if sys.argv[2] == "synth":
+                synth_hyper_parameters30b = {
+                    "data_path": "/project/compbio-lab/encode_data/",
+                    "input_dim": 47,
+                    "metadata_embedding_dim": 49,
+                    "dropout": 0.1,
 
-                "n_cnn_layers": 3,
-                "conv_kernel_size" : 7,
-                "n_decoder_layers" : 1,
+                    "n_cnn_layers": 3,
+                    "conv_kernel_size" : 7,
+                    "n_decoder_layers" : 1,
 
-                "nhead": 8,
-                "d_model": 768,
-                "nlayers": 3,
-                "epochs": 4000,
-                "inner_epochs": 50,
-                "mask_percentage": 0.1,
-                "context_length": 810,
-                "batch_size": 50,
-                "learning_rate": 1e-4,
-                "num_loci": 800,
-                "lr_halflife":2,
-                "min_avail":8
-            }
-            train_epd30_synthdata(
-                synth_hyper_parameters30b, arch="b")
+                    "nhead": 8,
+                    "d_model": 768,
+                    "nlayers": 3,
+                    "epochs": 4000,
+                    "inner_epochs": 50,
+                    "mask_percentage": 0.1,
+                    "context_length": 810,
+                    "batch_size": 50,
+                    "learning_rate": 1e-4,
+                    "num_loci": 800,
+                    "lr_halflife":2,
+                    "min_avail":8
+                }
+                train_epd30_synthdata(
+                    synth_hyper_parameters30b, arch="b")
 
         else:
             train_epidenoise30(
@@ -5090,33 +5092,33 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":8
         }
+        if len(sys.argv) >= 3:
+            if sys.argv[2] == "synth":
+                synth_hyper_parameters30cd = {
+                    "data_path": "/project/compbio-lab/encode_data/",
+                    "input_dim": 47,
+                    "metadata_embedding_dim": 49,
+                    "dropout": 0.05,
 
-        if sys.argv[2] == "synth":
-            synth_hyper_parameters30cd = {
-                "data_path": "/project/compbio-lab/encode_data/",
-                "input_dim": 47,
-                "metadata_embedding_dim": 49,
-                "dropout": 0.05,
+                    "n_cnn_layers": 3,
+                    "conv_kernel_size" : 7,
+                    "pool_size" : 3,
 
-                "n_cnn_layers": 3,
-                "conv_kernel_size" : 7,
-                "pool_size" : 3,
-
-                "nhead": 6,
-                "d_model": (47+49)*(2**3),
-                "nlayers": 3,
-                "epochs": 2000,
-                "inner_epochs": 50,
-                "mask_percentage": 0.1,
-                "context_length": 810,
-                "batch_size": 20,
-                "learning_rate": 1e-4,
-                "num_loci": 800,
-                "lr_halflife":2,
-                "min_avail":8
-            }
-            train_epd30_synthdata(
-                synth_hyper_parameters30cd, arch="c")
+                    "nhead": 6,
+                    "d_model": (47+49)*(2**3),
+                    "nlayers": 3,
+                    "epochs": 2000,
+                    "inner_epochs": 50,
+                    "mask_percentage": 0.1,
+                    "context_length": 810,
+                    "batch_size": 20,
+                    "learning_rate": 1e-4,
+                    "num_loci": 800,
+                    "lr_halflife":2,
+                    "min_avail":8
+                }
+                train_epd30_synthdata(
+                    synth_hyper_parameters30cd, arch="c")
 
         else:
             train_epidenoise30(
