@@ -7,7 +7,7 @@ import multiprocessing as mp
 import torch
 from scipy.stats import nbinom
 import torch.distributions as dist
-# from eval import METRICS
+from eval import METRICS
 from data import ExtendedEncodeDataHandler
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions import Poisson as PoissonTorch
