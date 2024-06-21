@@ -4917,7 +4917,7 @@ if __name__ == "__main__":
 
                     "nhead": 8,
                     "d_model": 768,
-                    "nlayers": 5,
+                    "nlayers": 2,
                     "epochs": 4000,
                     "inner_epochs": 50,
                     "mask_percentage": 0.1,
