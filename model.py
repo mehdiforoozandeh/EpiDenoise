@@ -1443,7 +1443,7 @@ class EpiDenoise30b(nn.Module):
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.posDec = PositionalEncoding(d_model, dropout, self.l1)
 
-            print(self.f1, self.f2, self.f3) 
+            print(self.f1, self.f2, self.f3, self.l1, self.l2) 
 
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
