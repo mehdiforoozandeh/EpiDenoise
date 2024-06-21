@@ -1395,108 +1395,6 @@ class EpiDenoise30a(nn.Module):
 
         return p, n, mp, mo
 
-# class EpiDenoise30b_old(nn.Module):
-#     def __init__(self, 
-#         input_dim, metadata_embedding_dim, conv_kernel_size, 
-#         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
-#         dropout=0.1, context_length=2000, pos_enc="relative"):
-#         super(EpiDenoise30b_old, self).__init__()
-#         self.pos_enc = "abs"#pos_enc
-
-#         conv_out_channels = exponential_linspace_int(
-#             d_model//n_cnn_layers, d_model, n_cnn_layers, divisible_by=2)
-
-#         stride = 1
-#         dilation=1
-#         self.context_length = context_length
-#         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-#         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
-#         self.lin = nn.Linear(input_dim + metadata_embedding_dim, d_model)
-
-#         self.signal_layer_norm = nn.LayerNorm(input_dim)
-#         self.embedd_layer_norm = nn.LayerNorm(d_model)
-
-#         self.conv0 = ConvTower(
-#                 input_dim + metadata_embedding_dim, conv_out_channels[0],
-#                 conv_kernel_size[0], stride, dilation, 
-#                 pool_type="max", residuals=True)
-
-#         self.convtower = nn.ModuleList([ConvTower(
-#                 conv_out_channels[i], conv_out_channels[i + 1],
-#                 conv_kernel_size[i + 1], stride, dilation, 
-#                 pool_type="max", residuals=True
-#             ) for i in range(n_cnn_layers - 1)])
-
-#         if self.pos_enc == "relative":
-#             self.encoder_layer = RelativeEncoderLayer(
-#                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-
-#             self.decoder_layer = RelativeDecoderLayer(
-#                 hid_dim=d_model, n_heads=nhead, pf_dim=4*d_model, dropout=dropout)
-#         else:
-#             self.position = PositionalEncoding(d_model, dropout, context_length)
-#             # self.enc_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length//(2**n_cnn_layers))
-#             # self.dec_position = AbsPositionalEmbedding15(d_model=d_model, max_len=self.context_length)
-
-#             self.encoder_layer = nn.TransformerEncoderLayer(
-#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-#             self.decoder_layer = nn.TransformerDecoderLayer(
-#                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-
-#         self.transformer_encoder = nn.ModuleList(
-#             [self.encoder_layer for _ in range(nlayers)])
-
-#         self.transformer_decoder = nn.ModuleList(
-#             [self.decoder_layer for _ in range(n_decoder_layers)])
-        
-#         self.neg_binom_layer = NegativeBinomialLayer(d_model, output_dim)
-#         self.mask_pred_layer = nn.Linear(d_model, output_dim)
-#         self.mask_obs_layer = nn.Linear(d_model, output_dim)
-    
-#     def forward(self, src, x_metadata, y_metadata, availability):
-#         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-#         md_embedding = md_embedding.unsqueeze(1).expand(-1, self.context_length, -1)
-
-#         md_embedding = F.relu(md_embedding)
-#         src = self.signal_layer_norm(src)
-
-#         src = F.relu(torch.cat([src, md_embedding], dim=-1)) # N, L, F
-
-#         ### CONV ENCODER ###
-
-#         e_src = src.permute(0, 2, 1) # to N, F, L
-#         e_src = self.conv0(e_src)
-#         for conv in self.convtower:
-#             e_src = conv(e_src)
-#         e_src = e_src.permute(0, 2, 1)  # to N, L, F
-
-#         ### TRANSFORMER ENCODER ###
-#         if self.pos_enc != "relative":
-#             # encpos = torch.permute(self.enc_position(src), (1, 0, 2)) # to N, L, F
-#             e_src = self.position(e_src)
-#             # e_src = e_src + encpos
-
-#         for enc in self.transformer_encoder:
-#             e_src = enc(e_src)
-        
-#         src = F.relu(self.embedd_layer_norm(self.lin(src)))
-
-#         ### TRANSFORMER DECODER ###
-#         if self.pos_enc != "relative":
-#             # trgpos = torch.permute(self.dec_position(src), (1, 0, 2))
-#             src = self.position(src)
-#             # src = src + trgpos
-
-#         for dec in self.transformer_decoder:
-#             src = dec(src, e_src)
-
-#         p, n = self.neg_binom_layer(src)
-#         mp = torch.sigmoid(self.mask_pred_layer(src))
-#         mo = torch.sigmoid(self.mask_obs_layer(src))
-
-#         return p, n, mp, mo
-
 class EpiDenoise30b(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
@@ -1512,10 +1410,6 @@ class EpiDenoise30b(nn.Module):
         self.f2 = (self.f1 * (2**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f3 
-
-        print(self.f1, self.f2, self.f3)
-        exit()
-        # assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
@@ -1535,17 +1429,6 @@ class EpiDenoise30b(nn.Module):
                 pool_type="max", residuals=True,
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
-
-        # self.fusionEnc = nn.Sequential(
-        #     nn.Linear(self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
-        # self.fusionDec = nn.Sequential(
-        #     nn.Linear(self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
 
         self.SE_enc = SE_Block_1D(self.f2)
         self.SE_dec = SE_Block_1D(self.f2)
@@ -1579,31 +1462,20 @@ class EpiDenoise30b(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        # md_embedding = 
 
-        md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
-
-        # src = torch.cat([src, md_embedding], dim=-1)
-        # src = F.relu(self.fusion(src)) # N, L, F
-
         ### CONV ENCODER ###
         e_src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
             e_src = conv(e_src)
-        
-        e_src = torch.cat([e_src, md_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-
+        # e_src.shape = N, F2, L'
+        e_src = torch.cat([e_src, md_embedding.unsqueeze(1).expand(-1, -1, self.l2)], dim=-1)
         e_src = self.SE_enc(e_src)
 
-
         e_src = e_src.permute(0, 2, 1)  # to N, L', F2
-
-        # e_src = self.fusionEnc(e_src)
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             e_src = self.posEnc(e_src)
-
         for enc in self.transformer_encoder:
             e_src = enc(e_src)
 
@@ -1611,25 +1483,16 @@ class EpiDenoise30b(nn.Module):
         src = src.permute(0, 2, 1) # to N, F1, L
         src = self.convDec(src)
 
-        src = torch.cat([src, md_embedding.unsqueeze(1).expand(-1, self.l1, -1)], dim=-1)
-
-
+        src = torch.cat([src, md_embedding.unsqueeze(1).expand(-1, -1, self.l1)], dim=-1)
         src = self.SE_dec(src)
 
-
         src = src.permute(0, 2, 1) # to N, L, F2
-
-        # src = self.fusionDec(src)
         ### TRANSFORMER DECODER ###
         if self.pos_enc != "relative":
             src = self.posDec(src)
-
         for dec in self.transformer_decoder:
             src = dec(src, e_src)
         # src.shape = N, L, F2
-
-        # src = torch.cat([src, md_embedding], dim=-1) 
-        # src.shape = N, L, F3
 
         p, n = self.neg_binom_layer(src)
         mp = torch.sigmoid(self.mask_pred_layer(src))
@@ -5020,7 +4883,7 @@ if __name__ == "__main__":
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 47,
-            "metadata_embedding_dim": 42,
+            "metadata_embedding_dim": 47,
             "dropout": 0.01,
 
             "n_cnn_layers": 3,
@@ -5045,7 +4908,7 @@ if __name__ == "__main__":
                 synth_hyper_parameters30b = {
                     "data_path": "/project/compbio-lab/encode_data/",
                     "input_dim": 47,
-                    "metadata_embedding_dim": 42,
+                    "metadata_embedding_dim": 47,
                     "dropout": 0.1,
 
                     "n_cnn_layers": 3,

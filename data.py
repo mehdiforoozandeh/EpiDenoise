@@ -1734,9 +1734,9 @@ if __name__ == "__main__":
             row, col = divmod(i, n_cols)
             ax = axs[row, col]
             seq = smoothed_sequences[i]
-            md, _ = syn_metadata[i]
+            md = syn_metadata[i]
             ax.plot(seq, label=f'F{i+1}: {md[0]:.1f}-{md[1]:.1f}-{md[2]:.1f}-{md[3]:.1f}')
-            ax.legend(fontsize=5)
+            # ax.legend(fontsize=5)
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
 
