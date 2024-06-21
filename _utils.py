@@ -302,13 +302,16 @@ class MONITOR_VALIDATION(object):
         self.model = model
         # self.model.eval()
         full_res = []
-        bioses = list(self.dataset.navigation.keys())
-        # bioses = [list(self.dataset.navigation.keys())[0]]
+        # bioses = list(self.dataset.navigation.keys())
+        bioses = [list(self.dataset.navigation.keys())[0]]
 
         for bios_name in bioses:
-            imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-            full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
-            del imp_dist, ups_dist, Y
+            try:
+                imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+                del imp_dist, ups_dist, Y
+            except:
+                pass
         del self.model
         
         # print(f"got results.. generating text output")
