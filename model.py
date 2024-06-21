@@ -5042,11 +5042,11 @@ if __name__ == "__main__":
 
                 "n_cnn_layers": 2,
                 "conv_kernel_size" : 7,
-                "n_decoder_layers" : 1,
+                "n_decoder_layers" : 3,
 
                 "nhead": 8,
                 "d_model": 768,
-                "nlayers": 3,
+                "nlayers": 4,
                 "epochs": 4000,
                 "inner_epochs": 50,
                 "mask_percentage": 0.1,
