@@ -1415,7 +1415,7 @@ class EpiDenoise30a(nn.Module):
                 pool_type="none", residuals=False, 
                 groups=input_dim)
 
-        self.SE_block = SE_Block_1D(d_model)
+        # self.SE_block = SE_Block_1D(d_model)
 
         self.FF = nn.Sequential(
             nn.Linear(d_model, d_model),
@@ -1438,7 +1438,7 @@ class EpiDenoise30a(nn.Module):
 
         src = src.permute(0,2,1)
         src = self.ConvEmb(src)
-        src = self.SE_block(src)
+        # src = self.SE_block(src)
         src = src.permute(0,2,1)
 
         src = self.FF(src)
