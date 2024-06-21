@@ -4911,13 +4911,13 @@ if __name__ == "__main__":
                     "metadata_embedding_dim": 40,
                     "dropout": 0.1,
 
-                    "n_cnn_layers": 5,
+                    "n_cnn_layers": 4,
                     "conv_kernel_size" : 7,
                     "n_decoder_layers" : 1,
 
                     "nhead": 8,
                     "d_model": 768,
-                    "nlayers": 5,
+                    "nlayers": 3,
                     "epochs": 4000,
                     "inner_epochs": 50,
                     "mask_percentage": 0.1,
