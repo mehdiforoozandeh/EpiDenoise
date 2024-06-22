@@ -93,7 +93,7 @@ class MetadataEmbeddingModule(nn.Module):
         full_embed = full_embed.view(full_embed.shape[0], -1)
         full_embed = self.final_embedding(full_embed)
 
-        full_embed = self.final_emb_layer_norm(full_embed)
+        full_embed = F.relu(self.final_emb_layer_norm(full_embed))
 
         return full_embed
 
