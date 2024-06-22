@@ -4922,7 +4922,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 3,
+            "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
@@ -4932,7 +4932,7 @@ if __name__ == "__main__":
             "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
-            "context_length": 810,
+            "context_length": 1620,
             "batch_size": 25,
             "learning_rate": 1e-4,
             "num_loci": 800,
