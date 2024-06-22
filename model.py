@@ -4932,10 +4932,10 @@ if __name__ == "__main__":
             "nlayers": 6,
             "epochs": 1,
             "inner_epochs": 50,
-            "mask_percentage": 0.1,
+            "mask_percentage": 0.15,
             "context_length": 1620,
             "batch_size": 25,
-            "learning_rate": 1e-3,
+            "learning_rate": 1e-4,
             "num_loci": 800,
             "lr_halflife":2,
             "min_avail":15
