@@ -1431,7 +1431,7 @@ class ExtendedEncodeDataHandler:
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            if self.has_rnaseq(bios):
+            if split != "val" and self.has_rnaseq(bios):
                 continue
 
             elif len(self.navigation[bios]) < bios_min_exp_avail_threshold:
