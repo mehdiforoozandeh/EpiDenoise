@@ -3410,7 +3410,7 @@ class PRE_TRAINER(object):
                 # print("new batch")
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
                 dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
-                # dsf_X, dsf_Y = 1, 1
+                dsf_X, dsf_Y = 1, 1
 
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)
@@ -3570,123 +3570,54 @@ class PRE_TRAINER(object):
                     batch_rec["ups_pmf"].append(ups_pmf)
                     batch_rec["ups_conf"].append(ups_errstd)
 
-                    lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
-                    if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
-                        try:
-                            torch.save(
-                                self.model.state_dict(), 
-                                f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
-                        except:
-                            pass
+                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
+                if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
+                    try:
+                        torch.save(
+                            self.model.state_dict(), 
+                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
+                    except:
+                        pass
 
-                    elapsed_time = datetime.now() - t0
-                    hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                    minutes, seconds = divmod(remainder, 60)
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
 
-                    if arch in ["a", "b"]:
-                        logstr = [
-                            f"Ep. {epoch}",
-                            f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                            f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                            f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
-                            f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                            f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                            f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
-                            f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
-                            f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                            f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                            f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
-                            f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
-                            f"took {int(minutes)}:{int(seconds)}"]
+                if arch in ["a", "b"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
+                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
 
-                    elif arch in ["c", "d"]:
-                        logstr = [
-                            f"Ep. {epoch}",
-                            f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                            f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                            f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
-                            f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
-                            f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                            f"took {int(minutes)}:{int(seconds)}"]
-                    
-                    logstr = " | ".join(logstr)
-                    log_strs.append(logstr)
-                    print(logstr)
-
-                #     if arch in ["a", "b"]:
-                #         imp_pred = NegativeBinomial(
-                #             output_p[masked_map].cpu().detach(), 
-                #             output_n[masked_map].cpu().detach()
-                #             ).expect().cpu().detach().numpy()
-
-                #         imp_true = Y_batch[masked_map].cpu().detach().numpy()
-                #         imp_r2 = r2_score(imp_true, imp_pred)
-                #         imp_mse = ((imp_true - imp_pred)**2).mean()
-
-                #         batch_rec["imp_loss"].append(pred_loss.item())
-                #         batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
-                #         batch_rec["imp_mse"].append(imp_mse)
-                #         batch_rec["imp_r2"].append(imp_r2)
-
-                #     ups_pred = NegativeBinomial(
-                #         output_p[observed_map].cpu().detach(), 
-                #         output_n[observed_map].cpu().detach()
-                #         ).expect().cpu().detach().numpy()
-
-                #     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                #     try:
-                #         ups_r2 = r2_score(ups_true, ups_pred)
-                #         ups_mse = ((ups_true - ups_pred)**2).mean()
-                #     except:
-                #         ups_r2 = np.nan
-                #         ups_mse = np.nan
+                elif arch in ["c", "d"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
                 
-                #     batch_rec["ups_loss"].append(obs_loss.item())
-                #     batch_rec["ups_r2"].append(ups_r2)
-                #     batch_rec["ups_mse"].append(ups_mse)
-                
-                # lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
-                # if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
-                #     try:
-                #         torch.save(
-                #             self.model.state_dict(), 
-                #             f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
-                #     except:
-                #         pass
-
-                # elapsed_time = datetime.now() - t0
-                # hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                # minutes, seconds = divmod(remainder, 60)
-
-                # if arch in ["a", "b"]:
-                #     logstr = [
-                #         f"Ep. {epoch}",
-                #         f"DSF{dsf_X}->{dsf_Y}",
-                #         f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                #         f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                #         f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                #         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                #         f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
-                #         f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                #         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                #         f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                #         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                #         f"took {int(minutes)}:{int(seconds)}"]
-
-                # elif arch in ["c", "d"]:
-                #     logstr = [
-                #         f"Ep. {epoch}",
-                #         f"DSF{dsf_X}->{dsf_Y}",
-                #         f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                #         f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
-                #         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                #         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                #         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                #         f"took {int(minutes)}:{int(seconds)}"]
-                
-                # logstr = " | ".join(logstr)
-                # log_strs.append(logstr)
-                # print(logstr)
+                logstr = " | ".join(logstr)
+                log_strs.append(logstr)
+                print(logstr)
                 
                 if lopr % 2 == 0 and lopr != last_lopr:
                     validation_set_eval = val_eval.get_validation(self.model)
