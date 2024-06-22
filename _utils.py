@@ -302,8 +302,8 @@ class MONITOR_VALIDATION(object):
         self.model = model
         # self.model.eval()
         full_res = []
-        # bioses = list(self.dataset.navigation.keys())
-        bioses = [list(self.dataset.navigation.keys())[0]]
+        bioses = list(self.dataset.navigation.keys())
+        # bioses = [list(self.dataset.navigation.keys())[0]]
 
         for bios_name in bioses:
             try:
