@@ -1062,7 +1062,7 @@ class ExtendedEncodeDataHandler:
                         if exp in new_nav[ct]:
                             print("overwritten")
                         else:
-                            new_nav[ct] = self.navigation[sub_bios][exp]
+                            new_nav[ct][exp] = self.navigation[sub_bios][exp]
                             pass
 
     def filter_navigation(self, include=[], exclude=[]):
