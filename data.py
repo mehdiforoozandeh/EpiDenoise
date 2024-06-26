@@ -1638,7 +1638,7 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
-        eed = ExtendedEncodeDataHandler("data/")
+        eed = ExtendedEncodeDataHandler(solar_data_path)
         eed.set_alias()
         eed.coords(mode="train")
 
