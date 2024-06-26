@@ -907,16 +907,16 @@ class ExtendedEncodeDataHandler:
         self.alias_path = os.path.join(self.base_path, "aliases.json")
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
         self.split_path = os.path.join(self.base_path, "train_va_test_split.json")
-        # self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
+        
+        self.resolution = resolution
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
         self.df1 = pd.read_csv(self.df1_path)
-        self.resolution = resolution
 
         self.df2_path = os.path.join(self.base_path, "DF2.csv")
-        
+        self.df2 = pd.read_csv(self.df2_path).drop("Unnamed: 0", axis=1)
+
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
-        # self.ensure_files()
 
     def coords(self, mode="train"):
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
@@ -931,22 +931,6 @@ class ExtendedEncodeDataHandler:
                     self.chr_sizes[chr_name] = int(chr_size)    
         
         self.genomesize = sum(list(self.chr_sizes.values()))
-
-    def ensure_files(self):
-        essential_paths = [
-            self.alias_path, self.navigation_path, self.df1_path,
-            self.df2_path, self.df3_path#, self.merged_navigation_path
-        ]
-        for path in essential_paths:
-            if not os.path.exists(path):
-                if path in [self.alias_path, self.navigation_path]:
-                    with open(path, 'w') as file:
-                        json.dump({}, file)
-                else:
-                    print(f"Warning: {path} does not exist at {path}.")
-        
-        with open(self.alias_path, 'r') as alifile:
-            self.alias = json.load(alifile)
 
     def is_bios_complete(self, bios_name):
         """Check if a biosample has all required files."""
@@ -1018,7 +1002,7 @@ class ExtendedEncodeDataHandler:
         
         return sum(is_comp) / len(is_comp)
 
-    def set_alias(self, donor=False, excludes=["ChIA-PET", "CAGE", "RNA-seq"]):
+    def set_alias(self, excludes=["ChIA-PET", "CAGE", "RNA-seq"]):
         if os.path.exists(self.alias_path):
             with open(self.alias_path, 'r') as file:
                 self.aliases = json.load(file)
@@ -1041,51 +1025,12 @@ class ExtendedEncodeDataHandler:
             experiment: f"M{str(index+1).zfill(len(str(num_experiments)))}" for index, experiment in enumerate(
                 experiment_counts.index)}
 
-        if donor:
-            # # Alias for donors
-            self.merge_donors()
-            if os.path.exists(self.merged_navigation_path):
-                with open(self.merged_navigation_path, 'r') as file:
-                    donor_to_biosamples = json.load(file)
-                donor_counts = {donor: len(biosamples) for donor, biosamples in donor_to_biosamples.items()}
-                sorted_donors = sorted(donor_counts.items(), key=lambda x: x[1], reverse=True)
-                num_donors = len(sorted_donors)
-                donor_alias = {donor: f"D{str(index+1).zfill(len(str(num_donors)))}" for index, (donor, _) in enumerate(sorted_donors)}
-            else:
-                print("Merged navigation JSON does not exist. Run merge_donors first.")
-                donor_alias = {}
-
-            self.aliases = {
-                "biosample_aliases": biosample_alias,
-                "experiment_aliases": experiment_alias,
-                "donor_aliases": donor_alias
-            }
-        else:
-            self.aliases = {
-                "biosample_aliases": biosample_alias,
-                "experiment_aliases": experiment_alias}
+        self.aliases = {
+            "biosample_aliases": biosample_alias,
+            "experiment_aliases": experiment_alias}
 
         with open(self.alias_path, 'w') as file:
             json.dump(self.aliases, file, indent=4)
-
-    def merge_donors(self):
-        """Merge biosamples based on donors and write a merged navigation JSON file."""
-        donor_to_biosamples = {}
-
-        for bios in os.listdir(self.base_path):
-            donor_path = os.path.join(self.base_path, bios, "donor.json")
-            if os.path.isfile(donor_path):
-                with open(donor_path, 'r') as file:
-                    donor_data = json.load(file)
-                    donor_id = donor_data.get('Accession', None)
-
-                    if donor_id:
-                        if donor_id not in donor_to_biosamples:
-                            donor_to_biosamples[donor_id] = []
-                        donor_to_biosamples[donor_id].append(bios)
-
-        with open(self.merged_navigation_path, 'w') as file:
-            json.dump(donor_to_biosamples, file, indent=4)
 
     def navigate_bios_exps(self):
         """Navigate all biosample-experiment pairs and save in JSON."""
@@ -1101,6 +1046,37 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
+    def merge_celltypes(self):
+        celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
+        for i in range(len(self.df2)):
+            celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
+
+        new_nav = {}
+        for ct in celltypes.keys():
+            for sub_bios in celltypes[ct]:
+                if sub_bios in self.navigation.keys():
+                    if ct not in new_nav.keys():
+                        new_nav[ct] = {}
+
+                    for exp in self.navigation[sub_bios].keys():
+                        if exp in new_nav[ct]:
+                            print("overwritten")
+                        else:
+                            pass
+
+
+    def filter_navigation(self, include=[]):
+        """
+        filter based on a list of assays to include
+        """
+        if len(include) == 0:
+            return
+        else:
+            for bios in list(self.navigation.keys()):
+                for exp in list(self.navigation[bios].keys()):
+                    if exp not in include:
+                        del self.navigation[bios][exp]
+                        
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
             with open(self.split_path, 'r') as file:
@@ -1333,6 +1309,8 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
+
+        
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
@@ -1643,7 +1621,6 @@ class SyntheticData:
 
         return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
-
 if __name__ == "__main__": 
 
     solar_data_path = "/project/compbio-lab/encode_data/"
@@ -1663,13 +1640,17 @@ if __name__ == "__main__":
     elif sys.argv[1] == "test":
         eed = ExtendedEncodeDataHandler("data/")
         eed.set_alias()
-        eed.coords(mode="eval")
+        eed.coords(mode="train")
 
         if os.path.exists(eed.navigation_path) == False:
             eed.navigate_bios_exps()
             
         with open(eed.navigation_path, 'r') as navfile:
             eed.navigation  = json.load(navfile)
+
+        print(eed.navigation)
+
+        exit()
 
         t0 = datetime.datetime.now()
 
@@ -1739,7 +1720,6 @@ if __name__ == "__main__":
             # ax.legend(fontsize=5)
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
-
 
     else:
         d = GET_DATA()

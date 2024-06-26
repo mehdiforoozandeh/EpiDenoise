@@ -289,6 +289,17 @@ class SE_Block_1D(nn.Module):
         else:
             return y.expand_as(x)  # Shape matches (bs, c, l)
 
+class Sqeeze_Extend(nn.Module):
+    def __init__(self, k=1):
+        super(Sqeeze_Extend, self).__init__()
+        self.k = k
+        self.squeeze = nn.AdaptiveAvgPool1d(k)
+
+    def forward(self, x):
+        bs, c, l = x.shape  
+        y = self.squeeze(x).view(bs, c, self.k)
+        return y.expand_as(x)
+
 class RelativePosition(nn.Module):
 
     def __init__(self, num_units, max_relative_position):
@@ -1607,6 +1618,63 @@ class EpiDenoise30c(nn.Module):
         p, n = self.neg_binom_layer(Z)
 
         return p, n
+
+class EpiDenoise30d(nn.Module):
+    def __init__(self, 
+        input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
+        dropout=0.1, context_length=2000):
+        super(EpiDenoise30d, self).__init__()
+
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = input_dim
+        self.f2 = self.f1 * (2**(n_cnn_layers))
+
+        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.convtower = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_kernel_size[i], S=1, D=1, pool_type="max", residuals=True,
+                groups=conv_channels[i], pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.squeez = Sqeeze_Extend()
+        self.expand = nn.Sequential(
+            nn.Linear(1, self.f1),
+            nn.LayerNorm(self.f1),
+            nn.ReLU(inplace=True))
+
+        self.transD = nn.ModuleList(
+            [nn.TransformerEncoderLayer(
+                d_model=self.f2, nhead=1, 
+                dim_feedforward=2*self.f2, 
+                dropout=dropout, batch_first=True) for _ in range(nlayers)])
+
+        self.dwconvblock = ConvTower(
+            self.f1, self.f2, W=1, S=1, D=1, 
+            pool_type="none", residuals=False, 
+            groups=self.f1)
+
+        self.SEblock = SE_Block_1D(self.f2)
+
+        self.transL = nn.ModuleList(
+            [nn.TransformerEncoderLayer(
+                d_model=self.f2, nhead=nhead, 
+                dim_feedforward=2*self.f2, 
+                dropout=dropout, batch_first=True) for _ in range(nlayers)])
+        
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=self.f1, non_linearity=True)
+
+        self.trasZ = nn.ModuleList(
+            [nn.TransformerDecoderLayer(
+                d_model=d_model, nhead=nhead,
+                dim_feedforward=2*d_model, 
+                dropout=dropout, batch_first=True) for _ in range(n_decoder_layers)])
+
+        self.neg_binom_layer = NegativeBinomialLayer(self.l2, output_dim)
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
