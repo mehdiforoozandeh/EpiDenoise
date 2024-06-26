@@ -1059,11 +1059,10 @@ class ExtendedEncodeDataHandler:
                         new_nav[ct] = {}
 
                     for exp in self.navigation[sub_bios].keys():
-                        if exp in new_nav[ct]:
-                            print(f"overwritten {ct} {exp}")
-                        else:
+                        if exp not in new_nav[ct]:
                             new_nav[ct][exp] = self.navigation[sub_bios][exp]
-                            pass
+        
+        self.navigation = new_nav
 
     def filter_navigation(self, include=[], exclude=[]):
         """
@@ -1660,7 +1659,7 @@ if __name__ == "__main__":
 
         eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
         eed.merge_celltypes()
-        print(eed.navigation)
+        # print(eed.navigation)
 
         exit()
 
