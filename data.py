@@ -1659,7 +1659,7 @@ if __name__ == "__main__":
 
         eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
         eed.merge_celltypes()
-        print(eed.navigation)
+        print({ct:len(v) for ct,v in eed.navigation.items()})
 
         exit()
 
