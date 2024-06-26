@@ -1064,7 +1064,6 @@ class ExtendedEncodeDataHandler:
                         else:
                             pass
 
-
     def filter_navigation(self, include=[], exclude=[]):
         """
         filter based on a list of assays to include
@@ -1659,7 +1658,7 @@ if __name__ == "__main__":
             eed.navigation  = json.load(navfile)
 
         eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
-        print(eed.navigation)
+        eed.merge_celltypes()
 
         exit()
 
