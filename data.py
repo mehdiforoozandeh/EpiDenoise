@@ -1065,17 +1065,27 @@ class ExtendedEncodeDataHandler:
                             pass
 
 
-    def filter_navigation(self, include=[]):
+    def filter_navigation(self, include=[], exclude=[]):
         """
         filter based on a list of assays to include
         """
-        if len(include) == 0:
+        if len(include) == 0 and len(exclude) == 0:
             return
-        else:
+
+        elif len(exclude) == 0 and len(include) != 0:
             for bios in list(self.navigation.keys()):
                 for exp in list(self.navigation[bios].keys()):
                     if exp not in include:
                         del self.navigation[bios][exp]
+
+        elif len(include) == 0 and len(exclude) != 0:
+            for bios in list(self.navigation.keys()):
+                for exp in list(self.navigation[bios].keys()):
+                    if exp in exclude:
+                        del self.navigation[bios][exp]
+
+        else:
+            return
                         
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
@@ -1648,6 +1658,7 @@ if __name__ == "__main__":
         with open(eed.navigation_path, 'r') as navfile:
             eed.navigation  = json.load(navfile)
 
+        eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
         print(eed.navigation)
 
         exit()
