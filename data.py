@@ -1060,7 +1060,7 @@ class ExtendedEncodeDataHandler:
 
                     for exp in self.navigation[sub_bios].keys():
                         if exp in new_nav[ct]:
-                            print("overwritten")
+                            print(f"overwritten {ct} {exp}")
                         else:
                             new_nav[ct][exp] = self.navigation[sub_bios][exp]
                             pass
