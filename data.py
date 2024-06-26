@@ -918,6 +918,42 @@ class ExtendedEncodeDataHandler:
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
 
+    def report(self):
+        """
+        Generates a formatted text report of the dataset.
+        """
+        print("Extended Encode Data Report")
+        print("----------------------------")
+        print(f"Total number of complete biosamples: {sum(self.DS_checkup())}")
+        
+        # Count biosamples with more than n assays available
+        assay_count = self.df1.notna().sum(axis=1)
+        max_assays = assay_count.max()
+        print("\nNumber of biosamples with more than N assays available:")
+        for n in range(max_assays, 0, -1):
+            count = (assay_count >= n).sum()
+            print(f"  - More than {n} assays: {count}")
+        
+        # Count of biosamples where each assay is available
+        print("\nAssays availability in biosamples:")
+        for assay in self.df1.columns[1:]:  # Skip 'Accession'
+            available_count = self.df1[assay].notna().sum()
+            print(f"  - {assay}: {available_count} biosamples")
+        
+        # Training and testing biosamples
+        print("\nTraining and testing biosamples:")
+        print(f"  - Number of training biosamples: {len([b for b, s in self.split_dict.items() if s == 'train'])}")
+        print(f"  - Number of testing biosamples: {len([b for b, s in self.split_dict.items() if s == 'test'])}")
+        
+        # Count of isogenic replicates
+        isogenic_train_test = self.df2[self.df2['isogenic_replicates'].notnull()]
+        isogenic_count = 0
+        for index, row in isogenic_train_test.iterrows():
+            if row['Accession'] in self.split_dict and self.split_dict[row['Accession']] == 'train' \
+            and row['isogenic_replicates'] in self.split_dict and self.split_dict[row['isogenic_replicates']] == 'test':
+                isogenic_count += 1
+        print(f"  - Number of isogenic replicates, one in train and one in test: {isogenic_count}\n")
+
     def coords(self, mode="train"):
         main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
         if mode == "train":
@@ -1103,10 +1139,16 @@ class ExtendedEncodeDataHandler:
         self.split_dict = {}
         
         for idx in train_data.Accession:
-            self.split_dict[idx] = 'train'
+            if self.has_rnaseq(idx):
+                self.split_dict[idx] = 'test'
+            else:
+                self.split_dict[idx] = 'train'
         
         for idx in val_data.Accession:
-            self.split_dict[idx] = 'val'
+            if self.has_rnaseq(idx):
+                self.split_dict[idx] = 'test'
+            else:
+                self.split_dict[idx] = 'val'
         
         for idx in test_data.Accession:
             self.split_dict[idx] = 'test'
@@ -1300,7 +1342,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        top_k_bios=False, k=300):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=True):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1319,7 +1361,9 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-        
+        self.filter_navigation(exclude=excludes)
+        if merge_ct:
+            self.merge_celltypes()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
@@ -1332,19 +1376,6 @@ class ExtendedEncodeDataHandler:
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
-
-        if top_k_bios:
-            avail = {}
-            for key, v in self.navigation.items():
-                avail[key] = len(v)
-
-            # Sort the dictionary by values and extract the top k keys
-            top_k_keys = [key for key, value in sorted(avail.items(), key=lambda item: item[1], reverse=True)[:k]]
-            new_nav = {}
-            for key in top_k_keys:
-                new_nav[key] = dataset.navigation[key]
-
-            self.navigation = new_nav
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
@@ -1660,6 +1691,8 @@ if __name__ == "__main__":
         eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
         eed.merge_celltypes()
         print({ct:len(v) for ct,v in eed.navigation.items()})
+
+        eed.reports()
 
         exit()
 
