@@ -1243,7 +1243,7 @@ class ExtendedEncodeDataHandler:
         self.m_regions = []
         size = (self.chr_sizes[chr] // self.resolution) * self.resolution
         for i in range(0, size, context_length):
-            self.m_regions.append(chr, i, i+context_length)
+            self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
