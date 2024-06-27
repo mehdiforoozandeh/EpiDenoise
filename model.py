@@ -5199,7 +5199,7 @@ if __name__ == "__main__":
             "input_dim": 45,
             "metadata_embedding_dim": 45,
             "dropout": 0.01,
-            "nhead": 4,
+            "nhead": 5,
             "d_model": 450,
             "nlayers": 6,
             "epochs": 1,
