@@ -3926,9 +3926,10 @@ class PRE_TRAINER(object):
                 if arch in ["a", "b"]:
                     logstr = [
                         f"Ep. {epoch}",
-                        # f"DSF{dsf_X}->{dsf_Y}",
-                        # f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        # f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}",
+                        f"ChrLoci Prog. {self.dataset.loci_pointer/len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
+                        f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                         f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
@@ -3945,9 +3946,10 @@ class PRE_TRAINER(object):
                 elif arch in ["c", "d"]:
                     logstr = [
                         f"Ep. {epoch}",
-                        # f"DSF{dsf_X}->{dsf_Y}",
-                        # f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
-                        # f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}",
+                        f"ChrLoci Prog. {self.dataset.loci_pointer/len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
+                        f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
                         f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",

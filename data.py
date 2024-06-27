@@ -1237,9 +1237,6 @@ class ExtendedEncodeDataHandler:
                         break
                         
     def generate_full_chr_loci(self, context_length, chr="chr19"):
-        """
-        fill in
-        """
         self.m_regions = []
         size = (self.chr_sizes[chr] // self.resolution) * self.resolution
         for i in range(0, size, context_length):
