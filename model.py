@@ -3445,7 +3445,7 @@ class PRE_TRAINER(object):
 
         return self.model
 
-    def pretrain_epidenoise_30(self, 
+    def __pretrain_epidenoise_30(self, 
         num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
         log_strs = []
         log_strs.append(str(self.device))
@@ -3473,7 +3473,7 @@ class PRE_TRAINER(object):
             next_epoch = False
 
             last_lopr = -1
-            while (next_epoch==False):
+            while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
                 t0 = datetime.now()
                 # print("new batch")
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
@@ -3482,6 +3482,271 @@ class PRE_TRAINER(object):
 
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(dsf_X)
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(dsf_Y)
+
+                if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
+                    self.dataset.update_batch_pointers()
+                    print("mismatch in shapes! skipped batch...")
+                    continue
+                
+                batch_rec = {
+                    "imp_loss":[], "ups_loss":[], "msk_loss":[],
+                    "ups_r2":[], "imp_r2":[],
+                    "ups_mse":[], "imp_mse":[],
+                    "ups_pmf":[], "imp_pmf":[],
+                    "ups_conf":[], "imp_conf":[]
+                    }
+                for _ in range(inner_epochs):
+                    # print("new inner epoch")
+                    self.optimizer.zero_grad()
+                    torch.cuda.empty_cache()
+
+                    X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                    Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
+
+                    if arch in ["a", "b"]:
+                        X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+
+                        masked_map = (X_batch == token_dict["cloze_mask"])
+                        observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
+                        missing_map = (X_batch == token_dict["missing_mask"])
+                        masked_map = masked_map.to(self.device) # imputation targets
+                        observed_map = observed_map.to(self.device) # upsampling targets
+                    
+                    elif arch in ["c", "d"]:
+                        observed_map = (X_batch != token_dict["missing_mask"])
+                        observed_map = observed_map.to(self.device) # upsampling targets
+                        
+                    X_batch = X_batch.float().to(self.device).requires_grad_(True)
+                    mX_batch = mX_batch.to(self.device)
+                    avX_batch = avX_batch.to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+                    Y_batch = Y_batch.to(self.device)
+
+                    if arch in ["a", "b"]:
+                        output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                        pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                            output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
+
+                        if torch.isnan(pred_loss).any():
+                            if len(batch_rec["imp_loss"]) > 0:
+                                pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                            else:
+                                pred_loss = torch.Tensor(1e5)
+
+                        if torch.isnan(obs_loss).any():
+                            if len(batch_rec["ups_loss"]) > 0:
+                                obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                            else:
+                                obs_loss = torch.Tensor(1e5)
+
+                        # loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) #+ msk_p_loss + msk_o_loss
+                        # loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                        loss = pred_loss
+
+                    elif arch in ["c", "d"]:
+                        output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                        obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
+                        loss = obs_loss
+
+                    if torch.isnan(loss).sum() > 0:
+                        skipmessage = "Encountered nan loss! Skipping batch..."
+                        log_strs.append(skipmessage)
+                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
+                        print(skipmessage)
+                        torch.cuda.empty_cache() 
+                        continue
+                    
+                    loss.backward()  
+
+                    if hook:
+                        # Initialize variables to store maximum gradient norms and corresponding layer names
+                        max_weight_grad_norm = 0
+                        max_weight_grad_layer = None
+                        max_bias_grad_norm = 0
+                        max_bias_grad_layer = None
+
+                        # Check and update maximum gradient norms
+                        for name, module in self.model.named_modules():
+                            if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                                if module.weight.grad_norm > max_weight_grad_norm:
+                                    max_weight_grad_norm = module.weight.grad_norm
+                                    max_weight_grad_layer = name
+
+                            if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                                if module.bias.grad_norm > max_bias_grad_norm:
+                                    max_bias_grad_norm = module.bias.grad_norm
+                                    max_bias_grad_layer = name
+
+                        if max_weight_grad_layer:
+                            print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
+
+                    self.optimizer.step()
+
+                    if arch in ["a", "b"]:
+                        imp_pred = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(), 
+                            output_n[masked_map].cpu().detach()
+                            ).expect().cpu().detach().numpy()
+
+                        imp_true = Y_batch[masked_map].cpu().detach().numpy()
+                        imp_r2 = r2_score(imp_true, imp_pred)
+                        imp_pmf = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(),  
+                            output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
+                        imp_mse = ((imp_true - imp_pred)**2).mean()
+
+                        imp_std = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(), 
+                            output_n[masked_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                        imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
+                        imp_errstd = pearsonr(imp_std, imp_abs_error)
+
+                        batch_rec["imp_loss"].append(pred_loss.item())
+                        batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                        batch_rec["imp_mse"].append(imp_mse)
+                        batch_rec["imp_r2"].append(imp_r2)
+                        batch_rec["imp_pmf"].append(imp_pmf)
+                        batch_rec["imp_conf"].append(imp_errstd)
+
+                    ups_pred = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()
+                        ).expect().cpu().detach().numpy()
+
+                    ups_true = Y_batch[observed_map].cpu().detach().numpy()
+                    ups_pmf = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+
+                    ups_std = NegativeBinomial(
+                            output_p[observed_map].cpu().detach(), 
+                            output_n[observed_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                    ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
+                    ups_errstd = pearsonr(ups_std, ups_abs_error)
+
+                    try:
+                        ups_r2 = r2_score(ups_true, ups_pred)
+                        ups_mse = ((ups_true - ups_pred)**2).mean()
+                    except:
+                        ups_r2 = np.nan
+                        ups_mse = np.nan
+                
+                    batch_rec["ups_loss"].append(obs_loss.item())
+                    batch_rec["ups_r2"].append(ups_r2)
+                    batch_rec["ups_mse"].append(ups_mse)
+                    batch_rec["ups_pmf"].append(ups_pmf)
+                    batch_rec["ups_conf"].append(ups_errstd)
+
+                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
+                if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
+                    try:
+                        torch.save(
+                            self.model.state_dict(), 
+                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
+                    except:
+                        pass
+
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+
+                if arch in ["a", "b"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                        f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
+                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
+
+                elif arch in ["c", "d"]:
+                    logstr = [
+                        f"Ep. {epoch}",
+                        f"DSF{dsf_X}->{dsf_Y}",
+                        f"Loci Prog. {self.dataset.current_loci_batch_pointer/self.dataset.num_regions:.2%}",
+                        f"Bios Prog. {self.dataset.current_bios_batch_pointer/self.dataset.num_bios:.2%}",
+                        f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
+                        f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
+                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
+                        f"took {int(minutes)}:{int(seconds)}"]
+                
+                logstr = " | ".join(logstr)
+                log_strs.append(logstr)
+                print(logstr)
+                
+                if lopr % 2 == 0 and lopr != last_lopr:
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
+                    
+                logfile = open(f"models/EPD30{arch}_log.txt", "w")
+                logfile.write("\n".join(log_strs))
+                logfile.close()
+
+                last_lopr = lopr
+                next_epoch = self.dataset.update_batch_pointers()
+                
+            if epoch%1==0:
+                try:
+                    torch.save(self.model.state_dict(), f'models/EPD30{arch}_model_checkpoint_epoch{epoch}.pth')
+                except:
+                    pass
+                
+        return self.model
+
+    def pretrain_epidenoise_30(self, 
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
+        log_strs = []
+        log_strs.append(str(self.device))
+        log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
+        logfile = open(f"models/EPD30{arch}_log.txt", "w")
+        logfile.write("\n".join(log_strs))
+        logfile.close()
+
+        token_dict = {
+            "missing_mask": -1, 
+            "cloze_mask": -2,
+            "pad": -3
+        }
+        self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
+
+        if hook:
+            register_hooks(self.model)
+            
+        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch)
+        
+        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
+        for epoch in range(num_epochs):
+            self.dataset.new_epoch()
+            next_epoch = False
+
+            last_lopr = -1
+            while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
+                t0 = datetime.now()
+                # print("new batch")
+                # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
+                dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
+                dsf_X, dsf_Y = 1, 1
+
+                _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
+                _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(side="y")
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     self.dataset.update_batch_pointers()

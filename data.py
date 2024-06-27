@@ -1491,7 +1491,10 @@ class ExtendedEncodeDataHandler:
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
-    
+
+        self.Y_loaded_data = self.loaded_data
+        self.Y_loaded_metadata = self.loaded_metadata
+
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
             self.chr_loci_pointer = 0
@@ -1523,13 +1526,17 @@ class ExtendedEncodeDataHandler:
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
+            
+            if self.dsf_pointer == 0:
+                self.Y_loaded_data = self.loaded_data
+                self.Y_loaded_metadata = self.loaded_metadata
 
         else:
             self.chr_loci_pointer += self.loci_batchsize
         
         return False
 
-    def get_batch(self):
+    def get_batch(self, side="x"):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
@@ -1551,10 +1558,17 @@ class ExtendedEncodeDataHandler:
 
         for locus in batch_loci_list:
             loc_d = []
-            for d in self.loaded_data:
-                loc_d.append(self.select_region_from_loaded_data(d, locus))
             
-            d, md, avl = self.make_region_tensor(loc_d, self.loaded_metadata)
+            if side == "x":
+                for d in self.loaded_data:
+                    loc_d.append(self.select_region_from_loaded_data(d, locus))
+                d, md, avl = self.make_region_tensor(loc_d, self.loaded_metadata)
+
+            elif side == "y":
+                for d in self.Y_loaded_data:
+                    loc_d.append(self.select_region_from_loaded_data(d, locus))
+                d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
+
             batch_data.append(d)
             batch_metadata.append(md)
             batch_availability.append(avl)
