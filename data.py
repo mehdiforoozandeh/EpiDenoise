@@ -1375,7 +1375,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=False, DSF_list=[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H4K12ac", "H3T11ph", "H2AK9ac"], merge_ct=False, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1558,7 +1558,7 @@ class ExtendedEncodeDataHandler:
 
         for locus in batch_loci_list:
             loc_d = []
-            
+
             if side == "x":
                 for d in self.loaded_data:
                     loc_d.append(self.select_region_from_loaded_data(d, locus))
