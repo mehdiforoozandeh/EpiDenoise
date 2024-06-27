@@ -5258,7 +5258,7 @@ if __name__ == "__main__":
 
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
-            "input_dim": 47,
+            "input_dim": 45,
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
