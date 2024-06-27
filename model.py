@@ -3748,8 +3748,8 @@ class PRE_TRAINER(object):
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(side="y")
 
-                print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
-                print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
+                print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape, _Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
+                print(torch.equal(_X_batch, _Y_batch), torch.equal(_mX_batch, _mY_batch), torch.equal(_avX_batch, _avY_batch))
                 next_epoch = self.dataset.update_batch_pointers()
                 print(next_epoch, self.dataset.chr_pointer, self.dataset.bios_pointer, self.dataset.dsf_pointer, self.dataset.chr_loci_pointer)
                 continue
