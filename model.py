@@ -5328,12 +5328,12 @@ if __name__ == "__main__":
             "d_model": (90)*(2**3),
             "nlayers": 2,
             "epochs": 1,
-            "inner_epochs": 50,
+            "inner_epochs": 1,
             "mask_percentage": 0.1,
             "context_length": 810,
             "batch_size": 20,
             "learning_rate": 1e-5,
-            "num_loci": 800,
+            "num_loci": 4000,
             "lr_halflife":2,
             "min_avail":10
         }
