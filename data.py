@@ -1113,6 +1113,10 @@ class ExtendedEncodeDataHandler:
                     if exp not in include:
                         del self.navigation[bios][exp]
 
+            for exp in list(self.aliases["experiment_aliases"].keys()):
+                if exp not in include:
+                    del self.aliases["experiment_aliases"][exp]
+
         elif len(include) == 0 and len(exclude) != 0:
             for bios in list(self.navigation.keys()):
                 for exp in list(self.navigation[bios].keys()):
@@ -1122,7 +1126,6 @@ class ExtendedEncodeDataHandler:
             for exp in exclude:
                 if exp in self.aliases["experiment_aliases"].keys():
                     del self.aliases["experiment_aliases"][exp]
-                    print(f"excluded {exp}")
 
         else:
             return
@@ -1380,7 +1383,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H4K12ac", "H3T11ph", "H2AK9ac"], merge_ct=False, DSF_list=[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1399,7 +1402,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-        self.filter_navigation(exclude=excludes)
+        self.filter_navigation(exclude=excludes, include=includes)
 
         if merge_ct:
             self.merge_celltypes()
