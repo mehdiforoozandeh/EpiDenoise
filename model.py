@@ -3910,14 +3910,14 @@ class PRE_TRAINER(object):
                     batch_rec["ups_pmf"].append(ups_pmf)
                     batch_rec["ups_conf"].append(ups_errstd)
 
-                lopr = int((self.dataset.current_loci_batch_pointer/self.dataset.num_regions) * 100)
-                if lopr > 1 and lopr % 10 == 0 and lopr != last_lopr:
-                    try:
-                        torch.save(
-                            self.model.state_dict(), 
-                            f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_LociProg{lopr}.pth')
-                    except:
-                        pass
+                # current_chr = list(self.loci.keys())[self.chr_pointer]
+                # if  current_chr != last_chr:
+                #     try:
+                #         torch.save(
+                #             self.model.state_dict(), 
+                #             f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_chr{current_chr}.pth')
+                #     except:
+                #         pass
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -3959,19 +3959,19 @@ class PRE_TRAINER(object):
                 log_strs.append(logstr)
                 print(logstr)
                 
-                if lopr % 2 == 0 and lopr != last_lopr:
-                    validation_set_eval = val_eval.get_validation(self.model)
+                # if lopr % 2 == 0 and lopr != last_lopr:
+                #     validation_set_eval = val_eval.get_validation(self.model)
                     
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                #     torch.cuda.empty_cache()
+                #     log_strs.append(validation_set_eval)
+                #     print(validation_set_eval)
+                #     log_resource_usage()
                     
-                logfile = open(f"models/EPD30{arch}_log.txt", "w")
-                logfile.write("\n".join(log_strs))
-                logfile.close()
+                # logfile = open(f"models/EPD30{arch}_log.txt", "w")
+                # logfile.write("\n".join(log_strs))
+                # logfile.close()
 
-                last_lopr = lopr
+                # last_lopr = lopr
                 next_epoch = self.dataset.update_batch_pointers()
                 
             if epoch%1==0:
