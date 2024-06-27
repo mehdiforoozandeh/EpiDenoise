@@ -1383,7 +1383,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=True, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1412,8 +1412,9 @@ class ExtendedEncodeDataHandler:
             if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != "train":
-                del self.navigation[bios]
+            elif merge_ct==False:
+                if self.split_dict[bios] != "train":
+                    del self.navigation[bios]
 
             elif check_completeness:
                 if len(self.is_bios_complete(bios))>0:
