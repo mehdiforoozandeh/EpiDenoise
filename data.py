@@ -1375,7 +1375,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=True, DSF_list=[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=False, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1563,7 +1563,6 @@ class ExtendedEncodeDataHandler:
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
         
-
     def init_eval(self, context_length, bios_min_exp_avail_threshold=3, check_completeness=False, split="test"): #split in ["test", "val"]
         self.set_alias()
         self.train_val_test_split()
