@@ -1227,7 +1227,12 @@ class ExtendedEncodeDataHandler:
                         self.m_regions.append([row['chrom'], rand_start, rand_end])
                         used_regions[row['chrom']].append((rand_start, rand_end))
                         break
-            
+                        
+    def generate_full_chr_loci(self, context_length, chr=["chr19"]):
+        """
+        fill in
+        """
+
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
@@ -1262,16 +1267,33 @@ class ExtendedEncodeDataHandler:
             loaded_metadata[e] = md
             
         # Load files in parallel
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        with ThreadPoolExecutor(max_workers=-1) as executor:
             loaded = list(executor.map(self.load_npz, npz_files))
         
+        if len(locus) == 1:
+            for l in loaded:
+                for exp, data in l.items():
+                    loaded_data[exp] = data
+
+            return loaded_data, loaded_metadata
+
+        else:
+            start_bin = int(locus[1]) // self.resolution
+            end_bin = int(locus[2]) // self.resolution
+            for l in loaded:
+                for exp, data in l.items():
+                    loaded_data[exp] = data[start_bin:end_bin]
+            
+            return loaded_data, loaded_metadata
+    
+    def select_region_from_loaded_data(self, loaded_data, locus):
+        region = {}
         start_bin = int(locus[1]) // self.resolution
         end_bin = int(locus[2]) // self.resolution
-        for l in loaded:
-            for exp, data in l.items():
-                loaded_data[exp] = data[start_bin:end_bin]
+        for exp, data in loaded_data.items():
+            region[exp] = data[start_bin:end_bin]
         
-        return loaded_data, loaded_metadata
+        return region
 
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
@@ -1310,7 +1332,7 @@ class ExtendedEncodeDataHandler:
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
     
-    def make_region_tensor(self, list_bios, locus, DSF, max_workers=-1):
+    def __make_region_tensor(self, list_bios, locus, DSF, max_workers=-1):
         """Load and process data for multiple biosamples in parallel."""
         def load_and_process(bios):
             try:
@@ -1339,10 +1361,21 @@ class ExtendedEncodeDataHandler:
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
 
+    def make_region_tensor(self, loaded_data, loaded_metadata):
+        data, metadata, availability = [], [], []
+        for i in range(len(loaded_data)):
+            d, md, avl = self.make_bios_tensor(loaded_data[i], loaded_metadata[i])
+            data.append(d)
+            metadata.append(md)
+            availability.append(avl)
+        
+        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        return data, metadata, availability
+
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=True):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET"], merge_ct=True, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1388,11 +1421,19 @@ class ExtendedEncodeDataHandler:
         self.bios_batchsize = bios_batchsize
         self.loci_batchsize = loci_batchsize
 
-    def new_epoch(self):
+        self.loci = {}
+        for i in range(len(self.m_regions)):
+            if self.m_regions[i][0] not in self.loci.keys():
+                self.loci[self.m_regions[i][0]] = []
+
+            self.loci[self.m_regions[i][0]].append(self.m_regions[i])
+        self.dsf_list = DSF_list
+
+    def __new_epoch(self):
         self.current_bios_batch_pointer = 0
         self.current_loci_batch_pointer = 0
     
-    def update_batch_pointers(self, cycle_biosamples_first=True):
+    def __update_batch_pointers(self, cycle_biosamples_first=True):
         if cycle_biosamples_first:
             # Cycle through all biosamples for each loci before moving to the next loci
             if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
@@ -1418,7 +1459,7 @@ class ExtendedEncodeDataHandler:
 
         return False
 
-    def get_batch(self, dsf):
+    def __get_batch(self, dsf):
         batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
         batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
         
@@ -1435,6 +1476,93 @@ class ExtendedEncodeDataHandler:
         
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
+
+    def new_epoch(self):
+        self.chr_pointer = 0 
+        self.bios_pointer = 0
+        self.dsf_pointer = 0
+        self.chr_loci_pointer = 0
+
+        batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
+        self.loaded_data = []
+        self.loaded_metadata = []
+
+        for bios in batch_bios_list:
+            d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+            self.loaded_data.append(d)
+            self.loaded_metadata.append(md)
+    
+    def update_batch_pointers(self):
+        if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
+            self.chr_loci_pointer = 0
+
+            if self.dsf_pointer + 1 >= len(self.dsf_list):
+                self.dsf_pointer = 0
+
+                if self.bios_pointer + self.bios_batchsize >= self.num_bios:
+                    self.bios_pointer = 0 
+
+                    if self.chr_pointer + 1 >= len(self.loci.keys()):
+                        self.chr_pointer = 0
+                        return True
+
+                    else:
+                        self.chr_pointer += 1
+                        
+                else:
+                    self.bios_pointer += self.bios_batchsize
+                    
+            else: 
+                self.dsf_pointer += 1
+            
+            batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
+            self.loaded_data = []
+            self.loaded_metadata = []
+
+            for bios in batch_bios_list:
+                d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                self.loaded_data.append(d)
+                self.loaded_metadata.append(md)
+
+        else:
+            self.chr_loci_pointer += self.loci_batchsize
+        
+        return False
+
+    def get_batch(self):
+        """
+        select subset of loci in working chr
+        chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
+        
+        for chr in loci.chrs:
+            for batch in biosamples:
+                for dsf in dsf_list:
+                    load all bios_chr_dsf
+
+                    for locus in chr_loci:
+                        return bios_chr_dsf[locus]
+        """
+        current_chr = list(self.loci.keys())[self.chr_pointer]
+        batch_loci_list = self.loci[current_chr][self.chr_loci_pointer : self.chr_loci_pointer+self.loci_batchsize]
+
+        batch_data = []
+        batch_metadata = []
+        batch_availability = []
+
+        for locus in batch_loci_list:
+            loc_d = []
+            for d in self.loaded_data:
+                loc_d.append(self.select_region_from_loaded_data(d, locus))
+            
+            d, md, avl = self.make_region_tensor(loc_d, self.loaded_metadata)
+            batch_data.append(d)
+            batch_metadata.append(md)
+            batch_availability.append(avl)
+        
+        
+        batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
+        return batch_data, batch_metadata, batch_availability
+        
 
     def init_eval(self, context_length, bios_min_exp_avail_threshold=3, check_completeness=False, split="test"): #split in ["test", "val"]
         self.set_alias()
