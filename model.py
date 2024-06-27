@@ -5270,7 +5270,7 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 50,
+            "inner_epochs": 1,
             "mask_percentage": 0.25,
             "context_length": 1620,
             "batch_size": 25,
