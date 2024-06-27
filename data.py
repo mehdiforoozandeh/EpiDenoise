@@ -1120,7 +1120,7 @@ class ExtendedEncodeDataHandler:
                         del self.navigation[bios][exp]
                         
             for exp in exclude:
-                del self.self.aliases["experiment_aliases"][exp]
+                del self.aliases["experiment_aliases"][exp]
                 print(f"excluded {exp}")
 
         else:
