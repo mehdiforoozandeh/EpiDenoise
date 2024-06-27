@@ -1236,11 +1236,15 @@ class ExtendedEncodeDataHandler:
                         used_regions[row['chrom']].append((rand_start, rand_end))
                         break
                         
-    def generate_full_chr_loci(self, context_length, chr=["chr19"]):
+    def generate_full_chr_loci(self, context_length, chr="chr19"):
         """
         fill in
         """
-
+        self.m_regions = []
+        size = (self.chr_sizes[chr] // self.resolution) * self.resolution
+        for i in range(0, size, context_length):
+            self.m_regions.append(chr, i, i+context_length)
+        
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
@@ -1381,7 +1385,7 @@ class ExtendedEncodeDataHandler:
         return data, metadata, availability
 
     def initialize_EED(self,
-        m, context_length, bios_batchsize, loci_batchsize, ccre=False, 
+        m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1,2,4]):
 
@@ -1389,12 +1393,14 @@ class ExtendedEncodeDataHandler:
         self.train_val_test_split()
         self.coords(mode="train")
 
-        if ccre:
+        if loci_gen == "ccre":
             print("generating cCRE loci")
             self.generate_ccre_loci(m, context_length)
-        else:
+        elif loci_gen == "random":
             print("generating random loci")
             self.generate_random_loci(m, context_length)
+        else:
+            self.generate_full_chr_loci(context_length, chr=loci_gen)
         
         if os.path.exists(self.navigation_path) == False:
             self.navigate_bios_exps()
