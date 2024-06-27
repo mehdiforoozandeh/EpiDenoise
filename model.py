@@ -3473,7 +3473,7 @@ class PRE_TRAINER(object):
             next_epoch = False
 
             last_lopr = -1
-            while (next_epoch==False) and (self.dataset.current_loci_batch_pointer < self.dataset.num_regions or self.dataset.current_bios_batch_pointer < self.dataset.num_bios):
+            while (next_epoch==False):
                 t0 = datetime.now()
                 # print("new batch")
                 # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
