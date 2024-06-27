@@ -5317,7 +5317,7 @@ if __name__ == "__main__":
         hyper_parameters30cd = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
-            "metadata_embedding_dim": 51,
+            "metadata_embedding_dim": 45,
             "dropout": 0.05,
 
             "n_cnn_layers": 3,
@@ -5325,17 +5325,17 @@ if __name__ == "__main__":
             "pool_size" : 3,
 
             "nhead": 6,
-            "d_model": (47+49)*(2**3),
-            "nlayers": 3,
+            "d_model": (90)*(2**3),
+            "nlayers": 2,
             "epochs": 1,
             "inner_epochs": 50,
             "mask_percentage": 0.1,
             "context_length": 810,
-            "batch_size": 30,
+            "batch_size": 20,
             "learning_rate": 1e-5,
             "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":8
+            "min_avail":10
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
