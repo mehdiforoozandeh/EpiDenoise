@@ -1396,7 +1396,7 @@ class EpiDenoise30a(nn.Module):
         src = self.ConvEmb(src)
 
         src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.context_length)], dim=1)
-        src = self.SE_block(src)
+        # src = self.SE_block(src)
 
         src = src.permute(0, 2, 1) # to N, L, F2
 
