@@ -1118,6 +1118,7 @@ class ExtendedEncodeDataHandler:
                 for exp in list(self.navigation[bios].keys()):
                     if exp in exclude:
                         del self.navigation[bios][exp]
+                        print(f"excluded {exp}")
 
         else:
             return
@@ -1395,6 +1396,7 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
 
         self.filter_navigation(exclude=excludes)
+
         if merge_ct:
             self.merge_celltypes()
 
