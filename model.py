@@ -3946,6 +3946,7 @@ class PRE_TRAINER(object):
                     logstr = [
                         f"Ep. {epoch}",
                         f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer/len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
                         f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
