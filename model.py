@@ -3910,15 +3910,6 @@ class PRE_TRAINER(object):
                     batch_rec["ups_pmf"].append(ups_pmf)
                     batch_rec["ups_conf"].append(ups_errstd)
 
-                # current_chr = list(self.loci.keys())[self.chr_pointer]
-                # if  current_chr != last_chr:
-                #     try:
-                #         torch.save(
-                #             self.model.state_dict(), 
-                #             f'models/EPD30{arch}_model_checkpoint_epoch{epoch}_chr{current_chr}.pth')
-                #     except:
-                #         pass
-
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
@@ -3958,22 +3949,19 @@ class PRE_TRAINER(object):
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
-                
-                # if lopr % 2 == 0 and lopr != last_lopr:
-                #     validation_set_eval = val_eval.get_validation(self.model)
-                    
-                #     torch.cuda.empty_cache()
-                #     log_strs.append(validation_set_eval)
-                #     print(validation_set_eval)
-                #     log_resource_usage()
-                    
-                # logfile = open(f"models/EPD30{arch}_log.txt", "w")
-                # logfile.write("\n".join(log_strs))
-                # logfile.close()
 
-                # last_lopr = lopr
-                next_epoch = self.dataset.update_batch_pointers()
+                logfile = open(f"models/EPD30{arch}_log.txt", "w")
+                logfile.write("\n".join(log_strs))
+                logfile.close()
                 
+                next_epoch = self.dataset.update_batch_pointers()
+
+            validation_set_eval = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
+
             if epoch%1==0:
                 try:
                     torch.save(self.model.state_dict(), f'models/EPD30{arch}_model_checkpoint_epoch{epoch}.pth')
@@ -5208,18 +5196,18 @@ if __name__ == "__main__":
         
         hyper_parameters30a = {
             "data_path": "/project/compbio-lab/encode_data/",
-            "input_dim": 47,
-            "metadata_embedding_dim": 47,
+            "input_dim": 45,
+            "metadata_embedding_dim": 45,
             "dropout": 0.01,
             "nhead": 4,
-            "d_model": 384,
+            "d_model": 450,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 100,
+            "inner_epochs": 1,
             "mask_percentage": 0.1,
             "context_length": 400,
             "batch_size": 36,
-            "learning_rate": 1e-6,
+            "learning_rate": 1e-4,
             "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":5

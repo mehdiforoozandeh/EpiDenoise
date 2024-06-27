@@ -1481,7 +1481,7 @@ class ExtendedEncodeDataHandler:
 
         for locus in batch_loci_list:
             self.make_region_tensor
-            d, md, avl = self.make_region_tensor(batch_bios_list, locus, DSF=dsf)
+            d, md, avl = self.__make_region_tensor(batch_bios_list, locus, DSF=dsf)
             batch_data.append(d)
             batch_metadata.append(md)
             batch_availability.append(avl)
