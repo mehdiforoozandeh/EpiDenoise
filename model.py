@@ -5360,7 +5360,7 @@ if __name__ == "__main__":
             "learning_rate": 3e-4,
             "num_loci": 1600,
             "lr_halflife":2,
-            "min_avail":10
+            "min_avail":15
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
