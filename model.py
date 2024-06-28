@@ -262,8 +262,8 @@ class DeconvTower(nn.Module):
         # if self.resid:
         #     y = y + self.rdeconv(x)
 
-        if self.do_pool:
-            y = self.pool(y)
+        # if self.do_pool:
+        #     y = self.pool(y)
         
         return y
 
