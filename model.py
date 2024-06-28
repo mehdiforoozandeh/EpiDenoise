@@ -1711,12 +1711,8 @@ class EpiDenoise30d(nn.Module):
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
-        print(src.shape)
         for conv in self.convEnc:
             src = conv(src)
-            print(src.shape)
-
-
 
         # e_src.shape = N, F2, L'
         src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
@@ -1731,10 +1727,8 @@ class EpiDenoise30d(nn.Module):
 
         src = self.lin(src)
         src = src.permute(0, 2, 1) # to N, F2, L'
-        print(src.shape)
         for dconv in self.deconv:
             src = dconv(src)
-            print(src.shape)
 
         src = src.permute(0, 2, 1) # to N, L, F1
         
