@@ -1565,7 +1565,7 @@ class EpiDenoise30c(nn.Module):
 
         self.transD = nn.ModuleList(
             [nn.TransformerEncoderLayer(
-                d_model=self.l2, nhead=nhead, 
+                d_model=self.l2, nhead=1, 
                 dim_feedforward=2*self.f2, 
                 dropout=dropout, batch_first=True) for _ in range(nlayers)]) # input (B, F, L) -> output (B, d_model, L')
         
