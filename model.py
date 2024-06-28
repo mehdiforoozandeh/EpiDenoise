@@ -1554,12 +1554,6 @@ class EpiDenoise30c(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        # self.fusionL = nn.Sequential(
-        #     nn.Linear(self.f2, self.f2),
-        #     nn.LayerNorm(self.f2),
-        #     nn.ReLU()
-        # )
-
         self.SE_L = SE_Block_1D(self.f2)
         self.SE_D = SE_Block_1D(self.f2)
         
@@ -1580,15 +1574,15 @@ class EpiDenoise30c(nn.Module):
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-        md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
+        # md_embedding = md_embedding.unsqueeze(1).expand(-1, self.l1, -1)
 
-        md_embedding = F.relu(md_embedding)
         src = self.signal_layer_norm(src)
 
-        src = torch.cat([src, md_embedding], dim=-1)
+        # src = torch.cat([src, md_embedding], dim=-1)
 
         W = src.permute(0, 2, 1) # to B, F, L
         W = self.convL(W)
+        W = torch.cat([W, md_embedding.unsqueeze(2).expand(-1, -1, self.l1)], dim=1)
         W = self.SE_L(W, recal=True)
         W = W.permute(0, 2, 1) # to B, L, F'
 
@@ -1602,8 +1596,9 @@ class EpiDenoise30c(nn.Module):
         H = src.permute(0, 2, 1) # to B, F, L
         for conv in self.convD:
             H = conv(H)
+        H = torch.cat([H, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
         H = self.SE_D(H, recal=False)
-        # Aggregating the sequence representation
+
         # H.shape =  N, F', L'
         for encD in self.transD:
             H = encD(H)
@@ -5196,7 +5191,7 @@ if __name__ == "__main__":
             "epochs": 1,
             "inner_epochs": 10,
             "mask_percentage": 0.15,
-            "context_length": 500,
+            "context_length": 200,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 200,
