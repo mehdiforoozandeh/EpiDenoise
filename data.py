@@ -1589,7 +1589,10 @@ class ExtendedEncodeDataHandler:
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
         
-    def init_eval(self, context_length, bios_min_exp_avail_threshold=3, check_completeness=False, split="test"): #split in ["test", "val"]
+    def init_eval(
+        self, context_length, bios_min_exp_avail_threshold=3, 
+        check_completeness=False, split="test",
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"]): #split in ["test", "val"]
         self.set_alias()
         self.train_val_test_split()
         self.coords(mode="eval")
@@ -1599,6 +1602,8 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
+        
+        self.filter_navigation(exclude=excludes, include=includes)
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
