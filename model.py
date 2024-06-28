@@ -223,8 +223,9 @@ class DeconvBlock(nn.Module):
         elif self.norm == "layer":
             self.norm = nn.LayerNorm(out_C)
 
-        padding = W // 2
-        output_padding = 1  # This can be adjusted based on the stride and kernel size
+        padding = (W - 1) // 2
+        output_padding = S - 1  # Ensure output_padding is less than stride
+
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
             padding=padding, output_padding=output_padding, groups=groups)
@@ -238,17 +239,13 @@ class DeconvBlock(nn.Module):
         x = F.relu(x)
         return x
 
+
 class DeconvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="up", residuals=True, groups=1, pool_size=2):
         super(DeconvTower, self).__init__()
-        
+
         self.do_pool = pool_type == "up"
-        S = pool_size
-        # W = pool_size
-
-        # if self.do_pool:
-            # self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
-
+        
         self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
 
         self.resid = residuals
@@ -257,15 +254,10 @@ class DeconvTower(nn.Module):
         
     def forward(self, x):
         y = self.deconv1(x)
-        print(x.shape, y.shape)
-        
 
-        # if self.resid:
-        #     y = y + self.rdeconv(x)
+        if self.resid:
+            y = y + self.rdeconv(x)
 
-        # if self.do_pool:
-        #     y = self.pool(y)
-        
         return y
 
 class ConvTower(nn.Module):
@@ -1703,7 +1695,7 @@ class EpiDenoise30d(nn.Module):
         self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size[-(i + 1)], S=1, D=1,
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1,
                 pool_type="up", residuals=True,
                 groups=1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
