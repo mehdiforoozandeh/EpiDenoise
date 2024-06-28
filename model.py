@@ -5008,12 +5008,12 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         model = EpiDenoise30a(input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
             dropout=dropout, context_length=context_length, pos_enc="relative")
             
-    elif arch in ["b", "d"]:
+    elif arch == "b":
         n_cnn_layers = hyper_parameters["n_cnn_layers"]
         conv_kernel_size = hyper_parameters["conv_kernel_size"]
         n_decoder_layers = hyper_parameters["n_decoder_layers"]
 
-        model = EpiDenoise30d(input_dim, metadata_embedding_dim, conv_kernel_size, 
+        model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
@@ -5026,6 +5026,15 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size, 
         dropout=dropout, context_length=context_length)
     
+    elif arch == "d":
+        n_cnn_layers = hyper_parameters["n_cnn_layers"]
+        conv_kernel_size = hyper_parameters["conv_kernel_size"]
+        n_decoder_layers = hyper_parameters["n_decoder_layers"]
+
+        model = EpiDenoise30d(input_dim, metadata_embedding_dim, conv_kernel_size, 
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+        dropout=dropout, context_length=context_length, pos_enc="relative")
+
     if arch in ["a", "b", "d"]:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     elif arch in ["c"]:
