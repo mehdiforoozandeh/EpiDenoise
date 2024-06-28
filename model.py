@@ -5420,7 +5420,7 @@ if __name__ == "__main__":
             "lr_halflife":2,
             "min_avail":5
         }
-                train_epidenoise30(
-                    hyper_parameters30d, 
-                    checkpoint_path=None, 
-                    arch="d")
+        train_epidenoise30(
+            hyper_parameters30d, 
+            checkpoint_path=None, 
+            arch="d")
