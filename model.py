@@ -5429,7 +5429,7 @@ if __name__ == "__main__":
             "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
 
-            "nhead": 8,
+            "nhead": 5,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
@@ -5437,7 +5437,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.15,
             "context_length": 1620,
             "batch_size": 50,
-            "learning_rate": 3e-4,
+            "learning_rate": 5e-5,
             "num_loci": 200,
             "lr_halflife":2,
             "min_avail":5
