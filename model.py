@@ -1546,10 +1546,9 @@ class EpiDenoise30b(nn.Module):
         d_model = self.f3 
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [2*conv_channels[-1]] + conv_channels[::-1]
+        reverse_conv_channels = conv_channels[::-1]
         print(conv_channels)
         print(reverse_conv_channels)
-        exit()
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
@@ -1580,7 +1579,7 @@ class EpiDenoise30b(nn.Module):
 
         self.deconv_layers = nn.ModuleList(
             [DeconvTower(
-                conv_channels[-(i + 1)], conv_channels[-(i + 2)] if i + 1 < n_cnn_layers else self.f1,
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else reverse_conv_channels[i] / 2,
                 conv_kernel_size[-(i + 1)], S=1, D=1,
                 pool_type="up", residuals=True,
                 groups=conv_channels[-(i + 1)],
