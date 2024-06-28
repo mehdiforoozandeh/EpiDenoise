@@ -5233,10 +5233,10 @@ if __name__ == "__main__":
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
-            "metadata_embedding_dim": 40,
+            "metadata_embedding_dim": 45,
             "dropout": 0.01,
 
-            "n_cnn_layers": 4,
+            "n_cnn_layers": 3,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
@@ -5244,11 +5244,11 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 1,
-            "inner_epochs": 1,
+            "inner_epochs": 10,
             "mask_percentage": 0.25,
-            "context_length": 1620,
+            "context_length": 810,
             "batch_size": 25,
-            "learning_rate": 1e-4,
+            "learning_rate": 5e-4,
             "num_loci": 800,
             "lr_halflife":2,
             "min_avail":12
