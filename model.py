@@ -654,44 +654,6 @@ class MatrixFactorizationEmbedding(nn.Module):
 
         return torch.permute(M, (0, 2, 1))
 
-
-class Autoencoder(nn.Module):
-    def __init__(self, in_channels, latent_dim):
-        super(Autoencoder, self).__init__()
-        self.encoder = nn.Sequential(
-            ConvTower(in_channels, 64, 3, pool_size=2, residuals=True),
-            ConvTower(64, 128, 3, pool_size=2, residuals=True),
-            ConvTower(128, latent_dim, 3, pool_size=2, residuals=True)
-        )
-        self.decoder = nn.Sequential(
-            DeconvTower(latent_dim, 128, 3, pool_size=2, residuals=True),
-            DeconvTower(128, 64, 3, pool_size=2, residuals=True),
-            DeconvTower(64, in_channels, 3, pool_size=2, residuals=True)
-        )
-        
-    def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        return x
-
-
-# Function to train the autoencoder
-def train_autoencoder(autoencoder, data_loader, num_epochs=20, learning_rate=1e-3):
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(autoencoder.parameters(), lr=learning_rate)
-    
-    for epoch in range(num_epochs):
-        for data, _ in data_loader:
-            inputs = data.view(data.size(0), 1, -1)  # Flatten images to 1D sequences
-            outputs = autoencoder(inputs)
-            
-            loss = criterion(outputs, inputs)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-
 #========================================================================================================#
 #========================================= Negative Binomial ============================================#
 #========================================================================================================#
@@ -5167,33 +5129,6 @@ def train_epd30_synthdata(hyper_parameters, arch="a"):
 #========================================================================================================#
 
 if __name__ == "__main__":
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    import torch.nn.functional as F
-    from torchvision import datasets, transforms
-    from torch.utils.data import DataLoader, TensorDataset
-
-    
-    # Load MNIST dataset
-    transform = transforms.Compose([transforms.ToTensor()])
-    train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
-    data_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    
-    # Initialize and train the autoencoder
-    latent_dim = 256
-    autoencoder = Autoencoder(in_channels=1, latent_dim=latent_dim)
-    train_autoencoder(autoencoder, data_loader, num_epochs=20, learning_rate=1e-3)
-    
-    # Test the autoencoder on a sample input
-    sample_input, _ = next(iter(data_loader))
-    sample_input = sample_input.view(sample_input.size(0), 1, -1)  # Flatten images to 1D sequences
-    output = autoencoder(sample_input)
-    
-    print("Input shape:", sample_input.shape)
-    print("Output shape:", output.shape)
-    print("Output matches input:", output.shape == sample_input.shape)
-    exit()
 
 
     hyper_parameters1678 = {
