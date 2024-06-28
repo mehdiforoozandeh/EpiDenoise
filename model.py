@@ -1530,7 +1530,7 @@ class EpiDenoise30c(nn.Module):
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
-        self.f1 = input_dim + metadata_embedding_dim
+        self.f1 = input_dim
         self.f2 = self.f1 * (2**(n_cnn_layers))
         assert d_model == self.f2, "mismatch in dimensions -- f2 != d_model"
 
@@ -3731,6 +3731,12 @@ class PRE_TRAINER(object):
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
+
+            validation_set_eval = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
 
             last_lopr = -1
             while (next_epoch==False):
