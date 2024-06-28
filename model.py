@@ -5196,12 +5196,12 @@ if __name__ == "__main__":
             "epochs": 1,
             "inner_epochs": 10,
             "mask_percentage": 0.15,
-            "context_length": 400,
+            "context_length": 500,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 800,
+            "num_loci": 200,
             "lr_halflife":1,
-            "min_avail":12
+            "min_avail":10
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
