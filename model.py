@@ -226,8 +226,8 @@ class DeconvBlock(nn.Module):
         padding = W // 2
         output_padding = 1  # This can be adjusted based on the stride and kernel size
         self.deconv = nn.ConvTranspose1d(
-            in_C, out_C, kernel_size=W, dilation=D, stride=S, 
-            padding=padding, output_padding=output_padding, groups=groups)
+            in_C, out_C, kernel_size=W, dilation=D, stride=S)#, 
+            # padding=padding, output_padding=output_padding, groups=groups)
         
     def forward(self, x):
         x = self.deconv(x)
