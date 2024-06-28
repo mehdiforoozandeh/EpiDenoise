@@ -238,15 +238,15 @@ class DeconvBlock(nn.Module):
         x = F.relu(x)
         return x
 
-
 class DeconvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="up", residuals=True, groups=1, pool_size=2):
         super(DeconvTower, self).__init__()
         
         self.do_pool = pool_type == "up"
+        S = pool_size
 
-        if self.do_pool:
-            self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
+        # if self.do_pool:
+            # self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
 
         self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
 
