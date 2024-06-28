@@ -224,7 +224,7 @@ class DeconvBlock(nn.Module):
             self.norm = nn.LayerNorm(out_C)
 
         padding = W // 2
-        output_padding = 1  # This can be adjusted based on the stride and kernel size
+        output_padding = 0  # This can be adjusted based on the stride and kernel size
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S)#, 
             # padding=padding, output_padding=output_padding, groups=groups)
@@ -258,6 +258,7 @@ class DeconvTower(nn.Module):
     def forward(self, x):
         y = self.deconv1(x)
         print(x.shape, y.shape)
+        
 
         # if self.resid:
         #     y = y + self.rdeconv(x)
