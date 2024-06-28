@@ -1604,7 +1604,6 @@ class EpiDenoise30c(nn.Module):
             H = encD(H)
         # H.shape =  N, F', L'
 
-        
         Z = torch.matmul(W, H)
 
         # Z = torch.cat([Z, md_embedding], dim=-1) 
@@ -5304,10 +5303,10 @@ if __name__ == "__main__":
             "epochs": 1,
             "inner_epochs": 1,
             "mask_percentage": 0.1,
-            "context_length": 810,
+            "context_length": 270,
             "batch_size": 20,
-            "learning_rate": 1e-3,
-            "num_loci": 4000,
+            "learning_rate": 1e-4,
+            "num_loci": 200,
             "lr_halflife":2,
             "min_avail":10
         }
