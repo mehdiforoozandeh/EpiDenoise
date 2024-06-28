@@ -5303,7 +5303,7 @@ if __name__ == "__main__":
             "epochs": 1,
             "inner_epochs": 1,
             "mask_percentage": 0.1,
-            "context_length": 270,
+            "context_length": 810,
             "batch_size": 20,
             "learning_rate": 1e-4,
             "num_loci": 200,
