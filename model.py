@@ -654,6 +654,44 @@ class MatrixFactorizationEmbedding(nn.Module):
 
         return torch.permute(M, (0, 2, 1))
 
+
+class Autoencoder(nn.Module):
+    def __init__(self, in_channels, latent_dim):
+        super(Autoencoder, self).__init__()
+        self.encoder = nn.Sequential(
+            ConvTower(in_channels, 64, 3, pool_size=2, residuals=True),
+            ConvTower(64, 128, 3, pool_size=2, residuals=True),
+            ConvTower(128, latent_dim, 3, pool_size=2, residuals=True)
+        )
+        self.decoder = nn.Sequential(
+            DeconvTower(latent_dim, 128, 3, pool_size=2, residuals=True),
+            DeconvTower(128, 64, 3, pool_size=2, residuals=True),
+            DeconvTower(64, in_channels, 3, pool_size=2, residuals=True)
+        )
+        
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+
+# Function to train the autoencoder
+def train_autoencoder(autoencoder, data_loader, num_epochs=20, learning_rate=1e-3):
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(autoencoder.parameters(), lr=learning_rate)
+    
+    for epoch in range(num_epochs):
+        for data, _ in data_loader:
+            inputs = data.view(data.size(0), 1, -1)  # Flatten images to 1D sequences
+            outputs = autoencoder(inputs)
+            
+            loss = criterion(outputs, inputs)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
 #========================================================================================================#
 #========================================= Negative Binomial ============================================#
 #========================================================================================================#
@@ -1528,100 +1566,6 @@ class EpiDenoise30b(nn.Module):
 
         return p, n, mp, mo
 
-class EpiDenoise30d(nn.Module):
-    def __init__(self, 
-        input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
-        dropout=0.1, context_length=2000, pos_enc="relative"):
-        super(EpiDenoise30d, self).__init__()
-
-        self.pos_enc = "abs" #pos_enc
-        self.l1 = context_length
-        self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-        self.f1 = input_dim 
-        self.f2 = (self.f1 * (2**(n_cnn_layers)))
-        self.f3 = self.f2 + metadata_embedding_dim
-        d_model = self.f3 
-
-        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
-        self.signal_layer_norm = nn.LayerNorm(input_dim)
-
-        self.convEnc = nn.ModuleList(
-            [ConvTower(
-                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
-                conv_kernel_size[i], S=1, D=1,
-                pool_type="max", residuals=True,
-                groups=conv_channels[i],
-                pool_size=pool_size) for i in range(n_cnn_layers)])
-
-        self.SE_enc = SE_Block_1D(self.f3)
-        self.SE_dec = SE_Block_1D(self.f3)
-
-        if self.pos_enc == "relative":
-            self.encoder_layer = RelativeEncoderLayer(
-                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-
-        else:
-            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-            self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-
-        self.transformer_encoder = nn.ModuleList(
-            [self.encoder_layer for _ in range(nlayers)])
-
-        self.lin = nn.Linear(self.f3, self.f2)
-
-        self.deconv = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size[-(i + 1)], S=1, D=1,
-                pool_type="up", residuals=True,
-                groups=conv_channels[-(i + 1)],
-                pool_size=pool_size) for i in range(n_cnn_layers)])
-        
-        # self.f3 = d_model + metadata_embedding_dim
-        self.neg_binom_layer = NegativeBinomialLayer(self.f1, output_dim)
-        self.mask_pred_layer = nn.Linear(self.f1, output_dim)
-        self.mask_obs_layer = nn.Linear(self.f1, output_dim)
-    
-    def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-
-        src = self.signal_layer_norm(src)
-        ### CONV ENCODER ###
-        src = src.permute(0, 2, 1) # to N, F1, L
-        for conv in self.convEnc:
-            src = conv(src)
-        # e_src.shape = N, F2, L'
-        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
-        src = self.SE_enc(src)
-
-        src = src.permute(0, 2, 1)  # to N, L', F2
-        ### TRANSFORMER ENCODER ###
-        if self.pos_enc != "relative":
-            src = self.posEnc(src)
-        for enc in self.transformer_encoder:
-            src = enc(src)
-
-        src = self.lin(src)
-        src = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv:
-            src = dconv(src)
-
-        src = src.permute(0, 2, 1) # to N, L, F1
-        
-        p, n = self.neg_binom_layer(src)
-        mp = torch.sigmoid(self.mask_pred_layer(src))
-        mo = torch.sigmoid(self.mask_obs_layer(src))
-
-        return p, n, mp, mo
-
-
 ### testing matrix factorization
 class EpiDenoise30c(nn.Module):
     def __init__(self, 
@@ -1721,59 +1665,96 @@ class EpiDenoise30c(nn.Module):
 class EpiDenoise30d(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size,
-        dropout=0.1, context_length=2000):
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
+        dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30d, self).__init__()
 
+        self.pos_enc = "abs" #pos_enc
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
-        self.f1 = input_dim
-        self.f2 = self.f1 * (2**(n_cnn_layers))
+        self.f1 = input_dim 
+        self.f2 = (self.f1 * (2**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f3 
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.convtower = nn.ModuleList(
+        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
+        self.signal_layer_norm = nn.LayerNorm(input_dim)
+
+        self.convEnc = nn.ModuleList(
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
-                conv_kernel_size[i], S=1, D=1, pool_type="max", residuals=True,
-                groups=conv_channels[i], pool_size=pool_size) for i in range(n_cnn_layers)])
+                conv_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=conv_channels[i],
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.SE_enc = SE_Block_1D(self.f3)
+        self.SE_dec = SE_Block_1D(self.f3)
+
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
+
+        self.lin = nn.Linear(self.f3, self.f2)
+
+        self.deconv = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size[-(i + 1)], S=1, D=1,
+                pool_type="up", residuals=True,
+                groups=conv_channels[-(i + 1)],
+                pool_size=pool_size) for i in range(n_cnn_layers)])
         
-        self.squeez = Sqeeze_Extend()
-        self.expand = nn.Sequential(
-            nn.Linear(1, self.f1),
-            nn.LayerNorm(self.f1),
-            nn.ReLU(inplace=True))
+        # self.f3 = d_model + metadata_embedding_dim
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, output_dim)
+        self.mask_pred_layer = nn.Linear(self.f1, output_dim)
+        self.mask_obs_layer = nn.Linear(self.f1, output_dim)
+    
+    def forward(self, src, x_metadata, y_metadata, availability):
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
-        self.transD = nn.ModuleList(
-            [nn.TransformerEncoderLayer(
-                d_model=self.f2, nhead=1, 
-                dim_feedforward=2*self.f2, 
-                dropout=dropout, batch_first=True) for _ in range(nlayers)])
+        src = self.signal_layer_norm(src)
+        ### CONV ENCODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            src = conv(src)
+        # e_src.shape = N, F2, L'
+        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
+        src = self.SE_enc(src)
 
-        self.dwconvblock = ConvTower(
-            self.f1, self.f2, W=1, S=1, D=1, 
-            pool_type="none", residuals=False, 
-            groups=self.f1)
+        src = src.permute(0, 2, 1)  # to N, L', F2
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+        for enc in self.transformer_encoder:
+            src = enc(src)
 
-        self.SEblock = SE_Block_1D(self.f2)
+        src = self.lin(src)
+        src = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv:
+            src = dconv(src)
 
-        self.transL = nn.ModuleList(
-            [nn.TransformerEncoderLayer(
-                d_model=self.f2, nhead=nhead, 
-                dim_feedforward=2*self.f2, 
-                dropout=dropout, batch_first=True) for _ in range(nlayers)])
+        src = src.permute(0, 2, 1) # to N, L, F1
         
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=self.f1, non_linearity=True)
+        p, n = self.neg_binom_layer(src)
+        mp = torch.sigmoid(self.mask_pred_layer(src))
+        mo = torch.sigmoid(self.mask_obs_layer(src))
 
-        self.trasZ = nn.ModuleList(
-            [nn.TransformerDecoderLayer(
-                d_model=d_model, nhead=nhead,
-                dim_feedforward=2*d_model, 
-                dropout=dropout, batch_first=True) for _ in range(n_decoder_layers)])
+        return p, n, mp, mo
 
-        self.neg_binom_layer = NegativeBinomialLayer(self.l2, output_dim)
 
 #========================================================================================================#
 #=========================================Pretraining====================================================#
@@ -5035,10 +5016,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    if arch in ["a", "b", "d"]:
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    elif arch in ["c"]:
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
     scheduler = None
@@ -5189,6 +5167,35 @@ def train_epd30_synthdata(hyper_parameters, arch="a"):
 #========================================================================================================#
 
 if __name__ == "__main__":
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    import torch.nn.functional as F
+    from torchvision import datasets, transforms
+    from torch.utils.data import DataLoader, TensorDataset
+
+    
+    # Load MNIST dataset
+    transform = transforms.Compose([transforms.ToTensor()])
+    train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
+    data_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    
+    # Initialize and train the autoencoder
+    latent_dim = 256
+    autoencoder = Autoencoder(in_channels=1, latent_dim=latent_dim)
+    train_autoencoder(autoencoder, data_loader, num_epochs=20, learning_rate=1e-3)
+    
+    # Test the autoencoder on a sample input
+    sample_input, _ = next(iter(data_loader))
+    sample_input = sample_input.view(sample_input.size(0), 1, -1)  # Flatten images to 1D sequences
+    output = autoencoder(sample_input)
+    
+    print("Input shape:", sample_input.shape)
+    print("Output shape:", output.shape)
+    print("Output matches input:", output.shape == sample_input.shape)
+    exit()
+
+
     hyper_parameters1678 = {
         "data_path": "/project/compbio-lab/EIC/training_data/",
         "input_dim": 35,
