@@ -3904,7 +3904,7 @@ class PRE_TRAINER(object):
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
-                    elif arch in ["c", "d"]:
+                    elif arch in ["c"..]:
                         output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
                         obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
                         loss = obs_loss
@@ -5055,9 +5055,9 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     with open(f'models/hyper_parameters30{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    if arch in ["a", "b"]:
+    if arch in ["a", "b", "d"]:
         criterion = ComboLoss_NBNLL_msk()
-    elif arch in ["c", "d"]:
+    elif arch in ["c"]:
         criterion = MatrixFactor_NBLL()
 
     start_time = time.time()
