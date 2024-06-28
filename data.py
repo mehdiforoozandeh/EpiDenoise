@@ -1592,7 +1592,8 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=3, 
         check_completeness=False, split="test",
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"]): #split in ["test", "val"]
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        includes=[]): #split in ["test", "val"]
         self.set_alias()
         self.train_val_test_split()
         self.coords(mode="eval")
