@@ -4929,7 +4929,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         pass
     
     if arch in ["a", "b"]:
-        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     elif arch in ["c", "d"]:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
