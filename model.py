@@ -1576,7 +1576,7 @@ class EpiDenoise30b(nn.Module):
 
         print(conv_channels, d_model)
         print([conv_channels[-(i + 1)] for i in range(n_cnn_layers)])
-        print([conv_channels[-(i + 2)] if i + 1 < n_cnn_layers else self.f1 for i in range(n_cnn_layers)])
+        print([[conv_channels[-(i + 1)] * (2**i) for i in range(len(conv_channels))] + [conv_channels[0] * (2**len(conv_channels))]])
 
         exit()
         self.deconv_layers = nn.ModuleList(
