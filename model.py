@@ -3940,13 +3940,16 @@ class PRE_TRAINER(object):
                 logfile.write("\n".join(log_strs))
                 logfile.close()
                 
+                chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 next_epoch = self.dataset.update_batch_pointers()
+                chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
 
-            validation_set_eval = val_eval.get_validation(self.model)
-            torch.cuda.empty_cache()
-            log_strs.append(validation_set_eval)
-            print(validation_set_eval)
-            log_resource_usage()
+                if chr0 != chr1:
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
 
             if epoch%1==0:
                 try:
@@ -5229,12 +5232,11 @@ if __name__ == "__main__":
                 arch="a")
     
     elif sys.argv[1] == "epd30b":
-
         hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 40,
-            "dropout": 0.01,
+            "dropout": 0.05,
 
             "n_cnn_layers": 3,
             "conv_kernel_size" : 7,
@@ -5243,13 +5245,13 @@ if __name__ == "__main__":
             "nhead": 8,
             "d_model": 768,
             "nlayers": 6,
-            "epochs": 1,
-            "inner_epochs": 10,
+            "epochs": 10,
+            "inner_epochs": 5,
             "mask_percentage": 0.25,
             "context_length": 810,
             "batch_size": 50,
-            "learning_rate": 5e-4,
-            "num_loci": 800,
+            "learning_rate": 3e-4,
+            "num_loci": 100,
             "lr_halflife":2,
             "min_avail":10
         }
