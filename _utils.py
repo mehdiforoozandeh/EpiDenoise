@@ -528,7 +528,7 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
-    def mask_feature30(self, data, metadata, availability, missing_value=-1):
+    def mask_feature30(self, data, metadata, availability):
         B, L, F = data.shape
 
         # Number of features to mask per sample in the batch
@@ -557,7 +557,36 @@ class DataMasker:
                 new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
 
         return data, new_md, new_A
-        
+    
+    def mask_chunk_features_30(self, data, metadata, availability):
+        B, L, F = data.shape
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+        new_md = metadata.clone().float()
+        data = data.clone().float()
+
+        # Calculate the total number of signals and chunks to mask per batch sample
+        num_all_signals = L * availability.sum(dim=1)
+        num_masks = (num_all_signals * self.mask_percentage / self.chunk_size).int()
+
+        # Masking operation for each sample in the batch
+        for b in range(B):
+            for _ in range(num_masks[b]):
+                # Select a random chunk start and feature index
+                length_start = random.randint(0, L - self.chunk_size)
+                available_indices = torch.where(availability[b] == 1)[0]
+                if len(available_indices) == 0:
+                    continue
+                feature_start = random.choice(available_indices)
+                
+                # Apply the mask to the data, metadata, and update availability
+                data[b, length_start:length_start+self.chunk_size, feature_start] = self.mask_value
+                # new_md[b, length_start:length_start+self.chunk_size, feature_start] = self.mask_value
+                # new_A[b, feature_start] = 0  # Update the availability to indicate masked feature
+
+        return data, new_md, new_A
+
     def mask_chunk_features(self, data, available_features):
         self.available_features = available_features
 
