@@ -224,7 +224,7 @@ class DeconvBlock(nn.Module):
             self.norm = nn.LayerNorm(out_C)
 
         padding = W // 2
-        output_padding = 0  # This can be adjusted based on the stride and kernel size
+        output_padding = 1  # This can be adjusted based on the stride and kernel size
         self.deconv = nn.ConvTranspose1d(
             in_C, out_C, kernel_size=W, dilation=D, stride=S, 
             padding=padding, output_padding=output_padding, groups=groups)
@@ -1719,8 +1719,13 @@ class EpiDenoise30d(nn.Module):
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
+        print(src.shape)
         for conv in self.convEnc:
             src = conv(src)
+            print(src.shape)
+
+
+
         # e_src.shape = N, F2, L'
         src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
         src = self.SE_enc(src)
@@ -1734,8 +1739,10 @@ class EpiDenoise30d(nn.Module):
 
         src = self.lin(src)
         src = src.permute(0, 2, 1) # to N, F2, L'
+        print(src.shape)
         for dconv in self.deconv:
             src = dconv(src)
+            print(src.shape)
 
         src = src.permute(0, 2, 1) # to N, L, F1
         
