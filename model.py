@@ -5247,11 +5247,11 @@ if __name__ == "__main__":
             "inner_epochs": 10,
             "mask_percentage": 0.25,
             "context_length": 810,
-            "batch_size": 25,
+            "batch_size": 50,
             "learning_rate": 5e-4,
             "num_loci": 800,
             "lr_halflife":2,
-            "min_avail":12
+            "min_avail":10
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
