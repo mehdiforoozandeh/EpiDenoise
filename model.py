@@ -1570,14 +1570,11 @@ class EpiDenoise30b(nn.Module):
         else:
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=2*d_model, dropout=dropout, batch_first=True)
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
 
-        # print([reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else reverse_conv_channels[i] // 2 for i in range(n_cnn_layers)])
-        # print([reverse_conv_channels[i] for i in range(n_cnn_layers)])
-        # exit()
         self.lin = nn.Linear(self.f3, self.f2)
 
         self.deconv = nn.ModuleList(
@@ -1589,9 +1586,9 @@ class EpiDenoise30b(nn.Module):
                 pool_size=pool_size) for i in range(n_cnn_layers)])
         
         # self.f3 = d_model + metadata_embedding_dim
-        self.neg_binom_layer = NegativeBinomialLayer(self.f3, output_dim)
-        self.mask_pred_layer = nn.Linear(self.f3, output_dim)
-        self.mask_obs_layer = nn.Linear(self.f3, output_dim)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, output_dim)
+        self.mask_pred_layer = nn.Linear(self.f1, output_dim)
+        self.mask_obs_layer = nn.Linear(self.f1, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
@@ -1614,12 +1611,10 @@ class EpiDenoise30b(nn.Module):
 
         src = self.lin(src)
         src = src.permute(0, 2, 1) # to N, F2, L'
-        print(src.shape)
         for dconv in self.deconv:
             src = dconv(src)
-            print(src.shape)
 
-        exit()
+        src = src.permute(0, 2, 1) # to N, L, F1
         
         p, n = self.neg_binom_layer(src)
         mp = torch.sigmoid(self.mask_pred_layer(src))
@@ -5348,7 +5343,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.05,
 
-            "n_cnn_layers": 3,
+            "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
@@ -5357,8 +5352,8 @@ if __name__ == "__main__":
             "nlayers": 6,
             "epochs": 10,
             "inner_epochs": 5,
-            "mask_percentage": 0.25,
-            "context_length": 810,
+            "mask_percentage": 0.15,
+            "context_length": 1620,
             "batch_size": 50,
             "learning_rate": 3e-4,
             "num_loci": 1600,
