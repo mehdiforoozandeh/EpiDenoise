@@ -244,6 +244,7 @@ class DeconvTower(nn.Module):
         
         self.do_pool = pool_type == "up"
         S = pool_size
+        W = pool_size
 
         # if self.do_pool:
             # self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
