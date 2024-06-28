@@ -5203,14 +5203,14 @@ if __name__ == "__main__":
             "d_model": 450,
             "nlayers": 3,
             "epochs": 1,
-            "inner_epochs": 200,
+            "inner_epochs": 10,
             "mask_percentage": 0.15,
             "context_length": 400,
             "batch_size": 36,
-            "learning_rate": 1e-5,
+            "learning_rate": 1e-4,
             "num_loci": 1600,
             "lr_halflife":1,
-            "min_avail":5
+            "min_avail":12
         }
         if len(sys.argv) >= 3:
             if sys.argv[2] == "synth":
