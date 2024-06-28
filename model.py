@@ -5334,8 +5334,8 @@ if __name__ == "__main__":
                 checkpoint_path=None, 
                 arch="a")
     
-    elif sys.argv[1] == "epd30b":
-        hyper_parameters30b = {
+    elif sys.argv[1] in ["epd30b", "epd30d"]:
+        hyper_parameters30bd = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 40,
@@ -5387,10 +5387,16 @@ if __name__ == "__main__":
                     synth_hyper_parameters30b, arch="b")
 
         else:
-            train_epidenoise30(
-                hyper_parameters30b, 
-                checkpoint_path=None, 
-                arch="b")
+            if sys.argv[1] == "epd30b":
+                train_epidenoise30(
+                    hyper_parameters30bd, 
+                    checkpoint_path=None, 
+                    arch="b")
+            elif sys.argv[1] == "epd30d":
+                train_epidenoise30(
+                    hyper_parameters30bd, 
+                    checkpoint_path=None, 
+                    arch="d")
 
     elif sys.argv[1] == "epd30c":
         hyper_parameters30cd = {
