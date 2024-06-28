@@ -213,6 +213,32 @@ class ConvBlock(nn.Module):
         x = F.relu(x)
         return x
 
+class DeconvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, S, D, norm="layer", groups=1):
+        super(DeconvBlock, self).__init__()
+        self.norm = norm
+
+        if self.norm == "batch":
+            self.norm = nn.BatchNorm1d(out_C)
+        elif self.norm == "layer":
+            self.norm = nn.LayerNorm(out_C)
+
+        padding = W // 2
+        output_padding = 1  # This can be adjusted based on the stride and kernel size
+        self.deconv = nn.ConvTranspose1d(
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, 
+            padding=padding, output_padding=output_padding, groups=groups)
+        
+    def forward(self, x):
+        x = self.deconv(x)
+
+        if self.norm in ["batch", "layer"]:
+            x = self.norm(x)
+            
+        x = F.relu(x)
+        return x
+
+
 class DeconvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="up", residuals=True, groups=1, pool_size=2):
         super(DeconvTower, self).__init__()
@@ -222,7 +248,7 @@ class DeconvTower(nn.Module):
         if self.do_pool:
             self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
 
-        self.deconv1 = ConvBlock(in_C, out_C, W, S, D, groups=groups)
+        self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
 
         self.resid = residuals
         if self.resid:
@@ -1676,7 +1702,7 @@ class EpiDenoise30d(nn.Module):
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=1, D=1,
                 pool_type="up", residuals=True,
-                groups=conv_channels[-(i + 1)],
+                groups=1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
         
         # self.f3 = d_model + metadata_embedding_dim
