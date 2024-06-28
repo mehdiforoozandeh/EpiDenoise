@@ -1582,7 +1582,7 @@ class EpiDenoise30b(nn.Module):
         # exit()
         self.deconv_layers = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else reverse_conv_channels[i] / 2,
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=1, D=1,
                 pool_type="up", residuals=True,
                 groups=conv_channels[-(i + 1)],
