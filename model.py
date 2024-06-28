@@ -1574,8 +1574,9 @@ class EpiDenoise30b(nn.Module):
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
 
-        print(conv_channels[-(i + 1)], conv_channels[-(i + 2)] for i in range(n_cnn_layers) if i + 1 < n_cnn_layers else self.f1 )
-        print(conv_kernel_size[-(i + 1)] for i in range(n_cnn_layers))
+        print([conv_channels[-(i + 1)] for i in range(n_cnn_layers)])
+        print([conv_channels[-(i + 2)] if i + 1 < n_cnn_layers else self.f1 for i in range(n_cnn_layers)])
+        print([conv_kernel_size[-(i + 1)] for i in range(n_cnn_layers)])
         exit()
         self.deconv_layers = nn.ModuleList(
             [DeconvTower(
