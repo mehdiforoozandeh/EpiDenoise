@@ -1546,7 +1546,7 @@ class EpiDenoise30b(nn.Module):
         d_model = self.f3 
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = 2*conv_channels[-1] + conv_channels[::-1]
+        reverse_conv_channels = [2*conv_channels[-1]] + conv_channels[::-1]
         print(conv_channels)
         print(reverse_conv_channels)
         exit()
