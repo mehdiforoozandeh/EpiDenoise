@@ -1676,7 +1676,6 @@ class EpiDenoise30d(nn.Module):
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.SE_enc = SE_Block_1D(self.f3)
-        self.SE_dec = SE_Block_1D(self.f3)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -5013,7 +5012,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="chr19", 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5433,12 +5432,12 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
-            "inner_epochs": 5,
+            "inner_epochs": 15,
             "mask_percentage": 0.15,
             "context_length": 1620,
             "batch_size": 50,
             "learning_rate": 5e-5,
-            "num_loci": 200,
+            "num_loci": 1600,
             "lr_halflife":2,
             "min_avail":5
         }
