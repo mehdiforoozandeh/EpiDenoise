@@ -1454,7 +1454,7 @@ class EpiDenoise30a(nn.Module):
 #             [ConvTower(
 #                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
 #                 conv_kernel_size[i], S=1, D=1,
-#                 pool_type="avg", residuals=True,
+#                 pool_type="max", residuals=True,
 #                 groups=conv_channels[i],
 #                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
@@ -1555,7 +1555,7 @@ class EpiDenoise30b(nn.Module):
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
-                pool_type="avg", residuals=True,
+                pool_type="max", residuals=True,
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
