@@ -3741,19 +3741,9 @@ class PRE_TRAINER(object):
             last_lopr = -1
             while (next_epoch==False):
                 t0 = datetime.now()
-                # print("new batch")
-                # Randomly choose two downsampling factors and assign them to dsf_X and dsf_Y based on their values
-                # dsf_X, dsf_Y = sorted(random.choices(dsf_list, k=2), reverse=True) # dsf_X is of equal or higher dsf
-                # dsf_X, dsf_Y = 1, 1
 
                 _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
                 _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(side="y")
-
-                # print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape, _Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
-                # print(torch.equal(_X_batch, _Y_batch), torch.equal(_mX_batch, _mY_batch), torch.equal(_avX_batch, _avY_batch))
-                # next_epoch = self.dataset.update_batch_pointers()
-                # print(next_epoch, self.dataset.chr_pointer, self.dataset.bios_pointer, self.dataset.dsf_pointer, self.dataset.chr_loci_pointer)
-                # continue
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     self.dataset.update_batch_pointers()
@@ -3767,6 +3757,7 @@ class PRE_TRAINER(object):
                     "ups_pmf":[], "imp_pmf":[],
                     "ups_conf":[], "imp_conf":[]
                     }
+                    
                 for _ in range(inner_epochs):
                     # print("new inner epoch")
                     self.optimizer.zero_grad()

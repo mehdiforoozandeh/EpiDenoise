@@ -543,6 +543,7 @@ class DataMasker:
         # Prepare the new availability tensor
         new_A = availability.clone().float()
         new_md = metadata.clone().float()
+        data = data.clone().float()
 
         # Mask indices generation and masking operation
         for b in range(B):
