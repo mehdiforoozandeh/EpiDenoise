@@ -1674,3 +1674,19 @@ def load_and_fit_nb(file_path):
     # Fit negative binomial distribution
     n, p = fit_negative_binomial(data)
     return n, p
+
+class DeconvBlock(nn.Module):
+    def __init__(self, in_C, out_C, W, S, D):
+        super(DeconvBlock, self).__init__()
+        self.batch_norm = nn.BatchNorm1d(in_C)
+        padding = W // 2
+        output_padding = 1 
+        self.deconv = nn.ConvTranspose1d(
+            in_C, out_C, kernel_size=W, dilation=D, stride=S, 
+            padding=padding, output_padding=output_padding)
+        
+    def forward(self, x):
+        x = self.batch_norm(x)
+        x = self.deconv(x)
+        x = F.gelu(x)
+        return x
