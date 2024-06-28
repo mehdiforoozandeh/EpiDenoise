@@ -244,7 +244,7 @@ class DeconvTower(nn.Module):
         
         self.do_pool = pool_type == "up"
         S = pool_size
-        W = pool_size
+        # W = pool_size
 
         # if self.do_pool:
             # self.pool = nn.Upsample(scale_factor=pool_size, mode='nearest')
@@ -257,9 +257,10 @@ class DeconvTower(nn.Module):
         
     def forward(self, x):
         y = self.deconv1(x)
+        print(x.shape, y.shape)
 
-        if self.resid:
-            y = y + self.rdeconv(x)
+        # if self.resid:
+        #     y = y + self.rdeconv(x)
 
         if self.do_pool:
             y = self.pool(y)
