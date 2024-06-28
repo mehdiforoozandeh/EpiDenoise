@@ -3757,7 +3757,7 @@ class PRE_TRAINER(object):
                     "ups_pmf":[], "imp_pmf":[],
                     "ups_conf":[], "imp_conf":[]
                     }
-                    
+
                 for _ in range(inner_epochs):
                     # print("new inner epoch")
                     self.optimizer.zero_grad()
@@ -4930,7 +4930,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         pass
     
     if arch in ["a", "b"]:
-        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     elif arch in ["c", "d"]:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
