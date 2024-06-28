@@ -3864,7 +3864,7 @@ class PRE_TRAINER(object):
                     X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone()
 
-                    if arch in ["a", "b"]:
+                    if arch in ["a", "b", "d"]:
                         # X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                         X_batch, mX_batch, avX_batch = self.masker.mask_chunk_features_30(X_batch, mX_batch, avX_batch)
 
@@ -3874,7 +3874,7 @@ class PRE_TRAINER(object):
                         masked_map = masked_map.to(self.device) # imputation targets
                         observed_map = observed_map.to(self.device) # upsampling targets
                     
-                    elif arch in ["c", "d"]:
+                    elif arch in ["c"]:
                         observed_map = (X_batch != token_dict["missing_mask"])
                         observed_map = observed_map.to(self.device) # upsampling targets
                         
@@ -3884,7 +3884,7 @@ class PRE_TRAINER(object):
                     mY_batch = mY_batch.to(self.device)
                     Y_batch = Y_batch.to(self.device)
 
-                    if arch in ["a", "b"]:
+                    if arch in ["a", "b", "d"]:
                         output_p, output_n, output_mp, output_mo = self.model(X_batch, mX_batch, mY_batch, avX_batch)
                         pred_loss, obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
@@ -3901,7 +3901,6 @@ class PRE_TRAINER(object):
                             else:
                                 obs_loss = torch.Tensor(1e5)
 
-                        # loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) #+ msk_p_loss + msk_o_loss
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
@@ -3944,7 +3943,7 @@ class PRE_TRAINER(object):
 
                     self.optimizer.step()
 
-                    if arch in ["a", "b"]:
+                    if arch in ["a", "b", "d"]:
                         imp_pred = NegativeBinomial(
                             output_p[masked_map].cpu().detach(), 
                             output_n[masked_map].cpu().detach()
@@ -4005,7 +4004,7 @@ class PRE_TRAINER(object):
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
 
-                if arch in ["a", "b"]:
+                if arch in ["a", "b", "d"]:
                     logstr = [
                         f"Ep. {epoch}",
                         f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
@@ -4024,7 +4023,7 @@ class PRE_TRAINER(object):
                         f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                         f"took {int(minutes)}:{int(seconds)}"]
 
-                elif arch in ["c", "d"]:
+                elif arch in ["c"]:
                     logstr = [
                         f"Ep. {epoch}",
                         f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
@@ -5010,7 +5009,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         model = EpiDenoise30a(input_dim, metadata_embedding_dim, nhead, d_model, nlayers, output_dim, 
             dropout=dropout, context_length=context_length, pos_enc="relative")
             
-    elif arch == "b":
+    elif arch in ["b", "d"]:
         n_cnn_layers = hyper_parameters["n_cnn_layers"]
         conv_kernel_size = hyper_parameters["conv_kernel_size"]
         n_decoder_layers = hyper_parameters["n_decoder_layers"]
@@ -5031,9 +5030,9 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     elif arch == "d":
         pass
     
-    if arch in ["a", "b"]:
-        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    elif arch in ["c", "d"]:
+    if arch in ["a", "b", "d"]:
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    elif arch in ["c"]:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
