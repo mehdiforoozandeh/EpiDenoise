@@ -1547,8 +1547,6 @@ class EpiDenoise30b(nn.Module):
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
-        print(conv_channels)
-        print(reverse_conv_channels)
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
@@ -1580,7 +1578,7 @@ class EpiDenoise30b(nn.Module):
         # print([reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else reverse_conv_channels[i] // 2 for i in range(n_cnn_layers)])
         # print([reverse_conv_channels[i] for i in range(n_cnn_layers)])
         # exit()
-        self.deconv_layers = nn.ModuleList(
+        self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=1, D=1,
@@ -1612,9 +1610,14 @@ class EpiDenoise30b(nn.Module):
         for enc in self.transformer_encoder:
             src = enc(src)
 
-        print(src.shape)
-        exit()
+        src = src.permute(0, 2, 1) # to N, F2, L'
+        print(src)
+        for dconv in self.deconv:
+            src = dconv(src)
+            print(src)
 
+        exit()
+        
         p, n = self.neg_binom_layer(src)
         mp = torch.sigmoid(self.mask_pred_layer(src))
         mo = torch.sigmoid(self.mask_obs_layer(src))
