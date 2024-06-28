@@ -1578,6 +1578,8 @@ class EpiDenoise30b(nn.Module):
         # print([reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else reverse_conv_channels[i] // 2 for i in range(n_cnn_layers)])
         # print([reverse_conv_channels[i] for i in range(n_cnn_layers)])
         # exit()
+        self.lin = nn.Linear(self.f3, self.f2)
+
         self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
@@ -1610,11 +1612,12 @@ class EpiDenoise30b(nn.Module):
         for enc in self.transformer_encoder:
             src = enc(src)
 
+        src = self.lin(src)
         src = src.permute(0, 2, 1) # to N, F2, L'
-        print(src)
+        print(src.shape)
         for dconv in self.deconv:
             src = dconv(src)
-            print(src)
+            print(src.shape)
 
         exit()
         
