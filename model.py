@@ -1528,7 +1528,6 @@ class EpiDenoise30b(nn.Module):
 
         return p, n, mp, mo
 
-### testing matrix factorization
 class EpiDenoise30c(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
@@ -1627,7 +1626,7 @@ class EpiDenoise30c(nn.Module):
 class EpiDenoise30d(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size=3,
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30d, self).__init__()
 
@@ -4972,10 +4971,9 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     elif arch == "d":
         n_cnn_layers = hyper_parameters["n_cnn_layers"]
         conv_kernel_size = hyper_parameters["conv_kernel_size"]
-        n_decoder_layers = hyper_parameters["n_decoder_layers"]
 
         model = EpiDenoise30d(input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
+        n_cnn_layers, nhead, d_model, nlayers, output_dim,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -5282,8 +5280,8 @@ if __name__ == "__main__":
                 checkpoint_path=None, 
                 arch="a")
     
-    elif sys.argv[1] in ["epd30b", "epd30d"]:
-        hyper_parameters30bd = {
+    elif sys.argv[1]  == "epd30b":
+        hyper_parameters30b = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 40,
@@ -5337,18 +5335,12 @@ if __name__ == "__main__":
         else:
             if sys.argv[1] == "epd30b":
                 train_epidenoise30(
-                    hyper_parameters30bd, 
+                    hyper_parameters30b, 
                     checkpoint_path=None, 
                     arch="b")
 
-            elif sys.argv[1] == "epd30d":
-                train_epidenoise30(
-                    hyper_parameters30bd, 
-                    checkpoint_path=None, 
-                    arch="d")
-
     elif sys.argv[1] == "epd30c":
-        hyper_parameters30cd = {
+        hyper_parameters30c = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 45,
@@ -5401,6 +5393,34 @@ if __name__ == "__main__":
 
         else:
             train_epidenoise30(
-                hyper_parameters30cd, 
+                hyper_parameters30c, 
                 checkpoint_path=None, 
                 arch="c")
+    
+    elif sys.argv[1] == "epd30d":
+        hyper_parameters30d = {
+            "data_path": "/project/compbio-lab/encode_data/",
+            "input_dim": 45,
+            "metadata_embedding_dim": 40,
+            "dropout": 0.05,
+
+            "n_cnn_layers": 4,
+            "conv_kernel_size" : 7,
+
+            "nhead": 8,
+            "d_model": 768,
+            "nlayers": 6,
+            "epochs": 10,
+            "inner_epochs": 5,
+            "mask_percentage": 0.15,
+            "context_length": 1620,
+            "batch_size": 50,
+            "learning_rate": 3e-4,
+            "num_loci": 200,
+            "lr_halflife":2,
+            "min_avail":5
+        }
+                train_epidenoise30(
+                    hyper_parameters30d, 
+                    checkpoint_path=None, 
+                    arch="d")
