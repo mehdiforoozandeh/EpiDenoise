@@ -170,6 +170,10 @@ class MONITOR_VALIDATION(object):
                 avail_batch = avail_batch.to(self.device)
 
                 if self.arch in ["a", "b"]:
+                    print(x_batch.shape)
+                    print(mX_batch.shape)
+                    print(mY_batch.shape)
+                    print(avail_batch.shape)
                     outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
                 elif self.arch in ["c", "d"]:
                     outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
