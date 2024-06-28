@@ -26,7 +26,7 @@ class MetadataEmbeddingModule(nn.Module):
         self.non_linearity = non_linearity
         self.continuous_size = embedding_dim // 3
 
-        self.avail_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: available, missing, cloze_masked
+        # self.avail_embedding = nn.Embedding(3, self.continuous_size)  # 3 classes: available, missing, cloze_masked
 
         # X metadata embedding parameters
         self.xruntype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
@@ -41,7 +41,8 @@ class MetadataEmbeddingModule(nn.Module):
         self.yread_length_transform = nn.Linear(1, self.continuous_size)
 
         # Final layer to combine all embeddings
-        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
+        # self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 9, embedding_dim)  # Adjusted for all inputs
+        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 8, embedding_dim)  # Adjusted for all inputs
         self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
 
     def embed_metadata(self, metadata, side="x"):
@@ -85,10 +86,11 @@ class MetadataEmbeddingModule(nn.Module):
     def forward(self, x_metadata, y_metadata, availability):
         Xmd_embed = self.embed_metadata(x_metadata, side="x")
         Ymd_embed = self.embed_metadata(y_metadata, side="y")
-        av_embed = self.embed_avail(availability)
+        # av_embed = self.embed_avail(availability)
 
         # Concatenate all embeddings along the last dimension
-        full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
+        # full_embed = torch.cat([Xmd_embed, Ymd_embed, av_embed], dim=-1)
+        full_embed = torch.cat([Xmd_embed, Ymd_embed], dim=-1)
 
         full_embed = full_embed.view(full_embed.shape[0], -1)
         full_embed = self.final_embedding(full_embed)
@@ -1354,7 +1356,6 @@ class EpiDenoise30a(nn.Module):
         self.context_length = context_length
 
         self.signal_layer_norm = nn.LayerNorm(input_dim)
-        self.embedd_layer_norm = nn.LayerNorm(d_model)
         
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim)
         # self.embedding_linear = nn.Linear(input_dim + metadata_embedding_dim, d_model)
@@ -5201,12 +5202,12 @@ if __name__ == "__main__":
             "dropout": 0.01,
             "nhead": 5,
             "d_model": 450,
-            "nlayers": 3,
+            "nlayers": 2,
             "epochs": 1,
             "inner_epochs": 10,
             "mask_percentage": 0.15,
             "context_length": 400,
-            "batch_size": 36,
+            "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 1600,
             "lr_halflife":1,
