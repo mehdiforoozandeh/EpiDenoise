@@ -248,15 +248,15 @@ class DeconvTower(nn.Module):
         
         self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
 
-        # self.resid = residuals
-        # if self.resid:
-        #     self.rdeconv = nn.ConvTranspose1d(in_C, out_C, kernel_size=1, groups=groups)
+        self.resid = residuals
+        if self.resid:
+            self.rdeconv = nn.ConvTranspose1d(in_C, out_C, kernel_size=1, stride=S, output_padding=S - 1, groups=groups)
         
     def forward(self, x):
         y = self.deconv1(x)
 
-        # if self.resid:
-        #     y = y + self.rdeconv(x)
+        if self.resid:
+            y = y + self.rdeconv(x)
 
         return y
 
