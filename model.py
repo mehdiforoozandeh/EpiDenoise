@@ -3757,7 +3757,6 @@ class PRE_TRAINER(object):
                     "ups_pmf":[], "imp_pmf":[],
                     "ups_conf":[], "imp_conf":[]
                     }
-
                 for _ in range(inner_epochs):
                     # print("new inner epoch")
                     self.optimizer.zero_grad()
@@ -4930,7 +4929,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         pass
     
     if arch in ["a", "b"]:
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     elif arch in ["c", "d"]:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -4947,7 +4946,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="chr19", 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5200,7 +5199,7 @@ if __name__ == "__main__":
             "context_length": 400,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 1600,
+            "num_loci": 800,
             "lr_halflife":1,
             "min_avail":12
         }
