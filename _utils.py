@@ -169,9 +169,9 @@ class MONITOR_VALIDATION(object):
                 mY_batch = mY_batch.to(self.device)
                 avail_batch = avail_batch.to(self.device)
 
-                if self.arch in ["a", "b"]:
+                if self.arch in ["a", "b", "d"]:
                     outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
-                elif self.arch in ["c", "d"]:
+                elif self.arch in ["c"]:
                     outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
 
             # Store the predictions in the large tensor

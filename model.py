@@ -3798,6 +3798,12 @@ class PRE_TRAINER(object):
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
+            validation_set_eval = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
+            exit()
 
             last_lopr = -1
             while (next_epoch==False):
