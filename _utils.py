@@ -433,13 +433,13 @@ class MONITOR_VALIDATION(object):
 
             # Define the data and labels
             data = [
-                (observed_values, "Observed", "blue", f"{assname}_Observed"),
-                (ups11, "Upsampled 1->1", "green", f"{assname}_Ups1->1"),
-                (imp11, "Imputed 1->1", "red", f"{assname}_Imp1->1"),
-                (ups21, "Upsampled 2->1", "green", f"{assname}_Ups2->1"),
-                (imp21, "Imputed 2->1", "red", f"{assname}_Imp2->1"),
-                (ups41, "Upsampled 4->1", "green", f"{assname}_Ups4->1"),
-                (imp41, "Imputed 4->1", "red", f"{assname}_Imp4->1"),
+                (observed_values, "Observed", "royalblue", f"{assname}_Observed"),
+                (ups11, "Upsampled 1->1", "darkcyan", f"{assname}_Ups1->1"),
+                (imp11, "Imputed 1->1", "salmon", f"{assname}_Imp1->1"),
+                (ups21, "Upsampled 2->1", "darkcyan", f"{assname}_Ups2->1"),
+                (imp21, "Imputed 2->1", "salmon", f"{assname}_Imp2->1"),
+                (ups41, "Upsampled 4->1", "darkcyan", f"{assname}_Ups4->1"),
+                (imp41, "Imputed 4->1", "salmon", f"{assname}_Imp4->1"),
             ]
             
             for i, (values, label, color, title) in enumerate(data):
@@ -482,14 +482,12 @@ class MONITOR_VALIDATION(object):
 
             if assay in selected_assays:
                 obs = Y[:, j].numpy()
-            else:
-                obs = [0 for _ in range(Y.shape[0])]
 
-            gen_subplt(axes, x_values, 
-                    obs, 
-                    ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
-                    imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
-                    col, assay)
+                gen_subplt(axes, x_values, 
+                        obs, 
+                        ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
+                        imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
+                        col, assay)
 
         fig.suptitle(fig_title, fontsize=10)
         plt.tight_layout()

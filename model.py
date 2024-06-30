@@ -4019,8 +4019,9 @@ class PRE_TRAINER(object):
 
                 # if dsf_pointer0 != dsf_pointer1:
                     # Generate and process the plot
-                fig_title = " | ".join(["Ep. {epoch}", f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
-                    f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer/len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}"])
+                fig_title = " | ".join([
+                    "Ep. {epoch}", f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                    f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                 
                 plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
                 images.append(imageio.imread(plot_buf))
