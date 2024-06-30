@@ -3798,12 +3798,6 @@ class PRE_TRAINER(object):
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
-            validation_set_eval = val_eval.get_validation(self.model)
-            torch.cuda.empty_cache()
-            log_strs.append(validation_set_eval)
-            print(validation_set_eval)
-            log_resource_usage()
-            exit()
 
             last_lopr = -1
             while (next_epoch==False):
@@ -4022,7 +4016,9 @@ class PRE_TRAINER(object):
                     log_strs.append(validation_set_eval)
                     print(validation_set_eval)
                     log_resource_usage()
-
+            
+            self.scheduler.step()
+            print("learning rate scheduler step...")
             if epoch%1==0:
                 try:
                     torch.save(self.model.state_dict(), f'models/EPD30{arch}_model_checkpoint_epoch{epoch}.pth')
@@ -5005,8 +5001,8 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=1)
-    scheduler = None
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
+    # scheduler = None
 
     # Load from checkpoint if provided
     if checkpoint_path is not None:
@@ -5312,23 +5308,23 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 40,
-            "dropout": 0.05,
+            "dropout": 0.01,
 
             "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
             "n_decoder_layers" : 1,
 
-            "nhead": 8,
+            "nhead": 5,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.15,
-            "context_length": 1620,
+            "context_length": 810,
             "batch_size": 50,
-            "learning_rate": 3e-4,
+            "learning_rate": 1e-4,
             "num_loci": 200,
-            "lr_halflife":2,
+            "lr_halflife":1,
             "min_avail":5
         }
         if len(sys.argv) >= 3:
@@ -5429,7 +5425,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 40,
-            "dropout": 0.05,
+            "dropout": 0.01,
 
             "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
@@ -5438,13 +5434,13 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
-            "inner_epochs": 15,
+            "inner_epochs": 5,
             "mask_percentage": 0.15,
-            "context_length": 1620,
+            "context_length": 810,
             "batch_size": 50,
-            "learning_rate": 5e-5,
+            "learning_rate": 1e-4,
             "num_loci": 1600,
-            "lr_halflife":2,
+            "lr_halflife":1,
             "min_avail":5
         }
         train_epidenoise30(
