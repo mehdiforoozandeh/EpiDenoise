@@ -455,6 +455,7 @@ class MONITOR_VALIDATION(object):
         self.model = model
 
         bios = list(self.dataset['navigation'].keys())[0]
+        print(bios)
 
         # dsf4-1
         imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=4, y_dsf=1)
