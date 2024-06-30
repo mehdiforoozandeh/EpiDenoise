@@ -473,21 +473,26 @@ class MONITOR_VALIDATION(object):
         del self.model
 
         selected_assays = ["H3K4me3", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K9me3", "CTCF", "DNase-seq", "ATAC-seq"]
-        fig, axes = plt.subplots(7, len(available_indices), figsize=(len(selected_assays) * 3, 6), sharex=True, sharey=False)
-        
+        available_selected = []
         for col, jj in enumerate(available_indices):
+            assay = self.mark_dict[f"M{str(jj.item()+1).zfill(len(str(len(self.mark_dict))))}"]
+            if assay in selected_assays:
+                available_selected.append(jj)
+
+        fig, axes = plt.subplots(7, len(available_selected), figsize=(len(available_selected) * 3, 6), sharex=True, sharey=False)
+        
+        for col, jj in enumerate(available_selected):
             j = jj.item()
             assay = self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]
             x_values = list(range(len(Y[:, j])))
 
-            if assay in selected_assays:
-                obs = Y[:, j].numpy()
+            obs = Y[:, j].numpy()
 
-                gen_subplt(axes, x_values, 
-                        obs, 
-                        ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
-                        imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
-                        col, assay)
+            gen_subplt(axes, x_values, 
+                    obs, 
+                    ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
+                    imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
+                    col, assay)
 
         fig.suptitle(fig_title, fontsize=10)
         plt.tight_layout()
