@@ -3785,7 +3785,7 @@ class PRE_TRAINER(object):
         logfile.close()
 
         images = []
-        gif_filename = 'f"models/EPD30{arch}_TrainProg.gif"
+        gif_filename = f"models/EPD30{arch}_TrainProg.gif"
 
         token_dict = {
             "missing_mask": -1, 
