@@ -17,6 +17,7 @@ from torch.distributions.utils import (
     logits_to_probs,
     probs_to_logits,
 )
+import matplotlib.pyplot as plt
 
 def log_resource_usage():
     print(f"CPU Usage: {psutil.cpu_percent()}%")
@@ -423,7 +424,7 @@ class MONITOR_VALIDATION(object):
 
         return print_statement
 
-    def generate_training_gif_frame(self, model):
+    def generate_training_gif_frame(self, model, fig_title):
         def gen_subplt(
             ax, x_values, observed_values, 
             ups11, ups21, ups41, 
@@ -489,6 +490,7 @@ class MONITOR_VALIDATION(object):
                     imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
                     col, assay)
 
+        fig.suptitle(fig_title, fontsize=10)
         plt.tight_layout()
         
         buf = BytesIO()
