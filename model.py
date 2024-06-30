@@ -4013,20 +4013,22 @@ class PRE_TRAINER(object):
                 
                 chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 dsf_pointer0 = self.dataset.dsf_pointer
+
                 next_epoch = self.dataset.update_batch_pointers()
+                
                 dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
 
-                # if dsf_pointer0 != dsf_pointer1:
+                if dsf_pointer0 != dsf_pointer1:
                     # Generate and process the plot
-                fig_title = " | ".join([
-                    "Ep. {epoch}", f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
-                    f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
-                
-                plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
-                images.append(imageio.imread(plot_buf))
-                plot_buf.close()
-                imageio.mimsave(gif_filename, images, duration=0.1 * len(images))
+                    fig_title = " | ".join([
+                        "Ep. {epoch}", f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                    
+                    plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+                    images.append(imageio.imread(plot_buf))
+                    plot_buf.close()
+                    imageio.mimsave(gif_filename, images, duration=0.3 * len(images))
 
                 if chr0 != chr1:
                     validation_set_eval = val_eval.get_validation(self.model)

@@ -443,8 +443,8 @@ class MONITOR_VALIDATION(object):
             ]
             
             for i, (values, label, color, title) in enumerate(data):
-                ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.5, label=label, linewidth=0.1)
-                ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.5)
+                ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.7, label=label, linewidth=0.01)
+                ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.7)
                 
                 if i != len(data)-1:
                     ax[i, col].tick_params(axis='x', labelbottom=False)
