@@ -454,9 +454,7 @@ class MONITOR_VALIDATION(object):
 
         self.model = model
 
-        print(self.dataset['navigation'].keys())
-        exit()
-        # bios = list(self.dataset['navigation'].keys())[0]
+        bios = list(self.dataset.navigation.keys())[0]
         # print(bios)
 
         # dsf4-1
