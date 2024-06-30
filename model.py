@@ -10,6 +10,8 @@ from _utils import *
 from sklearn.metrics import r2_score
 from datetime import datetime
 from scipy.stats import nbinom
+import imageio
+from io import BytesIO
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -3782,6 +3784,9 @@ class PRE_TRAINER(object):
         logfile.write("\n".join(log_strs))
         logfile.close()
 
+        images = []
+        gif_filename = 'f"models/EPD30{arch}_TrainProg.gif"
+
         token_dict = {
             "missing_mask": -1, 
             "cloze_mask": -2,
@@ -4007,8 +4012,17 @@ class PRE_TRAINER(object):
                 logfile.close()
                 
                 chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                dsf_pointer0 = self.dataset.dsf_pointer
                 next_epoch = self.dataset.update_batch_pointers()
+                dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+
+                # if dsf_pointer0 != dsf_pointer1:
+                    # Generate and process the plot
+                plot_buf = val_eval.generate_training_gif_frame(self.model)
+                images.append(imageio.imread(plot_buf))
+                plot_buf.close()
+                imageio.mimsave(gif_filename, images, duration=0.1 * len(images))
 
                 if chr0 != chr1:
                     validation_set_eval = val_eval.get_validation(self.model)

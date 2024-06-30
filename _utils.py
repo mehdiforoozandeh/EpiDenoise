@@ -1,6 +1,6 @@
 import os, pyBigWig, pybedtools, random, datetime, gzip, pickle, psutil, math
 from torch.utils.data import Dataset
-
+from io import BytesIO
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -247,6 +247,69 @@ class MONITOR_VALIDATION(object):
 
         return imp_dist, ups_dist, Y, bios_name, available_indices
     
+    def get_frame(self, bios_name, x_dsf=1, y_dsf=1):
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        start, end = 33481539//self.resolution, 33588914//self.resolution
+        segment_length = end - start
+        adjusted_length = (segment_length // self.context_length) * self.context_length
+        adjusted_end = start + adjusted_length
+
+        subsets_X.append(X[start:adjusted_end, :])
+        subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        for leave_one_out in available_indices:
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            # print(f"got imputations for feature #{leave_one_out+1}")
+            del n, p  # Free up memory
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
+        # print("got upsampled")
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return imp_dist, ups_dist, Y, bios_name, available_indices
+
     def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
         # print(f"getting metrics")
         imp_mean = imp_dist.expect()
@@ -314,8 +377,6 @@ class MONITOR_VALIDATION(object):
                 pass
         del self.model
         
-        # print(f"got results.. generating text output")
-        # self.model.train()
         df = pd.DataFrame(full_res)
 
         # Separate the data based on comparison type
@@ -362,6 +423,81 @@ class MONITOR_VALIDATION(object):
 
         return print_statement
 
+    def generate_training_gif_frame(self, model):
+        def gen_subplt(
+            ax, x_values, observed_values, 
+            ups11, ups21, ups41, 
+            imp11, imp21, imp41, 
+            col, assname, ytick_fontsize=6, title_fontsize=6):
+
+            # Define the data and labels
+            data = [
+                (observed_values, "Observed", "blue", f"{assname}_Observed"),
+                (ups11, "Upsampled 1->1", "green", f"{assname}_Ups1->1"),
+                (imp11, "Imputed 1->1", "red", f"{assname}_Imp1->1"),
+                (ups21, "Upsampled 2->1", "green", f"{assname}_Ups2->1"),
+                (imp21, "Imputed 2->1", "red", f"{assname}_Imp2->1"),
+                (ups41, "Upsampled 4->1", "green", f"{assname}_Ups4->1"),
+                (imp41, "Imputed 4->1", "red", f"{assname}_Imp4->1"),
+            ]
+            
+            for i, (values, label, color, title) in enumerate(data):
+                ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.5, label=label, linewidth=0.1)
+                ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.5)
+                
+                if i != len(data)-1:
+                    ax[i, col].tick_params(axis='x', labelbottom=False)
+                
+                ax[i, col].tick_params(axis='y', labelsize=ytick_fontsize)
+                ax[i, col].set_xticklabels([])
+                ax[i, col].set_title(title, fontsize=title_fontsize)
+
+        self.model = model
+
+        full_res = []
+        bios = [list(self.dataset['navigation'].keys())[0]]
+
+        # dsf4-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=4, y_dsf=1)
+        imp_mean41, ups_mean41 = imp_dist.expect(), ups_dist.expect()
+
+        # dsf2-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=2, y_dsf=1)
+        imp_mean21, ups_mean21 = imp_dist.expect(), ups_dist.expect()
+
+        # dsf1-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=1, y_dsf=1)
+        imp_mean11, ups_mean11 = imp_dist.expect(), ups_dist.expect()
+
+        del self.model
+
+        selected_assays = ["H3K4me3", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K9me3", "CTCF", "DNase-seq", "ATAC-seq"]
+        fig, axes = plt.subplots(7, len(available_indices), figsize=(len(selected_assays) * 3, 6), sharex=True, sharey=False)
+        
+        for col, j in enumerate(available_indices):
+            assay = self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]
+            x_values = list(range(len(Y[:, j])))
+
+            if assay in selected_assays:
+                obs = Y[:, j].numpy()
+            else:
+                obs = [0 for _ in range(Y.shape[0])]
+
+            gen_subplt(axes, x_values, 
+                    obs, 
+                    ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
+                    imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
+                    col, assay)
+
+        plt.tight_layout()
+        
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=150)
+        buf.seek(0)
+        plt.close(fig)
+        
+        return buf
+        
 random.seed(73)
 def get_overlap(tup1, tup2):
 
