@@ -475,7 +475,8 @@ class MONITOR_VALIDATION(object):
         selected_assays = ["H3K4me3", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K9me3", "CTCF", "DNase-seq", "ATAC-seq"]
         fig, axes = plt.subplots(7, len(available_indices), figsize=(len(selected_assays) * 3, 6), sharex=True, sharey=False)
         
-        for col, j in enumerate(available_indices):
+        for col, jj in enumerate(available_indices):
+            j = jj.item()
             assay = self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]
             x_values = list(range(len(Y[:, j])))
 
