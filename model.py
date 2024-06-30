@@ -4015,7 +4015,7 @@ class PRE_TRAINER(object):
                 dsf_pointer0 = self.dataset.dsf_pointer
 
                 next_epoch = self.dataset.update_batch_pointers()
-                
+
                 dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
 
@@ -5343,7 +5343,7 @@ if __name__ == "__main__":
             "context_length": 810,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 200,
+            "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":5
         }
