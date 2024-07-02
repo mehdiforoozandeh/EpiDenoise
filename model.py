@@ -3868,7 +3868,7 @@ class PRE_TRAINER(object):
                             else:
                                 obs_loss = torch.Tensor(1e5)
 
-                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
                     elif arch in ["c"]:
@@ -5448,7 +5448,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 5,
+            "n_cnn_layers": 4,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
@@ -5458,9 +5458,9 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.25,
-            "context_length": 2400,
+            "context_length": 800,
             "batch_size": 50,
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-3,
             "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":10
