@@ -5448,11 +5448,11 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 4,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
-            "nhead": 5,
+            "nhead": 8,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
