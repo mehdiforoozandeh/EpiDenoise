@@ -5449,21 +5449,21 @@ if __name__ == "__main__":
             "dropout": 0.01,
 
             "n_cnn_layers": 4,
-            "conv_kernel_size" : 7,
-            "pool_size": 3,
+            "conv_kernel_size" : 5,
+            "pool_size": 2,
 
             "nhead": 5,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
             "inner_epochs": 5,
-            "mask_percentage": 0.15,
-            "context_length": 810,
+            "mask_percentage": 0.25,
+            "context_length": 800,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 1600,
+            "num_loci": 200,
             "lr_halflife":1,
-            "min_avail":5
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30d, 
