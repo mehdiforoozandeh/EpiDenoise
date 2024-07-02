@@ -196,11 +196,12 @@ class AttentionPooling1D(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D, norm="layer", groups=1):
         super(ConvBlock, self).__init__()
-        self.norm = norm
 
-        if self.norm == "batch":
+        self.normtype = norm
+        if self.normtype == "batch":
             self.norm = nn.BatchNorm1d(out_C)
-        elif self.norm == "layer":
+
+        elif self.normtype == "layer":
             self.norm = nn.LayerNorm(out_C)
 
         self.conv = nn.Conv1d(
@@ -209,7 +210,7 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         x = self.conv(x)
 
-        if self.norm in ["batch", "layer"]:
+        if self.normtype in ["batch", "layer"]:
             x = self.norm(x)
             
         x = F.relu(x)
@@ -244,8 +245,6 @@ class DeconvBlock(nn.Module):
 class DeconvTower(nn.Module):
     def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="up", residuals=True, groups=1, pool_size=2):
         super(DeconvTower, self).__init__()
-
-        self.do_pool = pool_type == "up"
         
         self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
 
@@ -275,7 +274,7 @@ class ConvTower(nn.Module):
         elif pool_type == "max":
             self.pool  = nn.MaxPool1d(pool_size)
         elif pool_type == "avg":
-            self.pool  = nn.AvgPool1d(pool_sizes)
+            self.pool  = nn.AvgPool1d(pool_size)
 
         self.conv1 = ConvBlock(in_C, out_C, W, S, D, groups=groups)
 
@@ -1672,7 +1671,7 @@ class EpiDenoise30d(nn.Module):
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
-                pool_type="max", residuals=True,
+                pool_type="avg", residuals=True,
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
@@ -5019,7 +5018,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size = pool_size,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
@@ -5457,7 +5456,7 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.25,
-            "context_length": 800,
+            "context_length": 2400,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 1600,
