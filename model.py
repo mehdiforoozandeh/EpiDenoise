@@ -3982,12 +3982,12 @@ class PRE_TRAINER(object):
                         f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
                         f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
-                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        # f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
+                        # f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
                         f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
                         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
-                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        # f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                        # f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                         f"took {int(minutes)}:{int(seconds)}"]
 
                 elif arch in ["c"]:
@@ -3999,7 +3999,7 @@ class PRE_TRAINER(object):
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
                         f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
-                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        # f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                         f"took {int(minutes)}:{int(seconds)}"]
                 
@@ -4022,7 +4022,7 @@ class PRE_TRAINER(object):
                 if dsf_pointer0 != dsf_pointer1:
                     # Generate and process the plot
                     fig_title = " | ".join([
-                        "Ep. {epoch}", f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                        "Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
                         f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                     
                     plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
@@ -5014,9 +5014,10 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     elif arch == "d":
         n_cnn_layers = hyper_parameters["n_cnn_layers"]
         conv_kernel_size = hyper_parameters["conv_kernel_size"]
+        pool_size = hyper_parameters["pool_size"]
 
         model = EpiDenoise30d(input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim,
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size = pool_size,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -5449,6 +5450,7 @@ if __name__ == "__main__":
 
             "n_cnn_layers": 4,
             "conv_kernel_size" : 7,
+            "pool_size": 3,
 
             "nhead": 5,
             "d_model": 768,
