@@ -211,7 +211,9 @@ class ConvBlock(nn.Module):
         x = self.conv(x)
 
         if self.normtype in ["batch", "layer"]:
+            x = x.permute(0, 2, 1)
             x = self.norm(x)
+            x = x.permute(0, 2, 1)
             
         x = F.relu(x)
         return x
