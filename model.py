@@ -5034,8 +5034,11 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         # Create dummy inputs based on the input shapes
         inputs = [torch.randn(shape).to(device) for shape in input_shapes]
         
+        # Convert input shapes to tuples of integers
+        input_sizes = [tuple(shape[1:]) for shape in input_shapes]
+        
         # Print the summary
-        summary_str = summary(model, input_size=inputs)
+        summary_str = summary(model, input_size=input_sizes)
         print(summary_str)
 
     # Example usage
