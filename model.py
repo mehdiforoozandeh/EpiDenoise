@@ -3959,9 +3959,9 @@ class PRE_TRAINER(object):
 
                         imp_true = Y_batch[masked_map].cpu().detach().numpy()
                         imp_r2 = r2_score(imp_true, imp_pred)
-                        imp_pmf = NegativeBinomial(
-                            output_p[masked_map].cpu().detach(),  
-                            output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
+                        # imp_pmf = NegativeBinomial(
+                        #     output_p[masked_map].cpu().detach(),  
+                        #     output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                         imp_mse = ((imp_true - imp_pred)**2).mean()
 
                         imp_std = NegativeBinomial(
@@ -3975,7 +3975,7 @@ class PRE_TRAINER(object):
                         batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                         batch_rec["imp_mse"].append(imp_mse)
                         batch_rec["imp_r2"].append(imp_r2)
-                        batch_rec["imp_pmf"].append(imp_pmf)
+                        # batch_rec["imp_pmf"].append(imp_pmf)
                         # batch_rec["imp_conf"].append(imp_errstd)
 
                     ups_pred = NegativeBinomial(
@@ -3984,9 +3984,9 @@ class PRE_TRAINER(object):
                         ).expect().cpu().detach().numpy()
 
                     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                    ups_pmf = NegativeBinomial(
-                        output_p[observed_map].cpu().detach(), 
-                        output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+                    # ups_pmf = NegativeBinomial(
+                    #     output_p[observed_map].cpu().detach(), 
+                    #     output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
 
                     ups_std = NegativeBinomial(
                             output_p[observed_map].cpu().detach(), 
@@ -4005,7 +4005,7 @@ class PRE_TRAINER(object):
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["ups_mse"].append(ups_mse)
-                    batch_rec["ups_pmf"].append(ups_pmf)
+                    # batch_rec["ups_pmf"].append(ups_pmf)
                     # batch_rec["ups_conf"].append(ups_errstd)
 
                 elapsed_time = datetime.now() - t0

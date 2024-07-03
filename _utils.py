@@ -79,8 +79,8 @@ def log_resource_usage():
 # class Gaussian:
 class NegativeBinomial:
     def __init__(self, mean, std):
-        self.mean = mean.numpy()
-        self.std = std.numpy()
+        self.mean = mean
+        self.std = std
 
     def mean(self):
         return self.mean
