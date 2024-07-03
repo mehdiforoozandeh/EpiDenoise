@@ -701,7 +701,8 @@ class MatrixFactorizationEmbedding(nn.Module):
 # class GaussianLayer(nn.Module):
 class NegativeBinomialLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
-        super(GaussianLayer, self).__init__()
+        # super(GaussianLayer, self).__init__()
+        super(NegativeBinomialLayer, self).__init__()
 
         self.fc_mean = nn.Linear(input_dim, output_dim)
         self.fc_std = nn.Linear(input_dim, output_dim)
