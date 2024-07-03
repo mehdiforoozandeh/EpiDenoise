@@ -79,8 +79,8 @@ def log_resource_usage():
 # class Gaussian:
 class NegativeBinomial:
     def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
+        self.mean = torch.Tensor(mean)
+        self.std = torch.Tensor(std)
 
     def mean(self):
         return self.mean
