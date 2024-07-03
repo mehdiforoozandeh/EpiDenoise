@@ -682,35 +682,21 @@ class MatrixFactorizationEmbedding(nn.Module):
 #========================================= Negative Binomial ============================================#
 #========================================================================================================#
 
-# class NegativeBinomialLayer(nn.Module):
-#     def __init__(self, input_dim, output_dim):
-#         super(NegativeBinomialLayer, self).__init__()
-
-#         self.fc_p = nn.Linear(input_dim, output_dim)
-#         self.fc_n = nn.Linear(input_dim, output_dim)
-
-#     def forward(self, x):
-#         # using sigmoid to ensure it's between 0 and 1
-#         p = torch.sigmoid(self.fc_p(x))
-
-#         # using softplus to ensure it's positive
-#         n = F.softplus(self.fc_n(x))
-
-#         return p, n
-
-# class GaussianLayer(nn.Module):
 class NegativeBinomialLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
-        # super(GaussianLayer, self).__init__()
         super(NegativeBinomialLayer, self).__init__()
 
-        self.fc_mean = nn.Linear(input_dim, output_dim)
-        self.fc_std = nn.Linear(input_dim, output_dim)
+        self.fc_p = nn.Linear(input_dim, output_dim)
+        self.fc_n = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
-        mean = self.fc_mean(x)
-        std = F.softplus(self.fc_std(x)) + 1e-6  # Ensure std is positive
-        return mean, std
+        # using sigmoid to ensure it's between 0 and 1
+        p = torch.sigmoid(self.fc_p(x))
+
+        # using softplus to ensure it's positive
+        n = F.softplus(self.fc_n(x))
+
+        return p, n
 
 def negative_binomial_loss(y_true, n_pred, p_pred):
     """
@@ -940,24 +926,20 @@ class ComboLoss_NBNLL_msk(nn.Module):
         super(ComboLoss_NBNLL_msk, self).__init__()
         self.reduction = 'sum'
         self.bce_loss = nn.BCELoss(reduction='sum')
-        self.gnll_loss = nn.GaussianNLLLoss(reduction='sum')
 
     def forward(self, p_pred, n_pred, pred_mask, obs_mask, true_signals, masked_map, obs_map):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        # upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
-        # imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
+        imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
 
-        upsampling_loss = self.gnll_loss(ups_y_true, ups_p_pred, ups_n_pred)
-        imputation_loss = self.gnll_loss(imp_y_true, imp_p_pred, imp_n_pred)
-
-        # if self.reduction == "mean":
-        #     upsampling_loss = upsampling_loss.mean()
-        #     imputation_loss = imputation_loss.mean()
-        # else:
-        #     upsampling_loss = upsampling_loss.sum()
-        #     imputation_loss = imputation_loss.sum()
+        if self.reduction == "mean":
+            upsampling_loss = upsampling_loss.mean()
+            imputation_loss = imputation_loss.mean()
+        else:
+            upsampling_loss = upsampling_loss.sum()
+            imputation_loss = imputation_loss.sum()
 
         bce_mask_prd_loss = self.bce_loss(pred_mask, masked_map.float())
         bce_mask_obs_loss = self.bce_loss(obs_mask, obs_map.float())
@@ -3937,24 +3919,24 @@ class PRE_TRAINER(object):
 
                         imp_true = Y_batch[masked_map].cpu().detach().numpy()
                         imp_r2 = r2_score(imp_true, imp_pred)
-                        # imp_pmf = NegativeBinomial(
-                        #     output_p[masked_map].cpu().detach(),  
-                        #     output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
+                        imp_pmf = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(),  
+                            output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                         imp_mse = ((imp_true - imp_pred)**2).mean()
 
-                        # imp_std = NegativeBinomial(
-                        #     output_p[masked_map].cpu().detach(), 
-                        #     output_n[masked_map].cpu().detach()
-                        #     ).std().cpu().detach().numpy()
-                        # imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
-                        # imp_errstd = pearsonr(imp_std, imp_abs_error)
+                        imp_std = NegativeBinomial(
+                            output_p[masked_map].cpu().detach(), 
+                            output_n[masked_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                        imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
+                        imp_errstd = pearsonr(imp_std, imp_abs_error)
 
                         batch_rec["imp_loss"].append(pred_loss.item())
                         batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                         batch_rec["imp_mse"].append(imp_mse)
                         batch_rec["imp_r2"].append(imp_r2)
-                        # batch_rec["imp_pmf"].append(imp_pmf)
-                        # batch_rec["imp_conf"].append(imp_errstd)
+                        batch_rec["imp_pmf"].append(imp_pmf)
+                        batch_rec["imp_conf"].append(imp_errstd)
 
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3962,16 +3944,16 @@ class PRE_TRAINER(object):
                         ).expect().cpu().detach().numpy()
 
                     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                    # ups_pmf = NegativeBinomial(
-                    #     output_p[observed_map].cpu().detach(), 
-                    #     output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+                    ups_pmf = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
 
-                    # ups_std = NegativeBinomial(
-                    #         output_p[observed_map].cpu().detach(), 
-                    #         output_n[observed_map].cpu().detach()
-                    #         ).std().cpu().detach().numpy()
-                    # ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
-                    # ups_errstd = pearsonr(ups_std, ups_abs_error)
+                    ups_std = NegativeBinomial(
+                            output_p[observed_map].cpu().detach(), 
+                            output_n[observed_map].cpu().detach()
+                            ).std().cpu().detach().numpy()
+                    ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
+                    ups_errstd = pearsonr(ups_std, ups_abs_error)
 
                     try:
                         ups_r2 = r2_score(ups_true, ups_pred)
@@ -3983,8 +3965,8 @@ class PRE_TRAINER(object):
                     batch_rec["ups_loss"].append(obs_loss.item())
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["ups_mse"].append(ups_mse)
-                    # batch_rec["ups_pmf"].append(ups_pmf)
-                    # batch_rec["ups_conf"].append(ups_errstd)
+                    batch_rec["ups_pmf"].append(ups_pmf)
+                    batch_rec["ups_conf"].append(ups_errstd)
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
