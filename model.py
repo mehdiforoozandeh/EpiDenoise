@@ -195,7 +195,7 @@ class AttentionPooling1D(nn.Module):
         return pooled
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, norm="batch", groups=1):
+    def __init__(self, in_C, out_C, W, S, D, norm="layer", groups=1):
         super(ConvBlock, self).__init__()
 
         self.normtype = norm
@@ -223,7 +223,7 @@ class ConvBlock(nn.Module):
         return x
 
 class DeconvBlock(nn.Module):
-    def __init__(self, in_C, out_C, W, S, D, norm="batch", groups=1):
+    def __init__(self, in_C, out_C, W, S, D, norm="layer", groups=1):
         super(DeconvBlock, self).__init__()
         self.normtype = norm
 
