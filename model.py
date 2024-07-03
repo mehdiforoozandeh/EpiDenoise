@@ -5027,7 +5027,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
 
-        def custom_summary(model, input_shapes):
+    def custom_summary(model, input_shapes):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
         
@@ -5037,7 +5037,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         # Print the summary
         summary_str = summary(model, input_size=input_sizes, device=str(device))
         print(summary_str)
-        
+
     # Example usage
     input_shapes = [(batch_size, context_length, input_dim), (batch_size, 4, input_dim), (batch_size, 4, input_dim), (batch_size, 4)]
     custom_summary(model, input_shapes)
