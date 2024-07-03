@@ -1677,20 +1677,20 @@ class EpiDenoise30d(nn.Module):
                 groups=conv_channels[i],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        # self.SE_enc = SE_Block_1D(self.f3)
-        # self.lin = nn.Linear(self.f3, self.f2)
+        self.SE_enc = SE_Block_1D(self.f3)
+        self.lin = nn.Linear(self.f3, self.f2)
 
-        # if self.pos_enc == "relative":
-        #     self.encoder_layer = RelativeEncoderLayer(
-        #         d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
 
-        # else:
-        #     self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-        #     self.encoder_layer = nn.TransformerEncoderLayer(
-        #         d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
-        # self.transformer_encoder = nn.ModuleList(
-        #     [self.encoder_layer for _ in range(nlayers)])
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -1714,19 +1714,19 @@ class EpiDenoise30d(nn.Module):
         for conv in self.convEnc:
             src = conv(src)
 
-        # # e_src.shape = N, F2, L'
-        # src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
-        # src = self.SE_enc(src)
+        # e_src.shape = N, F2, L'
+        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
+        src = self.SE_enc(src)
 
-        # src = src.permute(0, 2, 1)  # to N, L', F2
-        # src = self.lin(src)
-        # ### TRANSFORMER ENCODER ###
-        # if self.pos_enc != "relative":
-        #     src = self.posEnc(src)
-        # for enc in self.transformer_encoder:
-        #     src = enc(src)
+        src = src.permute(0, 2, 1)  # to N, L', F2
+        src = self.lin(src)
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+        for enc in self.transformer_encoder:
+            src = enc(src)
 
-        # src = src.permute(0, 2, 1) # to N, F2, L'
+        src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
             src = dconv(src)
 
@@ -5448,17 +5448,17 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 5,
+            "n_cnn_layers": 3,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
-            "nhead": 16,
+            "nhead": 8,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.2,
-            "context_length": 2400,
+            "context_length": 800,
             "batch_size": 50,
             "learning_rate": 1e-3,
             "num_loci": 1600,
