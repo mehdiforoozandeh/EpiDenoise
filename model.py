@@ -1660,7 +1660,7 @@ class EpiDenoise30d(nn.Module):
         self.f1 = input_dim 
         self.f2 = (self.f1 * (2**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
-        d_model = self.f3 
+        d_model = self.f2
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
@@ -1678,6 +1678,7 @@ class EpiDenoise30d(nn.Module):
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.SE_enc = SE_Block_1D(self.f3)
+        self.lin = nn.Linear(self.f3, self.f2)
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1690,8 +1691,6 @@ class EpiDenoise30d(nn.Module):
 
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
-
-        self.lin = nn.Linear(self.f3, self.f2)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -3776,7 +3775,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_30(self, 
-        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=True):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
@@ -5452,7 +5451,7 @@ if __name__ == "__main__":
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
-            "nhead": 8,
+            "nhead": 16,
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
