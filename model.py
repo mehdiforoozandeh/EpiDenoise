@@ -307,7 +307,7 @@ class SE_Block_1D(nn.Module):
         # Excitation network to produce channel-wise weights
         self.excitation = nn.Sequential(
             nn.Linear(c, c // r, bias=False),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
             nn.Linear(c // r, c, bias=False),
             nn.Sigmoid()
         )
