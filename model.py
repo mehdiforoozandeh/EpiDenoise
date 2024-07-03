@@ -12,7 +12,6 @@ from datetime import datetime
 from scipy.stats import nbinom
 import imageio.v2 as imageio
 from io import BytesIO
-from torchsummary import summary
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
@@ -5027,23 +5026,6 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
 
-    def custom_summary(model, input_shapes):
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = model.to(device)
-        
-        # Convert input shapes to tuples of integers
-        input_sizes = [tuple(shape[1:]) for shape in input_shapes]
-        
-        # Print the summary
-        summary_str = summary(model, input_size=input_sizes, device=str(device))
-        print(summary_str)
-
-    # Example usage
-    input_shapes = [(batch_size, context_length, input_dim), (batch_size, 4, input_dim), (batch_size, 4, input_dim), (batch_size, 4)]
-    custom_summary(model, input_shapes)
-
-    # print(summary(model, input_size=)))
-    # Load from checkpoint if provided
     if checkpoint_path is not None:
         print("loading pretrained model...")
         model.load_state_dict(torch.load(checkpoint_path))
