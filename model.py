@@ -1698,7 +1698,7 @@ class EpiDenoise30d(nn.Module):
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
                 pool_type="avg", residuals=True,
-                groups=conv_channels[i],
+                groups=conv_channels[0],
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.SE_enc = SE_Block_1D(self.f3)
