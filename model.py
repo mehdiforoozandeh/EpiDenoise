@@ -5448,7 +5448,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 4,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
@@ -5458,7 +5458,7 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.2,
-            "context_length": 1600,
+            "context_length": 3200,
             "batch_size": 50,
             "learning_rate": 1e-3,
             "num_loci": 1600,
