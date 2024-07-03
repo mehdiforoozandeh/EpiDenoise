@@ -3907,7 +3907,6 @@ class PRE_TRAINER(object):
 
                         if max_weight_grad_layer:
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
-                            #, Ups_loss: {obs_loss.item():.2f}, Imp_loss: {pred_loss.item():.2f}, mask_losses: {msk_p_loss.item():.2f},{msk_o_loss.item():.2f}")
 
                     self.optimizer.step()
 
@@ -5448,7 +5447,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 40,
             "dropout": 0.01,
 
-            "n_cnn_layers": 3,
+            "n_cnn_layers": 4,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
@@ -5456,11 +5455,11 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 6,
             "epochs": 10,
-            "inner_epochs": 20,
-            "mask_percentage": 0.2,
+            "inner_epochs": 1,
+            "mask_percentage": 0.3,
             "context_length": 800,
             "batch_size": 50,
-            "learning_rate": 1e-4,
+            "learning_rate": 1e-3,
             "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":10
