@@ -3776,7 +3776,7 @@ class PRE_TRAINER(object):
         return self.model
 
     def pretrain_epidenoise_30(self, 
-        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=False):
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="a", hook=True):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"EPD30{arch} # model_parameters: {count_parameters(self.model)}")
