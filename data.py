@@ -1236,11 +1236,12 @@ class ExtendedEncodeDataHandler:
                         used_regions[row['chrom']].append((rand_start, rand_end))
                         break
                         
-    def generate_full_chr_loci(self, context_length, chr="chr19"):
+    def generate_full_chr_loci(self, context_length, chrs=["chr19"]):
         self.m_regions = []
-        size = (self.chr_sizes[chr] // self.resolution) * self.resolution
-        for i in range(0, size, context_length):
-            self.m_regions.append([chr, i, i+context_length])
+        for chr in chrs:
+            size = (self.chr_sizes[chr] // self.resolution) * self.resolution
+            for i in range(0, size, context_length):
+                self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
