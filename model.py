@@ -5035,7 +5035,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         inputs = [torch.randn(shape).to(device) for shape in input_shapes]
         
         # Print the summary
-        summary_str = summary(model, input_data=inputs)
+        summary_str = summary(model, input_size=inputs)
         print(summary_str)
 
     # Example usage
