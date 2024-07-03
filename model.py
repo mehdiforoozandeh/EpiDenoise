@@ -229,6 +229,7 @@ class DeconvBlock(nn.Module):
 
         if self.normtype == "batch":
             self.norm = nn.BatchNorm1d(out_C)
+
         elif self.normtype == "layer":
             self.norm = nn.LayerNorm(out_C)
 
@@ -694,15 +695,29 @@ class NegativeBinomialLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(NegativeBinomialLayer, self).__init__()
 
-        self.fc_p = nn.Linear(input_dim, output_dim)
-        self.fc_n = nn.Linear(input_dim, output_dim)
+        self.fc_p = nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.LayerNorm(output_dim),
+            nn.Sigmoid
+        )
+
+        self.fc_n = nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.LayerNorm(output_dim),
+            nn.Softplus()
+        )
+
+        # self.fc_p = nn.Linear(input_dim, output_dim)
+        # self.fc_n = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
         # using sigmoid to ensure it's between 0 and 1
-        p = torch.sigmoid(self.fc_p(x))
+        p = self.fc_p(x)
+        # p = torch.sigmoid(self.fc_p(x))
 
         # using softplus to ensure it's positive
-        n = F.softplus(self.fc_n(x))
+        n = self.fc_n(x)
+        # n = F.softplus(self.fc_n(x))
 
         return p, n
 
