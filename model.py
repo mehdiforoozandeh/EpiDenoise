@@ -3935,7 +3935,7 @@ class PRE_TRAINER(object):
                         batch_rec["imp_mse"].append(imp_mse)
                         batch_rec["imp_r2"].append(imp_r2)
                         batch_rec["imp_pmf"].append(imp_pmf)
-                        batch_rec["imp_conf"].append(imp_errstd)
+                        # batch_rec["imp_conf"].append(imp_errstd)
 
                     ups_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -3965,7 +3965,7 @@ class PRE_TRAINER(object):
                     batch_rec["ups_r2"].append(ups_r2)
                     batch_rec["ups_mse"].append(ups_mse)
                     batch_rec["ups_pmf"].append(ups_pmf)
-                    batch_rec["ups_conf"].append(ups_errstd)
+                    # batch_rec["ups_conf"].append(ups_errstd)
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
