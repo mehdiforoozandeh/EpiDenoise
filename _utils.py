@@ -78,9 +78,10 @@ def log_resource_usage():
 
 # class Gaussian:
 class NegativeBinomial:
-    def __init__(self, mean, std):
+    def __init__(self, mean, var):
         self.mean = mean
-        self.std = std
+        self.var = var
+        self.std = self.var ** (1/2)
 
     def mean(self):
         return self.mean
@@ -89,7 +90,7 @@ class NegativeBinomial:
         return self.std
 
     def var(self):
-        return self.std ** 2
+        return self.var
 
     def cdf(self, x):
         return 0.5 * (1 + torch.erf((x - self.mean) / (self.std * torch.sqrt(torch.tensor(2.0)))))
