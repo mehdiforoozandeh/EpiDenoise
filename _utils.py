@@ -634,7 +634,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 class DataMasker:
-    def __init__(self, mask_value, mask_percentage, chunk_size=6):
+    def __init__(self, mask_value, mask_percentage, chunk_size=5):
         self.mask_value = mask_value
         self.mask_percentage = mask_percentage
         self.chunk_size = chunk_size
