@@ -1239,7 +1239,7 @@ class ExtendedEncodeDataHandler:
     def generate_full_chr_loci(self, context_length, chrs=["chr19"]):
         self.m_regions = []
         for chr in chrs:
-            size = (self.chr_sizes[chr] // self.resolution) * self.resolution
+            size = (self.chr_sizes[chr] // context_length) * context_length
             for i in range(0, size, context_length):
                 self.m_regions.append([chr, i, i+context_length])
         
