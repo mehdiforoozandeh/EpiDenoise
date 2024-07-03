@@ -3964,10 +3964,10 @@ class PRE_TRAINER(object):
                         #     output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
                         imp_mse = ((imp_true - imp_pred)**2).mean()
 
-                        imp_std = NegativeBinomial(
-                            output_p[masked_map].cpu().detach(), 
-                            output_n[masked_map].cpu().detach()
-                            ).std().cpu().detach().numpy()
+                        # imp_std = NegativeBinomial(
+                        #     output_p[masked_map].cpu().detach(), 
+                        #     output_n[masked_map].cpu().detach()
+                        #     ).std().cpu().detach().numpy()
                         # imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
                         # imp_errstd = pearsonr(imp_std, imp_abs_error)
 
@@ -3988,10 +3988,10 @@ class PRE_TRAINER(object):
                     #     output_p[observed_map].cpu().detach(), 
                     #     output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
 
-                    ups_std = NegativeBinomial(
-                            output_p[observed_map].cpu().detach(), 
-                            output_n[observed_map].cpu().detach()
-                            ).std().cpu().detach().numpy()
+                    # ups_std = NegativeBinomial(
+                    #         output_p[observed_map].cpu().detach(), 
+                    #         output_n[observed_map].cpu().detach()
+                    #         ).std().cpu().detach().numpy()
                     # ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
                     # ups_errstd = pearsonr(ups_std, ups_abs_error)
 
