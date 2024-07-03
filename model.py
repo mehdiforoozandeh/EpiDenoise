@@ -5025,6 +5025,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
 
+    print(model.summary())
     # Load from checkpoint if provided
     if checkpoint_path is not None:
         print("loading pretrained model...")
