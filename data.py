@@ -1398,7 +1398,7 @@ class ExtendedEncodeDataHandler:
             print("generating random loci")
             self.generate_random_loci(m, context_length)
         else:
-            self.generate_full_chr_loci(context_length, chr=loci_gen)
+            self.generate_full_chr_loci(context_length, chrs=loci_gen)
         
         if os.path.exists(self.navigation_path) == False:
             self.navigate_bios_exps()
