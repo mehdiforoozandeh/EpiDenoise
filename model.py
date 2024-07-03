@@ -12,6 +12,8 @@ from datetime import datetime
 from scipy.stats import nbinom
 import imageio.v2 as imageio
 from io import BytesIO
+from torchsummary import summary
+
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -5025,7 +5027,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
 
-    print(model.summary())
+    print(summary(model, (batch_size, context_length, input_dim)))
     # Load from checkpoint if provided
     if checkpoint_path is not None:
         print("loading pretrained model...")
