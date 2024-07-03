@@ -5028,7 +5028,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     # scheduler = None
 
     print(
-        summary(model, input_data=None))
+        summary(model, input_size=None))
     # Load from checkpoint if provided
     if checkpoint_path is not None:
         print("loading pretrained model...")
