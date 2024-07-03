@@ -3890,7 +3890,7 @@ class PRE_TRAINER(object):
                             else:
                                 obs_loss = torch.Tensor(1e5)
 
-                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
+                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
                     elif arch in ["c"]:
@@ -4020,7 +4020,7 @@ class PRE_TRAINER(object):
                         f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                        f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
+                        # f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
                         # f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
                         f"took {int(minutes)}:{int(seconds)}"]
@@ -5056,7 +5056,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5479,7 +5479,7 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 1,
             "mask_percentage": 0.3,
-            "context_length": 800,
+            "context_length": 1600,
             "batch_size": 50,
             "learning_rate": 5e-5,
             "num_loci": 1600,
