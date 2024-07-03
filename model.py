@@ -1721,7 +1721,7 @@ class EpiDenoise30d(nn.Module):
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1,
                 pool_type="up", residuals=True,
-                groups=self.f1,
+                groups=1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
         
         # self.f3 = d_model + metadata_embedding_dim
@@ -5481,7 +5481,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.3,
             "context_length": 800,
             "batch_size": 50,
-            "learning_rate": 1e-5,
+            "learning_rate": 5e-5,
             "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":10
