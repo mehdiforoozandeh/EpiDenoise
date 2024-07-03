@@ -949,8 +949,8 @@ class ComboLoss_NBNLL_msk(nn.Module):
         # upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         # imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
 
-        upsampling_loss = self.gnll_loss(ups_y_true, ups_n_pred, ups_p_pred)
-        imputation_loss = self.gnll_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        upsampling_loss = self.gnll_loss(ups_y_true, ups_p_pred, ups_n_pred)
+        imputation_loss = self.gnll_loss(imp_y_true, imp_p_pred, imp_n_pred)
 
         # if self.reduction == "mean":
         #     upsampling_loss = upsampling_loss.mean()
