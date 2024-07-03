@@ -222,11 +222,11 @@ class ConvBlock(nn.Module):
 class DeconvBlock(nn.Module):
     def __init__(self, in_C, out_C, W, S, D, norm="layer", groups=1):
         super(DeconvBlock, self).__init__()
-        self.norm = norm
+        self.normtype = norm
 
-        if self.norm == "batch":
+        if self.normtype == "batch":
             self.norm = nn.BatchNorm1d(out_C)
-        elif self.norm == "layer":
+        elif self.normtype == "layer":
             self.norm = nn.LayerNorm(out_C)
 
         padding = (W - 1) // 2
@@ -239,7 +239,7 @@ class DeconvBlock(nn.Module):
     def forward(self, x):
         x = self.deconv(x)
 
-        if self.norm in ["batch", "layer"]:
+        if self.normtype in ["batch", "layer"]:
             x = self.norm(x)
             
         x = F.relu(x)
@@ -5034,7 +5034,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5444,7 +5444,7 @@ if __name__ == "__main__":
         hyper_parameters30d = {
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
-            "metadata_embedding_dim": 40,
+            "metadata_embedding_dim": 45,
             "dropout": 0.01,
 
             "n_cnn_layers": 4,
