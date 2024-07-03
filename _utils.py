@@ -30,50 +30,91 @@ def log_resource_usage():
         print(f"GPU Memory Allocated (peak): {gpu_stats['allocated_bytes.all.peak'] / (1024 ** 2)} MB")
         print(f"GPU Memory Reserved (peak): {gpu_stats['reserved_bytes.all.peak'] / (1024 ** 2)} MB")
 
+# class NegativeBinomial:
+#     def __init__(self, p, n):
+#         self.n = n
+#         self.p = p
+
+#     def mean(self):
+#         return (self.n * (1 - self.p)) / self.p
+
+#     def median(self):
+#         return self.icdf(torch.tensor(0.5))
+
+#     def mode(self):
+#         mode = torch.floor(((self.n - 1) * (1 - self.p)) / self.p)
+#         mode[mode < 0] = 0  # Mode is 0 if the computed value is negative
+#         return mode
+
+#     def var(self):
+#         return self.n * (1 - self.p) / (self.p ** 2)
+
+#     def std(self):
+#         return self.var().sqrt()
+
+#     def cdf(self, k):
+#         return torch.Tensor(nbinom.cdf(k, self.n, self.p))
+
+#     def pmf(self, k):
+#         k = torch.tensor(k, dtype=torch.float32)
+#         comb = torch.lgamma(k + self.n) - torch.lgamma(k + 1) - torch.lgamma(self.n)
+#         return torch.exp(comb) * (self.p ** self.n) * ((1 - self.p) ** k)
+
+#     def icdf(self, q):
+#         return torch.Tensor(nbinom.ppf(q, self.n, self.p))
+
+#     def expect(self, stat="mean"):
+#         if stat == "mean":
+#             return self.mean()
+#         elif stat == "mode":
+#             return self.mode()
+#         else:
+#             return self.median()
+
+#     def interval(self, confidence=0.95):
+#         lower = self.icdf(q=(1-confidence)/2)
+#         upper = self.icdf(q=(1+confidence)/2)
+#         return lower, upper
+
+# class Gaussian:
 class NegativeBinomial:
-    def __init__(self, p, n):
-        self.n = n
-        self.p = p
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
 
     def mean(self):
-        return (self.n * (1 - self.p)) / self.p
-
-    def median(self):
-        return self.icdf(torch.tensor(0.5))
-
-    def mode(self):
-        mode = torch.floor(((self.n - 1) * (1 - self.p)) / self.p)
-        mode[mode < 0] = 0  # Mode is 0 if the computed value is negative
-        return mode
-
-    def var(self):
-        return self.n * (1 - self.p) / (self.p ** 2)
+        return self.mean
 
     def std(self):
-        return self.var().sqrt()
+        return self.std
 
-    def cdf(self, k):
-        return torch.Tensor(nbinom.cdf(k, self.n, self.p))
+    def var(self):
+        return self.std ** 2
 
-    def pmf(self, k):
-        k = torch.tensor(k, dtype=torch.float32)
-        comb = torch.lgamma(k + self.n) - torch.lgamma(k + 1) - torch.lgamma(self.n)
-        return torch.exp(comb) * (self.p ** self.n) * ((1 - self.p) ** k)
+    def cdf(self, x):
+        return 0.5 * (1 + torch.erf((x - self.mean) / (self.std * torch.sqrt(torch.tensor(2.0)))))
+
+    def pdf(self, x):
+        return (1 / (self.std * torch.sqrt(torch.tensor(2 * torch.pi)))) * torch.exp(-0.5 * ((x - self.mean) / self.std) ** 2)
+
+    def pmf(self, x):
+        # For Gaussian distribution, the pmf is equivalent to the pdf for continuous values
+        return self.pdf(x)
 
     def icdf(self, q):
-        return torch.Tensor(nbinom.ppf(q, self.n, self.p))
+        return self.mean + self.std * torch.sqrt(torch.tensor(2.0)) * torch.erfinv(2 * q - 1)
 
     def expect(self, stat="mean"):
         if stat == "mean":
-            return self.mean()
-        elif stat == "mode":
-            return self.mode()
+            return self.mean
+        elif stat == "std":
+            return self.std
         else:
-            return self.median()
+            raise ValueError(f"Unsupported statistic: {stat}")
 
     def interval(self, confidence=0.95):
-        lower = self.icdf(q=(1-confidence)/2)
-        upper = self.icdf(q=(1+confidence)/2)
+        lower = self.icdf((1 - confidence) / 2)
+        upper = self.icdf((1 + confidence) / 2)
         return lower, upper
 
 class MONITOR_VALIDATION(object):

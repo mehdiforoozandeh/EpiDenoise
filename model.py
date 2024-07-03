@@ -682,50 +682,89 @@ class MatrixFactorizationEmbedding(nn.Module):
 #========================================= Negative Binomial ============================================#
 #========================================================================================================#
 
+# class NegativeBinomialLayer(nn.Module):
+#     def __init__(self, input_dim, output_dim):
+#         super(NegativeBinomialLayer, self).__init__()
+
+#         self.fc_p = nn.Linear(input_dim, output_dim)
+#         self.fc_n = nn.Linear(input_dim, output_dim)
+
+#     def forward(self, x):
+#         # using sigmoid to ensure it's between 0 and 1
+#         p = torch.sigmoid(self.fc_p(x))
+
+#         # using softplus to ensure it's positive
+#         n = F.softplus(self.fc_n(x))
+
+#         return p, n
+
+# class GaussianLayer(nn.Module):
 class NegativeBinomialLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
-        super(NegativeBinomialLayer, self).__init__()
+        super(GaussianLayer, self).__init__()
 
-        self.fc_p = nn.Linear(input_dim, output_dim)
-        self.fc_n = nn.Linear(input_dim, output_dim)
+        self.fc_mean = nn.Linear(input_dim, output_dim)
+        self.fc_std = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
-        # using sigmoid to ensure it's between 0 and 1
-        p = torch.sigmoid(self.fc_p(x))
+        mean = self.fc_mean(x)
+        std = F.softplus(self.fc_std(x)) + 1e-6  # Ensure std is positive
+        return mean, std
 
-        # using softplus to ensure it's positive
-        n = F.softplus(self.fc_n(x))
+# def negative_binomial_loss(y_true, n_pred, p_pred):
+#     """
+#         Negative binomial loss function for PyTorch.
+        
+#         Parameters
+#         ----------
+#         y_true : torch.Tensor
+#             Ground truth values of the predicted variable.
+#         n_pred : torch.Tensor
+#             Tensor containing n values of the predicted distribution.
+#         p_pred : torch.Tensor
+#             Tensor containing p values of the predicted distribution.
+            
+#         Returns
+#         -------
+#         nll : torch.Tensor
+#             Negative log likelihood.
+#     """
+#     p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
+    
+#     # Calculate the negative log likelihood using PyTorch functions
+#     nll = (
+#         torch.lgamma(n_pred)
+#         + torch.lgamma(y_true + 1)
+#         - torch.lgamma(n_pred + y_true)
+#         - n_pred * torch.log(p_pred)
+#         - y_true * torch.log(1 - p_pred)
+#     )
+    
+#     return nll
 
-        return p, n
-
-def negative_binomial_loss(y_true, n_pred, p_pred):
+def negative_binomial_loss(y_true, mean_pred, std_pred):
+# def gaussian_nll_loss(y_true, mean_pred, std_pred):
     """
-        Negative binomial loss function for PyTorch.
+        Gaussian negative log likelihood loss function for PyTorch.
         
         Parameters
         ----------
         y_true : torch.Tensor
             Ground truth values of the predicted variable.
-        n_pred : torch.Tensor
-            Tensor containing n values of the predicted distribution.
-        p_pred : torch.Tensor
-            Tensor containing p values of the predicted distribution.
+        mean_pred : torch.Tensor
+            Tensor containing mean values of the predicted distribution.
+        std_pred : torch.Tensor
+            Tensor containing standard deviation values of the predicted distribution.
             
         Returns
         -------
         nll : torch.Tensor
             Negative log likelihood.
     """
-    p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
+    std_pred = torch.clamp(std_pred, min=1e-6)  # Ensure std is not zero or negative
     
     # Calculate the negative log likelihood using PyTorch functions
-    nll = (
-        torch.lgamma(n_pred)
-        + torch.lgamma(y_true + 1)
-        - torch.lgamma(n_pred + y_true)
-        - n_pred * torch.log(p_pred)
-        - y_true * torch.log(1 - p_pred)
-    )
+    nll = 0.5 * torch.log(2 * torch.pi * (std_pred ** 2)) + 0.5 * ((y_true - mean_pred) ** 2) / (std_pred ** 2)
     
     return nll
 
