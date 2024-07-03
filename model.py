@@ -211,10 +211,13 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         x = self.conv(x)
 
-        if self.normtype in ["batch", "layer"]:
+        if self.normtype == "layer":
             x = x.permute(0, 2, 1)
             x = self.norm(x)
             x = x.permute(0, 2, 1)
+            
+        elif self.normtype == "batch":
+            x = self.norm(x)
             
         x = F.relu(x)
         return x
@@ -239,7 +242,12 @@ class DeconvBlock(nn.Module):
     def forward(self, x):
         x = self.deconv(x)
 
-        if self.normtype in ["batch", "layer"]:
+        if self.normtype == "layer":
+            x = x.permute(0, 2, 1)
+            x = self.norm(x)
+            x = x.permute(0, 2, 1)
+            
+        elif self.normtype == "batch":
             x = self.norm(x)
             
         x = F.relu(x)
