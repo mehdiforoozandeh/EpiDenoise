@@ -698,7 +698,7 @@ class NegativeBinomialLayer(nn.Module):
         self.fc_p = nn.Sequential(
             nn.Linear(input_dim, output_dim),
             nn.LayerNorm(output_dim),
-            nn.Sigmoid
+            nn.Sigmoid()
         )
 
         self.fc_n = nn.Sequential(
