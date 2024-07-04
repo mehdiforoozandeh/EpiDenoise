@@ -1732,7 +1732,7 @@ class EpiDenoise30d(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
-        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        # src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
 
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
