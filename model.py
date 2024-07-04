@@ -134,7 +134,12 @@ class EmbedMetadata(nn.Module):
         runtype_embed = self.runtype_embedding(runtype)
 
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
+        print(embeddings.shape)
+        embeddings = embeddings.view(embeddings.shape[0], -1)
+        print(embeddings.shape)
+
         embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
+        print(embeddings.shape)
         
         if self.non_linearity:
             embeddings = F.relu(embeddings)
