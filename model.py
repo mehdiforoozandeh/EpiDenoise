@@ -134,12 +134,9 @@ class EmbedMetadata(nn.Module):
         runtype_embed = self.runtype_embedding(runtype)
 
         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
-        print(embeddings.shape)
         embeddings = embeddings.view(embeddings.shape[0], -1)
-        print(embeddings.shape)
 
         embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
-        print(embeddings.shape)
         
         if self.non_linearity:
             embeddings = F.relu(embeddings)
@@ -1796,11 +1793,8 @@ class EpiDenoise30d(nn.Module):
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
-        print(src.shape, xmd_embedding.shape)
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        print(src.shape)
         src = self.xmd_fusionlin(src)
-        print(src.shape)
 
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
@@ -1811,15 +1805,9 @@ class EpiDenoise30d(nn.Module):
                 src = enc(src)
 
         ymd_embedding = self.ymd_emb(y_metadata)
-        print(src.shape, ymd_embedding.shape)
         src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        print(src.shape)
         src = self.ymd_fusionlin(src)
-        print(src.shape)
-
-        exit()
         
-
         src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
             src = dconv(src)
