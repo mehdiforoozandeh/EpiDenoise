@@ -4042,22 +4042,24 @@ class PRE_TRAINER(object):
                 
                 chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 dsf_pointer0 = self.dataset.dsf_pointer
+                bios_pointer0 = self.dataset.bios_pointer
 
                 next_epoch = self.dataset.update_batch_pointers()
 
                 dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                bios_pointer1 = self.dataset.bios_pointer
 
-                if dsf_pointer0 != dsf_pointer1:
+                if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
                     # Generate and process the plot
                     fig_title = " | ".join([
-                        "Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                        f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
                         f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                     
                     plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
                     images.append(imageio.imread(plot_buf))
                     plot_buf.close()
-                    imageio.mimsave(gif_filename, images, duration=0.4 * len(images))
+                    imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
                 if chr0 != chr1:
                     validation_set_eval = val_eval.get_validation(self.model)
@@ -5064,7 +5066,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5492,7 +5494,7 @@ if __name__ == "__main__":
             "learning_rate": 1e-4,
             "num_loci": 3200,
             "lr_halflife":1,
-            "min_avail":3
+            "min_avail":5
         }
         train_epidenoise30(
             hyper_parameters30d, 
