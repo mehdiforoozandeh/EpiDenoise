@@ -1677,7 +1677,7 @@ class EpiDenoise30d(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30d, self).__init__()
 
-        # self.pos_enc = "abs" #pos_enc
+        self.pos_enc = pos_enc
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
