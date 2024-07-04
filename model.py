@@ -4058,7 +4058,7 @@ class PRE_TRAINER(object):
                     plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
                     images.append(imageio.imread(plot_buf))
                     plot_buf.close()
-                    imageio.mimsave(gif_filename, images, duration=0.3 * len(images))
+                    imageio.mimsave(gif_filename, images, duration=0.4 * len(images))
 
                 if chr0 != chr1:
                     validation_set_eval = val_eval.get_validation(self.model)
@@ -5064,7 +5064,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
