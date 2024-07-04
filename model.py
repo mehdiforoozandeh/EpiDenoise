@@ -5060,7 +5060,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         model.load_state_dict(torch.load(checkpoint_path))
 
     print(f"EPD30{arch} # model_parameters: {count_parameters(model)}")
-    summary(model, [(input_dim,), (input_dim,), (input_dim,), (input_dim,)])
+    summary(model, [(1, context_length, input_dim), (1, 4, input_dim), (1, 4, input_dim), (1, input_dim)])
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
