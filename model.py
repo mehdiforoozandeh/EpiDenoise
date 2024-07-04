@@ -954,9 +954,10 @@ class ComboLoss_NBNLL_msk(nn.Module):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
+        print(imp_n_pred.min().item(), imp_n_pred.max().item(), imp_p_pred.min().item(), imp_p_pred.max().item())
+
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
-        print(imputation_loss.min().item(), imputation_loss.max().item())
 
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
@@ -5481,10 +5482,10 @@ if __name__ == "__main__":
             "nlayers": 6,
             "epochs": 10,
             "inner_epochs": 5,
-            "mask_percentage": 0.3,
+            "mask_percentage": 0.2,
             "context_length": 1600,
             "batch_size": 50,
-            "learning_rate": 5e-5,
+            "learning_rate": 1e-3,
             "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":10
