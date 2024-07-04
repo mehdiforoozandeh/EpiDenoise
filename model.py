@@ -1473,7 +1473,7 @@ class EpiDenoise30a(nn.Module):
 class EpiDenoise30b(nn.Module):
     def __init__(self, 
         input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=3,
+        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers, pool_size=2,
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30b, self).__init__()
 
@@ -5361,7 +5361,7 @@ if __name__ == "__main__":
             "dropout": 0.01,
 
             "n_cnn_layers": 4,
-            "conv_kernel_size" : 7,
+            "conv_kernel_size" : 5,
             "n_decoder_layers" : 1,
 
             "nhead": 5,
