@@ -1716,7 +1716,7 @@ class EpiDenoise30d(nn.Module):
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
         
-        print(n_layers)
+        print(nlayers)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
