@@ -311,7 +311,7 @@ class SE_Block_1D(nn.Module):
     Squeeze-and-Excitation block for 1D convolutional layers.
     This module recalibrates channel-wise feature responses by modeling interdependencies between channels.
     """
-    def __init__(self, c, r=16):
+    def __init__(self, c, r=8):
         super(SE_Block_1D, self).__init__()
         # Global average pooling for 1D
         self.squeeze = nn.AdaptiveAvgPool1d(1)
@@ -5475,13 +5475,13 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 45,
-            "dropout": 0.05,
+            "dropout": 0.1,
 
             "n_cnn_layers": 5,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
-            "nhead": 8,
+            "nhead": 16,
             "d_model": 768,
             "nlayers": 8,
             "epochs": 10,
