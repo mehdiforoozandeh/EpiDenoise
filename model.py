@@ -1708,22 +1708,20 @@ class EpiDenoise30d(nn.Module):
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-            
             self.transformer_encoder = nn.ModuleList([self.encoder_layer for _ in range(nlayers)])
             
         else:
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
-
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+            self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1,
                 pool_type="up", residuals=True,
-                groups=self.f1,
+                groups=1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
         
         # self.f3 = d_model + metadata_embedding_dim
@@ -5480,7 +5478,7 @@ if __name__ == "__main__":
             "dropout": 0.05,
 
             "n_cnn_layers": 5,
-            "conv_kernel_size" : 7,
+            "conv_kernel_size" : 5,
             "pool_size": 2,
 
             "nhead": 8,
@@ -5489,7 +5487,7 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 1,
             "mask_percentage": 0.25,
-            "context_length": 1600,
+            "context_length": 3200,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 3200,
