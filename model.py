@@ -1717,7 +1717,6 @@ class EpiDenoise30d(nn.Module):
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
         
-        print(nlayers)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -5484,7 +5483,7 @@ if __name__ == "__main__":
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 8,
+            "nlayers": 1,
             "epochs": 10,
             "inner_epochs": 1,
             "mask_percentage": 0.25,
