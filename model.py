@@ -5479,8 +5479,8 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 45,
             "dropout": 0.05,
 
-            "n_cnn_layers": 4,
-            "conv_kernel_size" : 5,
+            "n_cnn_layers": 5,
+            "conv_kernel_size" : 7,
             "pool_size": 2,
 
             "nhead": 8,
