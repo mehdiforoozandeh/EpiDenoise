@@ -954,8 +954,6 @@ class ComboLoss_NBNLL_msk(nn.Module):
         ups_y_true, ups_n_pred, ups_p_pred = true_signals[obs_map], n_pred[obs_map], p_pred[obs_map]
         imp_y_true, imp_n_pred, imp_p_pred = true_signals[masked_map], n_pred[masked_map], p_pred[masked_map]
 
-        print(imp_n_pred.min().item(), imp_n_pred.max().item(), imp_p_pred.min().item(), imp_p_pred.max().item())
-
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
 
@@ -1679,7 +1677,7 @@ class EpiDenoise30d(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30d, self).__init__()
 
-        self.pos_enc = "relative" #pos_enc
+        self.pos_enc = "abs" #pos_enc
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
@@ -3884,15 +3882,15 @@ class PRE_TRAINER(object):
 
                         if torch.isnan(pred_loss).any():
                             if len(batch_rec["imp_loss"]) > 0:
-                                pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
+                                pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
                             else:
-                                pred_loss = torch.tensor(1e5)
+                                pred_loss = torch.Tensor(1e5)
 
                         if torch.isnan(obs_loss).any():
                             if len(batch_rec["ups_loss"]) > 0:
-                                obs_loss = torch.tensor(np.mean(batch_rec["ups_loss"]))
+                                obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
                             else:
-                                obs_loss = torch.tensor(1e5)
+                                obs_loss = torch.Tensor(1e5)
 
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
@@ -5483,12 +5481,12 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.2,
-            "context_length": 1600,
+            "context_length": 1200,
             "batch_size": 50,
             "learning_rate": 1e-3,
-            "num_loci": 1600,
+            "num_loci": 200,
             "lr_halflife":1,
-            "min_avail":10
+            "min_avail":5
         }
         train_epidenoise30(
             hyper_parameters30d, 
