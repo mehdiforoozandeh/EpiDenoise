@@ -103,6 +103,44 @@ class MetadataEmbeddingModule(nn.Module):
 
         return full_embed
 
+class EmbedMetadata(nn.Module):
+    def __init__(self, input_dim, embedding_dim, non_linearity=True):
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.input_dim = input_dim 
+        self.non_linearity = non_linearity
+        self.continuous_size = embedding_dim // 3
+
+        self.runtype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
+        self.depth_transform = nn.Linear(1, self.continuous_size) 
+        self.coverage_transform = nn.Linear(1, self.continuous_size)
+        self.read_length_transform = nn.Linear(1, self.continuous_size)
+
+        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 4, embedding_dim)  # Adjusted for all inputs
+        self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
+
+    def forward(self, metadata):
+        depth = metadata[:, 0, :].unsqueeze(-1).float() 
+        coverage = metadata[:, 1, :].unsqueeze(-1).float() 
+        read_length = metadata[:, 2, :].unsqueeze(-1).float() 
+        runtype = metadata[:, 3, :].long() 
+        
+        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
+        runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
+
+        depth_embed = self.depth_transform(depth)
+        coverage_embed = self.coverage_transform(coverage)
+        read_length_embed = self.read_length_transform(read_length)
+        runtype_embed = self.runtype_embedding(runtype)
+
+        embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
+        embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
+        
+        if self.non_linearity:
+            embeddings = F.relu(embeddings)
+        
+        return embeddings
+
 class DualConvEmbedding(nn.Module):
     def __init__(self, in_C, out_C, do_batchnorm=True):
         super(DualConvEmbedding, self).__init__()
@@ -1691,7 +1729,6 @@ class EpiDenoise30d(nn.Module):
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.signal_layer_norm = nn.LayerNorm(input_dim)
 
         self.convEnc = nn.ModuleList(
@@ -1702,8 +1739,14 @@ class EpiDenoise30d(nn.Module):
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.SE_enc = SE_Block_1D(self.f3)
-        self.lin = nn.Linear(self.f3, self.f2)
+        self.SE_enc = SE_Block_1D(self.f2)
+
+        self.xmd_emb = EmbedMetadata(input_dim, metadata_embedding_dim, non_linearity=True)
+        self.xmd_fusionlin = nn.Linear(self.f3, self.f2)
+
+        self.ymd_emb = EmbedMetadata(input_dim, metadata_embedding_dim, non_linearity=True)
+        self.ymd_fusionlin = nn.Linear(self.f3, self.f2)
+
 
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
@@ -1737,18 +1780,25 @@ class EpiDenoise30d(nn.Module):
 
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
+        
+
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
             src = conv(src)
-
         # e_src.shape = N, F2, L'
-        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
         src = self.SE_enc(src)
 
+
         src = src.permute(0, 2, 1)  # to N, L', F2
-        src = self.lin(src)
+        xmd_embedding = self.xmd_emb(x_metadata)
+        print(src.shape, xmd_embedding.shape)
+        src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        print(src.shape)
+        src = self.xmd_fusionlin(src)
+        print(src.shape)
+
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             src = self.posEnc(src)
@@ -1756,6 +1806,16 @@ class EpiDenoise30d(nn.Module):
         else:
             for enc in self.transformer_encoder:
                 src = enc(src)
+
+        ymd_embedding = self.ymd_emb(y_metadata)
+        print(src.shape, ymd_embedding.shape)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        print(src.shape)
+        src = self.ymd_fusionlin(src)
+        print(src.shape)
+
+        exit()
+        
 
         src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
