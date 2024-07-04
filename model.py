@@ -3881,6 +3881,8 @@ class PRE_TRAINER(object):
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
                         if torch.isnan(pred_loss).any():
+                            print("encountered nan")
+                            continue
                             if len(batch_rec["imp_loss"]) > 0:
                                 pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
                                 print("nan pred_loss")
@@ -3889,6 +3891,8 @@ class PRE_TRAINER(object):
                                 print("nan pred_loss")
 
                         if torch.isnan(obs_loss).any():
+                            print("encountered nan")
+                            continue
                             if len(batch_rec["ups_loss"]) > 0:
                                 obs_loss = torch.tensor(np.mean(batch_rec["ups_loss"]))
                             else:
