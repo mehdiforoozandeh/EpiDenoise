@@ -1697,7 +1697,7 @@ class EpiDenoise30d(nn.Module):
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
-                pool_type="avg", residuals=True,
+                pool_type="max", residuals=True,
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
@@ -5058,7 +5058,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5469,7 +5469,7 @@ if __name__ == "__main__":
             "data_path": "/project/compbio-lab/encode_data/",
             "input_dim": 45,
             "metadata_embedding_dim": 45,
-            "dropout": 0.01,
+            "dropout": 0.05,
 
             "n_cnn_layers": 4,
             "conv_kernel_size" : 5,
@@ -5477,14 +5477,14 @@ if __name__ == "__main__":
 
             "nhead": 8,
             "d_model": 768,
-            "nlayers": 6,
+            "nlayers": 8,
             "epochs": 10,
             "inner_epochs": 1,
-            "mask_percentage": 0.2,
+            "mask_percentage": 0.25,
             "context_length": 1600,
             "batch_size": 50,
             "learning_rate": 1e-5,
-            "num_loci": 1600,
+            "num_loci": 3200,
             "lr_halflife":1,
             "min_avail":3
         }
