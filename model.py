@@ -1778,9 +1778,7 @@ class EpiDenoise30d(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-
-        
+        # md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
