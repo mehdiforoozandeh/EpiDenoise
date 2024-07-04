@@ -956,6 +956,7 @@ class ComboLoss_NBNLL_msk(nn.Module):
 
         upsampling_loss = negative_binomial_loss(ups_y_true, ups_n_pred, ups_p_pred)
         imputation_loss = negative_binomial_loss(imp_y_true, imp_n_pred, imp_p_pred)
+        print(len(imputation_loss))
 
         if self.reduction == "mean":
             upsampling_loss = upsampling_loss.mean()
@@ -1701,20 +1702,20 @@ class EpiDenoise30d(nn.Module):
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        # self.SE_enc = SE_Block_1D(self.f3)
-        # self.lin = nn.Linear(self.f3, self.f2)
+        self.SE_enc = SE_Block_1D(self.f3)
+        self.lin = nn.Linear(self.f3, self.f2)
 
-        # if self.pos_enc == "relative":
-        #     self.encoder_layer = RelativeEncoderLayer(
-        #         d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
 
-        # else:
-        #     self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-        #     self.encoder_layer = nn.TransformerEncoderLayer(
-        #         d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
-        # self.transformer_encoder = nn.ModuleList(
-        #     [self.encoder_layer for _ in range(nlayers)])
+        self.transformer_encoder = nn.ModuleList(
+            [self.encoder_layer for _ in range(nlayers)])
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -1741,16 +1742,16 @@ class EpiDenoise30d(nn.Module):
             src = conv(src)
 
         # e_src.shape = N, F2, L'
-        # src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
-        # src = self.SE_enc(src)
+        src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
+        src = self.SE_enc(src)
 
-        # src = src.permute(0, 2, 1)  # to N, L', F2
-        # src = self.lin(src)
-        # ### TRANSFORMER ENCODER ###
-        # if self.pos_enc != "relative":
-        #     src = self.posEnc(src)
-        # for enc in self.transformer_encoder:
-        #     src = enc(src)
+        src = src.permute(0, 2, 1)  # to N, L', F2
+        src = self.lin(src)
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+        for enc in self.transformer_encoder:
+            src = enc(src)
 
         # src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
@@ -3881,18 +3882,12 @@ class PRE_TRAINER(object):
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map) 
 
                         if torch.isnan(pred_loss).any():
-                            print("encountered nan")
-                            continue
                             if len(batch_rec["imp_loss"]) > 0:
                                 pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
-                                print("nan pred_loss")
                             else:
                                 pred_loss = torch.tensor(1e5)
-                                print("nan pred_loss")
 
                         if torch.isnan(obs_loss).any():
-                            print("encountered nan")
-                            continue
                             if len(batch_rec["ups_loss"]) > 0:
                                 obs_loss = torch.tensor(np.mean(batch_rec["ups_loss"]))
                             else:
