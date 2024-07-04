@@ -3811,7 +3811,7 @@ class PRE_TRAINER(object):
 
         token_dict = {
             "missing_mask": -1, 
-            "cloze_mask": -1,
+            "cloze_mask": -2,
             "pad": -3
         }
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
