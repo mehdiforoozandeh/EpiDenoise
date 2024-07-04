@@ -1732,7 +1732,7 @@ class EpiDenoise30d(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
-        # src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        src = torch.where(src == -2, torch.tensor(-1, device=srsc.device), src)
 
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
@@ -5058,7 +5058,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5484,7 +5484,7 @@ if __name__ == "__main__":
             "context_length": 1200,
             "batch_size": 50,
             "learning_rate": 1e-3,
-            "num_loci": 200,
+            "num_loci": 1600,
             "lr_halflife":1,
             "min_avail":5
         }
