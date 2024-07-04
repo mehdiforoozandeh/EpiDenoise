@@ -1708,15 +1708,15 @@ class EpiDenoise30d(nn.Module):
         if self.pos_enc == "relative":
             self.encoder_layer = RelativeEncoderLayer(
                 d_model=d_model, heads=nhead, feed_forward_hidden=4*d_model, dropout=dropout)
-
+            
+            self.transformer_encoder = nn.ModuleList([self.encoder_layer for _ in range(nlayers)])
+            
         else:
             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
             self.encoder_layer = nn.TransformerEncoderLayer(
                 d_model=d_model, nhead=nhead, dim_feedforward=4*d_model, dropout=dropout, batch_first=True)
 
-        self.transformer_encoder = nn.ModuleList(
-            [self.encoder_layer for _ in range(nlayers)])
-        
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=nlayers)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -1754,8 +1754,10 @@ class EpiDenoise30d(nn.Module):
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
             src = self.posEnc(src)
-        for enc in self.transformer_encoder:
-            src = enc(src)
+            src = self.transformer_encoder(src)
+        else:
+            for enc in self.transformer_encoder:
+                src = enc(src)
 
         src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
