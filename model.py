@@ -3882,15 +3882,15 @@ class PRE_TRAINER(object):
 
                         if torch.isnan(pred_loss).any():
                             if len(batch_rec["imp_loss"]) > 0:
-                                pred_loss = torch.Tensor(np.mean(batch_rec["imp_loss"]))
+                                pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
                             else:
-                                pred_loss = torch.Tensor(1e5)
+                                pred_loss = torch.tensor(1e5)
 
                         if torch.isnan(obs_loss).any():
                             if len(batch_rec["ups_loss"]) > 0:
-                                obs_loss = torch.Tensor(np.mean(batch_rec["ups_loss"]))
+                                obs_loss = torch.tensor(np.mean(batch_rec["ups_loss"]))
                             else:
-                                obs_loss = torch.Tensor(1e5)
+                                obs_loss = torch.tensor(1e5)
 
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
