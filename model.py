@@ -1715,6 +1715,8 @@ class EpiDenoise30d(nn.Module):
 
         self.transformer_encoder = nn.ModuleList(
             [self.encoder_layer for _ in range(nlayers)])
+        
+        print(n_layers)
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -5026,8 +5028,8 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         n_decoder_layers = hyper_parameters["n_decoder_layers"]
 
         model = EpiDenoise30b(input_dim, metadata_embedding_dim, conv_kernel_size, 
-        n_cnn_layers, nhead, d_model, nlayers, output_dim, n_decoder_layers,
-        dropout=dropout, context_length=context_length, pos_enc="relative")
+        n_cnn_layers, nhead, d_model, output_dim, n_decoder_layers,
+        nlayers=nlayers, dropout=dropout, context_length=context_length, pos_enc="relative")
 
     elif arch == "c":
         n_cnn_layers = hyper_parameters["n_cnn_layers"]
