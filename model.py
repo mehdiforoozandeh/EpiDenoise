@@ -3895,7 +3895,7 @@ class PRE_TRAINER(object):
                             else:
                                 obs_loss = torch.tensor(1e5)
 
-                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage)) + msk_p_loss + msk_o_loss
+                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
                     elif arch in ["c"]:
@@ -3958,7 +3958,7 @@ class PRE_TRAINER(object):
                         imp_errstd = pearsonr(imp_std, imp_abs_error)
 
                         batch_rec["imp_loss"].append(pred_loss.item())
-                        batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
+                        # batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
                         batch_rec["imp_mse"].append(imp_mse)
                         batch_rec["imp_r2"].append(imp_r2)
                         batch_rec["imp_pmf"].append(imp_pmf)
@@ -4006,15 +4006,15 @@ class PRE_TRAINER(object):
                         f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                         f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
                         f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                        f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
+                        # f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
                         f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
                         f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
                         # f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
                         # f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
                         f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
                         f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                        # f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
-                        # f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
+                        f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
+                        f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                         f"took {int(minutes)}:{int(seconds)}"]
 
                 elif arch in ["c"]:
@@ -5486,7 +5486,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 1600,
             "batch_size": 50,
-            "learning_rate": 1e-5,
+            "learning_rate": 1e-4,
             "num_loci": 3200,
             "lr_halflife":1,
             "min_avail":3
