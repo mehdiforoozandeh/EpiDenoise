@@ -1753,7 +1753,7 @@ class EpiDenoise30d(nn.Module):
         for enc in self.transformer_encoder:
             src = enc(src)
 
-        # src = src.permute(0, 2, 1) # to N, F2, L'
+        src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
             src = dconv(src)
 
