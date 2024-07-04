@@ -3884,8 +3884,10 @@ class PRE_TRAINER(object):
                         if torch.isnan(pred_loss).any():
                             if len(batch_rec["imp_loss"]) > 0:
                                 pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
+                                print("nan pred_loss")
                             else:
                                 pred_loss = torch.tensor(1e5)
+                                print("nan pred_loss")
 
                         if torch.isnan(obs_loss).any():
                             if len(batch_rec["ups_loss"]) > 0:
