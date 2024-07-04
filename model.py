@@ -1730,9 +1730,12 @@ class EpiDenoise30d(nn.Module):
         self.mask_obs_layer = nn.Linear(self.f1, output_dim)
     
     def forward(self, src, x_metadata, y_metadata, availability):
-        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
-
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
+
+        md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
