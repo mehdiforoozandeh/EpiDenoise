@@ -1695,7 +1695,7 @@ class EpiDenoise30d(nn.Module):
         self.signal_layer_norm = nn.LayerNorm(input_dim)
 
         self.convEnc = nn.Sequential(
-            [ConvTower(
+            *[ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
