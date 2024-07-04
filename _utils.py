@@ -80,7 +80,8 @@ class MONITOR_VALIDATION(object):
     def __init__(
         self, data_path, context_length, batch_size,
         chr_sizes_file="data/hg38.chrom.sizes", 
-        resolution=25, split="val", arch="a"):
+        resolution=25, split="val", arch="a", 
+        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}):
 
         self.data_path = data_path
         self.context_length = context_length
@@ -106,11 +107,7 @@ class MONITOR_VALIDATION(object):
             (39500000//self.resolution, 40000000//self.resolution) # Highly Conserved Non-Coding Sequences (HCNS)
             ]
 
-        self.token_dict = {
-                    "missing_mask": -1, 
-                    "cloze_mask": -2,
-                    "pad": -3
-                }
+        self.token_dict = token_dict
         
         if self.arch in ["c", "d"]:
             self.token_dict["cloze_mask"] = self.token_dict["missing_mask"]

@@ -3811,7 +3811,7 @@ class PRE_TRAINER(object):
 
         token_dict = {
             "missing_mask": -1, 
-            "cloze_mask": -2,
+            "cloze_mask": -1,
             "pad": -3
         }
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
@@ -3819,7 +3819,7 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
             
-        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch)
+        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch, token_dict=token_dict)
         
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
