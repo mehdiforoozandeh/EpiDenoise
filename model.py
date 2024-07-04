@@ -1694,13 +1694,22 @@ class EpiDenoise30d(nn.Module):
         self.metadata_embedder = MetadataEmbeddingModule(input_dim, embedding_dim=metadata_embedding_dim, non_linearity=True)
         self.signal_layer_norm = nn.LayerNorm(input_dim)
 
-        self.convEnc = nn.ModuleList(
+        self.convEnc = nn.Sequential(
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
                 groups=self.f1,
-                pool_size=pool_size) for i in range(n_cnn_layers)])
+                pool_size=pool_size) for i in range(n_cnn_layers)]
+        )
+
+        # self.convEnc = nn.ModuleList(
+        #     [ConvTower(
+        #         conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+        #         conv_kernel_size[i], S=1, D=1,
+        #         pool_type="max", residuals=True,
+        #         groups=self.f1,
+        #         pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.SE_enc = SE_Block_1D(self.f3)
         self.lin = nn.Linear(self.f3, self.f2)
@@ -1742,8 +1751,9 @@ class EpiDenoise30d(nn.Module):
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
-        for conv in self.convEnc:
-            src = conv(src)
+        # for conv in self.convEnc:
+        #     src = conv(src)
+        src = self.convEnc
 
         # e_src.shape = N, F2, L'
         src = torch.cat([src, md_embedding.unsqueeze(2).expand(-1, -1, self.l2)], dim=1)
