@@ -12,6 +12,7 @@ from datetime import datetime
 from scipy.stats import nbinom
 import imageio.v2 as imageio
 from io import BytesIO
+from torchsummary import summary
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
@@ -5059,6 +5060,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="a"):
         model.load_state_dict(torch.load(checkpoint_path))
 
     print(f"EPD30{arch} # model_parameters: {count_parameters(model)}")
+    summary(model, [(input_dim,), (input_dim,), (input_dim,), (input_dim,)])
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
