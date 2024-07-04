@@ -5481,12 +5481,12 @@ if __name__ == "__main__":
             "epochs": 10,
             "inner_epochs": 5,
             "mask_percentage": 0.2,
-            "context_length": 1200,
+            "context_length": 1600,
             "batch_size": 50,
-            "learning_rate": 1e-3,
+            "learning_rate": 5e-5,
             "num_loci": 1600,
             "lr_halflife":1,
-            "min_avail":5
+            "min_avail":3
         }
         train_epidenoise30(
             hyper_parameters30d, 
