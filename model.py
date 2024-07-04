@@ -1677,7 +1677,7 @@ class EpiDenoise30d(nn.Module):
         dropout=0.1, context_length=2000, pos_enc="relative"):
         super(EpiDenoise30d, self).__init__()
 
-        self.pos_enc = pos_enc
+        self.pos_enc = "abs"#pos_enc
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
@@ -1732,8 +1732,7 @@ class EpiDenoise30d(nn.Module):
     def forward(self, src, x_metadata, y_metadata, availability):
         md_embedding = self.metadata_embedder(x_metadata, y_metadata, availability)
 
-        src = torch.where(
-            src == -2, torch.tensor(-1, device=src.device), src)
+        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
 
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
