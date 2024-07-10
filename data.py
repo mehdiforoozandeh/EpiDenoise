@@ -1385,7 +1385,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1, 2]):#[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1]):#[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
