@@ -1137,10 +1137,10 @@ class ExtendedEncodeDataHandler:
                 
             else:
 
-                print("bios missing", exp_type, exp_accession, data_type, ct, so_far[ct])
+                print("bios missing", exp_type, exp_accession, data_type, ct)
                 # print("found these substitute biosamples", celltypes[ct])
 
-
+        print(so_far)
         exit()
 
 
