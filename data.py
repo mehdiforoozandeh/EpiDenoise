@@ -1123,15 +1123,16 @@ class ExtendedEncodeDataHandler:
             exp_accession = self.eic_df["experiment"][i] 
             exp_type = self.eic_df["mark/assay"][i]
             data_type = self.eic_df["data_type"][i]
-            ct = self.eic_df["cell_type"][i]
+            ct = self.eic_df["cell_type"][i].replace("_", " ")
+            if ct == "H1-hESC":
+                ct = ""
             
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
             else:
                 print("bios missing", exp_type, exp_accession, data_type, ct)
-                
-                # print(celltypes[ct.replace("_", " ")])
+                print(celltypes[ct])
 
 
         exit()
