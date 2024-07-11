@@ -1146,7 +1146,6 @@ class ExtendedEncodeDataHandler:
                 
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
-        exit()
 
         for i in range(len(missed)):
             found = False
