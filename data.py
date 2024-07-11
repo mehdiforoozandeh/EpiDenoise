@@ -918,6 +918,10 @@ class ExtendedEncodeDataHandler:
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
 
+        
+        self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
+        self.eic_df = pd.read_csv(self.eicdf_path).drop("Unnamed: 0", axis=1)
+        
     def report(self):
         """
         Generates a formatted text report of the dataset.
@@ -1099,6 +1103,42 @@ class ExtendedEncodeDataHandler:
                             new_nav[ct][exp] = self.navigation[sub_bios][exp]
         
         self.navigation = new_nav
+
+    def init_eic_subset(self):
+        split = {} # keys are bios accessions | values are "train"/"test"/"val"
+        nav = {} # keys are bios accessions | values are "train"/"test"/"val"
+
+
+        aliases = {
+            "biosample_aliases": {}, # keys are bios accessions
+            "experiment_aliases": {} # keys are exp names
+        }
+
+        # replace self.navigation
+        for i in range(self.eic_df.shape[0]):
+            exp_accession = self.eic_df["experiment"][i] 
+            exp_type = self.eic_df["mark/assay"][i]
+            data_type = self.eic_df["data_type"][i]
+            
+            # find corresponding bios in df1
+            found = False
+            if exp_type in self.df1.columns:
+                if exp_accession in self.df1[exp_type]:
+                    bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
+                    found = True
+            
+            if found:
+                print("found")
+            else:
+                print("not found", exp_type, exp_accession, data_type)
+        
+        exit()
+
+
+        # replace self.split_dict
+        # replace self.aliases
+
+
 
     def filter_navigation(self, include=[], exclude=[]):
         """
@@ -1385,7 +1425,9 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], includes=[], merge_ct=False, DSF_list=[1]):#[1,2,4]):
+        excludes=["CAGE", "RNA-seq", "ChIA-PET"],# "H3T11ph", "H2AK9ac"], 
+        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        includes=[], merge_ct=False, eic=False, DSF_list=[1]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1409,6 +1451,12 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
 
         self.filter_navigation(exclude=excludes, include=includes)
+        
+        if eic:
+            # replace self.navigation
+            # replace self.split_dict
+            # replcate self.aliases
+            self.init_eic_subset()
 
         if merge_ct:
             self.merge_celltypes()
@@ -1926,6 +1974,16 @@ if __name__ == "__main__":
             # ax.legend(fontsize=5)
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
+
+    elif sys.argv[1] == "eic":
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
+        context_length=3200
+        resolution = 25
+
+        dataset.initialize_EED(
+            m=num_training_loci, context_length=context_length*resolution, 
+            bios_batchsize=50, loci_batchsize=1, loci_gen="ccre",
+            bios_min_exp_avail_threshold=3, check_completeness=True, eic=True)
 
     else:
         d = GET_DATA()
