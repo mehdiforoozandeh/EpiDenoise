@@ -1118,6 +1118,7 @@ class ExtendedEncodeDataHandler:
             "experiment_aliases": {} # keys are exp names
         }
 
+        so_far = {}
         # replace self.navigation
         for i in range(self.eic_df.shape[0]):
             exp_accession = self.eic_df["experiment"][i] 
@@ -1130,9 +1131,14 @@ class ExtendedEncodeDataHandler:
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
+                if ct not in so_far.keys():
+                    so_far[ct] = []
+                so_far[ct].append(bios_accession)
+                
             else:
-                print("bios missing", exp_type, exp_accession, data_type, ct)
-                print("found these substitute biosamples", celltypes[ct])
+
+                print("bios missing", exp_type, exp_accession, data_type, ct, so_far[ct])
+                # print("found these substitute biosamples", celltypes[ct])
 
 
         exit()
