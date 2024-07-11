@@ -1122,17 +1122,17 @@ class ExtendedEncodeDataHandler:
             data_type = self.eic_df["data_type"][i]
             
             # find corresponding bios in df1
-            found = False
             if exp_type in self.df1.columns:
+
                 if exp_accession in self.df1[exp_type]:
                     bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
                     found = True
-            
-            if found:
-                print("found")
+                else:
+                    print("bios missing", exp_type, exp_accession, data_type)
+                    
             else:
-                print("not found", exp_type, exp_accession, data_type)
-        
+                print("exp missing in df1", exp_type, exp_accession, data_type)
+
         exit()
 
 
