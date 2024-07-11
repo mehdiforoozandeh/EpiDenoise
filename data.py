@@ -1121,6 +1121,12 @@ class ExtendedEncodeDataHandler:
         so_far = {}
         missed = []
         
+        to_move = {
+            "training_data":{}, # keys are cell_types | values are file paths (list)
+            "validation_data":{},  # keys are cell_types | values are file paths (list)
+            "blind_data":{}  # keys are cell_types | values are file paths (list)
+        }
+
         for i in range(self.eic_df.shape[0]):
             exp_accession = self.eic_df["experiment"][i] 
             exp_type = self.eic_df["mark/assay"][i]
@@ -1140,6 +1146,11 @@ class ExtendedEncodeDataHandler:
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
                 print([exp_type, exp_accession, data_type, ct, bios_accession])
+
+                if ct not in to_move[data_type].keys():
+                    to_move[data_type][ct] = []
+                to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+
                 if ct not in so_far.keys():
                     so_far[ct] = []
                 so_far[ct].append(bios_accession)
@@ -1152,9 +1163,14 @@ class ExtendedEncodeDataHandler:
             for j in so_far[missed[i][-1]]:
                 if missed[i][0] in self.navigation[j].keys():
                     if len(self.is_bios_complete(j))==0:
-                        # print(missed[i][-1], "found in so far")
                         bios_accession = j
-                        print(missed[i] + [bios_accession])
+                        ct = missed[i][-1]
+                        data_type = missed[i][-2]
+                        exp_type = missed[i][0]
+                        if ct not in to_move[data_type].keys():
+                            to_move[data_type][ct] = []
+                        to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+
                         found == True
                         break
 
@@ -1162,9 +1178,14 @@ class ExtendedEncodeDataHandler:
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
                         if len(self.is_bios_complete(j))==0:
-                            # print(missed[i][-1], "found in celltype", self.navigation[j])
                             bios_accession = j
-                            print(missed[i] + [bios_accession])
+                            ct = missed[i][-1]
+                            data_type = missed[i][-2]
+                            exp_type = missed[i][0]
+                            if ct not in to_move[data_type].keys():
+                                to_move[data_type][ct] = []
+                            to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+
                             found == True
                             break
 
