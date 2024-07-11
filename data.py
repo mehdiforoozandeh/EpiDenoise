@@ -1138,22 +1138,20 @@ class ExtendedEncodeDataHandler:
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
 
-        for k, v in so_far.items():
-            print(k, v)
-        
-
         for i in range(len(missed)):
             found = False
             for j in so_far[missed[i][-1]]:
                 if missed[i][0] in self.navigation[j].keys():
                     print("found in so far")
                     found == True
+                    break
 
             if not found:
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
                         print("found in celltype", self.navigation[j])
                         found == True
+                        break
 
                 
 
@@ -1485,8 +1483,7 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
         
-        
-
+    
         if merge_ct:
             self.merge_celltypes()
 
