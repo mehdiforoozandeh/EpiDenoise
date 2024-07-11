@@ -1136,7 +1136,7 @@ class ExtendedEncodeDataHandler:
                 so_far[ct].append(bios_accession)
                 
             else:
-                missed.append(exp_type, exp_accession, data_type, ct)
+                missed.append([exp_type, exp_accession, data_type, ct])
 
         for k, v in so_far.items():
             print(k, v)
