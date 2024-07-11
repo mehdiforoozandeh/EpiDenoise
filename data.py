@@ -1124,9 +1124,16 @@ class ExtendedEncodeDataHandler:
             exp_accession = self.eic_df["experiment"][i] 
             exp_type = self.eic_df["mark/assay"][i]
             data_type = self.eic_df["data_type"][i]
+
             ct = self.eic_df["cell_type"][i].replace("_", " ")
             if ct == "H1-hESC":
                 ct = "H1"
+
+            if ct not in aliases["biosample_aliases"].keys():
+                aliases["biosample_aliases"][ct] = self.eic_df["cell_type_id"][i]
+
+            if exp_type not in aliases["experiment_aliases"].keys():
+                aliases["experiment_aliases"][exp_type] = self.eic_df["mark_id"][i]
             
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
@@ -1138,12 +1145,15 @@ class ExtendedEncodeDataHandler:
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
 
+        print(aliases)
+        exit()
         for i in range(len(missed)):
             found = False
             for j in so_far[missed[i][-1]]:
                 if missed[i][0] in self.navigation[j].keys():
                     if len(self.is_bios_complete(j))==0:
-                        print(missed[i][-1], "found in so far")
+                        # print(missed[i][-1], "found in so far")
+                        bios_accession = self.navigation[j]
                         found == True
                         break
 
@@ -1151,14 +1161,13 @@ class ExtendedEncodeDataHandler:
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
                         if len(self.is_bios_complete(j))==0:
-                            print(missed[i][-1], "found in celltype", self.navigation[j])
+                            # print(missed[i][-1], "found in celltype", self.navigation[j])
+                            bios_accession = self.navigation[j]
                             found == True
                             break
 
                 
 
-
-        # fixed missed by looking for same exp_type in one of its corresponding biosamples in so_far
         exit()
 
         # replace self.navigation
