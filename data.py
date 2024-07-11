@@ -1141,9 +1141,22 @@ class ExtendedEncodeDataHandler:
         for k, v in so_far.items():
             print(k, v)
         
+
         for i in range(len(missed)):
+            found = False
             for j in so_far[missed[i][-1]]:
-                print(self.navigation[j].keys(), missed[i][0])
+                if missed[i][0] in self.navigation[j].keys():
+                    print("found in so far")
+                    found == True
+
+            if not found:
+                for j in celltypes[missed[i][-1]]:
+                    if missed[i][0] in self.navigation[j].keys():
+                        print("found in celltype", self.navigation[j])
+                        found == True
+
+                
+
 
         # fixed missed by looking for same exp_type in one of its corresponding biosamples in so_far
         exit()
