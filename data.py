@@ -1142,7 +1142,8 @@ class ExtendedEncodeDataHandler:
             print(k, v)
         
         for i in range(len(missed)):
-            print(missed[i])
+            for j in so_far[missed[i][-1]]:
+                print(self.navigation[j].keys())
 
         # fixed missed by looking for same exp_type in one of its corresponding biosamples in so_far
         exit()
