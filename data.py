@@ -1126,10 +1126,10 @@ class ExtendedEncodeDataHandler:
 
                 if exp_accession in self.df1[exp_type]:
                     bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
-                    found = True
+                    print(bios_accession)
                 else:
                     print("bios missing", exp_type, exp_accession, data_type)
-                    
+
             else:
                 print("exp missing in df1", exp_type, exp_accession, data_type)
 
