@@ -1106,9 +1106,14 @@ class ExtendedEncodeDataHandler:
         self.navigation = new_nav
 
     def init_eic_subset(self):
+        celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
+        for i in range(len(self.df2)):
+            celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
+
+        print(celltypes)
+        exit()
         split = {} # keys are bios accessions | values are "train"/"test"/"val"
         nav = {} # keys are bios accessions | values are "train"/"test"/"val"
-
 
         aliases = {
             "biosample_aliases": {}, # keys are bios accessions
@@ -1122,14 +1127,11 @@ class ExtendedEncodeDataHandler:
             data_type = self.eic_df["data_type"][i]
             
             # find corresponding bios in df1
-            if exp_type in self.df1.columns:
-                if exp_accession in self.df1[exp_type].values:
-                    bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
-                else:
-                    print("bios missing", exp_type, exp_accession, data_type)
-
+            if exp_accession in self.df1[exp_type].values:
+                bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
             else:
-                print("exp missing in df1", exp_type, exp_accession, data_type)
+                print("bios missing", exp_type, exp_accession, data_type)
+
 
         exit()
 
@@ -1424,8 +1426,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET"],# "H3T11ph", "H2AK9ac"], 
-        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[], merge_ct=False, eic=False, DSF_list=[1]):
 
         self.set_alias()
@@ -1449,13 +1450,16 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-        self.filter_navigation(exclude=excludes, include=includes)
-        
         if eic:
             # replace self.navigation
             # replace self.split_dict
             # replcate self.aliases
             self.init_eic_subset()
+
+        else:
+            self.filter_navigation(exclude=excludes, include=includes)
+        
+        
 
         if merge_ct:
             self.merge_celltypes()
