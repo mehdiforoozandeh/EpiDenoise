@@ -1123,8 +1123,8 @@ class ExtendedEncodeDataHandler:
             
             # find corresponding bios in df1
             if exp_type in self.df1.columns:
-                print(self.df1[exp_type])
-                
+                print(self.df1[exp_type].values)
+
 
                 if exp_accession in self.df1[exp_type]:
                     bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
