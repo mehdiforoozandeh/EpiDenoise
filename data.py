@@ -1142,7 +1142,7 @@ class ExtendedEncodeDataHandler:
             found = False
             for j in so_far[missed[i][-1]]:
                 if missed[i][0] in self.navigation[j].keys():
-                    if len(self.is_bios_complete(bios))==0:
+                    if len(self.is_bios_complete(j))==0:
                         print(missed[i][-1], "found in so far")
                         found == True
                         break
@@ -1150,7 +1150,7 @@ class ExtendedEncodeDataHandler:
             if not found:
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
-                        if len(self.is_bios_complete(bios))==0:
+                        if len(self.is_bios_complete(j))==0:
                             print(missed[i][-1], "found in celltype", self.navigation[j])
                             found == True
                             break
