@@ -1140,7 +1140,8 @@ class ExtendedEncodeDataHandler:
                 print("bios missing", exp_type, exp_accession, data_type, ct)
                 # print("found these substitute biosamples", celltypes[ct])
 
-        print(so_far)
+        for k,v in so_far.items():
+            print(k, v, "\n")
         exit()
 
 
