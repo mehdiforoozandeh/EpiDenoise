@@ -1110,8 +1110,6 @@ class ExtendedEncodeDataHandler:
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
 
-        print(celltypes)
-        exit()
         split = {} # keys are bios accessions | values are "train"/"test"/"val"
         nav = {} # keys are bios accessions | values are "train"/"test"/"val"
 
