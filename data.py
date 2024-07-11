@@ -1130,7 +1130,7 @@ class ExtendedEncodeDataHandler:
             
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
-                bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
+                bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
                 if ct not in so_far.keys():
                     so_far[ct] = []
                 so_far[ct].append(bios_accession)
