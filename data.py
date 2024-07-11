@@ -1982,8 +1982,8 @@ if __name__ == "__main__":
         resolution = 25
 
         dataset.initialize_EED(
-            m=num_training_loci, context_length=context_length*resolution, 
-            bios_batchsize=50, loci_batchsize=1, loci_gen="ccre",
+            m=100, context_length=context_length*resolution, 
+            bios_batchsize=50, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=3, check_completeness=True, eic=True)
 
     else:
