@@ -1119,7 +1119,7 @@ class ExtendedEncodeDataHandler:
         }
 
         so_far = {}
-        # replace self.navigation
+        missed = []
         for i in range(self.eic_df.shape[0]):
             exp_accession = self.eic_df["experiment"][i] 
             exp_type = self.eic_df["mark/assay"][i]
@@ -1136,15 +1136,18 @@ class ExtendedEncodeDataHandler:
                 so_far[ct].append(bios_accession)
                 
             else:
+                missed.append(exp_type, exp_accession, data_type, ct)
 
-                print("bios missing", exp_type, exp_accession, data_type, ct)
-                # print("found these substitute biosamples", celltypes[ct])
+        for k, v in so_far.items():
+            print(k, v)
+        
+        for i in range(len(missed)):
+            print(missed[i])
 
-        for k,v in so_far.items():
-            print(k, v, "\n")
+        # fixed missed by looking for same exp_type in one of its corresponding biosamples in so_far
         exit()
 
-
+        # replace self.navigation
         # replace self.split_dict
         # replace self.aliases
 
