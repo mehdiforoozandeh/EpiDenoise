@@ -1130,7 +1130,8 @@ class ExtendedEncodeDataHandler:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"]
             else:
                 print("bios missing", exp_type, exp_accession, data_type, ct)
-                print(celltypes[ct.replace("_", " ")])
+                
+                # print(celltypes[ct.replace("_", " ")])
 
 
         exit()
