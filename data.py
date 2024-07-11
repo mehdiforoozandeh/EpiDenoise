@@ -1120,6 +1120,7 @@ class ExtendedEncodeDataHandler:
 
         so_far = {}
         missed = []
+        
         for i in range(self.eic_df.shape[0]):
             exp_accession = self.eic_df["experiment"][i] 
             exp_type = self.eic_df["mark/assay"][i]
@@ -1138,16 +1139,15 @@ class ExtendedEncodeDataHandler:
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
+                print([exp_type, exp_accession, data_type, ct, bios_accession])
                 if ct not in so_far.keys():
                     so_far[ct] = []
                 so_far[ct].append(bios_accession)
                 
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
-
-        print(aliases)
-        print(self.aliases)
         exit()
+
         for i in range(len(missed)):
             found = False
             for j in so_far[missed[i][-1]]:
@@ -1167,6 +1167,16 @@ class ExtendedEncodeDataHandler:
                             found == True
                             break
 
+        """
+        make nav
+            mkdir T_ct
+            mkdir V_ct
+            mkdir B_ct
+        make splitdict
+            all T_*:"train"
+            all V_*:"val"
+            all B_*:"test"
+        """
                 
 
         exit()
