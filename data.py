@@ -1153,7 +1153,7 @@ class ExtendedEncodeDataHandler:
                 if missed[i][0] in self.navigation[j].keys():
                     if len(self.is_bios_complete(j))==0:
                         # print(missed[i][-1], "found in so far")
-                        bios_accession = self.navigation[j]
+                        bios_accession = j
                         print(missed[i] + [bios_accession])
                         found == True
                         break
@@ -1163,7 +1163,7 @@ class ExtendedEncodeDataHandler:
                     if missed[i][0] in self.navigation[j].keys():
                         if len(self.is_bios_complete(j))==0:
                             # print(missed[i][-1], "found in celltype", self.navigation[j])
-                            bios_accession = self.navigation[j]
+                            bios_accession = j
                             print(missed[i] + [bios_accession])
                             found == True
                             break
