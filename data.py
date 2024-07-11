@@ -1188,6 +1188,7 @@ class ExtendedEncodeDataHandler:
 
                             found == True
                             break
+        print(to_move)
 
         """
         make nav
