@@ -1190,8 +1190,8 @@ class ExtendedEncodeDataHandler:
                             break
         print(to_move)
         for ct, files in to_move["training_data"].items():
-            dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}")
             for f in files:
+                dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}", f.split("/")[-1])
                 shutil.copytree(f, dst)
                 #test if it is correct
         exit()
