@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
-import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random, glob
+import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random, glob, shutil
 from torch.utils.data import Dataset
 import torch, sys, math
 import pybedtools
@@ -1189,6 +1189,15 @@ class ExtendedEncodeDataHandler:
                             found == True
                             break
         print(to_move)
+        exit()
+        for ct, files in to_move["training_data"].items():
+            dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}")
+            for f in files:
+                shutil.copytree(f, dst)
+                #test if it is correct
+        
+        # same for val and blind
+
 
         """
         make nav
@@ -1201,7 +1210,6 @@ class ExtendedEncodeDataHandler:
             all B_*:"test"
         """
                 
-
         exit()
 
         # replace self.navigation
