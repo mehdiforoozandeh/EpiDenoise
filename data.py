@@ -1188,14 +1188,21 @@ class ExtendedEncodeDataHandler:
 
                             found == True
                             break
-        print(to_move)
+        # print(to_move)
         for ct, files in to_move["training_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}", f.split("/")[-1])
                 shutil.copytree(f, dst)
-                #test if it is correct
-        exit()
-        # same for val and blind
+
+        for ct, files in to_move["validation_data"].items():
+            for f in files:
+                dst = os.path.join(self.base_path, f"V_{ct.replace(' ', '_')}", f.split("/")[-1])
+                shutil.copytree(f, dst)
+        
+        for ct, files in to_move["blind_data"].items():
+            for f in files:
+                dst = os.path.join(self.base_path, f"B_{ct.replace(' ', '_')}", f.split("/")[-1])
+                shutil.copytree(f, dst)
 
 
         """
