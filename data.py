@@ -1145,7 +1145,7 @@ class ExtendedEncodeDataHandler:
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
-                print([exp_type, exp_accession, data_type, ct, bios_accession])
+                # print([exp_type, exp_accession, data_type, ct, bios_accession])
 
                 if ct not in to_move[data_type].keys():
                     to_move[data_type][ct] = []
@@ -1189,13 +1189,12 @@ class ExtendedEncodeDataHandler:
                             found == True
                             break
         print(to_move)
-        exit()
         for ct, files in to_move["training_data"].items():
             dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}")
             for f in files:
                 shutil.copytree(f, dst)
                 #test if it is correct
-        
+        exit()
         # same for val and blind
 
 
