@@ -2118,6 +2118,12 @@ class EVAL_EED(object):
         imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
+        print(imp_lower_95.shape, imp_upper_95.shape)
+        print(ups_lower_95.shape, ups_upper_95.shape)
+        print(imp_mean.shape, ups_mean.shape)
+        print(imp_std.shape, ups_std.shape)
+        exit()
+
         results = []
         # for j in availability:  # for each feature i.e. assay
         for j in range(Y.shape[1]):
