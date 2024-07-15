@@ -2113,6 +2113,7 @@ class EVAL_EED(object):
 
         # imp_lower_80, imp_upper_80 = imp_dist.interval(confidence=0.8)
         # ups_lower_80, ups_upper_80 = ups_dist.interval(confidence=0.8)
+        print("getting 0.95 interval conf")
 
         imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
