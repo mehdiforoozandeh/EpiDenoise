@@ -198,9 +198,12 @@ class METRICS(object):
         return chrom_subset
         
     def get_signals(self, array, df):
-        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in df.iterrows()])
-        # Use advanced indexing to extract all necessary elements at once
-        signals = array[indices]
+        try:
+            indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in df.iterrows()])
+            # Use advanced indexing to extract all necessary elements at once
+            signals = array[indices]
+        except:
+            print(array.shape, df.shape, indices)
         return signals
 
     ################################################################################
