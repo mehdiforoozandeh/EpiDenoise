@@ -921,7 +921,6 @@ class ExtendedEncodeDataHandler:
         
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
-        print(self.eic_df)
         
     def report(self):
         """
