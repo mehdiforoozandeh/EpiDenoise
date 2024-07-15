@@ -1725,7 +1725,7 @@ class ExtendedEncodeDataHandler:
         return batch_data, batch_metadata, batch_availability
         
     def init_eval(
-        self, context_length, bios_min_exp_avail_threshold=3, 
+        self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[]): #split in ["test", "val"]

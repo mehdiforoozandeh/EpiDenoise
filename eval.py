@@ -2490,6 +2490,7 @@ class EVAL_EED(object):
         """
         
         self.model_res = []
+        print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios, dsf)
@@ -2535,6 +2536,8 @@ if __name__=="__main__":
         hyper_parameters_path="models/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30d", resolution=25, savedir="models/eval_30d/", mode="eval")
+    
+    e.viz_all()
 
     exit()
 
