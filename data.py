@@ -1204,7 +1204,6 @@ class ExtendedEncodeDataHandler:
                 dst = os.path.join(self.base_path, f"B_{ct.replace(' ', '_')}", f.split("/")[-1])
                 shutil.copytree(f, dst)
 
-
         """
         make nav
             mkdir T_ct

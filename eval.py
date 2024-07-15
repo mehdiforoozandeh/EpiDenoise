@@ -2175,7 +2175,7 @@ class EVAL_EED(object):
                         "upper_95": upper_95,
 
                         "p0_bg":p0bgdf["p0_bg"],
-                        "p0_fg":p0bgdf["p0_fg"],
+                        "p0_fg":["p0_fg"],
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),
@@ -2527,6 +2527,16 @@ class EVAL_EED(object):
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
 if __name__=="__main__":
+
+    e = EVAL_EED(
+        model="models/EPD30d_model_checkpoint_epoch1.pth", 
+        data_path="/project/compbio-lab/encode_data/", 
+        context_length=3200, batch_size=50, 
+        hyper_parameters_path="models/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+        version="30d", resolution=25, savedir="models/eval_30d/", mode="eval")
+
+    exit()
 
     # e = EVAL_EED(
     #     model="models/pretrained/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
