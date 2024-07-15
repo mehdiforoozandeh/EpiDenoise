@@ -2118,12 +2118,6 @@ class EVAL_EED(object):
         imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
         ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
 
-        print(imp_lower_95.shape, imp_upper_95.shape)
-        print(ups_lower_95.shape, ups_upper_95.shape)
-        print(imp_mean.shape, ups_mean.shape)
-        print(imp_std.shape, ups_std.shape)
-        exit()
-
         results = []
         # for j in availability:  # for each feature i.e. assay
         for j in range(Y.shape[1]):
@@ -2160,6 +2154,14 @@ class EVAL_EED(object):
 
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
+
+                    print(pred.shape)
+                    print(target.shape)
+                    print(pred_std.shape)
+                    print(lower_95.shape)
+                    print(upper_95.shape)
+                    print(quantile.shape)
+                    print(p0bgdf.shape)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
