@@ -2155,13 +2155,6 @@ class EVAL_EED(object):
                         quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
                         p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
 
-                    print(pred.shape)
-                    print(target.shape)
-                    print(pred_std.shape)
-                    print(lower_95.shape)
-                    print(upper_95.shape)
-                    print(quantile.shape)
-                    print(p0bgdf.shape)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
