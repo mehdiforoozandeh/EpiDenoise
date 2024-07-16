@@ -972,10 +972,30 @@ class ExtendedEncodeDataHandler:
         
         self.genomesize = sum(list(self.chr_sizes.values()))
 
+    def is_exp_complete(self, bios_name, exp):
+        required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
+        
+        bios_path = os.path.join(self.base_path, bios_name)
+        exp_path = os.path.join(bios_path, exp)
+        exp_listdir = os.listdir(exp_path)
+
+        exp_full = True
+        for dsf in required_dsfs:
+            if exp_full == True:
+                if  "file_metadata.json" in exp_listdir:
+                    if f'signal_{dsf}_res25' in exp_listdir:
+                        md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
+                        exp_full = os.path.exists(md1_path)
+                    else:
+                        exp_full = False
+                else:
+                    exp_full = False
+                    
+        return exp_full
+        
     def is_bios_complete(self, bios_name):
         """Check if a biosample has all required files."""
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
-        missing_files = []
 
         try:
             available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]
@@ -984,23 +1004,10 @@ class ExtendedEncodeDataHandler:
             return f"Error reading DF1.csv: {e}"
 
         missing_exp = []
-        bios_path = os.path.join(self.base_path, bios_name)
         for exp in available_exps:
-            exp_path = os.path.join(bios_path, exp)
-            exp_listdir = os.listdir(exp_path)
-            exp_full = True
-            for dsf in required_dsfs:
-                if exp_full == True:
-                    if  "file_metadata.json" in exp_listdir:
-                        if f'signal_{dsf}_res25' in exp_listdir:
-                            md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
-                            exp_full = os.path.exists(md1_path)
-                        else:
-                            exp_full = False
-                    else:
-                        exp_full = False
+            exp_full = self.is_exp_complete(bios_name, exp)
                         
-            if exp_full == False:
+            if not exp_full:
                 missing_exp.append(exp)
 
         return missing_exp
@@ -1123,7 +1130,7 @@ class ExtendedEncodeDataHandler:
                 if self.split_dict[bios] != target_split:
                     del self.navigation[bios]
             
-            return
+            # return
 
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
@@ -1166,7 +1173,12 @@ class ExtendedEncodeDataHandler:
 
                 if ct not in to_move[data_type].keys():
                     to_move[data_type][ct] = []
-                to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+
+                if self.is_exp_complete(bios_accession, exp_type):
+                    to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+                    print("missing files for ", [exp_type, exp_accession, data_type, ct])
+                else:
+                    missed.append([exp_type, exp_accession, data_type, ct])
 
                 if ct not in so_far.keys():
                     so_far[ct] = []
