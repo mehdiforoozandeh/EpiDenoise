@@ -1171,15 +1171,14 @@ class ExtendedEncodeDataHandler:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
                 # print([exp_type, exp_accession, data_type, ct, bios_accession])
 
-                if ct not in to_move[data_type].keys():
-                    to_move[data_type][ct] = []
-
                 if not self.is_exp_complete(bios_accession, exp_type):
+                    if ct not in to_move[data_type].keys():
+                        to_move[data_type][ct] = []
                     to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
                     print("missing files for ", [exp_type, exp_accession, data_type, ct])
                 else:
-                    # missed.append([exp_type, exp_accession, data_type, ct])
-                    pass
+                    missed.append([exp_type, exp_accession, data_type, ct])
+
 
                 if ct not in so_far.keys():
                     so_far[ct] = []
