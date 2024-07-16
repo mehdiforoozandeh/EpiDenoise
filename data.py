@@ -1191,7 +1191,7 @@ class ExtendedEncodeDataHandler:
         print(so_far)
 
         for i in range(len(missed)):
-            # found = False
+            found = False
             # for j in so_far[missed[i][-1]]:
             #     if missed[i][0] in self.navigation[j].keys():
             #         if len(self.is_bios_complete(j))==0:
