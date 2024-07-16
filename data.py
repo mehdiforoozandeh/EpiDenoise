@@ -1182,7 +1182,7 @@ class ExtendedEncodeDataHandler:
 
                 else:
                     missed.append([exp_type, exp_accession, data_type, ct])
-                    print("missing files for ", [exp_type, exp_accession, data_type, ct])
+                    print("missing files for ", [exp_type, exp_accession, data_type, ct], bios_accession)
 
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
