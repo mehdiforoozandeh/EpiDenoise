@@ -5974,7 +5974,7 @@ if __name__ == "__main__":
             "lr_halflife":1,
             "min_avail":1
         }
-        train_epidenoise30(
+        train_epd30_eic(
             hyper_parameters30d_eic, 
             checkpoint_path=None, 
             arch="d")
