@@ -1241,7 +1241,7 @@ class ExtendedEncodeDataHandler:
             json.dump(navigation, file, indent=4)
 
         with open(eic_split_path, 'w') as file:
-            json.dump(split_dict, file, indent=4)
+            json.dump(split, file, indent=4)
 
         with open(eic_aliases_path, 'w') as file:
             json.dump(aliases, file, indent=4)
