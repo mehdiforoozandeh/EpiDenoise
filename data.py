@@ -1209,8 +1209,11 @@ class ExtendedEncodeDataHandler:
             for f in files:
                 dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}", f.split("/")[-1])
                 if not os.path.exists(dst):
-                    if not self.is_exp_complete(f"T_{ct.replace(' ', '_')}", f.split("/")[-1]):
-                        shutil.rmtree(dst)
+                    shutil.copytree(f, dst)
+                    print(f"copying {dst}")
+
+                elif not self.is_exp_complete(f"T_{ct.replace(' ', '_')}", f.split("/")[-1]):
+                    shutil.rmtree(dst)
                     shutil.copytree(f, dst)
                     print(f"copying {dst}")
 
@@ -1219,10 +1222,12 @@ class ExtendedEncodeDataHandler:
         for ct, files in to_move["validation_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"V_{ct.replace(' ', '_')}", f.split("/")[-1])
-
                 if not os.path.exists(dst):
-                    if not self.is_exp_complete(f"V_{ct.replace(' ', '_')}", f.split("/")[-1]):
-                        shutil.rmtree(dst)
+                    shutil.copytree(f, dst)
+                    print(f"copying {dst}")
+
+                elif not self.is_exp_complete(f"V_{ct.replace(' ', '_')}", f.split("/")[-1]):
+                    shutil.rmtree(dst)
                     shutil.copytree(f, dst)
                     print(f"copying {dst}")
                     
@@ -1231,9 +1236,13 @@ class ExtendedEncodeDataHandler:
         for ct, files in to_move["blind_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"B_{ct.replace(' ', '_')}", f.split("/")[-1])
+
                 if not os.path.exists(dst):
-                    if not self.is_exp_complete(f"B_{ct.replace(' ', '_')}", f.split("/")[-1]):
-                        shutil.rmtree(dst)
+                    shutil.copytree(f, dst)
+                    print(f"copying {dst}")
+                
+                elif not self.is_exp_complete(f"B_{ct.replace(' ', '_')}", f.split("/")[-1]):
+                    shutil.rmtree(dst)
                     shutil.copytree(f, dst)
                     print(f"copying {dst}")
 
