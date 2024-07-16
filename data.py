@@ -1191,7 +1191,22 @@ class ExtendedEncodeDataHandler:
 
         for i in range(len(missed)):
             found = False
-            for j in so_far[missed[i][-1]]:
+            # for j in so_far[missed[i][-1]]:
+            #     if missed[i][0] in self.navigation[j].keys():
+            #         if len(self.is_bios_complete(j))==0:
+            #             bios_accession = j
+            #             ct = missed[i][-1]
+            #             data_type = missed[i][-2]
+            #             exp_type = missed[i][0]
+            #             if ct not in to_move[data_type].keys():
+            #                 to_move[data_type][ct] = []
+            #             to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
+
+            #             found == True
+            #             break
+
+            # if not found:
+            for j in celltypes[missed[i][-1]]:
                 if missed[i][0] in self.navigation[j].keys():
                     if len(self.is_bios_complete(j))==0:
                         bios_accession = j
@@ -1204,21 +1219,6 @@ class ExtendedEncodeDataHandler:
 
                         found == True
                         break
-
-            if not found:
-                for j in celltypes[missed[i][-1]]:
-                    if missed[i][0] in self.navigation[j].keys():
-                        if len(self.is_bios_complete(j))==0:
-                            bios_accession = j
-                            ct = missed[i][-1]
-                            data_type = missed[i][-2]
-                            exp_type = missed[i][0]
-                            if ct not in to_move[data_type].keys():
-                                to_move[data_type][ct] = []
-                            to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
-
-                            found == True
-                            break
 
         for ct, files in to_move["training_data"].items():
             for f in files:
