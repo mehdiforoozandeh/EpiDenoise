@@ -1159,6 +1159,8 @@ class ExtendedEncodeDataHandler:
             ct = self.eic_df["cell_type"][i].replace("_", " ")
             if ct == "H1-hESC":
                 ct = "H1"
+            elif ct == "skin fibroblast":
+                ct = "fibroblast of skin of back"
 
             if ct not in aliases["biosample_aliases"].keys():
                 aliases["biosample_aliases"][ct] = self.eic_df["cell_type_id"][i]
