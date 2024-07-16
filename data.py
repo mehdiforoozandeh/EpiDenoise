@@ -1123,7 +1123,6 @@ class ExtendedEncodeDataHandler:
                 if self.split_dict[bios] != target_split:
                     del self.navigation[bios]
             
-            print(self.navigation)
             return
 
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
@@ -1541,7 +1540,7 @@ class ExtendedEncodeDataHandler:
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], merge_ct=False, eic=False, DSF_list=[1]):
+        includes=[], merge_ct=False, eic=False, DSF_list=[1,2]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -1565,30 +1564,24 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
 
         if eic:
-            # replace self.navigation
-            # replace self.split_dict
-            # replcate self.aliases
-            self.init_eic()
-
+            self.init_eic(target_split="train")
         else:
             self.filter_navigation(exclude=excludes, include=includes)
-        
     
-        if merge_ct:
+        if merge_ct and eic==False:
             self.merge_celltypes()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            if len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+            if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
             elif self.split_dict[bios] != "train":
                 del self.navigation[bios]
 
-            elif check_completeness:
-                if not eic:
-                    if len(self.is_bios_complete(bios))>0:
-                        del self.navigation[bios]
+            elif check_completeness and eic==False: 
+                if len(self.is_bios_complete(bios))>0:
+                    del self.navigation[bios]
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
