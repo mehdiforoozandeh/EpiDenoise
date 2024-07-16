@@ -1116,21 +1116,21 @@ class ExtendedEncodeDataHandler:
         eic_aliases_path = os.path.join(self.base_path, "aliases_eic.json")
         eic_split_path = os.path.join(self.base_path, "train_va_test_split_eic.json")
 
-        # if os.path.exists(eic_nav_path) and os.path.exists(eic_aliases_path) and os.path.exists(eic_split_path):
-        #     with open(eic_nav_path, 'r') as file:
-        #         self.navigation  = json.load(file)
+        if os.path.exists(eic_nav_path) and os.path.exists(eic_aliases_path) and os.path.exists(eic_split_path):
+            with open(eic_nav_path, 'r') as file:
+                self.navigation  = json.load(file)
 
-        #     with open(eic_split_path, 'r') as file:
-        #         self.split_dict  = json.load(file)
+            with open(eic_split_path, 'r') as file:
+                self.split_dict  = json.load(file)
 
-        #     with open(eic_aliases_path, 'r') as file:
-        #         self.aliases  = json.load(file)
+            with open(eic_aliases_path, 'r') as file:
+                self.aliases  = json.load(file)
 
-        #     for bios in list(self.navigation.keys()):
-        #         if self.split_dict[bios] != target_split:
-        #             del self.navigation[bios]
+            for bios in list(self.navigation.keys()):
+                if self.split_dict[bios] != target_split:
+                    del self.navigation[bios]
             
-        #     return
+            return
 
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
@@ -1184,7 +1184,7 @@ class ExtendedEncodeDataHandler:
 
                 else:
                     missed.append([exp_type, exp_accession, data_type, ct])
-                    print("missing files for ", [exp_type, exp_accession, data_type, ct], bios_accession)
+                    # print("missing files for ", [exp_type, exp_accession, data_type, ct], bios_accession)
 
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
