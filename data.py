@@ -1178,7 +1178,8 @@ class ExtendedEncodeDataHandler:
                     to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
                     print("missing files for ", [exp_type, exp_accession, data_type, ct])
                 else:
-                    missed.append([exp_type, exp_accession, data_type, ct])
+                    # missed.append([exp_type, exp_accession, data_type, ct])
+                    pass
 
                 if ct not in so_far.keys():
                     so_far[ct] = []
@@ -1204,7 +1205,6 @@ class ExtendedEncodeDataHandler:
                         break
 
             if not found:
-                print(celltypes)
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
                         if len(self.is_bios_complete(j))==0:
