@@ -10,8 +10,6 @@ import statsmodels.api as sm
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from sklearn.svm import SVR
 
-
-
 import scipy.stats
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -1932,7 +1930,7 @@ class EVAL_EED(object):
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(self.context_length, check_completeness=True, split=split)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=15)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
 
