@@ -1104,7 +1104,27 @@ class ExtendedEncodeDataHandler:
         
         self.navigation = new_nav
 
-    def init_eic(self, split="train"):
+    def init_eic(self, target_split="train"):
+        eic_nav_path = os.path.join(self.base_path, "navigation_eic.json")
+        eic_aliases_path = os.path.join(self.base_path, "aliases_eic.json")
+        eic_split_path = os.path.join(self.base_path, "train_va_test_split_eic.json")
+
+        if os.path.exists(eic_nav_path) and os.path.exists(eic_aliases_path) and os.path.exists(eic_split_path):
+            with open(eic_nav_path, 'r') as file:
+                self.navigation  = json.load(file)
+
+            with open(eic_split_path, 'r') as file:
+                self.split_dict  = json.load(file)
+
+            with open(eic_aliases_path, 'r') as file:
+                self.aliases  = json.load(file)
+
+            for bios in list(self.navigation.keys()):
+                if self.split_dict[bios] != target_split:
+                    del self.navigation[bios]
+                    
+            return
+
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
@@ -1217,21 +1237,22 @@ class ExtendedEncodeDataHandler:
                         if os.path.isdir(exp_path):
                             navigation[bios][exp] = os.listdir(exp_path)
         
-        print(navigation)
-        print("\n\n")
-        print(split)
-        print("\n\n")
-        print(aliases)
-        print("\n\n")
-        exit()
+        with open(eic_nav_path, 'w') as file:
+            json.dump(navigation, file, indent=4)
 
+        with open(eic_split_path, 'w') as file:
+            json.dump(split_dict, file, indent=4)
+
+        with open(eic_aliases_path, 'w') as file:
+            json.dump(aliases, file, indent=4)
+        
         self.navigation = navigation
         self.split_dict = split
         self.aliases = aliases
-        
-        # replace self.navigation -> write navigation_eic.json
-        # replace self.split_dict -> write train_va_test_split_eic.json
-        # replace self.aliases -> write aliases_eic.json
+
+        for bios in list(self.navigation.keys()):
+            if self.split_dict[bios] != target_split:
+                del self.navigation[bios]
 
     def filter_navigation(self, include=[], exclude=[]):
         """
