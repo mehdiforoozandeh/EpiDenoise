@@ -1191,7 +1191,6 @@ class ExtendedEncodeDataHandler:
                 dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}", f.split("/")[-1])
                 if not os.path.exists(dst):
                     shutil.copytree(f, dst)
-                shutil.copytree(f, dst)
                 split[f"T_{ct.replace(' ', '_')}"] = "train"
 
         for ct, files in to_move["validation_data"].items():
@@ -1199,7 +1198,6 @@ class ExtendedEncodeDataHandler:
                 dst = os.path.join(self.base_path, f"V_{ct.replace(' ', '_')}", f.split("/")[-1])
                 if not os.path.exists(dst):
                     shutil.copytree(f, dst)
-                shutil.copytree(f, dst)
                 split[f"V_{ct.replace(' ', '_')}"] = "val"
         
         for ct, files in to_move["blind_data"].items():
