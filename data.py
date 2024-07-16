@@ -1176,13 +1176,15 @@ class ExtendedEncodeDataHandler:
                         to_move[data_type][ct] = []
                     to_move[data_type][ct].append(os.path.join(self.base_path, bios_accession, exp_type))
                     print("missing files for ", [exp_type, exp_accession, data_type, ct])
+                    
+                    if ct not in so_far.keys():
+                        so_far[ct] = []
+                    so_far[ct].append(bios_accession)
+
                 else:
                     missed.append([exp_type, exp_accession, data_type, ct])
 
-
-                if ct not in so_far.keys():
-                    so_far[ct] = []
-                so_far[ct].append(bios_accession)
+                
                 
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
