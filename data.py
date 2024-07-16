@@ -1188,7 +1188,8 @@ class ExtendedEncodeDataHandler:
                 missed.append([exp_type, exp_accession, data_type, ct])
 
         print(missed)
-        print(so_far)
+        print(celltypes)
+        # print(so_far)
 
         for i in range(len(missed)):
             found = False
