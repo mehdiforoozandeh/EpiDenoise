@@ -1204,6 +1204,7 @@ class ExtendedEncodeDataHandler:
                         break
 
             if not found:
+                print(celltypes)
                 for j in celltypes[missed[i][-1]]:
                     if missed[i][0] in self.navigation[j].keys():
                         if len(self.is_bios_complete(j))==0:
