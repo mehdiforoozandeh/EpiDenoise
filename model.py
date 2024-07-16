@@ -5606,7 +5606,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",
         bios_min_exp_avail_threshold=1, check_completeness=False, 
         eic=True)
     
