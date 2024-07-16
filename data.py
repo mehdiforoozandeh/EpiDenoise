@@ -1104,14 +1104,12 @@ class ExtendedEncodeDataHandler:
         
         self.navigation = new_nav
 
-    def init_eic_subset(self):
+    def init_eic(self, split="train"):
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
 
         split = {} # keys are bios accessions | values are "train"/"test"/"val"
-        nav = {} # keys are bios accessions | values are "train"/"test"/"val"
-
         aliases = {
             "biosample_aliases": {}, # keys are bios accessions
             "experiment_aliases": {} # keys are exp names
@@ -1187,40 +1185,55 @@ class ExtendedEncodeDataHandler:
 
                             found == True
                             break
-        # print(to_move)
+
         for ct, files in to_move["training_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"T_{ct.replace(' ', '_')}", f.split("/")[-1])
+                if not os.path.exists(dst):
+                    shutil.copytree(f, dst)
                 shutil.copytree(f, dst)
+                split[f"T_{ct.replace(' ', '_')}"] = "train"
 
         for ct, files in to_move["validation_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"V_{ct.replace(' ', '_')}", f.split("/")[-1])
+                if not os.path.exists(dst):
+                    shutil.copytree(f, dst)
                 shutil.copytree(f, dst)
+                split[f"V_{ct.replace(' ', '_')}"] = "val"
         
         for ct, files in to_move["blind_data"].items():
             for f in files:
                 dst = os.path.join(self.base_path, f"B_{ct.replace(' ', '_')}", f.split("/")[-1])
-                shutil.copytree(f, dst)
+                if not os.path.exists(dst):
+                    shutil.copytree(f, dst)
+                split[f"B_{ct.replace(' ', '_')}"] = "test"
 
-        """
-        make nav
-            mkdir T_ct
-            mkdir V_ct
-            mkdir B_ct
-        make splitdict
-            all T_*:"train"
-            all V_*:"val"
-            all B_*:"test"
-        """
-                
+        navigation = {} # keys are bios accessions | values are "train"/"test"/"val"
+        for bios in os.listdir(self.base_path):
+            if os.path.isdir(os.path.join(self.base_path, bios)):
+                if bios[0] in ["V", "T", "B"]:
+                    navigation[bios] = {}
+                    for exp in os.listdir(os.path.join(self.base_path, bios)):
+                        exp_path = os.path.join(self.base_path, bios, exp)
+                        if os.path.isdir(exp_path):
+                            navigation[bios][exp] = os.listdir(exp_path)
+        
+        print(navigation)
+        print("\n\n")
+        print(split)
+        print("\n\n")
+        print(aliases)
+        print("\n\n")
         exit()
 
-        # replace self.navigation
-        # replace self.split_dict
-        # replace self.aliases
-
-
+        self.navigation = navigation
+        self.split_dict = split
+        self.aliases = aliases
+        
+        # replace self.navigation -> write navigation_eic.json
+        # replace self.split_dict -> write train_va_test_split_eic.json
+        # replace self.aliases -> write aliases_eic.json
 
     def filter_navigation(self, include=[], exclude=[]):
         """
@@ -1535,7 +1548,7 @@ class ExtendedEncodeDataHandler:
             # replace self.navigation
             # replace self.split_dict
             # replcate self.aliases
-            self.init_eic_subset()
+            self.init_eic()
 
         else:
             self.filter_navigation(exclude=excludes, include=includes)
