@@ -1122,7 +1122,8 @@ class ExtendedEncodeDataHandler:
             for bios in list(self.navigation.keys()):
                 if self.split_dict[bios] != target_split:
                     del self.navigation[bios]
-                    
+            
+            print(self.navigation)
             return
 
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
