@@ -1169,7 +1169,6 @@ class ExtendedEncodeDataHandler:
             # find corresponding bios in df1
             if exp_accession in self.df1[exp_type].values:
                 bios_accession = self.df1.loc[self.df1[exp_type] == exp_accession, "Accession"].values[0]
-                # print([exp_type, exp_accession, data_type, ct, bios_accession])
 
                 if self.is_exp_complete(bios_accession, exp_type):
                     if ct not in to_move[data_type].keys():
@@ -1188,8 +1187,8 @@ class ExtendedEncodeDataHandler:
             else:
                 missed.append([exp_type, exp_accession, data_type, ct])
 
-        # print(missed)
-        # print(so_far)
+        print(missed)
+        print(so_far)
 
         for i in range(len(missed)):
             found = False
