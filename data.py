@@ -921,7 +921,8 @@ class ExtendedEncodeDataHandler:
         
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
-        self.expstats = pd.read_csv("dat")
+        self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
+        print(self.expstats)
         
     def report(self):
         """
@@ -2212,7 +2213,7 @@ if __name__ == "__main__":
                     summary_rows.append([exp, metric, np.nan, np.nan, stats["mean"], stats["median"], stats["std_dev"], stats["min"], stats["max"]])
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
-        summary_report.to_csv("data/ExpStats.csv")
+        # summary_report.to_csv("data/ExpStats.csv")
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
 
 
