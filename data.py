@@ -2180,6 +2180,7 @@ if __name__ == "__main__":
 
         print(exps2.keys())
         print(exps2["H3K4ac"].keys())
+        print(exps2["H3K4ac"]["depth"])
                     
 
     else:
