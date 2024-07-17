@@ -2146,26 +2146,27 @@ if __name__ == "__main__":
                     if exp not in exps.keys():
                         exps[exp] = []
 
-                    # try:
-                    jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
-                    with open(jsn1, 'r') as jsnfile:
-                        md1 = json.load(jsnfile)
+                    try:
+                        jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
+                        with open(jsn1, 'r') as jsnfile:
+                            md1 = json.load(jsnfile)
 
-                    jsn2 = os.path.join(solar_data_path, bios_name, exp, "file_metadata.json")
-                    with open(jsn2, 'r') as jsnfile:
-                        md2 = json.load(jsnfile)
+                        jsn2 = os.path.join(solar_data_path, bios_name, exp, "file_metadata.json")
+                        with open(jsn2, 'r') as jsnfile:
+                            md2 = json.load(jsnfile)
 
-                    md = {
-                        "depth":md1["depth"], "coverage":md1["coverage"], 
-                        "read_length":list(md2["read_length"].values())[0], "run_type":list(md2["run_type"].values())[0] 
-                    }
+                        md = {
+                            "depth":md1["depth"], "coverage":md1["coverage"], 
+                            "read_length":list(md2["read_length"].values())[0], "run_type":list(md2["run_type"].values())[0] 
+                        }
 
-                    exps[exp].append(md)
+                        exps[exp].append(md)
+                        print(md)
 
-                    # except:
-                    #     pass
+                    except:
+                        pass
 
-        print(pd.DataFrame(exps))
+        # print(pd.DataFrame(exps))
 
     else:
         d = GET_DATA()
