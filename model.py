@@ -5590,7 +5590,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size = pool_size,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
@@ -5956,7 +5956,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 35,
             "dropout": 0.1,
 
-            "n_cnn_layers": 6,
+            "n_cnn_layers": 5,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
@@ -5968,8 +5968,8 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 50,
-            "learning_rate": 1e-4,
-            "num_loci": 20,
+            "learning_rate": 1e-5,
+            "num_loci": 3200,
             "lr_halflife":1,
             "min_avail":1
         }
