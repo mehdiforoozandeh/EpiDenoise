@@ -256,6 +256,7 @@ class MONITOR_VALIDATION(object):
         del temp_x, temp_mx
         
         temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf, eic=True)
+        print(temp_y.shape, temp_my.shape)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
         del temp_y, temp_my
 
