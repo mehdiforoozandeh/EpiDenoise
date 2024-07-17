@@ -2183,26 +2183,35 @@ if __name__ == "__main__":
         for exp, metrics in exps2.items():
             statistics[exp] = {}
             for metric, values in metrics.items():
-                values = np.array(values, dtype=np.float64)
-                statistics[exp][metric] = {
-                    "mean": np.nanmean(values),
-                    "median": np.nanmedian(values),
-                    "std_dev": np.nanstd(values),
-                    "min": np.nanmin(values),
-                    "max": np.nanmax(values)
-                }
+                if metric == "run_type":
+                    run_type_counts = pd.Series(values).value_counts().to_dict()
+                    statistics[exp][metric] = run_type_counts
+                else:
+                    values = np.array(values, dtype=np.float64)
+                    statistics[exp][metric] = {
+                        "mean": np.nanmean(values),
+                        "median": np.nanmedian(values),
+                        "std_dev": np.nanstd(values),
+                        "min": np.nanmin(values),
+                        "max": np.nanmax(values)
+                    }
 
         # Create summary report
-        summary_report = pd.DataFrame.from_dict({(i,j): statistics[i][j] 
-                                    for i in statistics.keys() 
-                                    for j in statistics[i].keys()},
-                                orient='index')
-        summary_report = summary_report.reset_index()
-        summary_report.columns = ['Experiment', 'Metric', 'Mean', 'Median', 'Std Dev', 'Min', 'Max']
+        summary_rows = []
+        for exp, metrics in statistics.items():
+            for metric, stats in metrics.items():
+                if metric == "run_type":
+                    for run_type, count in stats.items():
+                        summary_rows.append([exp, metric, run_type, count, np.nan, np.nan, np.nan, np.nan])
+                else:
+                    summary_rows.append([exp, metric, np.nan, np.nan, stats["mean"], stats["median"], stats["std_dev"], stats["min"], stats["max"]])
+
+        summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
 
         # Display summary report
         import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
 
+print(summary_report)
 
     else:
         d = GET_DATA()
