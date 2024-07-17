@@ -2209,7 +2209,7 @@ if __name__ == "__main__":
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
 
         # Display summary report
-        import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
+        # import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
 
         print(summary_report)
 
