@@ -287,7 +287,7 @@ class MONITOR_VALIDATION(object):
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
         
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
-        del X, mX, mY, avX, avY  # Free up memoryrm m
+        # del X, mX, mY, avX, avY  # Free up memoryrm m
 
         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
