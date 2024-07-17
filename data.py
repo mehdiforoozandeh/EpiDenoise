@@ -2157,16 +2157,16 @@ if __name__ == "__main__":
 
                         md = {
                             "depth":md1["depth"], "coverage":md1["coverage"], 
-                            "read_length":list(md2["read_length"].values())[0], "run_type":list(md2["run_type"].values())[0] 
+                            "read_length":list(md2["read_length"].values())[0], 
+                            "run_type":list(md2["run_type"].values())[0] 
                         }
 
                         exps[exp].append(md)
-                        print(md)
 
                     except:
                         pass
-
-        # print(pd.DataFrame(exps))
+        
+        print(exps)
 
     else:
         d = GET_DATA()
