@@ -2211,7 +2211,7 @@ if __name__ == "__main__":
         # Display summary report
         import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
 
-print(summary_report)
+        print(summary_report)
 
     else:
         d = GET_DATA()
