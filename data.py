@@ -2211,7 +2211,7 @@ if __name__ == "__main__":
                     summary_rows.append([exp, metric, np.nan, np.nan, stats["mean"], stats["median"], stats["std_dev"], stats["min"], stats["max"]])
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
-        print(summary_report)
+        summary_report.to_csv("data/ExpStats.csv")
 
         # Prepare data for histograms
         def plot_histograms(metric_data, metric_name, xlabel, bins=30):
