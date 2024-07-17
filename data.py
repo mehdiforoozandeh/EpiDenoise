@@ -2145,7 +2145,7 @@ if __name__ == "__main__":
                     
                     if exp not in exps.keys():
                         exps[exp] = []
-                        
+
                     try:
                         jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
                         with open(jsn1, 'r') as jsnfile:
@@ -2165,7 +2165,7 @@ if __name__ == "__main__":
                     except:
                         pass
 
-        print(exps)
+        print(pd.DataFrame(exps))
 
     else:
         d = GET_DATA()
