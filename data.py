@@ -2136,7 +2136,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "prompt":
         
-        bioses = [b for b in os.listdir(solar_data_path) if os.listdir(os.path.join(solar_data_path, b)]
+        bioses = [b for b in os.listdir(solar_data_path) if os.listdir(os.path.join(solar_data_path, b))]
         exps = {}
         for bios_name in bioses:
             for exp in os.listdir(os.path.join(solar_data_path, bios_name)):
