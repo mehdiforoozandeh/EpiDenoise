@@ -425,7 +425,7 @@ class MONITOR_VALIDATION(object):
                     'bios':bios_name,
                     'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
                     'comparison': comparison,
-                    'available assays': len(availability),
+                    'available assays': len(availability_X),
 
                     'MSE': self.metrics.mse(target, pred),
                     'Pearson': self.metrics.pearson(target, pred),
@@ -442,7 +442,7 @@ class MONITOR_VALIDATION(object):
                     'bios':bios_name,
                     'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
                     'comparison': comparison,
-                    'available assays': len(availability),
+                    'available assays': len(availability_X),
 
                     'MSE': self.metrics.mse(target, pred),
                     'Pearson': self.metrics.pearson(target, pred),
