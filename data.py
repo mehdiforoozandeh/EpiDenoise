@@ -2178,10 +2178,31 @@ if __name__ == "__main__":
 
                     exps2[exp][md].append(exps[exp][i][md])
 
-        print(exps2.keys())
-        print(exps2["H3K4ac"].keys())
-        print([np.log2(x) for x in exps2["H3K4ac"]["depth"]])
-                    
+        # Calculate basic statistics
+        statistics = {}
+        for exp, metrics in exps2.items():
+            statistics[exp] = {}
+            for metric, values in metrics.items():
+                values = np.array(values, dtype=np.float64)
+                statistics[exp][metric] = {
+                    "mean": np.nanmean(values),
+                    "median": np.nanmedian(values),
+                    "std_dev": np.nanstd(values),
+                    "min": np.nanmin(values),
+                    "max": np.nanmax(values)
+                }
+
+        # Create summary report
+        summary_report = pd.DataFrame.from_dict({(i,j): statistics[i][j] 
+                                    for i in statistics.keys() 
+                                    for j in statistics[i].keys()},
+                                orient='index')
+        summary_report = summary_report.reset_index()
+        summary_report.columns = ['Experiment', 'Metric', 'Mean', 'Median', 'Std Dev', 'Min', 'Max']
+
+        # Display summary report
+        import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
+
 
     else:
         d = GET_DATA()
