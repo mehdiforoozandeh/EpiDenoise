@@ -5969,7 +5969,7 @@ if __name__ == "__main__":
             "context_length": 3200,
             "batch_size": 50,
             "learning_rate": 1e-4,
-            "num_loci": 100,
+            "num_loci": 20,
             "lr_halflife":1,
             "min_avail":1
         }
