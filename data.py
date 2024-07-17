@@ -2212,10 +2212,40 @@ if __name__ == "__main__":
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
 
-        # Display summary report
-        # import ace_tools as tools; tools.display_dataframe_to_user(name="Summary Report", dataframe=summary_report)
-
         print(summary_report)
+
+        # Prepare data for histograms
+        def plot_histograms(metric_data, metric_name, xlabel, bins=30):
+            num_experiments = len(metric_data)
+            cols = 4
+            rows = (num_experiments + cols - 1) // cols
+            plt.figure(figsize=(20, rows * 5))
+
+            for i, (exp, values) in enumerate(metric_data.items()):
+                plt.subplot(rows, cols, i + 1)
+                plt.hist(values, bins=bins, edgecolor='black')
+                plt.title(f'{exp} - {metric_name}')
+                plt.xlabel(xlabel)
+                plt.ylabel('Count')
+
+            plt.tight_layout()
+            plt.savefig(f"data/{metric_name}.png")
+
+        # Histograms of run types
+        run_type_data = {exp: [val for val in values if val in ['single-ended', 'paired-ended']] for exp, values in exps2['run_type'].items()}
+        plot_histograms(run_type_data, 'Run Type', 'Run Type', bins=2)
+
+        # Histograms of sequencing depth (log2) at DSF1
+        depth_data = {exp: [np.log2(val) for val in values if not np.isnan(val)] for exp, values in exps2['depth'].items()}
+        plot_histograms(depth_data, 'Sequencing Depth (log2) at DSF1', 'Depth (log2)')
+
+        # Histograms of coverage at DSF1
+        coverage_data = {exp: [val for val in values if not np.isnan(val)] for exp, values in exps2['coverage'].items()}
+        plot_histograms(coverage_data, 'Coverage at DSF1', 'Coverage')
+
+        # Histograms of read length
+        read_length_data = {exp: [val for val in values if not np.isnan(val)] for exp, values in exps2['read_length'].items()}
+        plot_histograms(read_length_data, 'Read Length', 'Read Length')
 
     else:
         d = GET_DATA()
