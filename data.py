@@ -2142,24 +2142,28 @@ if __name__ == "__main__":
             for exp in os.listdir(os.path.join(solar_data_path, bios_name)):
                 exp_path = os.path.join(solar_data_path, bios_name, exp)
                 if os.path.isdir(exp_path):
-
+                    
                     if exp not in exps.keys():
                         exps[exp] = []
-                    
-                    jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
-                    with open(jsn1, 'r') as jsnfile:
-                        md1 = json.load(jsnfile)
+                        
+                    try:
+                        jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
+                        with open(jsn1, 'r') as jsnfile:
+                            md1 = json.load(jsnfile)
 
-                    jsn2 = os.path.join(solar_data_path, bios_name, exp, "file_metadata.json")
-                    with open(jsn2, 'r') as jsnfile:
-                        md2 = json.load(jsnfile)
+                        jsn2 = os.path.join(solar_data_path, bios_name, exp, "file_metadata.json")
+                        with open(jsn2, 'r') as jsnfile:
+                            md2 = json.load(jsnfile)
 
-                    md = {
-                        "depth":md1["depth"], "coverage":md1["coverage"], 
-                        "read_length":md2["read_length"], "run_type":md2["run_type"] 
-                    }
+                        md = {
+                            "depth":md1["depth"], "coverage":md1["coverage"], 
+                            "read_length":md2["read_length"], "run_type":md2["run_type"] 
+                        }
 
-                    exps[exp].append(md)
+                        exps[exp].append(md)
+
+                    except:
+                        pass
 
         print(exps)
 
