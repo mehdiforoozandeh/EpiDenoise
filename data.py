@@ -2186,8 +2186,12 @@ if __name__ == "__main__":
                 if metric == "run_type":
                     run_type_counts = pd.Series(values).value_counts().to_dict()
                     statistics[exp][metric] = run_type_counts
+
                 else:
-                    values = np.array(values, dtype=np.float64)
+                    if metric == "depth"::
+                        values = np.log2(np.array(values, dtype=np.float64))
+                    else:
+                        values = np.array(values, dtype=np.float64)
                     statistics[exp][metric] = {
                         "mean": np.nanmean(values),
                         "median": np.nanmedian(values),
