@@ -83,16 +83,17 @@ class MONITOR_VALIDATION(object):
         self, data_path, context_length, batch_size,
         chr_sizes_file="data/hg38.chrom.sizes", 
         resolution=25, split="val", arch="a", 
-        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}):
+        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}, eic=False):
 
         self.data_path = data_path
         self.context_length = context_length
         self.batch_size = batch_size
         self.resolution = resolution
         self.arch = arch
+        self.eic = eic
 
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=10)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=10, eic=eic)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -188,7 +189,7 @@ class MONITOR_VALIDATION(object):
         temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
         del temp_x, temp_mx
-
+        
         temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
         del temp_y, temp_my
@@ -247,6 +248,57 @@ class MONITOR_VALIDATION(object):
 
         return imp_dist, ups_dist, Y, bios_name, available_indices
     
+    def get_bios_eic(self, bios_name, x_dsf=1, y_dsf=1):
+        print(f"getting bios vals for {bios_name}")
+
+        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+        
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        for start, end in self.example_coords:
+            segment_length = end - start
+            adjusted_length = (segment_length // self.context_length) * self.context_length
+            adjusted_end = start + adjusted_length
+
+            subsets_X.append(X[start:adjusted_end, :])
+            subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_X_indices = torch.where(avX[0, :] == 1)[0]
+        available_Y_indices = torch.where(avY[0, :] == 1)[0]
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1])
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices
+
     def get_frame(self, bios_name, x_dsf=1, y_dsf=1):
         temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
@@ -359,22 +411,71 @@ class MONITOR_VALIDATION(object):
 
         return results
     
-    def get_validation(self, model, x_dsf=1, y_dsf=1):
+    def get_metric_eic(self, ups_dist, Y, X, bios_name, availability_X, availability_Y):
+        ups_mean = ups_dist.expect()
         
+        results = []
+        for j in range(Y.shape[1]):
+            pred = ups_mean[:, j].numpy()
+            if j in list(availability_X):
+                comparison = "upsampled"
+                target = X[:, j].numpy()
+
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': comparison,
+                    'available assays': len(availability),
+
+                    'MSE': self.metrics.mse(target, pred),
+                    'Pearson': self.metrics.pearson(target, pred),
+                    'Spearman': self.metrics.spearman(target, pred),
+                    'r2': self.metrics.r2(target, pred)
+                }
+                results.append(metrics)
+                
+            elif j in list(availability_Y):
+                comparison = "imputed"
+                target = Y[:, j].numpy()
+
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': comparison,
+                    'available assays': len(availability),
+
+                    'MSE': self.metrics.mse(target, pred),
+                    'Pearson': self.metrics.pearson(target, pred),
+                    'Spearman': self.metrics.spearman(target, pred),
+                    'r2': self.metrics.r2(target, pred)
+                }
+                results.append(metrics)
+
+        return results
+
+    def get_validation(self, model, x_dsf=1, y_dsf=1):
         t0 = datetime.datetime.now()
         self.model = model
-        # self.model.eval()
+
         full_res = []
         bioses = list(self.dataset.navigation.keys())
-        # bioses = [list(self.dataset.navigation.keys())[0]]
+        if not self.eic:
+            for bios_name in bioses:
+                try:
+                    imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                    full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+                    del imp_dist, ups_dist, Y
+                except:
+                    pass
+        else:
+            for bios_name in bioses:
+                try:
+                    ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices = self.get_bios_eic(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                    full_res += self.get_metric_eic(ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices)
+                    del imp_dist, ups_dist, Y
+                except:
+                    pass
 
-        for bios_name in bioses:
-            try:
-                imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-                full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
-                del imp_dist, ups_dist, Y
-            except:
-                pass
         del self.model
         
         df = pd.DataFrame(full_res)

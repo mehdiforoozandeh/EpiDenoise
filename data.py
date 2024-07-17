@@ -1775,7 +1775,7 @@ class ExtendedEncodeDataHandler:
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[]): #split in ["test", "val"]
+        includes=[], eic=False): #split in ["test", "val"]
         self.set_alias()
         self.train_val_test_split()
         self.coords(mode="eval")
@@ -1785,21 +1785,24 @@ class ExtendedEncodeDataHandler:
             
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
-        
-        self.filter_navigation(exclude=excludes, include=includes)
+    
+        if eic:
+            self.init_eic(target_split=split)
+        else:
+            self.filter_navigation(exclude=excludes, include=includes)
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if split == "test" and self.has_rnaseq(bios):
                 continue
 
-            elif len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+            elif eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
             elif self.split_dict[bios] != split:
                 del self.navigation[bios]
 
-            elif check_completeness:
+            elif eic==False and check_completeness:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
         

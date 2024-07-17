@@ -1790,7 +1790,6 @@ class EpiDenoise30d(nn.Module):
         # e_src.shape = N, F2, L'
         src = self.SE_enc(src)
 
-
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
@@ -4363,9 +4362,9 @@ class PRE_TRAINER(object):
         if hook:
             register_hooks(self.model)
             
-        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch, token_dict=token_dict)
-        
+        val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch, token_dict=token_dict, eic=True)
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
+
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
@@ -5622,7 +5621,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
     start_time = time.time()
 
     trainer = PRE_TRAINER(model, dataset, criterion, optimizer, scheduler)
-    model = trainer.pretrain_epidenoise_30(
+    model = trainer.pretrain_epidenoise_30_eic(
         num_epochs=epochs, mask_percentage=mask_percentage, 
         context_length=context_length, batch_size=batch_size, inner_epochs=inner_epochs, arch=arch)
 
