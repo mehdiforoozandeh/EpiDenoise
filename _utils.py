@@ -469,12 +469,12 @@ class MONITOR_VALIDATION(object):
                     pass
         else:
             for bios_name in bioses:
-                try:
-                    ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices = self.get_bios_eic(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-                    full_res += self.get_metric_eic(ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices)
-                    del imp_dist, ups_dist, Y
-                except:
-                    pass
+                # try:
+                ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices = self.get_bios_eic(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric_eic(ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices)
+                del ups_dist, Y, X
+                # except:
+                #     pass
 
         del self.model
         
