@@ -921,6 +921,7 @@ class ExtendedEncodeDataHandler:
         
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
+        self.expstats = pd.read_csv("dat")
         
     def report(self):
         """
@@ -2212,40 +2213,9 @@ if __name__ == "__main__":
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
         summary_report.to_csv("data/ExpStats.csv")
+        summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
 
-        # Prepare data for histograms
-        def plot_histograms(metric_data, metric_name, xlabel, bins=30):
-            num_experiments = len(metric_data)
-            cols = 4
-            rows = (num_experiments + cols - 1) // cols
-            plt.figure(figsize=(20, rows * 5))
 
-            for i, (exp, values) in enumerate(metric_data.items()):
-                plt.subplot(rows, cols, i + 1)
-                plt.hist(values, bins=bins, edgecolor='black')
-                plt.title(f'{exp} - {metric_name}')
-                plt.xlabel(xlabel)
-                plt.ylabel('Count')
-
-            plt.tight_layout()
-            plt.savefig(f"data/ExpStat_{metric_name}.png")
-        exit()
-
-        # Histograms of run types
-        # run_type_data = {exp: values for exp, values in exps2.items() if 'run_type' in values}
-        # plot_histograms(run_type_data, 'RunType', 'RunType', bins=2)
-
-        # Histograms of sequencing depth (log2) at DSF1
-        depth_data = {exp: [np.log2(val) for val in values['depth'] if not np.isnan(val)] for exp, values in exps2.items() if 'depth' in values}
-        plot_histograms(depth_data, 'Sequencing', 'log2(Depth)')
-
-        # Histograms of coverage at DSF1
-        coverage_data = {exp: [val for val in values['coverage'] if not np.isnan(val)] for exp, values in exps2.items() if 'coverage' in values}
-        plot_histograms(coverage_data, 'Coverage', 'Coverage')
-
-        # Histograms of read length
-        read_length_data = {exp: [val for val in values['read_length'] if not np.isnan(val)] for exp, values in exps2.items() if 'read_length' in values}
-        plot_histograms(read_length_data, 'ReadLength', 'ReadLength')
 
     else:
         d = GET_DATA()
