@@ -1279,6 +1279,10 @@ class ExtendedEncodeDataHandler:
         """
         filter based on a list of assays to include
         """
+        for bios in list(self.navigation.keys()):
+            if bios[0] in ["T", "V", "B"]:
+                del self.navigation[bios]
+
         if len(include) == 0 and len(exclude) == 0:
             return
 
@@ -1572,7 +1576,7 @@ class ExtendedEncodeDataHandler:
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], merge_ct=False, eic=False, DSF_list=[1,2]):
+        includes=[], merge_ct=False, eic=False, DSF_list=[1,2,4]):
 
         self.set_alias()
         self.train_val_test_split()
@@ -2130,6 +2134,34 @@ if __name__ == "__main__":
             bios_batchsize=50, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=3, check_completeness=True, eic=True)
 
+    elif sys.argv[1] == "prompt":
+        
+        bioses = [b for b in os.listdir(solar_data_path) if os.listdir(b)]
+        exps = {}
+        for bios_name in bioses:
+            for exp in os.listdir(os.path.join(solar_data_path, bios_name)):
+                exp_path = os.path.join(solar_data_path, bios_name, exp)
+                if os.path.isdir(exp_path):
+
+                    if exp not in exps.keys():
+                        exps[exp] = []
+                    
+                    jsn1 = os.path.join(solar_data_path, bios_name, exp, "signal_DSF1_res25", "metadata.json")
+                    with open(jsn1, 'r') as jsnfile:
+                        md1 = json.load(jsnfile)
+
+                    jsn2 = os.path.join(solar_data_path, bios_name, exp, "file_metadata.json")
+                    with open(jsn2, 'r') as jsnfile:
+                        md2 = json.load(jsnfile)
+
+                    md = {
+                        "depth":md1["depth"], "coverage":md1["coverage"], 
+                        "read_length":md2["read_length"], "run_type":md2["run_type"] 
+                    }
+
+                    exps[exp].append(md)
+
+        print(exps)
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
