@@ -5956,7 +5956,7 @@ if __name__ == "__main__":
             "metadata_embedding_dim": 35,
             "dropout": 0.1,
 
-            "n_cnn_layers": 5,
+            "n_cnn_layers": 6,
             "conv_kernel_size" : 5,
             "pool_size": 2,
 
