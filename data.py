@@ -2214,6 +2214,19 @@ if __name__ == "__main__":
 
         print(summary_report)
 
+        # Organize data
+        exps2 = {}
+        for exp in exps.keys():
+            if exp not in exps2.keys():
+                exps2[exp] = {}
+
+            for i in range(len(exps[exp])):
+                for md in exps[exp][i].keys():
+                    if md not in exps2[exp].keys():
+                        exps2[exp][md] = []
+
+                    exps2[exp][md].append(exps[exp][i][md])
+
         # Prepare data for histograms
         def plot_histograms(metric_data, metric_name, xlabel, bins=30):
             num_experiments = len(metric_data)
