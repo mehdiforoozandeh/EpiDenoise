@@ -2211,21 +2211,7 @@ if __name__ == "__main__":
                     summary_rows.append([exp, metric, np.nan, np.nan, stats["mean"], stats["median"], stats["std_dev"], stats["min"], stats["max"]])
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
-
         print(summary_report)
-
-        # Organize data
-        exps2 = {}
-        for exp in exps.keys():
-            if exp not in exps2.keys():
-                exps2[exp] = {}
-
-            for i in range(len(exps[exp])):
-                for md in exps[exp][i].keys():
-                    if md not in exps2[exp].keys():
-                        exps2[exp][md] = []
-
-                    exps2[exp][md].append(exps[exp][i][md])
 
         # Prepare data for histograms
         def plot_histograms(metric_data, metric_name, xlabel, bins=30):
@@ -2242,24 +2228,24 @@ if __name__ == "__main__":
                 plt.ylabel('Count')
 
             plt.tight_layout()
-            plt.savefig(f"data/{metric_name}.png")
+            plt.savefig(f"data/ExpStat_{metric_name}.png")
 
         # Histograms of run types
-        run_type_data = {exp: [val for val in values if val in ['single-ended', 'paired-ended']] for exp, values in exps2['run_type'].items()}
+        run_type_data = {exp: values for exp, values in exps2.items() if 'run_type' in values}
         plot_histograms(run_type_data, 'Run Type', 'Run Type', bins=2)
 
         # Histograms of sequencing depth (log2) at DSF1
-        depth_data = {exp: [np.log2(val) for val in values if not np.isnan(val)] for exp, values in exps2['depth'].items()}
+        depth_data = {exp: [np.log2(val) for val in values['depth'] if not np.isnan(val)] for exp, values in exps2.items() if 'depth' in values}
         plot_histograms(depth_data, 'Sequencing Depth (log2) at DSF1', 'Depth (log2)')
 
         # Histograms of coverage at DSF1
-        coverage_data = {exp: [val for val in values if not np.isnan(val)] for exp, values in exps2['coverage'].items()}
+        coverage_data = {exp: [val for val in values['coverage'] if not np.isnan(val)] for exp, values in exps2.items() if 'coverage' in values}
         plot_histograms(coverage_data, 'Coverage at DSF1', 'Coverage')
 
         # Histograms of read length
-        read_length_data = {exp: [val for val in values if not np.isnan(val)] for exp, values in exps2['read_length'].items()}
+        read_length_data = {exp: [val for val in values['read_length'] if not np.isnan(val)] for exp, values in exps2.items() if 'read_length' in values}
         plot_histograms(read_length_data, 'Read Length', 'Read Length')
-
+        
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
