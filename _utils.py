@@ -251,11 +251,11 @@ class MONITOR_VALIDATION(object):
     def get_bios_eic(self, bios_name, x_dsf=1, y_dsf=1):
         print(f"getting bios vals for {bios_name}")
 
-        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf, eic=True)
         X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
         del temp_x, temp_mx
         
-        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf, eic=True)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
         del temp_y, temp_my
 
@@ -477,7 +477,6 @@ class MONITOR_VALIDATION(object):
                 #     pass
 
         del self.model
-        
         df = pd.DataFrame(full_res)
 
         # Separate the data based on comparison type

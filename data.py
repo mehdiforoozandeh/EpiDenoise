@@ -1422,10 +1422,21 @@ class ExtendedEncodeDataHandler:
         with np.load(file_name, allow_pickle=True) as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
         
-    def load_bios(self, bios_name, locus, DSF, f_format="npz"):
+    def load_bios(self, bios_name, locus, DSF, f_format="npz", eic=False):
         """Load all available experiments for a given biosample and locus."""
         
-        exps = list(self.navigation[bios_name].keys())
+        if eic:
+            exps = []
+            if bios_name not in self.navigation.keys():
+                if os.path.isdir(os.path.join(self.base_path, bios_name)):
+                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+                        exp_path = os.path.join(self.base_path, bios_name, exp)
+                        if os.path.isdir(exp_path):
+                            exps.append(exp)
+                
+        else:
+            exps = list(self.navigation[bios_name].keys())
+
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
 
