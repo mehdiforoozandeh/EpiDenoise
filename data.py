@@ -2157,7 +2157,7 @@ if __name__ == "__main__":
 
                         md = {
                             "depth":md1["depth"], "coverage":md1["coverage"], 
-                            "read_length":md2["read_length"], "run_type":md2["run_type"] 
+                            "read_length":list(md2["read_length"].values())[0], "run_type":list(md2["run_type"].values())[0] 
                         }
 
                         exps[exp].append(md)
