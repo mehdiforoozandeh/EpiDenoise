@@ -1780,6 +1780,11 @@ class ExtendedEncodeDataHandler:
                     loc_d.append(self.select_region_from_loaded_data(d, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
 
+                print(d.shape)
+                print(md.shape)
+                print(avl.shape)
+                exit()
+
             batch_data.append(d)
             batch_metadata.append(md)
             batch_availability.append(avl)
