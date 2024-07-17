@@ -5590,7 +5590,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size = pool_size,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
@@ -5605,7 +5605,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",
         bios_min_exp_avail_threshold=1, check_completeness=False, 
         eic=True)
     
@@ -5968,7 +5968,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 50,
-            "learning_rate": 1e-5,
+            "learning_rate": 1e-3,
             "num_loci": 3200,
             "lr_halflife":1,
             "min_avail":1
