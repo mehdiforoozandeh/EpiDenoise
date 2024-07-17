@@ -2232,20 +2232,20 @@ if __name__ == "__main__":
 
         # Histograms of run types
         run_type_data = {exp: values for exp, values in exps2.items() if 'run_type' in values}
-        plot_histograms(run_type_data, 'Run Type', 'Run Type', bins=2)
+        plot_histograms(run_type_data, 'RunType', 'RunType', bins=2)
 
         # Histograms of sequencing depth (log2) at DSF1
         depth_data = {exp: [np.log2(val) for val in values['depth'] if not np.isnan(val)] for exp, values in exps2.items() if 'depth' in values}
-        plot_histograms(depth_data, 'Sequencing Depth (log2) at DSF1', 'Depth (log2)')
+        plot_histograms(depth_data, 'Sequencing', 'log2(Depth)')
 
         # Histograms of coverage at DSF1
         coverage_data = {exp: [val for val in values['coverage'] if not np.isnan(val)] for exp, values in exps2.items() if 'coverage' in values}
-        plot_histograms(coverage_data, 'Coverage at DSF1', 'Coverage')
+        plot_histograms(coverage_data, 'Coverage', 'Coverage')
 
         # Histograms of read length
         read_length_data = {exp: [val for val in values['read_length'] if not np.isnan(val)] for exp, values in exps2.items() if 'read_length' in values}
-        plot_histograms(read_length_data, 'Read Length', 'Read Length')
-        
+        plot_histograms(read_length_data, 'ReadLength', 'ReadLength')
+
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
