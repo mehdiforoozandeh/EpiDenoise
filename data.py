@@ -2229,10 +2229,11 @@ if __name__ == "__main__":
 
             plt.tight_layout()
             plt.savefig(f"data/ExpStat_{metric_name}.png")
+        exit()
 
         # Histograms of run types
-        run_type_data = {exp: values for exp, values in exps2.items() if 'run_type' in values}
-        plot_histograms(run_type_data, 'RunType', 'RunType', bins=2)
+        # run_type_data = {exp: values for exp, values in exps2.items() if 'run_type' in values}
+        # plot_histograms(run_type_data, 'RunType', 'RunType', bins=2)
 
         # Histograms of sequencing depth (log2) at DSF1
         depth_data = {exp: [np.log2(val) for val in values['depth'] if not np.isnan(val)] for exp, values in exps2.items() if 'depth' in values}
