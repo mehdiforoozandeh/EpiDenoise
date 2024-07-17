@@ -4586,16 +4586,16 @@ class PRE_TRAINER(object):
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
 
-                if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
-                    # Generate and process the plot
-                    fig_title = " | ".join([
-                        f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
-                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
+                #     # Generate and process the plot
+                #     fig_title = " | ".join([
+                #         f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                #         f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                     
-                    plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
-                    images.append(imageio.imread(plot_buf))
-                    plot_buf.close()
-                    imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                #     plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+                #     images.append(imageio.imread(plot_buf))
+                #     plot_buf.close()
+                #     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
                 if chr0 != chr1:
                     validation_set_eval = val_eval.get_validation(self.model)
