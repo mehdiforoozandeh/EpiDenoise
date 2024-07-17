@@ -2188,7 +2188,7 @@ if __name__ == "__main__":
                     statistics[exp][metric] = run_type_counts
 
                 else:
-                    if metric == "depth"::
+                    if metric == "depth":
                         values = np.log2(np.array(values, dtype=np.float64))
                     else:
                         values = np.array(values, dtype=np.float64)
