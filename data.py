@@ -918,11 +918,13 @@ class ExtendedEncodeDataHandler:
         self.df3_path = os.path.join(self.base_path, "DF3.csv")
         self.df3 = pd.read_csv(self.df3_path).drop("Unnamed: 0", axis=1)
 
-        
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
-        print(self.expstats)
+
+        print(self.expstats.loc[
+            (self.expstats["Experiment"]=="DNase-seq") & (self.expstats["Metric"]=="read_length"), "median"])
+            exit()
         
     def report(self):
         """
@@ -1497,6 +1499,28 @@ class ExtendedEncodeDataHandler:
         
         return region
 
+    def fill_in_y_prompt(self, md, missing_value=-1):
+        i = 0
+        for assay, alias in self.aliases["experiment_aliases"].items():
+            assert i+1 == int(alias.replace("M",""))
+            
+            for b in md.shape[0]:
+                if torch.all(md[b, :, i]  == missing_value):
+                    md[b, 0, i] = self.expstats.loc[
+                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "median"]
+                    md[b, 1, i] = self.expstats.loc[
+                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "median"]
+                    md[b, 2, i] = self.expstats.loc[
+                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "median"]
+                    md[b, 3, i] = 1
+
+            i += 1
+
+        # if self.eic:
+            
+        # else:
+
+
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
         mdtensor = []
@@ -1579,6 +1603,7 @@ class ExtendedEncodeDataHandler:
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[], merge_ct=False, eic=False, DSF_list=[1,2,4]):
+        self.eic = eic
 
         self.set_alias()
         self.train_val_test_split()
@@ -1747,7 +1772,7 @@ class ExtendedEncodeDataHandler:
         
         return False
 
-    def get_batch(self, side="x"):
+    def get_batch(self, side="x", y_prompt=True):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
@@ -1780,10 +1805,8 @@ class ExtendedEncodeDataHandler:
                     loc_d.append(self.select_region_from_loaded_data(d, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
 
-                print(d.shape)
-                print(md.shape)
-                print(avl.shape)
-                exit()
+                if y_prompt:
+
 
             batch_data.append(d)
             batch_metadata.append(md)
