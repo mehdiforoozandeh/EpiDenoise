@@ -4341,7 +4341,8 @@ class PRE_TRAINER(object):
                 
         return self.model
 
-    def pretrain_epidenoise_30_eic(self, num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="d", hook=False):
+    def pretrain_epidenoise_30_eic(self, 
+        num_epochs=25, mask_percentage=0.15, context_length=2000, batch_size=50, inner_epochs=5, arch="d", hook=False):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"EPD30{arch}_eic # model_parameters: {count_parameters(self.model)}")
@@ -4613,6 +4614,7 @@ class PRE_TRAINER(object):
                     pass
                 
         return self.model
+
 #========================================================================================================#
 #==========================================  Loader  ====================================================#
 #========================================================================================================#
@@ -5590,7 +5592,7 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
         n_cnn_layers, nhead, d_model, nlayers, output_dim, pool_size = pool_size,
         dropout=dropout, context_length=context_length, pos_enc="relative")
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
     # scheduler = None
@@ -5968,7 +5970,7 @@ if __name__ == "__main__":
             "mask_percentage": 0.25,
             "context_length": 3200,
             "batch_size": 50,
-            "learning_rate": 1e-3,
+            "learning_rate": 1e-4,
             "num_loci": 3200,
             "lr_halflife":1,
             "min_avail":1
