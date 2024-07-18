@@ -2510,6 +2510,7 @@ class EVAL_EED(object):
                     if d in fkeys:
                         del f[d]
 
+                print(f)
                 self.model_res.append(f)
             # except:
             #     pass
