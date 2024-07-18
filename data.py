@@ -922,9 +922,8 @@ class ExtendedEncodeDataHandler:
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
 
-        print(self.expstats.loc[
-            (self.expstats["Experiment"]=="DNase-seq") & (self.expstats["Metric"]=="read_length"), "median"])
-            exit()
+        print(self.expstats.loc[(self.expstats["Experiment"]=="DNase-seq") & (self.expstats["Metric"]=="read_length"), "median"])
+        exit()
         
     def report(self):
         """
