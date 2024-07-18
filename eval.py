@@ -2492,29 +2492,28 @@ class EVAL_EED(object):
         
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
-        # for bios in list(self.dataset.navigation.keys()):
-        for bios in list(self.dataset.navigation.keys())[:3]:
-            # try:
-            print("evaluating ", bios)
-            eval_res_bios = self.bios_pipeline(bios, dsf)
-            print("got results for ", bios)
-            self.viz_bios(eval_res_bios)
-            
-            to_del = [
-                "obs", "imp", "pred_quantile", "pred_std", 
-                "lower_60", "lower_80", "lower_95", 
-                "upper_60", "upper_80", "upper_95"]
-
-            for f in eval_res_bios:
-                fkeys = list(f.keys())
-                for d in to_del:
-                    if d in fkeys:
-                        del f[d]
+        for bios in list(self.dataset.navigation.keys()):
+            try:
+                print("evaluating ", bios)
+                eval_res_bios = self.bios_pipeline(bios, dsf)
+                print("got results for ", bios)
+                self.viz_bios(eval_res_bios)
                 
-                if f["comparison"] != "None":
-                    self.model_res.append(f)
-            # except:
-            #     pass
+                to_del = [
+                    "obs", "imp", "pred_quantile", "pred_std", 
+                    "lower_60", "lower_80", "lower_95", 
+                    "upper_60", "upper_80", "upper_95"]
+
+                for f in eval_res_bios:
+                    fkeys = list(f.keys())
+                    for d in to_del:
+                        if d in fkeys:
+                            del f[d]
+                    
+                    if f["comparison"] != "None":
+                        self.model_res.append(f)
+            except:
+                pass
 
         self.model_res = pd.DataFrame(self.model_res)
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
