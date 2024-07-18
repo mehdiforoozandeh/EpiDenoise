@@ -2535,12 +2535,12 @@ class EVAL_EED(object):
 if __name__=="__main__":
 
     e = EVAL_EED(
-        model="models/pretrained/EPD30d_model_checkpoint_Jul8th.pth", 
+        model="/project/compbio-lab/EPD/pretrained/EPD30d_model_checkpoint_Jul8th.pth", 
         data_path="/project/compbio-lab/encode_data/", 
         context_length=3200, batch_size=50, 
-        hyper_parameters_path="models/pretrained/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
+        hyper_parameters_path="/project/compbio-lab/EPD/pretrained/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30d", resolution=25, savedir="models/eval_30d/", mode="eval")
+        version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
     
     e.viz_all()
 
