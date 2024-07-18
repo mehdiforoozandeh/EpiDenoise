@@ -2176,7 +2176,7 @@ class EVAL_EED(object):
                         "upper_95": upper_95,
 
                         "p0_bg":p0bgdf["p0_bg"],
-                        "p0_fg":["p0_fg"],
+                        "p0_fg":p0bgdf["p0_fg"],
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),
@@ -2492,7 +2492,8 @@ class EVAL_EED(object):
         
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
-        for bios in list(self.dataset.navigation.keys()):
+        # for bios in list(self.dataset.navigation.keys()):
+        for bios in list(self.dataset.navigation.keys())[:3]:
             # try:
             print("evaluating ", bios)
             eval_res_bios = self.bios_pipeline(bios, dsf)
@@ -2509,9 +2510,9 @@ class EVAL_EED(object):
                 for d in to_del:
                     if d in fkeys:
                         del f[d]
-
-                print(f)
-                self.model_res.append(f)
+                
+                if f["comparison"] != "None":
+                    self.model_res.append(f)
             # except:
             #     pass
 
