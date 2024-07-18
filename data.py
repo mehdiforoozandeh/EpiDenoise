@@ -1500,7 +1500,7 @@ class ExtendedEncodeDataHandler:
         for assay, alias in self.aliases["experiment_aliases"].items():
             assert i+1 == int(alias.replace("M",""))
             
-            for b in md.shape[0]:
+            for b in range(md.shape[0]):
                 if torch.all(md[b, :, i]  == missing_value):
                     print(md[b, :, i])
                     md[b, 0, i] = self.expstats.loc[
