@@ -1502,7 +1502,6 @@ class ExtendedEncodeDataHandler:
             
             for b in range(md.shape[0]):
                 if torch.all(md[b, :, i]  == missing_value):
-                    print(md[b, :, i])
                     md[b, 0, i] = self.expstats.loc[
                         (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "Median"].values[0]
                     md[b, 1, i] = self.expstats.loc[
@@ -1510,8 +1509,6 @@ class ExtendedEncodeDataHandler:
                     md[b, 2, i] = self.expstats.loc[
                         (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "Median"].values[0]
                     md[b, 3, i] = 1
-                    print(md[b, :, i])
-                    print("\n\n")
 
             i += 1
         return md
