@@ -1498,26 +1498,22 @@ class ExtendedEncodeDataHandler:
         
         return region
 
-    def fill_in_y_prompt(self, md, missing_value=-1):
-        i = 0
-        for assay, alias in self.aliases["experiment_aliases"].items():
-            assert i+1 == int(alias.replace("M",""))
+    # def fill_in_y_prompt(self, md, missing_value=-1):
+    #     i = 0
+    #     for assay, alias in self.aliases["experiment_aliases"].items():
+    #         assert i+1 == int(alias.replace("M",""))
             
-            for b in md.shape[0]:
-                if torch.all(md[b, :, i]  == missing_value):
-                    md[b, 0, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "median"]
-                    md[b, 1, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "median"]
-                    md[b, 2, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "median"]
-                    md[b, 3, i] = 1
+    #         for b in md.shape[0]:
+    #             if torch.all(md[b, :, i]  == missing_value):
+    #                 md[b, 0, i] = self.expstats.loc[
+    #                     (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "median"]
+    #                 md[b, 1, i] = self.expstats.loc[
+    #                     (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "median"]
+    #                 md[b, 2, i] = self.expstats.loc[
+    #                     (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "median"]
+    #                 md[b, 3, i] = 1
 
-            i += 1
-
-        # if self.eic:
-            
-        # else:
+    #         i += 1
 
 
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
@@ -1804,7 +1800,7 @@ class ExtendedEncodeDataHandler:
                     loc_d.append(self.select_region_from_loaded_data(d, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
 
-                if y_prompt:
+                # if y_prompt:
 
 
             batch_data.append(d)
