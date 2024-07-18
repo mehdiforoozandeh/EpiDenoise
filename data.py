@@ -1800,11 +1800,9 @@ class ExtendedEncodeDataHandler:
                 if y_prompt:
                     md = self.fill_in_y_prompt(md)
 
-
             batch_data.append(d)
             batch_metadata.append(md)
             batch_availability.append(avl)
-        
         
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
@@ -2236,8 +2234,6 @@ if __name__ == "__main__":
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
         # summary_report.to_csv("data/ExpStats.csv")
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
-
-
 
     else:
         d = GET_DATA()
