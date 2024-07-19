@@ -584,7 +584,7 @@ class VISUALS(object):
                 # Fill between for confidence intervals
                 ax.fill_between(
                     x_values, result['lower_95'][gene_coord[0]:gene_coord[1]], result['upper_95'][gene_coord[0]:gene_coord[1]], 
-                    color='coral', alpha=0.1, label='95% Confidence')
+                    color='coral', alpha=0.4, label='95% Confidence')
 
                 # ax.fill_between(
                 #     x_values, result['lower_80'][gene_coord[0]:gene_coord[1]], result['upper_80'][gene_coord[0]:gene_coord[1]], 
@@ -1930,7 +1930,7 @@ class EVAL_EED(object):
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=15)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
 
@@ -2041,15 +2041,20 @@ class EVAL_EED(object):
             plt.subplot(1, 2, 1)
             true_errors_svr = report['true_svr']['errors']
             denoised_errors_svr = report['denoised_svr']['errors']
+            denoised_imputed_errors_svr = report['denoised_imputed_svr']['errors']
             
             sorted_true_errors_svr = np.sort(true_errors_svr)
             cumulative_true_svr = np.arange(1, len(sorted_true_errors_svr) + 1) / len(sorted_true_errors_svr)
             
             sorted_denoised_errors_svr = np.sort(denoised_errors_svr)
             cumulative_denoised_svr = np.arange(1, len(sorted_denoised_errors_svr) + 1) / len(sorted_denoised_errors_svr)
+
+            sorted_denoised_imputed_errors_svr = np.sort(denoised_imputed_errors_svr)
+            cumulative_denoised_imputed_svr = np.arange(1, len(sorted_denoised_imputed_errors_svr) + 1) / len(sorted_denoised_imputed_errors_svr)
             
-            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='True SVR', color='blue', alpha=0.7)
-            plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised SVR', color='orange', alpha=0.7)
+            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='True', color='Observed', alpha=0.7)
+            plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised', color='orange', alpha=0.7)
+            plt.plot(sorted_denoised_imputed_errors_svr, cumulative_denoised_imputed_svr, label='Denoised+Imputed', color='green', alpha=0.7)
             plt.xlabel('Error Tolerance')
             plt.ylabel('Proportion of Points within Tolerance')
             plt.title('REC Curve - SVR')
@@ -2060,15 +2065,20 @@ class EVAL_EED(object):
             plt.subplot(1, 2, 2)
             true_errors_linear = report['true_linear']['errors']
             denoised_errors_linear = report['denoised_linear']['errors']
+            denoised_imputed_errors_linear = report['denoised_imputed_linear']['errors']
             
             sorted_true_errors_linear = np.sort(true_errors_linear)
             cumulative_true_linear = np.arange(1, len(sorted_true_errors_linear) + 1) / len(sorted_true_errors_linear)
             
             sorted_denoised_errors_linear = np.sort(denoised_errors_linear)
             cumulative_denoised_linear = np.arange(1, len(sorted_denoised_errors_linear) + 1) / len(sorted_denoised_errors_linear)
+
+            sorted_denoised_imputed_errors_linear = np.sort(denoised_imputed_errors_linear)
+            cumulative_denoised_imputed_linear = np.arange(1, len(sorted_denoised_imputed_errors_linear) + 1) / len(sorted_denoised_imputed_errors_linear)
             
-            plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='True Linear', color='blue', alpha=0.7)
-            plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised Linear', color='orange', alpha=0.7)
+            plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='Observed', color='blue', alpha=0.7)
+            plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised', color='orange', alpha=0.7)
+            plt.plot(sorted_denoised_imputed_errors_linear, cumulative_denoised_imputed_linear, label='Denoised+Imputed', color='green', alpha=0.7)
             plt.xlabel('Error Tolerance')
             plt.ylabel('Proportion of Points within Tolerance')
             plt.title('REC Curve - Linear Regression')
@@ -2406,12 +2416,12 @@ class EVAL_EED(object):
         except Exception as e:
             print(f"Failed to plot mean vs. std hexbin: {e}")
 
-        print("plotting quantile heatmap")
-        try:
-            self.viz.BIOS_quantile_heatmap(eval_res)
-            self.viz.clear_pallete()
-        except Exception as e:
-            print(f"Failed to plot quantile heatmap: {e}")
+        # print("plotting quantile heatmap")
+        # try:
+        #     self.viz.BIOS_quantile_heatmap(eval_res)
+        #     self.viz.clear_pallete()
+        # except Exception as e:
+        #     print(f"Failed to plot quantile heatmap: {e}")
 
         print("plotting error vs. std hexbin")
         try:
@@ -2518,19 +2528,19 @@ class EVAL_EED(object):
         self.model_res = pd.DataFrame(self.model_res)
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
-        boxplot_metrics = [
-            'MSE-GW', 'Pearson-GW', 'Spearman-GW',
-            'MSE-1obs', 'Pearson_1obs', 'Spearman_1obs',
-            'MSE-1imp', 'Pearson_1imp', 'Spearman_1imp',
-            'MSE-gene', 'Pearson_gene', 'Spearman_gene',
-            'MSE-prom', 'Pearson_prom', 'Spearman_prom',
-            'peak_overlap_01thr', 'peak_overlap_05thr', 
-            'peak_overlap_10thr']
+        # boxplot_metrics = [
+        #     'MSE-GW', 'Pearson-GW', 'Spearman-GW',
+        #     'MSE-1obs', 'Pearson_1obs', 'Spearman_1obs',
+        #     'MSE-1imp', 'Pearson_1imp', 'Spearman_1imp',
+        #     'MSE-gene', 'Pearson_gene', 'Spearman_gene',
+        #     'MSE-prom', 'Pearson_prom', 'Spearman_prom',
+        #     'peak_overlap_01thr', 'peak_overlap_05thr', 
+        #     'peak_overlap_10thr']
         
-        for m in boxplot_metrics:
-            self.viz.MODEL_boxplot(self.model_res, metric=m)
-            self.viz.MODEL_regplot_overall(self.model_res, metric=m)
-            self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
+        # for m in boxplot_metrics:
+        #     self.viz.MODEL_boxplot(self.model_res, metric=m)
+        #     self.viz.MODEL_regplot_overall(self.model_res, metric=m)
+        #     self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
 if __name__=="__main__":
 
