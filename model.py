@@ -3950,6 +3950,13 @@ class PRE_TRAINER(object):
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
+                        refine_X_batch = NegativeBinomial(output_p, output_n).expect(stat="median")
+                        output_p, output_n, output_mp, output_mo = self.model(refine_X_batch, mY_batch, mY_batch, avX_batch)
+                        refine_pred_loss, refine_obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                            output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
+
+                        loss += (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
+
                     elif arch in ["c"]:
                         output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
                         obs_loss = self.criterion(output_p, output_n, Y_batch, observed_map) 
