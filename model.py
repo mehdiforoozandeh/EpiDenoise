@@ -5948,7 +5948,7 @@ if __name__ == "__main__":
         }
         train_epidenoise30(
             hyper_parameters30d, 
-            checkpoint_path="models/EPD30d_model_checkpoint_epoch1.pth", 
+            checkpoint_path=None, 
             arch="d")
     
     elif sys.argv[1] == "epd30d_eic":
