@@ -2390,7 +2390,7 @@ class EVAL_EED(object):
 
         eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
         return eval_res
-
+    
     def viz_bios(self, eval_res):
         print("plotting signal tracks")
         try:
@@ -2552,7 +2552,8 @@ if __name__=="__main__":
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
     
-    e.viz_all()
+    print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
+    # e.viz_all()
 
     exit()
 
