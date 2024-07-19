@@ -3960,7 +3960,6 @@ class PRE_TRAINER(object):
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
 
                         ref_loss = (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
-                        print(loss, ref_loss)
                         loss += ref_loss
 
                     elif arch in ["c"]:
@@ -5420,7 +5419,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="d"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
@@ -5957,7 +5956,7 @@ if __name__ == "__main__":
             "learning_rate": 1e-4,
             "num_loci": 3200,
             "lr_halflife":1,
-            "min_avail":3
+            "min_avail":10
         }
         train_epidenoise30(
             hyper_parameters30d, 
