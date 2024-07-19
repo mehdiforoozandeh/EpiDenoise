@@ -2052,7 +2052,7 @@ class EVAL_EED(object):
             sorted_denoised_imputed_errors_svr = np.sort(denoised_imputed_errors_svr)
             cumulative_denoised_imputed_svr = np.arange(1, len(sorted_denoised_imputed_errors_svr) + 1) / len(sorted_denoised_imputed_errors_svr)
             
-            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='True', color='Observed', alpha=0.7)
+            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='Observed', color='blue', alpha=0.7)
             plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised', color='orange', alpha=0.7)
             plt.plot(sorted_denoised_imputed_errors_svr, cumulative_denoised_imputed_svr, label='Denoised+Imputed', color='green', alpha=0.7)
             plt.xlabel('Error Tolerance')
@@ -2552,8 +2552,8 @@ if __name__=="__main__":
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
     
-    print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
-    # e.viz_all()
+    # print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
+    e.viz_all()
 
     exit()
 
