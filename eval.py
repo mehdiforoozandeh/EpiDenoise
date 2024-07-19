@@ -2359,6 +2359,38 @@ class EVAL_EED(object):
 
         return n, p
 
+    # def bios_pipeline(self, bios_name, x_dsf):
+    #     X, mX, avX, Y, mY, avY = self.load_bios(bios_name, x_dsf)  
+
+    #     available_indices = torch.where(avX[0, :] == 1)[0]
+
+    #     n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+    #     p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+    #     for leave_one_out in available_indices:
+    #         n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+    #         n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+    #         p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+    #         print(f"got imputations for feature #{leave_one_out+1}")
+        
+    #     n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+    #     print("got upsampled")
+
+    #     p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+    #     n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+    #     p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+    #     n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+    #     imp_dist = NegativeBinomial(p_imp, n_imp)
+    #     ups_dist = NegativeBinomial(p_ups, n_ups)
+
+    #     Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
+
+    #     eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
+    #     return eval_res
+
     def bios_pipeline(self, bios_name, x_dsf):
         X, mX, avX, Y, mY, avY = self.load_bios(bios_name, x_dsf)  
 
@@ -2373,24 +2405,25 @@ class EVAL_EED(object):
             n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
             p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
             print(f"got imputations for feature #{leave_one_out+1}")
-        
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        newX = imp_dist.expect()
+        n_imp, p_imp = self.pred(newX, mX, mY, avX, imp_target=[])
+        print("got refined imputations")
+             
         n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
         print("got upsampled")
-
-        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
-        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
 
         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
 
-        imp_dist = NegativeBinomial(p_imp, n_imp)
         ups_dist = NegativeBinomial(p_ups, n_ups)
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1]) 
 
         eval_res = self.get_metrics(imp_dist, ups_dist, Y, bios_name, available_indices)
         return eval_res
-    
+
     def viz_bios(self, eval_res):
         print("plotting signal tracks")
         try:
