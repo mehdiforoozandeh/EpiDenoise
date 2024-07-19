@@ -3950,7 +3950,7 @@ class PRE_TRAINER(object):
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
 
-                        refine_X_batch = NegativeBinomial(output_p, output_n).expect(stat="median")
+                        refine_X_batch = NegativeBinomial(output_p.cpu(), output_n.cpu()).expect()
                         output_p, output_n, output_mp, output_mo = self.model(refine_X_batch, mY_batch, mY_batch, avX_batch)
                         refine_pred_loss, refine_obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
@@ -5416,7 +5416,7 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="d"):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
