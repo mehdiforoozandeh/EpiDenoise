@@ -3949,6 +3949,7 @@ class PRE_TRAINER(object):
 
                         loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
                         # loss = pred_loss #+ msk_p_loss + msk_o_loss
+                        del output_mp, output_mo, X_batch
                         torch.cuda.empty_cache()
 
                         X_batch = NegativeBinomial(output_p, output_n).expect()
