@@ -3955,7 +3955,9 @@ class PRE_TRAINER(object):
                         refine_pred_loss, refine_obs_loss, msk_p_loss, msk_o_loss = self.criterion(
                             output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
 
-                        loss += (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
+                        ref_loss = (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
+                        print(loss, ref_loss)
+                        loss += ref_loss
 
                     elif arch in ["c"]:
                         output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
