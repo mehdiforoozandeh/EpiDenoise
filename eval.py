@@ -2552,8 +2552,8 @@ if __name__=="__main__":
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
         version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
     
-    # print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
-    e.viz_all()
+    print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
+    # e.viz_all()
 
     exit()
 
