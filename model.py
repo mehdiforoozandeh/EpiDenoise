@@ -3947,22 +3947,22 @@ class PRE_TRAINER(object):
                             else:
                                 obs_loss = torch.tensor(1e5)
 
-                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))# + msk_p_loss + msk_o_loss
-                        # loss = pred_loss #+ msk_p_loss + msk_o_loss
+                        loss = (mask_percentage * obs_loss) + (pred_loss * (1 - mask_percentage))
                         # loss.backward()  
 
-                        # del output_mp, output_mo, X_batch
-                        # torch.cuda.empty_cache()
-                        # X_batch = NegativeBinomial(output_p, output_n).expect()
-                        # del output_p, output_n
+                        del output_mp, output_mo, X_batch
+                        torch.cuda.empty_cache()
+                        X_batch = NegativeBinomial(output_p, output_n).expect()
+                        del output_p, output_n
 
-                        # output_p, output_n, output_mp, output_mo = self.model(X_batch, mY_batch, mY_batch, avX_batch)
-                        # refine_pred_loss, refine_obs_loss, msk_p_loss, msk_o_loss = self.criterion(
-                        #     output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
+                        output_p, output_n, output_mp, output_mo = self.model(X_batch, mY_batch, mY_batch, avX_batch)
+                        refine_pred_loss, refine_obs_loss, msk_p_loss, msk_o_loss = self.criterion(
+                            output_p, output_n, output_mp, output_mo, Y_batch, masked_map, observed_map)
 
-                        # ref_loss = (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
-                        # ref_loss.backward()  
-                        # # loss += ref_loss
+                        ref_loss = (mask_percentage * refine_obs_loss) + (refine_pred_loss * (1 - mask_percentage))
+                        # ref_loss.backward()
+                        loss += ref_loss
+
 
                     elif arch in ["c"]:
                         output_p, output_n = self.model(X_batch, mX_batch, mY_batch, avX_batch)
@@ -5951,14 +5951,14 @@ if __name__ == "__main__":
             "d_model": 768,
             "nlayers": 8,
             "epochs": 10,
-            "inner_epochs": 1,
+            "inner_epochs": 5,
             "mask_percentage": 0.2,
-            "context_length": 3200,
+            "context_length": 1600,
             "batch_size": 50,
             "learning_rate": 1e-4,
             "num_loci": 3200,
             "lr_halflife":1,
-            "min_avail":10
+            "min_avail":5
         }
         train_epidenoise30(
             hyper_parameters30d, 
