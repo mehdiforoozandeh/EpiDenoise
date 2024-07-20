@@ -257,7 +257,7 @@ class MONITOR_VALIDATION(object):
         
         temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
         Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
-        mY = self.dataset.fill_in_y_prompt(mY)
+        # mY = self.dataset.fill_in_y_prompt(mY)
         del temp_y, temp_my
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
