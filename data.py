@@ -1764,7 +1764,7 @@ class ExtendedEncodeDataHandler:
         
         return False
 
-    def get_batch(self, side="x", y_prompt=True):
+    def get_batch(self, side="x", y_prompt=False):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
