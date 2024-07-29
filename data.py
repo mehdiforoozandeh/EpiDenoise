@@ -1031,12 +1031,24 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
+    def get_signal_pval_bigwig(self, bios_name, exp):
+        bios_path = os.path.join(self.base_path, bios_name)
+        exp_path = os.path.join(bios_path, exp)
+        # exp_listdir = os.listdir(exp_path)
+        
+        if not os.path.exists(os.path.join(exp_path, 'signal_pval_res25')):
+            with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
+                exp_md = json.load(file)
+            
+            exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+            print(exp_url)
+
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
         random.shuffle(bios_list)
         with mp.Pool(n_p) as p:
             p.map(self.fix_bios, bios_list)
-        
+
     def DS_checkup(self):
         bios_list = self.df1.Accession.to_list()
         is_comp = []
@@ -2234,6 +2246,14 @@ if __name__ == "__main__":
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
         # summary_report.to_csv("data/ExpStats.csv")
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
+
+    elif sys.argv[1] == "get_pval":
+        eed = ExtendedEncodeDataHandler(solar_data_path)
+        bios_list = eed.df1.Accession.to_list()
+        for bs in bios_list:
+            exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(x)]
+            for exp in exps:
+                eed.get_signal_pval_bigwig(bs, exp)
 
     else:
         d = GET_DATA()
