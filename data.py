@@ -1090,6 +1090,9 @@ class ExtendedEncodeDataHandler:
                         'file_size', 'assembly', 'download_url', 'date_created', 
                         'status', "default"])
                 
+                e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+                
                 if len(e_files_navigation) > 0:
                     print(e_files_navigation, "\n")
                 else:
