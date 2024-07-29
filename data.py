@@ -1062,9 +1062,6 @@ class ExtendedEncodeDataHandler:
 
                     if filter_statement:
                         if "origin_batches" in efile_results.keys():
-                            if "ENCSR218FSP" in exp_url:
-                                print(efile_results['origin_batches'])
-                                exit()
 
                             if ',' not in str(efile_results['origin_batches']):
                                 e_file_biosample = str(efile_results['origin_batches'])
@@ -1076,6 +1073,10 @@ class ExtendedEncodeDataHandler:
                         else:
                             repnumber = int(efile_results['biological_replicates'][0]) - 1
                             e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+
+                        if "ENCSR218FSP" in exp_url:
+                            print(e_file_biosample)
+                            exit()
 
                         # ignore files that contain both replicates 
                         if e_file_biosample == bios_name:
