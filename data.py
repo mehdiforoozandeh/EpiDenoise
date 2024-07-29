@@ -1061,34 +1061,34 @@ class ExtendedEncodeDataHandler:
 
 
                 if filter_statement:
-                    # if "origin_batches" in efile_results.keys():
+                    if "origin_batches" in efile_results.keys():
 
-                    #     if ',' not in str(efile_results['origin_batches']):
-                    #         e_file_biosample = str(efile_results['origin_batches'])
-                    #         e_file_biosample = e_file_biosample.replace('/', '')
-                    #         e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                    #     else:
-                    #         repnumber = int(efile_results['biological_replicates'][0]) - 1
-                    #         e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    # else:
-                    #     repnumber = int(efile_results['biological_replicates'][0]) - 1
-                    #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                        if ',' not in str(efile_results['origin_batches']):
+                            e_file_biosample = str(efile_results['origin_batches'])
+                            e_file_biosample = e_file_biosample.replace('/', '')
+                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                        else:
+                            repnumber = int(efile_results['biological_replicates'][0]) - 1
+                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                    else:
+                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
 
-                    # if "ENCSR218FSP" in exp_url:
-                    #     print(e_file_biosample, )
-                    #     exit()
+                    if "ENCSR218FSP" in exp_url:
+                        print(e_file_biosample, )
+                        exit()
 
-                    # # ignore files that contain both replicates 
-                    # if e_file_biosample == bios_name:
-                    parsed = [exp, efile_results['accession'], bios_name,
-                        efile_results['file_format'], efile_results['output_type'], 
-                        efile_results['dataset'], efile_results['biological_replicates'], 
-                        efile_results['file_size'], efile_results['assembly'], 
-                        "https://www.encodeproject.org{}".format(efile_results['href']), 
-                        efile_results['date_created'], efile_results['status'], 
-                        efile_results["preferred_default"]]
+                    # ignore files that contain both replicates 
+                    if e_file_biosample == bios_name:
+                        parsed = [exp, efile_results['accession'], bios_name,
+                            efile_results['file_format'], efile_results['output_type'], 
+                            efile_results['dataset'], efile_results['biological_replicates'], 
+                            efile_results['file_size'], efile_results['assembly'], 
+                            "https://www.encodeproject.org{}".format(efile_results['href']), 
+                            efile_results['date_created'], efile_results['status'], 
+                            efile_results["preferred_default"]]
 
-                    e_files_navigation.append(parsed)
+                        e_files_navigation.append(parsed)
             
             e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
                     'assay', 'accession', 'biosample', 'file_format', 
