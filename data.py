@@ -1032,7 +1032,7 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
-    def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"s):
+    def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"):
         bios_path = os.path.join(self.base_path, bios_name)
         exp_path = os.path.join(bios_path, exp)
         # exp_listdir = os.listdir(exp_path)
