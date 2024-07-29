@@ -1052,6 +1052,10 @@ class ExtendedEncodeDataHandler:
                     efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                     efile_results = efile_respond.json()
 
+                    if "ENCSR218FSP" in exp_url:
+                        print(efile_results)
+                        exit()
+
                     filter_statement = bool(
                         efile_results['file_format'] == "bigWig" and 
                         efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
@@ -1105,6 +1109,7 @@ class ExtendedEncodeDataHandler:
 
             except:
                 print(f"skipped {bios_name}-{exp}")
+                print(os.listdir(exp))
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
