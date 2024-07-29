@@ -1111,7 +1111,7 @@ class ExtendedEncodeDataHandler:
 
             except:
                 print(f"skipped {bios_name}-{exp}")
-                print(os.listdir(exp))
+                print(os.listdir(exp_path))
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
