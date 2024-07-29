@@ -1076,7 +1076,7 @@ class ExtendedEncodeDataHandler:
                     #     repnumber = int(efile_results['biological_replicates'][0]) - 1
                     #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
                     
-                    if bam_accession in "|".join(efile_results["derived_from"]):
+                    if len(efile_results["derived_from"]) <= 2 and bam_accession in "|".join(efile_results["derived_from"]):
                     # if e_file_biosample == bios_name:
                         parsed = [exp, efile_results['accession'], bios_name,
                             efile_results['file_format'], efile_results['output_type'], 
