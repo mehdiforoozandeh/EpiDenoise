@@ -1075,9 +1075,6 @@ class ExtendedEncodeDataHandler:
                     # else:
                     #     repnumber = int(efile_results['biological_replicates'][0]) - 1
                     #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-
-                    if "ENCSR218FSP" in exp_url:
-                        print("|".join(efile_results["derived_from"]))
                     
                     if bam_accession in "|".join(efile_results["derived_from"]):
                     # if e_file_biosample == bios_name:
@@ -1101,8 +1098,8 @@ class ExtendedEncodeDataHandler:
                     'file_size', 'assembly', 'download_url', 'date_created', 
                     'status', "default"])
             
-            e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-            e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+            # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+            # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
             
             if len(e_files_navigation) > 0:
                 print(e_files_navigation, "\n")
