@@ -1176,7 +1176,7 @@ class ExtendedEncodeDataHandler:
                 #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
                 # url = "https://www.encodeproject.org{}".format(efile_results['href'])
-                save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
+                save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
                 
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
                 print(download_prompt)
