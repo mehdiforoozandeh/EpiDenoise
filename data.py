@@ -1095,6 +1095,7 @@ class ExtendedEncodeDataHandler:
                                 parsed.append(None)
                                 parsed.append(None)
 
+                            print(parsed)
                             e_files_navigation.append(parsed)
 
                 # print(efile_results['file_format'])
