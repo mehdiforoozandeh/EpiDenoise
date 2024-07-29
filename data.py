@@ -1064,39 +1064,48 @@ class ExtendedEncodeDataHandler:
 
                 if filter_statement:
 
-                    # if "origin_batches" in efile_results.keys():
-                    #     if ',' not in str(efile_results['origin_batches']):
-                    #         e_file_biosample = str(efile_results['origin_batches'])
-                    #         e_file_biosample = e_file_biosample.replace('/', '')
-                    #         e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                    #     else:
-                    #         repnumber = int(efile_results['biological_replicates'][0]) - 1
-                    #         e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    # else:
-                    #     repnumber = int(efile_results['biological_replicates'][0]) - 1
-                    #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    
-                    if len(efile_results["derived_from"]) <= 2 and bam_accession in "|".join(efile_results["derived_from"]):
-                    # if e_file_biosample == bios_name:
-                        parsed = [exp, efile_results['accession'], bios_name,
-                            efile_results['file_format'], efile_results['output_type'], 
-                            efile_results['dataset'], efile_results['biological_replicates'], 
-                            efile_results['file_size'], efile_results['assembly'], 
-                            "https://www.encodeproject.org{}".format(efile_results['href']), 
-                            efile_results['date_created'], efile_results['status']]
-                        
-                        if "preferred_default" in efile_results.keys():
-                            parsed.append(efile_results["preferred_default"])
+                    if "origin_batches" in efile_results.keys():
+                        if ',' not in str(efile_results['origin_batches']):
+                            e_file_biosample = str(efile_results['origin_batches'])
+                            e_file_biosample = e_file_biosample.replace('/', '')
+                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
                         else:
-                            parsed.append(None)
+                            repnumber = int(efile_results['biological_replicates'][0]) - 1
+                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                    else:
+                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                    
+                    
+                    parsed = [exp, efile_results['accession'], bios_name,
+                        efile_results['file_format'], efile_results['output_type'], 
+                        efile_results['dataset'], efile_results['biological_replicates'], 
+                        efile_results['file_size'], efile_results['assembly'], 
+                        "https://www.encodeproject.org{}".format(efile_results['href']), 
+                        efile_results['date_created'], efile_results['status']]
+                    
+                    if "preferred_default" in efile_results.keys():
+                        parsed.append(efile_results["preferred_default"])
+                    else:
+                        parsed.append(None)
+                    
+                    if bam_accession in "|".join(efile_results["derived_from"]):
+                        parsed.append(True)
+                    else:
+                        parsed.append(False)
 
-                        e_files_navigation.append(parsed)
+                    if e_file_biosample == bios_name:
+                        parsed.append(True)
+                    else:
+                        parsed.append(False)
+
+                    e_files_navigation.append(parsed)
             
             e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
                     'assay', 'accession', 'biosample', 'file_format', 
                     'output_type', 'experiment', 'bio_replicate_number', 
                     'file_size', 'assembly', 'download_url', 'date_created', 
-                    'status', "default"])
+                    'status', "default", "derived_from_bam", "same_bios"])
             
             # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
             # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
