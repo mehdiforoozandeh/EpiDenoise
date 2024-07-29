@@ -2330,11 +2330,12 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "get_pval":
         eed = ExtendedEncodeDataHandler(solar_data_path)
-        bios_list = eed.df1.Accession.to_list()
-        for bs in bios_list:
-            exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
-            for exp in exps:
-                eed.get_signal_pval_bigwig(bs, exp)
+        for bs in os.listdir(solar_data_path):
+            if os.path.isdir(os.path.join(solar_data_path, bs)):
+
+                exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
+                for exp in exps:
+                    eed.get_signal_pval_bigwig(bs, exp)
 
     else:
         d = GET_DATA()
