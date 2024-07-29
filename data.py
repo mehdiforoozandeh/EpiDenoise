@@ -1092,7 +1092,7 @@ class ExtendedEncodeDataHandler:
                 if len(e_files_navigation) > 0:
                     print(e_files_navigation, "\n")
                 else:
-                    print(bios_name, exp)
+                    print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
                 url = "https://www.encodeproject.org{}".format(efile_results['href'])
                 save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
