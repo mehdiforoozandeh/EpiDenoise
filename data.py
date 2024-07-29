@@ -1059,12 +1059,13 @@ class ExtendedEncodeDataHandler:
                         efile_results['status'] == "released"
                     )
 
-                    if "ENCSR218FSP" in exp_url:
-                        print(filter_statement)
-                        exit()
 
                     if filter_statement:
                         if "origin_batches" in efile_results.keys():
+                            if "ENCSR218FSP" in exp_url:
+                                print(efile_results['origin_batches'])
+                                exit()
+
                             if ',' not in str(efile_results['origin_batches']):
                                 e_file_biosample = str(efile_results['origin_batches'])
                                 e_file_biosample = e_file_biosample.replace('/', '')
