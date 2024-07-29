@@ -1073,9 +1073,9 @@ class ExtendedEncodeDataHandler:
                     #     repnumber = int(efile_results['biological_replicates'][0]) - 1
                     #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
 
-                    # if "ENCSR218FSP" in exp_url:
-                    #     print(e_file_biosample, )
-                    #     exit()
+                    if "ENCSR218FSP" in exp_url:
+                        print(exp_md)
+                        exit()
 
                     # ignore files that contain both replicates 
                     # if e_file_biosample == bios_name:
