@@ -1037,24 +1037,24 @@ class ExtendedEncodeDataHandler:
         # exp_listdir = os.listdir(exp_path)
         
         if not os.path.exists(os.path.join(exp_path, 'signal_pval_res25')):
-            try:
-                with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
-                    exp_md = json.load(file)
-                
-                exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
-                exp_respond = requests.get(exp_url, headers=self.headers)
-                exp_results = exp_respond.json()
-                
-                e_fileslist = list(exp_results['original_files'])
-                e_files_navigation = []
+            # try:
+            with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
+                exp_md = json.load(file)
+            
+            exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+            exp_respond = requests.get(exp_url, headers=self.headers)
+            exp_results = exp_respond.json()
+            
+            e_fileslist = list(exp_results['original_files'])
+            e_files_navigation = []
 
-                for ef in e_fileslist:
-                    efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                    efile_results = efile_respond.json()
-                    print(efile_results['file_format'])
+            for ef in e_fileslist:
+                efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                efile_results = efile_respond.json()
+                print(efile_results['file_format'])
 
-            except:
-                print(f"skipped {bios_name}-{exp}")
+            # except:
+            #     print(f"skipped {bios_name}-{exp}")
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
