@@ -16,6 +16,36 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExec
 import multiprocessing
 from multiprocessing import Pool
 
+def get_binned_values(bigwig_file, bin_size=25):
+    # Open the BigWig file
+    bw = pyBigWig.open(bigwig_file)
+
+    # Get the chromosomes and their lengths
+    chroms = bw.chroms()
+    
+    binned_values = {}
+
+    for chrom, length in chroms.items():
+        num_bins = length // bin_size
+        values = np.empty(num_bins)
+
+        for i in range(num_bins):
+            start = i * bin_size
+            end = start + bin_size
+            vals = bw.values(chrom, start, end, numpy=True)
+            
+            # Taking the average value for the bin
+            bin_value = np.nanmean(vals)
+            values[i] = bin_value
+        
+        binned_values[chrom] = values
+
+    # Close the BigWig file
+    bw.close()
+
+    return binned_values
+
+
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
     # Initialize an empty dictionary to store donor information
@@ -1066,93 +1096,94 @@ class ExtendedEncodeDataHandler:
         exp_path = os.path.join(bios_path, exp)
         
         if not os.path.exists(os.path.join(exp_path, 'signal_pval_res25')):
-            # try:
-            with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
-                exp_md = json.load(file)
-            
-            bam_accession = exp_md["accession"][list(exp_md["accession"].keys())[0]]
-            
-            exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
-            exp_respond = requests.get(exp_url, headers=self.headers)
-            exp_results = exp_respond.json()
-            
-            e_fileslist = list(exp_results['original_files'])
-            e_files_navigation = []
+            try:
+                with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
+                    exp_md = json.load(file)
+                
+                bam_accession = exp_md["accession"][list(exp_md["accession"].keys())[0]]
+                
+                exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+                exp_respond = requests.get(exp_url, headers=self.headers)
+                exp_results = exp_respond.json()
+                
+                e_fileslist = list(exp_results['original_files'])
+                e_files_navigation = []
 
-            for ef in e_fileslist:
-                efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                efile_results = efile_respond.json()
+                for ef in e_fileslist:
+                    efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                    efile_results = efile_respond.json()
 
-                filter_statement = bool(
-                    efile_results['file_format'] == "bigWig" and 
-                    efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
-                    efile_results['assembly']==assembly and 
-                    efile_results['status'] == "released"
-                )
+                    filter_statement = bool(
+                        efile_results['file_format'] == "bigWig" and 
+                        efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
+                        efile_results['assembly']==assembly and 
+                        efile_results['status'] == "released"
+                    )
 
-                if filter_statement:
+                    if filter_statement:
 
-                    if "origin_batches" in efile_results.keys():
-                        if ',' not in str(efile_results['origin_batches']):
-                            e_file_biosample = str(efile_results['origin_batches'])
-                            e_file_biosample = e_file_biosample.replace('/', '')
-                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                        if "origin_batches" in efile_results.keys():
+                            if ',' not in str(efile_results['origin_batches']):
+                                e_file_biosample = str(efile_results['origin_batches'])
+                                e_file_biosample = e_file_biosample.replace('/', '')
+                                e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                            else:
+                                repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
                         else:
                             repnumber = int(efile_results['biological_replicates'][0]) - 1
                             e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    else:
-                        repnumber = int(efile_results['biological_replicates'][0]) - 1
-                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    
-                    
-                    parsed = [exp, efile_results['accession'], bios_name,
-                        efile_results['file_format'], efile_results['output_type'], 
-                        efile_results['dataset'], efile_results['biological_replicates'], 
-                        efile_results['file_size'], efile_results['assembly'], 
-                        "https://www.encodeproject.org{}".format(efile_results['href']), 
-                        efile_results['date_created'], efile_results['status']]
-                    
-                    if "preferred_default" in efile_results.keys():
-                        parsed.append(efile_results["preferred_default"])
-                    else:
-                        parsed.append(None)
-                    
-                    if bam_accession in "|".join(efile_results["derived_from"]):
-                        parsed.append(True)
-                    else:
-                        parsed.append(False)
+                        
+                        
+                        parsed = [exp, efile_results['accession'], bios_name,
+                            efile_results['file_format'], efile_results['output_type'], 
+                            efile_results['dataset'], efile_results['biological_replicates'], 
+                            efile_results['file_size'], efile_results['assembly'], 
+                            "https://www.encodeproject.org{}".format(efile_results['href']), 
+                            efile_results['date_created'], efile_results['status']]
+                        
+                        if "preferred_default" in efile_results.keys():
+                            parsed.append(efile_results["preferred_default"])
+                        else:
+                            parsed.append(None)
+                        
+                        if bam_accession in "|".join(efile_results["derived_from"]):
+                            parsed.append(True)
+                        else:
+                            parsed.append(False)
 
-                    if e_file_biosample == bios_name:
-                        parsed.append(True)
-                    else:
-                        parsed.append(False)
+                        if e_file_biosample == bios_name:
+                            parsed.append(True)
+                        else:
+                            parsed.append(False)
 
-                    e_files_navigation.append(parsed)
-            
-            e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                    'assay', 'accession', 'biosample', 'file_format', 
-                    'output_type', 'experiment', 'bio_replicate_number', 
-                    'file_size', 'assembly', 'download_url', 'date_created', 
-                    'status', "default", "derived_from_bam", "same_bios"])
-            
-            # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-            # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+                        e_files_navigation.append(parsed)
+                
+                e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 
+                        'status', "default", "derived_from_bam", "same_bios"])
+                
+                # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
 
-            print(select_preferred_row(e_files_navigation))
-            
-            # if len(e_files_navigation) > 0:
-            #     print(e_files_navigation, "\n")
-            # else:
-            #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+                best_file = select_preferred_row(e_files_navigation)
+                
+                # if len(e_files_navigation) > 0:
+                #     print(e_files_navigation, "\n")
+                # else:
+                #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
-            # url = "https://www.encodeproject.org{}".format(efile_results['href'])
-            # save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
-            
-            # download_prompt = {"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
+                # url = "https://www.encodeproject.org{}".format(efile_results['href'])
+                save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
+                
+                download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
+                print(download_prompt)
 
-            # except:
-            #     print(f"skipped {bios_name}-{exp}")
-            #     print(os.listdir(exp_path))
+            except:
+                print(f"skipped {bios_name}-{exp}")
+                print(os.listdir(exp_path))
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
