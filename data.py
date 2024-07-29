@@ -1033,6 +1033,35 @@ class ExtendedEncodeDataHandler:
                 single_download(dl_dict)
     
     def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"):
+        def select_preferred_row(df):
+            if df.empty:
+                raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
+            
+            # Define preferences
+            preferences = [
+                ('derived_from_bam', True),
+                ('bio_replicate_number', lambda x: len(x) == 1),
+                ('same_bios', True),
+                ('default', True)
+            ]
+
+            for column, condition in preferences:
+                if len(df) > 1:
+                    if callable(condition):
+                        df = df[df[column].apply(condition)]
+                    else:
+                        df = df[df[column] == condition]
+                if len(df) == 1:
+                    return df.iloc[0]
+            
+            # Sort by date_created if still multiple rows
+            if len(df) > 1:
+                df['date_created'] = pd.to_datetime(df['date_created'])
+                df = df.sort_values(by='date_created', ascending=False)
+
+            # Return the top row of the filtered DataFrame
+            return df.iloc[0]
+
         bios_path = os.path.join(self.base_path, bios_name)
         exp_path = os.path.join(bios_path, exp)
         
@@ -1060,7 +1089,6 @@ class ExtendedEncodeDataHandler:
                     efile_results['assembly']==assembly and 
                     efile_results['status'] == "released"
                 )
-
 
                 if filter_statement:
 
@@ -1109,16 +1137,18 @@ class ExtendedEncodeDataHandler:
             
             # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
             # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
-            
-            if len(e_files_navigation) > 0:
-                print(e_files_navigation, "\n")
-            else:
-                print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
-            url = "https://www.encodeproject.org{}".format(efile_results['href'])
-            save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
+            print(select_preferred_row(e_files_navigation))
             
-            download_prompt = {"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
+            # if len(e_files_navigation) > 0:
+            #     print(e_files_navigation, "\n")
+            # else:
+            #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+
+            # url = "https://www.encodeproject.org{}".format(efile_results['href'])
+            # save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
+            
+            # download_prompt = {"url":url, "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
 
             # except:
             #     print(f"skipped {bios_name}-{exp}")
