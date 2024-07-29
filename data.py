@@ -1053,34 +1053,37 @@ class ExtendedEncodeDataHandler:
                 efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                 efile_results = efile_respond.json()
 
-                if efile_results['file_format'] == "bigWig" and efile_results['output_type'] == 'signal p-value' and efile_results['assembly']==assembly:
+                filter_statement = bool(
+                    efile_results['file_format'] == "bigWig" and 
+                    efile_results['output_type'] == 'signal p-value' and 
+                    efile_results['assembly']==assembly and 
+                    efile_results['status'] == "released"
+                )
 
-                    if efile_results['status'] == "released": 
-                        #ignore old and depricated versions
+                if "origin_batches" in efile_results.keys():
+                    if ',' not in str(efile_results['origin_batches']):
+                        e_file_biosample = str(efile_results['origin_batches'])
+                        e_file_biosample = e_file_biosample.replace('/', '')
+                        e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                    else:
+                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                else:
+                    repnumber = int(efile_results['biological_replicates'][0]) - 1
+                    e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
 
-                        if "origin_batches" in efile_results.keys():
-                            if ',' not in str(efile_results['origin_batches']):
-                                e_file_biosample = str(efile_results['origin_batches'])
-                                e_file_biosample = e_file_biosample.replace('/', '')
-                                e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                            else:
-                                repnumber = int(efile_results['biological_replicates'][0]) - 1
-                                e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                        else:
-                            repnumber = int(efile_results['biological_replicates'][0]) - 1
-                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                # ignore files that contain both replicates 
+                if e_file_biosample == bios_name:
+                    parsed = [exp, efile_results['accession'], e_file_biosample,
+                        efile_results['file_format'], efile_results['output_type'], 
+                        efile_results['dataset'], efile_results['biological_replicates'], 
+                        efile_results['file_size'], efile_results['assembly'], 
+                        "https://www.encodeproject.org{}".format(efile_results['href']), 
+                        efile_results['date_created'], efile_results['status']]
 
-                        # ignore files that contain both replicates 
-                        if e_file_biosample == bios_name:
-                            parsed = [exp, efile_results['accession'], e_file_biosample,
-                                efile_results['file_format'], efile_results['output_type'], 
-                                efile_results['dataset'], efile_results['biological_replicates'], 
-                                efile_results['file_size'], efile_results['assembly'], 
-                                "https://www.encodeproject.org{}".format(efile_results['href']), 
-                                efile_results['date_created'], efile_results['status']]
-
-                            print(parsed)
-                            e_files_navigation.append(parsed)
+                    print(parsed)
+                    print(len(parsed))
+                    e_files_navigation.append(parsed)
 
                 # print(efile_results['file_format'])
 
