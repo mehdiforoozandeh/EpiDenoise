@@ -1071,7 +1071,7 @@ class ExtendedEncodeDataHandler:
                             e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
 
                         # ignore files that contain both replicates 
-                        if e_file_biosample == bios:
+                        if e_file_biosample == bios_name:
                             parsed = [exp, efile_results['accession'], e_file_biosample,
                                 efile_results['file_format'], efile_results['output_type'], 
                                 efile_results['dataset'], efile_results['biological_replicates'], 
@@ -1096,7 +1096,7 @@ class ExtendedEncodeDataHandler:
                                 parsed.append(None)
 
                             e_files_navigation.append(parsed)
-                            
+
                 # print(efile_results['file_format'])
 
             # except:
