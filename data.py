@@ -2252,6 +2252,7 @@ if __name__ == "__main__":
         bios_list = eed.df1.Accession.to_list()
         for bs in bios_list:
             exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(x)]
+            print(bs, exps)
             for exp in exps:
                 eed.get_signal_pval_bigwig(bs, exp)
 
