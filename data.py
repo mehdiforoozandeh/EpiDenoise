@@ -1035,7 +1035,6 @@ class ExtendedEncodeDataHandler:
     def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"):
         bios_path = os.path.join(self.base_path, bios_name)
         exp_path = os.path.join(bios_path, exp)
-        # exp_listdir = os.listdir(exp_path)
         
         if not os.path.exists(os.path.join(exp_path, 'signal_pval_res25')):
             try:
@@ -1084,6 +1083,8 @@ class ExtendedEncodeDataHandler:
 
                             print(parsed)
                             e_files_navigation.append(parsed)
+                    else:
+                        print(bios_name, exp)
                 
                 e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
                         'assay', 'accession', 'biosample', 'file_format', 
