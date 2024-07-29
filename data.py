@@ -1032,7 +1032,7 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
-    def get_signal_pval_bigwig(self, bios_name, exp):
+    def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"s):
         bios_path = os.path.join(self.base_path, bios_name)
         exp_path = os.path.join(bios_path, exp)
         # exp_listdir = os.listdir(exp_path)
@@ -1053,7 +1053,7 @@ class ExtendedEncodeDataHandler:
                 efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                 efile_results = efile_respond.json()
 
-                if efile_results['file_format'] == "bigWig" and efile_results['output_type'] == 'signal p-value':
+                if efile_results['file_format'] == "bigWig" and efile_results['output_type'] == 'signal p-value' and efile_results['assembly']==assembly:
 
                     if efile_results['status'] == "released": 
                         #ignore old and depricated versions
