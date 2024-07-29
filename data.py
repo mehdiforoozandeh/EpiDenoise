@@ -1083,16 +1083,17 @@ class ExtendedEncodeDataHandler:
 
                             print(parsed)
                             e_files_navigation.append(parsed)
-                    else:
-                        print(bios_name, exp)
                 
                 e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
                         'assay', 'accession', 'biosample', 'file_format', 
                         'output_type', 'experiment', 'bio_replicate_number', 
                         'file_size', 'assembly', 'download_url', 'date_created', 
                         'status'])
-                    
-                print(e_files_navigation)
+                
+                if len(e_files_navigation) > 0:
+                    print(e_files_navigation)
+                else:
+                    print(bios_name, exp)
 
                 url = "https://www.encodeproject.org{}".format(efile_results['href'])
                 save_dir_name = os.path.join(exp_path, efile_results['accession']+".bigWig")
