@@ -1052,7 +1052,52 @@ class ExtendedEncodeDataHandler:
             for ef in e_fileslist:
                 efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                 efile_results = efile_respond.json()
-                print(efile_results['file_format'])
+
+                if efile_results['file_format'] == "bigWig":
+
+                    if efile_results['status'] == "released": 
+                        #ignore old and depricated versions
+
+                        if "origin_batches" in efile_results.keys():
+                            if ',' not in str(efile_results['origin_batches']):
+                                e_file_biosample = str(efile_results['origin_batches'])
+                                e_file_biosample = e_file_biosample.replace('/', '')
+                                e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                            else:
+                                repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                        else:
+                            repnumber = int(efile_results['biological_replicates'][0]) - 1
+                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+
+                        # ignore files that contain both replicates 
+                        if e_file_biosample == bios:
+                            parsed = [exp, efile_results['accession'], e_file_biosample,
+                                efile_results['file_format'], efile_results['output_type'], 
+                                efile_results['dataset'], efile_results['biological_replicates'], 
+                                efile_results['file_size'], efile_results['assembly'], 
+                                "https://www.encodeproject.org{}".format(efile_results['href']), 
+                                efile_results['date_created'], efile_results['status']]
+
+                            if "read_length" in efile_results:
+                                read_length = efile_results["read_length"]
+                                run_type = efile_results["run_type"]
+                                parsed.append(read_length)
+                                parsed.append(run_type)
+
+                            elif "mapped_read_length" in efile_results:
+                                read_length = efile_results["mapped_read_length"]
+                                run_type = efile_results["mapped_run_type"]
+                                parsed.append(read_length)
+                                parsed.append(run_type)
+
+                            else:
+                                parsed.append(None)
+                                parsed.append(None)
+
+                            e_files_navigation.append(parsed)
+                            
+                # print(efile_results['file_format'])
 
             # except:
             #     print(f"skipped {bios_name}-{exp}")
