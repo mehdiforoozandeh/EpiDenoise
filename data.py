@@ -903,6 +903,7 @@ class ExtendedEncodeDataHandler:
     """
     def __init__(self, base_path, resolution=25):
         self.base_path = base_path
+        self.headers = {'accept': 'application/json'}
         self.chr_sizes_file = os.path.join(self.base_path, "hg38.chrom.sizes")
         self.alias_path = os.path.join(self.base_path, "aliases.json")
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
