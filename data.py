@@ -1079,7 +1079,8 @@ class ExtendedEncodeDataHandler:
                                 efile_results['dataset'], efile_results['biological_replicates'], 
                                 efile_results['file_size'], efile_results['assembly'], 
                                 "https://www.encodeproject.org{}".format(efile_results['href']), 
-                                efile_results['date_created'], efile_results['status']]
+                                efile_results['date_created'], efile_results['status'], 
+                                efile_results["preferred_default"]]
 
                             e_files_navigation.append(parsed)
                 
@@ -1087,7 +1088,7 @@ class ExtendedEncodeDataHandler:
                         'assay', 'accession', 'biosample', 'file_format', 
                         'output_type', 'experiment', 'bio_replicate_number', 
                         'file_size', 'assembly', 'download_url', 'date_created', 
-                        'status'])
+                        'status', "default"])
                 
                 if len(e_files_navigation) > 0:
                     print(e_files_navigation, "\n")
