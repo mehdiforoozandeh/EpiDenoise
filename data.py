@@ -1082,6 +1082,7 @@ class ExtendedEncodeDataHandler:
                                 "https://www.encodeproject.org{}".format(efile_results['href']), 
                                 efile_results['date_created'], efile_results['status']]
 
+                            print(parsed)
                             e_files_navigation.append(parsed)
                 
                 e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
