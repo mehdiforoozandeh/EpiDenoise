@@ -1041,6 +1041,8 @@ class ExtendedEncodeDataHandler:
             with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
                 exp_md = json.load(file)
             
+            bam_accession = exp_md["accession"][list(exp_md["accession"].keys())[0]]
+            
             exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
             exp_respond = requests.get(exp_url, headers=self.headers)
             exp_results = exp_respond.json()
@@ -1075,7 +1077,7 @@ class ExtendedEncodeDataHandler:
                     #     e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
 
                     if "ENCSR218FSP" in exp_url:
-                        print(efile_results)
+                        print(efile_results["derived_from"])
                         exit()
 
                     # ignore files that contain both replicates 
