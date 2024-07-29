@@ -1054,7 +1054,7 @@ class ExtendedEncodeDataHandler:
 
                     filter_statement = bool(
                         efile_results['file_format'] == "bigWig" and 
-                        efile_results['output_type'] == 'signal p-value' and 
+                        efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
                         efile_results['assembly']==assembly and 
                         efile_results['status'] == "released"
                     )
