@@ -45,7 +45,6 @@ def get_binned_values(bigwig_file, bin_size=25):
 
     return binned_values
 
-
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
     # Initialize an empty dictionary to store donor information
@@ -1180,6 +1179,26 @@ class ExtendedEncodeDataHandler:
                 
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
                 print(download_prompt)
+
+                """
+                TODO:
+                    download the bigwig
+                    parse bigwig
+                    save per chromosome bigwig to signal_pval_res25/chr.npz 
+                """
+
+                t0 = datetime.datetime.now()
+                single_download(download_prompt)
+                t1 = datetime.datetime.now()
+                binned_bw = get_binned_values(save_dir_name)
+                t2 = datetime.datetime.now()
+                print(f"binning took {t2-t1}")
+
+                for chr, val in binned_bw.items():
+                    print(f"{chr} -- {len(val)}")
+
+
+
 
             except:
                 print(f"skipped {bios_name}-{exp}")
