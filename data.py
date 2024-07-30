@@ -1186,19 +1186,18 @@ class ExtendedEncodeDataHandler:
                     parse bigwig
                     save per chromosome bigwig to signal_pval_res25/chr.npz 
                 """
+                if "H3" in exp:
 
-                t0 = datetime.datetime.now()
-                single_download(download_prompt)
-                t1 = datetime.datetime.now()
-                binned_bw = get_binned_values(save_dir_name)
-                t2 = datetime.datetime.now()
-                print(f"binning took {t2-t1}")
+                    t0 = datetime.datetime.now()
+                    single_download(download_prompt)
+                    t1 = datetime.datetime.now()
+                    print(f"downloaded")
+                    binned_bw = get_binned_values(save_dir_name)
+                    t2 = datetime.datetime.now()
+                    print(f"binning took {t2-t1}")
 
-                for chr, val in binned_bw.items():
-                    print(f"{chr} -- {len(val)}")
-
-
-
+                    for chr, val in binned_bw.items():
+                        print(f"{chr} -- {len(val)}")
 
             except:
                 print(f"skipped {bios_name}-{exp}")
