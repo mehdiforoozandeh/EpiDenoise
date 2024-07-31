@@ -193,62 +193,8 @@ from multiprocessing import Pool
 ############################################################
 ############################################################
 
-# def get_bin_value_dict(input_dict):
-#     if input_dict["bw_obj"] == False:
-#         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
-
-#     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
-#     print(chr)
-#     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-
-#     input_dict["signals"] = bin_value
-
-#     if input_dict["bw_obj"] == False:
-#         bw.close()
-#         del input_dict["bw"]
-        
-#     return input_dict
-
-
-# def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
-#     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
-#     chr_sizes = {}
-
-#     with open(chr_sizes_file, 'r') as f:
-#         for line in f:
-#             chr_name, chr_size = line.strip().split('\t')
-#             if chr_name in main_chrs:
-#                 chr_sizes[chr_name] = int(chr_size)
-
-#     inputs = []
-#     for chr, size in chr_sizes.items():
-#         inputs.append({"bw": bigwig_file, "chr": chr, "start": 0, "end": bin_size * (size // bin_size), "resolution": bin_size, "bw_obj": False})
-
-#     t1 = datetime.datetime.now()
-
-#     # with ThreadPoolExecutor(max_workers=20) as executor:
-#     #     binned_values = executor.map(get_bin_value_dict, inputs)
-
-#     with mp.Pool(4) as p:
-#         binned_values = p.map(get_bin_value_dict, inputs)
-
-#     # res = {}
-#     # for i in inputs:
-#     #     res[i["chr"]] = get_bin_value(i)
-
-#     # with mp.Pool(1) as p:
-#     #     m_signals = p.map(get_bin_value, inputs)
-
-#     t2 = datetime.datetime.now()
-#     print(f"binning took {t2 - t1}")
-
-#     return binned_values
-############################################################
-############################################################
-############################################################
-
 def get_bin_value_dict(input_dict):
-    if not input_dict["bw_obj"]:
+    if input_dict["bw_obj"] == False:
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
 
     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
@@ -257,11 +203,12 @@ def get_bin_value_dict(input_dict):
 
     input_dict["signals"] = bin_value
 
-    if not input_dict["bw_obj"]:
+    if input_dict["bw_obj"] == False:
         bw.close()
         del input_dict["bw"]
-
+        
     return input_dict
+
 
 def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
@@ -277,32 +224,26 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     for chr, size in chr_sizes.items():
         inputs.append({"bw": bigwig_file, "chr": chr, "start": 0, "end": bin_size * (size // bin_size), "resolution": bin_size, "bw_obj": False})
 
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-    print(rank, size)
-
-    if rank == 0:
-        # Scatter inputs to all processes
-        chunks = [inputs[i::size] for i in range(size)]
-    else:
-        chunks = None
-
-    chunk = comm.scatter(chunks, root=0)
-    
     t1 = datetime.datetime.now()
 
-    results = [get_bin_value_dict(input_dict) for input_dict in chunk]
+    # with ThreadPoolExecutor(max_workers=20) as executor:
+    #     binned_values = executor.map(get_bin_value_dict, inputs)
 
-    gathered_results = comm.gather(results, root=0)
+    with mp.Pool(4) as p:
+        binned_values = p.map(get_bin_value_dict, inputs)
+
+    # res = {}
+    # for i in inputs:
+    #     res[i["chr"]] = get_bin_value(i)
+
+    # with mp.Pool(1) as p:
+    #     m_signals = p.map(get_bin_value, inputs)
 
     t2 = datetime.datetime.now()
-    if rank == 0:
-        print(f"binning took {t2 - t1}")
-        binned_values = [item for sublist in gathered_results for item in sublist]
-        return binned_values
-    else:
-        return None
+    print(f"binning took {t2 - t1}")
+
+    return binned_values
+
 
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
