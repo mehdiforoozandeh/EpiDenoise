@@ -219,7 +219,7 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     # with ThreadPoolExecutor(max_workers=20) as executor:
     #     binned_values = executor.map(get_bin_value_dict, inputs)
 
-    with mp.Pool(5) as p:
+    with mp.Pool(4) as p:
         binned_values = p.map(get_bin_value_dict, inputs)
 
     # res = {}
@@ -232,7 +232,7 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     t2 = datetime.datetime.now()
     print(f"binning took {t2 - t1}")
 
-    return m_signals
+    return binned_values
 
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
