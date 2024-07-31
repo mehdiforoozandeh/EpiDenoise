@@ -231,7 +231,7 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     # with ThreadPoolExecutor(max_workers=20) as executor:
     #     binned_values = executor.map(get_bin_value_dict, inputs)
 
-    with mp.Pool(4) as p:
+    with mp.Pool(10) as p:
         binned_values = p.map(get_bin_value_dict, inputs)
 
     # res = {}
