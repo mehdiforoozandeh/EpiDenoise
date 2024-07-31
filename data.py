@@ -197,8 +197,12 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
 
     t1 = datetime.datetime.now()
 
-    with mp.Pool(1) as p:
-        m_signals = p.map(get_bin_value, inputs)
+    res = {}
+    for i in inputs:
+        res[i["chr"]] = get_bin_value(i)
+
+    # with mp.Pool(1) as p:
+    #     m_signals = p.map(get_bin_value, inputs)
 
     t2 = datetime.datetime.now()
     print(f"binning took {t2 - t1}")
