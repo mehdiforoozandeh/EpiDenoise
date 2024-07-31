@@ -198,8 +198,11 @@ def get_bin_value_dict(input_dict):
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
 
     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
-    print(chr)
+
+    t1 = datetime.datetime.now()
     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+    t2 = datetime.datetime.now()
+    print(f"binning took {t2 - t1} for {chr} of length {end}")
 
     input_dict["signals"] = bin_value
 
@@ -208,7 +211,6 @@ def get_bin_value_dict(input_dict):
         del input_dict["bw"]
         
     return input_dict
-
 
 def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
