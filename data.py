@@ -173,7 +173,7 @@ def get_bin_value(input_dict):
     ends = starts + bin_size
     bins = [{"chrom": chrom, "start": start, "end": end} for start, end in zip(starts, ends)]
 
-    with ThreadPoolExecutor(max_workers=100) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         binned_values = list(executor.map(get_val, bins))
 
     if not input_dict["bw_obj"]:
