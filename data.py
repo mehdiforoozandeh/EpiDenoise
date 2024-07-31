@@ -216,8 +216,11 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
 
     t1 = datetime.datetime.now()
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        binned_values = executor.map(get_bin_value_dict, inputs)
+    # with ThreadPoolExecutor(max_workers=20) as executor:
+    #     binned_values = executor.map(get_bin_value_dict, inputs)
+
+    with mp.Pool(5) as p:
+        binned_values = p.map(get_bin_value_dict, inputs)
 
     # res = {}
     # for i in inputs:
