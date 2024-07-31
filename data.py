@@ -188,6 +188,7 @@ def get_bin_value_dict(input_dict):
         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
 
     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+    print(chr)
     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
 
     input_dict["signals"] = bin_value
