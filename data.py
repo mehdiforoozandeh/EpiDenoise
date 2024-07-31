@@ -280,6 +280,7 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
+    print(rank, size)
 
     if rank == 0:
         # Scatter inputs to all processes
