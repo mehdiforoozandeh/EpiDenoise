@@ -9,3 +9,4 @@ data/foreground_*
 data/bins*
 data/*.pt
 data/ExpStat*
+data/*.bigWig
