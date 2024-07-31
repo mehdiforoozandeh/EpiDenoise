@@ -934,7 +934,6 @@ def get_bin_value_dict(input_dict):
         bw.close()
         del input_dict["bw"]
         
-
     return input_dict
 
 def add_noise(data, noise_factor):

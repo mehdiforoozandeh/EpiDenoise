@@ -16,34 +16,194 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExec
 import multiprocessing
 from multiprocessing import Pool
 
-def get_binned_values(bigwig_file, bin_size=25):
-    # Open the BigWig file
-    bw = pyBigWig.open(bigwig_file)
+# def get_binned_values(bigwig_file, bin_size=25):
+#     # Open the BigWig file
+#     bw = pyBigWig.open(bigwig_file)
 
-    # Get the chromosomes and their lengths
-    chroms = bw.chroms()
+#     # Get the chromosomes and their lengths
+#     chroms = bw.chroms()
     
-    binned_values = {}
+#     binned_values = {}
 
-    for chrom, length in chroms.items():
-        num_bins = length // bin_size
-        values = np.empty(num_bins)
+#     for chrom, length in chroms.items():
+#         num_bins = length // bin_size
+#         values = np.empty(num_bins)
 
-        for i in range(num_bins):
-            start = i * bin_size
-            end = start + bin_size
-            vals = bw.values(chrom, start, end, numpy=True)
+#         for i in range(num_bins):
+#             print(chrom, i)
+#             start = i * bin_size
+#             end = start + bin_size
+#             vals = bw.values(chrom, start, end, numpy=True)
             
-            # Taking the average value for the bin
-            bin_value = np.nanmean(vals)
-            values[i] = bin_value
+#             # Taking the average value for the bin
+#             bin_value = np.nanmean(vals)
+#             values[i] = bin_value
         
-        binned_values[chrom] = values
+#         binned_values[chrom] = values
 
-    # Close the BigWig file
-    bw.close()
+#     # Close the BigWig file
+#     bw.close()
+
+#     return binned_values
+
+# def get_bin_value(input_dict):
+#     if input_dict["bw_obj"] == False:
+#         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
+
+#     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+#     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+
+#     if input_dict["bw_obj"] == False:
+#         bw.close()
+
+#     return bin_value
+
+# def get_bin_value(input_dict):
+
+#     def get_val(inp_dict):
+#         print(chrom, start)
+#         bw, chrom, start, end = inp_dict["bw"], inp_dict["chrom"], inp_dict["start"], inp_dict["end"]
+#         vals = bw.values(chrom, start, end, numpy=True)
+#         return np.nanmean(vals)
+
+#     if input_dict["bw_obj"] == False:
+#         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
+
+#     bw, chr, start, end, bin_size = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+#     # print(chr)
+#     # bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+
+    
+
+#     # Get the chromosomes and their lengths
+#     chroms = bw.chroms()
+    
+#     binned_values = {}
+
+#     for chrom, length in chroms.items():
+#         num_bins = length // bin_size
+#         values = np.empty(num_bins)
+
+#         bins = []
+#         for i in range(num_bins):
+            
+#             start = i * bin_size
+#             end = start + bin_size
+#             bins.append({"bw": input_dict["bw"], "chrom":chrom, "start":start, "end":end})
+
+#         with ThreadPoolExecutor(max_workers=10) as executor:
+#             loaded = list(executor.map(get_val, bins))
+        
+#         print(loaded)
+
+#     if input_dict["bw_obj"] == False:
+#         bw.close()
+        
+#     return bin_value
+
+# def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
+#     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+#     chr_sizes = {}
+
+#     with open(chr_sizes_file, 'r') as f:
+#         for line in f:
+#             chr_name, chr_size = line.strip().split('\t')
+#             if chr_name in main_chrs:
+#                 chr_sizes[chr_name] = int(chr_size)
+
+#     inputs = []
+#     for chr, size in chr_sizes.items():
+#         inputs.append({"bw":bigwig_file, "chr":chr, "start":0, "end":bin_size*(size // bin_size), "resolution": bin_size, "bw_obj":False})
+
+#     t1 = datetime.datetime.now()
+
+#     with mp.Pool(10) as p:
+#         m_signals = p.map(get_bin_value, inputs)
+
+#     t2 = datetime.datetime.now()
+#     print(f"binning took {t2-t1}")
+#     print(loaded)
+    
+    # bw = pyBigWig.open(bigwig_file)
+    
+    # binned = {}
+    # for chr, size in chr_sizes.items():
+    #     print(chr)
+    #     binned[chr] = bw.stats(chr, 0, bin_size*(size // bin_size), type="mean", nBins=size // bin_size)
+    
+    # bw.close()
+
+# def get_bin_values_for_chrom(bw, chrom, length, bin_size):
+#     print(chrom)
+#     num_bins = length // bin_size
+#     starts = np.arange(0, length, bin_size)
+#     ends = starts + bin_size
+#     bins = [{"chrom": chrom, "start": start, "end": end} for start, end in zip(starts, ends)]
+
+#     def get_val(bin_info):
+#         chrom = bin_info["chrom"]
+#         start = bin_info["start"]
+#         end = bin_info["end"]
+#         vals = bw.values(chrom, start, end, numpy=True)
+#         return np.nanmean(vals)
+
+#     with ThreadPoolExecutor(max_workers=10) as executor:
+#         binned_values = list(executor.map(get_val, bins))
+    
+#     return binned_values
+
+def get_bin_value(input_dict):
+    def get_val(bin_info):
+        chrom = bin_info["chrom"]
+        start = bin_info["start"]
+        end = bin_info["end"]
+        print(chrom, start, end)
+        vals = bw.values(chrom, start, end, numpy=True)
+        return np.nanmean(vals)
+
+    if not input_dict["bw_obj"]:
+        bw = pyBigWig.open(input_dict["bw"])
+    else:
+        bw = input_dict["bw"]
+    
+    chrom, bin_size = input_dict["chr"], input_dict["resolution"]
+    
+    num_bins = input_dict["end"] // bin_size
+    starts = np.arange(0, input_dict["end"], bin_size)
+    ends = starts + bin_size
+    bins = [{"chrom": chrom, "start": start, "end": end} for start, end in zip(starts, ends)]
+
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        binned_values = list(executor.map(get_val, bins))
+
+    if not input_dict["bw_obj"]:
+        bw.close()
 
     return binned_values
+
+def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
+    main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+    chr_sizes = {}
+
+    with open(chr_sizes_file, 'r') as f:
+        for line in f:
+            chr_name, chr_size = line.strip().split('\t')
+            if chr_name in main_chrs:
+                chr_sizes[chr_name] = int(chr_size)
+
+    inputs = []
+    for chr, size in chr_sizes.items():
+        inputs.append({"bw": bigwig_file, "chr": chr, "start": 0, "end": bin_size * (size // bin_size), "resolution": bin_size, "bw_obj": False})
+
+    t1 = datetime.datetime.now()
+
+    with mp.Pool(1) as p:
+        m_signals = p.map(get_bin_value, inputs)
+
+    t2 = datetime.datetime.now()
+    print(f"binning took {t2 - t1}")
+
+    return m_signals
 
 def extract_donor_information(json_data):
     # Check if 'donor' key exists in the JSON data
@@ -2230,36 +2390,38 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
-        eed = ExtendedEncodeDataHandler(solar_data_path)
-        eed.set_alias()
-        eed.coords(mode="train")
+        # eed = ExtendedEncodeDataHandler("data/")
+        get_binned_values("data/ENCFF860QIP.bigWig", bin_size=25)
 
-        if os.path.exists(eed.navigation_path) == False:
-            eed.navigate_bios_exps()
+        # eed.set_alias()
+        # eed.coords(mode="train")
+
+        # if os.path.exists(eed.navigation_path) == False:
+        #     eed.navigate_bios_exps()
             
-        with open(eed.navigation_path, 'r') as navfile:
-            eed.navigation  = json.load(navfile)
+        # with open(eed.navigation_path, 'r') as navfile:
+        #     eed.navigation  = json.load(navfile)
 
-        eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
-        eed.merge_celltypes()
-        # print({ct:len(v) for ct,v in eed.navigation.items()})
+        # eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
+        # eed.merge_celltypes()
+        # # print({ct:len(v) for ct,v in eed.navigation.items()})
 
-        eed.report()
+        # eed.report()
 
-        exit()
+        # exit()
 
-        t0 = datetime.datetime.now()
+        # t0 = datetime.datetime.now()
 
-        eed.generate_random_loci(m=10, context_length=20000)
+        # eed.generate_random_loci(m=10, context_length=20000)
 
-        batch_data, batch_metadata, batch_availability = eed.make_region_tensor(
-            ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=8)
-        batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
+        # batch_data, batch_metadata, batch_availability = eed.make_region_tensor(
+        #     ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=8)
+        # batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
 
-        print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
+        # print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
 
-        t1 = datetime.datetime.now()
-        print(f"took {t1-t0} ")
+        # t1 = datetime.datetime.now()
+        # print(f"took {t1-t0} ")
 
     elif sys.argv[1] == "test_solar":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
