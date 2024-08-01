@@ -1228,11 +1228,15 @@ class ExtendedEncodeDataHandler:
                             np.array(data))
                     
                     os.system(f"rm {save_dir_name}")
-                    
+
                 except:
-                    print(f"failed at downloading/processing {bios_name}-{exp}")
+                    print(f"failed at downloading/processing {bios_name}-{exp}, retrying...")
                     if os.path.exists(save_dir_name):
                         os.system(f"rm {save_dir_name}")
+                    
+                    selfget_signal_pval_bigwig(bios_name, exp, assembly=assembly)
+                    
+                    
 
             except:
                 print(f"skipped {bios_name}-{exp}")
