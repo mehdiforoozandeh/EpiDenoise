@@ -2449,7 +2449,7 @@ if __name__ == "__main__":
 
                 exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
                 for exp in exps:
-                    if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, x)):
+                    if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
                         proc.append(1)
                     else:
                         proc.append(0)
