@@ -200,6 +200,35 @@ def get_bin_value_dict(input_dict):
         
 #     return input_dict
 
+def get_bin_value_dict(input_dict):
+    if input_dict["bw_obj"] == False:
+        input_dict["bw"] = pyBigWig.open(input_dict["bw"])
+
+    bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+
+    t1 = datetime.datetime.now()
+    vals = bw.values(chr, start, end, numpy=True)
+    vals = vals[:end - (end % bin_size)]
+
+    vals = vals.reshape(-1, bin_size)
+
+    # Compute the mean, but handle empty slices
+    with np.errstate(invalid='ignore'):  # suppress warnings for invalid operations
+        bin_means = np.nanmean(vals, axis=1)
+
+    bin_means = np.nan_to_num(bin_means, nan=0.0)
+
+    t2 = datetime.datetime.now()
+    print(f"binning took {t2 - t1} for {chr} of length {end}")
+
+    input_dict["signals"] = bin_means
+
+    if input_dict["bw_obj"] == False:
+        bw.close()
+        del input_dict["bw"]
+        
+    return input_dict
+
 def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
     chr_sizes = {}
@@ -231,6 +260,8 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
 
     t2 = datetime.datetime.now()
     print(f"binning took {t2 - t1}")
+    print(binned_values)
+    exit()
 
     return binned_values
 
