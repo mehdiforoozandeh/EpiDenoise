@@ -1211,23 +1211,25 @@ class ExtendedEncodeDataHandler:
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
 
                 try:
-                    t0 = datetime.datetime.now()
-                    single_download(download_prompt)
-                    t1 = datetime.datetime.now()
-                    print(f"download took {t1-t0}")
-                    binned_bw = get_binned_values(save_dir_name)
-                    t2 = datetime.datetime.now()
-                    print(f"binning took {t2-t1}")
-
                     if not os.path.exists(f"{exp_path}/signal_BW_res25"):
+                        t0 = datetime.datetime.now()
+                        single_download(download_prompt)
+                        t1 = datetime.datetime.now()
+                        print(f"download took {t1-t0}")
+                        binned_bw = get_binned_values(save_dir_name)
+                        t2 = datetime.datetime.now()
+                        print(f"binning took {t2-t1}")
+
                         os.mkdir(f"{exp_path}/signal_BW_res25")
 
-                    for chr, data in binned_bw.items():
-                        np.savez_compressed(
-                            f"{exp_path}/signal_BW_res25/{chr}.npz", 
-                            np.array(data))
-                    
-                    os.system(f"rm {save_dir_name}")
+                        for chr, data in binned_bw.items():
+                            np.savez_compressed(
+                                f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                                np.array(data))
+                        
+                        os.system(f"rm {save_dir_name}")
+                    else:
+                        print(f"{exp_path}/signal_BW_res25/ already exists!")
 
                 except:
                     print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
@@ -1241,7 +1243,6 @@ class ExtendedEncodeDataHandler:
                     
             except:
                 print(f"skipped {bios_name}-{exp}")
-                print(os.listdir(exp_path))
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
@@ -2451,12 +2452,21 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "get_pval":
         eed = ExtendedEncodeDataHandler(solar_data_path)
+        def process_pair(pair):
+            bios_name, exp = pair
+            eed.get_signal_pval_bigwig(bios_name, exp)
+        
+        todo = []
         for bs in os.listdir(solar_data_path):
             if os.path.isdir(os.path.join(solar_data_path, bs)):
 
                 exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
                 for exp in exps:
-                    eed.get_signal_pval_bigwig(bs, exp)
+                    todo.append([bs, exp])
+    
+        # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            pool.map(process_pair, todo)
 
     else:
         d = GET_DATA()
