@@ -2469,9 +2469,10 @@ if __name__ == "__main__":
                 exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
                 for exp in exps:
                     todo.append([bs, exp])
-    
+
+        random.shuffle(todo)
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
-        with mp.Pool(processes=10) as pool:
+        with mp.Pool(processes=5) as pool:
             pool.map(process_pair, todo)
 
     else:
