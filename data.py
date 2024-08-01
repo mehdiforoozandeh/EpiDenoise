@@ -70,7 +70,9 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
 
     t2 = datetime.datetime.now()
     print(f"binning took {t2 - t1}")
-    print(res)
+
+    for chr, vals in res.items():
+        print(chr, vals.mean(), vals.std())
 
     return res
 
@@ -1207,30 +1209,30 @@ class ExtendedEncodeDataHandler:
                 save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
                 
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
-                print(download_prompt)
 
-                """
-                TODO:
-                    download the bigwig
-                    parse bigwig
-                    save per chromosome bigwig to signal_pval_res25/chr.npz 
-                """
+                try:
+                    t0 = datetime.datetime.now()
+                    single_download(download_prompt)
+                    t1 = datetime.datetime.now()
+                    print(f"download took {t1-t0}")
+                    binned_bw = get_binned_values(save_dir_name)
+                    t2 = datetime.datetime.now()
+                    print(f"binning took {t2-t1}")
 
-                t0 = datetime.datetime.now()
-                single_download(download_prompt)
-                t1 = datetime.datetime.now()
-                print(f"download took {t1-t0}")
-                binned_bw = get_binned_values(save_dir_name)
-                t2 = datetime.datetime.now()
-                print(f"binning took {t2-t1}")
+                    if not os.path.exists(f"{exp_path}/signal_BW_res25"):
+                        os.mkdir(f"{exp_path}/signal_BW_res25")
 
-                if not os.path.exists(f"{exp_path}/signal_BW_res25"):
-                    os.mkdir(f"{exp_path}/signal_BW_res25")
-
-                for chr, data in binned_bw.items():
-                    np.savez_compressed(
-                        f"{exp_path}/signal_BW_res25/{chr}.npz", 
-                        np.array(data))
+                    for chr, data in binned_bw.items():
+                        np.savez_compressed(
+                            f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                            np.array(data))
+                    
+                    os.system(f"rm {save_dir_name}")
+                    
+                except:
+                    print(f"failed at downloading/processing {bios_name}-{exp}")
+                    if os.path.exists(save_dir_name):
+                        os.system(f"rm {save_dir_name}")
 
             except:
                 print(f"skipped {bios_name}-{exp}")
