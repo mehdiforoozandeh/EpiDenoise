@@ -144,65 +144,28 @@ from multiprocessing import Pool
 
 
 
-# def get_bin_value(input_dict):
-#     def get_val(bin_info):
-#         chrom = bin_info["chrom"]
-#         start = bin_info["start"]
-#         end = bin_info["end"]
-#         print(chrom, start, end)
-#         vals = bw.values(chrom, start, end, numpy=True)
-#         return np.nanmean(vals)
-
-#     if not input_dict["bw_obj"]:
-#         bw = pyBigWig.open(input_dict["bw"])
-#     else:
-#         bw = input_dict["bw"]
-    
-#     chrom, bin_size = input_dict["chr"], input_dict["resolution"]
-    
-#     num_bins = input_dict["end"] // bin_size
-#     starts = np.arange(0, input_dict["end"], bin_size)
-#     ends = starts + bin_size
-#     bins = [{"chrom": chrom, "start": start, "end": end} for start, end in zip(starts, ends)]
-
-#     with ThreadPoolExecutor(max_workers=20) as executor:
-#         binned_values = list(executor.map(get_val, bins))
-
-#     if not input_dict["bw_obj"]:
-#         bw.close()
-
-#     return binned_values
-
-# def get_bin_value(input_dict):
-#     if input_dict["bw_obj"] == False:
-#         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
-
-#     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
-#     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-
-#     if input_dict["bw_obj"] == False:
-#         bw.close()
-
-#     return bin_value
-
-
-
-
-############################################################
-############################################################
-############################################################
-############################################################
-
 def get_bin_value_dict(input_dict):
-    if input_dict["bw_obj"] == False:
-        input_dict["bw"] = pyBigWig.open(input_dict["bw"])
+    def get_val(bin_info):
+        chrom = bin_info["chrom"]
+        start = bin_info["start"]
+        end = bin_info["end"]
+        vals = bw.values(chrom, start, end, numpy=True)
+        return np.nanmean(vals)
 
-    bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+    if not input_dict["bw_obj"]:
+        bw = pyBigWig.open(input_dict["bw"])
+    else:
+        bw = input_dict["bw"]
+    
+    chrom, bin_size = input_dict["chr"], input_dict["resolution"]
+    
+    num_bins = input_dict["end"] // bin_size
+    starts = np.arange(0, input_dict["end"], bin_size)
+    ends = starts + bin_size
+    bins = [{"chrom": chrom, "start": start, "end": end} for start, end in zip(starts, ends)]
 
-    t1 = datetime.datetime.now()
-    bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
-    t2 = datetime.datetime.now()
-    print(f"binning took {t2 - t1} for {chr} of length {end}")
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        binned_values = list(executor.map(get_val, bins))
 
     input_dict["signals"] = bin_value
 
@@ -211,6 +174,31 @@ def get_bin_value_dict(input_dict):
         del input_dict["bw"]
         
     return input_dict
+
+
+############################################################
+############################################################
+############################################################
+############################################################
+
+# def get_bin_value_dict(input_dict):
+#     if input_dict["bw_obj"] == False:
+#         input_dict["bw"] = pyBigWig.open(input_dict["bw"])
+
+#     bw, chr, start, end, resolution = input_dict["bw"], input_dict["chr"], input_dict["start"], input_dict["end"], input_dict["resolution"]
+
+#     t1 = datetime.datetime.now()
+#     bin_value = bw.stats(chr, start, end, type="mean", nBins=(end - start) // resolution)
+#     t2 = datetime.datetime.now()
+#     print(f"binning took {t2 - t1} for {chr} of length {end}")
+
+#     input_dict["signals"] = bin_value
+
+#     if input_dict["bw_obj"] == False:
+#         bw.close()
+#         del input_dict["bw"]
+        
+#     return input_dict
 
 def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.sizes"):
     main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
@@ -231,7 +219,7 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     # with ThreadPoolExecutor(max_workers=20) as executor:
     #     binned_values = executor.map(get_bin_value_dict, inputs)
 
-    with mp.Pool(10) as p:
+    with mp.Pool(2) as p:
         binned_values = p.map(get_bin_value_dict, inputs)
 
     # res = {}
