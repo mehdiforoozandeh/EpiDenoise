@@ -1092,7 +1092,7 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
-    def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38"):
+    def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38", attempt=0):
         def select_preferred_row(df):
             if df.empty:
                 raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
@@ -1230,14 +1230,15 @@ class ExtendedEncodeDataHandler:
                     os.system(f"rm {save_dir_name}")
 
                 except:
-                    print(f"failed at downloading/processing {bios_name}-{exp}, retrying...")
+                    print(f"failed at downloading/processing {bios_name}-{exp}")
                     if os.path.exists(save_dir_name):
                         os.system(f"rm {save_dir_name}")
-                    
-                    selfget_signal_pval_bigwig(bios_name, exp, assembly=assembly)
-                    
-                    
 
+                    attempt +=1
+                    if attempt<10:
+                        print("retrying...")
+                        self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
+                    
             except:
                 print(f"skipped {bios_name}-{exp}")
                 print(os.listdir(exp_path))
