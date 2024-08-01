@@ -2465,8 +2465,7 @@ if __name__ == "__main__":
                     todo.append([bs, exp])
     
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
-        print(f"num cpus: {mp.cpu_count()}")
-        with mp.Pool(processes=mp.cpu_count()) as pool:
+        with mp.Pool(processes=10) as pool:
             pool.map(process_pair, todo)
 
     else:
