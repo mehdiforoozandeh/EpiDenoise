@@ -1230,7 +1230,7 @@ class ExtendedEncodeDataHandler:
                     os.system(f"rm {save_dir_name}")
 
                 except:
-                    print(f"failed at downloading/processing {bios_name}-{exp}")
+                    print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
                     if os.path.exists(save_dir_name):
                         os.system(f"rm {save_dir_name}")
 
