@@ -208,9 +208,9 @@ def get_bin_value_dict(input_dict):
 
     t1 = datetime.datetime.now()
     vals = bw.values(chr, start, end, numpy=True)
-    vals = vals[:end - (end % bin_size)]
+    vals = vals[:end - (end % resolution)]
 
-    vals = vals.reshape(-1, bin_size)
+    vals = vals.reshape(-1, resolution)
 
     # Compute the mean, but handle empty slices
     with np.errstate(invalid='ignore'):  # suppress warnings for invalid operations
