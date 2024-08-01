@@ -62,17 +62,9 @@ def get_binned_values(bigwig_file, bin_size=25, chr_sizes_file="data/hg38.chrom.
     for chr, size in chr_sizes.items():
         inputs.append({"bw": bigwig_file, "chr": chr, "start": 0, "end": bin_size * (size // bin_size), "resolution": bin_size, "bw_obj": False})
 
-    t1 = datetime.datetime.now()
-
     res = {}
     for i in inputs:
         res[i["chr"]] = get_bin_value_dict(i)["signals"]
-
-    t2 = datetime.datetime.now()
-    print(f"binning took {t2 - t1}")
-
-    for chr, vals in res.items():
-        print(chr, vals.mean(), vals.std())
 
     return res
 
@@ -2449,6 +2441,20 @@ if __name__ == "__main__":
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
         # summary_report.to_csv("data/ExpStats.csv")
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
+
+    elif sys.argv[1] == "check_pval":
+        proc = []
+        for bs in os.listdir(solar_data_path):
+            if os.path.isdir(os.path.join(solar_data_path, bs)):
+
+                exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
+                for exp in exps:
+                    if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, x)):
+                        proc.append(1)
+                    else:
+                        proc.append(0)
+        
+        print(f"frac exps with bigwig = {float(sum(proc))/len(proc)}")
 
     elif sys.argv[1] == "get_pval":
         eed = ExtendedEncodeDataHandler(solar_data_path)
