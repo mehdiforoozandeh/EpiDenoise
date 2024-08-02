@@ -2307,7 +2307,7 @@ if __name__ == "__main__":
         seq = get_DNA_sequence("chr21", 100000, 900000)
         print(seq[:5], seq[-5:])
         seq = dna_to_onehot(seq)
-        print(seq)
+        print(seq.sum().sum())
         t1 = datetime.datetime.now()
         print(f"retrieval took {t1-t0}")
 
