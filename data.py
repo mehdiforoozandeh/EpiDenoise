@@ -232,13 +232,16 @@ def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_
 
 def dna_to_onehot(sequence):
     # Create a mapping from nucleotide to index
-    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N':-1}
+    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N':4}
     
     # Convert the sequence to indices
     indices = torch.tensor([mapping[nuc.upper()] for nuc in sequence], dtype=torch.long)
     
     # Create one-hot encoding
-    one_hot = torch.nn.functional.one_hot(indices, num_classes=4)
+    one_hot = torch.nn.functional.one_hot(indices, num_classes=5)
+
+    # Remove the fifth column which corresponds to 'N'
+    one_hot = one_hot[:, :4]
     
     return one_hot
 
