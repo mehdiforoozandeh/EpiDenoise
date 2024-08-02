@@ -2290,7 +2290,7 @@ if __name__ == "__main__":
                 with open(savedir.replace(".gz", ""), 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
         t0 = datetime.datetime.now()
-        print(len(get_DNA_sequence("chr1", 10000, 90000)))
+        print(len(get_DNA_sequence("chr21", 10000, 90000)))
         t1 = datetime.datetime.now()
         print(f"retrieval took {t1-t0}")
 
