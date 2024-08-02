@@ -20,6 +20,7 @@ from multiprocessing import Pool
 
 def download_save(url, save_dir_name):
     try:
+        print(f"downloading {url}")
         # Stream the download; this loads the file piece by piece
         with requests.get(url, stream=True) as response:
             response.raise_for_status()  # Check for request errors
@@ -2258,9 +2259,9 @@ if __name__ == "__main__":
             savedir = solar_data_path + "/hg38.fa.gz"
             download_save(refseq_url, savedir)
 
-            with gzip.open(savedir, 'rb') as f_in:
-                with open(savedir.replace(".gz", ""), 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            # with gzip.open(savedir, 'rb') as f_in:
+            #     with open(savedir.replace(".gz", ""), 'wb') as f_out:
+            #         shutil.copyfileobj(f_in, f_out)
 
     elif sys.argv[1] == "fix":
         eed = ExtendedEncodeDataHandler(solar_data_path)
