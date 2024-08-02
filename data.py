@@ -2305,14 +2305,14 @@ if __name__ == "__main__":
                     shutil.copyfileobj(f_in, f_out)
 
         t0 = datetime.datetime.now()
-        seq = get_DNA_sequence("chr21", 0, 40000000)
+        seq = get_DNA_sequence("chr1", 0, 248387328)
         num_N = 0
         for n in range(len(seq)):
             if seq[n]=="N":
                 num_N+=1
                 last_n = n
 
-        print(num_N, last_n)
+        print(num_N, last_n, float(num_N)/248387328)
         seq = dna_to_onehot(seq)
         print(seq.sum().sum())
         t1 = datetime.datetime.now()
