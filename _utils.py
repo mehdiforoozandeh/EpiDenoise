@@ -20,6 +20,47 @@ from torch.distributions.utils import (
 import matplotlib.pyplot as plt
 
 
+def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
+    """
+    Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
+
+    :param fasta_file: Path to the fasta file.
+    :param chrom: Chromosome name (e.g., 'chr1').
+    :param start: Start position (0-based).
+    :param end: End position (1-based, exclusive).
+    :return: Sequence string.
+    """
+    try:
+        # Open the fasta file
+        fasta = pysam.FastaFile(fasta_file)
+        
+        # Ensure coordinates are within the valid range
+        if start < 0 or end <= start:
+            raise ValueError("Invalid start or end position")
+        
+        # Retrieve the sequence
+        sequence = fasta.fetch(chrom, start, end)
+        
+        return sequence
+    except Exception as e:
+        print(f"Error retrieving sequence: {e}")
+        return None
+
+def dna_to_onehot(sequence):
+    # Create a mapping from nucleotide to index
+    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N':4}
+    
+    # Convert the sequence to indices
+    indices = torch.tensor([mapping[nuc.upper()] for nuc in sequence], dtype=torch.long)
+    
+    # Create one-hot encoding
+    one_hot = torch.nn.functional.one_hot(indices, num_classes=5)
+
+    # Remove the fifth column which corresponds to 'N'
+    one_hot = one_hot[:, :4]
+    
+    return one_hot
+
 def log_resource_usage():
     print(f"CPU Usage: {psutil.cpu_percent()}%")
     print(f"Memory Usage: {psutil.virtual_memory().percent}%")

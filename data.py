@@ -204,47 +204,6 @@ def single_download(dl_dict):
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
 
-def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
-    """
-    Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
-
-    :param fasta_file: Path to the fasta file.
-    :param chrom: Chromosome name (e.g., 'chr1').
-    :param start: Start position (0-based).
-    :param end: End position (1-based, exclusive).
-    :return: Sequence string.
-    """
-    try:
-        # Open the fasta file
-        fasta = pysam.FastaFile(fasta_file)
-        
-        # Ensure coordinates are within the valid range
-        if start < 0 or end <= start:
-            raise ValueError("Invalid start or end position")
-        
-        # Retrieve the sequence
-        sequence = fasta.fetch(chrom, start, end)
-        
-        return sequence
-    except Exception as e:
-        print(f"Error retrieving sequence: {e}")
-        return None
-
-def dna_to_onehot(sequence):
-    # Create a mapping from nucleotide to index
-    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N':4}
-    
-    # Convert the sequence to indices
-    indices = torch.tensor([mapping[nuc.upper()] for nuc in sequence], dtype=torch.long)
-    
-    # Create one-hot encoding
-    one_hot = torch.nn.functional.one_hot(indices, num_classes=5)
-
-    # Remove the fifth column which corresponds to 'N'
-    one_hot = one_hot[:, :4]
-    
-    return one_hot
-
 class GET_DATA(object):
     def __init__(self):
         self.encode_imputation_challenge_assays = ["DNase-seq", "H3K4me3", "H3K36me3", "H3K27ac", "H3K9me3",
@@ -2531,7 +2490,7 @@ if __name__ == "__main__":
 
         random.shuffle(todo)
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
-        with mp.Pool(processes=5) as pool:
+        with mp.Pool(processes=4) as pool:
             pool.map(process_pair, todo)
 
     else:
