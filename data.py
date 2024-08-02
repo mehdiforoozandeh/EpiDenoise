@@ -20,7 +20,7 @@ from multiprocessing import Pool
 
 def download_save(url, save_dir_name):
     try:
-        print(f"downloading {url}")
+        # print(f"downloading {url}")
         # Stream the download; this loads the file piece by piece
         with requests.get(url, stream=True) as response:
             response.raise_for_status()  # Check for request errors
@@ -203,6 +203,33 @@ def single_download(dl_dict):
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
+
+def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
+    """
+    Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
+
+    :param fasta_file: Path to the fasta file.
+    :param chrom: Chromosome name (e.g., 'chr1').
+    :param start: Start position (0-based).
+    :param end: End position (1-based, exclusive).
+    :return: Sequence string.
+    """
+    try:
+        # Open the fasta file
+        fasta = pysam.FastaFile(fasta_file)
+        
+        # Ensure coordinates are within the valid range
+        if start < 0 or end <= start:
+            raise ValueError("Invalid start or end position")
+        
+        # Retrieve the sequence
+        sequence = fasta.fetch(chrom, start, end)
+        
+        return sequence
+    except Exception as e:
+        print(f"Error retrieving sequence: {e}")
+        return None
+
 
 class GET_DATA(object):
     def __init__(self):
@@ -2262,6 +2289,8 @@ if __name__ == "__main__":
             with gzip.open(savedir, 'rb') as f_in:
                 with open(savedir.replace(".gz", ""), 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
+        
+        print(get_DNA_sequence("chr1", "10000", "20000"))
 
     elif sys.argv[1] == "fix":
         eed = ExtendedEncodeDataHandler(solar_data_path)
