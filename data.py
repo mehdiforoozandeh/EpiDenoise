@@ -18,6 +18,20 @@ from mpi4py import MPI
 
 from multiprocessing import Pool
 
+def download_save(url, save_dir_name):
+    try:
+        # Stream the download; this loads the file piece by piece
+        with requests.get(url, stream=True) as response:
+            response.raise_for_status()  # Check for request errors
+            with open(save_dir_name, 'wb') as file:
+                # Iterate over the response in chunks (e.g., 8KB each)
+                for chunk in response.iter_content(chunk_size=int(1e3*1024)):
+                    # Write each chunk to the file immediately
+                    file.write(chunk)
+        return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
 
 def get_bin_value_dict(input_dict):
     if input_dict["bw_obj"] == False:
@@ -160,21 +174,6 @@ def visualize_availability(
 
 def single_download(dl_dict):
     num_attempts = 10
-
-    def download_save(url, save_dir_name):
-        try:
-            # Stream the download; this loads the file piece by piece
-            with requests.get(url, stream=True) as response:
-                response.raise_for_status()  # Check for request errors
-                with open(save_dir_name, 'wb') as file:
-                    # Iterate over the response in chunks (e.g., 8KB each)
-                    for chunk in response.iter_content(chunk_size=int(1e3*1024)):
-                        # Write each chunk to the file immediately
-                        file.write(chunk)
-            return True
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return False
 
     url, save_dir_name, exp, bios = dl_dict["url"], dl_dict["save_dir_name"], dl_dict["exp"], dl_dict["bios"]
 
@@ -2252,6 +2251,16 @@ if __name__ == "__main__":
     if sys.argv[1] == "check":
         eed = ExtendedEncodeDataHandler(solar_data_path)
         print(eed.is_bios_complete(sys.argv[2]))
+
+    elif sys.argv[1] == "get_refseq":
+        if not os.path.exists(solar_data_path + "/hg38.fa"):
+            refseq_url = "http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+            savedir = solar_data_path + "/hg38.fa.gz"
+            download_save(refseq_url, savedir)
+
+            with gzip.open(savedir, 'rb') as f_in:
+                with open(savedir.replace(".gz", ""), 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
 
     elif sys.argv[1] == "fix":
         eed = ExtendedEncodeDataHandler(solar_data_path)
