@@ -230,6 +230,17 @@ def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_
         print(f"Error retrieving sequence: {e}")
         return None
 
+def dna_to_onehot(sequence):
+    # Create a mapping from nucleotide to index
+    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+    
+    # Convert the sequence to indices
+    indices = torch.tensor([mapping[nuc] for nuc in sequence], dtype=torch.long)
+    
+    # Create one-hot encoding
+    one_hot = torch.nn.functional.one_hot(indices, num_classes=4)
+    
+    return one_hot
 
 class GET_DATA(object):
     def __init__(self):
@@ -2290,7 +2301,9 @@ if __name__ == "__main__":
                 with open(savedir.replace(".gz", ""), 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
         t0 = datetime.datetime.now()
-        print(len(get_DNA_sequence("chr21", 10000, 90000)))
+        seq = get_DNA_sequence("chr21", 10000, 90000)
+        seq = dna_to_onehot(seq)
+        print(seq.shape)
         t1 = datetime.datetime.now()
         print(f"retrieval took {t1-t0}")
 
