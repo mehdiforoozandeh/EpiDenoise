@@ -2303,8 +2303,9 @@ if __name__ == "__main__":
             with gzip.open(savedir, 'rb') as f_in:
                 with open(savedir.replace(".gz", ""), 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
+
         t0 = datetime.datetime.now()
-        seq = get_DNA_sequence("chr1", 100000, 900000)
+        seq = get_DNA_sequence("chr21", 1000000, 1000000+80000)
         print(seq[:5], seq[-5:])
         seq = dna_to_onehot(seq)
         print(seq.sum().sum())
