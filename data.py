@@ -2312,7 +2312,7 @@ if __name__ == "__main__":
                 num_N+=1
                 last_n = n
 
-        print(seq[:5], seq[-5:])
+        print(num_N, last_n)
         seq = dna_to_onehot(seq)
         print(seq.sum().sum())
         t1 = datetime.datetime.now()
