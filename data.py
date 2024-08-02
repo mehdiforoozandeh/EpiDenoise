@@ -2290,7 +2290,7 @@ if __name__ == "__main__":
                 with open(savedir.replace(".gz", ""), 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
         
-        print(get_DNA_sequence("chr1", "10000", "20000"))
+        print(get_DNA_sequence("chr1", 10000, 20000))
 
     elif sys.argv[1] == "fix":
         eed = ExtendedEncodeDataHandler(solar_data_path)
