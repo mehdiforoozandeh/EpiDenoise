@@ -2306,6 +2306,12 @@ if __name__ == "__main__":
 
         t0 = datetime.datetime.now()
         seq = get_DNA_sequence("chr21", 0, 40000000)
+        num_N = 0
+        for n in range(len(seq)):
+            if seq[n]=="N":
+                num_N+=1
+                last_n = n
+
         print(seq[:5], seq[-5:])
         seq = dna_to_onehot(seq)
         print(seq.sum().sum())
