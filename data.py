@@ -2462,15 +2462,19 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "check_pval":
         proc = []
+        chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
         for bs in os.listdir(solar_data_path):
             if os.path.isdir(os.path.join(solar_data_path, bs)):
-
                 exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
                 for exp in exps:
+                    full = 1
                     if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
-                        proc.append(1)
+                        for c in chrs:
+                            if c not in os.listdir(os.path.join(solar_data_path, bs, exp, "signal_BW_res25")):
+                                full = 0
                     else:
-                        proc.append(0)
+                        full = 0
+                    proc.append(full)
         
         print(f"frac exps with bigwig = {float(sum(proc))/len(proc)}")
 
