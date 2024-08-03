@@ -1084,6 +1084,17 @@ class ExtendedEncodeDataHandler:
                 dl_dict["bios"] = missingrows.loc[i, "bios"]
                 single_download(dl_dict)
     
+    def is_bigwig_complete(self, bios_name, exp):
+        chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
+        full = 1
+        if "signal_BW_res25" in os.listdir(os.path.join(self.base_path, bios_name, exp)):
+            for c in chrs:
+                if c+".npz" not in os.listdir(os.path.join(self.base_path, bios_name, exp, "signal_BW_res25")):
+                    full = 0
+        else:
+            full = 0
+        return full
+
     def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38", attempt=0):
         def select_preferred_row(df):
             if df.empty:
@@ -1203,7 +1214,7 @@ class ExtendedEncodeDataHandler:
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
 
                 try:
-                    if not os.path.exists(f"{exp_path}/signal_BW_res25"):
+                    if not self.is_bigwig_complete(bios_name, exp):
                         t0 = datetime.datetime.now()
                         single_download(download_prompt)
                         t1 = datetime.datetime.now()
