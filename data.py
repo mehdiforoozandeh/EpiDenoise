@@ -2470,7 +2470,7 @@ if __name__ == "__main__":
                     full = 1
                     if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
                         for c in chrs:
-                            if c not in os.listdir(os.path.join(solar_data_path, bs, exp, "signal_BW_res25")):
+                            if c+".npz" not in os.listdir(os.path.join(solar_data_path, bs, exp, "signal_BW_res25")):
                                 full = 0
                     else:
                         full = 0
