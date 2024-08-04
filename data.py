@@ -2505,7 +2505,7 @@ if __name__ == "__main__":
 
         random.shuffle(todo)
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
-        with mp.Pool(processes=4) as pool:
+        with mp.Pool(processes=2) as pool:
             pool.map(process_pair, todo)
 
     else:
