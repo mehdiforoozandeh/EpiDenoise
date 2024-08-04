@@ -1213,36 +1213,36 @@ class ExtendedEncodeDataHandler:
                 
                 download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
 
-                try:
-                    if not self.is_bigwig_complete(bios_name, exp):
-                        t0 = datetime.datetime.now()
-                        single_download(download_prompt)
-                        t1 = datetime.datetime.now()
-                        print(f"download took {t1-t0}")
-                        binned_bw = get_binned_values(save_dir_name)
-                        t2 = datetime.datetime.now()
-                        print(f"binning took {t2-t1}")
+                # try:
+                if not self.is_bigwig_complete(bios_name, exp):
+                    t0 = datetime.datetime.now()
+                    single_download(download_prompt)
+                    t1 = datetime.datetime.now()
+                    print(f"download took {t1-t0}")
+                    binned_bw = get_binned_values(save_dir_name)
+                    t2 = datetime.datetime.now()
+                    print(f"binning took {t2-t1}")
 
-                        os.mkdir(f"{exp_path}/signal_BW_res25")
+                    os.mkdir(f"{exp_path}/signal_BW_res25")
 
-                        for chr, data in binned_bw.items():
-                            np.savez_compressed(
-                                f"{exp_path}/signal_BW_res25/{chr}.npz", 
-                                np.array(data))
-                        
-                        os.system(f"rm {save_dir_name}")
-                    else:
-                        print(f"{exp_path}/signal_BW_res25/ already exists!")
+                    for chr, data in binned_bw.items():
+                        np.savez_compressed(
+                            f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                            np.array(data))
+                    
+                    os.system(f"rm {save_dir_name}")
+                else:
+                    print(f"{exp_path}/signal_BW_res25/ already exists!")
 
-                except:
-                    print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
-                    if os.path.exists(save_dir_name):
-                        os.system(f"rm {save_dir_name}")
+                # except:
+                #     print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
+                #     if os.path.exists(save_dir_name):
+                #         os.system(f"rm {save_dir_name}")
 
-                    attempt +=1
-                    if attempt<10:
-                        print("retrying...")
-                        self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
+                #     attempt +=1
+                #     if attempt<10:
+                #         print("retrying...")
+                #         self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
                     
             except:
                 print(f"skipped {bios_name}-{exp}")
