@@ -1876,11 +1876,10 @@ class ExtendedEncodeDataHandler:
             self.navigation = {key: self.navigation[key] for key in keys}
 
         # print num_bios per assay
-        unique_exp = {}
+        unique_exp = {exp:0 for exp in self.df1.columns}
         for bios in self.navigation.keys():
             for exp in self.navigation[bios].keys():
-                if not exp in unique_exp:
-                    unique_exp[exp] = 0
+
                 unique_exp[exp] += 1
         
         for exp, count in unique_exp.items():
