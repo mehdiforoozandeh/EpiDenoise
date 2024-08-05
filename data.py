@@ -1102,7 +1102,10 @@ class ExtendedEncodeDataHandler:
     def filter_nav_complete_exps(self):
         for bios in list(self.navigation.keys()):
             for exp in list(self.navigation[bios].keys()):
-                if not self.is_exp_complete(bios, exp):
+                if os.path.exists(os.path.join(self.base_path, bios, exp)):
+                    if not self.is_exp_complete(bios, exp):
+                        del self.navigation[bios][exp]
+                else:
                     del self.navigation[bios][exp]
 
     def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38", attempt=0):
@@ -1850,6 +1853,7 @@ class ExtendedEncodeDataHandler:
             self.filter_navigation(exclude=excludes, include=includes)
 
         self.filter_nav_complete_exps()
+
         if merge_ct and eic==False:
             self.merge_celltypes()
 
