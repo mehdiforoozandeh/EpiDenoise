@@ -1025,7 +1025,7 @@ class ExtendedEncodeDataHandler:
         
         self.genomesize = sum(list(self.chr_sizes.values()))
 
-    def is_exp_complete(self, bios_name, exp):
+    def is_exp_complete(self, bios_name, exp, check_pval=True):
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
         
         bios_path = os.path.join(self.base_path, bios_name)
@@ -1043,7 +1043,11 @@ class ExtendedEncodeDataHandler:
                         exp_full = False
                 else:
                     exp_full = False
-                    
+        
+        if exp_full:
+            if not self.is_bigwig_complete(bios_name, exp):
+                exp_full = False
+                
         return exp_full
         
     def is_bios_complete(self, bios_name):
@@ -1129,123 +1133,123 @@ class ExtendedEncodeDataHandler:
         exp_path = os.path.join(bios_path, exp)
         
         if not os.path.exists(os.path.join(exp_path, 'signal_pval_res25')):
-            # try:
-            with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
-                exp_md = json.load(file)
-            
-            bam_accession = exp_md["accession"][list(exp_md["accession"].keys())[0]]
-            
-            exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
-            exp_respond = requests.get(exp_url, headers=self.headers)
-            exp_results = exp_respond.json()
-            
-            e_fileslist = list(exp_results['original_files'])
-            e_files_navigation = []
+            try:
+                with open(os.path.join(exp_path, 'file_metadata.json'), 'r') as file:
+                    exp_md = json.load(file)
+                
+                bam_accession = exp_md["accession"][list(exp_md["accession"].keys())[0]]
+                
+                exp_url = "https://www.encodeproject.org{}".format(exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+                exp_respond = requests.get(exp_url, headers=self.headers)
+                exp_results = exp_respond.json()
+                
+                e_fileslist = list(exp_results['original_files'])
+                e_files_navigation = []
 
-            for ef in e_fileslist:
-                efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                efile_results = efile_respond.json()
+                for ef in e_fileslist:
+                    efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
+                    efile_results = efile_respond.json()
 
-                filter_statement = bool(
-                    efile_results['file_format'] == "bigWig" and 
-                    efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
-                    efile_results['assembly']==assembly and 
-                    efile_results['status'] == "released"
-                )
+                    filter_statement = bool(
+                        efile_results['file_format'] == "bigWig" and 
+                        efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"] and 
+                        efile_results['assembly']==assembly and 
+                        efile_results['status'] == "released"
+                    )
 
-                if filter_statement:
+                    if filter_statement:
 
-                    if "origin_batches" in efile_results.keys():
-                        if ',' not in str(efile_results['origin_batches']):
-                            e_file_biosample = str(efile_results['origin_batches'])
-                            e_file_biosample = e_file_biosample.replace('/', '')
-                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                        if "origin_batches" in efile_results.keys():
+                            if ',' not in str(efile_results['origin_batches']):
+                                e_file_biosample = str(efile_results['origin_batches'])
+                                e_file_biosample = e_file_biosample.replace('/', '')
+                                e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                            else:
+                                repnumber = int(efile_results['biological_replicates'][0]) - 1
+                                e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
                         else:
                             repnumber = int(efile_results['biological_replicates'][0]) - 1
                             e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    else:
-                        repnumber = int(efile_results['biological_replicates'][0]) - 1
-                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    
-                    
-                    parsed = [exp, efile_results['accession'], bios_name,
-                        efile_results['file_format'], efile_results['output_type'], 
-                        efile_results['dataset'], efile_results['biological_replicates'], 
-                        efile_results['file_size'], efile_results['assembly'], 
-                        "https://www.encodeproject.org{}".format(efile_results['href']), 
-                        efile_results['date_created'], efile_results['status']]
-                    
-                    if "preferred_default" in efile_results.keys():
-                        parsed.append(efile_results["preferred_default"])
-                    else:
-                        parsed.append(None)
-                    
-                    if bam_accession in "|".join(efile_results["derived_from"]):
-                        parsed.append(True)
-                    else:
-                        parsed.append(False)
+                        
+                        
+                        parsed = [exp, efile_results['accession'], bios_name,
+                            efile_results['file_format'], efile_results['output_type'], 
+                            efile_results['dataset'], efile_results['biological_replicates'], 
+                            efile_results['file_size'], efile_results['assembly'], 
+                            "https://www.encodeproject.org{}".format(efile_results['href']), 
+                            efile_results['date_created'], efile_results['status']]
+                        
+                        if "preferred_default" in efile_results.keys():
+                            parsed.append(efile_results["preferred_default"])
+                        else:
+                            parsed.append(None)
+                        
+                        if bam_accession in "|".join(efile_results["derived_from"]):
+                            parsed.append(True)
+                        else:
+                            parsed.append(False)
 
-                    if e_file_biosample == bios_name:
-                        parsed.append(True)
-                    else:
-                        parsed.append(False)
+                        if e_file_biosample == bios_name:
+                            parsed.append(True)
+                        else:
+                            parsed.append(False)
 
-                    e_files_navigation.append(parsed)
-            
-            e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                    'assay', 'accession', 'biosample', 'file_format', 
-                    'output_type', 'experiment', 'bio_replicate_number', 
-                    'file_size', 'assembly', 'download_url', 'date_created', 
-                    'status', "default", "derived_from_bam", "same_bios"])
-            
-            # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-            # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
-
-            best_file = select_preferred_row(e_files_navigation)
-            
-            # if len(e_files_navigation) > 0:
-            #     print(e_files_navigation, "\n")
-            # else:
-            #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
-
-            # url = "https://www.encodeproject.org{}".format(efile_results['href'])
-            save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
-            
-            download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
-
-            # try:
-            if not self.is_bigwig_complete(bios_name, exp):
-                t0 = datetime.datetime.now()
-                single_download(download_prompt)
-                t1 = datetime.datetime.now()
-                print(f"download took {t1-t0}")
-                binned_bw = get_binned_values(save_dir_name)
-                t2 = datetime.datetime.now()
-                print(f"binning took {t2-t1}")
-
-                os.mkdir(f"{exp_path}/signal_BW_res25")
-
-                for chr, data in binned_bw.items():
-                    np.savez_compressed(
-                        f"{exp_path}/signal_BW_res25/{chr}.npz", 
-                        np.array(data))
+                        e_files_navigation.append(parsed)
                 
-                os.system(f"rm {save_dir_name}")
-            else:
-                print(f"{exp_path}/signal_BW_res25/ already exists!")
-
-            # except:
-            #     print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
-            #     if os.path.exists(save_dir_name):
-            #         os.system(f"rm {save_dir_name}")
-
-            #     attempt +=1
-            #     if attempt<10:
-            #         print("retrying...")
-            #         self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
+                e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 
+                        'status', "default", "derived_from_bam", "same_bios"])
                 
-            # except:
-            #     print(f"skipped {bios_name}-{exp}")
+                # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+
+                best_file = select_preferred_row(e_files_navigation)
+                
+                # if len(e_files_navigation) > 0:
+                #     print(e_files_navigation, "\n")
+                # else:
+                #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+
+                # url = "https://www.encodeproject.org{}".format(efile_results['href'])
+                save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
+                
+                download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
+
+                try:
+                    if not self.is_bigwig_complete(bios_name, exp):
+                        t0 = datetime.datetime.now()
+                        single_download(download_prompt)
+                        t1 = datetime.datetime.now()
+                        print(f"download took {t1-t0}")
+                        binned_bw = get_binned_values(save_dir_name)
+                        t2 = datetime.datetime.now()
+                        print(f"binning took {t2-t1}")
+
+                        os.mkdir(f"{exp_path}/signal_BW_res25")
+
+                        for chr, data in binned_bw.items():
+                            np.savez_compressed(
+                                f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                                np.array(data))
+                        
+                        os.system(f"rm {save_dir_name}")
+                    else:
+                        print(f"{exp_path}/signal_BW_res25/ already exists!")
+
+                except:
+                    print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
+                    if os.path.exists(save_dir_name):
+                        os.system(f"rm {save_dir_name}")
+
+                    attempt +=1
+                    if attempt<10:
+                        print("retrying...")
+                        self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
+                
+            except:
+                print(f"skipped {bios_name}-{exp}")
 
     def mp_fix_DS(self, n_p=5):
         bios_list = self.df1.Accession.to_list()
