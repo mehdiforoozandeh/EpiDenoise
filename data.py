@@ -1025,7 +1025,7 @@ class ExtendedEncodeDataHandler:
         
         self.genomesize = sum(list(self.chr_sizes.values()))
 
-    def is_exp_complete(self, bios_name, exp, check_pval=True):
+    def is_exp_complete(self, bios_name, exp, check_pval=False):
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
         
         bios_path = os.path.join(self.base_path, bios_name)
@@ -1098,6 +1098,12 @@ class ExtendedEncodeDataHandler:
         else:
             full = 0
         return full
+
+    def filter_nav_complete_exps(self):
+        for bios in list(self.navigation.keys()):
+            for exp in list(self.navigation[bios].keys()):
+                if not self.is_exp_complete(bios, exp):
+                    del self.navigation[bios][exp]
 
     def get_signal_pval_bigwig(self, bios_name, exp, assembly="GRCh38", attempt=0):
         def select_preferred_row(df):
@@ -1842,7 +1848,8 @@ class ExtendedEncodeDataHandler:
             self.init_eic(target_split="train")
         else:
             self.filter_navigation(exclude=excludes, include=includes)
-    
+
+        self.filter_nav_complete_exps()
         if merge_ct and eic==False:
             self.merge_celltypes()
 
@@ -1854,9 +1861,9 @@ class ExtendedEncodeDataHandler:
             elif self.split_dict[bios] != "train":
                 del self.navigation[bios]
 
-            elif check_completeness and eic==False: 
-                if len(self.is_bios_complete(bios))>0:
-                    del self.navigation[bios]
+            # elif check_completeness and eic==False: 
+            #     if len(self.is_bios_complete(bios))>0:
+            #         del self.navigation[bios]
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
