@@ -1025,7 +1025,7 @@ class ExtendedEncodeDataHandler:
         
         self.genomesize = sum(list(self.chr_sizes.values()))
 
-    def is_exp_complete(self, bios_name, exp, check_pval=False):
+    def is_exp_complete(self, bios_name, exp, check_pval=True):
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
         
         bios_path = os.path.join(self.base_path, bios_name)
@@ -1854,6 +1854,7 @@ class ExtendedEncodeDataHandler:
 
         self.filter_nav_complete_exps()
 
+
         if merge_ct and eic==False:
             self.merge_celltypes()
 
@@ -1873,6 +1874,17 @@ class ExtendedEncodeDataHandler:
             keys = list(self.navigation.keys())
             random.shuffle(keys)
             self.navigation = {key: self.navigation[key] for key in keys}
+
+        # print num_bios per assay
+        unique_exp = {}
+        for bios in self.navigation.keys():
+            for exp in self.navigation[bios].keys():
+                if not exp in unique_exp:
+                    unique_exp[exp] = 0
+                unique_exp[exp] += 1
+        
+        for exp, count in unique_exp.items():
+            print(f"{exp} in present in {count} biosamples")
 
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
