@@ -1025,7 +1025,7 @@ class ExtendedEncodeDataHandler:
         
         self.genomesize = sum(list(self.chr_sizes.values()))
 
-    def is_exp_complete(self, bios_name, exp, check_pval=True):
+    def is_exp_complete(self, bios_name, exp, check_pval=False):
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
         
         bios_path = os.path.join(self.base_path, bios_name)
@@ -1047,7 +1047,7 @@ class ExtendedEncodeDataHandler:
         if exp_full:
             if not self.is_bigwig_complete(bios_name, exp):
                 exp_full = False
-                
+
         return exp_full
         
     def is_bios_complete(self, bios_name):
