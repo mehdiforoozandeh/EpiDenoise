@@ -1228,6 +1228,10 @@ class ExtendedEncodeDataHandler:
 
             # try:
             if not self.is_bigwig_complete(bios_name, exp):
+                if os.path.exists(f"{exp_path}/signal_BW_res25/"):
+                    shutil.rmtree(f"{exp_path}/signal_BW_res25/")
+                    print(f"cleaned up old files...")
+
                 t0 = datetime.datetime.now()
                 single_download(download_prompt)
                 t1 = datetime.datetime.now()
