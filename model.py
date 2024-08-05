@@ -5424,9 +5424,6 @@ def train_epidenoise30(hyper_parameters, checkpoint_path=None, arch="d"):
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
-    print(len(dataset.navigation.keys()))
-    exit()
-    
     model_name = f"EpiDenoise30{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     with open(f'models/hyper_parameters30{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
