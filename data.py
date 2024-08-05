@@ -1854,7 +1854,6 @@ class ExtendedEncodeDataHandler:
 
         self.filter_nav_complete_exps()
 
-
         if merge_ct and eic==False:
             self.merge_celltypes()
 
@@ -2523,6 +2522,8 @@ if __name__ == "__main__":
         
         todo = []
         for bs in os.listdir(solar_data_path):
+            if bs[0] not in ["B", "V", "T"]:
+                continue
             if os.path.isdir(os.path.join(solar_data_path, bs)):
 
                 exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
