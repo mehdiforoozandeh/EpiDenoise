@@ -2432,7 +2432,7 @@ if __name__ == "__main__":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
             m=10, context_length=800*25, 
-            bios_batchsize=5, loci_batchsize=1, loci_gen="random",
+            bios_batchsize=2, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=10, check_completeness=True, eic=True)
 
         for epoch in range(10):
@@ -2455,7 +2455,7 @@ if __name__ == "__main__":
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
                     print("\n\n")
                 
-                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
+                # del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
                     
                 next_epoch = dataset.update_batch_pointers()
 
