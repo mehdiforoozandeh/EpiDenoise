@@ -2435,8 +2435,6 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
-        os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
             m=10, context_length=400*25, 
@@ -2451,7 +2449,7 @@ if __name__ == "__main__":
             while (next_epoch==False):
 
                 _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
-                _Y_batch, _mY_batch, _avY_batch = dataset.get_batch(side="y")
+                _Y_batch, _mY_batch, _avY_batch, _pval_batch = dataset.get_batch(side="y", pval=True)
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     dataset.update_batch_pointers()
