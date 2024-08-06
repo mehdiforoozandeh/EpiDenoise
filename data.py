@@ -2435,6 +2435,7 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
+        from scipy.stats import spearmanr
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
             m=10, context_length=400*25, 
@@ -2459,6 +2460,11 @@ if __name__ == "__main__":
                 else:
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape, _pval_batch.shape)
+                    for e in range(_avY_batch[0].shape):
+                        if _avY_batch[0, e] != 0:
+                            correlation, p_value = spearmanr(_Y_batch[0,:,e], _pval_batch[0,:,e],)
+                            print(f"Spearman correlation: {correlation}")
+
                     print(_Y_batch.float().mean(axis=1), _pval_batch.float().mean(axis=1))
                     print("\n\n")
                 
@@ -2615,25 +2621,25 @@ if __name__ == "__main__":
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
 
     elif sys.argv[1] == "check_pval":
-        from scipy.stats import spearmanr
-        dataset = ExtendedEncodeDataHandler(solar_data_path)
-        for bs in os.listdir(solar_data_path):
-            if os.path.isdir(os.path.join(solar_data_path, bs)):
-                exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
-                for exp in exps:
-                    if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
-                        if "signal_DSF1_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
-                            count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr21.npz"))
-                            pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr21.npz"))
+        # from scipy.stats import spearmanr
+        # dataset = ExtendedEncodeDataHandler(solar_data_path)
+        # for bs in os.listdir(solar_data_path):
+        #     if os.path.isdir(os.path.join(solar_data_path, bs)):
+        #         exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
+        #         for exp in exps:
+        #             if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
+        #                 if "signal_DSF1_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
+        #                     count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr21.npz"))
+        #                     pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr21.npz"))
                         
-                            count_data = count_data[list(count_data.keys())[0]]
-                            pval = pval[list(pval.keys())[0]]
+        #                     count_data = count_data[list(count_data.keys())[0]]
+        #                     pval = pval[list(pval.keys())[0]]
 
-                            correlation, p_value = spearmanr(count_data[:len(pval)], pval[:len(pval)])
+        #                     correlation, p_value = spearmanr(count_data[:len(pval)], pval[:len(pval)])
 
-                            print(f"{bs}-{exp} Spearman correlation: {correlation}")
+        #                     print(f"{bs}-{exp} Spearman correlation: {correlation}")
 
-        exit()
+        # exit()
         proc = []
         chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
         for bs in os.listdir(solar_data_path):
