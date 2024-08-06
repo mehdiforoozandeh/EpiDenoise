@@ -2459,7 +2459,7 @@ if __name__ == "__main__":
                 else:
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape, _pval_batch.shape)
-                    print(_Y_batch.mean(axis=2), _pval_batch.mean(axis=2))
+                    print(_Y_batch.float().mean(axis=2), _pval_batch.float().mean(axis=2))
                     print("\n\n")
                 
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
