@@ -1729,7 +1729,7 @@ class ExtendedEncodeDataHandler:
         return dtensor, availability
 
     def make_region_tensor_BW(self, loaded_data):
-        data, availability = [], [], []
+        data, availability = [], []
         for i in range(len(loaded_data)):
             d, avl = self.make_bios_tensor_BW(loaded_data[i])
             data.append(d)
