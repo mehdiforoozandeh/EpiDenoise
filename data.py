@@ -2631,7 +2631,7 @@ if __name__ == "__main__":
 
                             correlation, p_value = spearmanr(count_data[:len(pval)], pval[:len(pval)])
 
-                            print(f"{bios}-{exp} Spearman correlation: {correlation}")
+                            print(f"{bs}-{exp} Spearman correlation: {correlation}")
 
                             exit()
         exit()
