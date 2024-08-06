@@ -2448,6 +2448,7 @@ if __name__ == "__main__":
             next_epoch = False
 
             while (next_epoch==False):
+                torch.cuda.empty_cache()
 
                 _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
                 _Y_batch, _mY_batch, _avY_batch = dataset.get_batch(side="y")
