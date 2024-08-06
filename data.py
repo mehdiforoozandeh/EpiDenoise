@@ -2460,7 +2460,7 @@ if __name__ == "__main__":
                 else:
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape, _pval_batch.shape)
-                    for e in range(_avY_batch[0].shape):
+                    for e in range(len(_avY_batch[0])):
                         if _avY_batch[0, e] != 0:
                             correlation, p_value = spearmanr(_Y_batch[0,:,e], _pval_batch[0,:,e],)
                             print(f"Spearman correlation: {correlation}")
