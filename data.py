@@ -2439,7 +2439,7 @@ if __name__ == "__main__":
         dataset.initialize_EED(
             m=10, context_length=400*25, 
             bios_batchsize=1, loci_batchsize=1, loci_gen="random",
-            bios_min_exp_avail_threshold=10, check_completeness=True, eic=True)
+            bios_min_exp_avail_threshold=10, check_completeness=True, eic=False)
 
         for epoch in range(10):
             dataset.new_epoch()
