@@ -105,7 +105,7 @@ class CANDI(nn.Module):
         src = src.permute(0, 2, 1) # to N, L, F1
         
         p, n = self.neg_binom_layer(src)
-        mu, var = self.gaussian_layer(Src)
+        mu, var = self.gaussian_layer(src)
 
         return p, n, mu, var
 
