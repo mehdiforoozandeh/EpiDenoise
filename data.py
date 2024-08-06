@@ -17,9 +17,49 @@ import multiprocessing
 # from mpi4py import MPI
 import gc
 import concurrent.futures
-
-
 from multiprocessing import Pool
+
+
+def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
+    """
+    Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
+
+    :param fasta_file: Path to the fasta file.
+    :param chrom: Chromosome name (e.g., 'chr1').
+    :param start: Start position (0-based).
+    :param end: End position (1-based, exclusive).
+    :return: Sequence string.
+    """
+    try:
+        # Open the fasta file
+        fasta = pysam.FastaFile(fasta_file)
+        
+        # Ensure coordinates are within the valid range
+        if start < 0 or end <= start:
+            raise ValueError("Invalid start or end position")
+        
+        # Retrieve the sequence
+        sequence = fasta.fetch(chrom, start, end)
+        
+        return sequence
+    except Exception as e:
+        print(f"Error retrieving sequence: {e}")
+        return None
+
+def dna_to_onehot(sequence):
+    # Create a mapping from nucleotide to index
+    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N':4}
+    
+    # Convert the sequence to indices
+    indices = torch.tensor([mapping[nuc.upper()] for nuc in sequence], dtype=torch.long)
+    
+    # Create one-hot encoding
+    one_hot = torch.nn.functional.one_hot(indices, num_classes=5)
+
+    # Remove the fifth column which corresponds to 'N'
+    one_hot = one_hot[:, :4]
+    
+    return one_hot
 
 def download_save(url, save_dir_name):
     try:
@@ -2105,7 +2145,7 @@ class ExtendedEncodeDataHandler:
         
         return False
 
-    def get_batch(self, side="x", y_prompt=True, pval=False):
+    def get_batch(self, side="x", y_prompt=True, pval=False, dna_seq=False):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
@@ -2118,6 +2158,7 @@ class ExtendedEncodeDataHandler:
                     for locus in chr_loci:
                         return bios_chr_dsf[locus]
         """
+        
         current_chr = list(self.loci.keys())[self.chr_pointer]
         batch_loci_list = self.loci[current_chr][self.chr_loci_pointer : self.chr_loci_pointer+self.loci_batchsize]
 
@@ -2129,7 +2170,10 @@ class ExtendedEncodeDataHandler:
             batch_pval = []
 
         for locus in batch_loci_list:
-            print("loc",locus)
+            if dna_seq:
+                dna_seq = dna_to_onehot(get_DNA_sequence(locus[0], locus[1], locus[2]))
+                print(dna_seq.shape)
+
             loc_d = []
 
             if side == "x":
@@ -2167,8 +2211,6 @@ class ExtendedEncodeDataHandler:
             batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
             return batch_data, batch_metadata, batch_availability
         
-    
-
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
