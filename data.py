@@ -2615,6 +2615,19 @@ if __name__ == "__main__":
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
 
     elif sys.argv[1] == "check_pval":
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
+        for bs in os.listdir(solar_data_path):
+            if os.path.isdir(os.path.join(solar_data_path, bs)):
+                exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
+                for exp in exps:
+                    if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
+                        if "signal_DSF1_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
+                            count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr21.npz"))
+                            pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr21.npz"))
+                            print(pval.shape)
+                            print(count_data.shape)
+                            exit()
+        exit()
         proc = []
         chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
         for bs in os.listdir(solar_data_path):
