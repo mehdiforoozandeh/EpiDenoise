@@ -522,4 +522,4 @@ if __name__ == "__main__":
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
-        Train_CANDI_EIC(hyper_parameters)
+    Train_CANDI_EIC(hyper_parameters)
