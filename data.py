@@ -2633,7 +2633,6 @@ if __name__ == "__main__":
 
                             print(f"{bs}-{exp} Spearman correlation: {correlation}")
 
-                            exit()
         exit()
         proc = []
         chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
