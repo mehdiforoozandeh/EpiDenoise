@@ -2454,6 +2454,8 @@ if __name__ == "__main__":
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
                     print("\n\n")
+                
+                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
                     
                 next_epoch = dataset.update_batch_pointers()
 
