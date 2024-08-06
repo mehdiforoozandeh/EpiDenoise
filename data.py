@@ -1656,7 +1656,7 @@ class ExtendedEncodeDataHandler:
                 self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
-        with np.load(file_name, allow_pickle=True) as data:
+        with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
     def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
@@ -2433,9 +2433,6 @@ if __name__ == "__main__":
             m=10, context_length=800*25, 
             bios_batchsize=25, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=10, check_completeness=True, eic=True)
-        
-        print(dataset.navigation)
-        exit()
 
         for epoch in range(10):
             dataset.new_epoch()
