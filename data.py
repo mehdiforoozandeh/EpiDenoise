@@ -1658,11 +1658,86 @@ class ExtendedEncodeDataHandler:
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
+    
+    def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
+        if self.eic:
+            exps = []
+            if bios_name not in self.navigation.keys():
+                if os.path.isdir(os.path.join(self.base_path, bios_name)):
+                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+                        exp_path = os.path.join(self.base_path, bios_name, exp)
+                        if os.path.isdir(exp_path):
+                            exps.append(exp)
+                
+        else:
+            exps = list(self.navigation[bios_name].keys())
+
+        if "RNA-seq" in exps:
+            exps.remove("RNA-seq")
+
+        loaded_data = {}
+        npz_files = []
+        for e in exps:
+            l = os.path.join(self.base_path, bios_name, e, f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
+            npz_files.append(l)
+
+        # Load files in parallel
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            loaded = list(executor.map(self.load_npz, npz_files))
         
-    def load_bios(self, bios_name, locus, DSF, f_format="npz", eic=False):
+        if len(locus) == 1:
+            for l in loaded:
+                for exp, data in l.items():
+                    loaded_data[exp] = data
+
+            return loaded_data
+
+        else:
+            start_bin = int(locus[1]) // self.resolution
+            end_bin = int(locus[2]) // self.resolution
+            for l in loaded:
+                for exp, data in l.items():
+                    loaded_data[exp] = data[start_bin:end_bin]
+            
+            return loaded_data
+    
+    def make_bios_tensor_BW(self, loaded_data, missing_value=-1):
+        dtensor = []
+        availability = []
+
+        L = len(loaded_data[list(loaded_data.keys())[0]])
+        i = 0
+        for assay, alias in self.aliases["experiment_aliases"].items():
+            
+            assert i+1 == int(alias.replace("M",""))
+            if assay in loaded_data.keys():
+                dtensor.append(loaded_data[assay])
+                availability.append(1)
+
+            else:
+                dtensor.append([missing_value for _ in range(L)])
+                availability.append(0)
+
+            i += 1
+        
+        dtensor = torch.tensor(np.array(dtensor)).permute(1, 0)
+        availability = torch.tensor(np.array(availability))
+        return dtensor, availability
+
+    def make_region_tensor_BW(self, loaded_data):
+        data, availability = [], [], []
+        for i in range(len(loaded_data)):
+            d, avl = self.make_bios_tensor_BW(loaded_data[i])
+            data.append(d)
+            availability.append(avl)
+        
+        data, availability = torch.stack(data), torch.stack(availability)
+        return data, availability
+
+    def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
         
-        if eic:
+        if self.eic:
             exps = []
             if bios_name not in self.navigation.keys():
                 if os.path.isdir(os.path.join(self.base_path, bios_name)):
@@ -1968,6 +2043,11 @@ class ExtendedEncodeDataHandler:
         self.Y_loaded_data = self.loaded_data
         self.Y_loaded_metadata = self.loaded_metadata
 
+        self.Y_loaded_pval = []
+        for bios in batch_bios_list:
+            pval_d = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+            self.Y_loaded_pval.append(pval_d)
+
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
             self.chr_loci_pointer = 0
@@ -1994,7 +2074,7 @@ class ExtendedEncodeDataHandler:
             batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
             self.loaded_data = []
             self.loaded_metadata = []
-
+            
             for bios in batch_bios_list:
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
@@ -2004,12 +2084,17 @@ class ExtendedEncodeDataHandler:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
+                self.Y_loaded_pval = []
+                for bios in batch_bios_list:
+                    pval_d = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                    self.Y_loaded_pval.append(pval_d)
+
         else:
             self.chr_loci_pointer += self.loci_batchsize
         
         return False
 
-    def get_batch(self, side="x", y_prompt=True):
+    def get_batch(self, side="x", y_prompt=True, pval=False):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
@@ -2028,29 +2113,48 @@ class ExtendedEncodeDataHandler:
         batch_data = []
         batch_metadata = []
         batch_availability = []
+        
+        if pval and side == "y":
+            batch_pval = []
 
         for locus in batch_loci_list:
             loc_d = []
 
             if side == "x":
-                for d in self.loaded_data:
-                    loc_d.append(self.select_region_from_loaded_data(d, locus))
+                for data in self.loaded_data:
+                    loc_d.append(self.select_region_from_loaded_data(data, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.loaded_metadata)
 
             elif side == "y":
-                for d in self.Y_loaded_data:
-                    loc_d.append(self.select_region_from_loaded_data(d, locus))
+                for data in self.Y_loaded_data:
+                    loc_d.append(self.select_region_from_loaded_data(data, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
 
                 if y_prompt:
                     md = self.fill_in_y_prompt(md)
 
+                if pval:
+                    loc_p = []
+                    for pp in self.Y_loaded_pval:
+                        loc_p.append(self.select_region_from_loaded_data(pp, locus))
+                    p, avl_p = self.make_region_tensor(loc_p)
+                     
+                    assert avl_p == avl
+                    batch_pval.append(p)
+
+
             batch_data.append(d)
             batch_metadata.append(md)
             batch_availability.append(avl)
         
-        batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
-        return batch_data, batch_metadata, batch_availability
+        if pval and side == "y":
+            batch_data, batch_metadata = torch.concat(batch_data), torch.concat(batch_metadata) 
+            batch_availability, batch_pval = torch.concat(batch_availability), torch.concat(batch_pval)
+            return batch_data, batch_metadata, batch_availability, batch_pval
+
+        else:
+            batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
+            return batch_data, batch_metadata, batch_availability
         
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
@@ -2321,38 +2425,33 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
-        # eed = ExtendedEncodeDataHandler("data/")
-        get_binned_values("data/ENCFF860QIP.bigWig", bin_size=25)
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
+        dataset.initialize_EED(
+            m=10, context_length=800*25, 
+            bios_batchsize=50, loci_batchsize=1, loci_gen="random",
+            bios_min_exp_avail_threshold=3, check_completeness=True)
 
-        # eed.set_alias()
-        # eed.coords(mode="train")
+        for epoch in range(10):
+            self.dataset.new_epoch()
+            print("new epoch")
+            next_epoch = False
 
-        # if os.path.exists(eed.navigation_path) == False:
-        #     eed.navigate_bios_exps()
-            
-        # with open(eed.navigation_path, 'r') as navfile:
-        #     eed.navigation  = json.load(navfile)
+            while (next_epoch==False):
+                t0 = datetime.now()
 
-        # eed.filter_navigation(exclude=["CAGE", "RNA-seq", "ChIA-PET"])
-        # eed.merge_celltypes()
-        # # print({ct:len(v) for ct,v in eed.navigation.items()})
+                _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
+                _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(side="y")
 
-        # eed.report()
-
-        # exit()
-
-        # t0 = datetime.datetime.now()
-
-        # eed.generate_random_loci(m=10, context_length=20000)
-
-        # batch_data, batch_metadata, batch_availability = eed.make_region_tensor(
-        #     ["ENCBS075PNA" for _ in range(5)], ["chr21", 0, eed.chr_sizes["chr21"]], DSF=8)
-        # batch_data, batch_metadata, batch_availability = torch.concat([batch_data]), torch.concat([batch_metadata]), torch.concat([batch_availability])
-
-        # print(batch_data.shape, batch_metadata.shape, batch_availability.shape)
-
-        # t1 = datetime.datetime.now()
-        # print(f"took {t1-t0} ")
+                if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
+                    self.dataset.update_batch_pointers()
+                    print("mismatch in shapes! skipped batch...")
+                    continue
+                
+                else:
+                    print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
+                    print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
+                    
+                next_epoch = self.dataset.update_batch_pointers()
 
     elif sys.argv[1] == "test_solar":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
