@@ -15,6 +15,7 @@ from scipy.ndimage import gaussian_filter1d
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
 import multiprocessing
 # from mpi4py import MPI
+import gc
 import concurrent.futures
 
 
@@ -2448,7 +2449,6 @@ if __name__ == "__main__":
             next_epoch = False
 
             while (next_epoch==False):
-                torch.cuda.empty_cache()
 
                 _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
                 _Y_batch, _mY_batch, _avY_batch = dataset.get_batch(side="y")
@@ -2463,7 +2463,9 @@ if __name__ == "__main__":
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
                     print("\n\n")
                 
-                # del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
+                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
+                gc.collect()
+                torch.cuda.empty_cache()
                     
                 next_epoch = dataset.update_batch_pointers()
 
