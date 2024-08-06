@@ -2129,6 +2129,7 @@ class ExtendedEncodeDataHandler:
             batch_pval = []
 
         for locus in batch_loci_list:
+            print("loc",locus)
             loc_d = []
 
             if side == "x":
@@ -2166,6 +2167,8 @@ class ExtendedEncodeDataHandler:
             batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
             return batch_data, batch_metadata, batch_availability
         
+    
+
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
@@ -2460,10 +2463,10 @@ if __name__ == "__main__":
                 else:
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape, _pval_batch.shape)
-                    for e in range(len(_avY_batch[0])):
-                        if _avY_batch[0, e] != 0:
-                            correlation, p_value = spearmanr(_X_batch[0,:,e], _pval_batch[0,:,e],)
-                            print(f"Spearman correlation: {correlation}")
+                    # for e in range(len(_avY_batch[0])):
+                    #     if _avY_batch[0, e] != 0:
+                    #         correlation, p_value = spearmanr(_X_batch[0,:,e], _pval_batch[0,:,e],)
+                    #         print(f"Spearman correlation: {correlation}")
 
                     # print(_Y_batch.float().mean(axis=1), _pval_batch.float().mean(axis=1))
                     print("\n\n")
