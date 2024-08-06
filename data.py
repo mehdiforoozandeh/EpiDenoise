@@ -2045,7 +2045,7 @@ class ExtendedEncodeDataHandler:
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
-            pval_d = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+            pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.Y_loaded_pval.append(pval_d)
 
     def update_batch_pointers(self):
@@ -2086,7 +2086,7 @@ class ExtendedEncodeDataHandler:
 
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
-                    pval_d = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                    pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                     self.Y_loaded_pval.append(pval_d)
 
         else:
@@ -2137,7 +2137,7 @@ class ExtendedEncodeDataHandler:
                     loc_p = []
                     for pp in self.Y_loaded_pval:
                         loc_p.append(self.select_region_from_loaded_data(pp, locus))
-                    p, avl_p = self.make_region_tensor(loc_p)
+                    p, avl_p = self.make_region_tensor_BW(loc_p)
                      
                     assert avl_p == avl
                     batch_pval.append(p)
@@ -2425,6 +2425,8 @@ if __name__ == "__main__":
         print(eed.DS_checkup())
     
     elif sys.argv[1] == "test":
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+        os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
             m=10, context_length=800*25, 
@@ -2437,7 +2439,6 @@ if __name__ == "__main__":
             next_epoch = False
 
             while (next_epoch==False):
-                t0 = datetime.now()
 
                 _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
                 _Y_batch, _mY_batch, _avY_batch = dataset.get_batch(side="y")
