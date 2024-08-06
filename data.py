@@ -2150,7 +2150,7 @@ class ExtendedEncodeDataHandler:
                         loc_p.append(self.select_region_from_loaded_data(pp, locus))
                     p, avl_p = self.make_region_tensor_BW(loc_p)
                      
-                    assert avl_p == avl
+                    assert (avl_p == avl).all(), "avl_p and avl do not match"
                     batch_pval.append(p)
 
             batch_data.append(d)
