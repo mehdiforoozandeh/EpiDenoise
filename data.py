@@ -1656,7 +1656,8 @@ class ExtendedEncodeDataHandler:
                 self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
-        with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
+        with np.load(file_name, allow_pickle=True) as data:
+        # with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
     def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
@@ -2044,10 +2045,10 @@ class ExtendedEncodeDataHandler:
         self.Y_loaded_data = self.loaded_data
         self.Y_loaded_metadata = self.loaded_metadata
 
-        self.Y_loaded_pval = []
-        for bios in batch_bios_list:
-            pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-            self.Y_loaded_pval.append(pval_d)
+        # self.Y_loaded_pval = []
+        # for bios in batch_bios_list:
+        #     pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+        #     self.Y_loaded_pval.append(pval_d)
 
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
@@ -2085,10 +2086,10 @@ class ExtendedEncodeDataHandler:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
-                self.Y_loaded_pval = []
-                for bios in batch_bios_list:
-                    pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-                    self.Y_loaded_pval.append(pval_d)
+                # self.Y_loaded_pval = []
+                # for bios in batch_bios_list:
+                #     pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                #     self.Y_loaded_pval.append(pval_d)
 
         else:
             self.chr_loci_pointer += self.loci_batchsize
