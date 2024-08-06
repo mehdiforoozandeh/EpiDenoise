@@ -2432,18 +2432,18 @@ if __name__ == "__main__":
             bios_min_exp_avail_threshold=10, check_completeness=True)
 
         for epoch in range(10):
-            self.dataset.new_epoch()
+            dataset.new_epoch()
             print("new epoch")
             next_epoch = False
 
             while (next_epoch==False):
                 t0 = datetime.now()
 
-                _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
-                _Y_batch, _mY_batch, _avY_batch = self.dataset.get_batch(side="y")
+                _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
+                _Y_batch, _mY_batch, _avY_batch = dataset.get_batch(side="y")
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
-                    self.dataset.update_batch_pointers()
+                    dataset.update_batch_pointers()
                     print("mismatch in shapes! skipped batch...")
                     continue
                 
@@ -2451,7 +2451,7 @@ if __name__ == "__main__":
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
                     
-                next_epoch = self.dataset.update_batch_pointers()
+                next_epoch = dataset.update_batch_pointers()
 
     elif sys.argv[1] == "test_solar":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
