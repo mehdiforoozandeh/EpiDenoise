@@ -2045,10 +2045,10 @@ class ExtendedEncodeDataHandler:
         self.Y_loaded_data = self.loaded_data
         self.Y_loaded_metadata = self.loaded_metadata
 
-        # self.Y_loaded_pval = []
-        # for bios in batch_bios_list:
-        #     pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-        #     self.Y_loaded_pval.append(pval_d)
+        self.Y_loaded_pval = []
+        for bios in batch_bios_list:
+            pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+            self.Y_loaded_pval.append(pval_d)
 
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
@@ -2086,10 +2086,10 @@ class ExtendedEncodeDataHandler:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
-                # self.Y_loaded_pval = []
-                # for bios in batch_bios_list:
-                #     pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-                #     self.Y_loaded_pval.append(pval_d)
+                self.Y_loaded_pval = []
+                for bios in batch_bios_list:
+                    pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                    self.Y_loaded_pval.append(pval_d)
 
         else:
             self.chr_loci_pointer += self.loci_batchsize
@@ -2453,6 +2453,7 @@ if __name__ == "__main__":
                 else:
                     print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape)
+                    print("\n\n")
                     
                 next_epoch = dataset.update_batch_pointers()
 
