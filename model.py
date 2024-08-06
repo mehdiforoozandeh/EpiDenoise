@@ -296,7 +296,7 @@ class DeconvBlock(nn.Module):
         return x
 
 class DeconvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="up", residuals=True, groups=1, pool_size=2):
+    def __init__(self, in_C, out_C, W, S=1, D=1, residuals=True, groups=1, pool_size=2):
         super(DeconvTower, self).__init__()
         
         self.deconv1 = DeconvBlock(in_C, out_C, W, S, D, norm="layer", groups=groups)
@@ -748,19 +748,38 @@ class NegativeBinomialLayer(nn.Module):
             nn.Softplus()
         )
 
-        # self.fc_p = nn.Linear(input_dim, output_dim)
-        # self.fc_n = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
         # using sigmoid to ensure it's between 0 and 1
         p = self.fc_p(x)
-        # p = torch.sigmoid(self.fc_p(x))
 
         # using softplus to ensure it's positive
         n = self.fc_n(x)
-        # n = F.softplus(self.fc_n(x))
 
         return p, n
+
+class GaussianLayer(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(GaussianLayer, self).__init__()
+
+        # Define the layers for calculating mu (mean) parameter
+        self.fc_mu = nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.LayerNorm(output_dim)
+        )
+
+        # Define the layers for calculating var parameter
+        self.fc_var = nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.LayerNorm(output_dim),
+            nn.Softplus() # Ensure var is positive
+        )
+
+    def forward(self, x):
+        mu = self.fc_mu(x)
+        var = self.fc_var(x)
+
+        return mu, var
 
 def negative_binomial_loss(y_true, n_pred, p_pred):
     """

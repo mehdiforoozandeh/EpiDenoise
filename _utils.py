@@ -72,6 +72,50 @@ def log_resource_usage():
         print(f"GPU Memory Allocated (peak): {gpu_stats['allocated_bytes.all.peak'] / (1024 ** 2)} MB")
         print(f"GPU Memory Reserved (peak): {gpu_stats['reserved_bytes.all.peak'] / (1024 ** 2)} MB")
 
+import torch
+from scipy.stats import norm
+
+class Gaussian:
+    def __init__(self, mu, var):
+        self.mu = mu
+        self.var = var
+        self.sigma = self.var ** (1/2)
+
+    def mean(self):
+        return self.mu
+
+    def median(self):
+        return self.mu
+
+    def mode(self):
+        return self.mu
+
+    def var(self):
+        return self.var
+
+    def std(self):
+        return self.sigma
+
+    def cdf(self, x):
+        x = x.detach().cpu().numpy() if torch.is_tensor(x) else x
+        return torch.tensor(norm.cdf(x, self.mu, self.sigma), dtype=torch.float32)
+
+    def pdf(self, x):
+        x = x.detach().cpu().numpy() if torch.is_tensor(x) else x
+        return torch.tensor(norm.pdf(x, self.mu, self.sigma), dtype=torch.float32)
+
+    def icdf(self, q):
+        q = q.detach().cpu().numpy() if torch.is_tensor(q) else q
+        return torch.tensor(norm.ppf(q, self.mu, self.sigma), dtype=torch.float32)
+
+    def expect(self):
+        return self.mu
+
+    def interval(self, confidence=0.95):
+        lower = self.icdf((1 - confidence) / 2)
+        upper = self.icdf((1 + confidence) / 2)
+        return lower, upper
+
 class NegativeBinomial:
     def __init__(self, p, n):
         self.n = n
@@ -114,11 +158,12 @@ class NegativeBinomial:
             return self.median()
 
     def interval(self, confidence=0.95):
-        # lower = self.icdf(q=(1-confidence)/2)
-        # upper = self.icdf(q=(1+confidence)/2)
-        lower = self.mean() - self.std()
-        upper = self.mean() + self.std()
+        lower = self.icdf(q=(1-confidence)/2)
+        upper = self.icdf(q=(1+confidence)/2)
         return lower, upper
+
+
+
 
 class MONITOR_VALIDATION(object):
     def __init__(
