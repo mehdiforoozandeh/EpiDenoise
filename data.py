@@ -2171,8 +2171,7 @@ class ExtendedEncodeDataHandler:
 
         for locus in batch_loci_list:
             if dna_seq:
-                dna_seq = dna_to_onehot(get_DNA_sequence(locus[0], locus[1], locus[2]))
-                print(dna_seq.shape)
+                one_hot_sequence = dna_to_onehot(get_DNA_sequence(locus[0], locus[1], locus[2]))
 
             loc_d = []
 
@@ -2202,14 +2201,25 @@ class ExtendedEncodeDataHandler:
             batch_metadata.append(md)
             batch_availability.append(avl)
         
-        if pval and side == "y":
-            batch_data, batch_metadata = torch.concat(batch_data), torch.concat(batch_metadata) 
-            batch_availability, batch_pval = torch.concat(batch_availability), torch.concat(batch_pval)
-            return batch_data, batch_metadata, batch_availability, batch_pval
+        if dna_seq:
+            if pval and side == "y":
+                batch_data, batch_metadata = torch.concat(batch_data), torch.concat(batch_metadata) 
+                batch_availability, batch_pval = torch.concat(batch_availability), torch.concat(batch_pval)
+                return batch_data, batch_metadata, batch_availability, batch_pval, one_hot_sequence
+
+            else:
+                batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
+                return batch_data, batch_metadata, batch_availability, one_hot_sequence
 
         else:
-            batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
-            return batch_data, batch_metadata, batch_availability
+            if pval and side == "y":
+                batch_data, batch_metadata = torch.concat(batch_data), torch.concat(batch_metadata) 
+                batch_availability, batch_pval = torch.concat(batch_availability), torch.concat(batch_pval)
+                return batch_data, batch_metadata, batch_availability, batch_pval
+
+            else:
+                batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
+                return batch_data, batch_metadata, batch_availability
         
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
@@ -2494,7 +2504,7 @@ if __name__ == "__main__":
 
             while (next_epoch==False):
 
-                _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x", dna_seq=True)
+                _X_batch, _mX_batch, _avX_batch, _dnaseq_batch = dataset.get_batch(side="x", dna_seq=True)
                 _Y_batch, _mY_batch, _avY_batch, _pval_batch = dataset.get_batch(side="y", pval=True)
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
@@ -2503,7 +2513,7 @@ if __name__ == "__main__":
                     continue
                 
                 else:
-                    print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape)
+                    print(_X_batch.shape, _mX_batch.shape, _avX_batch.shape, _dnaseq_batch.shape)
                     print(_Y_batch.shape, _mY_batch.shape, _avY_batch.shape, _pval_batch.shape)
                     # for e in range(len(_avY_batch[0])):
                     #     if _avY_batch[0, e] != 0:
