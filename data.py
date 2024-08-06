@@ -1784,7 +1784,7 @@ class ExtendedEncodeDataHandler:
 
         loaded = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            for result in executor.map(load_npz, npz_files):
+            for result in executor.map(self.load_npz, npz_files):
                 if result is not None:
                     loaded.append(result)
         
