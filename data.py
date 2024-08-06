@@ -1660,17 +1660,17 @@ class ExtendedEncodeDataHandler:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
     def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
-        if self.eic:
-            exps = []
-            if bios_name not in self.navigation.keys():
-                if os.path.isdir(os.path.join(self.base_path, bios_name)):
-                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
-                        exp_path = os.path.join(self.base_path, bios_name, exp)
-                        if os.path.isdir(exp_path):
-                            exps.append(exp)
+        # if self.eic:
+        #     exps = []
+        #     if bios_name not in self.navigation.keys():
+        #         if os.path.isdir(os.path.join(self.base_path, bios_name)):
+        #             for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+        #                 exp_path = os.path.join(self.base_path, bios_name, exp)
+        #                 if os.path.isdir(exp_path):
+        #                     exps.append(exp)
                 
-        else:
-            exps = list(self.navigation[bios_name].keys())
+        # else:
+        exps = list(self.navigation[bios_name].keys())
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
@@ -1737,18 +1737,18 @@ class ExtendedEncodeDataHandler:
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
         
-        if self.eic:
-            exps = []
-            if bios_name not in self.navigation.keys():
-                if os.path.isdir(os.path.join(self.base_path, bios_name)):
-                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
-                        exp_path = os.path.join(self.base_path, bios_name, exp)
-                        if os.path.isdir(exp_path):
-                            exps.append(exp)
+        # if self.eic:
+        #     exps = []
+        #     if bios_name not in self.navigation.keys():
+        #         if os.path.isdir(os.path.join(self.base_path, bios_name)):
+        #             for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+        #                 exp_path = os.path.join(self.base_path, bios_name, exp)
+        #                 if os.path.isdir(exp_path):
+        #                     exps.append(exp)
             
-            print(exps)
-        else:
-            exps = list(self.navigation[bios_name].keys())
+        #     print(exps)
+        # else:
+        exps = list(self.navigation[bios_name].keys())
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
