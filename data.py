@@ -2041,8 +2041,8 @@ class ExtendedEncodeDataHandler:
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
 
-        # self.Y_loaded_data = self.loaded_data
-        # self.Y_loaded_metadata = self.loaded_metadata
+        self.Y_loaded_data = self.loaded_data
+        self.Y_loaded_metadata = self.loaded_metadata
 
         # self.Y_loaded_pval = []
         # for bios in batch_bios_list:
