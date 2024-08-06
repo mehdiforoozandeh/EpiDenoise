@@ -2622,8 +2622,8 @@ if __name__ == "__main__":
                 for exp in exps:
                     if "signal_BW_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
                         if "signal_DSF1_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
-                            count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr21.npz"))
-                            pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr21.npz"))
+                            count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr1.npz"))
+                            pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr1.npz"))
 
                             count_data = count_data[list(count_data.keys())[0]]
                             pval = pval[list(pval.keys())[0]]
