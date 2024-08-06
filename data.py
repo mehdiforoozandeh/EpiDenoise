@@ -2439,8 +2439,8 @@ if __name__ == "__main__":
         os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
-            m=10, context_length=800*25, 
-            bios_batchsize=2, loci_batchsize=1, loci_gen="random",
+            m=10, context_length=400*25, 
+            bios_batchsize=1, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=10, check_completeness=True, eic=True)
 
         for epoch in range(10):
