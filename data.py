@@ -2438,7 +2438,7 @@ if __name__ == "__main__":
         from scipy.stats import spearmanr
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
-            m=10, context_length=400*25, 
+            m=10, context_length=1600*25, 
             bios_batchsize=1, loci_batchsize=1, loci_gen="random",
             bios_min_exp_avail_threshold=10, check_completeness=True, eic=False)
 
@@ -2465,7 +2465,7 @@ if __name__ == "__main__":
                             correlation, p_value = spearmanr(_Y_batch[0,:,e], _pval_batch[0,:,e],)
                             print(f"Spearman correlation: {correlation}")
 
-                    print(_Y_batch.float().mean(axis=1), _pval_batch.float().mean(axis=1))
+                    # print(_Y_batch.float().mean(axis=1), _pval_batch.float().mean(axis=1))
                     print("\n\n")
                 
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch
