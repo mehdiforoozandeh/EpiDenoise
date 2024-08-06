@@ -2624,8 +2624,8 @@ if __name__ == "__main__":
                         if "signal_DSF1_res25" in os.listdir(os.path.join(solar_data_path, bs, exp)):
                             count_data = dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_DSF1_res25", "chr21.npz"))
                             pval =  dataset.load_npz(os.path.join(solar_data_path, bs, exp, "signal_BW_res25", "chr21.npz"))
-                            print(pval.shape)
-                            print(count_data.shape)
+                            print(pval.keys())
+                            print(count_data.keys())
                             exit()
         exit()
         proc = []
