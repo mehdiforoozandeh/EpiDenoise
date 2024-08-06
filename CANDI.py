@@ -415,7 +415,7 @@ class PRETRAIN(object):
         return self.model
 
 
-def Train_CANDI_EIC(hyper_parameters, eic=False, arch=""):
+def Train_CANDI_EIC(hyper_parameters, eic=False, arch="", checkpoint_path=None):
     # Defining the hyperparameters
     resolution = 25
     data_path = hyper_parameters["data_path"]
