@@ -2494,7 +2494,7 @@ if __name__ == "__main__":
 
             while (next_epoch==False):
 
-                _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x")
+                _X_batch, _mX_batch, _avX_batch = dataset.get_batch(side="x", dna_seq=True)
                 _Y_batch, _mY_batch, _avY_batch, _pval_batch = dataset.get_batch(side="y", pval=True)
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
