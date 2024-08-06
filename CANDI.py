@@ -279,6 +279,7 @@ class PRETRAIN(object):
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
                     self.optimizer.step()
+                    print(obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss)
 
                 #################################################################################
                 #################################################################################
