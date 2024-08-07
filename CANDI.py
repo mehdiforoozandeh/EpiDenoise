@@ -247,9 +247,9 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    loss =  imp_pval_loss + imp_count_loss
+                    # loss =  imp_pval_loss + imp_count_loss
                     # loss =  obs_count_loss + imp_count_loss
 
 
