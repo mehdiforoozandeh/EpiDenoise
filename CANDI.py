@@ -168,7 +168,7 @@ class PRETRAIN(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
     
-    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=True):
+    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"CANDI{arch} # model_parameters: {count_parameters(self.model)}")
@@ -262,22 +262,11 @@ class PRETRAIN(object):
                         continue
                     
                     loss.backward()  
-                    # Log gradients before clipping
-                    print(f"Before clipping gradients at epoch {epoch}")
-                    for name, param in self.model.named_parameters():
-                        if param.grad is not None:
-                            print(f"Layer: {name} | Grad Min: {param.grad.min()} | Grad Max: {param.grad.max()} | Grad Mean: {param.grad.mean()} | Grad Std: {param.grad.std()}")
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
-                    # Log gradients after clipping
-                    print(f"After clipping gradients at epoch {epoch}")
-                    for name, param in self.model.named_parameters():
-                        if param.grad is not None:
-                            print(f"Layer: {name} | Grad Min: {param.grad.min()} | Grad Max: {param.grad.max()} | Grad Mean: {param.grad.mean()} | Grad Std: {param.grad.std()}")
-        
                     self.optimizer.step()
-                    exit()
 
                     #################################################################################
 
