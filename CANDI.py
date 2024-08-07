@@ -555,10 +555,10 @@ if __name__ == "__main__":
         "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 3,
-        "mask_percentage": 0.15,
+        "mask_percentage": 0.20,
         "context_length": 800,
         "batch_size": 50,
-        "learning_rate": 1e-5,
+        "learning_rate": 1e-4,
         "num_loci": 1200,
         "lr_halflife":1,
         "min_avail":10}
