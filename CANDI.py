@@ -485,7 +485,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
         signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
