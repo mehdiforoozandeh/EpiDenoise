@@ -114,7 +114,7 @@ class CANDI_DNA():
 
 
 class CANDI_NLL_LOSS(nn.Module):
-    def __init__(self, reduction='mean'):
+    def __init__(self, reduction='sum'):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
         self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
