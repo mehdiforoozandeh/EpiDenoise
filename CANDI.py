@@ -234,20 +234,10 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    # if torch.isnan(pred_loss).any():
-                    #     if len(batch_rec["imp_loss"]) > 0:
-                    #         pred_loss = torch.tensor(np.mean(batch_rec["imp_loss"]))
-                    #     else:
-                    #         pred_loss = torch.tensor(1e5)
-
-                    # if torch.isnan(obs_loss).any():
-                    #     if len(batch_rec["ups_loss"]) > 0:
-                    #         obs_loss = torch.tensor(np.mean(batch_rec["ups_loss"]))
-                    #     else:
-                    #         obs_loss = torch.tensor(1e5)
-
-                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    loss =  imp_pval_loss + imp_count_loss
+
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -554,8 +544,8 @@ if __name__ == "__main__":
         "nhead": 8,
         "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 3,
-        "mask_percentage": 0.20,
+        "inner_epochs": 10,
+        "mask_percentage": 0.05,
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-4,
