@@ -189,6 +189,8 @@ class EmbedMetadata(nn.Module):
         print(embeddings.shape)
         embeddings = embeddings.squeeze(2)
         print(embeddings.shape)
+        embeddings = torch.cat(embeddings_list, dim=-1)
+        print(embeddings.shape)
         exit()
         
         return embeddings
