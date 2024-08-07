@@ -471,8 +471,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
-    signal_dim = len(dataset.unique_exp)
-    metadata_embedding_dim = len(dataset.unique_exp)
+    signal_dim = len(dataset.signal_dim)
+    metadata_embedding_dim = len(dataset.signal_dim)
 
     model = CANDI(
         signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
