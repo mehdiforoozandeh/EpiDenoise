@@ -2005,13 +2005,13 @@ class ExtendedEncodeDataHandler:
             self.navigation = {key: self.navigation[key] for key in keys}
 
         # print num_bios per assay
-        unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
+        self.unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
         for bios in self.navigation.keys():
             for exp in self.navigation[bios].keys():
 
-                unique_exp[exp] += 1
+                self.unique_exp[exp] += 1
         
-        for exp, count in unique_exp.items():
+        for exp, count in self.unique_exp.items():
             print(f"{exp} in present in {count} biosamples")
 
         self.num_regions = len(self.m_regions)

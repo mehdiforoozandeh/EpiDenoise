@@ -283,73 +283,8 @@ class PRETRAIN(object):
 
                     self.optimizer.step()
 
-                #################################################################################
-                #################################################################################
-                #################################################################################
-                    # output_std = output_var**(1/2)
-                    # imp_count_pred = NegativeBinomial(
-                    #     output_p[masked_map].cpu().detach(), 
-                    #     output_n[masked_map].cpu().detach()
-                    #     ).expect().cpu().detach().numpy()
-                    # imp_count_std = NegativeBinomial(
-                    #     output_p[masked_map].cpu().detach(), 
-                    #     output_n[masked_map].cpu().detach()
-                    #     ).std().cpu().detach().numpy()
+                    #################################################################################
 
-                    # imp_count_true = Y_batch[masked_map].cpu().detach().numpy()
-                    # imp_count_abs_error = torch.abs(torch.Tensor(imp_count_true) - torch.Tensor(imp_count_pred)).cpu().detach().numpy()
-                    
-                    # imp_count_r2 = r2_score(imp_count_true, imp_count_pred)
-                    # imp_count_errstd = spearmanr(imp_count_std, imp_count_abs_error)
-                    # imp_count_pmf = NegativeBinomial(
-                    #     output_p[masked_map].cpu().detach(), 
-                    #     output_n[masked_map].cpu().detach()).pmf(imp_count_true).mean()
-                    # #################################################################################
-                    # imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
-                    # imp_pval_std = output_std[masked_map].cpu().detach().numpy()
-
-                    # imp_pval_true = pval_batch[masked_map].cpu().detach().numpy()
-                    # imp_pval_abs_error = torch.abs(torch.Tensor(imp_pval_true) - torch.Tensor(imp_pval_pred)).cpu().detach().numpy()
-
-                    # imp_pval_r2 = r2_score(imp_pval_true, imp_pval_pred)
-                    # imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
-                    # imp_pval_pmf = Gaussian(
-                    #     output_mu[masked_map].cpu().detach(), 
-                    #     output_var[masked_map].cpu().detach()).pdf(imp_pval_true).mean()
-                    # #################################################################################
-                    # ups_count_pred = NegativeBinomial(
-                    #     output_p[observed_map].cpu().detach(), 
-                    #     output_n[observed_map].cpu().detach()
-                    #     ).expect().cpu().detach().numpy()
-                    # ups_count_std = NegativeBinomial(
-                    #     output_p[observed_map].cpu().detach(), 
-                    #     output_n[observed_map].cpu().detach()
-                    #     ).std().cpu().detach().numpy()
-
-                    # ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
-                    # ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).cpu().detach().numpy()
-
-                    # ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
-                    # ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
-                    # ups_count_pmf = NegativeBinomial(
-                    #     output_p[observed_map].cpu().detach(), 
-                    #     output_n[observed_map].cpu().detach()).pmf(ups_count_true).mean()
-                    # #################################################################################
-                    # ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
-                    # ups_pval_std = output_std[observed_map].cpu().detach().numpy()
-
-                    # ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
-                    # ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).cpu().detach().numpy()
-
-                    # ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
-                    # ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
-                    # ups_pval_pmf = Gaussian(
-                    #     output_mu[observed_map].cpu().detach(), 
-                    #     output_var[observed_map].cpu().detach()).pdf(ups_pval_true).mean()
-
-                #################################################################################
-                #################################################################################
-                #################################################################################
                     # IMP Count Predictions
                     neg_bin_imp = NegativeBinomial(output_p[masked_map].cpu().detach(), output_n[masked_map].cpu().detach())
                     imp_count_pred = neg_bin_imp.expect().numpy()
@@ -397,10 +332,9 @@ class PRETRAIN(object):
                     ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
                     gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
                     ups_pval_pmf = gaussian_ups.pdf(ups_pval_true).mean()
+                    
                     #################################################################################
-                    #################################################################################
-                    #################################################################################
-                    #################################################################################                    
+                  
                     batch_rec["imp_count_loss"].append(imp_count_loss.item())
                     batch_rec["ups_count_loss"].append(obs_count_loss.item())
                     batch_rec["imp_pval_loss"].append(imp_pval_loss.item())
@@ -427,23 +361,6 @@ class PRETRAIN(object):
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
-
-                # logstr = [
-                #     f"Ep. {epoch}",
-                #     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
-                #     f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer/len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
-                #     f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
-                #     f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
-                #     f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                #     f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
-                #     f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
-                #     # f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
-                #     # f"Ups_pmf {np.mean(batch_rec['ups_pmf']):.2f}",
-                #     f"Imp_MSE {np.mean(batch_rec['imp_mse']):.2f}",
-                #     f"Ups_MSE {np.mean(batch_rec['ups_mse']):.2f}",
-                #     f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
-                #     f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
-                #     f"took {int(minutes)}:{int(seconds)}"]
                 
                 logstr = [
                     f"Ep. {epoch}",
@@ -519,17 +436,20 @@ class PRETRAIN(object):
                 
         return self.model
 
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
+    if eic:
+        arch="eic"
+    else:
+        arch="full"
 
-def Train_CANDI_EIC(hyper_parameters, eic=False, arch="", checkpoint_path=None):
     # Defining the hyperparameters
     resolution = 25
     data_path = hyper_parameters["data_path"]
 
-    signal_dim = hyper_parameters["signal_dim"]
+    
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
     n_sab_layers = hyper_parameters["n_sab_layers"]
-    metadata_embedding_dim = hyper_parameters["metadata_embedding_dim"]
     
     epochs = hyper_parameters["epochs"]
     num_training_loci = hyper_parameters["num_loci"]
@@ -545,31 +465,34 @@ def Train_CANDI_EIC(hyper_parameters, eic=False, arch="", checkpoint_path=None):
     conv_kernel_size = hyper_parameters["conv_kernel_size"]
     pool_size = hyper_parameters["pool_size"]
 
+    dataset = ExtendedEncodeDataHandler(data_path)
+    dataset.initialize_EED(
+        m=num_training_loci, context_length=context_length*resolution, 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
+
+    signal_dim = len(dataset.unique_exp)
+    metadata_embedding_dim = len(dataset.unique_exp)
+
     model = CANDI(
         signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
         model.load_state_dict(torch.load(checkpoint_path))
 
-    print(f"CANDI{arch} # model_parameters: {count_parameters(model)}")
+    print(f"CANDI_{arch} # model_parameters: {count_parameters(model)}")
     summary(model)
-
-    dataset = ExtendedEncodeDataHandler(data_path)
-    dataset.initialize_EED(
-        m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
-        bios_min_exp_avail_threshold=min_avail, check_completeness=True)
     
     model_name = f"CANDI{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    with open(f'models/hyper_parameters_{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    
     criterion = CANDI_NLL_LOSS()
 
     start_time = time.time()
@@ -599,17 +522,9 @@ def Train_CANDI_EIC(hyper_parameters, eic=False, arch="", checkpoint_path=None):
 
     return model
 
-    # if eic:
-    #     pass
-    # else:
-    #     pass
-
-
 if __name__ == "__main__":
-    hyper_parameters = {
+    hyper_parameters_L = {
         "data_path": "/project/compbio-lab/encode_data/",
-        "signal_dim": 45,
-        "metadata_embedding_dim": 45,
         "dropout": 0.1,
 
         "n_cnn_layers": 5,
@@ -619,7 +534,7 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 8,
         "epochs": 5,
-        "inner_epochs": 5,
+        "inner_epochs": 3,
         "mask_percentage": 0.15,
         "context_length": 1600,
         "batch_size": 50,
@@ -627,4 +542,25 @@ if __name__ == "__main__":
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
-    Train_CANDI_EIC(hyper_parameters)
+
+    hyper_parameters_S = {
+        "data_path": "/project/compbio-lab/encode_data/",
+        "dropout": 0.1,
+
+        "n_cnn_layers": 5,
+        "conv_kernel_size" : 5,
+        "pool_size": 2,
+
+        "nhead": 16,
+        "n_sab_layers": 2,
+        "epochs": 5,
+        "inner_epochs": 3,
+        "mask_percentage": 0.15,
+        "context_length": 800,
+        "batch_size": 50,
+        "learning_rate": 1e-4,
+        "num_loci": 1200,
+        "lr_halflife":1,
+        "min_avail":10}
+
+    Train_CANDI(hyper_parameters_S, eic=True)
