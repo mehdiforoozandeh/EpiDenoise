@@ -464,10 +464,6 @@ class PRETRAIN(object):
                     f"took {int(minutes)}:{int(seconds):02d}", "\n"
                 ]
 
-# Print or log the logstr
-print(" | ".join(logstr))
-
-
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
