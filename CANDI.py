@@ -197,11 +197,13 @@ class PRETRAIN(object):
                     continue
                 
                 batch_rec = {
-                    "imp_loss":[], "ups_loss":[], "msk_loss":[],
-                    "ups_r2":[], "imp_r2":[],
-                    "ups_mse":[], "imp_mse":[],
-                    "ups_pmf":[], "imp_pmf":[],
-                    "ups_conf":[], "imp_conf":[]
+                    "imp_count_loss":[], "ups_count_loss":[],
+                    "imp_pval_loss":[], "ups_pval_loss":[],
+                    "ups_count_r2":[], "imp_count_r2":[],
+                    "ups_count_pmf":[], "imp_count_pmf":[],
+                    "ups_pval_pmf":[], "imp_pval_pmf":[],
+                    "ups_count_conf":[], "imp_count_conf":[],
+                    "ups_pval_conf":[], "imp_pval_conf":[]
                     }
 
                 for _ in range(inner_epochs):
@@ -279,71 +281,149 @@ class PRETRAIN(object):
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
                     self.optimizer.step()
-                    print(obs_count_loss.item(), imp_count_loss.item(), obs_pval_loss.item(), imp_pval_loss.item())
 
                 #################################################################################
                 #################################################################################
                 #################################################################################
+                    imp_count_pred = NegativeBinomial(
+                        output_p[masked_map].cpu().detach(), 
+                        output_n[masked_map].cpu().detach()
+                        ).expect().cpu().detach().numpy()
+                    imp_count_std = NegativeBinomial(
+                        output_p[masked_map].cpu().detach(), 
+                        output_n[masked_map].cpu().detach()
+                        ).std().cpu().detach().numpy()
 
-                #     imp_pred = NegativeBinomial(
-                #         output_p[masked_map].cpu().detach(), 
-                #         output_n[masked_map].cpu().detach()
-                #         ).expect().cpu().detach().numpy()
+                    imp_count_true = Y_batch[masked_map].cpu().detach().numpy()
+                    imp_count_abs_error = torch.abs(torch.Tensor(imp_count_true) - torch.Tensor(imp_count_pred)).cpu().detach().numpy()
+                    
+                    imp_count_r2 = r2_score(imp_count_true, imp_count_pred)
+                    imp_count_errstd = spearmanr(imp_count_std, imp_count_abs_error)
+                    imp_count_pmf = NegativeBinomial(
+                        output_p[masked_map].cpu().detach(), 
+                        output_n[masked_map].cpu().detach()).pmf(imp_count_true).mean()
+                    #################################################################################
+                    imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
+                    imp_pval_std = output_var**(1/2)[masked_map].cpu().detach().numpy()
 
-                #     imp_true = Y_batch[masked_map].cpu().detach().numpy()
-                #     imp_r2 = r2_score(imp_true, imp_pred)
-                #     imp_pmf = NegativeBinomial(
-                #         output_p[masked_map].cpu().detach(),  
-                #         output_n[masked_map].cpu().detach()).pmf(imp_true).mean()
-                #     imp_mse = ((imp_true - imp_pred)**2).mean()
+                    imp_pval_true = pval_batch[masked_map].cpu().detach().numpy()
+                    imp_pval_abs_error = torch.abs(torch.Tensor(imp_pval_true) - torch.Tensor(imp_pval_pred)).cpu().detach().numpy()
 
-                #     imp_std = NegativeBinomial(
-                #         output_p[masked_map].cpu().detach(), 
-                #         output_n[masked_map].cpu().detach()
-                #         ).std().cpu().detach().numpy()
-                #     imp_abs_error = torch.abs(torch.Tensor(imp_true) - torch.Tensor(imp_pred)).cpu().detach().numpy()
-                #     imp_errstd = pearsonr(imp_std, imp_abs_error)
+                    imp_pval_r2 = r2_score(imp_pval_true, imp_pval_pred)
+                    imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
+                    imp_pval_pmf = Gaussian(
+                        output_mu[masked_map].cpu().detach(), 
+                        output_var[masked_map].cpu().detach()).pmf(imp_pval_true).mean()
+                    #################################################################################
+                    ups_count_pred = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()
+                        ).expect().cpu().detach().numpy()
+                    ups_count_std = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()
+                        ).std().cpu().detach().numpy()
 
-                #     batch_rec["imp_loss"].append(pred_loss.item())
-                #     # batch_rec["msk_loss"].append(msk_p_loss.item() + msk_o_loss.item())
-                #     batch_rec["imp_mse"].append(imp_mse)
-                #     batch_rec["imp_r2"].append(imp_r2)
-                #     batch_rec["imp_pmf"].append(imp_pmf)
-                #     batch_rec["imp_conf"].append(imp_errstd)
+                    ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
+                    ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).cpu().detach().numpy()
 
-                #     ups_pred = NegativeBinomial(
-                #         output_p[observed_map].cpu().detach(), 
-                #         output_n[observed_map].cpu().detach()
-                #         ).expect().cpu().detach().numpy()
+                    ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
+                    ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
+                    ups_count_pmf = NegativeBinomial(
+                        output_p[observed_map].cpu().detach(), 
+                        output_n[observed_map].cpu().detach()).pmf(ups_count_true).mean()
+                    #################################################################################
+                    ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
+                    ups_pval_std = output_var**(1/2)[observed_map].cpu().detach().numpy()
 
-                #     ups_true = Y_batch[observed_map].cpu().detach().numpy()
-                #     ups_pmf = NegativeBinomial(
-                #         output_p[observed_map].cpu().detach(), 
-                #         output_n[observed_map].cpu().detach()).pmf(ups_true).mean()
+                    ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
+                    ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).cpu().detach().numpy()
 
-                #     ups_std = NegativeBinomial(
-                #             output_p[observed_map].cpu().detach(), 
-                #             output_n[observed_map].cpu().detach()
-                #             ).std().cpu().detach().numpy()
-                #     ups_abs_error = torch.abs(torch.Tensor(ups_true) - torch.Tensor(ups_pred)).cpu().detach().numpy()
-                #     ups_errstd = pearsonr(ups_std, ups_abs_error)
+                    ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
+                    ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
+                    ups_pval_pmf = Gaussian(
+                        output_mu[observed_map].cpu().detach(), 
+                        output_var[observed_map].cpu().detach()).pmf(ups_pval_true).mean()
 
-                #     try:
-                #         ups_r2 = r2_score(ups_true, ups_pred)
-                #         ups_mse = ((ups_true - ups_pred)**2).mean()
-                #     except:
-                #         ups_r2 = np.nan
-                #         ups_mse = np.nan
-                
-                #     batch_rec["ups_loss"].append(obs_loss.item())
-                #     batch_rec["ups_r2"].append(ups_r2)
-                #     batch_rec["ups_mse"].append(ups_mse)
-                #     batch_rec["ups_pmf"].append(ups_pmf)
-                #     batch_rec["ups_conf"].append(ups_errstd)
+                    
+                #################################################################################
+                #################################################################################
+                #################################################################################
+                    # # IMP Count Predictions
+                    # neg_bin_imp = NegativeBinomial(output_p[masked_map].cpu().detach(), output_n[masked_map].cpu().detach())
+                    # imp_count_pred = neg_bin_imp.expect().numpy()
+                    # imp_count_std = neg_bin_imp.std().numpy()
 
-                # elapsed_time = datetime.now() - t0
-                # hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                # minutes, seconds = divmod(remainder, 60)
+                    # imp_count_true = Y_batch[masked_map].cpu().detach().numpy()
+                    # imp_count_abs_error = torch.abs(torch.Tensor(imp_count_true) - torch.Tensor(imp_count_pred)).numpy()
+
+                    # imp_count_r2 = r2_score(imp_count_true, imp_count_pred)
+                    # imp_count_errstd = spearmanr(imp_count_std, imp_count_abs_error)
+                    # imp_count_pmf = neg_bin_imp.pmf(imp_count_true).mean()
+
+                    # # IMP P-value Predictions
+                    # imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
+                    # imp_pval_std = output_var[masked_map].cpu().detach().numpy() ** 0.5
+
+                    # imp_pval_true = pval_batch[masked_map].cpu().detach().numpy()
+                    # imp_pval_abs_error = torch.abs(torch.Tensor(imp_pval_true) - torch.Tensor(imp_pval_pred)).numpy()
+
+                    # imp_pval_r2 = r2_score(imp_pval_true, imp_pval_pred)
+                    # imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
+                    # gaussian_imp = Gaussian(output_mu[masked_map].cpu().detach(), output_var[masked_map].cpu().detach())
+                    # imp_pval_pmf = gaussian_imp.pmf(imp_pval_true).mean()
+
+                    # # UPS Count Predictions
+                    # neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
+                    # ups_count_pred = neg_bin_ups.expect().numpy()
+                    # ups_count_std = neg_bin_ups.std().numpy()
+
+                    # ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
+                    # ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).numpy()
+
+                    # ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
+                    # ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
+                    # ups_count_pmf = neg_bin_ups.pmf(ups_count_true).mean()
+
+                    # # UPS P-value Predictions
+                    # ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
+                    # ups_pval_std = output_var[observed_map].cpu().detach().numpy() ** 0.5
+
+                    # ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
+                    # ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).numpy()
+
+                    # ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
+                    # ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
+                    # gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
+                    # ups_pval_pmf = gaussian_ups.pmf(ups_pval_true).mean()
+                    #################################################################################
+                    #################################################################################
+                    #################################################################################
+                    #################################################################################                    
+                    batch_rec["imp_count_loss"].append(imp_count_loss.item())
+                    batch_rec["ups_count_loss"].append(obs_count_loss.item())
+                    batch_rec["imp_pval_loss"].append(imp_pval_loss.item())
+                    batch_rec["ups_pval_loss"].append(obs_pval_loss.item())
+
+                    batch_rec["ups_count_r2"].append(ups_count_r2)
+                    batch_rec["imp_count_r2"].append(imp_count_r2)
+
+                    batch_rec["ups_count_pmf"].append(ups_count_pmf)
+                    batch_rec["imp_count_pmf"].append(imp_count_pmf)
+
+                    batch_rec["ups_pval_pmf"].append(ups_pval_pmf)
+                    batch_rec["imp_pval_pmf"].append(imp_pval_pmf)
+
+                    batch_rec["ups_count_conf"].append(ups_count_conf)
+                    batch_rec["imp_count_conf"].append(imp_count_conf)
+
+                    batch_rec["ups_pval_conf"].append(ups_pval_conf)
+                    batch_rec["imp_pval_conf"].append(imp_pval_conf)
+
+
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
 
                 # logstr = [
                 #     f"Ep. {epoch}",
@@ -352,7 +432,6 @@ class PRETRAIN(object):
                 #     f"Bios Prog. {self.dataset.bios_pointer/self.dataset.num_bios:.2%}",
                 #     f"Imp_Loss {np.mean(batch_rec['imp_loss']):.2f}",
                 #     f"Ups_Loss {np.mean(batch_rec['ups_loss']):.2f}",
-                #     # f"Msk_Loss {np.mean(batch_rec['msk_loss']):.2f}",
                 #     f"Imp_R2 {np.mean(batch_rec['imp_r2']):.2f}",
                 #     f"Ups_R2 {np.mean(batch_rec['ups_r2']):.2f}",
                 #     # f"Imp_pmf {np.mean(batch_rec['imp_pmf']):.2f}",
@@ -362,14 +441,40 @@ class PRETRAIN(object):
                 #     f"Imp_Conf {np.mean(batch_rec['imp_conf']):.2f}",
                 #     f"Ups_Conf {np.mean(batch_rec['ups_conf']):.2f}",
                 #     f"took {int(minutes)}:{int(seconds)}"]
+                
+                logstr = [
+                    f"Ep. {epoch}",
+                    f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
+                    f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer / len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
+                    f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}",
+                    f"Imp_Count_Loss {np.mean(batch_rec['imp_count_loss']):.2f}",
+                    f"Ups_Count_Loss {np.mean(batch_rec['ups_count_loss']):.2f}",
+                    f"Imp_Pval_Loss {np.mean(batch_rec['imp_pval_loss']):.2f}",
+                    f"Ups_Pval_Loss {np.mean(batch_rec['ups_pval_loss']):.2f}",
+                    f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
+                    f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
+                    f"Imp_Count_PMF {np.mean(batch_rec['imp_count_pmf']):.2f}",
+                    f"Ups_Count_PMF {np.mean(batch_rec['ups_count_pmf']):.2f}",
+                    f"Imp_Pval_PMF {np.mean(batch_rec['imp_pval_pmf']):.2f}",
+                    f"Ups_Pval_PMF {np.mean(batch_rec['ups_pval_pmf']):.2f}",
+                    f"Imp_Count_Conf {np.mean(batch_rec['imp_count_conf']):.2f}",
+                    f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
+                    f"Imp_Pval_Conf {np.mean(batch_rec['imp_pval_conf']):.2f}",
+                    f"Ups_Pval_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",
+                    f"took {int(minutes)}:{int(seconds):02d}", "\n"
+                ]
 
-                # logstr = " | ".join(logstr)
-                # log_strs.append(logstr)
-                # print(logstr)
+# Print or log the logstr
+print(" | ".join(logstr))
 
-                # logfile = open(f"models/CANDI{arch}_log.txt", "w")
-                # logfile.write("\n".join(log_strs))
-                # logfile.close()
+
+                logstr = " | ".join(logstr)
+                log_strs.append(logstr)
+                print(logstr)
+
+                logfile = open(f"models/CANDI{arch}_log.txt", "w")
+                logfile.write("\n".join(log_strs))
+                logfile.close()
 
                 
                 #################################################################################
