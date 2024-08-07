@@ -158,7 +158,7 @@ class EmbedMetadata(nn.Module):
         self.runtype_embedding = nn.ModuleList([nn.Embedding(4, self.continuous_size) for _ in range(input_dim)])
         
         # Separate final embedding layers for each feature
-        self.final_embedding = nn.ModuleList([nn.Linear(self.continuous_size * 4, embedding_dim) for _ in range(input_dim)])
+        self.final_embedding = nn.ModuleList([nn.Linear(self.continuous_size * 4, 1) for _ in range(input_dim)])
 
     def forward(self, metadata):
         embeddings_list = []
@@ -187,6 +187,9 @@ class EmbedMetadata(nn.Module):
 
         embeddings = torch.stack(embeddings_list, dim=2)
         print(embeddings.shape)
+        embeddings = embeddings.squeeze(2)
+        print(embeddings.shape)
+        exit()
         
         return embeddings
 
