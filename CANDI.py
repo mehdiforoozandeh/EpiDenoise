@@ -168,7 +168,7 @@ class PRETRAIN(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
     
-    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False):
+    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=True):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"CANDI{arch} # model_parameters: {count_parameters(self.model)}")
