@@ -23,7 +23,7 @@ class CANDI(nn.Module):
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        # self.signal_layer_norm = nn.LayerNorm(self.f1)
+        self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
@@ -79,7 +79,7 @@ class CANDI(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        # src = self.signal_layer_norm(src)
+        src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
@@ -166,7 +166,7 @@ class PRETRAIN(object):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-    
+
     def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False):
         log_strs = []
         log_strs.append(str(self.device))
@@ -488,7 +488,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
         signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
@@ -568,7 +569,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.05,
         "context_length": 800,
         "batch_size": 50,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-2,
         "num_loci": 1200,
         "lr_halflife":1,
         "min_avail":10}

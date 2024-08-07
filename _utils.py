@@ -162,9 +162,6 @@ class NegativeBinomial:
         upper = self.icdf(q=(1+confidence)/2)
         return lower, upper
 
-
-
-
 class MONITOR_VALIDATION(object):
     def __init__(
         self, data_path, context_length, batch_size,
