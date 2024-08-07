@@ -547,11 +547,11 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 5,
-        "conv_kernel_size" : 5,
+        "n_cnn_layers": 4,
+        "conv_kernel_size" : 3,
         "pool_size": 2,
 
-        "nhead": 16,
+        "nhead": 8,
         "n_sab_layers": 2,
         "epochs": 5,
         "inner_epochs": 3,
