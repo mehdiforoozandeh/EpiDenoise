@@ -315,7 +315,7 @@ class PRETRAIN(object):
                     imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
                     imp_pval_pmf = Gaussian(
                         output_mu[masked_map].cpu().detach(), 
-                        output_var[masked_map].cpu().detach()).pmf(imp_pval_true).mean()
+                        output_var[masked_map].cpu().detach()).pdf(imp_pval_true).mean()
                     #################################################################################
                     ups_count_pred = NegativeBinomial(
                         output_p[observed_map].cpu().detach(), 
@@ -345,7 +345,7 @@ class PRETRAIN(object):
                     ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
                     ups_pval_pmf = Gaussian(
                         output_mu[observed_map].cpu().detach(), 
-                        output_var[observed_map].cpu().detach()).pmf(ups_pval_true).mean()
+                        output_var[observed_map].cpu().detach()).pdf(ups_pval_true).mean()
 
                     
                 #################################################################################
