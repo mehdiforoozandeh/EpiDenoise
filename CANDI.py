@@ -384,7 +384,7 @@ class PRETRAIN(object):
 
                     ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
                     ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
-                    ups_count_pmf = neg_bin_ups.pdf(ups_count_true).mean()
+                    ups_count_pmf = neg_bin_ups.pmf(ups_count_true).mean()
 
                     # UPS P-value Predictions
                     ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
@@ -396,7 +396,7 @@ class PRETRAIN(object):
                     ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
                     ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
                     gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
-                    ups_pval_pmf = gaussian_ups.pmf(ups_pval_true).mean()
+                    ups_pval_pmf = gaussian_ups.pdf(ups_pval_true).mean()
                     #################################################################################
                     #################################################################################
                     #################################################################################
