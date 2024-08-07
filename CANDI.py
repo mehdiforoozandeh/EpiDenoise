@@ -122,8 +122,123 @@ class CANDI(nn.Module):
 
         return p, n, mu, var
 
-class CANDI_DNA():
-    pass
+class CANDI_DNA(nn.Module):
+    def __init__(
+        self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=4):
+        super(CANDI_DNA, self).__init__()
+
+        self.pos_enc = pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (2**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f2
+
+        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.signal_layer_norm = nn.LayerNorm(self.f1)
+
+        self.convEnc = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_kernel_size[i], S=1, D=1,
+                pool_type="avg", residuals=True,
+                groups=self.f1,
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.SE_enc = SE_Block_1D(self.f2)
+
+        self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
+        self.xmd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
+
+        self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
+        self.ymd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
+
+        if self.pos_enc == "relative":
+            self.encoder_layer = RelativeEncoderLayer(
+                d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout)
+            self.transformer_encoder = nn.ModuleList([self.encoder_layer for _ in range(n_sab_layers)])
+            
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
+            self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
+
+        self.deconv_count = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.deconv_pval = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
+    
+    def forward(self, src, x_metadata, y_metadata, availability):
+        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
+
+        src = self.signal_layer_norm(src)
+        ### CONV ENCODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            src = conv(src)
+        # e_src.shape = N, F2, L'
+        src = self.SE_enc(src)
+
+        src = src.permute(0, 2, 1)  # to N, L', F2
+        xmd_embedding = self.xmd_emb(x_metadata)
+        src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.xmd_fusion(src)
+
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+            src = self.transformer_encoder(src)
+        else:
+            for enc in self.transformer_encoder:
+                src = enc(src)
+
+        ### Count Decoder ###
+        ymd_embedding = self.ymd_emb(y_metadata)
+        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src_count = self.ymd_fusion(src_count)
+        
+        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv_count:
+            src_count = dconv(src_count)
+
+        src_count = src_count.permute(0, 2, 1) # to N, L, F1
+        p, n = self.neg_binom_layer(src_count)
+
+        ### Pval Decoder ###
+        src_pval = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv_pval:
+            src_pval = dconv(src_pval)
+
+        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
+        mu, var = self.gaussian_layer(src_pval)
+
+        return p, n, mu, var
 
 class CANDI_NLL_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
@@ -215,7 +330,9 @@ class PRETRAIN(object):
                     "ups_count_pmf":[], "imp_count_pmf":[],
                     "ups_pval_pmf":[], "imp_pval_pmf":[],
                     "ups_count_conf":[], "imp_count_conf":[],
-                    "ups_pval_conf":[], "imp_pval_conf":[]
+                    "ups_pval_conf":[], "imp_pval_conf":[],
+                    "ups_count_mse":[], "imp_count_mse":[],
+                    "ups_pval_mse":[], "imp_pval_mse":[]
                     }
 
                 for _ in range(inner_epochs):
@@ -262,8 +379,8 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5.0)
 
                     self.optimizer.step()
 
@@ -280,6 +397,7 @@ class PRETRAIN(object):
                     imp_count_r2 = r2_score(imp_count_true, imp_count_pred)
                     imp_count_errstd = spearmanr(imp_count_std, imp_count_abs_error)
                     imp_count_pmf = neg_bin_imp.pmf(imp_count_true).mean()
+                    imp_count_mse = ((imp_count_true - imp_count_pred)**2).mean()
 
                     # IMP P-value Predictions
                     imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
@@ -292,6 +410,7 @@ class PRETRAIN(object):
                     imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
                     gaussian_imp = Gaussian(output_mu[masked_map].cpu().detach(), output_var[masked_map].cpu().detach())
                     imp_pval_pmf = gaussian_imp.pdf(imp_pval_true).mean()
+                    imp_pval_mse = ((imp_pval_true - imp_pval_pred)**2).mean()
 
                     # UPS Count Predictions
                     neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
@@ -304,6 +423,7 @@ class PRETRAIN(object):
                     ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
                     ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
                     ups_count_pmf = neg_bin_ups.pmf(ups_count_true).mean()
+                    ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
 
                     # UPS P-value Predictions
                     ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
@@ -316,6 +436,7 @@ class PRETRAIN(object):
                     ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
                     gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
                     ups_pval_pmf = gaussian_ups.pdf(ups_pval_true).mean()
+                    ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
                     
                     #################################################################################
                   
@@ -341,6 +462,12 @@ class PRETRAIN(object):
 
                     batch_rec["ups_pval_conf"].append(ups_pval_errstd)
                     batch_rec["imp_pval_conf"].append(imp_pval_errstd)
+
+                    batch_rec["ups_count_mse"].append(ups_count_mse)
+                    batch_rec["imp_count_mse"].append(imp_count_mse)
+
+                    batch_rec["ups_pval_mse"].append(ups_pval_mse)
+                    batch_rec["imp_pval_mse"].append(imp_pval_mse)
                 
                 # if hook:
 
@@ -390,6 +517,11 @@ class PRETRAIN(object):
                     f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
                     f"Imp_Pval_Conf {np.mean(batch_rec['imp_pval_conf']):.2f}",
                     f"Ups_Pval_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}", "\n",
+                    
+                    f"Imp_Count_MSE {np.mean(batch_rec['imp_count_mse']):.2f}",
+                    f"Ups_Count_MSE {np.mean(batch_rec['ups_count_mse']):.2f}",
+                    f"Imp_Pval_MSE {np.mean(batch_rec['imp_pval_mse']):.2f}",
+                    f"Ups_Pval_MSE {np.mean(batch_rec['ups_pval_mse']):.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", "\n"
                 ]
 
@@ -455,7 +587,6 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
     # Defining the hyperparameters
     resolution = 25
     data_path = hyper_parameters["data_path"]
-
     
     dropout = hyper_parameters["dropout"]
     nhead = hyper_parameters["nhead"]
