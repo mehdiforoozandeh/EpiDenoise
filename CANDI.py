@@ -138,7 +138,7 @@ class CANDI_DNA(nn.Module):
         d_model = self.f2
 
         DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers)
-        DNA_kernel_size = 
+        DNA_kernel_size = 0
 
         self.convDNAstem = nn.ModuleList([
             ConvTower(
