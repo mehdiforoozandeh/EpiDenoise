@@ -264,7 +264,7 @@ class PRETRAIN(object):
                     loss.backward()  
                     # Log gradients before clipping
                     print(f"Before clipping gradients at epoch {epoch}")
-                    for name, param in model.named_parameters():
+                    for name, param in self.model.named_parameters():
                         if param.grad is not None:
                             print(f"Layer: {name} | Grad Min: {param.grad.min()} | Grad Max: {param.grad.max()} | Grad Mean: {param.grad.mean()} | Grad Std: {param.grad.std()}")
 
@@ -272,7 +272,7 @@ class PRETRAIN(object):
 
                     # Log gradients after clipping
                     print(f"After clipping gradients at epoch {epoch}")
-                    for name, param in model.named_parameters():
+                    for name, param in self.model.named_parameters():
                         if param.grad is not None:
                             print(f"Layer: {name} | Grad Min: {param.grad.min()} | Grad Max: {param.grad.max()} | Grad Mean: {param.grad.mean()} | Grad Std: {param.grad.std()}")
         
