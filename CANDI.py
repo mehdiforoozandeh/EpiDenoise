@@ -563,14 +563,14 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 4,
+        "n_sab_layers": 2,
         "epochs": 5,
         "inner_epochs": 10,
-        "mask_percentage": 0.05,
+        "mask_percentage": 0.15,
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-2,
-        "num_loci": 1200,
+        "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
 
