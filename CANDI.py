@@ -246,7 +246,8 @@ class PRETRAIN(object):
                     #     else:
                     #         obs_loss = torch.tensor(1e5)
 
-                    loss = obs_count_loss + imp_count_loss + obs_pval_loss + imp_pval_loss
+                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
