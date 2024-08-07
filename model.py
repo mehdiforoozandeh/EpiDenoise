@@ -185,14 +185,7 @@ class EmbedMetadata(nn.Module):
             
             embeddings_list.append(feature_embedding)
 
-        embeddings = torch.stack(embeddings_list, dim=1)
-        print(embeddings.shape)
-        embeddings = embeddings.squeeze(2)
-        print(embeddings.shape)
         embeddings = torch.cat(embeddings_list, dim=-1)
-        print(embeddings.shape)
-        exit()
-        
         return embeddings
 
 
