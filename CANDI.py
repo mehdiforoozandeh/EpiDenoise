@@ -467,7 +467,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -477,8 +477,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
         signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
@@ -551,13 +551,13 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 2,
+        "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 3,
         "mask_percentage": 0.15,
         "context_length": 800,
         "batch_size": 50,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-5,
         "num_loci": 1200,
         "lr_halflife":1,
         "min_avail":10}
