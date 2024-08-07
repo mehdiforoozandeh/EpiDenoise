@@ -285,6 +285,8 @@ class PRETRAIN(object):
                 #################################################################################
                 #################################################################################
                 #################################################################################
+
+                    output_std = output_var**(1/2)
                     imp_count_pred = NegativeBinomial(
                         output_p[masked_map].cpu().detach(), 
                         output_n[masked_map].cpu().detach()
@@ -304,7 +306,7 @@ class PRETRAIN(object):
                         output_n[masked_map].cpu().detach()).pmf(imp_count_true).mean()
                     #################################################################################
                     imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
-                    imp_pval_std = output_var**(1/2)[masked_map].cpu().detach().numpy()
+                    imp_pval_std = output_std[masked_map].cpu().detach().numpy()
 
                     imp_pval_true = pval_batch[masked_map].cpu().detach().numpy()
                     imp_pval_abs_error = torch.abs(torch.Tensor(imp_pval_true) - torch.Tensor(imp_pval_pred)).cpu().detach().numpy()
@@ -334,7 +336,7 @@ class PRETRAIN(object):
                         output_n[observed_map].cpu().detach()).pmf(ups_count_true).mean()
                     #################################################################################
                     ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
-                    ups_pval_std = output_var**(1/2)[observed_map].cpu().detach().numpy()
+                    ups_pval_std = output_std[observed_map].cpu().detach().numpy()
 
                     ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
                     ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).cpu().detach().numpy()
