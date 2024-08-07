@@ -156,7 +156,6 @@ class CANDI_NLL_LOSS(nn.Module):
         
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
-
 class PRETRAIN(object):
     def __init__(self, model, dataset, criterion, optimizer, scheduler):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -263,7 +262,7 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
                     self.optimizer.step()
