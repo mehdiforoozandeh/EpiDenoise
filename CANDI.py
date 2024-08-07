@@ -285,18 +285,6 @@ class PRETRAIN(object):
                         if max_weight_grad_layer:
                             print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
-                        if max_bias_grad_layer:
-                            print(f"Max Bias Grad Layer: {max_bias_grad_layer}, Bias Grad Norm: {max_bias_grad_norm:.3f}")
-
-                        # Additional information for all layers
-                        for name, module in self.model.named_modules():
-                            if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                                print(f"Layer: {name}, Weight Grad Norm: {module.weight.grad_norm:.3f}, Weight Norm: {module.weight.norm():.3f}")
-
-                            if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                                print(f"Layer: {name}, Bias Grad Norm: {module.bias.grad_norm:.3f}, Bias Norm: {module.bias.norm():.3f}")
-
-
                     self.optimizer.step()
 
                     #################################################################################
