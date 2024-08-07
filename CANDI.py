@@ -285,7 +285,6 @@ class PRETRAIN(object):
                 #################################################################################
                 #################################################################################
                 #################################################################################
-
                     output_std = output_var**(1/2)
                     imp_count_pred = NegativeBinomial(
                         output_p[masked_map].cpu().detach(), 
@@ -347,7 +346,6 @@ class PRETRAIN(object):
                         output_mu[observed_map].cpu().detach(), 
                         output_var[observed_map].cpu().detach()).pdf(ups_pval_true).mean()
 
-                    
                 #################################################################################
                 #################################################################################
                 #################################################################################
@@ -410,18 +408,20 @@ class PRETRAIN(object):
                     batch_rec["ups_count_r2"].append(ups_count_r2)
                     batch_rec["imp_count_r2"].append(imp_count_r2)
 
+                    batch_rec["ups_pval_r2"].append(ups_pval_r2)
+                    batch_rec["imp_pval_r2"].append(imp_pval_r2)
+
                     batch_rec["ups_count_pmf"].append(ups_count_pmf)
                     batch_rec["imp_count_pmf"].append(imp_count_pmf)
 
                     batch_rec["ups_pval_pmf"].append(ups_pval_pmf)
                     batch_rec["imp_pval_pmf"].append(imp_pval_pmf)
 
-                    batch_rec["ups_count_conf"].append(ups_count_conf)
-                    batch_rec["imp_count_conf"].append(imp_count_conf)
+                    batch_rec["ups_count_conf"].append(ups_count_errstd)
+                    batch_rec["imp_count_conf"].append(ups_count_errstd)
 
-                    batch_rec["ups_pval_conf"].append(ups_pval_conf)
-                    batch_rec["imp_pval_conf"].append(imp_pval_conf)
-
+                    batch_rec["ups_pval_conf"].append(ups_pval_errstd)
+                    batch_rec["imp_pval_conf"].append(imp_pval_errstd)
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -455,10 +455,12 @@ class PRETRAIN(object):
                     f"Ups_Pval_Loss {np.mean(batch_rec['ups_pval_loss']):.2f}",
                     f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
                     f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
-                    f"Imp_Count_PMF {np.mean(batch_rec['imp_count_pmf']):.2f}",
-                    f"Ups_Count_PMF {np.mean(batch_rec['ups_count_pmf']):.2f}",
-                    f"Imp_Pval_PMF {np.mean(batch_rec['imp_pval_pmf']):.2f}",
-                    f"Ups_Pval_PMF {np.mean(batch_rec['ups_pval_pmf']):.2f}",
+                    f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",
+                    f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",
+                    f"Imp_Count_P {np.mean(batch_rec['imp_count_pmf']):.2f}",
+                    f"Ups_Count_P {np.mean(batch_rec['ups_count_pmf']):.2f}",
+                    f"Imp_Pval_P {np.mean(batch_rec['imp_pval_pmf']):.2f}",
+                    f"Ups_Pval_P {np.mean(batch_rec['ups_pval_pmf']):.2f}",
                     f"Imp_Count_Conf {np.mean(batch_rec['imp_count_conf']):.2f}",
                     f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
                     f"Imp_Pval_Conf {np.mean(batch_rec['imp_pval_conf']):.2f}",
