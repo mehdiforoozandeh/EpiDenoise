@@ -23,7 +23,7 @@ class CANDI(nn.Module):
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        # self.signal_layer_norm = nn.LayerNorm(self.f1)
+        self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
@@ -79,7 +79,7 @@ class CANDI(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        # src = self.signal_layer_norm(src)
+        src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
@@ -137,11 +137,32 @@ class CANDI_DNA(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
 
+        DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers)
+        DNA_kernel_size = 
+
+        self.convDNAstem = nn.ModuleList([
+            ConvTower(
+                in_C=4, out_C=self.f2//4, W=15, S=1, D=1, pool_type="max", 
+                residuals=True, groups=1, pool_size=5),
+            ConvTower(
+                in_C=self.f2//4, out_C=self.f2//2, W=conv_kernel_size[0], S=1, D=1, pool_type="max", 
+                residuals=True, groups=1, pool_size=5) 
+        ])
+
+        self.convEncDNA = nn.ModuleList(
+            [ConvTower(
+                DNA_conv_channels[i], DNA_conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         # self.signal_layer_norm = nn.LayerNorm(self.f1)
+
+        
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
@@ -620,8 +641,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
         n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
@@ -690,7 +711,7 @@ if __name__ == "__main__":
         "dropout": 0.1,
 
         "n_cnn_layers": 4,
-        "conv_kernel_size" : 3,
+        "conv_kernel_size" : 5,
         "pool_size": 2,
 
         "nhead": 8,
@@ -700,7 +721,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.15,
         "context_length": 800,
         "batch_size": 50,
-        "learning_rate": 1e-2,
+        "learning_rate": 1e-3,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}

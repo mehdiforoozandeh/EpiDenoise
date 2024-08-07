@@ -687,7 +687,7 @@ class MONITOR_VALIDATION(object):
         plt.close(fig)
         
         return buf
-        
+
 random.seed(73)
 def get_overlap(tup1, tup2):
 
@@ -790,7 +790,6 @@ def exponential_linspace_int(start, end, num, divisible_by=1):
     """Exponentially increasing values of integers."""
     def _round(x):
         return int(np.round(x / divisible_by) * divisible_by)
-
     base = np.exp(np.log(end / start) / (num - 1))
     return [_round(start * base**i) for i in range(num)]
 
