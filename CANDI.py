@@ -112,7 +112,6 @@ class CANDI(nn.Module):
 class CANDI_DNA():
     pass
 
-
 class CANDI_NLL_LOSS(nn.Module):
     def __init__(self, reduction='sum'):
         super(CANDI_NLL_LOSS, self).__init__()
