@@ -200,6 +200,7 @@ class PRETRAIN(object):
                     "imp_count_loss":[], "ups_count_loss":[],
                     "imp_pval_loss":[], "ups_pval_loss":[],
                     "ups_count_r2":[], "imp_count_r2":[],
+                    "ups_pval_r2":[], "imp_pval_r2":[],
                     "ups_count_pmf":[], "imp_count_pmf":[],
                     "ups_pval_pmf":[], "imp_pval_pmf":[],
                     "ups_count_conf":[], "imp_count_conf":[],
@@ -475,12 +476,10 @@ class PRETRAIN(object):
                 logfile = open(f"models/CANDI{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
                 logfile.close()
-
                 
                 #################################################################################
                 #################################################################################
                 #################################################################################
-
 
                 # chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 # dsf_pointer0 = self.dataset.dsf_pointer
