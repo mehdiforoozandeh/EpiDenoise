@@ -137,37 +137,40 @@ class CANDI_DNA(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
 
-        DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers)
-        DNA_kernel_size = 0
+        self.convEncDNA_stem = nn.ModuleList(
+            [ConvTower(
+                4, self.f2//2, W=15, S=1, D=1,
+                pool_type="max", residuals=True, groups=1, pool_size=5),
+            ConvTower(
+                self.f2//2, self.f2//2, W=5, S=1, D=1,
+                pool_type="max", residuals=True, groups=1, pool_size=5)
+            ])
 
-        self.convDNAstem = nn.ModuleList([
-            ConvTower(
-                in_C=4, out_C=self.f2//4, W=15, S=1, D=1, pool_type="max", 
-                residuals=True, groups=1, pool_size=5),
-            ConvTower(
-                in_C=self.f2//4, out_C=self.f2//2, W=conv_kernel_size[0], S=1, D=1, pool_type="max", 
-                residuals=True, groups=1, pool_size=5) 
-        ])
+        DNA_conv_channels = [4] + exponential_linspace_int(self.f2//2, f2, n_cnn_layers)
+        DNA_kernel_size = [15] + [conv_kernel_size for _ in range(n_cnn_layers-1)]
+        DNA_pool_size = [5, 5] + [2 for _ in range(n_cnn_layers-2)]
 
         self.convEncDNA = nn.ModuleList(
             [ConvTower(
-                DNA_conv_channels[i], DNA_conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
-                conv_kernel_size[i], S=1, D=1,
+                DNA_conv_channels[i], DNA_conv_channels[i + 1],
+                DNA_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+                groups=1, pool_size=DNA_pool_size[i]) for i in range(n_cnn_layers)])
+        
+        ################################################################################
+        ################################################################################
+        ################################################################################
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+        conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        # self.signal_layer_norm = nn.LayerNorm(self.f1)
-
-        
+        self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
-                conv_kernel_size[i], S=1, D=1,
+                conv_kernel_size_list[i], S=1, D=1,
                 pool_type="avg", residuals=True,
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
@@ -218,7 +221,7 @@ class CANDI_DNA(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        # src = self.signal_layer_norm(src)
+        src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
@@ -400,8 +403,8 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5.0)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5.0)
 
                     self.optimizer.step()
 
