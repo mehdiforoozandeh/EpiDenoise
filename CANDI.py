@@ -242,6 +242,7 @@ class CANDI_DNA(nn.Module):
 
         ################################################################################
         seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
         for seq_conv in self.convEncDNA_stem:
             print(seq.shape)
             seq = seq_conv(seq)
