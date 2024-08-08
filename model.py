@@ -335,7 +335,7 @@ class DeconvBlock(nn.Module):
         elif self.normtype == "batch":
             x = self.norm(x)
             
-        x = F.relu(x)
+        x = F.gelu(x)
         return x
 
 class DeconvTower(nn.Module):

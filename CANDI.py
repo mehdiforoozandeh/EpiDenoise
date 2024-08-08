@@ -252,7 +252,7 @@ class CANDI_DNA(nn.Module):
         src = self.ymd_fusion(src)
         
         src = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv_count:
+        for dconv in self.deconv:
             src = dconv(src)
 
         src = src.permute(0, 2, 1) # to N, L, F1
