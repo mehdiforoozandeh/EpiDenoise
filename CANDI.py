@@ -711,13 +711,13 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 6,
+        "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 5,
         "mask_percentage": 0.20,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-3,
+        "learning_rate": 1e-4,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}

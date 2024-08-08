@@ -102,46 +102,6 @@ class MetadataEmbeddingModule(nn.Module):
 
         return full_embed
 
-# class EmbedMetadata(nn.Module):
-#     def __init__(self, input_dim, embedding_dim, non_linearity=True):
-#         super().__init__()
-#         self.embedding_dim = embedding_dim
-#         self.input_dim = input_dim 
-#         self.non_linearity = non_linearity
-#         self.continuous_size = embedding_dim // 3
-
-#         self.runtype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
-#         self.depth_transform = nn.Linear(1, self.continuous_size) 
-#         self.coverage_transform = nn.Linear(1, self.continuous_size)
-#         self.read_length_transform = nn.Linear(1, self.continuous_size)
-
-#         self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 4, embedding_dim)  # Adjusted for all inputs
-#         self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
-
-#     def forward(self, metadata):
-#         depth = metadata[:, 0, :].unsqueeze(-1).float() 
-#         coverage = metadata[:, 1, :].unsqueeze(-1).float() 
-#         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
-#         runtype = metadata[:, 3, :].long() 
-        
-#         runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
-#         runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
-
-#         depth_embed = self.depth_transform(depth)
-#         coverage_embed = self.coverage_transform(coverage)
-#         read_length_embed = self.read_length_transform(read_length)
-#         runtype_embed = self.runtype_embedding(runtype)
-
-#         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
-#         embeddings = embeddings.view(embeddings.shape[0], -1)
-
-#         embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
-        
-#         if self.non_linearity:
-#             embeddings = F.relu(embeddings)
-        
-#         return embeddings
-
 class EmbedMetadata(nn.Module):
     def __init__(self, input_dim, embedding_dim, non_linearity=True):
         super().__init__()
@@ -150,42 +110,82 @@ class EmbedMetadata(nn.Module):
         self.non_linearity = non_linearity
         self.continuous_size = embedding_dim // 3
 
-        # Separate embeddings for each pair of metadata and feature
-        self.depth_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
-        self.coverage_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
-        self.read_length_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
-        self.runtype_embedding = nn.ModuleList([nn.Embedding(4, self.continuous_size) for _ in range(input_dim)])
-        
-        # Separate final embedding layers for each feature
-        self.final_embedding = nn.ModuleList([nn.Linear(self.continuous_size * 4, 1) for _ in range(input_dim)])
+        self.runtype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
+        self.depth_transform = nn.Linear(1, self.continuous_size) 
+        self.coverage_transform = nn.Linear(1, self.continuous_size)
+        self.read_length_transform = nn.Linear(1, self.continuous_size)
+
+        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 4, embedding_dim)  # Adjusted for all inputs
+        self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
 
     def forward(self, metadata):
-        embeddings_list = []
+        depth = metadata[:, 0, :].unsqueeze(-1).float() 
+        coverage = metadata[:, 1, :].unsqueeze(-1).float() 
+        read_length = metadata[:, 2, :].unsqueeze(-1).float() 
+        runtype = metadata[:, 3, :].long() 
+        
+        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
+        runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
 
-        for i in range(metadata.shape[2]):
-            depth = metadata[:, 0, i].unsqueeze(-1).float()
-            coverage = metadata[:, 1, i].unsqueeze(-1).float()
-            read_length = metadata[:, 2, i].unsqueeze(-1).float()
-            runtype = metadata[:, 3, i].long()
-            
-            runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
-            runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
+        depth_embed = self.depth_transform(depth)
+        coverage_embed = self.coverage_transform(coverage)
+        read_length_embed = self.read_length_transform(read_length)
+        runtype_embed = self.runtype_embedding(runtype)
 
-            depth_embed = self.depth_transform[i](depth)
-            coverage_embed = self.coverage_transform[i](coverage)
-            read_length_embed = self.read_length_transform[i](read_length)
-            runtype_embed = self.runtype_embedding[i](runtype)
+        embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
+        embeddings = embeddings.view(embeddings.shape[0], -1)
 
-            feature_embedding = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
-            feature_embedding = self.final_embedding[i](feature_embedding)
-
-            if self.non_linearity:
-                feature_embedding = F.relu(feature_embedding)
-            
-            embeddings_list.append(feature_embedding)
-
-        embeddings = torch.cat(embeddings_list, dim=-1)
+        embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
+        
+        if self.non_linearity:
+            embeddings = F.relu(embeddings)
+        
         return embeddings
+
+# class EmbedMetadata(nn.Module):
+#     def __init__(self, input_dim, embedding_dim, non_linearity=True):
+#         super().__init__()
+#         self.embedding_dim = embedding_dim
+#         self.input_dim = input_dim 
+#         self.non_linearity = non_linearity
+#         self.continuous_size = embedding_dim // 3
+
+#         # Separate embeddings for each pair of metadata and feature
+#         self.depth_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
+#         self.coverage_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
+#         self.read_length_transform = nn.ModuleList([nn.Linear(1, self.continuous_size) for _ in range(input_dim)])
+#         self.runtype_embedding = nn.ModuleList([nn.Embedding(4, self.continuous_size) for _ in range(input_dim)])
+        
+#         # Separate final embedding layers for each feature
+#         self.final_embedding = nn.ModuleList([nn.Linear(self.continuous_size * 4, 1) for _ in range(input_dim)])
+
+#     def forward(self, metadata):
+#         embeddings_list = []
+
+#         for i in range(metadata.shape[2]):
+#             depth = metadata[:, 0, i].unsqueeze(-1).float()
+#             coverage = metadata[:, 1, i].unsqueeze(-1).float()
+#             read_length = metadata[:, 2, i].unsqueeze(-1).float()
+#             runtype = metadata[:, 3, i].long()
+            
+#             runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
+#             runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
+
+#             depth_embed = self.depth_transform[i](depth)
+#             coverage_embed = self.coverage_transform[i](coverage)
+#             read_length_embed = self.read_length_transform[i](read_length)
+#             runtype_embed = self.runtype_embedding[i](runtype)
+
+#             feature_embedding = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
+#             feature_embedding = self.final_embedding[i](feature_embedding)
+
+#             if self.non_linearity:
+#                 feature_embedding = F.relu(feature_embedding)
+            
+#             embeddings_list.append(feature_embedding)
+
+#         embeddings = torch.cat(embeddings_list, dim=-1)
+#         return embeddings
 
 class DualConvEmbedding(nn.Module):
     def __init__(self, in_C, out_C, do_batchnorm=True):
@@ -797,7 +797,7 @@ class NegativeBinomialLayer(nn.Module):
     def forward(self, x):
         if self.FF:
             x = self.feed_forward(x)
-            
+
         # using sigmoid to ensure it's between 0 and 1
         p = self.fc_p(x)
 
