@@ -437,8 +437,8 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5.0)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
 
                     self.optimizer.step()
 
