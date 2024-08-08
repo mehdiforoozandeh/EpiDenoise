@@ -207,7 +207,7 @@ class CANDI_DNA(nn.Module):
                 groups=1) for i in range(n_cnn_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(self.f2, self.f1, FF=False)
-        self.gaussian_layer = GaussianLayer(self.f2, self.f1, FF=True)
+        self.gaussian_layer = GaussianLayer(self.f2, self.f1, FF=False)
     
     def forward(self, src, seq, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
