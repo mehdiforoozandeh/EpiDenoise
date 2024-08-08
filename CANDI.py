@@ -737,7 +737,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 8,
+        "n_sab_layers": 6,
         "epochs": 5,
         "inner_epochs": 5,
         "mask_percentage": 0.20,
