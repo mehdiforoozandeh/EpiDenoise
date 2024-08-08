@@ -58,14 +58,20 @@ class CANDI(nn.Module):
                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
-        self.deconv = nn.ModuleList(
+        self.deconv_count = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=True)
-        self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=True)
+        self.deconv_pval = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
     def forward(self, src, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
@@ -94,18 +100,25 @@ class CANDI(nn.Module):
             for enc in self.transformer_encoder:
                 src = enc(src)
 
-        ### Decoder ###
+        ### Count Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.ymd_fusion(src)
+        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src_count = self.ymd_fusion(src_count)
         
-        src = src.permute(0, 2, 1) # to N, F2, L'
+        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
-            src = dconv(src)
+            src_count = dconv(src_count)
 
-        src = src.permute(0, 2, 1) # to N, L, F1
-        p, n = self.neg_binom_layer(src)
-        mu, var = self.gaussian_layer(src)
+        src_count = src_count.permute(0, 2, 1) # to N, L, F1
+        p, n = self.neg_binom_layer(src_count)
+
+        ### Pval Decoder ###
+        src_pval = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv_pval:
+            src_pval = dconv(src_pval)
+
+        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
+        mu, var = self.gaussian_layer(src_pval)
 
         return p, n, mu, var
 
@@ -193,18 +206,17 @@ class CANDI_DNA(nn.Module):
                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
-        # self.deconv = nn.ModuleList(
-        #     [DeconvTower(
-        #         reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-        #         conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
-        #         groups=1) for i in range(n_cnn_layers)])
-        
-        # self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=True)
-        # self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=True)
-        self.deconv = nn.ModuleList(
+        self.deconv_count = nn.ModuleList(
             [DeconvTower(
-                self.f2, self.f2, conv_kernel_size, S=pool_size, D=1, residuals=True,
-                groups=1) for i in range(n_cnn_layers)])
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.deconv_pval = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(self.f2, self.f1, FF=False)
         self.gaussian_layer = GaussianLayer(self.f2, self.f1, FF=False)
@@ -253,18 +265,25 @@ class CANDI_DNA(nn.Module):
             for enc in self.transformer_encoder:
                 src = enc(src)
 
-        ### Decoder ###
+        ### Count Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.ymd_fusion(src)
+        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src_count = self.ymd_fusion(src_count)
         
-        src = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv:
-            src = dconv(src)
+        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv_count:
+            src_count = dconv(src_count)
 
-        src = src.permute(0, 2, 1) # to N, L, F1
-        p, n = self.neg_binom_layer(src)
-        mu, var = self.gaussian_layer(src)
+        src_count = src_count.permute(0, 2, 1) # to N, L, F1
+        p, n = self.neg_binom_layer(src_count)
+
+        ### Pval Decoder ###
+        src_pval = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv_pval:
+            src_pval = dconv(src_pval)
+
+        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
+        mu, var = self.gaussian_layer(src_pval)
 
         return p, n, mu, var
 
@@ -718,7 +737,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 4,
+        "n_sab_layers": 8,
         "epochs": 5,
         "inner_epochs": 5,
         "mask_percentage": 0.20,
