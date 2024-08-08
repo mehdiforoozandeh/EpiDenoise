@@ -209,13 +209,13 @@ class CANDI_DNA(nn.Module):
         self.deconv_count = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.deconv_pval = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
