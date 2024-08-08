@@ -160,7 +160,7 @@ class CANDI_DNA(nn.Module):
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.SE_enc = SE_Block_1D(self.f2)
+        # self.SE_enc = SE_Block_1D(self.f2)
 
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
         self.xmd_fusion = nn.Sequential(
@@ -169,7 +169,7 @@ class CANDI_DNA(nn.Module):
             nn.ReLU())
 
         ################################################################################
-        self.SE_DNA_enc = SE_Block_1D(self.f2)
+        # self.SE_DNA_enc = SE_Block_1D(self.f2)
         self.DNA_Epig_fusion = nn.Sequential(
             nn.Linear(2*self.f2, self.f2), 
             nn.LayerNorm(self.f2), 
@@ -214,7 +214,7 @@ class CANDI_DNA(nn.Module):
         for conv in self.convEnc:
             src = conv(src)
         # e_src.shape = N, F2, L'
-        src = self.SE_enc(src)
+        # src = self.SE_enc(src)
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
@@ -231,7 +231,7 @@ class CANDI_DNA(nn.Module):
         for seq_conv in self.convEncDNA:
             seq = seq_conv(seq)
 
-        seq = self.SE_DNA_enc(seq)
+        # seq = self.SE_DNA_enc(seq)
         seq = seq.permute(0, 2, 1)  # to N, L', F2
         ################################################################################
         src = torch.cat([src, seq], dim=-1)

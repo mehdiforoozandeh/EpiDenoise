@@ -357,7 +357,7 @@ class DeconvTower(nn.Module):
         return y
 
 class ConvTower(nn.Module):
-    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=True, groups=1, pool_size=2):
+    def __init__(self, in_C, out_C, W, S=1, D=1, pool_type="max", residuals=True, groups=1, pool_size=2, SE=True):
         super(ConvTower, self).__init__()
         
         if pool_type == "max" or pool_type == "attn" or pool_type == "avg":
@@ -378,11 +378,18 @@ class ConvTower(nn.Module):
         if self.resid:
             self.rconv = nn.Conv1d(in_C, out_C, kernel_size=1, groups=groups)
         
+        self.SE = SE
+        if self.SE:
+            self.se_block = SE_Block_1D(out_C)
+        
     def forward(self, x):
         y = self.conv1(x)
 
         if self.resid:
             y = y + self.rconv(x)
+        
+        if self.SE:
+            y = self.se_block(y)
 
         if self.do_pool:
             y = self.pool(y)
