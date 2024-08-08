@@ -757,16 +757,16 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 2,
+        "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 10,
         "mask_percentage": 0.15,
-        "context_length": 800,
+        "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
 
-    # Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
-    Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
+    Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
+    # Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
