@@ -137,28 +137,26 @@ class CANDI_DNA(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
 
+        ################################################################################
         self.convEncDNA_stem = nn.ModuleList(
             [ConvTower(
-                4, self.f2//2, W=15, S=1, D=1,
+                4, self.f2//4, W=15, S=1, D=1,
                 pool_type="max", residuals=True, groups=1, pool_size=5),
             ConvTower(
-                self.f2//2, self.f2//2, W=5, S=1, D=1,
+                self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
                 pool_type="max", residuals=True, groups=1, pool_size=5)
             ])
 
-        DNA_conv_channels = [4] + exponential_linspace_int(self.f2//2, f2, n_cnn_layers)
-        DNA_kernel_size = [15] + [conv_kernel_size for _ in range(n_cnn_layers-1)]
-        DNA_pool_size = [5, 5] + [2 for _ in range(n_cnn_layers-2)]
+        DNA_conv_channels = exponential_linspace_int(self.f2//2, f2, n_cnn_layers+1)
+        DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.convEncDNA = nn.ModuleList(
             [ConvTower(
                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
                 DNA_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
-                groups=1, pool_size=DNA_pool_size[i]) for i in range(n_cnn_layers)])
+                groups=1, pool_size=2) for i in range(n_cnn_layers)])
         
-        ################################################################################
-        ################################################################################
         ################################################################################
 
         conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
@@ -182,6 +180,14 @@ class CANDI_DNA(nn.Module):
             nn.Linear(self.f3, self.f2),
             nn.LayerNorm(self.f2), 
             nn.ReLU())
+
+        ################################################################################
+        self.SE_DNA_enc = SE_Block_1D(self.f2)
+        self.DNA_Epig_fusion = nn.Sequential(
+            nn.Linear(2*self.f2, self.f2), 
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
+        ################################################################################
 
         self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
         self.ymd_fusion = nn.Sequential(
@@ -215,7 +221,7 @@ class CANDI_DNA(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
-    def forward(self, src, x_metadata, y_metadata, availability):
+    def forward(self, src, seq, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
@@ -233,6 +239,26 @@ class CANDI_DNA(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata)
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.xmd_fusion(src)
+
+        ################################################################################
+        for seq_conv in self.convEncDNA_stem:
+            print(seq.shape)
+            seq = seq_conv(seq)
+
+        for seq_conv in self.convEncDNA:
+            print(seq.shape)
+            seq = seq_conv(seq)
+
+        print(seq.shape)
+        seq = self.SE_DNA_enc(seq)
+        print(seq.shape)
+        seq = seq.permute(0, 2, 1)  # to N, L', F2
+        print(seq.shape)
+        exit()
+        ################################################################################
+        src = torch.cat([src, seq], dim=-1)
+        src = self.DNA_Epig_fusion(src)
+        ################################################################################
 
         ### TRANSFORMER ENCODER ###
         if self.pos_enc != "relative":
@@ -306,7 +332,7 @@ class PRETRAIN(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
 
-    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False):
+    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False, DNA=False):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"CANDI{arch} # model_parameters: {count_parameters(self.model)}")
@@ -338,7 +364,11 @@ class PRETRAIN(object):
             while (next_epoch==False):
                 t0 = datetime.now()
 
-                _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
+                if DNA:
+                    _X_batch, _mX_batch, _avX_batch, _dnaseq_batch= self.dataset.get_batch(side="x", dna_seq=True)
+                else:
+                    _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
+
                 _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.dataset.get_batch(side="y", pval=True)
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
@@ -363,7 +393,10 @@ class PRETRAIN(object):
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
 
-                    X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                    if DNA:
+                        X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
+                    else:
+                        X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
 
                     # X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
@@ -380,9 +413,13 @@ class PRETRAIN(object):
                     avX_batch = avX_batch.to(self.device)
                     mY_batch = mY_batch.to(self.device)
                     Y_batch = Y_batch.to(self.device)
-                    pval_batch = pval_batch.to(self.device)
+                    pval_batch = pval_batch.to(self.device)                        
 
-                    output_p, output_n, output_mu, output_var = self.model(X_batch, mX_batch, mY_batch, avX_batch)
+                    if DNA:
+                        dnaseq_batch = dnaseq_batch.to(self.device)
+                        output_p, output_n, output_mu, output_var = self.model(X_batch, dnaseq_batch, mX_batch, mY_batch, avX_batch)
+                    else:
+                        output_p, output_n, output_mu, output_var = self.model(X_batch, mX_batch, mY_batch, avX_batch)
 
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
@@ -599,14 +636,14 @@ class PRETRAIN(object):
                 
         return self.model
 
-    def pretrain_CANDI_DNA(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=False):
-        pass
-
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False):
     if eic:
         arch="eic"
     else:
         arch="full"
+    
+    if DNA:
+        arch = f"{arch}_DNA"
 
     # Defining the hyperparameters
     resolution = 25
@@ -639,9 +676,14 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
     signal_dim = dataset.signal_dim
     metadata_embedding_dim = dataset.signal_dim
 
-    model = CANDI(
-        signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+    if DNA:
+        model = CANDI_DNA(
+            signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+    else:
+        model = CANDI(
+            signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -666,7 +708,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None):
     trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler)
     model = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
-        batch_size=batch_size, inner_epochs=inner_epochs, arch=arch)
+        batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)
 
     end_time = time.time()
 
@@ -729,4 +771,4 @@ if __name__ == "__main__":
         "lr_halflife":1,
         "min_avail":10}
 
-    Train_CANDI(hyper_parameters_S, eic=True)
+    Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
