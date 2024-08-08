@@ -14,7 +14,6 @@ import imageio.v2 as imageio
 from io import BytesIO
 from torchinfo import summary
 
-
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
@@ -188,7 +187,6 @@ class EmbedMetadata(nn.Module):
         embeddings = torch.cat(embeddings_list, dim=-1)
         return embeddings
 
-
 class DualConvEmbedding(nn.Module):
     def __init__(self, in_C, out_C, do_batchnorm=True):
         super(DualConvEmbedding, self).__init__()
@@ -296,8 +294,6 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same", groups=groups)
         
     def forward(self, x):
-        x = self.conv(x)
-
         if self.normtype == "layer":
             x = x.permute(0, 2, 1)
             x = self.norm(x)
@@ -306,7 +302,8 @@ class ConvBlock(nn.Module):
         elif self.normtype == "batch":
             x = self.norm(x)
             
-        x = F.relu(x)
+        x = F.gelu(x)
+        x = self.conv(x)
         return x
 
 class DeconvBlock(nn.Module):

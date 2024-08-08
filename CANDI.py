@@ -58,18 +58,12 @@ class CANDI(nn.Module):
                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
-        self.deconv_count = nn.ModuleList(
+        self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.deconv_pval = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
-        
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
@@ -100,25 +94,18 @@ class CANDI(nn.Module):
             for enc in self.transformer_encoder:
                 src = enc(src)
 
-        ### Count Decoder ###
+        ### Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src_count = self.ymd_fusion(src_count)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
         
-        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
-            src_count = dconv(src_count)
+            src = dconv(src)
 
-        src_count = src_count.permute(0, 2, 1) # to N, L, F1
-        p, n = self.neg_binom_layer(src_count)
-
-        ### Pval Decoder ###
-        src_pval = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv_pval:
-            src_pval = dconv(src_pval)
-
-        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
-        mu, var = self.gaussian_layer(src_pval)
+        src = src.permute(0, 2, 1) # to N, L, F1
+        p, n = self.neg_binom_layer(src)
+        mu, var = self.gaussian_layer(src)
 
         return p, n, mu, var
 
@@ -206,16 +193,10 @@ class CANDI_DNA(nn.Module):
                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
-        self.deconv_count = nn.ModuleList(
+        self.deconv = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
-
-        self.deconv_pval = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
@@ -265,25 +246,18 @@ class CANDI_DNA(nn.Module):
             for enc in self.transformer_encoder:
                 src = enc(src)
 
-        ### Count Decoder ###
+        ### Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src_count = self.ymd_fusion(src_count)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
         
-        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
-            src_count = dconv(src_count)
+            src = dconv(src)
 
-        src_count = src_count.permute(0, 2, 1) # to N, L, F1
-        p, n = self.neg_binom_layer(src_count)
-
-        ### Pval Decoder ###
-        src_pval = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv_pval:
-            src_pval = dconv(src_pval)
-
-        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
-        mu, var = self.gaussian_layer(src_pval)
+        src = src.permute(0, 2, 1) # to N, L, F1
+        p, n = self.neg_binom_layer(src)
+        mu, var = self.gaussian_layer(src)
 
         return p, n, mu, var
 
