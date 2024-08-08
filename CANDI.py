@@ -437,9 +437,9 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
-
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
+# 
                     self.optimizer.step()
 
                     #################################################################################
@@ -767,6 +767,12 @@ if __name__ == "__main__":
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
+    eic = False
+    DNA = False
 
-    # Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
-    Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
+    if "eic" in sys.argv or "EIC" in sys.argv:
+        eic = True
+    if "dna" in sys.argv or "DNA" in sys.argv:
+        DNA = True
+
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA)
