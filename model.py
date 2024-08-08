@@ -294,6 +294,7 @@ class ConvBlock(nn.Module):
             in_C, out_C, kernel_size=W, dilation=D, stride=S, padding="same", groups=groups)
         
     def forward(self, x):
+        x = self.conv(x)
         if self.normtype == "layer":
             x = x.permute(0, 2, 1)
             x = self.norm(x)
@@ -303,7 +304,6 @@ class ConvBlock(nn.Module):
             x = self.norm(x)
             
         x = F.gelu(x)
-        x = self.conv(x)
         return x
 
 class DeconvBlock(nn.Module):
