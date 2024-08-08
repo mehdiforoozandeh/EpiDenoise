@@ -254,10 +254,7 @@ class CANDI_DNA(nn.Module):
         seq = seq.permute(0, 2, 1)  # to N, L', F2
         ################################################################################
         src = torch.cat([src, seq], dim=-1)
-        print(src.shape)
         src = self.DNA_Epig_fusion(src)
-        print(src.shape)
-        exit()
         ################################################################################
 
         ### TRANSFORMER ENCODER ###
@@ -771,4 +768,5 @@ if __name__ == "__main__":
         "lr_halflife":1,
         "min_avail":10}
 
-    Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
+    # Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
+    Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
