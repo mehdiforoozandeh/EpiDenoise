@@ -706,7 +706,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 5,
+        "n_cnn_layers": 4,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
