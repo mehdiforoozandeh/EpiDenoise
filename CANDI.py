@@ -713,8 +713,8 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 8,
         "epochs": 5,
-        "inner_epochs": 3,
-        "mask_percentage": 0.15,
+        "inner_epochs": 5,
+        "mask_percentage": 0.20,
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
@@ -733,8 +733,8 @@ if __name__ == "__main__":
         "nhead": 8,
         "n_sab_layers": 2,
         "epochs": 5,
-        "inner_epochs": 10,
-        "mask_percentage": 0.15,
+        "inner_epochs": 5,
+        "mask_percentage": 0.25,
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
@@ -742,5 +742,5 @@ if __name__ == "__main__":
         "lr_halflife":1,
         "min_avail":10}
 
-    Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
-    # Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
+    # Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
+    Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
