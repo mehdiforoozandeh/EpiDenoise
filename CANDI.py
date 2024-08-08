@@ -7,7 +7,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=4):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
@@ -33,7 +33,7 @@ class CANDI(nn.Module):
                 groups=self.f1,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.SE_enc = SE_Block_1D(self.f2)
+        # self.SE_enc = SE_Block_1D(self.f2)
 
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
         self.xmd_fusion = nn.Sequential(
@@ -85,7 +85,7 @@ class CANDI(nn.Module):
         for conv in self.convEnc:
             src = conv(src)
         # e_src.shape = N, F2, L'
-        src = self.SE_enc(src)
+        # src = self.SE_enc(src)
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
@@ -125,7 +125,7 @@ class CANDI(nn.Module):
 class CANDI_DNA(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=4):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=2):
         super(CANDI_DNA, self).__init__()
 
         self.pos_enc = pos_enc
