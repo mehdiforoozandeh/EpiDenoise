@@ -218,8 +218,8 @@ class CANDI_DNA(nn.Module):
                 conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
-        self.neg_binom_layer = NegativeBinomialLayer(self.f2, self.f1, FF=False)
-        self.gaussian_layer = GaussianLayer(self.f2, self.f1, FF=False)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=False)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=False)
     
     def forward(self, src, seq, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
