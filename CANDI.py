@@ -147,7 +147,7 @@ class CANDI_DNA(nn.Module):
                 pool_type="max", residuals=True, groups=1, pool_size=5)
             ])
 
-        DNA_conv_channels = exponential_linspace_int(self.f2//2, f2, n_cnn_layers+1)
+        DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
         DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.convEncDNA = nn.ModuleList(
