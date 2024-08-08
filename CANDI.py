@@ -245,22 +245,19 @@ class CANDI_DNA(nn.Module):
         seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
         seq = seq.float()
         for seq_conv in self.convEncDNA_stem:
-            print(seq.shape)
             seq = seq_conv(seq)
 
         for seq_conv in self.convEncDNA:
-            print(seq.shape)
             seq = seq_conv(seq)
 
-        print(seq.shape)
         seq = self.SE_DNA_enc(seq)
-        print(seq.shape)
         seq = seq.permute(0, 2, 1)  # to N, L', F2
-        print(seq.shape)
-        exit()
         ################################################################################
         src = torch.cat([src, seq], dim=-1)
+        print(src.shape)
         src = self.DNA_Epig_fusion(src)
+        print(src.shape)
+        exit()
         ################################################################################
 
         ### TRANSFORMER ENCODER ###
