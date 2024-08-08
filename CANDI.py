@@ -742,5 +742,5 @@ if __name__ == "__main__":
         "lr_halflife":1,
         "min_avail":10}
 
-    Train_CANDI(hyper_parameters_S, eic=False, DNA=True)
+    Train_CANDI(hyper_parameters_S, eic=True, DNA=True)
     # Train_CANDI(hyper_parameters_L, eic=True, DNA=True)
