@@ -776,8 +776,11 @@ class MatrixFactorizationEmbedding(nn.Module):
 #========================================================================================================#
 
 class NegativeBinomialLayer(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, FF=False):
         super(NegativeBinomialLayer, self).__init__()
+        self.FF = FF
+        if self.FF:
+            self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
 
         self.fc_p = nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -791,8 +794,10 @@ class NegativeBinomialLayer(nn.Module):
             nn.Softplus()
         )
 
-
     def forward(self, x):
+        if self.FF:
+            x = self.feed_forward(x)
+            
         # using sigmoid to ensure it's between 0 and 1
         p = self.fc_p(x)
 
@@ -802,8 +807,12 @@ class NegativeBinomialLayer(nn.Module):
         return p, n
 
 class GaussianLayer(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, FF=False):
         super(GaussianLayer, self).__init__()
+
+        self.FF = FF
+        if self.FF:
+            self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
 
         # Define the layers for calculating mu (mean) parameter
         self.fc_mu = nn.Sequential(
@@ -819,6 +828,9 @@ class GaussianLayer(nn.Module):
         )
 
     def forward(self, x):
+        if self.FF:
+            x = self.feed_forward(x)
+
         mu = self.fc_mu(x)
         var = self.fc_var(x)
 

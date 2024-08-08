@@ -64,7 +64,7 @@ class CANDI(nn.Module):
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
-        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=True)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
     def forward(self, src, x_metadata, y_metadata, availability):
@@ -395,10 +395,10 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
                     # loss =  imp_pval_loss + imp_count_loss
-                    loss =  obs_count_loss + imp_count_loss
+                    # loss =  obs_count_loss + imp_count_loss
                     # loss =  imp_count_loss
 
                     if torch.isnan(loss).sum() > 0:
