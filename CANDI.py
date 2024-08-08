@@ -193,14 +193,21 @@ class CANDI_DNA(nn.Module):
                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
+        # self.deconv = nn.ModuleList(
+        #     [DeconvTower(
+        #         reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+        #         conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
+        #         groups=1) for i in range(n_cnn_layers)])
+        
+        # self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=True)
+        # self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=True)
         self.deconv = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
-                conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+                self.f2, self.f2, conv_kernel_size, S=pool_size, D=1, residuals=True,
+                groups=1) for i in range(n_cnn_layers)])
         
-        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=True)
-        self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=True)
+        self.neg_binom_layer = NegativeBinomialLayer(self.f2, self.f1, FF=False)
+        self.gaussian_layer = GaussianLayer(self.f2, self.f1, FF=True)
     
     def forward(self, src, seq, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
@@ -711,7 +718,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 8,
+        "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 5,
         "mask_percentage": 0.20,
