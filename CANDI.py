@@ -241,6 +241,7 @@ class CANDI_DNA(nn.Module):
         src = self.xmd_fusion(src)
 
         ################################################################################
+        seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
         for seq_conv in self.convEncDNA_stem:
             print(seq.shape)
             seq = seq_conv(seq)
