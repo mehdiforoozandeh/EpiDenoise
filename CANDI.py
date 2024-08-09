@@ -441,7 +441,8 @@ class PRETRAIN(object):
                         print(skipmessage)
                         torch.cuda.empty_cache() 
                         continue
-                    
+
+                    loss = loss.float()
                     loss.backward()  
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
