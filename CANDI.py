@@ -291,7 +291,8 @@ class CANDI_NLL_LOSS(nn.Module):
     def __init__(self, reduction='sum'):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
+        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
+        self.mse = nn.MSELoss(reduction="mean")
         self.nbin_nll = negative_binomial_loss
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
@@ -313,8 +314,10 @@ class CANDI_NLL_LOSS(nn.Module):
             observed_count_loss = observed_count_loss.sum()
             imputed_count_loss = imputed_count_loss.sum()
 
-        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
-        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        observed_pval_loss = self.mse(ups_mu_pred, ups_true_pval)
+        imputed_pval_loss = self.mse(imp_mu_pred, imp_true_pval)
         
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
@@ -383,7 +386,11 @@ class PRETRAIN(object):
                     "ups_count_conf":[], "imp_count_conf":[],
                     "ups_pval_conf":[], "imp_pval_conf":[],
                     "ups_count_mse":[], "imp_count_mse":[],
-                    "ups_pval_mse":[], "imp_pval_mse":[]
+                    "ups_pval_mse":[], "imp_pval_mse":[],
+                    "ups_count_spearman":[], "imp_count_spearman":[],
+                    "ups_pval_spearman":[], "imp_pval_spearman":[],
+                    "ups_count_pearson":[], "imp_count_pearson":[],
+                    "ups_pval_pearson":[], "imp_pval_pearson":[]
                     }
 
                 for _ in range(inner_epochs):
@@ -437,7 +444,7 @@ class PRETRAIN(object):
                     
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.5)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
 # 
                     self.optimizer.step()
@@ -457,6 +464,9 @@ class PRETRAIN(object):
                     imp_count_pmf = neg_bin_imp.pmf(imp_count_true).mean()
                     imp_count_mse = ((imp_count_true - imp_count_pred)**2).mean()
 
+                    imp_count_spearman = spearmanr(imp_count_true, imp_count_pred).correlation
+                    imp_count_pearson = pearsonr(imp_count_true, imp_count_pred)[0]
+
                     # IMP P-value Predictions
                     imp_pval_pred = output_mu[masked_map].cpu().detach().numpy()
                     imp_pval_std = output_var[masked_map].cpu().detach().numpy() ** 0.5
@@ -469,6 +479,9 @@ class PRETRAIN(object):
                     gaussian_imp = Gaussian(output_mu[masked_map].cpu().detach(), output_var[masked_map].cpu().detach())
                     imp_pval_pmf = gaussian_imp.pdf(imp_pval_true).mean()
                     imp_pval_mse = ((imp_pval_true - imp_pval_pred)**2).mean()
+
+                    imp_pval_spearman = spearmanr(imp_pval_true, imp_pval_pred).correlation
+                    imp_pval_pearson = pearsonr(imp_pval_true, imp_pval_pred)[0]
 
                     # UPS Count Predictions
                     neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
@@ -483,6 +496,9 @@ class PRETRAIN(object):
                     ups_count_pmf = neg_bin_ups.pmf(ups_count_true).mean()
                     ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
 
+                    ups_count_spearman = spearmanr(ups_count_true, ups_count_pred).correlation
+                    ups_count_pearson = pearsonr(ups_count_true, ups_count_pred)[0]
+
                     # UPS P-value Predictions
                     ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
                     ups_pval_std = output_var[observed_map].cpu().detach().numpy() ** 0.5
@@ -495,7 +511,10 @@ class PRETRAIN(object):
                     gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
                     ups_pval_pmf = gaussian_ups.pdf(ups_pval_true).mean()
                     ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
-                    
+
+                    ups_pval_spearman = spearmanr(ups_pval_true, ups_pval_pred).correlation
+                    ups_pval_pearson = pearsonr(ups_pval_true, ups_pval_pred)[0]
+
                     #################################################################################
                   
                     batch_rec["imp_count_loss"].append(imp_count_loss.item())
@@ -526,6 +545,17 @@ class PRETRAIN(object):
 
                     batch_rec["ups_pval_mse"].append(ups_pval_mse)
                     batch_rec["imp_pval_mse"].append(imp_pval_mse)
+
+                    batch_rec["imp_count_spearman"].append(imp_count_spearman)
+                    batch_rec["ups_count_spearman"].append(ups_count_spearman)
+                    batch_rec["imp_pval_spearman"].append(imp_pval_spearman)
+                    batch_rec["ups_pval_spearman"].append(ups_pval_spearman)
+
+                    batch_rec["imp_count_pearson"].append(imp_count_pearson)
+                    batch_rec["ups_count_pearson"].append(ups_count_pearson)
+                    batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
+                    batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
+
                 
                 # if hook:
 
@@ -559,18 +589,22 @@ class PRETRAIN(object):
                     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
                     f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer / len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
                     f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}", "\n",
+
                     f"Imp_nbNLL {np.mean(batch_rec['imp_count_loss']):.2f}",
                     f"Ups_nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"Imp_gNLL {np.mean(batch_rec['imp_pval_loss']):.2f}",
                     f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", "\n",
+
                     f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
                     f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
-                    f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",
+                    f"Imp_Pval_R2 {np.mean(batch_rec['imp_pval_r2']):.2f}",
                     f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}", "\n",
+
                     f"Imp_Count_P {np.mean(batch_rec['imp_count_pmf']):.2f}",
                     f"Ups_Count_P {np.mean(batch_rec['ups_count_pmf']):.2f}",
                     f"Imp_Pval_P {np.mean(batch_rec['imp_pval_pmf']):.2f}",
                     f"Ups_Pval_P {np.mean(batch_rec['ups_pval_pmf']):.2f}", "\n",
+
                     f"Imp_Count_Conf {np.mean(batch_rec['imp_count_conf']):.2f}",
                     f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
                     f"Imp_Pval_Conf {np.mean(batch_rec['imp_pval_conf']):.2f}",
@@ -580,6 +614,17 @@ class PRETRAIN(object):
                     f"Ups_Count_MSE {np.mean(batch_rec['ups_count_mse']):.2f}",
                     f"Imp_Pval_MSE {np.mean(batch_rec['imp_pval_mse']):.2f}",
                     f"Ups_Pval_MSE {np.mean(batch_rec['ups_pval_mse']):.2f}", "\n",
+
+                    f"Imp_Count_SRCC {np.mean(batch_rec['imp_count_spearman']):.2f}",
+                    f"Ups_Count_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
+                    f"Imp_Pval_SRCC {np.mean(batch_rec['imp_pval_spearman']):.2f}",
+                    f"Ups_Pval_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}", "\n",
+
+                    f"Imp_Count_PCC {np.mean(batch_rec['imp_count_pearson']):.2f}",
+                    f"Ups_Count_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
+                    f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
+                    f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
+
                     f"took {int(minutes)}:{int(seconds):02d}", "\n"
                 ]
 
@@ -633,7 +678,7 @@ class PRETRAIN(object):
                 
         return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix=""):
     if eic:
         arch="eic"
     else:
@@ -642,6 +687,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False):
     if DNA:
         arch = f"{arch}_DNA"
 
+    arch = f"{arch}_{suffix}"
     # Defining the hyperparameters
     resolution = 25
     data_path = hyper_parameters["data_path"]
@@ -775,4 +821,4 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE")
