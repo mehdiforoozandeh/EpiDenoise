@@ -318,6 +318,20 @@ class CANDI_NLL_LOSS(nn.Module):
         # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
         observed_pval_loss = self.mse(ups_mu_pred, ups_true_pval)
         imputed_pval_loss = self.mse(imp_mu_pred, imp_true_pval)
+
+        print("obs_count_loss dtype:", observed_count_loss.dtype)
+        print("obs_pval_loss dtype:", observed_pval_loss.dtype)
+        print("imp_pval_loss dtype:", imputed_pval_loss.dtype)
+        print("imp_count_loss dtype:", imputed_count_loss.dtype)
+
+        observed_pval_loss = observed_pval_loss.float()
+        imputed_pval_loss = imputed_pval_loss.float()
+
+        print("obs_count_loss dtype:", observed_count_loss.dtype)
+        print("obs_pval_loss dtype:", observed_pval_loss.dtype)
+        print("imp_pval_loss dtype:", imputed_pval_loss.dtype)
+        print("imp_count_loss dtype:", imputed_count_loss.dtype)
+        
         
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
@@ -714,7 +728,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
