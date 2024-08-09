@@ -332,7 +332,6 @@ class CANDI_NLL_LOSS(nn.Module):
         print("imp_pval_loss dtype:", imputed_pval_loss.dtype)
         print("imp_count_loss dtype:", imputed_count_loss.dtype)
         
-        
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
 class PRETRAIN(object):
@@ -455,8 +454,10 @@ class PRETRAIN(object):
                         print(skipmessage)
                         torch.cuda.empty_cache() 
                         continue
-
+                    
+                    print("total Loss dtype:", loss.dtype)
                     loss = loss.float()
+                    print("total Loss dtype:", loss.dtype)
                     loss.backward()  
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
