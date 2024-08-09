@@ -458,11 +458,14 @@ class PRETRAIN(object):
                     print("total Loss dtype:", loss.dtype)
                     loss = loss.float()
                     print("total Loss dtype:", loss.dtype)
+                    for name, param in self.model.named_parameters():
+                        if param.dtype != torch.float32:
+                            print(f"Parameter {name} is of dtype {param.dtype}")
                     loss.backward()  
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
-# 
+
                     self.optimizer.step()
 
                     #################################################################################
