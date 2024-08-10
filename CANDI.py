@@ -291,8 +291,8 @@ class CANDI_NLL_LOSS(nn.Module):
     def __init__(self, reduction='sum'):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
-        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
-        self.mse = nn.MSELoss(reduction="mean")
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
+        # self.mse = nn.MSELoss(reduction="mean")
         self.nbin_nll = negative_binomial_loss
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
