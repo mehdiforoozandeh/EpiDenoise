@@ -292,7 +292,7 @@ class CANDI_NLL_LOSS(nn.Module):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
         # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
-        self.mse = nn.MSELoss(reduction="mean")
+        self.mse = nn.MSELoss(reduction="sum")
         self.nbin_nll = negative_binomial_loss
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
@@ -431,9 +431,10 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    loss = obs_pval_loss #+ imp_pval_loss 
+                    # loss = obs_pval_loss #+ imp_pval_loss 
+                    # loss = obs_pval_loss.dtype #+ imp_pval_loss 
                     # loss =  imp_pval_loss + imp_count_loss
                     # loss =  obs_count_loss + imp_count_loss
                     # loss =  imp_count_loss
