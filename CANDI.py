@@ -433,8 +433,9 @@ class PRETRAIN(object):
 
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # loss = obs_pval_loss + imp_pval_loss 
                     # loss =  imp_pval_loss + imp_count_loss
-                    loss =  obs_count_loss + imp_count_loss
+                    # loss =  obs_count_loss + imp_count_loss
                     # loss =  imp_count_loss
 
                     if torch.isnan(loss).sum() > 0:
