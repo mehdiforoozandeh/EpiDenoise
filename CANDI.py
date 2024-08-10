@@ -291,8 +291,8 @@ class CANDI_NLL_LOSS(nn.Module):
     def __init__(self, reduction='sum'):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
-        # self.mse = nn.MSELoss(reduction="mean")
+        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
+        self.mse = nn.MSELoss(reduction="mean")
         self.nbin_nll = negative_binomial_loss
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
@@ -314,23 +314,13 @@ class CANDI_NLL_LOSS(nn.Module):
             observed_count_loss = observed_count_loss.sum()
             imputed_count_loss = imputed_count_loss.sum()
 
-        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
-        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        # observed_pval_loss = self.mse(ups_mu_pred, ups_true_pval)
-        # imputed_pval_loss = self.mse(imp_mu_pred, imp_true_pval)
-
-        # print("obs_count_loss dtype:", observed_count_loss.dtype)
-        # print("obs_pval_loss dtype:", observed_pval_loss.dtype)
-        # print("imp_pval_loss dtype:", imputed_pval_loss.dtype)
-        # print("imp_count_loss dtype:", imputed_count_loss.dtype)
+        # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        observed_pval_loss = self.mse(ups_mu_pred, ups_true_pval)
+        imputed_pval_loss = self.mse(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
-
-        # print("obs_count_loss dtype:", observed_count_loss.dtype)
-        # print("obs_pval_loss dtype:", observed_pval_loss.dtype)
-        # print("imp_pval_loss dtype:", imputed_pval_loss.dtype)
-        # print("imp_count_loss dtype:", imputed_count_loss.dtype)
         
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
@@ -456,7 +446,7 @@ class PRETRAIN(object):
                         continue
                     
                     # print("total Loss dtype:", loss.dtype)
-                    # loss = loss.float()
+                    loss = loss.float()
                     # print("total Loss dtype:", loss.dtype)
                     # for name, param in self.model.named_parameters():
                     #     if param.dtype != torch.float32:
