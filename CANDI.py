@@ -292,8 +292,11 @@ class CANDI_NLL_LOSS(nn.Module):
         super(CANDI_NLL_LOSS, self).__init__()
         self.reduction = reduction
         # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
-        self.mse = nn.MSELoss(reduction=reduction)
+        # self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
+    
+    def mse_loss(self, Y_true, Y_pred):
+        return torch.square(torch.subtract(Y_true,Y_pred)).mean() 
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
         ups_true_count, ups_true_pval = true_count[obs_map], true_pval[obs_map]
@@ -316,8 +319,8 @@ class CANDI_NLL_LOSS(nn.Module):
 
         # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
         # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        observed_pval_loss = self.mse(ups_mu_pred, ups_true_pval)
-        imputed_pval_loss = self.mse(imp_mu_pred, imp_true_pval)
+        observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
+        imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
