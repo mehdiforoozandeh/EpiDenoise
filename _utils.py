@@ -828,7 +828,7 @@ class MONITOR_VALIDATION(object): # CANDI
         return results
     
     def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices):
-        ups_mean = ups_dist.expect()
+        ups_mean = ups_count_dist.expect()
         ups_pval = ups_pval_dist.mean()
         
         results = []
