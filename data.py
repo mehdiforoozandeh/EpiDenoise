@@ -1712,10 +1712,10 @@ class ExtendedEncodeDataHandler:
                     if os.path.isdir(exp_path):
                         exps.append(exp)
             
+            print(bios_name, exps)
         else:
             exps = list(self.navigation[bios_name].keys())
 
-        print(bios_name, exps)
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
@@ -1790,13 +1790,13 @@ class ExtendedEncodeDataHandler:
                     if os.path.isdir(exp_path):
                         exps.append(exp)
             
+            print(bios_name, exps)
+            
         else:
             exps = list(self.navigation[bios_name].keys())
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
-        
-        print(bios_name, exps)
 
         loaded_data = {}
         loaded_metadata = {}
@@ -2240,8 +2240,10 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
     
         if eic:
+            self.eic = eic
             self.init_eic(target_split=split)
         else:
+            self.eic = False
             self.filter_navigation(exclude=excludes, include=includes)
 
         # filter biosamples
