@@ -874,7 +874,9 @@ class MONITOR_VALIDATION(object): # CANDI
         for bios_name in bioses:
             if self.eic:
                 # try:
-                full_res += self.get_metric_eic(self.get_bios_frame_eic(bios_name, x_dsf=x_dsf, y_dsf=y_dsf))
+                ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
+                    bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
                 
                 # except:
                     # pass
