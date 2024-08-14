@@ -1716,6 +1716,8 @@ class ExtendedEncodeDataHandler:
         else:
             exps = list(self.navigation[bios_name].keys())
 
+        print(bios_name, exps)
+
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
 
