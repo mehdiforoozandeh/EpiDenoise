@@ -366,9 +366,6 @@ class PRETRAIN(object):
         else:
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
 
-        validation_set_eval = val_eval.get_validation(self.model)
-        print(validation_set_eval)
-
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
