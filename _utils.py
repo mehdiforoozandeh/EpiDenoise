@@ -8,7 +8,7 @@ import torch
 from scipy.stats import nbinom
 import torch.distributions as dist
 from eval import METRICS
-from data import ExtendedEncodeDataHandler
+from data import ExtendedEncodeDataHandler, get_DNA_sequence, dna_to_onehot
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions import Poisson as PoissonTorch
 from torch.distributions.utils import (
