@@ -346,8 +346,8 @@ class PRETRAIN(object):
         logfile.write("\n".join(log_strs))
         logfile.close()
 
-        # images = []
-        # gif_filename = f"models/EPD30{arch}_TrainProg.gif"
+        images = []
+        gif_filename = f"models/CANDI{arch}_TrainProg.gif"
 
         token_dict = {
             "missing_mask": -1, 
@@ -358,9 +358,12 @@ class PRETRAIN(object):
 
         if hook:
             register_hooks(self.model)
-            
-        # val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, arch=arch, token_dict=token_dict)
         
+        if "eic" in arch:
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA)
+        else:
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
+
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
@@ -462,7 +465,8 @@ class PRETRAIN(object):
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
 
                     self.optimizer.step()
-
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    print(validation_set_eval)
                     #################################################################################
 
                     # IMP Count Predictions
@@ -569,30 +573,29 @@ class PRETRAIN(object):
                     batch_rec["ups_count_pearson"].append(ups_count_pearson)
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
-
                 
-                # if hook:
+                if hook:
 
-                    # # Initialize variables to store maximum gradient norms and corresponding layer names
-                    # max_weight_grad_norm = 0
-                    # max_weight_grad_layer = None
-                    # max_bias_grad_norm = 0
-                    # max_bias_grad_layer = None
+                    # Initialize variables to store maximum gradient norms and corresponding layer names
+                    max_weight_grad_norm = 0
+                    max_weight_grad_layer = None
+                    max_bias_grad_norm = 0
+                    max_bias_grad_layer = None
 
-                    # # Check and update maximum gradient norms
-                    # for name, module in self.model.named_modules():
-                    #     if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
-                    #         if module.weight.grad_norm > max_weight_grad_norm:
-                    #             max_weight_grad_norm = module.weight.grad_norm
-                    #             max_weight_grad_layer = name
+                    # Check and update maximum gradient norms
+                    for name, module in self.model.named_modules():
+                        if hasattr(module, 'weight') and module.weight is not None and hasattr(module.weight, 'grad_norm'):
+                            if module.weight.grad_norm > max_weight_grad_norm:
+                                max_weight_grad_norm = module.weight.grad_norm
+                                max_weight_grad_layer = name
 
-                    #     if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
-                    #         if module.bias.grad_norm > max_bias_grad_norm:
-                    #             max_bias_grad_norm = module.bias.grad_norm
-                    #             max_bias_grad_layer = name
+                        if hasattr(module, 'bias') and module.bias is not None and hasattr(module.bias, 'grad_norm') and module.bias.grad_norm is not None:
+                            if module.bias.grad_norm > max_bias_grad_norm:
+                                max_bias_grad_norm = module.bias.grad_norm
+                                max_bias_grad_layer = name
 
-                    # if max_weight_grad_layer:
-                    #     print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+                    if max_weight_grad_layer:
+                        print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -654,33 +657,37 @@ class PRETRAIN(object):
                 #################################################################################
                 #################################################################################
 
-                # chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
-                # dsf_pointer0 = self.dataset.dsf_pointer
-                # bios_pointer0 = self.dataset.bios_pointer
+                chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                dsf_pointer0 = self.dataset.dsf_pointer
+                bios_pointer0 = self.dataset.bios_pointer
 
                 next_epoch = self.dataset.update_batch_pointers()
 
-                # dsf_pointer1 = self.dataset.dsf_pointer
-                # chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
-                # bios_pointer1 = self.dataset.bios_pointer
+                dsf_pointer1 = self.dataset.dsf_pointer
+                chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                bios_pointer1 = self.dataset.bios_pointer
 
-                # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
-                #     # Generate and process the plot
-                #     fig_title = " | ".join([
-                #         f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
-                #         f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
+                    # Generate and process the plot
+                    fig_title = " | ".join([
+                        f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                     
-                #     plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
-                #     images.append(imageio.imread(plot_buf))
-                #     plot_buf.close()
-                #     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                    if "eic" in arch:
+                        plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
+                    else:
+                        plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
 
-                # if chr0 != chr1:
-                #     validation_set_eval = val_eval.get_validation(self.model)
-                #     torch.cuda.empty_cache()
-                #     log_strs.append(validation_set_eval)
-                #     print(validation_set_eval)
-                #     log_resource_usage()
+                    images.append(imageio.imread(plot_buf))
+                    plot_buf.close()
+                    imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+
+                if chr0 != chr1:
+                    validation_set_eval = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
             
             self.scheduler.step()
             print("learning rate scheduler step...")
