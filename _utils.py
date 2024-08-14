@@ -845,6 +845,9 @@ class MONITOR_VALIDATION(object): # CANDI
                 comparison = "imputed"
                 target_count = Y[:, j].numpy()
 
+            else:
+                continue
+
             metrics = {
                 'bios':bios_name,
                 'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
