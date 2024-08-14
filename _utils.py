@@ -550,7 +550,7 @@ class MONITOR_VALIDATION(object): # CANDI
             subsets_P.append(P[start:adjusted_end, :])
 
             if self.DNA:
-                subsets_seq.append(dna_to_onehot(self.dataset.get_DNA_sequence("chr21", start, adjusted_end)))
+                subsets_seq.append(dna_to_onehot(get_DNA_sequence("chr21", start, adjusted_end)))
 
         X = torch.cat(subsets_X, dim=0)
         Y = torch.cat(subsets_Y, dim=0)
