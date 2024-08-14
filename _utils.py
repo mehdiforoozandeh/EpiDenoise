@@ -899,7 +899,9 @@ class MONITOR_VALIDATION(object): # CANDI
                     # pass
             else:
                 # try:
-                full_res += self.get_metric(self.get_bios_frame(bios_name, x_dsf=x_dsf, y_dsf=y_dsf))
+                imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
+                    bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
                 # except:
                     # pass
 
