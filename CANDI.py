@@ -242,7 +242,7 @@ class CANDI_DNA(nn.Module):
         src = self.xmd_fusion(src)
 
         ################################################################################
-        if seq.shape[0] != src.shape[0]:
+        if len(seq.shape) != len(src.shape):
             seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
 
         seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
