@@ -465,6 +465,9 @@ class PRETRAIN(object):
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
 
                     self.optimizer.step()
+
+
+                    
                     validation_set_eval = val_eval.get_validation(self.model)
                     print(validation_set_eval)
                     #################################################################################

@@ -194,9 +194,6 @@ class MONITOR_VALIDATION(object): # CANDI
             ]
 
         self.token_dict = token_dict
-        
-        if self.arch in ["c"]:
-            self.token_dict["cloze_mask"] = self.token_dict["missing_mask"]
 
         self.chr_sizes = {}
         self.metrics = METRICS()
