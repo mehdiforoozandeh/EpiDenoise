@@ -518,6 +518,9 @@ class MONITOR_VALIDATION(object): # CANDI
         temp_py = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
         temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
         temp_p = {**temp_py, **temp_px}
+        print(temp_p.keys())
+        if len(temp_p) == 0:
+            exit()
         P, avlP = self.dataset.make_region_tensor_BW(temp_p)
         del temp_py, temp_px, temp_p
 
