@@ -226,8 +226,7 @@ class CANDI_DNA(nn.Module):
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
-        print(src.shape, seq.shape)
-        exit()
+
         src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
