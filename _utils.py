@@ -399,7 +399,7 @@ class MONITOR_VALIDATION(object): # CANDI
         del temp_y, temp_my
 
         temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
-        P, avlP = self.dataset.make_region_tensor_BW(temp_p)
+        P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
         assert (avlP == avY).all(), "avlP and avY do not match"
         del temp_P
 
@@ -414,10 +414,10 @@ class MONITOR_VALIDATION(object): # CANDI
             subsets_seq = []
 
         if fixed_segment is None:
-            # Use example coordinates (behavior similar to get_bios)
+            # Use example coordinates (similar to get_bios_eic behavior)
             coordinates = self.example_coords
         else:
-            # Use fixed segment (behavior similar to get_frame)
+            # Use fixed segment (similar to get_bios_frame behavior)
             start, end = fixed_segment
             coordinates = [(start, end)]
 
@@ -431,7 +431,8 @@ class MONITOR_VALIDATION(object): # CANDI
             subsets_P.append(P[start:adjusted_end, :])
 
             if self.DNA:
-                subsets_seq.append(dna_to_onehot(self.dataset.get_DNA_sequence("chr21", start, adjusted_end)))
+                subsets_seq.append(
+                    dna_to_onehot(get_DNA_sequence("chr21", start*self.resolution, adjusted_end*self.resolution)))
 
         X = torch.cat(subsets_X, dim=0)
         Y = torch.cat(subsets_Y, dim=0)
@@ -439,10 +440,15 @@ class MONITOR_VALIDATION(object): # CANDI
 
         if self.DNA:
             seq = torch.cat(subsets_seq, dim=0)
-
+        
+        # print(X.shape, Y.shape, P.shape, seq.shape)
+            
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
         P = P.view(-1, self.context_length, P.shape[-1])
+
+        if self.DNA:
+            seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
 
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
