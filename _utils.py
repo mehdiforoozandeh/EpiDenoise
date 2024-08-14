@@ -1109,7 +1109,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         self.model = model
 
-        bios = list(self.dataset.navigation.keys())[0]
+        bios_name = list(self.dataset.navigation.keys())[0]
         
         # DSF 2->1 (EIC-specific logic)
         ups_count_dist_21, ups_pval_dist_21, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
