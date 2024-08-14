@@ -566,6 +566,8 @@ class MONITOR_VALIDATION(object): # CANDI
 
         if self.DNA:
             seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
+        
+        print(X.shape, Y.shape, P.shape, seq.shape)
 
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
