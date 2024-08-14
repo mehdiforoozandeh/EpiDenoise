@@ -572,11 +572,6 @@ class MONITOR_VALIDATION(object): # CANDI
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
-        print(seq.shape)
-        print(X.shape)
-        print(Y.shape)
-        print(P.shape)
-
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
         else:
