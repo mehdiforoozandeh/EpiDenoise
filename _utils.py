@@ -522,9 +522,6 @@ class MONITOR_VALIDATION(object): # CANDI
         P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
         del temp_py, temp_px, temp_p
 
-        print(P.shape, X.shape, Y.shape)
-        exit()
-
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
 
