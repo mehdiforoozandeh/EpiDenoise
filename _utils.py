@@ -827,7 +827,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         return results
     
-    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, availability_X, availability_Y):
+    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices):
         ups_mean = ups_count_dist.expect()
         ups_pval = ups_pval_dist.mean()
         
@@ -837,11 +837,11 @@ class MONITOR_VALIDATION(object): # CANDI
             pred_pval = ups_pval[:, j].numpy()
             target_pval = P[:, j].numpy()
 
-            if j in list(availability_X):
+            if j in list(available_X_indices):
                 comparison = "upsampled"
                 target_count = X[:, j].numpy()
 
-            elif j in list(availability_Y):
+            elif j in list(available_Y_indices):
                 comparison = "imputed"
                 target_count = Y[:, j].numpy()
 
@@ -849,7 +849,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 'bios':bios_name,
                 'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
                 'comparison': comparison,
-                'available assays': len(availability_X),
+                'available assays': len(available_X_indices),
 
                 'MSE_count': self.metrics.mse(target_count, pred_count),
                 'Pearson_count': self.metrics.pearson(target_count, pred_count),
