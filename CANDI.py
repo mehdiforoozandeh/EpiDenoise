@@ -244,8 +244,6 @@ class CANDI_DNA(nn.Module):
         if seq.shape[0] != src.shape[0]:
             seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
 
-        print(seq.shape, src.shape)
-        exit()
         seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
         seq = seq.float()
         for seq_conv in self.convEncDNA_stem:
@@ -257,6 +255,8 @@ class CANDI_DNA(nn.Module):
         # seq = self.SE_DNA_enc(seq)
         seq = seq.permute(0, 2, 1)  # to N, L', F2
         ################################################################################
+        print(seq.shape, src.shape)
+        exit()
         src = torch.cat([src, seq], dim=-1)
         src = self.DNA_Epig_fusion(src)
         ################################################################################
