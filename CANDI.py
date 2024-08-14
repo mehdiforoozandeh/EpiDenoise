@@ -351,6 +351,8 @@ class PRETRAIN(object):
         images = []
         gif_filename = f"models/CANDI{arch}_TrainProg.gif"
 
+        
+
         token_dict = {
             "missing_mask": -1, 
             "cloze_mask": -2,
@@ -366,6 +368,20 @@ class PRETRAIN(object):
         else:
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
 
+
+        # Generate and process the plot
+        fig_title = "test"
+        
+        if "eic" in arch:
+            plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
+        else:
+            plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+
+        images.append(imageio.imread(plot_buf))
+        plot_buf.close()
+        imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+
+        
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
