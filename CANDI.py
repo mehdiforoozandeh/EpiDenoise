@@ -368,7 +368,6 @@ class PRETRAIN(object):
         else:
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
 
-
         # Generate and process the plot
         fig_title = "test"
         
@@ -381,7 +380,6 @@ class PRETRAIN(object):
         plot_buf.close()
         imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-        
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
