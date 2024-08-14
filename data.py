@@ -1704,15 +1704,14 @@ class ExtendedEncodeDataHandler:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
     def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
-        if self.eic:
-            if bios_name not in self.navigation.keys():
-                exps = []
-                if os.path.isdir(os.path.join(self.base_path, bios_name)):
-                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
-                        exp_path = os.path.join(self.base_path, bios_name, exp)
-                        if os.path.isdir(exp_path):
-                            exps.append(exp)
-                
+        if self.eic and bios_name not in self.navigation.keys():
+            exps = []
+            if os.path.isdir(os.path.join(self.base_path, bios_name)):
+                for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+                    exp_path = os.path.join(self.base_path, bios_name, exp)
+                    if os.path.isdir(exp_path):
+                        exps.append(exp)
+            
         else:
             exps = list(self.navigation[bios_name].keys())
 
@@ -1783,14 +1782,13 @@ class ExtendedEncodeDataHandler:
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
         
-        if self.eic:
-            if bios_name not in self.navigation.keys():
-                exps = []
-                if os.path.isdir(os.path.join(self.base_path, bios_name)):
-                    for exp in os.listdir(os.path.join(self.base_path, bios_name)):
-                        exp_path = os.path.join(self.base_path, bios_name, exp)
-                        if os.path.isdir(exp_path):
-                            exps.append(exp)
+        if self.eic and bios_name not in self.navigation.keys():
+            exps = []
+            if os.path.isdir(os.path.join(self.base_path, bios_name)):
+                for exp in os.listdir(os.path.join(self.base_path, bios_name)):
+                    exp_path = os.path.join(self.base_path, bios_name, exp)
+                    if os.path.isdir(exp_path):
+                        exps.append(exp)
             
         else:
             exps = list(self.navigation[bios_name].keys())
