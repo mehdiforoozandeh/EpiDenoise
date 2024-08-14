@@ -560,7 +560,7 @@ class MONITOR_VALIDATION(object): # CANDI
         if self.DNA:
             seq = torch.cat(subsets_seq, dim=0)
         
-        print(X.shape, Y.shape, P.shape, seq.shape)
+        # print(X.shape, Y.shape, P.shape, seq.shape)
             
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
@@ -569,7 +569,7 @@ class MONITOR_VALIDATION(object): # CANDI
         if self.DNA:
             seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
         
-        print(X.shape, Y.shape, P.shape, seq.shape)
+        # print(X.shape, Y.shape, P.shape, seq.shape)
 
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
