@@ -401,7 +401,7 @@ class MONITOR_VALIDATION(object): # CANDI
         temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
         P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
         assert (avlP == avY).all(), "avlP and avY do not match"
-        del temp_P
+        del temp_p
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
