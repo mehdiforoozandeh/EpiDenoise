@@ -287,9 +287,9 @@ class CANDI_DNA(nn.Module):
 
         return p, n, mu, var
 
-class CANDI_NLL_LOSS(nn.Module):
+class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
-        super(CANDI_NLL_LOSS, self).__init__()
+        super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
         # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
         # self.mse = nn.MSELoss(reduction=reduction)
@@ -758,7 +758,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     with open(f'models/hyper_parameters_{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
-    criterion = CANDI_NLL_LOSS()
+    criterion = CANDI_LOSS()
 
     start_time = time.time()
 
@@ -786,6 +786,38 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         f.write(json.dumps(description, indent=4))
 
     return model
+
+class CANDI_LOADER(object):
+    def __init__(self, model_path, hyper_parameters, DNA=False):
+        self.model_path = model_path
+        self.hyper_parameters = hyper_parameters
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.DNA = DNA
+
+    def load_CANDI(self):
+        signal_dim = self.hyper_parameters["signal_dim"]
+        dropout = self.hyper_parameters["dropout"]
+        nhead = self.hyper_parameters["nhead"]
+        n_sab_layers = self.hyper_parameters["n_sab_layers"]
+        metadata_embedding_dim = self.hyper_parameters["metadata_embedding_dim"]
+        context_length = self.hyper_parameters["context_length"]
+
+        n_cnn_layers = self.hyper_parameters["n_cnn_layers"]
+        conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
+        pool_size = self.hyper_parameters["pool_size"]
+
+        if self.DNA:
+            model = CANDI_DNA(
+                signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+                n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+        else:
+            model = CANDI(
+                signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+                n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+
+        model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
+        model = model.to(self.device)
+        return model
 
 if __name__ == "__main__":
     hyper_parameters_L = {

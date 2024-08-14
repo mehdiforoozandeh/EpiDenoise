@@ -2043,3 +2043,529 @@ class DeconvBlock(nn.Module):
         x = self.deconv(x)
         x = F.gelu(x)
         return x
+
+class MONITOR_VALIDATION(object):
+    def __init__(
+        self, data_path, context_length, batch_size,
+        chr_sizes_file="data/hg38.chrom.sizes", 
+        resolution=25, split="val", arch="a", 
+        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}, eic=False):
+
+        self.data_path = data_path
+        self.context_length = context_length
+        self.batch_size = batch_size
+        self.resolution = resolution
+        self.arch = arch
+        self.eic = eic
+
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=10, eic=eic)
+
+        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.example_coords = [
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution), # ITSN1
+            (36260000//self.resolution, 36450000//self.resolution), # RUNX1
+            (45000000//self.resolution, 45250000//self.resolution), # COL18A1
+            (36600000//self.resolution, 36850000//self.resolution), # MX1
+            (39500000//self.resolution, 40000000//self.resolution) # Highly Conserved Non-Coding Sequences (HCNS)
+            ]
+
+        self.token_dict = token_dict
+        
+        if self.arch in ["c"]:
+            self.token_dict["cloze_mask"] = self.token_dict["missing_mask"]
+
+        self.chr_sizes = {}
+        self.metrics = METRICS()
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        with open(chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+    
+    def pred(self, X, mX, mY, avail, imp_target=[]):
+        # print("making preds")
+        # Initialize a tensor to store all predictions
+        n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        # make predictions in batches
+        for i in range(0, len(X), self.batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+ self.batch_size]
+            mX_batch = mX[i:i+ self.batch_size]
+            mY_batch = mY[i:i+ self.batch_size]
+            avail_batch = avail[i:i+ self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                # mY_batch_missing_vals = (mY_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+                # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
+                if self.arch in ["a", "b"]:
+                    avail_batch[avail_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                if len(imp_target)>0:
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    if self.arch in ["a", "b"]:
+                        avail_batch[:, imp_target] = self.token_dict["cloze_mask"]
+                    elif self.arch in ["c", "d"]:
+                        avail_batch[:, imp_target] = 0
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                if self.arch in ["a", "b", "d"]:
+                    outputs_p, outputs_n, _, _ = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+                elif self.arch in ["c"]:
+                    outputs_p, outputs_n = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+
+            # Store the predictions in the large tensor
+            n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
+
+            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n  # Free up memory
+            torch.cuda.empty_cache()  # Free up GPU memory
+
+        return n, p
+
+    def get_bios(self, bios_name, x_dsf=1, y_dsf=1):
+        print(f"getting bios vals for {bios_name}")
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+        
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        for start, end in self.example_coords:
+            segment_length = end - start
+            adjusted_length = (segment_length // self.context_length) * self.context_length
+            adjusted_end = start + adjusted_length
+
+            subsets_X.append(X[start:adjusted_end, :])
+            subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        for leave_one_out in available_indices:
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            # print(f"got imputations for feature #{leave_one_out+1}")
+            del n, p  # Free up memory
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
+        # print("got upsampled")
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return imp_dist, ups_dist, Y, bios_name, available_indices
+    
+    def get_bios_eic(self, bios_name, x_dsf=1, y_dsf=1):
+        print(f"getting bios vals for {bios_name}")
+
+        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf, eic=True)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+        
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        # mY = self.dataset.fill_in_y_prompt(mY)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        for start, end in self.example_coords:
+            segment_length = end - start
+            adjusted_length = (segment_length // self.context_length) * self.context_length
+            adjusted_end = start + adjusted_length
+
+            subsets_X.append(X[start:adjusted_end, :])
+            subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_X_indices = torch.where(avX[0, :] == 1)[0]
+        available_Y_indices = torch.where(avY[0, :] == 1)[0]
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        # del X, mX, mY, avX, avY  # Free up memoryrm m
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1])
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices
+
+    def get_frame(self, bios_name, x_dsf=1, y_dsf=1):
+        temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+        Y, mY, avY= self.dataset.make_bios_tensor(temp_y, temp_my)
+        del temp_y, temp_my
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y = X[:num_rows, :], Y[:num_rows, :]
+
+        subsets_X = []
+        subsets_Y = []
+
+        start, end = 33481539//self.resolution, 33588914//self.resolution
+        segment_length = end - start
+        adjusted_length = (segment_length // self.context_length) * self.context_length
+        adjusted_end = start + adjusted_length
+
+        subsets_X.append(X[start:adjusted_end, :])
+        subsets_Y.append(Y[start:adjusted_end, :])
+
+        # Concatenate the subsets along the sequence length dimension (second dimension)
+        X = torch.cat(subsets_X, dim=0)
+        Y = torch.cat(subsets_Y, dim=0)
+
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        for leave_one_out in available_indices:
+            n, p = self.pred(X, mX, mY, avX, imp_target=[leave_one_out])
+            
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+            # print(f"got imputations for feature #{leave_one_out+1}")
+            del n, p  # Free up memory
+        
+        n_ups, p_ups = self.pred(X, mX, mY, avX, imp_target=[])
+        del X, mX, mY, avX, avY  # Free up memoryrm m
+        # print("got upsampled")
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        imp_dist = NegativeBinomial(p_imp, n_imp)
+        ups_dist = NegativeBinomial(p_ups, n_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+
+        return imp_dist, ups_dist, Y, bios_name, available_indices
+
+    def get_metric(self, imp_dist, ups_dist, Y, bios_name, availability):
+        # print(f"getting metrics")
+        imp_mean = imp_dist.expect()
+        ups_mean = ups_dist.expect()
+
+        # print(f"got nbinom stuff")
+        # imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        # ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        
+        results = []
+        # for j in availability:  # for each feature i.e. assay
+        for j in range(Y.shape[1]):
+
+            if j in list(availability):
+                # j = j.item()
+                for comparison in ['imputed', 'upsampled']:
+                    if comparison == "imputed":
+                        pred = imp_mean[:, j].numpy()
+                        # lower_95 = imp_lower_95[:, j].numpy()
+                        # upper_95 = imp_upper_95[:, j].numpy()
+                        
+                    elif comparison == "upsampled":
+                        pred = ups_mean[:, j].numpy()
+                        # lower_95 = ups_lower_95[:, j].numpy()
+                        # upper_95 = ups_upper_95[:, j].numpy()
+
+                    target = Y[:, j].numpy()
+
+                    # Check if the target values fall within the intervals
+                    # within_interval = (target >= lower_95) & (target <= upper_95)
+                    
+                    # Calculate the fraction
+                    # print(
+                    #     f"adding {bios_name} | {self.mark_dict[f'M{str(j+1).zfill(len(str(len(self.mark_dict))))}']} | {comparison}")
+                    metrics = {
+                        'bios':bios_name,
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'comparison': comparison,
+                        'available assays': len(availability),
+
+                        'MSE': self.metrics.mse(target, pred),
+                        'Pearson': self.metrics.pearson(target, pred),
+                        'Spearman': self.metrics.spearman(target, pred),
+                        'r2': self.metrics.r2(target, pred)
+                    }
+                    results.append(metrics)
+
+        return results
+    
+    def get_metric_eic(self, ups_dist, Y, X, bios_name, availability_X, availability_Y):
+        ups_mean = ups_dist.expect()
+        
+        results = []
+        for j in range(Y.shape[1]):
+            pred = ups_mean[:, j].numpy()
+            if j in list(availability_X):
+                comparison = "upsampled"
+                target = X[:, j].numpy()
+
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': comparison,
+                    'available assays': len(availability_X),
+
+                    'MSE': self.metrics.mse(target, pred),
+                    'Pearson': self.metrics.pearson(target, pred),
+                    'Spearman': self.metrics.spearman(target, pred),
+                    'r2': self.metrics.r2(target, pred)
+                }
+                results.append(metrics)
+                
+            elif j in list(availability_Y):
+                comparison = "imputed"
+                target = Y[:, j].numpy()
+
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': comparison,
+                    'available assays': len(availability_X),
+
+                    'MSE': self.metrics.mse(target, pred),
+                    'Pearson': self.metrics.pearson(target, pred),
+                    'Spearman': self.metrics.spearman(target, pred),
+                    'r2': self.metrics.r2(target, pred)
+                }
+                results.append(metrics)
+
+        return results
+
+    def get_validation(self, model, x_dsf=1, y_dsf=1):
+        t0 = datetime.datetime.now()
+        self.model = model
+
+        full_res = []
+        bioses = list(self.dataset.navigation.keys())
+        if not self.eic:
+            for bios_name in bioses:
+                try:
+                    imp_dist, ups_dist, Y, _, available_indices = self.get_bios(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                    full_res += self.get_metric(imp_dist, ups_dist, Y, bios_name, available_indices)
+                    del imp_dist, ups_dist, Y
+                except:
+                    pass
+        else:
+            for bios_name in bioses:
+                # try:
+                ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices = self.get_bios_eic(bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric_eic(ups_dist, Y, X, bios_name, available_X_indices, available_Y_indices)
+                del ups_dist, Y, X
+                # except:
+                #     pass
+
+        del self.model
+        df = pd.DataFrame(full_res)
+
+        # Separate the data based on comparison type
+        imputed_df = df[df['comparison'] == 'imputed']
+        upsampled_df = df[df['comparison'] == 'upsampled']
+
+        # Function to calculate mean, min, and max for a given metric
+        def calculate_stats(df, metric):
+            return df[metric].mean(), df[metric].min(), df[metric].max()
+
+        # Imputed statistics
+        imp_mse_stats = calculate_stats(imputed_df, 'MSE')
+        imp_pearson_stats = calculate_stats(imputed_df, 'Pearson')
+        imp_spearman_stats = calculate_stats(imputed_df, 'Spearman')
+        imp_r2_stats = calculate_stats(imputed_df, 'r2')
+        # imp_frac95conf_stats = calculate_stats(imputed_df, 'frac_95_confidence')
+
+        # Upsampled statistics
+        ups_mse_stats = calculate_stats(upsampled_df, 'MSE')
+        ups_pearson_stats = calculate_stats(upsampled_df, 'Pearson')
+        ups_spearman_stats = calculate_stats(upsampled_df, 'Spearman')
+        ups_r2_stats = calculate_stats(upsampled_df, 'r2')
+        # ups_frac95conf_stats = calculate_stats(upsampled_df, 'frac_95_confidence')
+
+        elapsed_time = datetime.datetime.now() - t0
+        hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # Create the compact print statement
+        print_statement = f"""
+        Took {int(minutes)}:{int(seconds)}
+        For Imputed:
+        - MSE: mean={imp_mse_stats[0]:.2f}, min={imp_mse_stats[1]:.2f}, max={imp_mse_stats[2]:.2f}
+        - PCC: mean={imp_pearson_stats[0]:.2f}, min={imp_pearson_stats[1]:.2f}, max={imp_pearson_stats[2]:.2f}
+        - SRCC: mean={imp_spearman_stats[0]:.2f}, min={imp_spearman_stats[1]:.2f}, max={imp_spearman_stats[2]:.2f}
+        - R2: mean={imp_r2_stats[0]:.2f}, min={imp_r2_stats[1]:.2f}, max={imp_r2_stats[2]:.2f}
+
+        For Upsampled:
+        - MSE: mean={ups_mse_stats[0]:.2f}, min={ups_mse_stats[1]:.2f}, max={ups_mse_stats[2]:.2f}
+        - PCC: mean={ups_pearson_stats[0]:.2f}, min={ups_pearson_stats[1]:.2f}, max={ups_pearson_stats[2]:.2f}
+        - SRCC: mean={ups_spearman_stats[0]:.2f}, min={ups_spearman_stats[1]:.2f}, max={ups_spearman_stats[2]:.2f}
+        - R2: mean={ups_r2_stats[0]:.2f}, min={ups_r2_stats[1]:.2f}, max={ups_r2_stats[2]:.2f}
+        """
+
+        return print_statement
+
+    def generate_training_gif_frame(self, model, fig_title):
+        def gen_subplt(
+            ax, x_values, observed_values, 
+            ups11, ups21, ups41, 
+            imp11, imp21, imp41, 
+            col, assname, ytick_fontsize=6, title_fontsize=6):
+
+            # Define the data and labels
+            data = [
+                (observed_values, "Observed", "royalblue", f"{assname}_Observed"),
+                (ups11, "Upsampled 1->1", "darkcyan", f"{assname}_Ups1->1"),
+                (imp11, "Imputed 1->1", "salmon", f"{assname}_Imp1->1"),
+                (ups21, "Upsampled 2->1", "darkcyan", f"{assname}_Ups2->1"),
+                (imp21, "Imputed 2->1", "salmon", f"{assname}_Imp2->1"),
+                (ups41, "Upsampled 4->1", "darkcyan", f"{assname}_Ups4->1"),
+                (imp41, "Imputed 4->1", "salmon", f"{assname}_Imp4->1"),
+            ]
+            
+            for i, (values, label, color, title) in enumerate(data):
+                ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.7, label=label, linewidth=0.01)
+                ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.7)
+                
+                if i != len(data)-1:
+                    ax[i, col].tick_params(axis='x', labelbottom=False)
+                
+                ax[i, col].tick_params(axis='y', labelsize=ytick_fontsize)
+                ax[i, col].set_xticklabels([])
+                ax[i, col].set_title(title, fontsize=title_fontsize)
+
+        self.model = model
+
+        bios = list(self.dataset.navigation.keys())[0]
+        # print(bios)
+
+        # dsf4-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=4, y_dsf=1)
+        imp_mean41, ups_mean41 = imp_dist.expect(), ups_dist.expect()
+
+        # dsf2-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=2, y_dsf=1)
+        imp_mean21, ups_mean21 = imp_dist.expect(), ups_dist.expect()
+
+        # dsf1-1
+        imp_dist, ups_dist, Y, _, available_indices = self.get_frame(bios, x_dsf=1, y_dsf=1)
+        imp_mean11, ups_mean11 = imp_dist.expect(), ups_dist.expect()
+
+        del self.model
+
+        selected_assays = ["H3K4me3", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K9me3", "CTCF", "DNase-seq", "ATAC-seq"]
+        available_selected = []
+        for col, jj in enumerate(available_indices):
+            assay = self.mark_dict[f"M{str(jj.item()+1).zfill(len(str(len(self.mark_dict))))}"]
+            if assay in selected_assays:
+                available_selected.append(jj)
+
+        fig, axes = plt.subplots(7, len(available_selected), figsize=(len(available_selected) * 3, 6), sharex=True, sharey=False)
+        
+        for col, jj in enumerate(available_selected):
+            j = jj.item()
+            assay = self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"]
+            x_values = list(range(len(Y[:, j])))
+
+            obs = Y[:, j].numpy()
+
+            gen_subplt(axes, x_values, 
+                    obs, 
+                    ups_mean11[:, j].numpy(), ups_mean21[:, j].numpy(), ups_mean41[:, j].numpy(), 
+                    imp_mean11[:, j].numpy(), imp_mean21[:, j].numpy(), imp_mean41[:, j].numpy(), 
+                    col, assay)
+
+        fig.suptitle(fig_title, fontsize=10)
+        plt.tight_layout()
+        
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=150)
+        buf.seek(0)
+        plt.close(fig)
+        
+        return buf
