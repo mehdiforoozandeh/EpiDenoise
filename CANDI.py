@@ -460,6 +460,7 @@ class PRETRAIN(object):
                     loss = loss.float()
                     loss.backward()  
 
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
                     total_norm = 0.0
                     for param in self.model.parameters():
                         if param.grad is not None:
@@ -468,7 +469,7 @@ class PRETRAIN(object):
                     total_norm = total_norm ** 0.5
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
                     self.optimizer.step()
 
                     #################################################################################
