@@ -351,7 +351,6 @@ class PRETRAIN(object):
         images = []
         gif_filename = f"models/CANDI{arch}_TrainProg.gif"
 
-        
 
         token_dict = {
             "missing_mask": -1, 
@@ -367,18 +366,6 @@ class PRETRAIN(object):
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA)
         else:
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
-
-        # Generate and process the plot
-        fig_title = "test"
-        
-        if "eic" in arch:
-            plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
-        else:
-            plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
-
-        images.append(imageio.imread(plot_buf))
-        plot_buf.close()
-        imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         for epoch in range(num_epochs):
@@ -453,8 +440,8 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
-                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
                     # loss = obs_pval_loss #+ imp_pval_loss 
                     # loss = obs_pval_loss.dtype #+ imp_pval_loss 
                     # loss =  imp_pval_loss + imp_count_loss
@@ -469,17 +456,11 @@ class PRETRAIN(object):
                         torch.cuda.empty_cache() 
                         continue
                     
-                    # print("total Loss dtype:", loss.dtype)
                     loss = loss.float()
-                    # print("total Loss dtype:", loss.dtype)
-                    # for name, param in self.model.named_parameters():
-                    #     if param.dtype != torch.float32:
-                    #         print(f"Parameter {name} is of dtype {param.dtype}")
                     loss.backward()  
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
-
                     self.optimizer.step()
 
                     #################################################################################
@@ -749,7 +730,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -765,8 +746,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
