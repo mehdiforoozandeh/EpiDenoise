@@ -987,7 +987,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
             # Define the data and labels
             data = [
-                (observed_values, "Obs_count", "royalblue", f"{assname}_Obs_Count"),
+                (observed_count, "Obs_count", "royalblue", f"{assname}_Obs_Count"),
                 (ups11_count, "Count Ups. 1->1", "darkcyan", f"{assname}_Ups1->1"),
                 (imp11_count, "Count Imp. 1->1", "salmon", f"{assname}_Imp1->1"),
                 (ups21_count, "Count Ups. 2->1", "darkcyan", f"{assname}_Ups2->1"),
