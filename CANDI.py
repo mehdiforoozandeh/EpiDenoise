@@ -441,8 +441,8 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
 
-                    loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
-                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
                     # loss = obs_pval_loss #+ imp_pval_loss 
                     # loss = obs_pval_loss.dtype #+ imp_pval_loss 
                     # loss =  imp_pval_loss + imp_count_loss
@@ -460,23 +460,23 @@ class PRETRAIN(object):
                     loss = loss.float()
                     loss.backward()  
 
-                    # total_norm = 0.0
-                    # for param in self.model.parameters():
-                    #     if param.grad is not None:
-                    #         param_norm = param.grad.data.norm(2)
-                    #         total_norm += param_norm.item() ** 2
-                    # total_norm = total_norm ** 0.5
-
-                    gradients = []
+                    total_norm = 0.0
                     for param in self.model.parameters():
                         if param.grad is not None:
-                            gradients.append(param.grad.view(-1))
+                            param_norm = param.grad.data.norm(2)
+                            total_norm += param_norm.item() ** 2
+                    total_norm = total_norm ** 0.5
 
-                    # Flatten the gradients into a single vector
-                    flat_gradients = torch.cat(gradients).cpu().numpy()
+                    # gradients = []
+                    # for param in self.model.parameters():
+                    #     if param.grad is not None:
+                    #         gradients.append(param.grad.view(-1))
 
-                    # Step 3: Calculate the specific percentile (e.g., 90th percentile)
-                    total_norm = np.max(flat_gradients)
+                    # # Flatten the gradients into a single vector
+                    # flat_gradients = torch.cat(gradients).cpu().numpy()
+
+                    # # Step 3: Calculate the specific percentile (e.g., 90th percentile)
+                    # total_norm = np.max(flat_gradients)
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
