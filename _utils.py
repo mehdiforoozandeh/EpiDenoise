@@ -1017,7 +1017,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 ax[i, col].set_title(title, fontsize=title_fontsize)
 
         self.model = model
-
+        
         bios_name = list(self.dataset.navigation.keys())[0]
         
         # dsf2-1
@@ -1110,8 +1110,12 @@ class MONITOR_VALIDATION(object): # CANDI
 
         self.model = model
 
-        bios_name = list(self.dataset.navigation.keys())[0]
-        
+        bios_dict_sorted = dict(sorted(self.dataset.navigation.items(), key=lambda item: len(item[1]), reverse=True))
+        print([len(v) for k, v in self.dataset.navigation.items()])
+        print([len(v) for k, v in bios_dict_sorted.items()])
+        bios_name = list(bios_dict_sorted.keys())[0]
+        exit()
+
         # DSF 2->1 (EIC-specific logic)
         ups_count_dist_21, ups_pval_dist_21, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
             bios_name, x_dsf=2, y_dsf=1, fixed_segment=(33481539//self.resolution, 33588914//self.resolution))
