@@ -476,7 +476,7 @@ class PRETRAIN(object):
                     flat_gradients = torch.cat(gradients).cpu().numpy()
 
                     # Step 3: Calculate the specific percentile (e.g., 90th percentile)
-                    total_norm = np.percentile(flat_gradients, 99.99)
+                    total_norm = np.percentile(flat_gradients, 99.999)
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
