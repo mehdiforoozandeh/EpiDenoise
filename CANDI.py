@@ -851,7 +851,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 4,
+        "n_sab_layers": 1,
         "epochs": 5,
         "inner_epochs": 5,
         "mask_percentage": 0.20,
