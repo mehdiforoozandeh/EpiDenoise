@@ -824,7 +824,8 @@ class GaussianLayer(nn.Module):
         # Define the layers for calculating mu (mean) parameter
         self.fc_mu = nn.Sequential(
             nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim)
+            nn.LayerNorm(output_dim),
+            nn.Softplus()
         )
 
         # Define the layers for calculating var parameter
