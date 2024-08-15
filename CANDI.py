@@ -460,24 +460,13 @@ class PRETRAIN(object):
                     loss = loss.float()
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
                     total_norm = 0.0
                     for param in self.model.parameters():
                         if param.grad is not None:
                             param_norm = param.grad.data.norm(2)
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
-
-                    # gradients = []
-                    # for param in self.model.parameters():
-                    #     if param.grad is not None:
-                    #         gradients.append(param.grad.view(-1))
-
-                    # # Flatten the gradients into a single vector
-                    # flat_gradients = torch.cat(gradients).cpu().numpy()
-
-                    # # Step 3: Calculate the specific percentile (e.g., 90th percentile)
-                    # total_norm = np.max(flat_gradients)
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
