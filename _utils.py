@@ -1029,7 +1029,7 @@ class MONITOR_VALIDATION(object): # CANDI
         ups11_pval = ups_pval_dist.mean()
         imp11_pval = imp_pval_dist.mean() 
 
-        del imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices
+        del imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, available_indices
         
         # dsf1-1
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices = self.get_bios_frame(
