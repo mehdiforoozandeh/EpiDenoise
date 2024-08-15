@@ -477,8 +477,8 @@ class PRETRAIN(object):
                     #         print(f"Parameter {name} is of dtype {param.dtype}")
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
 
                     self.optimizer.step()
 
@@ -854,10 +854,10 @@ if __name__ == "__main__":
         "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 5,
-        "mask_percentage": 0.20,
+        "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-3,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
