@@ -1051,7 +1051,7 @@ class MONITOR_VALIDATION(object): # CANDI
             if assay in selected_assays:
                 available_selected.append(jj)
 
-        fig, axes = plt.subplots(10, len(available_selected), figsize=(len(available_selected) * 3, 6), sharex=True, sharey=False)
+        fig, axes = plt.subplots(10, len(available_selected), figsize=(len(available_selected) * 3, 10), sharex=True, sharey=False)
         
         for col, jj in enumerate(available_selected):
             j = jj.item()
