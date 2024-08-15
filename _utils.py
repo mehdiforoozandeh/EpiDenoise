@@ -1011,6 +1011,7 @@ class MONITOR_VALIDATION(object): # CANDI
                     print("done!", values.shape, label, color, title)
                 except:
                     print("Failed!", values.shape, label, color, title)
+                    continue
                 
                 if i != len(data)-1:
                     ax[i, col].tick_params(axis='x', labelbottom=False)
