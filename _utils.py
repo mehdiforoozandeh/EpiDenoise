@@ -1005,13 +1005,9 @@ class MONITOR_VALIDATION(object): # CANDI
             ]
             
             for i, (values, label, color, title) in enumerate(data):
-                try:
-                    ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.7, label=label, linewidth=0.01)
-                    ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.7)
-                    print("done!", values.shape, label, color, title)
-                except:
-                    print("Failed!", values.shape, label, color, title)
-                    continue
+                ax[i, col].plot(x_values, values, "--" if i != 0 else "-", color=color, alpha=0.7, label=label, linewidth=0.01)
+                ax[i, col].fill_between(x_values, 0, values, color=color, alpha=0.7)
+                # print("done!", values.shape, label, color, title)
                 
                 if i != len(data)-1:
                     ax[i, col].tick_params(axis='x', labelbottom=False)
