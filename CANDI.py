@@ -468,7 +468,7 @@ class PRETRAIN(object):
                     # total_norm = total_norm ** 0.5
 
                     gradients = []
-                    for param in model.parameters():
+                    for param in self.model.parameters():
                         if param.grad is not None:
                             gradients.append(param.grad.view(-1))
 
