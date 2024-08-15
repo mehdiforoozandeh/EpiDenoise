@@ -459,18 +459,26 @@ class PRETRAIN(object):
                     
                     loss = loss.float()
                     loss.backward()  
+                    
+                    # total_norm = 0.0
+                    # for param in self.model.parameters():
+                    #     if param.grad is not None:
+                    #         param_norm = param.grad.data.norm(2)
+                    #         total_norm += param_norm.item() ** 2
+                    # total_norm = total_norm ** 0.5
 
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=0.5)
-                    total_norm = 0.0
-                    for param in self.model.parameters():
+                    gradients = []
+                    for param in model.parameters():
                         if param.grad is not None:
-                            param_norm = param.grad.data.norm(2)
-                            total_norm += param_norm.item() ** 2
-                    total_norm = total_norm ** 0.5
+                            gradients.append(param.grad.view(-1))
 
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+                    # Flatten the gradients into a single vector
+                    flat_gradients = torch.cat(gradients).cpu().numpy()
+
+                    # Step 3: Calculate the specific percentile (e.g., 90th percentile)
+                    total_norm = np.max(flat_gradients)
+
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=0.5)
                     self.optimizer.step()
 
                     #################################################################################
@@ -756,8 +764,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
@@ -850,7 +858,7 @@ if __name__ == "__main__":
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 5e-4,
-        "num_loci": 100,
+        "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
 
