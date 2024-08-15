@@ -478,7 +478,7 @@ class PRETRAIN(object):
                     # Step 3: Calculate the specific percentile (e.g., 90th percentile)
                     total_norm = np.max(flat_gradients)
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=0.5)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=0.1)
                     self.optimizer.step()
 
                     #################################################################################
