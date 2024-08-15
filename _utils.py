@@ -1017,7 +1017,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         self.model = model
 
-        bios = list(self.dataset.navigation.keys())[0]
+        bios_name = list(self.dataset.navigation.keys())[0]
         
         # dsf2-1
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices = self.get_bios_frame(
