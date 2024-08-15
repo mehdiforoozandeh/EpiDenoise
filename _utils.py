@@ -1089,11 +1089,11 @@ class MONITOR_VALIDATION(object): # CANDI
             # Define the data and labels
             data = [
                 (observed_count, f"Obs_count ({comparison})", "royalblue", f"{assname}_Obs_Count"),
-                (ups11_count, f"Count Ups. 1->1 ({comparison})", "darkcyan", f"{assname}_Ups1->1"),
-                (ups21_count, f"Count Ups. 2->1 ({comparison})", "darkcyan", f"{assname}_Ups2->1"),
+                (ups11_count, f"Count Ups. 1->1 ({comparison})", "darkcyan", f"{assname}_Ups1->1 ({comparison})"),
+                (ups21_count, f"Count Ups. 2->1 ({comparison})", "darkcyan", f"{assname}_Ups2->1 ({comparison})"),
                 (observed_p_value, f"Obs_P ({comparison})", "royalblue", f"{assname}_Obs_P"),
-                (ups11_pval, f"P-Value Ups 1->1 ({comparison})", "darkcyan", f"{assname}_Ups1->1"),
-                (ups21_pval, f"P-Value Ups 2->1 ({comparison})", "darkcyan", f"{assname}_Ups2->1"),
+                (ups11_pval, f"P-Value Ups 1->1 ({comparison})", "darkcyan", f"{assname}_Ups1->1 ({comparison})"),
+                (ups21_pval, f"P-Value Ups 2->1 ({comparison})", "darkcyan", f"{assname}_Ups2->1 ({comparison})"),
             ]
             
             for i, (values, label, color, title) in enumerate(data):
