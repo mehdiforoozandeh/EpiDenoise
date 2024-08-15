@@ -402,7 +402,8 @@ class PRETRAIN(object):
                     "ups_count_spearman":[], "imp_count_spearman":[],
                     "ups_pval_spearman":[], "imp_pval_spearman":[],
                     "ups_count_pearson":[], "imp_count_pearson":[],
-                    "ups_pval_pearson":[], "imp_pval_pearson":[]
+                    "ups_pval_pearson":[], "imp_pval_pearson":[],
+                    "grad_norm":[]
                     }
 
                 for _ in range(inner_epochs):
@@ -459,8 +460,15 @@ class PRETRAIN(object):
                     loss = loss.float()
                     loss.backward()  
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
-                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
+                    total_norm = 0.0
+                    for param in self.model.parameters():
+                        if param.grad is not None:
+                            param_norm = param.grad.data.norm(2)
+                            total_norm += param_norm.item() ** 2
+                    total_norm = total_norm ** 0.5
+
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
                     self.optimizer.step()
 
                     #################################################################################
@@ -530,7 +538,8 @@ class PRETRAIN(object):
                     ups_pval_pearson = pearsonr(ups_pval_true, ups_pval_pred)[0]
 
                     #################################################################################
-                  
+                    batch_rec["grad_norm"].append(total_norm)
+
                     batch_rec["imp_count_loss"].append(imp_count_loss.item())
                     batch_rec["ups_count_loss"].append(obs_count_loss.item())
                     batch_rec["imp_pval_loss"].append(imp_pval_loss.item())
@@ -638,7 +647,7 @@ class PRETRAIN(object):
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
 
-                    f"took {int(minutes)}:{int(seconds):02d}", "\n"
+                    f"took {int(minutes)}:{int(seconds):02d}", f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}", "\n"
                 ]
 
                 logstr = " | ".join(logstr)
@@ -746,8 +755,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
@@ -870,4 +879,4 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_normclip_Adam")
