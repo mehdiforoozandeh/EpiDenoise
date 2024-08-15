@@ -459,8 +459,8 @@ class PRETRAIN(object):
                     loss = loss.float()
                     loss.backward()  
 
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=15)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=20.0)
                     self.optimizer.step()
 
                     #################################################################################
@@ -838,7 +838,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-3,
+        "learning_rate": 5e-4,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
