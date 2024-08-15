@@ -841,7 +841,7 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 1,
+        "inner_epochs": 5,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
