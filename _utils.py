@@ -1065,10 +1065,10 @@ class MONITOR_VALIDATION(object): # CANDI
 
             gen_subplt(axes, x_values, 
                     obs_count, obs_pval,
-                    ups11_count, ups21_count,   #ups41_count, 
-                    ups11_pval, ups21_pval,     #ups41_pval, 
-                    imp11_count, imp21_count,   #imp41_count, 
-                    imp11_pval, imp21_pval, 
+                    ups11_count[:, j].numpy(), ups21_count[:, j].numpy(),   #ups41_count, 
+                    ups11_pval[:, j].numpy(), ups21_pval[:, j].numpy(),     #ups41_pval, 
+                    imp11_count[:, j].numpy(), imp21_count[:, j].numpy(),   #imp41_count, 
+                    imp11_pval[:, j].numpy(), imp21_pval[:, j].numpy(), 
                     col, assay)
 
         fig.suptitle(fig_title, fontsize=10)
