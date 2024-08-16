@@ -2542,6 +2542,11 @@ class EVAL_EED(object):
         #     self.viz.MODEL_regplot_overall(self.model_res, metric=m)
         #     self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
+
+class EVAL_CANDI(object):
+    pass
+
+
 if __name__=="__main__":
 
     e = EVAL_EED(
