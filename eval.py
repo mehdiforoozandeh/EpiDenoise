@@ -2542,9 +2542,420 @@ class EVAL_EED(object):
         #     self.viz.MODEL_regplot_overall(self.model_res, metric=m)
         #     self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
-
 class EVAL_CANDI(object):
-    pass
+    def __init__(
+        self, model, data_path, context_length, batch_size, hyper_parameters_path="",
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, 
+        savedir="models/evals/", mode="eval", split="test", eic=False, DNA=False):
+
+        self.savedir = savedir
+        if os.path.exists(self.savedir) == False:
+            os.mkdir(self.savedir)
+
+        self.data_path = data_path
+        self.version = version
+        self.context_length = context_length
+        self.batch_size = batch_size
+        self.resolution = resolution
+        
+        self.eic = eic
+        self.DNA = DNA
+
+
+        self.model = model
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(
+            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
+
+        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.token_dict = {
+                    "missing_mask": -1, 
+                    "cloze_mask": -2,
+                    "pad": -3
+                }
+
+        self.chr_sizes = {}
+        main_chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+        with open(chr_sizes_file, 'r') as f:
+            for line in f:
+                chr_name, chr_size = line.strip().split('\t')
+                if chr_name in main_chrs:
+                    self.chr_sizes[chr_name] = int(chr_size)
+
+        self.train_data = {}
+        self.eval_data = {}
+        self.metrics = METRICS()
+        self.viz = VISUALS(resolution=self.resolution, savedir=self.savedir)
+
+        self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
+        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
+
+        if mode == "dev":
+            return
+
+        if type(self.model) == str:
+            with open(hyper_parameters_path, 'rb') as f:
+                self.hyper_parameters = pickle.load(f)
+            loader = MODEL_LOADER(model, self.hyper_parameters)
+            self.model = loader.load_epidenoise(version=self.version)
+
+        self.model = self.model.to(self.device)
+        self.model.eval()  # set the model to evaluation mode
+        print(f"# model_parameters: {count_parameters(self.model)}")
+
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10, plot_REC=True):
+        # columns=  chr, start, end, geneID, length, TPM, FPKM
+        rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
+        print(rna_seq_data)
+        
+        pred_features = []
+        true_features = []
+        available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
+        print(available_assays)
+        
+        for i in range(len(rna_seq_data)):
+            for a in range(y_pred.shape[1]):
+                assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
+
+                if a in list(availability):
+                    true_signal_a = y_true[:, a].numpy()
+                    f = signal_feature_extraction(
+                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
+                        rna_seq_data["strand"][i], true_signal_a
+                        )
+
+                    f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+                        f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+
+                    true_features.append(f)
+                
+                pred_signal_a = y_pred[:, a].numpy()
+                f = signal_feature_extraction(
+                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
+                        rna_seq_data["strand"][i], pred_signal_a
+                        )
+                    
+                f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+                    f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+
+                pred_features.append(f)
+        
+        true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+        pred_features_avail = pred_features_all[pred_features_all["assay"].isin(available_assays)]
+
+        report = {}
+        # Perform K-Fold Cross Validation for both true and predicted data
+        # print("Evaluating Experimental Data")
+        report['true_linear'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
+        
+        # print("Evaluating Denoised + Imputed Data")
+        report['denoised_imputed_linear'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
+
+        # print("Evaluating Denoised Data")
+        report['denoised_linear'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
+
+        # Perform K-Fold Cross Validation for both true and predicted data
+        # print("Evaluating Experimental Data")
+        report['true_svr'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        
+        # print("Evaluating Denoised + Imputed Data")
+        report['denoised_imputed_svr'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
+
+        # print("Evaluating Denoised Data")
+        report['denoised_svr'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        
+        # Plotting REC curves for comparison
+        if plot_REC:
+            plt.figure(figsize=(14, 7))
+            
+            # Plot REC for SVR models
+            plt.subplot(1, 2, 1)
+            true_errors_svr = report['true_svr']['errors']
+            denoised_errors_svr = report['denoised_svr']['errors']
+            denoised_imputed_errors_svr = report['denoised_imputed_svr']['errors']
+            
+            sorted_true_errors_svr = np.sort(true_errors_svr)
+            cumulative_true_svr = np.arange(1, len(sorted_true_errors_svr) + 1) / len(sorted_true_errors_svr)
+            
+            sorted_denoised_errors_svr = np.sort(denoised_errors_svr)
+            cumulative_denoised_svr = np.arange(1, len(sorted_denoised_errors_svr) + 1) / len(sorted_denoised_errors_svr)
+
+            sorted_denoised_imputed_errors_svr = np.sort(denoised_imputed_errors_svr)
+            cumulative_denoised_imputed_svr = np.arange(1, len(sorted_denoised_imputed_errors_svr) + 1) / len(sorted_denoised_imputed_errors_svr)
+            
+            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='Observed', color='blue', alpha=0.7)
+            plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised', color='orange', alpha=0.7)
+            plt.plot(sorted_denoised_imputed_errors_svr, cumulative_denoised_imputed_svr, label='Denoised+Imputed', color='green', alpha=0.7)
+            plt.xlabel('Error Tolerance')
+            plt.ylabel('Proportion of Points within Tolerance')
+            plt.title('REC Curve - SVR')
+            plt.legend()
+            plt.grid(True)
+            
+            # Plot REC for Linear models
+            plt.subplot(1, 2, 2)
+            true_errors_linear = report['true_linear']['errors']
+            denoised_errors_linear = report['denoised_linear']['errors']
+            denoised_imputed_errors_linear = report['denoised_imputed_linear']['errors']
+            
+            sorted_true_errors_linear = np.sort(true_errors_linear)
+            cumulative_true_linear = np.arange(1, len(sorted_true_errors_linear) + 1) / len(sorted_true_errors_linear)
+            
+            sorted_denoised_errors_linear = np.sort(denoised_errors_linear)
+            cumulative_denoised_linear = np.arange(1, len(sorted_denoised_errors_linear) + 1) / len(sorted_denoised_errors_linear)
+
+            sorted_denoised_imputed_errors_linear = np.sort(denoised_imputed_errors_linear)
+            cumulative_denoised_imputed_linear = np.arange(1, len(sorted_denoised_imputed_errors_linear) + 1) / len(sorted_denoised_imputed_errors_linear)
+            
+            plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='Observed', color='blue', alpha=0.7)
+            plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised', color='orange', alpha=0.7)
+            plt.plot(sorted_denoised_imputed_errors_linear, cumulative_denoised_imputed_linear, label='Denoised+Imputed', color='green', alpha=0.7)
+            plt.xlabel('Error Tolerance')
+            plt.ylabel('Proportion of Points within Tolerance')
+            plt.title('REC Curve - Linear Regression')
+            plt.legend()
+            plt.grid(True)
+            
+            plt.tight_layout()
+            savepath = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
+            if os.path.exists(savepath) ==False:
+                os.mkdir(savepath)
+
+            plt.savefig(savepath+"/RNAseq_REC.svg", format="svg")
+
+        return report
+
+    def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
+        # Initialize a tensor to store all predictions
+        n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        mu = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+        var = torch.empty_like(X, device="cpu", dtype=torch.float32) 
+
+        # make predictions in batches
+        for i in range(0, len(X), self.batch_size):
+            torch.cuda.empty_cache()
+            
+            x_batch = X[i:i+ self.batch_size]
+            mX_batch = mX[i:i+ self.batch_size]
+            mY_batch = mY[i:i+ self.batch_size]
+            avail_batch = avail[i:i+ self.batch_size]
+
+            if self.DNA:
+                seq_batch = seq[i:i + self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                # mY_batch_missing_vals = (mY_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+                # mY_batch[mY_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                if len(imp_target)>0:
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    # mY_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch[:, imp_target] = 0
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                if self.DNA:
+                    seq_batch = seq_batch.to(self.device)
+                    outputs_p, outputs_n, outputs_mu, outputs_var = self.model(x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch)
+                else:
+                    outputs_p, outputs_n, outputs_mu, outputs_var = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch)
+
+
+            # Store the predictions in the large tensor
+            n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
+            p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
+            mu[i:i+outputs_mu.shape[0], :, :] = outputs_mu.cpu()
+            var[i:i+outputs_var.shape[0], :, :] = outputs_var.cpu()
+
+            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var  # Free up memory
+            torch.cuda.empty_cache()  # Free up GPU memory
+
+        return n, p, mu, var
+
+    def get_metrics(self, imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability):
+        imp_count_mean = imp_count_dist.expect()
+        ups_count_mean = ups_count_dist.expect()
+
+        imp_count_std = imp_count_dist.std()
+        ups_count_std = ups_count_dist.std()
+
+        imp_pval_mean = imp_pval_dist.mean()
+        ups_pval_mean = ups_pval_dist.mean()
+
+        imp_pval_std = imp_pval_dist.std()
+        ups_pval_std = ups_pval_dist.std()
+
+        if self.dataset.has_rnaseq(bios_name):
+            print("got rna-seq data")
+            rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
+
+        print("getting 0.95 interval conf")
+
+        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
+        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+
+        results = []
+        # for j in availability:  # for each feature i.e. assay
+        for j in range(Y.shape[1]):
+
+            if j in list(availability):
+                target = Y[:, j].numpy()
+
+                for comparison in ['imputed', 'upsampled']:
+                    
+                    if comparison == "imputed":
+                        pred = imp_mean[:, j].numpy()
+                        pred_std = imp_std[:, j].numpy()
+                        # lower_60 = imp_lower_60[:, j].numpy()
+                        # lower_80 = imp_lower_80[:, j].numpy()
+                        lower_95 = imp_lower_95[:, j].numpy()
+
+                        # upper_60 = imp_upper_60[:, j].numpy()
+                        # upper_80 = imp_upper_80[:, j].numpy()
+                        upper_95 = imp_upper_95[:, j].numpy()
+
+                        quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
+                        p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
+                        
+                    elif comparison == "upsampled":
+                        pred = ups_mean[:, j].numpy()
+                        pred_std = ups_std[:, j].numpy()
+                        # lower_60 = ups_lower_60[:, j].numpy()
+                        # lower_80 = ups_lower_80[:, j].numpy()
+                        lower_95 = ups_lower_95[:, j].numpy()
+
+                        # upper_60 = ups_upper_60[:, j].numpy()
+                        # upper_80 = ups_upper_80[:, j].numpy()
+                        upper_95 = ups_upper_95[:, j].numpy()
+
+                        quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
+                        p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
+
+
+                    # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
+                    metrics = {
+                        'bios':bios_name,
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'comparison': comparison,
+                        'available assays': len(availability),
+
+                        "obs":target,
+                        "imp":pred,
+                        "pred_quantile":quantile,
+                        "pred_std":pred_std,
+
+                        # "lower_60" : lower_60,
+                        # "lower_80" : lower_80,
+                        "lower_95" : lower_95,
+
+                        # "upper_60": upper_60,
+                        # "upper_80": upper_80,
+                        "upper_95": upper_95,
+
+                        "p0_bg":p0bgdf["p0_bg"],
+                        "p0_fg":p0bgdf["p0_fg"],
+
+                        'MSE-GW': self.metrics.mse(target, pred),
+                        'Pearson-GW': self.metrics.pearson(target, pred),
+                        'Spearman-GW': self.metrics.spearman(target, pred),
+                        'r2_GW': self.metrics.r2(target, pred),
+
+                        'MSE-1obs': self.metrics.mse1obs(target, pred),
+                        'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
+                        'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
+                        'r2_1obs': self.metrics.r2_1obs(target, pred),
+
+                        'MSE-1imp': self.metrics.mse1imp(target, pred),
+                        'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
+                        'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
+                        'r2_1imp': self.metrics.r2_1imp(target, pred),
+
+                        'MSE-gene': self.metrics.mse_gene(target, pred),
+                        'Pearson_gene': self.metrics.pearson_gene(target, pred),
+                        'Spearman_gene': self.metrics.spearman_gene(target, pred),
+                        'r2_gene': self.metrics.r2_gene(target, pred),
+
+                        'MSE-prom': self.metrics.mse_prom(target, pred),
+                        'Pearson_prom': self.metrics.pearson_prom(target, pred),
+                        'Spearman_prom': self.metrics.spearman_prom(target, pred),
+                        'r2_prom': self.metrics.r2_prom(target, pred),
+
+                        "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
+                        "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
+                        "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+
+                    #     "corresp_curve": corresp,
+                    #     "corresp_curve_deriv": corresp_deriv
+                    }
+                    
+                    if self.dataset.has_rnaseq(bios_name):
+                        metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
+                        metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
+
+                        metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
+                        metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
+
+                        metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
+                        metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
+                        
+                        metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
+                        metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
+
+                    results.append(metrics)
+
+            else:
+                # continue
+                pred = ups_mean[:, j].numpy()
+                # lower_60 = ups_lower_60[:, j].numpy()
+                # lower_80 = ups_lower_80[:, j].numpy()
+                lower_95 = ups_lower_95[:, j].numpy()
+
+                # upper_60 = ups_upper_60[:, j].numpy()
+                # upper_80 = ups_upper_80[:, j].numpy()
+                upper_95 = ups_upper_95[:, j].numpy()
+
+                metrics = {
+                    'bios':bios_name,
+                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'comparison': "None",
+                    'available assays': len(availability),
+
+                    "imp":pred,
+
+                    # "lower_60" : lower_60,
+                    # "lower_80" : lower_80,
+                    "lower_95" : lower_95,
+
+                    # "upper_60": upper_60,
+                    # "upper_80": upper_80,
+                    "upper_95": upper_95
+                    }
+                results.append(metrics)
+            
+        return results
+    
+ 
+
 
 
 if __name__=="__main__":

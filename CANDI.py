@@ -467,7 +467,7 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=0.1)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
                     self.optimizer.step()
                     #################################################################################
 
@@ -645,7 +645,8 @@ class PRETRAIN(object):
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
 
-                    f"took {int(minutes)}:{int(seconds):02d}", f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}", "\n"
+                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
+                    f"took {int(minutes)}:{int(seconds):02d}", "\n"
                 ]
 
                 logstr = " | ".join(logstr)
@@ -737,7 +738,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -752,9 +753,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
@@ -845,7 +846,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 5e-4,
+        "learning_rate": 1e-2,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}
@@ -877,4 +878,4 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_valclip_SGD")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE")
