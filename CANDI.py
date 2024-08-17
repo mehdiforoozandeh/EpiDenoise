@@ -878,4 +878,4 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
