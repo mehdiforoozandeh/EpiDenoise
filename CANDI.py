@@ -470,7 +470,7 @@ class PRETRAIN(object):
 
 
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 2)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
 
                     self.optimizer.step()
                     #################################################################################
