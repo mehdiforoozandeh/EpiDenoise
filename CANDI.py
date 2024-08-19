@@ -293,7 +293,7 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-1)
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-3)
         # self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
     
@@ -447,9 +447,9 @@ class PRETRAIN(object):
                     
                     # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
                     loss = imp_pval_loss + imp_count_loss
-                    print(
-                        obs_count_loss.item(), imp_count_loss.item(),
-                        obs_pval_loss.item(), imp_pval_loss.item())
+                    # print(
+                    #     obs_count_loss.item(), imp_count_loss.item(),
+                    #     obs_pval_loss.item(), imp_pval_loss.item())
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -866,7 +866,7 @@ if __name__ == "__main__":
         "nhead": 4,
         "n_sab_layers": 1,
         "epochs": 5,
-        "inner_epochs": 50,
+        "inner_epochs": 1,
         "mask_percentage": 0.25,
         "context_length": 800,
         "batch_size": 50,
