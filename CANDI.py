@@ -340,7 +340,9 @@ class PRETRAIN(object):
         self.optimizer = optimizer
         self.scheduler = scheduler
 
-    def pretrain_CANDI(self, num_epochs, context_length, batch_size, inner_epochs, arch="", mask_percentage=0.15, hook=True, DNA=False):
+    def pretrain_CANDI(
+        self, num_epochs, context_length, batch_size, inner_epochs, 
+        arch="", mask_percentage=0.15, hook=True, DNA=False, LossNorm=True):
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"CANDI{arch} # model_parameters: {count_parameters(self.model)}")
@@ -440,14 +442,41 @@ class PRETRAIN(object):
 
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
-
+                    
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
-                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    # loss = obs_pval_loss #+ imp_pval_loss 
-                    # loss = obs_pval_loss.dtype #+ imp_pval_loss 
-                    # loss =  imp_pval_loss + imp_count_loss
-                    # loss =  obs_count_loss + imp_count_loss
-                    # loss =  imp_count_loss
+                    
+                    if LossNorm:
+                        grad_obs_count = torch.autograd.grad(obs_count_loss, model.parameters(), create_graph=True)
+                        grad_obs_pval = torch.autograd.grad(obs_pval_loss, model.parameters(), create_graph=True)
+                        grad_imp_pval = torch.autograd.grad(imp_pval_loss, model.parameters(), create_graph=True)
+                        grad_imp_count = torch.autograd.grad(imp_count_loss, model.parameters(), create_graph=True)
+
+                        norm_obs_count = sum((g.norm()**2 for g in grad_obs_count)).sqrt()
+                        norm_obs_pval = sum((g.norm()**2 for g in grad_obs_pval)).sqrt()
+                        norm_imp_pval = sum((g.norm()**2 for g in grad_imp_pval)).sqrt()
+                        norm_imp_count = sum((g.norm()**2 for g in grad_imp_count)).sqrt()
+
+                        normalized_obs_count_loss = obs_count_loss / (norm_obs_count + epsilon)
+                        normalized_obs_pval_loss = obs_pval_loss / (norm_obs_pval + epsilon)
+                        normalized_imp_pval_loss = imp_pval_loss / (norm_imp_pval + epsilon)
+                        normalized_imp_count_loss = imp_count_loss / (norm_imp_count + epsilon)
+
+                        loss = (normalized_obs_count_loss + 
+                            normalized_obs_pval_loss + 
+                            normalized_imp_pval_loss + 
+                            normalized_imp_count_loss)
+                        
+                        print(
+                            normalized_obs_count_loss.item(), normalized_imp_count_loss.item(),
+                            normalized_obs_pval_loss.item(), normalized_imp_pval_loss.item())
+
+                    else:
+                        loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                        print(
+                            obs_count_loss.item(), imp_count_loss.item(),
+                            obs_pval_loss.item(), imp_pval_loss.item())
+
+
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -467,10 +496,6 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    print(
-                        total_norm, 
-                        obs_pval_loss.item(), imp_pval_loss.item(), 
-                        obs_count_loss.item(), imp_count_loss.item())
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     self.optimizer.step()
@@ -847,7 +872,7 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 100,
+        "inner_epochs": 20,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
