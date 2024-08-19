@@ -844,14 +844,14 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 1,
+        "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 40,
+        "inner_epochs": 5,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-3,
-        "num_loci": 500,
+        "learning_rate": 1e-4,
+        "num_loci": 3200,
         "lr_halflife":2,
         "min_avail":5}
 
@@ -859,21 +859,22 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 4,
+        "n_cnn_layers": 3,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
-        "nhead": 8,
+        "nhead": 4,
         "n_sab_layers": 1,
         "epochs": 5,
-        "inner_epochs": 5,
+        "inner_epochs": 50,
         "mask_percentage": 0.25,
         "context_length": 800,
         "batch_size": 50,
-        "learning_rate": 1e-3,
+        "learning_rate": 1e-5,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
+
     eic = False
     DNA = False
 
@@ -882,4 +883,5 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="MSE_2")
+    # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
