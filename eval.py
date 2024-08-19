@@ -2821,7 +2821,8 @@ class EVAL_CANDI(object):
 
         for j in range(Y.shape[1]):
             if j in list(availability):
-                target = Y[:, j].numpy()
+                C_target = Y[:, j].numpy()
+                P_target = P[:, j].numpy()
 
                 for comparison in ['imputed', 'upsampled']:
                     
@@ -2868,9 +2869,14 @@ class EVAL_CANDI(object):
                         'comparison': comparison,
                         'available assays': len(availability),
 
-                        "obs":target,
-                        "imp":pred,
-                        "pred_std":pred_std,
+                        "obs_count": C_target,
+                        "obs_pval": P_target,
+                        
+                        "pred_count":pred_count,
+                        "pred_count_std":pred_count_std,
+
+                        "pred_pval":pred_pval,
+                        "pred_pval_std":pred_pval_std,
 
                         "count_lower_95" : count_lower_95,
                         "count_upper_95": count_upper_95,
@@ -2882,37 +2888,66 @@ class EVAL_CANDI(object):
                         "p0_fg":count_p0bgdf["p0_fg"],
                         "pred_quantile":count_quantile,
 
-                        'MSE-GW': self.metrics.mse(target, pred),
-                        'Pearson-GW': self.metrics.pearson(target, pred),
-                        'Spearman-GW': self.metrics.spearman(target, pred),
-                        'r2_GW': self.metrics.r2(target, pred),
+                        'C_MSE-GW': self.metrics.mse(C_target, pred_count),
+                        'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
+                        'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
+                        'C_r2_GW': self.metrics.r2(C_target, pred_count),
 
-                        'MSE-1obs': self.metrics.mse1obs(target, pred),
-                        'Pearson_1obs': self.metrics.pearson1_obs(target, pred),
-                        'Spearman_1obs': self.metrics.spearman1_obs(target, pred),
-                        'r2_1obs': self.metrics.r2_1obs(target, pred),
+                        'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
+                        'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
+                        'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
+                        'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
 
-                        'MSE-1imp': self.metrics.mse1imp(target, pred),
-                        'Pearson_1imp': self.metrics.pearson1_imp(target, pred),
-                        'Spearman_1imp': self.metrics.spearman1_imp(target, pred),
-                        'r2_1imp': self.metrics.r2_1imp(target, pred),
+                        'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
+                        'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
+                        'C_Spearman_1imp': self.metrics.spearman1_imp(C_target, pred_count),
+                        'C_r2_1imp': self.metrics.r2_1imp(C_target, pred_count),
 
-                        'MSE-gene': self.metrics.mse_gene(target, pred),
-                        'Pearson_gene': self.metrics.pearson_gene(target, pred),
-                        'Spearman_gene': self.metrics.spearman_gene(target, pred),
-                        'r2_gene': self.metrics.r2_gene(target, pred),
+                        'C_MSE-gene': self.metrics.mse_gene(C_target, pred_count),
+                        'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
+                        'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
+                        'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
 
-                        'MSE-prom': self.metrics.mse_prom(target, pred),
-                        'Pearson_prom': self.metrics.pearson_prom(target, pred),
-                        'Spearman_prom': self.metrics.spearman_prom(target, pred),
-                        'r2_prom': self.metrics.r2_prom(target, pred),
+                        'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
+                        'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
+                        'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
+                        'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
 
-                        "peak_overlap_01thr": self.metrics.peak_overlap(target, pred, p=0.01),
-                        "peak_overlap_05thr": self.metrics.peak_overlap(target, pred, p=0.05),
-                        "peak_overlap_10thr": self.metrics.peak_overlap(target, pred, p=0.10),
+                        "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
+                        "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
+                        "C_peak_overlap_10thr": self.metrics.peak_overlap(C_target, pred_count, p=0.10),
 
-                    #     "corresp_curve": corresp,
-                    #     "corresp_curve_deriv": corresp_deriv
+                        ########################################################################
+
+                        'P_MSE-GW': self.metrics.mse(P_target, pred_pval),
+                        'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
+                        'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
+                        'P_r2_GW': self.metrics.r2(P_target, pred_pval),
+
+                        'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
+                        'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
+                        'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
+                        'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
+
+                        'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
+                        'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
+                        'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, pred_pval),
+                        'P_r2_1imp': self.metrics.r2_1imp(P_target, pred_pval),
+
+                        'P_MSE-gene': self.metrics.mse_gene(P_target, pred_pval),
+                        'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
+                        'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
+                        'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
+
+                        'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
+                        'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
+                        'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
+                        'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
+
+                        "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
+                        "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
+                        "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10),
+
                     }
                     
                     if self.dataset.has_rnaseq(bios_name):
@@ -2931,15 +2966,17 @@ class EVAL_CANDI(object):
                     results.append(metrics)
 
             else:
-                # continue
-                pred = ups_mean[:, j].numpy()
-                # lower_60 = ups_lower_60[:, j].numpy()
-                # lower_80 = ups_lower_80[:, j].numpy()
-                lower_95 = ups_lower_95[:, j].numpy()
+                pred_count = ups_count_mean[:, j].numpy()
+                pred_count_std = ups_count_std[:, j].numpy()
 
-                # upper_60 = ups_upper_60[:, j].numpy()
-                # upper_80 = ups_upper_80[:, j].numpy()
-                upper_95 = ups_upper_95[:, j].numpy()
+                pred_pval = ups_pval_mean[:, j].numpy()
+                pred_pval_std = ups_pval_std[:, j].numpy()
+
+                count_lower_95 = ups_count_lower_95[:, j].numpy()
+                count_upper_95 = ups_count_upper_95[:, j].numpy()
+
+                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                 metrics = {
                     'bios':bios_name,
@@ -2947,23 +2984,63 @@ class EVAL_CANDI(object):
                     'comparison': "None",
                     'available assays': len(availability),
 
-                    "imp":pred,
+                    "pred_count":pred_count,
+                    "pred_count_std":pred_count_std,
 
-                    # "lower_60" : lower_60,
-                    # "lower_80" : lower_80,
-                    "lower_95" : lower_95,
+                    "pred_pval":pred_pval,
+                    "pred_pval_std":pred_pval_std,
 
-                    # "upper_60": upper_60,
-                    # "upper_80": upper_80,
-                    "upper_95": upper_95
+                    "count_lower_95" : count_lower_95,
+                    "count_upper_95": count_upper_95,
+
+                    "pval_lower_95" : pval_lower_95,
+                    "pval_upper_95": pval_upper_95
                     }
+
                 results.append(metrics)
             
         return results
     
- 
+    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices):
+        ups_mean = ups_count_dist.expect()
+        ups_pval = ups_pval_dist.mean()
+        
+        results = []
+        for j in range(Y.shape[1]):
+            pred_count = ups_mean[:, j].numpy()
+            pred_pval = ups_pval[:, j].numpy()
+            target_pval = P[:, j].numpy()
 
+            if j in list(available_X_indices):
+                comparison = "upsampled"
+                target_count = X[:, j].numpy()
 
+            elif j in list(available_Y_indices):
+                comparison = "imputed"
+                target_count = Y[:, j].numpy()
+
+            else:
+                continue
+
+            metrics = {
+                'bios':bios_name,
+                'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                'comparison': comparison,
+                'available assays': len(available_X_indices),
+
+                'MSE_count': self.metrics.mse(target_count, pred_count),
+                'Pearson_count': self.metrics.pearson(target_count, pred_count),
+                'Spearman_count': self.metrics.spearman(target_count, pred_count),
+                'r2_count': self.metrics.r2(target_count, pred_count),
+
+                'MSE_pval': self.metrics.mse(target_pval, pred_pval),
+                'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
+                'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
+                'r2_pval': self.metrics.r2(target_pval, pred_pval)
+            }
+            results.append(metrics)
+
+        return results
 
 if __name__=="__main__":
 
