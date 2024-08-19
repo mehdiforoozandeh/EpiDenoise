@@ -469,7 +469,7 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
                     
                     self.optimizer.step()
@@ -758,8 +758,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
@@ -871,7 +871,7 @@ if __name__ == "__main__":
         "context_length": 400,
         "batch_size": 50,
         "learning_rate": 1e-4,
-        "num_loci": 3200,
+        "num_loci": 6400,
         "lr_halflife":1,
         "min_avail":10}
 
