@@ -468,9 +468,8 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
+                    # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
 
                     self.optimizer.step()
                     #################################################################################
