@@ -450,13 +450,13 @@ class PRETRAIN(object):
                     #     obs_count_loss.item(), imp_count_loss.item(),
                     #     obs_pval_loss.item(), imp_pval_loss.item())
 
-                    if torch.isnan(loss).sum() > 0:
-                        skipmessage = "Encountered nan loss! Skipping batch..."
-                        log_strs.append(skipmessage)
-                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
-                        print(skipmessage)
-                        torch.cuda.empty_cache() 
-                        continue
+                    # if torch.isnan(loss).sum() > 0:
+                    #     skipmessage = "Encountered nan loss! Skipping batch..."
+                    #     log_strs.append(skipmessage)
+                    #     del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
+                    #     print(skipmessage)
+                    #     torch.cuda.empty_cache() 
+                    #     continue
                     
                     # loss = loss.float()
                     # loss.backward()  
