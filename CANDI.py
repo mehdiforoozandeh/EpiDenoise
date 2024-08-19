@@ -849,7 +849,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-2,
+        "learning_rate": 1e-3,
         "num_loci": 100,
         "lr_halflife":2,
         "min_avail":5}
