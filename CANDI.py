@@ -445,7 +445,8 @@ class PRETRAIN(object):
                     
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     
-                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    loss = imp_pval_loss + imp_count_loss
                     print(
                         obs_count_loss.item(), imp_count_loss.item(),
                         obs_pval_loss.item(), imp_pval_loss.item())
