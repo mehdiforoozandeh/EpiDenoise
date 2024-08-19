@@ -476,7 +476,7 @@ class PRETRAIN(object):
                     self.optimizer.step()
 
                     self.optimizer.zero_grad()
-                    torch.cuda.empty_cache()
+                    # torch.cuda.empty_cache()
 
                     pval_loss =  obs_pval_loss + imp_pval_loss 
                     pval_loss.backward()
