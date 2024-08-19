@@ -459,6 +459,7 @@ class PRETRAIN(object):
                     
                     loss = loss.float()
                     loss.backward()  
+                    print(obs_count_loss.item(), obs_pval_loss.item(), imp_pval_loss.item(), imp_count_loss.item())
                     
                     total_norm = 0.0
                     for param in self.model.parameters():
@@ -842,7 +843,7 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 5,
+        "inner_epochs": 500,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
