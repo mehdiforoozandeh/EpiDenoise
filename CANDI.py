@@ -293,7 +293,7 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction)
         # self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
     
@@ -319,10 +319,10 @@ class CANDI_LOSS(nn.Module):
             observed_count_loss = observed_count_loss.sum()
             imputed_count_loss = imputed_count_loss.sum()
 
-        # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
-        # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
-        imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
+        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        # observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
+        # imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
@@ -759,8 +759,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
 
     if checkpoint_path is not None:
