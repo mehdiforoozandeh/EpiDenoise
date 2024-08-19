@@ -446,10 +446,10 @@ class PRETRAIN(object):
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     
                     if LossNorm:
-                        grad_obs_count = torch.autograd.grad(obs_count_loss, model.parameters(), create_graph=True)
-                        grad_obs_pval = torch.autograd.grad(obs_pval_loss, model.parameters(), create_graph=True)
-                        grad_imp_pval = torch.autograd.grad(imp_pval_loss, model.parameters(), create_graph=True)
-                        grad_imp_count = torch.autograd.grad(imp_count_loss, model.parameters(), create_graph=True)
+                        grad_obs_count = torch.autograd.grad(obs_count_loss, self.model.parameters(), create_graph=True)
+                        grad_obs_pval = torch.autograd.grad(obs_pval_loss, self.model.parameters(), create_graph=True)
+                        grad_imp_pval = torch.autograd.grad(imp_pval_loss, self.model.parameters(), create_graph=True)
+                        grad_imp_count = torch.autograd.grad(imp_count_loss, self.model.parameters(), create_graph=True)
 
                         norm_obs_count = sum((g.norm()**2 for g in grad_obs_count)).sqrt()
                         norm_obs_pval = sum((g.norm()**2 for g in grad_obs_pval)).sqrt()
@@ -475,8 +475,6 @@ class PRETRAIN(object):
                         print(
                             obs_count_loss.item(), imp_count_loss.item(),
                             obs_pval_loss.item(), imp_pval_loss.item())
-
-
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
