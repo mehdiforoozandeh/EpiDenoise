@@ -844,14 +844,14 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 4,
+        "n_sab_layers": 1,
         "epochs": 5,
-        "inner_epochs": 20,
+        "inner_epochs": 40,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,
+        "num_loci": 500,
         "lr_halflife":2,
         "min_avail":5}
 
