@@ -445,10 +445,10 @@ class PRETRAIN(object):
                     
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     
-                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    print(
-                        obs_count_loss.item(), imp_count_loss.item(),
-                        obs_pval_loss.item(), imp_pval_loss.item())
+                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # print(
+                    #     obs_count_loss.item(), imp_count_loss.item(),
+                    #     obs_pval_loss.item(), imp_pval_loss.item())
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -458,8 +458,8 @@ class PRETRAIN(object):
                         torch.cuda.empty_cache() 
                         continue
                     
-                    loss = loss.float()
-                    loss.backward()  
+                    # loss = loss.float()
+                    # loss.backward()  
                     
                     total_norm = 0.0
                     for param in self.model.parameters():
@@ -468,10 +468,21 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
-
+                    #################################################################################
+                    count_loss =  obs_count_loss + imp_count_loss
+                    count_loss.backward()
                     self.optimizer.step()
+
+                    self.optimizer.zero_grad()
+                    torch.cuda.empty_cache()
+
+                    pval_loss =  obs_pval_loss + imp_pval_loss 
+                    pval_loss.backward()
+                    self.optimizer.step()
+                    #################################################################################
+                    # self.optimizer.step()
                     #################################################################################
 
                     # IMP Count Predictions
