@@ -459,7 +459,6 @@ class PRETRAIN(object):
                     
                     loss = loss.float()
                     loss.backward()  
-                    print(obs_count_loss.item(), obs_pval_loss.item(), imp_pval_loss.item(), imp_count_loss.item())
                     
                     total_norm = 0.0
                     for param in self.model.parameters():
@@ -467,6 +466,11 @@ class PRETRAIN(object):
                             param_norm = param.grad.data.norm(2)
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
+
+                    print(
+                        total_norm, 
+                        obs_pval_loss.item(), imp_pval_loss.item(), 
+                        obs_count_loss.item(), imp_count_loss.item())
 
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     self.optimizer.step()
@@ -739,7 +743,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -843,12 +847,12 @@ if __name__ == "__main__":
         "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 5,
-        "inner_epochs": 500,
+        "inner_epochs": 100,
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-4,
-        "num_loci": 3200,
+        "num_loci": 10,
         "lr_halflife":2,
         "min_avail":5}
 
