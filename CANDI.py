@@ -140,7 +140,7 @@ class CANDI_DNA(nn.Module):
         ################################################################################
         self.convEncDNA_stem = nn.ModuleList(
             [ConvTower(
-                4, self.f2//4, W=15, S=1, D=1,
+                4, self.f2//4, W=conv_kernel_size, S=1, D=1,
                 pool_type="max", residuals=True, groups=1, pool_size=5),
             ConvTower(
                 self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
@@ -467,7 +467,7 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=10)
                     self.optimizer.step()
                     #################################################################################
 
@@ -846,7 +846,7 @@ if __name__ == "__main__":
         "mask_percentage": 0.25,
         "context_length": 1600,
         "batch_size": 50,
-        "learning_rate": 1e-2,
+        "learning_rate": 1e-3,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":5}

@@ -2807,50 +2807,59 @@ class EVAL_CANDI(object):
 
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
-            rnaseq_res = self.eval_rnaseq(bios_name, ups_mean, Y, availability, k_fold=10, plot_REC=True)
+            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
         print("getting 0.95 interval conf")
 
-        imp_lower_95, imp_upper_95 = imp_dist.interval(confidence=0.95)
-        ups_lower_95, ups_upper_95 = ups_dist.interval(confidence=0.95)
+        imp_count_lower_95, imp_count_upper_95 = imp_count_mean.interval(confidence=0.95)
+        ups_count_lower_95, ups_count_upper_95 = ups_count_mean.interval(confidence=0.95)
+
+        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_mean.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_mean.interval(confidence=0.95)
 
         results = []
-        # for j in availability:  # for each feature i.e. assay
-        for j in range(Y.shape[1]):
 
+        for j in range(Y.shape[1]):
             if j in list(availability):
                 target = Y[:, j].numpy()
 
                 for comparison in ['imputed', 'upsampled']:
                     
                     if comparison == "imputed":
-                        pred = imp_mean[:, j].numpy()
-                        pred_std = imp_std[:, j].numpy()
-                        # lower_60 = imp_lower_60[:, j].numpy()
-                        # lower_80 = imp_lower_80[:, j].numpy()
-                        lower_95 = imp_lower_95[:, j].numpy()
+                        pred_count = imp_count_mean[:, j].numpy()
+                        pred_count_std = imp_count_std[:, j].numpy()
 
-                        # upper_60 = imp_upper_60[:, j].numpy()
-                        # upper_80 = imp_upper_80[:, j].numpy()
-                        upper_95 = imp_upper_95[:, j].numpy()
+                        pred_pval = imp_pval_mean[:, j].numpy()
+                        pred_pval_std = imp_pval_std[:, j].numpy()
 
-                        quantile = self.metrics.confidence_quantile(imp_dist.p[:,j], imp_dist.n[:,j], target)
-                        p0bgdf = self.metrics.foreground_vs_background(imp_dist.p[:,j], imp_dist.n[:,j], target)
+                        count_lower_95 = imp_count_lower_95[:, j].numpy()
+                        count_upper_95 = imp_count_upper_95[:, j].numpy()
+
+                        pval_lower_95 = imp_pval_lower_95[:, j].numpy()
+                        pval_upper_95 = imp_pval_upper_95[:, j].numpy()
+
+                        count_quantile = self.metrics.confidence_quantile(
+                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], target)
+                        count_p0bgdf = self.metrics.foreground_vs_background(
+                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], target)
                         
                     elif comparison == "upsampled":
-                        pred = ups_mean[:, j].numpy()
-                        pred_std = ups_std[:, j].numpy()
-                        # lower_60 = ups_lower_60[:, j].numpy()
-                        # lower_80 = ups_lower_80[:, j].numpy()
-                        lower_95 = ups_lower_95[:, j].numpy()
+                        pred_count = ups_count_mean[:, j].numpy()
+                        pred_count_std = ups_count_std[:, j].numpy()
 
-                        # upper_60 = ups_upper_60[:, j].numpy()
-                        # upper_80 = ups_upper_80[:, j].numpy()
-                        upper_95 = ups_upper_95[:, j].numpy()
+                        pred_pval = ups_pval_mean[:, j].numpy()
+                        pred_pval_std = ups_pval_std[:, j].numpy()
 
-                        quantile = self.metrics.confidence_quantile(ups_dist.p[:,j], ups_dist.n[:,j], target)
-                        p0bgdf = self.metrics.foreground_vs_background(ups_dist.p[:,j], ups_dist.n[:,j], target)
+                        count_lower_95 = ups_count_lower_95[:, j].numpy()
+                        count_upper_95 = ups_count_upper_95[:, j].numpy()
 
+                        pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                        pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+
+                        count_quantile = self.metrics.confidence_quantile(
+                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+                        count_p0bgdf = self.metrics.foreground_vs_background(
+                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
@@ -2861,19 +2870,17 @@ class EVAL_CANDI(object):
 
                         "obs":target,
                         "imp":pred,
-                        "pred_quantile":quantile,
                         "pred_std":pred_std,
 
-                        # "lower_60" : lower_60,
-                        # "lower_80" : lower_80,
-                        "lower_95" : lower_95,
+                        "count_lower_95" : count_lower_95,
+                        "count_upper_95": count_upper_95,
 
-                        # "upper_60": upper_60,
-                        # "upper_80": upper_80,
-                        "upper_95": upper_95,
+                        "pval_lower_95" : pval_lower_95,
+                        "pval_upper_95": pval_upper_95,
 
-                        "p0_bg":p0bgdf["p0_bg"],
-                        "p0_fg":p0bgdf["p0_fg"],
+                        "p0_bg":count_p0bgdf["p0_bg"],
+                        "p0_fg":count_p0bgdf["p0_fg"],
+                        "pred_quantile":count_quantile,
 
                         'MSE-GW': self.metrics.mse(target, pred),
                         'Pearson-GW': self.metrics.pearson(target, pred),

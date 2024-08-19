@@ -393,7 +393,7 @@ class ConvTower(nn.Module):
 
         if self.do_pool:
             y = self.pool(y)
-        
+
         return y
 
 class SE_Block_1D(nn.Module):
