@@ -293,7 +293,7 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-3)
         # self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
     
