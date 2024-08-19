@@ -868,9 +868,9 @@ if __name__ == "__main__":
         "epochs": 5,
         "inner_epochs": 1,
         "mask_percentage": 0.25,
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
-        "learning_rate": 1e-2,
+        "learning_rate": 1e-4,
         "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
