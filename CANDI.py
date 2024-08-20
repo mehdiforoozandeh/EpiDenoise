@@ -23,8 +23,7 @@ class CANDI(nn.Module):
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.signal_layer_norm = nn.ReLU()
-        # self.signal_layer_norm = nn.LayerNorm(self.f1)
+        self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
@@ -294,8 +293,8 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-3)
-        # self.mse = nn.MSELoss(reduction=reduction)
+        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-3)
+        self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
     
     def mse_loss(self, Y_true, Y_pred):
@@ -320,10 +319,10 @@ class CANDI_LOSS(nn.Module):
             observed_count_loss = observed_count_loss.sum()
             imputed_count_loss = imputed_count_loss.sum()
 
-        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
-        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        # observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
-        # imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
+        # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
+        imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
@@ -446,8 +445,8 @@ class PRETRAIN(object):
                     
                     # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                     
-                    # loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    loss = imp_pval_loss + imp_count_loss
+                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    # loss = imp_pval_loss + imp_count_loss
                     # print(
                     #     obs_count_loss.item(), imp_count_loss.item(),
                     #     obs_pval_loss.item(), imp_pval_loss.item())
@@ -470,7 +469,7 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
                     
                     self.optimizer.step()
@@ -860,7 +859,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 3,
+        "n_cnn_layers": 4,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
@@ -868,11 +867,11 @@ if __name__ == "__main__":
         "n_sab_layers": 1,
         "epochs": 5,
         "inner_epochs": 1,
-        "mask_percentage": 0.25,
-        "context_length": 400,
+        "mask_percentage": 0.2,
+        "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-4,
-        "num_loci": 6400,
+        "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
 
