@@ -7,7 +7,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc=" ", expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
@@ -163,7 +163,7 @@ class CANDI_DNA(nn.Module):
         reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
         conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-        self.signal_layer_norm = nn.LayerNorm(self.f1)
+        # self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
@@ -227,7 +227,7 @@ class CANDI_DNA(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        src = self.signal_layer_norm(src)
+        # src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
