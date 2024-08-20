@@ -1872,7 +1872,7 @@ class ExtendedEncodeDataHandler:
 
             i += 1
         return md
-        
+         
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
         mdtensor = []
@@ -1954,7 +1954,7 @@ class ExtendedEncodeDataHandler:
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], merge_ct=False, eic=False, DSF_list=[1, 2, 4, 8]):
+        includes=[], merge_ct=False, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
 
         self.set_alias()
