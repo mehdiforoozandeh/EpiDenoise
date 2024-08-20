@@ -847,7 +847,7 @@ if __name__ == "__main__":
         "n_sab_layers": 4,
         "epochs": 5,
         "inner_epochs": 5,
-        "mask_percentage": 0.25,
+        "mask_percentage": 0.2,
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-4,
@@ -883,5 +883,5 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="MSE_2")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
     # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
