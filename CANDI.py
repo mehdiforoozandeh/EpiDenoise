@@ -293,8 +293,8 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        # self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True, eps=1e-3)
-        self.mse = nn.MSELoss(reduction=reduction)
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)#, eps= 1e-3)
+        # self.mse = nn.MSELoss(reduction=reduction)
         self.nbin_nll = negative_binomial_loss
     
     def mse_loss(self, Y_true, Y_pred):
@@ -319,10 +319,10 @@ class CANDI_LOSS(nn.Module):
             observed_count_loss = observed_count_loss.sum()
             imputed_count_loss = imputed_count_loss.sum()
 
-        # observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
-        # imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
-        imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
+        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+        # observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
+        # imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
