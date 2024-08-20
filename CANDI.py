@@ -7,7 +7,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="absolute", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
