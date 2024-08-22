@@ -4340,9 +4340,9 @@ def main():
         mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
     res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
+    ec.viz_bios(eval_res=res)
     res = ec.filter_res(res)
     print(pd.DataFrame(res))
-    ec.viz_bios(eval_res=res)
 
 if __name__ == "__main__":
     main()
