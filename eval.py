@@ -3489,7 +3489,6 @@ class EVAL_CANDI(object):
             os.mkdir(self.savedir)
 
         self.data_path = data_path
-        self.version = version
         self.context_length = context_length
         self.batch_size = batch_size
         self.resolution = resolution
