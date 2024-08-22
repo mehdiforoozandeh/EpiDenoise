@@ -3541,6 +3541,8 @@ class EVAL_CANDI(object):
             self.model = loader.load_CANDI()
             
         summary(self.model)
+        print(self.dataset.navigation.keys())
+        exit()
 
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
@@ -4332,7 +4334,7 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
-    res = ec.bios_pipeline_eic(args.bios, args.dsf)
+    res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
     print(res)
     exit()
     ec.viz_bios(eval_res=res)
