@@ -3502,9 +3502,6 @@ class EVAL_CANDI(object):
         
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
-        
-        print(self.dataset.signal_dim)
-        exit()
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
 
@@ -3538,7 +3535,8 @@ class EVAL_CANDI(object):
         if type(self.model) == str:
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
-                self.hyper_parameters["signal_dim"]
+                self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
+                self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
             
