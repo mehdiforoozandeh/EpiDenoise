@@ -4105,8 +4105,6 @@ class EVAL_CANDI(object):
             P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
             del temp_py, temp_px, temp_p
 
-            print(avX, avY, avlP)
-            exit()
         else:
             temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
@@ -4321,7 +4319,7 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
-    # bios -> "B_RWPE2"
+    # bios -> "B_DND-41"
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
 
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
