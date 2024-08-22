@@ -4213,11 +4213,6 @@ class EVAL_CANDI(object):
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
-        print(self.eic)
-        print(available_X_indices)
-        print(available_Y_indices)
-        exit()
-
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
         else:
