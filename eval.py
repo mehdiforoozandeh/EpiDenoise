@@ -4290,18 +4290,19 @@ class EVAL_CANDI(object):
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
+
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
-    parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model.")
-    parser.add_argument("--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
-    parser.add_argument("--data_path", type=str, required=True, help="Path to the input data.")
-    parser.add_argument("--savedir", type=str, default="/project/compbio-lab/EPD/eval_30d/", help="Directory to save evaluation results.")
-    parser.add_argument("--resolution", type=int, default=25, help="Resolution for evaluation.")
-    parser.add_argument("--context_length", type=int, default=1600, help="Context length for evaluation.")
-    parser.add_argument("--batch_size", type=int, default=50, help="Batch size for evaluation.")
+    parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
+    parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
+    parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
+    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/eval_30d/", help="Directory to save evaluation results.")
+    parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
+    parser.add_argument("-cl", "--context_length", type=int, default=1600, help="Context length for evaluation.")
+    parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
     parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
-    parser.add_argument("--DNA", action="store_true", help="Flag to include DNA in the evaluation.")
+    parser.add_argument("--dna", action="store_true", help="Flag to include DNA in the evaluation.")
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
-    parser.add_argument("bios", type=str, help="BIOS argument for the pipeline.")
+    parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
 
     args = parser.parse_args()
     print(args)
