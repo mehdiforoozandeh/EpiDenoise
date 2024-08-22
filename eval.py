@@ -3541,8 +3541,6 @@ class EVAL_CANDI(object):
             self.model = loader.load_CANDI()
             
         summary(self.model)
-        print(self.dataset.navigation.keys())
-        exit()
 
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
