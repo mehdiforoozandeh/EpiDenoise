@@ -1,4 +1,5 @@
 from model import *
+from CANDI import *
 from data import *
 from _utils import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
@@ -3533,8 +3534,10 @@ class EVAL_CANDI(object):
         if type(self.model) == str:
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
-            loader = MODEL_LOADER(model, self.hyper_parameters)
-            self.model = loader.load_epidenoise(version=self.version)
+            loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
+            self.model = loader.load_CANDI()
+            
+        summary(self.model)
 
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
