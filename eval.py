@@ -4256,6 +4256,21 @@ class EVAL_CANDI(object):
             except Exception as e:
                 print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
 
+    # def filter_res(self, eval_res):
+    #     to_del = [
+    #         "obs_count", "obs_pval", "pred_count", "pred_count_std", 
+    #         "pred_pval", "pred_pval_std", "count_lower_95", "count_upper_95", 
+    #         "pval_lower_95", "pval_upper_95", "pred_quantile"]
+        
+    #     for f in eval_res:
+    #         fkeys = list(f.keys())
+    #         for d in to_del:
+    #             if d in fkeys:
+    #                 del f[d]
+        
+    #     return eval
+            
+
     def viz_all(self, dsf=1):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
@@ -4306,7 +4321,6 @@ def main():
 
     args = parser.parse_args()
     print(args)
-    exit()
 
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
@@ -4314,6 +4328,8 @@ def main():
         mode="eval", split="test", eic=args.eic, DNA=args.DNA)
 
     res = ec.bios_pipeline_eic(args.bios, args.dsf)
+    print(res)
+    exit()
     ec.viz_bios(eval_res=res)
 
 if __name__ == "__main__":
