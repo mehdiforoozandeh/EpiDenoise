@@ -4131,7 +4131,7 @@ class EVAL_CANDI(object):
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
 
         if self.DNA:
-            seq = seq[:num_rows, :]
+            seq = seq[:num_rows*self.resolution, :]
             
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
