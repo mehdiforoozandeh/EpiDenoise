@@ -3951,8 +3951,8 @@ class EVAL_CANDI(object):
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
         # print("getting 0.95 interval conf")
-        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        # ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+        # ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
         
         results = []
         for j in range(Y.shape[1]):
@@ -4002,11 +4002,11 @@ class EVAL_CANDI(object):
                 "pred_pval":pred_pval,
                 "pred_pval_std":pred_pval_std,
 
-                "count_lower_95" : count_lower_95,
-                "count_upper_95": count_upper_95,
+                # "count_lower_95" : count_lower_95,
+                # "count_upper_95": count_upper_95,
 
-                "pval_lower_95" : pval_lower_95,
-                "pval_upper_95": pval_upper_95,
+                # "pval_lower_95" : pval_lower_95,
+                # "pval_upper_95": pval_upper_95,
 
                 "p0_bg":count_p0bgdf["p0_bg"],
                 "p0_fg":count_p0bgdf["p0_fg"],
@@ -4208,6 +4208,9 @@ class EVAL_CANDI(object):
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
+        print(available_X_indices)
+        print(available_Y_indices)
+
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
         else:
@@ -4316,7 +4319,7 @@ def main():
     parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
     parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
     parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
-    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/eval_30d/", help="Directory to save evaluation results.")
+    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/CANDI/", help="Directory to save evaluation results.")
     parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
     parser.add_argument("-cl", "--context_length", type=int, default=1600, help="Context length for evaluation.")
     parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
@@ -4334,7 +4337,7 @@ def main():
         mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
     res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
-    print(ec.filter_res(res))
+    print(pd.DataFrame(ec.filter_res(res)))
     exit()
     ec.viz_bios(eval_res=res)
 
