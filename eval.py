@@ -3951,9 +3951,9 @@ class EVAL_CANDI(object):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        # print("getting 0.95 interval conf")
-        # ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
-        # ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        print("getting 0.95 interval conf")
+        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
         
         results = []
         for j in range(Y.shape[1]):
@@ -3963,11 +3963,11 @@ class EVAL_CANDI(object):
             pred_pval = ups_pval_mean[:, j].numpy()
             pred_pval_std = ups_pval_std[:, j].numpy()
 
-            # count_lower_95 = ups_count_lower_95[:, j].numpy()
-            # count_upper_95 = ups_count_upper_95[:, j].numpy()
+            count_lower_95 = ups_count_lower_95[:, j].numpy()
+            count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-            # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-            # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+            pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+            pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
             P_target = P[:, j].numpy()
 
@@ -4003,11 +4003,11 @@ class EVAL_CANDI(object):
                 "pred_pval":pred_pval,
                 "pred_pval_std":pred_pval_std,
 
-                # "count_lower_95" : count_lower_95,
-                # "count_upper_95": count_upper_95,
+                "count_lower_95" : count_lower_95,
+                "count_upper_95": count_upper_95,
 
-                # "pval_lower_95" : pval_lower_95,
-                # "pval_upper_95": pval_upper_95,
+                "pval_lower_95" : pval_lower_95,
+                "pval_upper_95": pval_upper_95,
 
                 "p0_bg":count_p0bgdf["p0_bg"],
                 "p0_fg":count_p0bgdf["p0_fg"],
