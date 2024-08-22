@@ -3950,7 +3950,7 @@ class EVAL_CANDI(object):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        print("getting 0.95 interval conf")
+        # print("getting 0.95 interval conf")
         ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
         ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
         
@@ -4260,20 +4260,21 @@ class EVAL_CANDI(object):
             except Exception as e:
                 print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
 
-    # def filter_res(self, eval_res):
-    #     to_del = [
-    #         "obs_count", "obs_pval", "pred_count", "pred_count_std", 
-    #         "pred_pval", "pred_pval_std", "count_lower_95", "count_upper_95", 
-    #         "pval_lower_95", "pval_upper_95", "pred_quantile"]
+    def filter_res(self, eval_res):
+        new_res = []
+        to_del = [
+            "obs_count", "obs_pval", "pred_count", "pred_count_std", 
+            "pred_pval", "pred_pval_std", "count_lower_95", "count_upper_95", 
+            "pval_lower_95", "pval_upper_95", "pred_quantile"]
         
-    #     for f in eval_res:
-    #         fkeys = list(f.keys())
-    #         for d in to_del:
-    #             if d in fkeys:
-    #                 del f[d]
-        
-    #     return eval
-            
+        for f in eval_res:
+            if f["comparison"] != "None":
+                fkeys = list(f.keys())
+                for d in to_del:
+                    if d in fkeys:
+                        del f[d]
+                new_res.append(f)
+        return new_res
 
     def viz_all(self, dsf=1):
         self.model_res = []
@@ -4333,7 +4334,7 @@ def main():
         mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
     res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
-    print(res)
+    print(ec.filter_res(res))
     exit()
     ec.viz_bios(eval_res=res)
 
