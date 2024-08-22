@@ -4100,6 +4100,9 @@ class EVAL_CANDI(object):
 
             P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
             del temp_py, temp_px, temp_p
+
+            print(avX, avY, avP)
+            exit()
         else:
             temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
