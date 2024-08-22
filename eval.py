@@ -4261,7 +4261,7 @@ class EVAL_CANDI(object):
             print(f"plotting {func_name.replace('_', ' ')}")
             # try:
             func(eval_res)
-            self.clear_pallete()
+            self.viz.clear_pallete()
             # except Exception as e:
             #     print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
 
