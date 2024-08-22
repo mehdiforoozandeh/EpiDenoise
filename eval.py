@@ -3977,15 +3977,15 @@ class EVAL_CANDI(object):
             elif j in list(available_Y_indices):
                 comparison = "imputed"
                 C_target = Y[:, j].numpy()
-            
+
+            else:
+                continue
+
             count_quantile = self.metrics.confidence_quantile(
                 ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
 
             count_p0bgdf = self.metrics.foreground_vs_background(
                 ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
-
-            else:
-                continue
 
             metrics = {
                 'bios':bios_name,
