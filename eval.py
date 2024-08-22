@@ -2205,23 +2205,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_quantile"]
-                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+                    pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
-                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    pcc = f"PCC_Gene: {eval_res[j]['C_Pearson_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
-                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+                    pcc = f"PCC_TSS: {eval_res[j]['C_Pearson_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
-                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+                    pcc = f"PCC_1obs: {eval_res[j]['C_Pearson_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
-                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    pcc = f"PCC_1imp: {eval_res[j]['C_Pearson_1imp']:.2f}"
 
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
@@ -2257,7 +2257,7 @@ class VISUALS_CANDI(object):
                 continue
 
             observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
-            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
             error = np.abs(observed - pred_mean)
 
             # Calculate the percentiles for x-axis limits
@@ -2303,7 +2303,7 @@ class VISUALS_CANDI(object):
                 continue
 
             observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
-            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            pcc = f"PCC_GW: {eval_res[j]['P_Pearson-GW']:.2f}"
             error = np.abs(observed - pred_mean)
 
             # Calculate the percentiles for x-axis limits
@@ -2350,7 +2350,7 @@ class VISUALS_CANDI(object):
             ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
-            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
 
             hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
             plt.colorbar(hb, ax=ax, label='Predicted std')
@@ -2378,7 +2378,7 @@ class VISUALS_CANDI(object):
             ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
-            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            pcc = f"PCC_GW: {eval_res[j]['P_Pearson-GW']:.2f}"
 
             hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
             plt.colorbar(hb, ax=ax, label='Predicted std')
@@ -2409,23 +2409,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
-                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+                    pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    pcc = f"PCC_Gene: {eval_res[j]['C_Pearson_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+                    pcc = f"PCC_TSS: {eval_res[j]['C_Pearson_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+                    pcc = f"PCC_1obs: {eval_res[j]['C_Pearson_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    pcc = f"PCC_1imp: {eval_res[j]['C_Pearson_1imp']:.2f}"
                     
                 sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
 
@@ -2472,23 +2472,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
-                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+                    pcc = f"PCC_GW: {eval_res[j]['P_Pearson-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    pcc = f"PCC_Gene: {eval_res[j]['P_Pearson_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+                    pcc = f"PCC_TSS: {eval_res[j]['P_Pearson_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+                    pcc = f"PCC_1obs: {eval_res[j]['P_Pearson_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    pcc = f"PCC_1imp: {eval_res[j]['P_Pearson_1imp']:.2f}"
                     
                 sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
 
@@ -2534,23 +2534,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
-                    title_suffix = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+                    title_suffix = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    title_suffix = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    title_suffix = f"PCC_Gene: {eval_res[j]['C_Pearson_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    title_suffix = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+                    title_suffix = f"PCC_TSS: {eval_res[j]['C_Pearson_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    title_suffix = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+                    title_suffix = f"PCC_1obs: {eval_res[j]['C_Pearson_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    title_suffix = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    title_suffix = f"PCC_1imp: {eval_res[j]['C_Pearson_1imp']:.2f}"
 
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
@@ -2587,23 +2587,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
-                    title_suffix = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+                    title_suffix = f"PCC_GW: {eval_res[j]['P_Pearson-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    title_suffix = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    title_suffix = f"PCC_Gene: {eval_res[j]['P_Pearson_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    title_suffix = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+                    title_suffix = f"PCC_TSS: {eval_res[j]['P_Pearson_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    title_suffix = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+                    title_suffix = f"PCC_1obs: {eval_res[j]['P_Pearson_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    title_suffix = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    title_suffix = f"PCC_1imp: {eval_res[j]['P_Pearson_1imp']:.2f}"
 
                 # Create the heatmap
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
@@ -2640,23 +2640,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
-                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+                    scc = f"SRCC_GW: {eval_res[j]['C_Spearman-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    scc = f"SRCC_Gene: {eval_res[j]['C_Spearman_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+                    scc = f"SRCC_TSS: {eval_res[j]['C_Spearman_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+                    scc = f"SRCC_1obs: {eval_res[j]['C_Spearman_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+                    scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
 
                 # Convert values to ranks
                 xs = rankdata(xs)
@@ -2697,23 +2697,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
-                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+                    scc = f"SRCC_GW: {eval_res[j]['P_Spearman-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    scc = f"SRCC_Gene: {eval_res[j]['P_Spearman_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
-                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+                    scc = f"SRCC_TSS: {eval_res[j]['P_Spearman_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+                    scc = f"SRCC_1obs: {eval_res[j]['P_Spearman_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
-                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+                    scc = f"SRCC_1imp: {eval_res[j]['P_Spearman_1imp']:.2f}"
 
                 # Convert values to ranks
                 xs = rankdata(xs)
