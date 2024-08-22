@@ -4099,8 +4099,16 @@ class EVAL_CANDI(object):
 
             # Load and process P (probability)
             temp_py = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
-            temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            if self.split == "test":
+                temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            elif self.split == "val":
+                temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+
+            print(temp_py)
+            print(temp_px)
             temp_p = {**temp_py, **temp_px}
+            print(temp_p)
+            exit()
 
             P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
             del temp_py, temp_px, temp_p
