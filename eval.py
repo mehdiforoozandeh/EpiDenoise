@@ -2349,7 +2349,7 @@ class VISUALS_CANDI(object):
 
             ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
-            observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
             pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
 
             hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
