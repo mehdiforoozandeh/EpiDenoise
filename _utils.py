@@ -381,10 +381,8 @@ class MONITOR_VALIDATION(object): # CANDI
             subsets_seq = []
 
         if fixed_segment is None:
-            # Use example coordinates (similar to get_bios_eic behavior)
             coordinates = self.example_coords
         else:
-            # Use fixed segment (similar to get_bios_frame behavior)
             start, end = fixed_segment
             coordinates = [(start, end)]
 
@@ -416,8 +414,6 @@ class MONITOR_VALIDATION(object): # CANDI
 
         if self.DNA:
             seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
-        
-        # print(X.shape, Y.shape, P.shape, seq.shape)
 
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
         avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)

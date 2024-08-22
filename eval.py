@@ -17,7 +17,7 @@ import matplotlib.ticker as mticker
 import matplotlib.lines as mlines
 from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
-import pyBigWig
+import pyBigWig, sys, argparse
 
 import scipy.stats as stats
 from scipy.optimize import minimize
@@ -1908,6 +1908,942 @@ class EVAL_EIC(object): # on chr21
             self.viz.MODEL_regplot_overall(self.model_res, metric=m)
             self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
 
+class VISUALS_CANDI(object):
+    def __init__(self, resolution=25, savedir="models/evals/"):
+        self.metrics = METRICS()
+        self.resolution = resolution
+        self.savedir = savedir
+
+    def clear_pallete(self):
+        sns.reset_orig
+        plt.close("all")
+        plt.style.use('default')
+        plt.clf()
+
+    def count_track(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
+        example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
+        example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
+        example_gene_coord4 = (39526359//self.resolution, 39802081//self.resolution) # B3GALT5
+        example_gene_coord5 = (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            example_gene_coord, example_gene_coord2, example_gene_coord3,
+            example_gene_coord4, example_gene_coord5]
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
+                imputed_values = eval_res[j]["pred_count"][gene_coord[0]:gene_coord[1]]
+
+                # Plot the lines
+                if "obs_count" in eval_res[j].keys():
+                    observed_values = eval_res[j]["obs_count"][gene_coord[0]:gene_coord[1]]
+                    ax.plot(x_values, observed_values, color="blue", alpha=0.7, label="Observed", linewidth=0.1)
+                    ax.fill_between(x_values, 0, observed_values, alpha=0.7, color="blue")
+
+                ax.plot(x_values, imputed_values, "--", color="red", alpha=0.5, label="Imputed", linewidth=0.1)
+                ax.fill_between(x_values, 0, imputed_values, color="red", alpha=0.5)
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("Count")
+
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
+
+                custom_lines = [mlines.Line2D([], [], color='blue', label='Observed'),
+                                mlines.Line2D([], [], color='red',  label='Imputed')]
+                ax.legend(handles=custom_lines)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_tracks.png", dpi=300)
+    
+    def signal_track(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        example_gene_coord = (33481539//self.resolution, 33588914//self.resolution) # GART
+        example_gene_coord2 = (25800151//self.resolution, 26235914//self.resolution) # APP
+        example_gene_coord3 = (31589009//self.resolution, 31745788//self.resolution) # SOD1
+        example_gene_coord4 = (39526359//self.resolution, 39802081//self.resolution) # B3GALT5
+        example_gene_coord5 = (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            example_gene_coord, example_gene_coord2, example_gene_coord3,
+            example_gene_coord4, example_gene_coord5]
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(example_gene_coords), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
+                imputed_values = eval_res[j]["pred_pval"][gene_coord[0]:gene_coord[1]]
+
+                # Plot the lines
+                if "obs_pval" in eval_res[j].keys():
+                    observed_values = eval_res[j]["obs_pval"][gene_coord[0]:gene_coord[1]]
+                    ax.plot(x_values, observed_values, color="blue", alpha=0.7, label="Observed", linewidth=0.1)
+                    ax.fill_between(x_values, 0, observed_values, alpha=0.7, color="blue")
+
+                ax.plot(x_values, imputed_values, "--", color="red", alpha=0.5, label="Imputed", linewidth=0.1)
+                ax.fill_between(x_values, 0, imputed_values, color="red", alpha=0.5)
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("Signal")
+
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
+
+                custom_lines = [mlines.Line2D([], [], color='blue', label='Observed'),
+                                mlines.Line2D([], [], color='red',  label='Imputed')]
+                ax.legend(handles=custom_lines)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=300)
+
+    def count_confidence(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            ]
+
+        # Define the size of the figure
+        plt.figure(figsize=(8 * len(example_gene_coords), len(eval_res) * 2))
+
+        for j, result in enumerate(eval_res):
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
+
+                # Fill between for confidence intervals
+                ax.fill_between(
+                    x_values, result['count_lower_95'][gene_coord[0]:gene_coord[1]], result['count_upper_95'][gene_coord[0]:gene_coord[1]], 
+                    color='coral', alpha=0.4, label='95% Confidence')
+
+                # Plot the median predictions
+                ax.plot(x_values, result['pred_count'][gene_coord[0]:gene_coord[1]], label='Mean', color='red', linewidth=0.5)
+
+                if "obs_count" in result.keys():
+                    # Plot the actual observations
+                    ax.plot(
+                        x_values, result['obs_count'][gene_coord[0]:gene_coord[1]], 
+                        label='Observed', color='royalblue', linewidth=0.4, alpha=0.8)
+
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+
+                # Set plot titles and labels
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("Count")
+                ax.set_yscale('log') 
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
+
+                # Only show legend in the first subplot to avoid redundancy
+                if i == 0 and j ==0:
+                    ax.legend(loc='upper left')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_95CI.pdf", dpi=300)
+    
+    def signal_confidence(self, eval_res):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Create a list of example gene coordinates for iteration
+        example_gene_coords = [
+            (33481539//self.resolution, 33588914//self.resolution), # GART
+            (25800151//self.resolution, 26235914//self.resolution), # APP
+            (31589009//self.resolution, 31745788//self.resolution), # SOD1
+            (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
+            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            ]
+
+        # Define the size of the figure
+        plt.figure(figsize=(8 * len(example_gene_coords), len(eval_res) * 2))
+
+        for j, result in enumerate(eval_res):
+            for i, gene_coord in enumerate(example_gene_coords):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(example_gene_coords), j * len(example_gene_coords) + i + 1)
+                
+                # Calculate x_values based on the current gene's coordinates
+                x_values = range(gene_coord[0], gene_coord[1])
+
+                # Fill between for confidence intervals
+                ax.fill_between(
+                    x_values, result['pval_lower_95'][gene_coord[0]:gene_coord[1]], result['pval_upper_95'][gene_coord[0]:gene_coord[1]], 
+                    color='coral', alpha=0.4, label='95% Confidence')
+
+                # Plot the median predictions
+                ax.plot(x_values, result['pred_pval'][gene_coord[0]:gene_coord[1]], label='Mean', color='red', linewidth=0.5)
+
+                if "obs_pval" in result.keys():
+                    # Plot the actual observations
+                    ax.plot(
+                        x_values, result['obs_pval'][gene_coord[0]:gene_coord[1]], 
+                        label='Observed', color='royalblue', linewidth=0.4, alpha=0.8)
+
+
+                start_coord = gene_coord[0] * self.resolution
+                end_coord = gene_coord[1] * self.resolution
+
+                # Set plot titles and labels
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_ylabel("Signal")
+                ax.set_yscale('log') 
+                ax.set_xlabel(f"chr21 {start_coord} : {end_coord}")
+                ax.set_xticklabels([])
+
+                # Only show legend in the first subplot to avoid redundancy
+                if i == 0 and j ==0:
+                    ax.legend(loc='upper left')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_95CI.pdf", dpi=300)
+
+    def quantile_hist(self, eval_res, b=20):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs_count" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_quantile"]
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
+
+                ax.hist(ys, bins=b, color='blue', alpha=0.7, density=True)
+                # ax.grid(True, linestyle='-', color='gray', alpha=0.5)
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"Obs. vs. Pred. Quantile {eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}")
+                ax.set_xlabel("Predicted CDF Quantile")
+                ax.set_ylabel("Density")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_quantile_hist.png", dpi=150)
+
+    def quantile_heatmap(self, eval_res, b=20):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs_count" not in eval_res[j]:
+                continue
+            
+            for i, c in enumerate(cols):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_quantile"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_quantile"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                # Create the heatmap
+                h, xedges, yedges = np.histogram2d(np.asarray(xs), np.asarray(ys), bins=b, density=True)
+                h = h.T  # Transpose to correct the orientation
+                h = h / h.sum(axis=0, keepdims=True)  # Normalize cols
+
+                im = ax.imshow(
+                    h, interpolation='nearest', origin='lower', 
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], 
+                    aspect='auto', cmap='viridis', norm=LogNorm())
+                
+                # Set title and labels for the top row and first column to avoid clutter
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{pcc}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted Quantiles")
+                plt.colorbar(im, ax=ax, orientation='vertical')
+                
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.png", dpi=150)
+
+    def count_error_std_hexbin(self, eval_res):
+        save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        
+        num_plots = len(eval_res) * 3  # Each evaluation will have 3 subplots
+        plt.figure(figsize=(15, len(eval_res) * 5))  # Adjust width for 3 columns
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            error = np.abs(observed - pred_mean)
+
+            # Calculate the percentiles for x-axis limits
+            x_90 = np.percentile(error, 99)
+            x_99 = np.percentile(error, 99.9)
+
+            # Define the ranges for subsetting
+            ranges = [(0, x_90), (0, x_99), (0, error.max())]
+
+            for i, (x_min, x_max) in enumerate(ranges):
+                # Subset the data for the current range
+                mask = (error >= x_min) & (error <= x_max)
+                subset_error = error[mask]
+                subset_pred_std = pred_std[mask]
+                
+                ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
+
+                # Hexbin plot for the subset data
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+
+                ax.set_xlabel('Absolute Error')
+                ax.set_ylabel('Predicted Std Dev')
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc} (Range: {x_min:.2f}-{x_max:.2f})")
+
+                # Add color bar
+                cb = plt.colorbar(hb, ax=ax)
+                cb.set_label('Log10(Counts)')
+        
+        plt.tight_layout()
+        plt.savefig(f"{save_path}/count_error_std_hexbin.png", dpi=150)
+
+    def signal_error_std_hexbin(self, eval_res):
+        save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        
+        num_plots = len(eval_res) * 3  # Each evaluation will have 3 subplots
+        plt.figure(figsize=(15, len(eval_res) * 5))  # Adjust width for 3 columns
+
+        for j in range(len(eval_res)):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+            error = np.abs(observed - pred_mean)
+
+            # Calculate the percentiles for x-axis limits
+            x_90 = np.percentile(error, 99)
+            x_99 = np.percentile(error, 99.9)
+
+            # Define the ranges for subsetting
+            ranges = [(0, x_90), (0, x_99), (0, error.max())]
+
+            for i, (x_min, x_max) in enumerate(ranges):
+                # Subset the data for the current range
+                mask = (error >= x_min) & (error <= x_max)
+                subset_error = error[mask]
+                subset_pred_std = pred_std[mask]
+                
+                ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
+
+                # Hexbin plot for the subset data
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+
+                ax.set_xlabel('Absolute Error')
+                ax.set_ylabel('Predicted Std Dev')
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc} (Range: {x_min:.2f}-{x_max:.2f})")
+
+                # Add color bar
+                cb = plt.colorbar(hb, ax=ax)
+                cb.set_label('Log10(signal)')
+        
+        plt.tight_layout()
+        plt.savefig(f"{save_path}/signal_error_std_hexbin.png", dpi=150)
+
+    def count_mean_std_hexbin(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+            hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
+            plt.colorbar(hb, ax=ax, label='Predicted std')
+            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
+            ax.set_xlabel('Observed')
+            ax.set_ylabel('Predicted Mean')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_mean_std_hexbin.png", dpi=150)
+    
+    def signal_mean_std_hexbin(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        for j in range(len(eval_res)):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+            hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
+            plt.colorbar(hb, ax=ax, label='Predicted std')
+            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
+            ax.set_xlabel('Observed')
+            ax.set_ylabel('Predicted Mean')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_mean_std_hexbin.png", dpi=150)
+
+    def count_scatter_with_marginals(self, eval_res, share_axes=True):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+        num_rows = len(eval_res)
+        num_cols = len(cols)
+
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5 * num_rows))
+
+        for j, result in enumerate(eval_res):
+            if "obs_count" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = axes[j, i] if num_rows > 1 else axes[i]
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    
+                sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
+
+                bin_range = np.linspace(min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys])), 50)
+                ax_histx = ax.inset_axes([0, 1.05, 1, 0.2])
+                ax_histy = ax.inset_axes([1.05, 0, 0.2, 1])
+                
+                ax_histx.hist(xs, bins=bin_range, alpha=0.9, color="#f25a64")
+                ax_histy.hist(ys, bins=bin_range, orientation='horizontal', alpha=0.9, color="#f25a64")
+                
+                ax_histx.set_xticklabels([])
+                ax_histx.set_yticklabels([])
+                ax_histy.set_xticklabels([])
+                ax_histy.set_yticklabels([])
+
+                # Set title, labels, and range if share_axes is True
+                ax.set_title(f"{result['feature']}_{c}_{result['comparison']}_{pcc}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted")
+
+                if share_axes:
+                    common_range = [min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys]))]
+                    ax.set_xlim(common_range)
+                    ax.set_ylim(common_range)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.png", dpi=150)
+
+    def signal_scatter_with_marginals(self, eval_res, share_axes=True):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+        num_rows = len(eval_res)
+        num_cols = len(cols)
+
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5 * num_rows))
+
+        for j, result in enumerate(eval_res):
+            if "obs_pval" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = axes[j, i] if num_rows > 1 else axes[i]
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
+                    pcc = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    pcc = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    pcc = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    pcc = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    pcc = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+                    
+                sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
+
+                bin_range = np.linspace(min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys])), 50)
+                ax_histx = ax.inset_axes([0, 1.05, 1, 0.2])
+                ax_histy = ax.inset_axes([1.05, 0, 0.2, 1])
+                
+                ax_histx.hist(xs, bins=bin_range, alpha=0.9, color="#f25a64")
+                ax_histy.hist(ys, bins=bin_range, orientation='horizontal', alpha=0.9, color="#f25a64")
+                
+                ax_histx.set_xticklabels([])
+                ax_histx.set_yticklabels([])
+                ax_histy.set_xticklabels([])
+                ax_histy.set_yticklabels([])
+
+                # Set title, labels, and range if share_axes is True
+                ax.set_title(f"{result['feature']}_{c}_{result['comparison']}_{pcc}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted")
+
+                if share_axes:
+                    common_range = [min(np.concatenate([xs, ys])), max(np.concatenate([xs, ys]))]
+                    ax.set_xlim(common_range)
+                    ax.set_ylim(common_range)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.png", dpi=150)
+
+    def count_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
+                    title_suffix = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    title_suffix = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    title_suffix = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    title_suffix = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    title_suffix = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                # Create the heatmap
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{title_suffix}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_heatmaps.png", dpi=150)
+
+    def signal_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            if "obs_pval" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
+                    title_suffix = f"PCC_GW: {eval_res[j]['Pearson-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    title_suffix = f"PCC_Gene: {eval_res[j]['Pearson_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    title_suffix = f"PCC_TSS: {eval_res[j]['Pearson_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    title_suffix = f"PCC_1obs: {eval_res[j]['Pearson_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    title_suffix = f"PCC_1imp: {eval_res[j]['Pearson_1imp']:.2f}"
+
+                # Create the heatmap
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(min(xs), min(ys))
+                    common_max = max(max(xs), max(ys))
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{title_suffix}")
+                ax.set_xlabel("Observed")
+                ax.set_ylabel("Predicted")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_heatmaps.png", dpi=150)
+
+    def count_rank_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
+                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
+                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
+                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+
+                # Convert values to ranks
+                xs = rankdata(xs)
+                ys = rankdata(ys)
+
+                # Create the heatmap for ranked values
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(xedges[0], yedges[0])
+                    common_max = max(xedges[-1], yedges[-1])
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
+                ax.set_xlabel("Observed | rank")
+                ax.set_ylabel("Predicted | rank")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
+
+    def signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        cols = ["GW", "gene", "TSS", "1obs", "1imp"]
+
+        # Define the size of the figure
+        plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
+
+        for j in range(len(eval_res)):
+            if "obs_pval" not in eval_res[j]:
+                continue
+            for i, c in enumerate(cols):
+                ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
+
+                if c == "GW":
+                    xs, ys = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"]
+                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+
+                elif c == "gene":
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    
+                elif c == "TSS":
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], bin_size=self.resolution)
+                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+
+                elif c == "1obs":
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+
+                elif c == "1imp":
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
+                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+
+                # Convert values to ranks
+                xs = rankdata(xs)
+                ys = rankdata(ys)
+
+                # Create the heatmap for ranked values
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = h.T  # Transpose to correct the orientation
+                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
+
+                if share_axes:
+                    common_min = min(xedges[0], yedges[0])
+                    common_max = max(xedges[-1], yedges[-1])
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
+
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
+                ax.set_xlabel("Observed | rank")
+                ax.set_ylabel("Predicted | rank")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
+        
+    def count_context_length_specific_performance(self, eval_res, context_length, bins=10):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(list_of_metrics), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs_count" not in eval_res[j]:
+                continue
+
+            observed_values = eval_res[j]["obs_count"]
+            imputed_values = eval_res[j]["pred_count"]
+
+            bin_size = context_length // bins
+
+            observed_values = observed_values.reshape(-1, context_length)
+            imputed_values = imputed_values.reshape(-1, context_length)
+
+            observed_values = observed_values.reshape(observed_values.shape[0]*bin_size, bins)
+            imputed_values = imputed_values.reshape(imputed_values.shape[0]*bin_size, bins)
+
+            for i, m in enumerate(list_of_metrics):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(list_of_metrics), j * len(list_of_metrics) + i + 1)
+                
+                xs = [float(xt)/bins for xt in range(bins)]
+                # Calculate x_values based on the current gene's coordinates
+                ys = []
+                for b in range(bins):
+                    
+                    obs, imp = observed_values[:,b].flatten(), imputed_values[:,b].flatten()
+                    if m == 'MSE-GW':
+                        ys.append(self.metrics.mse(obs, imp))
+
+                    elif m == 'Pearson-GW':
+                        ys.append(self.metrics.pearson(obs, imp))
+
+                    elif m == 'Spearman-GW':
+                        ys.append(self.metrics.spearman(obs, imp))
+                
+                ax.plot(xs, ys, color="grey", linewidth=3)
+                # ax.fill_between(xs, 0, ys, alpha=0.7, color="grey")
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_xlabel("position in context")
+                ax.set_ylabel(m)
+        
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_context.png", dpi=150)
+    
+    def signal_context_length_specific_performance(self, eval_res, context_length, bins=10):
+        if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        list_of_metrics = ['MSE-GW', 'Pearson-GW', 'Spearman-GW']
+
+        # Define the size of the figure
+        plt.figure(figsize=(6 * len(list_of_metrics), len(eval_res) * 2))
+
+        # Loop over each result
+        for j in range(len(eval_res)):
+            # Loop over each gene
+            if "obs_pval" not in eval_res[j]:
+                continue
+
+            observed_values = eval_res[j]["obs_pval"]
+            imputed_values = eval_res[j]["pred_pval"]
+
+            bin_size = context_length // bins
+
+            observed_values = observed_values.reshape(-1, context_length)
+            imputed_values = imputed_values.reshape(-1, context_length)
+
+            observed_values = observed_values.reshape(observed_values.shape[0]*bin_size, bins)
+            imputed_values = imputed_values.reshape(imputed_values.shape[0]*bin_size, bins)
+
+            for i, m in enumerate(list_of_metrics):
+                # Create subplot for each result and gene combination
+                ax = plt.subplot(len(eval_res), len(list_of_metrics), j * len(list_of_metrics) + i + 1)
+                
+                xs = [float(xt)/bins for xt in range(bins)]
+                # Calculate x_values based on the current gene's coordinates
+                ys = []
+                for b in range(bins):
+                    
+                    obs, imp = observed_values[:,b].flatten(), imputed_values[:,b].flatten()
+                    if m == 'MSE-GW':
+                        ys.append(self.metrics.mse(obs, imp))
+
+                    elif m == 'Pearson-GW':
+                        ys.append(self.metrics.pearson(obs, imp))
+
+                    elif m == 'Spearman-GW':
+                        ys.append(self.metrics.spearman(obs, imp))
+                
+                ax.plot(xs, ys, color="grey", linewidth=3)
+                # ax.fill_between(xs, 0, ys, alpha=0.7, color="grey")
+                ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+                ax.set_xlabel("position in context")
+                ax.set_ylabel(m)
+        
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_context.png", dpi=150)
+
 class EVAL_EED(object):
     """
     for imputating missing tracks, we should replace mY with 'prompt' metadata.
@@ -2561,7 +3497,6 @@ class EVAL_CANDI(object):
         self.eic = eic
         self.DNA = DNA
 
-
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         self.dataset.init_eval(
@@ -2811,11 +3746,11 @@ class EVAL_CANDI(object):
 
         print("getting 0.95 interval conf")
 
-        imp_count_lower_95, imp_count_upper_95 = imp_count_mean.interval(confidence=0.95)
-        ups_count_lower_95, ups_count_upper_95 = ups_count_mean.interval(confidence=0.95)
+        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_mean.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_mean.interval(confidence=0.95)
+        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
@@ -2947,7 +3882,6 @@ class EVAL_CANDI(object):
                         "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                         "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
                         "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10),
-
                     }
                     
                     if self.dataset.has_rnaseq(bios_name):
@@ -3002,22 +3936,49 @@ class EVAL_CANDI(object):
         return results
     
     def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices):
-        ups_mean = ups_count_dist.expect()
-        ups_pval = ups_pval_dist.mean()
+        ups_count_mean = ups_count_dist.expect()
+        ups_count_std = ups_count_dist.std()
+
+        ups_pval_mean = ups_pval_dist.mean()
+        ups_pval_std = ups_pval_dist.std()
+
+        if self.dataset.has_rnaseq(bios_name):
+            print("got rna-seq data")
+            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
+
+        print("getting 0.95 interval conf")
+        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
         
         results = []
         for j in range(Y.shape[1]):
-            pred_count = ups_mean[:, j].numpy()
-            pred_pval = ups_pval[:, j].numpy()
-            target_pval = P[:, j].numpy()
+            pred_count = ups_count_mean[:, j].numpy()
+            pred_count_std = ups_count_std[:, j].numpy()
+
+            pred_pval = ups_pval_mean[:, j].numpy()
+            pred_pval_std = ups_pval_std[:, j].numpy()
+
+            count_lower_95 = ups_count_lower_95[:, j].numpy()
+            count_upper_95 = ups_count_upper_95[:, j].numpy()
+
+            pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+            pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+
+            count_quantile = self.metrics.confidence_quantile(
+                ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+
+            count_p0bgdf = self.metrics.foreground_vs_background(
+                ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+
+            P_target = P[:, j].numpy()
 
             if j in list(available_X_indices):
                 comparison = "upsampled"
-                target_count = X[:, j].numpy()
+                C_target = X[:, j].numpy()
 
             elif j in list(available_Y_indices):
                 comparison = "imputed"
-                target_count = Y[:, j].numpy()
+                C_target = Y[:, j].numpy()
 
             else:
                 continue
@@ -3028,116 +3989,331 @@ class EVAL_CANDI(object):
                 'comparison': comparison,
                 'available assays': len(available_X_indices),
 
-                'MSE_count': self.metrics.mse(target_count, pred_count),
-                'Pearson_count': self.metrics.pearson(target_count, pred_count),
-                'Spearman_count': self.metrics.spearman(target_count, pred_count),
-                'r2_count': self.metrics.r2(target_count, pred_count),
+                "obs_count": C_target,
+                "obs_pval": P_target,
+                
+                "pred_count":pred_count,
+                "pred_count_std":pred_count_std,
 
-                'MSE_pval': self.metrics.mse(target_pval, pred_pval),
-                'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
-                'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
-                'r2_pval': self.metrics.r2(target_pval, pred_pval)
+                "pred_pval":pred_pval,
+                "pred_pval_std":pred_pval_std,
+
+                "count_lower_95" : count_lower_95,
+                "count_upper_95": count_upper_95,
+
+                "pval_lower_95" : pval_lower_95,
+                "pval_upper_95": pval_upper_95,
+
+                "p0_bg":count_p0bgdf["p0_bg"],
+                "p0_fg":count_p0bgdf["p0_fg"],
+                "pred_quantile":count_quantile,
+
+                'C_MSE-GW': self.metrics.mse(C_target, pred_count),
+                'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
+                'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
+                'C_r2_GW': self.metrics.r2(C_target, pred_count),
+
+                'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
+                'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
+                'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
+                'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+
+                'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
+                'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
+                'C_Spearman_1imp': self.metrics.spearman1_imp(C_target, pred_count),
+                'C_r2_1imp': self.metrics.r2_1imp(C_target, pred_count),
+
+                'C_MSE-gene': self.metrics.mse_gene(C_target, pred_count),
+                'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
+                'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
+                'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
+
+                'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
+                'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
+                'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
+                'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
+
+                "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
+                "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
+                "C_peak_overlap_10thr": self.metrics.peak_overlap(C_target, pred_count, p=0.10),
+
+                ########################################################################
+
+                'P_MSE-GW': self.metrics.mse(P_target, pred_pval),
+                'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
+                'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
+                'P_r2_GW': self.metrics.r2(P_target, pred_pval),
+
+                'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
+                'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
+                'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
+                'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
+
+                'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
+                'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
+                'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, pred_pval),
+                'P_r2_1imp': self.metrics.r2_1imp(P_target, pred_pval),
+
+                'P_MSE-gene': self.metrics.mse_gene(P_target, pred_pval),
+                'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
+                'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
+                'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
+
+                'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
+                'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
+                'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
+                'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
+
+                "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
+                "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
+                "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10)
             }
+
             results.append(metrics)
 
         return results
 
-if __name__=="__main__":
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
+        print(f"getting bios vals for {bios_name}")
 
-    e = EVAL_EED(
-        model="/project/compbio-lab/EPD/pretrained/EPD30d_model_checkpoint_Jul8th.pth", 
-        data_path="/project/compbio-lab/encode_data/", 
-        context_length=3200, batch_size=50, 
-        hyper_parameters_path="/project/compbio-lab/EPD/pretrained/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
-    
-    print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
-    # e.viz_all()
+        if self.eic:
+            # Load and process X (input) with "T_" prefix replacement in bios_name
+            temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+            del temp_x, temp_mx
+            
+            # Load and process Y (target)
+            temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+            Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
+            if fill_in_y_prompt:
+                mY = self.dataset.fill_in_y_prompt(mY)
+            del temp_y, temp_my
 
+            # Load and process P (probability)
+            temp_py = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+            temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            temp_p = {**temp_py, **temp_px}
+
+            P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
+            del temp_py, temp_px, temp_p
+        else:
+            temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+            del temp_x, temp_mx
+            
+            temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+            Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
+            if fill_in_y_prompt:
+                mY = self.dataset.fill_in_y_prompt(mY)
+            del temp_y, temp_my
+
+            temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", 0, self.chr_sizes["chr21"]], y_dsf)
+            P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
+            assert (avlP == avY).all(), "avlP and avY do not match"
+            del temp_p
+
+        if self.DNA:
+            seq = dna_to_onehot(get_DNA_sequence("chr21", 0, self.chr_sizes["chr21"]))
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
+
+        if self.DNA:
+            seq = seq[:num_rows, :]
+            
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+        P = P.view(-1, self.context_length, P.shape[-1])
+
+        if self.DNA:
+            seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
+
+        mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
+        avX, avY = avX.expand(X.shape[0], -1), avY.expand(Y.shape[0], -1)
+
+        if self.DNA:
+            return X, Y, P, seq, mX, mY, avX, avY
+        else:
+            return X, Y, P, mX, mY, avX, avY
+
+    def bios_pipeline(self, bios_name, x_dsf):
+        if self.DNA:
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+        else:
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+
+        mu_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        var_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+
+        for leave_one_out in available_indices:
+            if self.DNA:
+                n, p, mu, var = self.pred(X, mX, mY, avX, seq=seq, imp_target=[leave_one_out])
+            else:
+                n, p, mu, var = self.pred(X, mX, mY, avX, seq=None, imp_target=[leave_one_out])
+
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+
+            mu_imp[:, :, leave_one_out] = mu[:, :, leave_one_out]
+            var_imp[:, :, leave_one_out] = var[:, :, leave_one_out]
+
+            del n, p, mu, var  # Free up memory
+
+        if self.DNA:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
+
+        del X, mX, mY, avX, avY  # Free up memory
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        mu_imp = mu_imp.view((mu_imp.shape[0] * mu_imp.shape[1]), mu_imp.shape[-1])
+        var_imp = var_imp.view((var_imp.shape[0] * var_imp.shape[1]), var_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
+        var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+
+        imp_count_dist = NegativeBinomial(p_imp, n_imp)
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+
+        imp_pval_dist = Gaussian(mu_imp, var_imp)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+
+        eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices)
+        return eval_res
+
+    def bios_pipeline_eic(self, bios_name, x_dsf):
+        if self.DNA:
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+        else:
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf) 
+
+        available_X_indices = torch.where(avX[0, :] == 1)[0]
+        available_Y_indices = torch.where(avY[0, :] == 1)[0]
+
+        if self.DNA:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
+        var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+
+        X = X.view((X.shape[0] * X.shape[1]), X.shape[-1])
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+
+        eval_res = self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
+        return eval_res
+
+    def viz_bios(self, eval_res):
+        # Define a dictionary mapping function names to corresponding methods
+        plot_functions = {
+            "count_track": self.count_track,
+            "signal_track": self.signal_track,
+            "count_confidence": self.count_confidence,
+            "signal_confidence": self.signal_confidence,
+            "quantile_hist": self.quantile_hist,
+            "quantile_heatmap": self.quantile_heatmap,
+            "count_error_std_hexbin": self.count_error_std_hexbin,
+            "signal_error_std_hexbin": self.signal_error_std_hexbin,
+            "count_mean_std_hexbin": self.count_mean_std_hexbin,
+            "signal_mean_std_hexbin": self.signal_mean_std_hexbin,
+            "count_scatter_with_marginals": self.count_scatter_with_marginals,
+            "signal_scatter_with_marginals": self.signal_scatter_with_marginals,
+            "count_heatmap": self.count_heatmap,
+            "signal_heatmap": self.signal_heatmap,
+            "count_rank_heatmap": self.count_rank_heatmap,
+            "signal_rank_heatmap": self.signal_rank_heatmap,
+            "count_context_length_specific_performance": self.count_context_length_specific_performance,
+            "signal_context_length_specific_performance": self.signal_context_length_specific_performance
+        }
+        
+        for func_name, func in plot_functions.items():
+            print(f"plotting {func_name.replace('_', ' ')}")
+            try:
+                func(eval_res)
+                self.clear_pallete()
+            except Exception as e:
+                print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
+
+    def viz_all(self, dsf=1):
+        self.model_res = []
+        print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
+        for bios in list(self.dataset.navigation.keys()):
+            try:
+                print("evaluating ", bios)
+                if self.eic:
+                    eval_res_bios = self.bios_pipeline_eic(bios, dsf)
+                else:
+                    eval_res_bios = self.bios_pipeline(bios, dsf)
+                print("got results for ", bios)
+                self.viz_bios(eval_res_bios)
+                
+                to_del = [
+                    "obs_count", "obs_pval", "pred_count", "pred_count_std", 
+                    "pred_pval", "pred_pval_std", "count_lower_95", "count_upper_95", 
+                    "pval_lower_95", "pval_upper_95", "pred_quantile"]
+                
+                for f in eval_res_bios:
+                    fkeys = list(f.keys())
+                    for d in to_del:
+                        if d in fkeys:
+                            del f[d]
+                    
+                    if f["comparison"] != "None":
+                        self.model_res.append(f)
+            except:
+                pass
+
+        self.model_res = pd.DataFrame(self.model_res)
+        self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
+
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
+    parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
+    parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model.")
+    parser.add_argument("--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
+    parser.add_argument("--data_path", type=str, required=True, help="Path to the input data.")
+    parser.add_argument("--savedir", type=str, default="/project/compbio-lab/EPD/eval_30d/", help="Directory to save evaluation results.")
+    parser.add_argument("--resolution", type=int, default=25, help="Resolution for evaluation.")
+    parser.add_argument("--context_length", type=int, default=1600, help="Context length for evaluation.")
+    parser.add_argument("--batch_size", type=int, default=50, help="Batch size for evaluation.")
+    parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
+    parser.add_argument("--DNA", action="store_true", help="Flag to include DNA in the evaluation.")
+    parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
+    parser.add_argument("bios", type=str, help="BIOS argument for the pipeline.")
+
+    args = parser.parse_args()
+    print(args)
     exit()
 
-    # e = EVAL_EED(
-    #     model="models/pretrained/EPD30a_model_checkpoint_epoch0_LociProg60.pth", 
-    #     data_path="/project/compbio-lab/encode_data/", 
-    #     context_length=400, batch_size=200, 
-    #     hyper_parameters_path="models/pretrained/hyper_parameters30a_EpiDenoise30a_20240529134015_params2182872.pkl",
-    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-    #     version="30a", resolution=25, 
-    #     savedir="models/evals/eval_30a/", mode="eval"
-    # )
-    # evres = e.bios_pipeline("ENCBS899TTJ", 1)
-    # for i in range(len(evres)):
-    #     print(evres[i])
-    
-    # exit()
+    ec = EVAL_CANDI(
+        args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
+        chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
+        mode="eval", split="test", eic=args.eic, DNA=args.DNA)
 
-    # e.viz_bios(evres)
-    # try:
-    #     evres = pd.DataFrame(evres)
-    #     evres.to_csv("models/eval_30a/res.csv")
-    # except:
-    #     pass
+    res = ec.bios_pipeline_eic(args.bios, args.dsf)
+    ec.viz_bios(eval_res=res)
 
-    e = EVAL_EED(
-        model="models/pretrained/EpiDenoise30b_20240529133959_params5969560.pt", 
-        data_path="/project/compbio-lab/encode_data/", 
-        context_length=1600, batch_size=50, 
-        hyper_parameters_path="models/pretrained/hyper_parameters30b_EpiDenoise30b_20240529133959_params5969560.pkl",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-        version="30b", resolution=25, savedir="models/eval_30b/", mode="eval")
-
-    evres = e.bios_pipeline("ENCBS373AAA", 1)
-    print("plotting error vs. std hexbin")
-    try:
-        e.viz.BIOS_error_std_hexbin(evres)
-        e.viz.clear_pallete()
-    except Exception as e:
-        print(f"Failed to plot error vs. std hexbin: {e}")
-    # e.viz_all()
-
-
-    exit()
-    for i in range(len(evres)):
-        print(evres[i])
-
-    
-
-    evres = e.bios_pipeline("ENCBS596CTT", 1)
-    for i in range(len(evres)):
-        print(evres[i])
-
-    e.viz_bios(evres)
-    try:
-        evres = pd.DataFrame(evres)
-        evres.to_csv("models/eval_30b/res.csv")
-    except:
-        pass
-
-
-    # e = EVAL_EED(
-    #     model="models/EPD30c_model_checkpoint_epoch0_LociProg20.pth", 
-    #     data_path="/project/compbio-lab/encode_data/", 
-    #     context_length=1536, batch_size=50, 
-    #     hyper_parameters_path="models/hyper_parameters30c_EpiDenoise30c_20240603115718_params15099287.pkl",
-    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
-    #     version="30c", resolution=25, 
-    #     savedir="models/eval_30c/", mode="eval"
-    # )
-    # evres = e.bios_pipeline("ENCBS596CTT", 1)
-    # for i in range(len(evres)):
-    #     print(evres[i])
-
-    # e.viz_bios(evres)
-    # try:
-    #     evres = pd.DataFrame(evres)
-    #     evres.to_csv("models/eval_30a/res.csv")
-    # except:
-    #     pass
-    
-
-    
-
-    
-    
-
+if __name__ == "__main__":
+    main()

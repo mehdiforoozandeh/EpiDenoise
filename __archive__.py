@@ -2569,3 +2569,15 @@ class MONITOR_VALIDATION(object):
         plt.close(fig)
         
         return buf
+
+
+    # e = EVAL_EED(
+    #     model="/project/compbio-lab/EPD/pretrained/EPD30d_model_checkpoint_Jul8th.pth", 
+    #     data_path="/project/compbio-lab/encode_data/", 
+    #     context_length=3200, batch_size=50, 
+    #     hyper_parameters_path="/project/compbio-lab/EPD/pretrained/hyper_parameters30d_EpiDenoise30d_20240710133714_params237654660.pkl",
+    #     train_log={}, chr_sizes_file="data/hg38.chrom.sizes", 
+    #     version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
+    
+    # print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
+    
