@@ -4325,7 +4325,7 @@ def main():
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
-        mode="eval", split="test", eic=args.eic, DNA=args.DNA)
+        mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
     res = ec.bios_pipeline_eic(args.bios, args.dsf)
     print(res)
