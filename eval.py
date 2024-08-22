@@ -3540,10 +3540,9 @@ class EVAL_CANDI(object):
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
             
-        summary(self.model)
-
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
+        summary(self.model)
         print(f"# model_parameters: {count_parameters(self.model)}")
 
     def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10, plot_REC=True):
