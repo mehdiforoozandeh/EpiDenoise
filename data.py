@@ -2245,6 +2245,8 @@ class ExtendedEncodeDataHandler:
         else:
             self.eic = False
             self.filter_navigation(exclude=excludes, include=includes)
+        
+        self.signal_dim = len(self.aliases["experiment_aliases"])
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
