@@ -3499,6 +3499,8 @@ class EVAL_CANDI(object):
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        print(self.dataset.signal_dim)
+        exit()
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
 
@@ -3534,6 +3536,7 @@ class EVAL_CANDI(object):
         if type(self.model) == str:
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
+                self.hyper_parameters["signal_dim"]
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
             
