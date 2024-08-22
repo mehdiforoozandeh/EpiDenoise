@@ -3963,11 +3963,11 @@ class EVAL_CANDI(object):
             pred_pval = ups_pval_mean[:, j].numpy()
             pred_pval_std = ups_pval_std[:, j].numpy()
 
-            count_lower_95 = ups_count_lower_95[:, j].numpy()
-            count_upper_95 = ups_count_upper_95[:, j].numpy()
+            # count_lower_95 = ups_count_lower_95[:, j].numpy()
+            # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-            pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-            pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+            # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+            # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
             P_target = P[:, j].numpy()
 
