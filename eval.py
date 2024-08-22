@@ -3493,6 +3493,7 @@ class EVAL_CANDI(object):
         self.context_length = context_length
         self.batch_size = batch_size
         self.resolution = resolution
+        self.split = split
         
         self.eic = eic
         self.DNA = DNA
@@ -4081,8 +4082,11 @@ class EVAL_CANDI(object):
         print(f"getting bios vals for {bios_name}")
 
         if self.eic:
-            # Load and process X (input) with "T_" prefix replacement in bios_name
-            temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            if self.split == "test":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            elif self.split == "val":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), ["chr21", 0, self.chr_sizes["chr21"]], x_dsf)
+            
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
             
