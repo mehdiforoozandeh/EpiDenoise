@@ -4309,6 +4309,7 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
+    # bios -> "B_RWPE2"
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
 
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
