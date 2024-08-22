@@ -4342,7 +4342,6 @@ def main():
     res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
     res = ec.filter_res(res)
     print(pd.DataFrame(res))
-    exit()
     ec.viz_bios(eval_res=res)
 
 if __name__ == "__main__":
