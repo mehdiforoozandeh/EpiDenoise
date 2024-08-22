@@ -3968,12 +3968,6 @@ class EVAL_CANDI(object):
             pval_lower_95 = ups_pval_lower_95[:, j].numpy()
             pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
-            count_quantile = self.metrics.confidence_quantile(
-                ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
-
-            count_p0bgdf = self.metrics.foreground_vs_background(
-                ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
-
             P_target = P[:, j].numpy()
 
             if j in list(available_X_indices):
@@ -3983,6 +3977,12 @@ class EVAL_CANDI(object):
             elif j in list(available_Y_indices):
                 comparison = "imputed"
                 C_target = Y[:, j].numpy()
+            
+            count_quantile = self.metrics.confidence_quantile(
+                ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
+
+            count_p0bgdf = self.metrics.foreground_vs_background(
+                ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
 
             else:
                 continue
