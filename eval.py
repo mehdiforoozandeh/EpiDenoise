@@ -4259,11 +4259,11 @@ class EVAL_CANDI(object):
         
         for func_name, func in plot_functions.items():
             print(f"plotting {func_name.replace('_', ' ')}")
-            try:
-                func(eval_res)
-                self.clear_pallete()
-            except Exception as e:
-                print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
+            # try:
+            func(eval_res)
+            self.clear_pallete()
+            # except Exception as e:
+            #     print(f"Failed to plot {func_name.replace('_', ' ')}: {e}")
 
     def filter_res(self, eval_res):
         new_res = []
