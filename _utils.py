@@ -44,8 +44,8 @@ def compute_perplexity(probabilities):
     float: The perplexity of the model on the given sequence.
     """
     N = len(probabilities)
-    log_prob_sum = np.sum(np.log(probabilities))
-    perplexity = np.exp(-log_prob_sum / N)
+    log_prob_sum = torch.sum(torch.log(probabilities))
+    perplexity = torch.exp(-log_prob_sum / N)
     
     return perplexity
 
