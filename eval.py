@@ -4345,10 +4345,14 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
-    res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
-    ec.viz_bios(eval_res=res)
-    res = ec.filter_res(res)
-    print(pd.DataFrame(res))
+    if args.bios_name == "all":
+        ec.viz_bios(dsf=1)
+    else:
+        res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
+        ec.viz_bios(eval_res=res)
+        res = ec.filter_res(res)
+        print(pd.DataFrame(res))
 
 if __name__ == "__main__":
     main()
+    
