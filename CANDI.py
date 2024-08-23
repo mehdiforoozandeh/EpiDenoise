@@ -862,7 +862,7 @@ if __name__ == "__main__":
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
-        "nhead": 4,
+        "nhead": 8,
         "n_sab_layers": 1,
         "epochs": 5,
         "inner_epochs": 1,
@@ -870,7 +870,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-4,
-        "num_loci": 3200,
+        "num_loci": 400,
         "lr_halflife":1,
         "min_avail":10}
 
@@ -882,5 +882,5 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="testingmsk")
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="testingmsk")
     # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
