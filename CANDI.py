@@ -930,11 +930,19 @@ if __name__ == "__main__":
 
     eic = False
     DNA = False
+    prg = False
+    unm = False
 
     if "eic" in sys.argv or "EIC" in sys.argv:
         eic = True
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="tst_prg")
+    if "prog_mask" in sys.argv:
+        prg = True
+    elif "prog_unmask" in sys.argv:
+        prg = True
+        unm = True
+
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="tst_prg", prog_mask=prg, unmask=unm)
     # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
