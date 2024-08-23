@@ -2085,11 +2085,17 @@ class ExtendedEncodeDataHandler:
         batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
         return batch_data, batch_metadata, batch_availability
 
-    def new_epoch(self):
+    def new_epoch(self, shuffle_chr=True):
         self.chr_pointer = 0 
         self.bios_pointer = 0
         self.dsf_pointer = 0
         self.chr_loci_pointer = 0
+
+        if shuffle_chr:
+            keys = list(self.loci.keys())
+            random.shuffle(keys)
+            shuffled_loci = {key: self.loci[key] for key in keys}
+            self.loci = shuffled_loci
 
         batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
         self.loaded_data = []

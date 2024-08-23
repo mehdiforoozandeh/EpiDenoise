@@ -963,7 +963,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 class DataMasker:
-    def __init__(self, mask_value, mask_percentage, chunk_size=5):
+    def __init__(self, mask_value, mask_percentage, chunk_size=5, prog=False):
         self.mask_value = mask_value
         self.mask_percentage = mask_percentage
         self.chunk_size = chunk_size
@@ -1010,6 +1010,41 @@ class DataMasker:
                 num_to_mask.append(0)
             else:
                 num_to_mask.append(max(1, int(num_available[b] * self.mask_percentage)))
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+        new_md = metadata.clone().float()
+        data = data.clone().float()
+
+        # Mask indices generation and masking operation
+        for b in range(B):
+            if num_to_mask[b] > 0:
+                available_indices = torch.where(availability[b] == 1)[0]  # Find indices where features are available
+                mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
+                actual_indices_to_mask = available_indices[mask_indices]  # Actual indices in the feature dimension
+
+                data[b, :, actual_indices_to_mask] = self.mask_value  # Mask the features in X
+                new_md[b, :, actual_indices_to_mask] = self.mask_value
+                new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
+
+        return data, new_md, new_A
+
+    def progressive(self, data, metadata, availability, num_mask):
+        B, L, F = data.shape
+
+        # Number of features to mask per sample in the batch
+        num_to_mask = []
+        num_available = availability.sum(dim=1)
+        for b in range(B):
+
+            if num_available[b] > num_mask:
+                num_to_mask.append(num_mask)
+
+            elif num_available[b] == num_mask:
+                num_to_mask.append(num_mask - 1)
+            
+            elif num_available[b] < num_mask:
+                num_to_mask.append(num_available[b] - 1)
 
         # Prepare the new availability tensor
         new_A = availability.clone().float()

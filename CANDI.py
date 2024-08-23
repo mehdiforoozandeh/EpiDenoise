@@ -137,13 +137,32 @@ class CANDI_DNA(nn.Module):
         d_model = self.f2
 
         ################################################################################
+        # self.convEncDNA_stem = nn.ModuleList(
+        #     [ConvTower(
+        #         4, self.f2//4, W=conv_kernel_size, S=1, D=1,
+        #         pool_type="max", residuals=True, groups=1, pool_size=5),
+        #     ConvTower(
+        #         self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
+        #         pool_type="max", residuals=True, groups=1, pool_size=5)
+        #     ])
+
+        # DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
+        # DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        # self.convEncDNA = nn.ModuleList(
+        #     [ConvTower(
+        #         DNA_conv_channels[i], DNA_conv_channels[i + 1],
+        #         DNA_kernel_size[i], S=1, D=1,
+        #         pool_type="max", residuals=True,
+        #         groups=1, pool_size=2) for i in range(n_cnn_layers)])
+
         self.convEncDNA_stem = nn.ModuleList(
             [ConvTower(
                 4, self.f2//4, W=conv_kernel_size, S=1, D=1,
-                pool_type="max", residuals=True, groups=1, pool_size=5),
+                pool_type="max", residuals=True, groups=1, pool_size=2),
             ConvTower(
                 self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
-                pool_type="max", residuals=True, groups=1, pool_size=5)
+                pool_type="max", residuals=True, groups=1, pool_size=2)
             ])
 
         DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
@@ -154,7 +173,7 @@ class CANDI_DNA(nn.Module):
                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
                 DNA_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
-                groups=1, pool_size=2) for i in range(n_cnn_layers)])
+                groups=1, pool_size=5 if i >= n_cnn_layers - 2 else 2) for i in range(n_cnn_layers)])
         
         ################################################################################
 
@@ -360,6 +379,12 @@ class PRETRAIN(object):
 
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
+        if "_prog_unmask" in arch or "_prog_mask" in arch:
+            num_loci = self.dataset.m_regions
+            num_assays = self.dataset.signal_dim
+
+            mask_step = num_loci // (num_assays - 1)
+
         if hook:
             register_hooks(self.model)
         
@@ -372,6 +397,14 @@ class PRETRAIN(object):
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
+
+            if "_prog_unmask" in arch or "_prog_mask" in arch:
+                M_i = 1
+                if "_prog_unmask" in arch:
+                    num_mask = num_assays - 1
+
+                elif "_prog_mask" in arch:
+                    num_mask = 1
 
             last_lopr = -1
             while (next_epoch==False):
@@ -407,6 +440,16 @@ class PRETRAIN(object):
                     "grad_norm":[]
                     }
 
+                if "_prog_unmask" in arch or "_prog_mask" in arch:
+                    if M_i % mask_step == 0:
+                        if "_prog_unmask" in arch:
+                            num_mask -= 1
+
+                        elif "_prog_mask" in arch:
+                            num_mask += 1
+
+                    M_i += 1
+
                 for _ in range(inner_epochs):
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
@@ -417,8 +460,11 @@ class PRETRAIN(object):
                         X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
 
-                    X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-                    # X_batch, mX_batch, avX_batch = self.masker.mask_chunk_features_30(X_batch, mX_batch, avX_batch)
+                    if "_prog_unmask" in arch or "_prog_mask" in arch:
+                        X_batch, mX_batch, avX_batch = self.masker.progressive(X_batch, mX_batch, avX_batch, num_mask)
+                    else:
+                        X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
+                        # X_batch, mX_batch, avX_batch = self.masker.mask_chunk_features_30(X_batch, mX_batch, avX_batch)
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
@@ -651,6 +697,8 @@ class PRETRAIN(object):
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"took {int(minutes)}:{int(seconds):02d}", "\n"
                 ]
+                if "_prog_unmask" in arch or "_prog_mask" in arch:
+                    logstr.append(f"num_mask {num_mask}")
 
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
@@ -706,7 +754,7 @@ class PRETRAIN(object):
                 
         return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix=""):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, unmask=False):
     if eic:
         arch="eic"
     else:
@@ -714,6 +762,12 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     
     if DNA:
         arch = f"{arch}_DNA"
+
+    if prog_mask:
+        if unmask:
+            arch = f"{arch}_prog_unmask"
+        else:
+            arch = f"{arch}_prog_mask"
 
     arch = f"{arch}_{suffix}"
     # Defining the hyperparameters
@@ -882,5 +936,5 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="testingmsk")
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="tst_prg")
     # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
