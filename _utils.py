@@ -677,7 +677,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         self.model = model
         
-        bios_name = list(self.dataset.navigation.keys())[0]
+        bios_name = list(self.dataset.navigation.keys())[1]
         
         # dsf2-1
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices = self.get_bios_frame(
@@ -770,7 +770,7 @@ class MONITOR_VALIDATION(object): # CANDI
         self.model = model
 
         bios_dict_sorted = dict(sorted(self.dataset.navigation.items(), key=lambda item: len(item[1]), reverse=True))
-        bios_name = list(bios_dict_sorted.keys())[0]
+        bios_name = list(bios_dict_sorted.keys())[1]
 
         # DSF 2->1 (EIC-specific logic)
         ups_count_dist_21, ups_pval_dist_21, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
@@ -1040,10 +1040,7 @@ class DataMasker:
             if num_available[b] > num_mask:
                 num_to_mask.append(num_mask)
 
-            elif num_available[b] == num_mask:
-                num_to_mask.append(num_mask - 1)
-            
-            elif num_available[b] < num_mask:
+            else:
                 num_to_mask.append(num_available[b] - 1)
 
         # Prepare the new availability tensor

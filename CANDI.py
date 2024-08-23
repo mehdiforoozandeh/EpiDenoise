@@ -741,12 +741,12 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                if chr0 != chr1:
-                    validation_set_eval = val_eval.get_validation(self.model)
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                # if chr0 != chr1:
+                #     validation_set_eval = val_eval.get_validation(self.model)
+                #     torch.cuda.empty_cache()
+                #     log_strs.append(validation_set_eval)
+                #     print(validation_set_eval)
+                #     log_resource_usage()
             
             self.scheduler.step()
             print("learning rate scheduler step...")
