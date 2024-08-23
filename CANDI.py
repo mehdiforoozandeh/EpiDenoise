@@ -394,8 +394,8 @@ class PRETRAIN(object):
                     "imp_pval_loss":[], "ups_pval_loss":[],
                     "ups_count_r2":[], "imp_count_r2":[],
                     "ups_pval_r2":[], "imp_pval_r2":[],
-                    "ups_count_pmf":[], "imp_count_pmf":[],
-                    "ups_pval_pmf":[], "imp_pval_pmf":[],
+                    "ups_count_pp":[], "imp_count_pp":[],
+                    "ups_pval_pp":[], "imp_pval_pp":[],
                     "ups_count_conf":[], "imp_count_conf":[],
                     "ups_pval_conf":[], "imp_pval_conf":[],
                     "ups_count_mse":[], "imp_count_mse":[],
@@ -484,7 +484,7 @@ class PRETRAIN(object):
 
                     imp_count_r2 = r2_score(imp_count_true, imp_count_pred)
                     imp_count_errstd = spearmanr(imp_count_std, imp_count_abs_error)
-                    imp_count_pmf = neg_bin_imp.pmf(imp_count_true).mean()
+                    imp_count_pp = compute_perplexity(neg_bin_imp.pmf(imp_count_true))
                     imp_count_mse = ((imp_count_true - imp_count_pred)**2).mean()
 
                     imp_count_spearman = spearmanr(imp_count_true, imp_count_pred).correlation
@@ -500,7 +500,7 @@ class PRETRAIN(object):
                     imp_pval_r2 = r2_score(imp_pval_true, imp_pval_pred)
                     imp_pval_errstd = spearmanr(imp_pval_std, imp_pval_abs_error)
                     gaussian_imp = Gaussian(output_mu[masked_map].cpu().detach(), output_var[masked_map].cpu().detach())
-                    imp_pval_pmf = gaussian_imp.pdf(imp_pval_true).mean()
+                    imp_pval_pp = compute_perplexity(gaussian_imp.pdf(imp_pval_true))
                     imp_pval_mse = ((imp_pval_true - imp_pval_pred)**2).mean()
 
                     imp_pval_spearman = spearmanr(imp_pval_true, imp_pval_pred).correlation
@@ -516,7 +516,7 @@ class PRETRAIN(object):
 
                     ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
                     ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
-                    ups_count_pmf = neg_bin_ups.pmf(ups_count_true).mean()
+                    ups_count_pp = compute_perplexity(neg_bin_ups.pmf(ups_count_true))
                     ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
 
                     ups_count_spearman = spearmanr(ups_count_true, ups_count_pred).correlation
@@ -532,7 +532,7 @@ class PRETRAIN(object):
                     ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
                     ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
                     gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
-                    ups_pval_pmf = gaussian_ups.pdf(ups_pval_true).mean()
+                    ups_pval_pp = compute_perplexity(gaussian_ups.pdf(ups_pval_true))
                     ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
 
                     ups_pval_spearman = spearmanr(ups_pval_true, ups_pval_pred).correlation
@@ -552,11 +552,11 @@ class PRETRAIN(object):
                     batch_rec["ups_pval_r2"].append(ups_pval_r2)
                     batch_rec["imp_pval_r2"].append(imp_pval_r2)
 
-                    batch_rec["ups_count_pmf"].append(ups_count_pmf)
-                    batch_rec["imp_count_pmf"].append(imp_count_pmf)
+                    batch_rec["ups_count_pp"].append(ups_count_pp)
+                    batch_rec["imp_count_pp"].append(imp_count_pp)
 
-                    batch_rec["ups_pval_pmf"].append(ups_pval_pmf)
-                    batch_rec["imp_pval_pmf"].append(imp_pval_pmf)
+                    batch_rec["ups_pval_pp"].append(ups_pval_pp)
+                    batch_rec["imp_pval_pp"].append(imp_pval_pp)
 
                     batch_rec["ups_count_conf"].append(ups_count_errstd)
                     batch_rec["imp_count_conf"].append(ups_count_errstd)
@@ -623,10 +623,10 @@ class PRETRAIN(object):
                     f"Imp_Pval_R2 {np.mean(batch_rec['imp_pval_r2']):.2f}",
                     f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}", "\n",
 
-                    f"Imp_Count_P {np.mean(batch_rec['imp_count_pmf']):.2f}",
-                    f"Ups_Count_P {np.mean(batch_rec['ups_count_pmf']):.2f}",
-                    f"Imp_Pval_P {np.mean(batch_rec['imp_pval_pmf']):.2f}",
-                    f"Ups_Pval_P {np.mean(batch_rec['ups_pval_pmf']):.2f}", "\n",
+                    f"Imp_Count_PP {np.mean(batch_rec['imp_count_pp']):.2f}",
+                    f"Ups_Count_PP {np.mean(batch_rec['ups_count_pp']):.2f}",
+                    f"Imp_Pval_PP {np.mean(batch_rec['imp_pval_pp']):.2f}",
+                    f"Ups_Pval_PP {np.mean(batch_rec['ups_pval_pp']):.2f}", "\n",
 
                     f"Imp_Count_Conf {np.mean(batch_rec['imp_count_conf']):.2f}",
                     f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",

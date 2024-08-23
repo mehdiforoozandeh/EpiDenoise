@@ -33,6 +33,22 @@ def log_resource_usage():
 import torch
 from scipy.stats import norm
 
+def compute_perplexity(probabilities):
+    """
+    Computes the perplexity given a list of probabilities.
+
+    Parameters:
+    probabilities (list or np.array): A list or array of probabilities assigned by the model to each word in the sequence.
+
+    Returns:
+    float: The perplexity of the model on the given sequence.
+    """
+    N = len(probabilities)
+    log_prob_sum = np.sum(np.log(probabilities))
+    perplexity = np.exp(-log_prob_sum / N)
+    
+    return perplexity
+
 class Gaussian:
     def __init__(self, mu, var):
         self.mu = mu
