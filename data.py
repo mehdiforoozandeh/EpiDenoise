@@ -1703,7 +1703,7 @@ class ExtendedEncodeDataHandler:
         with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
-    def load_bios_BW(self, bios_name, locus, DSF, f_format="npz"):
+    def load_bios_BW(self, bios_name, locus, DSF, f_format="npz", arcsinh=True):
         if self.eic and bios_name not in self.navigation.keys():
             exps = []
             if os.path.isdir(os.path.join(self.base_path, bios_name)):
@@ -1733,7 +1733,10 @@ class ExtendedEncodeDataHandler:
         if len(locus) == 1:
             for l in loaded:
                 for exp, data in l.items():
-                    loaded_data[exp] = data
+                    if arcsinh:
+                        loaded_data[exp] = np.arcsinh(data)
+                    else:
+                        loaded_data[exp] = data
 
             return loaded_data
 
@@ -1742,7 +1745,10 @@ class ExtendedEncodeDataHandler:
             end_bin = int(locus[2]) // self.resolution
             for l in loaded:
                 for exp, data in l.items():
-                    loaded_data[exp] = data[start_bin:end_bin]
+                    if arcsinh:
+                        loaded_data[exp] = np.arcsinh(data[start_bin:end_bin])
+                    else:
+                        loaded_data[exp] = data[start_bin:end_bin]
             
             return loaded_data
     

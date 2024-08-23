@@ -1106,6 +1106,7 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
+
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()
