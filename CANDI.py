@@ -488,13 +488,14 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
                     
-                    # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
-                    
-                    loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
-                    # loss = imp_pval_loss + imp_count_loss
-                    # print(
-                    #     obs_count_loss.item(), imp_count_loss.item(),
-                    #     obs_pval_loss.item(), imp_pval_loss.item())
+                    if "_prog_unmask" in arch or "_prog_mask" in arch:
+                        msk_p = float(num_mask/num_assays)
+                        loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
+                        # loss = (msk_p*(obs_count_loss + obs_pval_loss)) + ((1-msk_p)*(imp_pval_loss + imp_count_loss))
+
+                    else:
+                        # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
+                        loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
 
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
@@ -695,10 +696,13 @@ class PRETRAIN(object):
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
-                    f"took {int(minutes)}:{int(seconds):02d}", "\n"
+                    f"took {int(minutes)}:{int(seconds):02d}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
+                    logstr.append("\n")
+                else:
+                    logstr.append("\n")
 
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
