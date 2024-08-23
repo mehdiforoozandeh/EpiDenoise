@@ -380,7 +380,7 @@ class PRETRAIN(object):
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
         if "_prog_unmask" in arch or "_prog_mask" in arch:
-            num_loci = self.dataset.m_regions
+            num_loci = len(self.dataset.m_regions)
             num_assays = self.dataset.signal_dim
 
             mask_step = num_loci // (num_assays - 1)
