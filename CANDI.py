@@ -3,7 +3,6 @@ from model import *
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
-
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
@@ -883,5 +882,5 @@ if __name__ == "__main__":
     if "dna" in sys.argv or "DNA" in sys.argv:
         DNA = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="testingmsk")
     # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
