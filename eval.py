@@ -4343,7 +4343,7 @@ def main():
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
-        mode="eval", split="test", eic=args.eic, DNA=args.dna)
+        mode="eval", split="val", eic=args.eic, DNA=args.dna)
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
