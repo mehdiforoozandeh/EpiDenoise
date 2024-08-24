@@ -139,10 +139,10 @@ class CANDI_DNA(nn.Module):
         ################################################################################
         # self.convEncDNA_stem = nn.ModuleList(
         #     [ConvTower(
-        #         4, self.f2//4, W=conv_kernel_size, S=1, D=1,
+        #         4, self.f2//2, W=conv_kernel_size, S=1, D=1,
         #         pool_type="max", residuals=True, groups=1, pool_size=5),
         #     ConvTower(
-        #         self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
+        #         self.f2//2, self.f2//2, W=conv_kernel_size, S=1, D=1,
         #         pool_type="max", residuals=True, groups=1, pool_size=5)
         #     ])
 
@@ -904,11 +904,11 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 16,
-        "n_sab_layers": 2,
+        "n_sab_layers": 4,
         "epochs": 7,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 1600,
+        "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 3200,
