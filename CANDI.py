@@ -441,7 +441,7 @@ class PRETRAIN(object):
                     }
 
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
-                    print(M_i, mask_step, num_loci)
+                    print(M_i, mask_step, N)
                     if M_i % mask_step == 0:
                         print("took a step")
                         if "_prog_unmask" in arch:
@@ -804,7 +804,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr19"], #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
