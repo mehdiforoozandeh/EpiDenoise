@@ -442,9 +442,12 @@ class PRETRAIN(object):
 
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
                     if M_i % mask_step == 0:
+                        print(M_i, mask_step, num_loci)
                         if "_prog_unmask" in arch:
                             if num_mask > 1:
                                 num_mask -= 1
+                            
+
 
                         elif "_prog_mask" in arch:
                             num_mask += 1
