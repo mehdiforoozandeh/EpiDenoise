@@ -441,8 +441,9 @@ class PRETRAIN(object):
                     }
 
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
+                    print(M_i, mask_step, num_loci)
                     if M_i % mask_step == 0:
-                        print(M_i, mask_step, num_loci)
+                        print("took a step")
                         if "_prog_unmask" in arch:
                             if num_mask > 1:
                                 num_mask -= 1
@@ -912,7 +913,7 @@ if __name__ == "__main__":
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 105,
+        "num_loci": 70,
         "lr_halflife":2,
         "min_avail":5}
 
