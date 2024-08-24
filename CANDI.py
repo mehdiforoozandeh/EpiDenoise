@@ -928,7 +928,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 3200,
+        "num_loci": 100,
         "lr_halflife":1,
         "min_avail":10}
 
@@ -948,5 +948,4 @@ if __name__ == "__main__":
         prg = True
         unm = True
 
-    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="tst_prg", prog_mask=prg, unmask=unm)
-    # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="MSE_2")
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
