@@ -440,21 +440,6 @@ class PRETRAIN(object):
                     "grad_norm":[]
                     }
 
-                if "_prog_unmask" in arch or "_prog_mask" in arch:
-                    print(M_i, mask_step, num_loci)
-                    if M_i % mask_step == 0:
-                        print("took a step")
-                        if "_prog_unmask" in arch:
-                            if num_mask > 1:
-                                num_mask -= 1
-                            
-
-
-                        elif "_prog_mask" in arch:
-                            num_mask += 1
-
-                    M_i += 1
-
                 for _ in range(inner_epochs):
                     self.optimizer.zero_grad()
                     torch.cuda.empty_cache()
@@ -724,12 +709,29 @@ class PRETRAIN(object):
                 chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 dsf_pointer0 = self.dataset.dsf_pointer
                 bios_pointer0 = self.dataset.bios_pointer
+                loci_pointer0 = self.dataset.chr_loci_pointer
 
                 next_epoch = self.dataset.update_batch_pointers()
 
                 dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
+                loci_pointer1 = self.dataset.chr_loci_pointer
+
+                
+                if chr0 != chr1 or loci_pointer0 !=loci_pointer1:
+                    if "_prog_unmask" in arch or "_prog_mask" in arch:
+                        print(M_i, mask_step, num_loci)
+                        if M_i % mask_step == 0:
+                            print("took a step")
+                            if "_prog_unmask" in arch:
+                                if num_mask > 1:
+                                    num_mask -= 1
+
+                            elif "_prog_mask" in arch:
+                                num_mask += 1
+
+                        M_i += 1
 
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
                 #     # Generate and process the plot
@@ -933,7 +935,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,
+        "num_loci": 102,
         "lr_halflife":1,
         "min_avail":10}
 
@@ -953,4 +955,5 @@ if __name__ == "__main__":
         prg = True
         unm = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
+    # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
