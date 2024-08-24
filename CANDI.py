@@ -441,17 +441,14 @@ class PRETRAIN(object):
                     }
 
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
-                    print(M_i, mask_step, N)
                     if M_i % mask_step == 0:
-                        print("took a step")
                         if "_prog_unmask" in arch:
                             if num_mask > 1:
                                 num_mask -= 1
-                            
-
 
                         elif "_prog_mask" in arch:
-                            num_mask += 1
+                            if num_mask < num_assays:
+                                num_mask += 1
 
                     M_i += 1
 
@@ -732,19 +729,20 @@ class PRETRAIN(object):
                 bios_pointer1 = self.dataset.bios_pointer
 
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
-                #     # Generate and process the plot
-                #     fig_title = " | ".join([
-                #         f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
-                #         f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                if chr0 != chr1:
+                    # Generate and process the plot
+                    fig_title = " | ".join([
+                        f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
                     
-                #     if "eic" in arch:
-                #         plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
-                #     else:
-                #         plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+                    if "eic" in arch:
+                        plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
+                    else:
+                        plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
 
-                #     images.append(imageio.imread(plot_buf))
-                #     plot_buf.close()
-                #     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                    images.append(imageio.imread(plot_buf))
+                    plot_buf.close()
+                    imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
                 # if chr0 != chr1:
                 #     validation_set_eval = val_eval.get_validation(self.model)
@@ -755,7 +753,7 @@ class PRETRAIN(object):
             
             self.scheduler.step()
             print("learning rate scheduler step...")
-            if epoch%2==0:
+            if epoch%3==0 and epoch != (num_epochs-1):
                 try:
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
@@ -804,7 +802,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -907,14 +905,14 @@ if __name__ == "__main__":
 
         "nhead": 16,
         "n_sab_layers": 4,
-        "epochs": 5,
+        "epochs": 7,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 70,
-        "lr_halflife":2,
+        "num_loci": 3200,
+        "lr_halflife":1,
         "min_avail":5}
 
     hyper_parameters_S = {
@@ -933,7 +931,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,
+        "num_loci": 3200,
         "lr_halflife":1,
         "min_avail":10}
 
@@ -953,5 +951,5 @@ if __name__ == "__main__":
         prg = True
         unm = True
 
-    # Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
-    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
+    # Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
