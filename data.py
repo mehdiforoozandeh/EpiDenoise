@@ -2029,6 +2029,8 @@ class ExtendedEncodeDataHandler:
         self.bios_batchsize = bios_batchsize
         self.loci_batchsize = loci_batchsize
 
+        self.num_batches = math.ceil(self.num_bios / self.bios_batchsize)
+
         self.loci = {}
         for i in range(len(self.m_regions)):
             if self.m_regions[i][0] not in self.loci.keys():
