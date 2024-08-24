@@ -443,7 +443,8 @@ class PRETRAIN(object):
                 if "_prog_unmask" in arch or "_prog_mask" in arch:
                     if M_i % mask_step == 0:
                         if "_prog_unmask" in arch:
-                            num_mask -= 1
+                            if num_mask > 1:
+                                num_mask -= 1
 
                         elif "_prog_mask" in arch:
                             num_mask += 1
@@ -500,7 +501,7 @@ class PRETRAIN(object):
                     if torch.isnan(loss).sum() > 0:
                         skipmessage = "Encountered nan loss! Skipping batch..."
                         log_strs.append(skipmessage)
-                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss, obs_loss
+                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss
                         print(skipmessage)
                         torch.cuda.empty_cache() 
                         continue
@@ -750,7 +751,7 @@ class PRETRAIN(object):
             
             self.scheduler.step()
             print("learning rate scheduler step...")
-            if epoch%1==0:
+            if epoch%2==0:
                 try:
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
