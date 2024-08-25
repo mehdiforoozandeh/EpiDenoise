@@ -866,8 +866,6 @@ class CANDI_LOADER(object):
     def __init__(self, model_path, hyper_parameters, DNA=False):
         self.model_path = model_path
         self.hyper_parameters = hyper_parameters
-        print(self.hyper_parameters)
-        exit()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.DNA = DNA
 
