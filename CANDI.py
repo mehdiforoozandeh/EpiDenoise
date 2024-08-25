@@ -88,8 +88,6 @@ class CANDI(nn.Module):
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
-        print(src.shape, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1).shape)
-        exit()
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.xmd_fusion(src)
 
@@ -868,6 +866,8 @@ class CANDI_LOADER(object):
     def __init__(self, model_path, hyper_parameters, DNA=False):
         self.model_path = model_path
         self.hyper_parameters = hyper_parameters
+        print(self.hyper_parameters)
+        exit()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.DNA = DNA
 
