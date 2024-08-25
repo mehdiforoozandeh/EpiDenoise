@@ -88,7 +88,8 @@ class CANDI(nn.Module):
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
-        print(src.shape, xmd_embedding.shape)
+        print(src.shape, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1).shape)
+        exit()
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.xmd_fusion(src)
 
