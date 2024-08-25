@@ -3732,7 +3732,7 @@ class EVAL_CANDI(object):
 
         return n, p, mu, var
 
-    def get_metrics(self, imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability):
+    def get_metrics(self, imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability, arcsinh=True):
         imp_count_mean = imp_count_dist.expect()
         ups_count_mean = ups_count_dist.expect()
 
@@ -3801,6 +3801,14 @@ class EVAL_CANDI(object):
                             ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
                         count_p0bgdf = self.metrics.foreground_vs_background(
                             ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+
+
+                    if arcsinh:
+                        P_target = np.sinh(P_target)
+                        pred_pval = np.sinh(pred_pval)
+                        pval_lower_95 = np.sinh(pval_lower_95)
+                        pval_upper_95 = np.sinh(pval_upper_95)
+
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
@@ -3917,6 +3925,11 @@ class EVAL_CANDI(object):
                 pval_lower_95 = ups_pval_lower_95[:, j].numpy()
                 pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
+                if arcsinh:
+                    pred_pval = np.sinh(pred_pval)
+                    pval_lower_95 = np.sinh(pval_lower_95)
+                    pval_upper_95 = np.sinh(pval_upper_95)
+
                 metrics = {
                     'bios':bios_name,
                     'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
@@ -3940,7 +3953,7 @@ class EVAL_CANDI(object):
             
         return results
     
-    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices):
+    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices, arcsinh=True):
         ups_count_mean = ups_count_dist.expect()
         ups_count_std = ups_count_dist.std()
 
@@ -3987,6 +4000,12 @@ class EVAL_CANDI(object):
 
             count_p0bgdf = self.metrics.foreground_vs_background(
                 ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
+
+            if arcsinh:
+                P_target = np.sinh(P_target)
+                pred_pval = np.sinh(pred_pval)
+                pval_lower_95 = np.sinh(pval_lower_95)
+                pval_upper_95 = np.sinh(pval_upper_95)
 
             metrics = {
                 'bios':bios_name,
@@ -4291,7 +4310,7 @@ class EVAL_CANDI(object):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
-            # try:
+            try:
                 print("evaluating ", bios)
                 if self.eic:
                     eval_res_bios = self.bios_pipeline_eic(bios, dsf)
@@ -4313,8 +4332,8 @@ class EVAL_CANDI(object):
                     
                     if f["comparison"] != "None":
                         self.model_res.append(f)
-            # except:
-            #     pass
+            except:
+                pass
 
         self.model_res = pd.DataFrame(self.model_res)
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
