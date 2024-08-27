@@ -951,9 +951,6 @@ if __name__ == "__main__":
 
     if "prog_mask" in sys.argv:
         prg = True
-    elif "prog_unmask" in sys.argv:
-        prg = True
-        unm = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
-    # Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg, unmask=unm)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg)
+    # Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg)
