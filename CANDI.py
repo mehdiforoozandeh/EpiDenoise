@@ -464,6 +464,11 @@ class PRETRAIN(object):
 
                     if "_prog_unmask" in arch or "_prog_mask" in arch:
                         X_batch, mX_batch, avX_batch = self.masker.progressive(X_batch, mX_batch, avX_batch, num_mask)
+
+                    if "random_mask" in arch:
+                        num_mask = random.randint(1, self.dataset.signal_dim - 1)
+                        X_batch, mX_batch, avX_batch = self.masker.progressive(X_batch, mX_batch, avX_batch, num_mask)
+
                     else:
                         X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
                         # X_batch, mX_batch, avX_batch = self.masker.mask_chunk_features_30(X_batch, mX_batch, avX_batch)
@@ -700,7 +705,7 @@ class PRETRAIN(object):
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"took {int(minutes)}:{int(seconds):02d}"
                 ]
-                if "_prog_unmask" in arch or "_prog_mask" in arch:
+                if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
                     logstr.append("\n")
                 else:
@@ -761,7 +766,7 @@ class PRETRAIN(object):
                 
         return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, unmask=False):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False):
     if eic:
         arch="eic"
     else:
@@ -771,10 +776,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         arch = f"{arch}_DNA"
 
     if prog_mask:
-        if unmask:
-            arch = f"{arch}_prog_unmask"
-        else:
-            arch = f"{arch}_prog_mask"
+        arch = f"{arch}_prog_mask"
+    else:
+        arch = f"{arch}_random_mask"
 
     arch = f"{arch}_{suffix}"
     # Defining the hyperparameters
@@ -820,7 +824,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.9)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
@@ -899,7 +903,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 4,
+        "n_cnn_layers": 5,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
@@ -908,7 +912,7 @@ if __name__ == "__main__":
         "epochs": 7,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 800,
+        "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 3200,

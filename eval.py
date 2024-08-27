@@ -4375,7 +4375,6 @@ def main():
     # srun python eval.py -m {model_path} -hp {hyperparam_path} -d /project/compbio-lab/encode_data/ -s {savedir} --eic all
     # srun python eval.py -m models/CANDI/CANDIeic_prog_mask__20240824014234_params16005090.pt -hp models/CANDI/hyper_parameters_eic_prog_mask__CANDIeic_prog_mask__20240824014234_params16005090.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_progmask/ --eic all
 
-    # srun python eval.py -m {model_path} -hp {hyperparam_path} -d /project/compbio-lab/encode_data/ -s {savedir} --eic --dna all
 
 if __name__ == "__main__":
     main()
