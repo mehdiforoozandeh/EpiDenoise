@@ -824,7 +824,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.75)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
@@ -909,7 +909,7 @@ if __name__ == "__main__":
 
         "nhead": 16,
         "n_sab_layers": 4,
-        "epochs": 7,
+        "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
         "context_length": 1600,
@@ -923,19 +923,19 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 4,
+        "n_cnn_layers": 3,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
-        "nhead": 8,
+        "nhead": 4,
         "n_sab_layers": 1,
         "epochs": 5,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 3200,
+        "num_loci": 100,
         "lr_halflife":1,
         "min_avail":10}
 
@@ -952,5 +952,5 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="", prog_mask=prg)
+    Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg)
     # Train_CANDI(hyper_parameters_S, eic=eic, DNA=DNA, suffix="", prog_mask=prg)
