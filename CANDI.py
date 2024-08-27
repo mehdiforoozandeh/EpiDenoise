@@ -918,7 +918,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,
+        "num_loci": 7500,
         "lr_halflife":1,
         "min_avail":5}
 
@@ -955,4 +955,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Aug27", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Aug27-relpos", prog_mask=prg)
