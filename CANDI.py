@@ -927,7 +927,7 @@ if __name__ == "__main__":
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
-        "nhead": 8,
+        "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 10,
         "inner_epochs": 1,
