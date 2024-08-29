@@ -930,15 +930,15 @@ if __name__ == "__main__":
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
-        "nhead": 8,
+        "nhead": 16,
         "n_sab_layers": 4,
         "epochs": 10,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 800,
+        "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 1200,
+        "num_loci": 3750,
         "lr_halflife":1,
         "min_avail":5}
 
