@@ -935,7 +935,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 1600,
+        "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 3750,
