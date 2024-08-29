@@ -906,7 +906,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 4,
+        "n_cnn_layers": 5,
         "conv_kernel_size" : 5,
         "pool_size": 2,
 
@@ -915,7 +915,7 @@ if __name__ == "__main__":
         "epochs": 10,
         "inner_epochs": 1,
         "mask_percentage": 0.2,
-        "context_length": 800,
+        "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 6400,
