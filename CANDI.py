@@ -263,6 +263,22 @@ class CANDI_DNA(nn.Module):
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
         # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
+        ################################################################################
+        if len(seq.shape) != len(src.shape):
+            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+
+        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
+        seq = seq.float()
+        # for seq_conv in self.convEncDNA_stem:
+        #     seq = seq_conv(seq)
+
+        for seq_conv in self.convEncDNA:
+            seq = seq_conv(seq)
+
+        # seq = self.SE_DNA_enc(seq)
+        seq = seq.permute(0, 2, 1)  # to N, L', F2
+
+        ################################################################################
         # src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
@@ -275,24 +291,7 @@ class CANDI_DNA(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata)
         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.xmd_fusion(src)
-
-        ################################################################################
-        if len(seq.shape) != len(src.shape):
-            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
-
-        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
-        seq = seq.float()
-        # for seq_conv in self.convEncDNA_stem:
-        #     seq = seq_conv(seq)
-
-        for seq_conv in self.convEncDNA:
-            print(seq.shape)
-            seq = seq_conv(seq)
-        print(seq.shape)
-        print(src.shape)
-        exit()
-        # seq = self.SE_DNA_enc(seq)
-        seq = seq.permute(0, 2, 1)  # to N, L', F2
+        
         ################################################################################
         src = torch.cat([src, seq], dim=-1)
         src = self.DNA_Epig_fusion(src)
