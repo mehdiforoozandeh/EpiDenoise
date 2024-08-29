@@ -138,32 +138,13 @@ class CANDI_DNA(nn.Module):
         d_model = self.f2
 
         ################################################################################
-        # self.convEncDNA_stem = nn.ModuleList(
-        #     [ConvTower(
-        #         4, self.f2//2, W=conv_kernel_size, S=1, D=1,
-        #         pool_type="max", residuals=True, groups=1, pool_size=5),
-        #     ConvTower(
-        #         self.f2//2, self.f2//2, W=conv_kernel_size, S=1, D=1,
-        #         pool_type="max", residuals=True, groups=1, pool_size=5)
-        #     ])
-
-        # DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
-        # DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-        # self.convEncDNA = nn.ModuleList(
-        #     [ConvTower(
-        #         DNA_conv_channels[i], DNA_conv_channels[i + 1],
-        #         DNA_kernel_size[i], S=1, D=1,
-        #         pool_type="max", residuals=True,
-        #         groups=1, pool_size=2) for i in range(n_cnn_layers)])
-
         self.convEncDNA_stem = nn.ModuleList(
             [ConvTower(
-                4, self.f2//4, W=conv_kernel_size, S=1, D=1,
-                pool_type="max", residuals=True, groups=1, pool_size=2),
+                4, self.f2//2, W=conv_kernel_size, S=1, D=1,
+                pool_type="max", residuals=True, groups=1, pool_size=5),
             ConvTower(
-                self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
-                pool_type="max", residuals=True, groups=1, pool_size=2)
+                self.f2//2, self.f2//2, W=conv_kernel_size, S=1, D=1,
+                pool_type="max", residuals=True, groups=1, pool_size=5)
             ])
 
         DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
@@ -174,7 +155,26 @@ class CANDI_DNA(nn.Module):
                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
                 DNA_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
-                groups=1, pool_size=5 if i >= n_cnn_layers - 2 else 2) for i in range(n_cnn_layers)])
+                groups=1, pool_size=2) for i in range(n_cnn_layers)])
+
+        # self.convEncDNA_stem = nn.ModuleList(
+        #     [ConvTower(
+        #         4, self.f2//4, W=conv_kernel_size, S=1, D=1,
+        #         pool_type="max", residuals=True, groups=1, pool_size=2),
+        #     ConvTower(
+        #         self.f2//4, self.f2//2, W=conv_kernel_size, S=1, D=1,
+        #         pool_type="max", residuals=True, groups=1, pool_size=2)
+        #     ])
+
+        # DNA_conv_channels = exponential_linspace_int(self.f2//2, self.f2, n_cnn_layers+1)
+        # DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        # self.convEncDNA = nn.ModuleList(
+        #     [ConvTower(
+        #         DNA_conv_channels[i], DNA_conv_channels[i + 1],
+        #         DNA_kernel_size[i], S=1, D=1,
+        #         pool_type="max", residuals=True,
+        #         groups=1, pool_size=5 if i >= n_cnn_layers - 2 else 2) for i in range(n_cnn_layers)])
         
         ################################################################################
 
