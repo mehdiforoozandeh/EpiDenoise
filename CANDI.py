@@ -282,8 +282,8 @@ class CANDI_DNA(nn.Module):
 
         seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
         seq = seq.float()
-        for seq_conv in self.convEncDNA_stem:
-            seq = seq_conv(seq)
+        # for seq_conv in self.convEncDNA_stem:
+        #     seq = seq_conv(seq)
 
         for seq_conv in self.convEncDNA:
             seq = seq_conv(seq)
