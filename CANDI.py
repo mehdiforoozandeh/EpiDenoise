@@ -653,6 +653,9 @@ class PRETRAIN(object):
                     batch_rec["ups_count_pearson"].append(ups_count_pearson)
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
+
+                    del output_p, output_n, output_mu, output_var, loss, obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss
+                    del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
                 
                 if hook:
 
