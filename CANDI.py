@@ -189,7 +189,7 @@ class CANDI_DNA(nn.Module):
                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
                 DNA_kernel_size[i], S=1, D=1,
                 pool_type="max", residuals=True,
-                groups=1, pool_size=pool_size if i >= n_cnn_layers - 2 else 2) for i in range(n_cnn_layers)])
+                groups=1, pool_size=pool_size if i >= n_cnn_layers else 2) for i in range(n_cnn_layers + 2)])
         
         ################################################################################
 
