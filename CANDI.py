@@ -286,8 +286,10 @@ class CANDI_DNA(nn.Module):
         #     seq = seq_conv(seq)
 
         for seq_conv in self.convEncDNA:
+            print(seq.shape)
             seq = seq_conv(seq)
-
+        print(seq.shape)
+        exit()
         # seq = self.SE_DNA_enc(seq)
         seq = seq.permute(0, 2, 1)  # to N, L', F2
         ################################################################################
