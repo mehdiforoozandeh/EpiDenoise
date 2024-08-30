@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import multiprocessing as mp
-import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random, glob, shutil
+import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, pickle, json, subprocess, random, glob, shutil, psutil
+
 from torch.utils.data import Dataset
 import torch, sys, math
 import pybedtools
@@ -2147,7 +2148,7 @@ class ExtendedEncodeDataHandler:
             self.loaded_metadata = []
             
             for bios in batch_bios_list:
-                print("added ", bios)
+                print("added ", bios, psutil.virtual_memory().available)
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
