@@ -1067,7 +1067,7 @@ class ExtendedEncodeDataHandler:
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)    
         
-        self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
+        # self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
 
         self.genomesize = sum(list(self.chr_sizes.values()))
 
@@ -2155,20 +2155,15 @@ class ExtendedEncodeDataHandler:
             self.loaded_metadata = []
             
             for bios in batch_bios_list:
-                print("added ", bios, psutil.virtual_memory().available)
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-                print("\t loading data", psutil.virtual_memory().available)
                 self.loaded_data.append(d)
-                print("\t loading metadata", psutil.virtual_memory().available)
                 self.loaded_metadata.append(md)
 
-            print("loaded all new data")
             
             if self.dsf_pointer == 0:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
-                # print("loading new pval data")
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
                     self.Y_loaded_pval.append(
