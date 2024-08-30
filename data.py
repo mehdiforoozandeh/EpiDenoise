@@ -1719,7 +1719,6 @@ class ExtendedEncodeDataHandler:
         else:
             exps = list(self.navigation[bios_name].keys())
 
-
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
 
@@ -1834,33 +1833,45 @@ class ExtendedEncodeDataHandler:
         #     loaded = list(executor.map(self.load_npz, npz_files))
 
         # loaded = []
-        # for npz_file in npz_files:
-        #     print("\t \t loading ", npz_file, psutil.virtual_memory().available / (1024 ** 3))
-        #     result = self.load_npz(npz_file)
-        #     if result is not None:
-        #         loaded.append(result)
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     for result in executor.map(self.load_npz, npz_files):
+        #         if result is not None:
+        #             loaded.append(result)
+        
+        # if len(locus) == 1:
+        #     for l in loaded:
+        #         for exp, data in l.items():
+        #             loaded_data[exp] = data
 
-        loaded = []
+        # else:
+        #     start_bin = int(locus[1]) // self.resolution
+        #     end_bin = int(locus[2]) // self.resolution
+        #     for l in loaded:
+        #         for exp, data in l.items():
+        #             loaded_data[exp] = data[start_bin:end_bin]
+
+            
+        # return loaded_data, loaded_metadata
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(self.load_npz, npz_files):
                 if result is not None:
-                    loaded.append(result)
+                    for exp, data in result.items():
+                        if len(locus) == 1:
+                            if arcsinh:
+                                loaded_data[exp] = np.arcsinh(data)
+                            else:
+                                loaded_data[exp] = data
+                                
+                        else:
+                            start_bin = int(locus[1]) // self.resolution
+                            end_bin = int(locus[2]) // self.resolution
+                            for l in loaded:
+                                for exp, data in l.items():
+                                    loaded_data[exp] = data[start_bin:end_bin]
         
-        if len(locus) == 1:
-            for l in loaded:
-                for exp, data in l.items():
-                    loaded_data[exp] = data
+        return loaded_data, loaded_metadata
 
-            return loaded_data, loaded_metadata
-
-        else:
-            start_bin = int(locus[1]) // self.resolution
-            end_bin = int(locus[2]) // self.resolution
-            for l in loaded:
-                for exp, data in l.items():
-                    loaded_data[exp] = data[start_bin:end_bin]
-            
-            return loaded_data, loaded_metadata
     
     def select_region_from_loaded_data(self, loaded_data, locus):
         region = {}
