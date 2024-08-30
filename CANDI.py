@@ -742,8 +742,8 @@ class PRETRAIN(object):
 
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
-                # print(logstr)
-                log_resource_usage()
+                print(logstr)
+                # log_resource_usage()
 
                 logfile = open(f"models/CANDI{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
