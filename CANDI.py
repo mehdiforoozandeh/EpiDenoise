@@ -958,14 +958,14 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 8,
+        "n_sab_layers": 1,
         "epochs": 20,
         "inner_epochs": 1,
-        "mask_percentage": 0.2,
+        "mask_percentage": 0.2, # not used
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,
+        "num_loci": 5,
         "lr_halflife":1,
         "min_avail":5}
 
