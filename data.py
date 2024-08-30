@@ -2147,6 +2147,7 @@ class ExtendedEncodeDataHandler:
             self.loaded_metadata = []
             
             for bios in batch_bios_list:
+                print("added ", bios)
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
@@ -2156,7 +2157,7 @@ class ExtendedEncodeDataHandler:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
-                print("loading new pval data")
+                # print("loading new pval data")
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
                     self.Y_loaded_pval.append(
