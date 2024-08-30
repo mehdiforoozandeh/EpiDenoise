@@ -1858,17 +1858,12 @@ class ExtendedEncodeDataHandler:
                 if result is not None:
                     for exp, data in result.items():
                         if len(locus) == 1:
-                            if arcsinh:
-                                loaded_data[exp] = np.arcsinh(data)
-                            else:
-                                loaded_data[exp] = data
+                            loaded_data[exp] = data
                                 
                         else:
                             start_bin = int(locus[1]) // self.resolution
                             end_bin = int(locus[2]) // self.resolution
-                            for l in loaded:
-                                for exp, data in l.items():
-                                    loaded_data[exp] = data[start_bin:end_bin]
+                            loaded_data[exp] = data[start_bin:end_bin]
         
         return loaded_data, loaded_metadata
 
