@@ -836,7 +836,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="random", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -945,7 +945,7 @@ if __name__ == "__main__":
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 10,
+        "num_loci": 3750,
         "lr_halflife":1,
         "min_avail":5}
 
