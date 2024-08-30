@@ -1066,6 +1066,8 @@ class ExtendedEncodeDataHandler:
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)    
         
+        self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
+
         self.genomesize = sum(list(self.chr_sizes.values()))
 
     def is_exp_complete(self, bios_name, exp, check_pval=True):

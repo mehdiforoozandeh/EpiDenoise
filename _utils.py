@@ -770,7 +770,7 @@ class MONITOR_VALIDATION(object): # CANDI
         self.model = model
 
         bios_dict_sorted = dict(sorted(self.dataset.navigation.items(), key=lambda item: len(item[1]), reverse=True))
-        bios_name = list(bios_dict_sorted.keys())[1]
+        bios_name = list(bios_dict_sorted.keys())[2]
 
         # DSF 2->1 (EIC-specific logic)
         ups_count_dist_21, ups_pval_dist_21, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
