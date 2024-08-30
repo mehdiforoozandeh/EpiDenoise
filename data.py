@@ -2141,6 +2141,7 @@ class ExtendedEncodeDataHandler:
             else: 
                 self.dsf_pointer += 1
             
+            print("loading new dataset")
             batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
             self.loaded_data = []
             self.loaded_metadata = []
