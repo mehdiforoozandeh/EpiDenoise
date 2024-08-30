@@ -552,12 +552,12 @@ class PRETRAIN(object):
                     
                     self.optimizer.step()
                     #################################################################################
-                    snapshot = tracemalloc.take_snapshot()
-                    top_stats = snapshot.statistics('lineno')
+                    # snapshot = tracemalloc.take_snapshot()
+                    # top_stats = snapshot.statistics('lineno')
 
-                    print("[ Top 10 memory consuming variables ]")
-                    for stat in top_stats[:10]:
-                        print(stat)
+                    # print("[ Top 10 memory consuming variables ]")
+                    # for stat in top_stats[:10]:
+                    #     print(stat)
                     #################################################################################
 
                     # IMP Count Predictions
@@ -963,7 +963,7 @@ if __name__ == "__main__":
         "inner_epochs": 1,
         "mask_percentage": 0.2,
         "context_length": 1600,
-        "batch_size": 25,
+        "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 100,
         "lr_halflife":1,
