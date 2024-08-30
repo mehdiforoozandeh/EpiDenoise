@@ -2117,14 +2117,20 @@ class ExtendedEncodeDataHandler:
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
+        
+        print(sys.getsizeof(self.loaded_data))
 
         self.Y_loaded_data = self.loaded_data
         self.Y_loaded_metadata = self.loaded_metadata
+
+        print(sys.getsizeof(self.Y_loaded_data))
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
             pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.Y_loaded_pval.append(pval_d)
+        
+        print(sys.getsizeof(self.Y_loaded_pval))
 
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
