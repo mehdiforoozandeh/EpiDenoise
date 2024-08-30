@@ -2152,7 +2152,8 @@ class ExtendedEncodeDataHandler:
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
-            
+
+            print("loaded all new data")
             
             if self.dsf_pointer == 0:
                 self.Y_loaded_data = self.loaded_data
