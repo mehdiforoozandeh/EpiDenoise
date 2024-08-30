@@ -1835,7 +1835,7 @@ class ExtendedEncodeDataHandler:
 
         loaded = []
         for npz_file in npz_files:
-            print("\t \t loading ", npz_file, psutil.virtual_memory().available)
+            print("\t \t loading ", npz_file, psutil.virtual_memory().available / (1024 ** 3))
             result = self.load_npz(npz_file)
             if result is not None:
                 loaded.append(result)
