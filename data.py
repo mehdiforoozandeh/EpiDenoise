@@ -1067,7 +1067,7 @@ class ExtendedEncodeDataHandler:
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)    
         
-        self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
+        # self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
 
         self.genomesize = sum(list(self.chr_sizes.values()))
 
@@ -1867,7 +1867,6 @@ class ExtendedEncodeDataHandler:
         
         return loaded_data, loaded_metadata
 
-    
     def select_region_from_loaded_data(self, loaded_data, locus):
         region = {}
         start_bin = int(locus[1]) // self.resolution
@@ -2164,7 +2163,6 @@ class ExtendedEncodeDataHandler:
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
-
             
             if self.dsf_pointer == 0:
                 self.Y_loaded_data = self.loaded_data

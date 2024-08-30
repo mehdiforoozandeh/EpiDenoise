@@ -668,6 +668,7 @@ class PRETRAIN(object):
                     del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
                     if DNA:
                         del dnaseq_batch
+                    gc.collect()
                 
                 if hook:
 
@@ -699,6 +700,7 @@ class PRETRAIN(object):
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
                 if DNA:
                     del _dnaseq_batch
+                gc.collect()
 
                 logstr = [
                     f"Ep. {epoch}",
@@ -962,7 +964,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 3750,
+        "num_loci": 10,
         "lr_halflife":1,
         "min_avail":5}
 
