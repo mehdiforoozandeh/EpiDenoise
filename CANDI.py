@@ -1,4 +1,9 @@
 from model import *
+import tracemalloc
+
+
+tracemalloc.start()
+
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -547,6 +552,13 @@ class PRETRAIN(object):
                     
                     self.optimizer.step()
                     #################################################################################
+                    snapshot = tracemalloc.take_snapshot()
+                    top_stats = snapshot.statistics('lineno')
+
+                    print("[ Top 10 memory consuming variables ]")
+                    for stat in top_stats[:10]:
+                        print(stat)
+                    #################################################################################
 
                     # IMP Count Predictions
                     neg_bin_imp = NegativeBinomial(output_p[masked_map].cpu().detach(), output_n[masked_map].cpu().detach())
@@ -743,6 +755,14 @@ class PRETRAIN(object):
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
+
+                snapshot = tracemalloc.take_snapshot()
+                top_stats = snapshot.statistics('lineno')
+
+                print("[ Top 10 memory consuming variables ]")
+                for stat in top_stats[:10]:
+                    print(stat)
+
                 # log_resource_usage()
 
                 logfile = open(f"models/CANDI{arch}_log.txt", "w")
