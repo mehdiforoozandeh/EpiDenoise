@@ -1,9 +1,7 @@
 from model import *
 import tracemalloc
 
-
-tracemalloc.start()
-
+# tracemalloc.start()
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -756,9 +754,8 @@ class PRETRAIN(object):
                 log_strs.append(logstr)
                 print(logstr)
 
-                snapshot = tracemalloc.take_snapshot()
-                top_stats = snapshot.statistics('lineno')
-
+                # snapshot = tracemalloc.take_snapshot()
+                # top_stats = snapshot.statistics('lineno')
                 # print("[ Top 10 memory consuming variables ]")
                 # for stat in top_stats[:10]:
                 #     print(stat)
@@ -958,14 +955,14 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 1,
+        "n_sab_layers": 8,
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2, # not used
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 5,
+        "num_loci": 3750,
         "lr_halflife":1,
         "min_avail":5}
 
