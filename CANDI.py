@@ -965,7 +965,7 @@ if __name__ == "__main__":
         "context_length": 1600,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 3750,
+        "num_loci": 100,
         "lr_halflife":1,
         "min_avail":5}
 
