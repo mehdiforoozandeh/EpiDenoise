@@ -2150,7 +2150,9 @@ class ExtendedEncodeDataHandler:
             for bios in batch_bios_list:
                 print("added ", bios, psutil.virtual_memory().available)
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+                print("\t loading data")
                 self.loaded_data.append(d)
+                print("\t loading metadata")
                 self.loaded_metadata.append(md)
 
             print("loaded all new data")
