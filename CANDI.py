@@ -656,6 +656,8 @@ class PRETRAIN(object):
 
                     del output_p, output_n, output_mu, output_var, loss, obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss
                     del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
+                    if DNA:
+                        del dnaseq_batch
                 
                 if hook:
 
@@ -684,6 +686,10 @@ class PRETRAIN(object):
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
                 
+                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
+                if DNA:
+                    del _dnaseq_batch
+
                 logstr = [
                     f"Ep. {epoch}",
                     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
@@ -938,7 +944,7 @@ if __name__ == "__main__":
         "context_length": 800,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 3750,
+        "num_loci": 100,
         "lr_halflife":1,
         "min_avail":5}
 

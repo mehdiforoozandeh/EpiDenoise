@@ -2154,8 +2154,8 @@ class ExtendedEncodeDataHandler:
 
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
-                    pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-                    self.Y_loaded_pval.append(pval_d)
+                    self.Y_loaded_pval.append(
+                        self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer]))
 
         else:
             self.chr_loci_pointer += self.loci_batchsize
