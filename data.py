@@ -1834,10 +1834,17 @@ class ExtendedEncodeDataHandler:
         #     loaded = list(executor.map(self.load_npz, npz_files))
 
         loaded = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            for result in executor.map(self.load_npz, npz_files):
-                if result is not None:
-                    loaded.append(result)
+        for npz_file in npz_files:
+            print("\t \t loading ", npz_file, psutil.virtual_memory().available)
+            result = self.load_npz(npz_file)
+            if result is not None:
+                loaded.append(result)
+
+        # loaded = []
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     for result in executor.map(self.load_npz, npz_files):
+        #         if result is not None:
+        #             loaded.append(result)
         
         if len(locus) == 1:
             for l in loaded:
