@@ -2141,7 +2141,7 @@ class ExtendedEncodeDataHandler:
             else: 
                 self.dsf_pointer += 1
             
-            print("loading new dataset")
+            print("loading new count data")
             batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
             self.loaded_data = []
             self.loaded_metadata = []
@@ -2151,10 +2151,12 @@ class ExtendedEncodeDataHandler:
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
             
+            
             if self.dsf_pointer == 0:
                 self.Y_loaded_data = self.loaded_data
                 self.Y_loaded_metadata = self.loaded_metadata
 
+                print("loading new pval data")
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
                     self.Y_loaded_pval.append(
