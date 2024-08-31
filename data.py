@@ -2119,6 +2119,7 @@ class ExtendedEncodeDataHandler:
         self.loaded_metadata = []
 
         for bios in batch_bios_list:
+            print(f"loading {bios}")
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
