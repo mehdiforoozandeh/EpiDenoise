@@ -2143,16 +2143,25 @@ class ExtendedEncodeDataHandler:
         # After processing, print the memory usage
         snapshot = tracemalloc.take_snapshot()
         top_stats = snapshot.statistics('lineno')
-        print("[Top 2 lines with the highest memory usage]")
-        for stat in top_stats[:2]:
+        print("[Top 3 lines with the highest memory usage]")
+        for stat in top_stats[:3]:
             print(stat)
 
-        tracemalloc.stop()  # Stop the memory tracking
+        
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
             pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.Y_loaded_pval.append(pval_d)
+        
+        # After processing, print the memory usage
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        print("[Top 3 lines with the highest memory usage]")
+        for stat in top_stats[:3]:
+            print(stat)
+        
+        tracemalloc.stop()  # Stop the memory tracking
 
     def update_batch_pointers(self):
         if self.chr_loci_pointer + self.loci_batchsize >= len(self.loci[list(self.loci.keys())[self.chr_pointer]]):
