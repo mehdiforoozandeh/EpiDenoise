@@ -1737,7 +1737,7 @@ class ExtendedEncodeDataHandler:
         if len(locus) == 1:
             for l in loaded:
                 for exp, data in l.items():
-                    print(data.dtype)
+                    # print(data.dtype)
                     if arcsinh:
                         loaded_data[exp] = np.arcsinh(data).astype(np.float16)
                     else:
@@ -2124,7 +2124,6 @@ class ExtendedEncodeDataHandler:
 
         for bios in batch_bios_list:
             print(f"loading {bios}")
-            
         
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
@@ -2133,15 +2132,22 @@ class ExtendedEncodeDataHandler:
             # After processing, print the memory usage
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics('lineno')
-
             print("[Top 2 lines with the highest memory usage]")
             for stat in top_stats[:2]:
                 print(stat)
 
-        tracemalloc.stop()  # Stop the memory tracking
 
         self.Y_loaded_data = self.loaded_data.copy()
         self.Y_loaded_metadata = self.loaded_metadata.copy()
+
+        # After processing, print the memory usage
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        print("[Top 2 lines with the highest memory usage]")
+        for stat in top_stats[:2]:
+            print(stat)
+
+        tracemalloc.stop()  # Stop the memory tracking
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
@@ -2173,17 +2179,37 @@ class ExtendedEncodeDataHandler:
             
             # print("loading new count data")
             batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
+
+            tracemalloc.start()  # Start tracking memory allocations
             self.loaded_data = []
             self.loaded_metadata = []
             
             for bios in batch_bios_list:
+                print(f"loading {bios}")
                 d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
+
+                # After processing, print the memory usage
+                snapshot = tracemalloc.take_snapshot()
+                top_stats = snapshot.statistics('lineno')
+
+                print("[Top 2 lines with the highest memory usage]")
+                for stat in top_stats[:2]:
+                    print(stat)
+                
             
             if self.dsf_pointer == 0:
                 self.Y_loaded_data = self.loaded_data.copy()
                 self.Y_loaded_metadata = self.loaded_metadata.copy()
+
+                # After processing, print the memory usage
+                snapshot = tracemalloc.take_snapshot()
+                top_stats = snapshot.statistics('lineno')
+
+                print("[Top 2 lines with the highest memory usage]")
+                for stat in top_stats[:2]:
+                    print(stat)
 
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
@@ -2193,6 +2219,9 @@ class ExtendedEncodeDataHandler:
         else:
             self.chr_loci_pointer += self.loci_batchsize
         
+        
+        tracemalloc.stop()  # Stop the memory tracking
+
         return False
 
     def get_batch(self, side="x", y_prompt=False, pval=False, dna_seq=False):
