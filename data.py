@@ -1860,8 +1860,7 @@ class ExtendedEncodeDataHandler:
                 if result is not None:
                     for exp, data in result.items():
                         if len(locus) == 1:
-                            print(data.dtype)
-                            loaded_data[exp] = data
+                            loaded_data[exp] = data.astype(np.int32)
                                 
                         else:
                             start_bin = int(locus[1]) // self.resolution
