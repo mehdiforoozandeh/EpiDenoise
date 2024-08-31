@@ -1067,7 +1067,7 @@ class ExtendedEncodeDataHandler:
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)    
         
-        # self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
+        self.chr_sizes = {"chr1":self.chr_sizes["chr1"]}
 
         self.genomesize = sum(list(self.chr_sizes.values()))
 
@@ -1702,8 +1702,8 @@ class ExtendedEncodeDataHandler:
                 self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
-        # with np.load(file_name, allow_pickle=True) as data:
-        with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
+        with np.load(file_name, allow_pickle=True) as data:
+        # with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
             return {file_name.split("/")[-3]: data[data.files[0]]}
     
     def load_bios_BW(self, bios_name, locus, DSF, f_format="npz", arcsinh=True):
