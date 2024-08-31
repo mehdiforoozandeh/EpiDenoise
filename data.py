@@ -1853,7 +1853,7 @@ class ExtendedEncodeDataHandler:
             
         # return loaded_data, loaded_metadata
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             for result in executor.map(self.load_npz, npz_files):
                 if result is not None:
                     for exp, data in result.items():
@@ -2123,8 +2123,8 @@ class ExtendedEncodeDataHandler:
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
 
-        self.Y_loaded_data = self.loaded_data
-        self.Y_loaded_metadata = self.loaded_metadata
+        self.Y_loaded_data = self.loaded_data.copy()
+        self.Y_loaded_metadata = self.loaded_metadata.copy()
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
@@ -2165,8 +2165,8 @@ class ExtendedEncodeDataHandler:
                 self.loaded_metadata.append(md)
             
             if self.dsf_pointer == 0:
-                self.Y_loaded_data = self.loaded_data
-                self.Y_loaded_metadata = self.loaded_metadata
+                self.Y_loaded_data = self.loaded_data.copy()
+                self.Y_loaded_metadata = self.loaded_metadata.copy()
 
                 self.Y_loaded_pval = []
                 for bios in batch_bios_list:
