@@ -2116,18 +2116,19 @@ class ExtendedEncodeDataHandler:
             shuffled_loci = {key: self.loci[key] for key in keys}
             self.loci = shuffled_loci
 
+        tracemalloc.start()  # Start tracking memory allocations
         batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
         self.loaded_data = []
         self.loaded_metadata = []
 
         for bios in batch_bios_list:
             print(f"loading {bios}")
-            tracemalloc.start()  # Start tracking memory allocations
+            
         
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
-            
+
             # After processing, print the memory usage
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics('lineno')
