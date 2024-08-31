@@ -2119,26 +2119,26 @@ class ExtendedEncodeDataHandler:
 
         tracemalloc.start()  # Start tracking memory allocations
         batch_bios_list = list(self.navigation.keys())[self.bios_pointer : self.bios_pointer+self.bios_batchsize]
-        self.loaded_data = []
-        self.loaded_metadata = []
+        # self.loaded_data = []
+        # self.loaded_metadata = []
 
-        for bios in batch_bios_list:
-            print(f"loading {bios}")
+        # for bios in batch_bios_list:
+        #     print(f"loading {bios}")
         
-            d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
-            self.loaded_data.append(d)
-            self.loaded_metadata.append(md)
+        #     d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
+        #     self.loaded_data.append(d)
+        #     self.loaded_metadata.append(md)
 
-            # After processing, print the memory usage
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics('lineno')
-            print("[Top 2 lines with the highest memory usage]")
-            for stat in top_stats[:2]:
-                print(stat)
+        #     # After processing, print the memory usage
+        #     snapshot = tracemalloc.take_snapshot()
+        #     top_stats = snapshot.statistics('lineno')
+        #     print("[Top 2 lines with the highest memory usage]")
+        #     for stat in top_stats[:2]:
+        #         print(stat)
 
 
-        self.Y_loaded_data = self.loaded_data.copy()
-        self.Y_loaded_metadata = self.loaded_metadata.copy()
+        # self.Y_loaded_data = self.loaded_data.copy()
+        # self.Y_loaded_metadata = self.loaded_metadata.copy()
 
         # After processing, print the memory usage
         snapshot = tracemalloc.take_snapshot()
@@ -2146,20 +2146,19 @@ class ExtendedEncodeDataHandler:
         print("[Top 3 lines with the highest memory usage]")
         for stat in top_stats[:3]:
             print(stat)
-
-        
 
         self.Y_loaded_pval = []
         for bios in batch_bios_list:
+            print(f"loading {bios}")
             pval_d = self.load_bios_BW(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.Y_loaded_pval.append(pval_d)
         
-        # After processing, print the memory usage
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics('lineno')
-        print("[Top 3 lines with the highest memory usage]")
-        for stat in top_stats[:3]:
-            print(stat)
+            # After processing, print the memory usage
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics('lineno')
+            print("[Top 3 lines with the highest memory usage]")
+            for stat in top_stats[:3]:
+                print(stat)
         
         tracemalloc.stop()  # Stop the memory tracking
 
