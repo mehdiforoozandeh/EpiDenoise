@@ -2133,8 +2133,8 @@ class ExtendedEncodeDataHandler:
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics('lineno')
 
-            print("[Top 10 lines with the highest memory usage]")
-            for stat in top_stats[:10]:
+            print("[Top 2 lines with the highest memory usage]")
+            for stat in top_stats[:2]:
                 print(stat)
 
         tracemalloc.stop()  # Stop the memory tracking
