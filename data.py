@@ -1737,6 +1737,7 @@ class ExtendedEncodeDataHandler:
         if len(locus) == 1:
             for l in loaded:
                 for exp, data in l.items():
+                    print(data.dtype)
                     if arcsinh:
                         loaded_data[exp] = np.arcsinh(data)
                     else:
