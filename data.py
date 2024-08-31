@@ -1860,6 +1860,7 @@ class ExtendedEncodeDataHandler:
                 if result is not None:
                     for exp, data in result.items():
                         if len(locus) == 1:
+                            print(data.dtype)
                             loaded_data[exp] = data
                                 
                         else:
