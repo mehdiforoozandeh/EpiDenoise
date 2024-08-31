@@ -1830,7 +1830,8 @@ class ExtendedEncodeDataHandler:
                 "read_length":md2["read_length"], "run_type":md2["run_type"] 
             }
             loaded_metadata[e] = md
-            
+        
+        print(loaded_metadata)
         # Load files in parallel
         # with ThreadPoolExecutor(max_workers=10) as executor:
         #     loaded = list(executor.map(self.load_npz, npz_files))
@@ -2186,8 +2187,6 @@ class ExtendedEncodeDataHandler:
         else:
             self.chr_loci_pointer += self.loci_batchsize
         
-
-
         return False
 
     def get_batch(self, side="x", y_prompt=False, pval=False, dna_seq=False):
