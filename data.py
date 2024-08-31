@@ -1739,9 +1739,9 @@ class ExtendedEncodeDataHandler:
                 for exp, data in l.items():
                     print(data.dtype)
                     if arcsinh:
-                        loaded_data[exp] = np.arcsinh(data)
+                        loaded_data[exp] = np.arcsinh(data).astype(np.float16)
                     else:
-                        loaded_data[exp] = data
+                        loaded_data[exp] = data.astype(np.float16)
 
             return loaded_data
 
