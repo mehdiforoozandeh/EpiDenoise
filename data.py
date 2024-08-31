@@ -2129,6 +2129,7 @@ class ExtendedEncodeDataHandler:
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
 
+        self.Y_loaded_data, self.Y_loaded_metadata = [], []
         self.Y_loaded_data = self.loaded_data.copy()
         self.Y_loaded_metadata = self.loaded_metadata.copy()
 
@@ -2172,7 +2173,7 @@ class ExtendedEncodeDataHandler:
                 self.loaded_metadata.append(md)
 
             if self.dsf_pointer == 0:
-
+                self.Y_loaded_data, self.Y_loaded_metadata = [], []
                 self.Y_loaded_data = self.loaded_data.copy()
                 self.Y_loaded_metadata = self.loaded_metadata.copy()
 
