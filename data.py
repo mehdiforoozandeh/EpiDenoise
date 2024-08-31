@@ -19,6 +19,8 @@ import multiprocessing
 import gc
 import concurrent.futures
 from multiprocessing import Pool
+import tracemalloc
+
 
 
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
@@ -1789,7 +1791,8 @@ class ExtendedEncodeDataHandler:
 
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
-        
+        tracemalloc.start()  # Start tracking memory allocations
+
         if self.eic and bios_name not in self.navigation.keys():
             exps = []
             if os.path.isdir(os.path.join(self.base_path, bios_name)):
@@ -1864,7 +1867,17 @@ class ExtendedEncodeDataHandler:
                             start_bin = int(locus[1]) // self.resolution
                             end_bin = int(locus[2]) // self.resolution
                             loaded_data[exp] = data[start_bin:end_bin]
-        
+
+        # After processing, print the memory usage
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+
+        print("[Top 10 lines with the highest memory usage]")
+        for stat in top_stats[:10]:
+            print(stat)
+
+        tracemalloc.stop()  # Stop the memory tracking
+            
         return loaded_data, loaded_metadata
 
     def select_region_from_loaded_data(self, loaded_data, locus):
