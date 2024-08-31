@@ -1791,7 +1791,6 @@ class ExtendedEncodeDataHandler:
 
     def load_bios(self, bios_name, locus, DSF, f_format="npz"):
         """Load all available experiments for a given biosample and locus."""
-        tracemalloc.start()  # Start tracking memory allocations
 
         if self.eic and bios_name not in self.navigation.keys():
             exps = []
@@ -1867,16 +1866,6 @@ class ExtendedEncodeDataHandler:
                             start_bin = int(locus[1]) // self.resolution
                             end_bin = int(locus[2]) // self.resolution
                             loaded_data[exp] = data[start_bin:end_bin]
-
-        # After processing, print the memory usage
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics('lineno')
-
-        print("[Top 10 lines with the highest memory usage]")
-        for stat in top_stats[:10]:
-            print(stat)
-
-        tracemalloc.stop()  # Stop the memory tracking
             
         return loaded_data, loaded_metadata
 
@@ -2133,9 +2122,21 @@ class ExtendedEncodeDataHandler:
 
         for bios in batch_bios_list:
             print(f"loading {bios}")
+            tracemalloc.start()  # Start tracking memory allocations
+        
             d, md = self.load_bios(bios, [list(self.loci.keys())[self.chr_pointer]], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
+            
+            # After processing, print the memory usage
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics('lineno')
+
+            print("[Top 10 lines with the highest memory usage]")
+            for stat in top_stats[:10]:
+                print(stat)
+
+        tracemalloc.stop()  # Stop the memory tracking
 
         self.Y_loaded_data = self.loaded_data.copy()
         self.Y_loaded_metadata = self.loaded_metadata.copy()
