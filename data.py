@@ -1729,7 +1729,7 @@ class ExtendedEncodeDataHandler:
             npz_files.append(l)
 
         # Load files in parallel
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             loaded = list(executor.map(self.load_npz, npz_files))
         
         if len(locus) == 1:
@@ -2212,11 +2212,13 @@ class ExtendedEncodeDataHandler:
                 for data in self.loaded_data:
                     loc_d.append(self.select_region_from_loaded_data(data, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.loaded_metadata)
+                del loc_d
 
             elif side == "y":
                 for data in self.Y_loaded_data:
                     loc_d.append(self.select_region_from_loaded_data(data, locus))
                 d, md, avl = self.make_region_tensor(loc_d, self.Y_loaded_metadata)
+                del loc_d
 
                 if y_prompt:
                     md = self.fill_in_y_prompt(md)
@@ -2226,6 +2228,7 @@ class ExtendedEncodeDataHandler:
                     for pp in self.Y_loaded_pval:
                         loc_p.append(self.select_region_from_loaded_data(pp, locus))
                     p, avl_p = self.make_region_tensor_BW(loc_p)
+                    del loc_p
                      
                     assert (avl_p == avl).all(), "avl_p and avl do not match"
                     batch_pval.append(p)
