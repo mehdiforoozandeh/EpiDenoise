@@ -550,13 +550,6 @@ class PRETRAIN(object):
                     
                     self.optimizer.step()
                     #################################################################################
-                    # snapshot = tracemalloc.take_snapshot()
-                    # top_stats = snapshot.statistics('lineno')
-
-                    # print("[ Top 10 memory consuming variables ]")
-                    # for stat in top_stats[:10]:
-                    #     print(stat)
-                    #################################################################################
 
                     # IMP Count Predictions
                     neg_bin_imp = NegativeBinomial(output_p[masked_map].cpu().detach(), output_n[masked_map].cpu().detach())
@@ -756,14 +749,6 @@ class PRETRAIN(object):
                 log_strs.append(logstr)
                 print(logstr)
 
-                # snapshot = tracemalloc.take_snapshot()
-                # top_stats = snapshot.statistics('lineno')
-                # print("[ Top 10 memory consuming variables ]")
-                # for stat in top_stats[:10]:
-                #     print(stat)
-
-                # log_resource_usage()
-
                 logfile = open(f"models/CANDI{arch}_log.txt", "w")
                 logfile.write("\n".join(log_strs))
                 logfile.close()
@@ -873,7 +858,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.75)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.85)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
@@ -957,7 +942,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 8,
+        "n_sab_layers": 4,
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2, # not used
@@ -1001,4 +986,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Aug30-relpos", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep3-relpos", prog_mask=prg)
