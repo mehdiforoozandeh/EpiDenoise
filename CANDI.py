@@ -9,7 +9,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="abs", expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
@@ -128,7 +128,7 @@ class CANDI(nn.Module):
 class CANDI_DNA(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="abs", expansion_factor=2):
         super(CANDI_DNA, self).__init__()
 
         self.pos_enc = pos_enc
@@ -942,7 +942,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 4,
+        "n_sab_layers": 8,
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2, # not used
@@ -986,4 +986,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep3-relpos", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep4-abspos", prog_mask=prg)
