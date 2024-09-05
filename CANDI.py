@@ -394,13 +394,11 @@ class PRETRAIN(object):
             "cloze_mask": -2,
             "pad": -3
         }
-
+        num_assays = self.dataset.signal_dim
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
         if "_prog_unmask" in arch or "_prog_mask" in arch:
             N = len(self.dataset.m_regions) * len(self.dataset.dsf_list) * self.dataset.num_batches
-            num_assays = self.dataset.signal_dim
-
             mask_step = N // (num_assays - 1)
 
         if hook:
