@@ -514,11 +514,11 @@ class PRETRAIN(object):
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
                     
                     if "_prog_unmask" in arch or "_prog_mask" in arch or "random_mask" in arch:
+                        msk_p = float(num_mask/num_assays)
                         
                         if "imponly" in arch:
-                            loss = imp_count_loss + imp_pval_loss
+                            loss = (msk_p*(imp_count_loss + imp_pval_loss))
                         else:
-                            msk_p = float(num_mask/num_assays)
                             loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
 
                     else:
@@ -834,6 +834,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     n_cnn_layers = hyper_parameters["n_cnn_layers"]
     conv_kernel_size = hyper_parameters["conv_kernel_size"]
     pool_size = hyper_parameters["pool_size"]
+
     if "relpos" in arch:
         pos_enc = "relative"
     else:
