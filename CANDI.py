@@ -9,7 +9,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="abs", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
@@ -50,8 +50,6 @@ class CANDI(nn.Module):
             nn.ReLU())
 
         if self.pos_enc == "relative":
-            # self.encoder_layer = RelativeEncoderLayer(
-            #     d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout)
             self.transformer_encoder = nn.ModuleList([
                 RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
             
@@ -128,7 +126,7 @@ class CANDI(nn.Module):
 class CANDI_DNA(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="abs", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
         super(CANDI_DNA, self).__init__()
 
         self.pos_enc = pos_enc
@@ -233,9 +231,6 @@ class CANDI_DNA(nn.Module):
             nn.ReLU())
 
         if self.pos_enc == "relative":
-            # self.encoder_layer = RelativeEncoderLayer(
-            #     d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout)
-            # self.transformer_encoder = nn.ModuleList([self.encoder_layer for _ in range(n_sab_layers)])
             self.transformer_encoder = nn.ModuleList([
                 RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
             
@@ -518,10 +513,13 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
                     
-                    if "_prog_unmask" in arch or "_prog_mask" in arch:
-                        msk_p = float(num_mask/num_assays)
-                        loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
-                        # loss = (msk_p*(obs_count_loss + obs_pval_loss)) + ((1-msk_p)*(imp_pval_loss + imp_count_loss))
+                    if "_prog_unmask" in arch or "_prog_mask" in arch or "random_mask" in arch:
+                        
+                        if "imponly" in arch:
+                            loss = imp_count_loss + imp_pval_loss
+                        else:
+                            msk_p = float(num_mask/num_assays)
+                            loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
 
                     else:
                         # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
@@ -836,6 +834,10 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     n_cnn_layers = hyper_parameters["n_cnn_layers"]
     conv_kernel_size = hyper_parameters["conv_kernel_size"]
     pool_size = hyper_parameters["pool_size"]
+    if "relpos" in arch:
+        pos_enc = "relative"
+    else:
+        pos_enc = "absolute"
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
@@ -849,11 +851,11 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     if DNA:
         model = CANDI_DNA(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, pos_enc=pos_enc)
     else:
         model = CANDI(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, pos_enc=pos_enc)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -942,7 +944,7 @@ if __name__ == "__main__":
         "pool_size": 2,
 
         "nhead": 8,
-        "n_sab_layers": 8,
+        "n_sab_layers": 4,
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2, # not used
@@ -986,4 +988,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep4-abspos", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep5-relpos-imponly", prog_mask=prg)
