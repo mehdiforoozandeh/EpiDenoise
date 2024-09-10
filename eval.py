@@ -4263,8 +4263,8 @@ class EVAL_CANDI(object):
             "signal_track": self.viz.signal_track,
             "count_confidence": self.viz.count_confidence,
             "signal_confidence": self.viz.signal_confidence,
-            "quantile_hist": self.viz.quantile_hist,
-            "quantile_heatmap": self.viz.quantile_heatmap,
+            # "quantile_hist": self.viz.quantile_hist,
+            # "quantile_heatmap": self.viz.quantile_heatmap,
             "count_error_std_hexbin": self.viz.count_error_std_hexbin,
             "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
             "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
@@ -4373,8 +4373,9 @@ def main():
         print(pd.DataFrame(res))
 
     # srun python eval.py -m {model_path} -hp {hyperparam_path} -d /project/compbio-lab/encode_data/ -s {savedir} --eic all
-    # srun python eval.py -m models/CANDI/CANDIeic_prog_mask__20240824014234_params16005090.pt -hp models/CANDI/hyper_parameters_eic_prog_mask__CANDIeic_prog_mask__20240824014234_params16005090.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_progmask/ --eic all
 
+    # srun python eval.py -m models/CANDIeic_random_mask_Sep3-relpos_model_checkpoint_epoch15.pth -hp models/hyper_parameters_eic_random_mask_Sep3-relpos_CANDIeic_random_mask_Sep3-relpos_20240903101338_params13492930.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_Sep3/ --eic all
+    # srun python eval.py -m models/CANDIeic_DNA_random_mask_Sep3-relpos_model_checkpoint_epoch12.pth -hp models/hyper_parameters_eic_DNA_random_mask_Sep3-relpos_CANDIeic_DNA_random_mask_Sep3-relpos_20240903101338_params15246010.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_DNA_Sep3/ --dna --eic all
 
 if __name__ == "__main__":
     main()
