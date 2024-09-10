@@ -788,7 +788,7 @@ class PRETRAIN(object):
             
             self.scheduler.step()
             print("learning rate scheduler step...")
-            if epoch%3==0 and epoch != (num_epochs-1):
+            if epoch%4==0 and epoch != (num_epochs-1):
                 try:
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
