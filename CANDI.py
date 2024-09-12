@@ -994,4 +994,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep12-expan3-imponly", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep12-expan3-relpos-imponly", prog_mask=prg)
