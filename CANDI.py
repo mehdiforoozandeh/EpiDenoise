@@ -10,7 +10,7 @@ class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", 
-        expansion_factor=2):
+        expansion_factor=3):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
