@@ -186,7 +186,13 @@ class CANDI(nn.Module):
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
-        
+                
+        for i in range(n_cnn_layers):
+            if i + 1 < n_cnn_layers:
+                print(reverse_conv_channels[i + 1])
+            else:
+                print(int(reverse_conv_channels[i] / 2))
+
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
 
