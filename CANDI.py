@@ -21,7 +21,7 @@ class CANDI(nn.Module):
         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
-        print(d_model)
+        print("d_model: ", d_model)
 
         conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
@@ -139,7 +139,7 @@ class CANDI_DNA(nn.Module):
         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
-        print(d_model)
+        print("d_model: ", d_model)
 
         ################################################################################
         # self.convEncDNA_stem = nn.ModuleList(
