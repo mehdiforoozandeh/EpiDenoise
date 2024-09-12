@@ -74,19 +74,66 @@ class CANDI(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
+    # def forward(self, src, x_metadata, y_metadata, availability):
+    #     src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+    #     x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+    #     y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+    #     # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
+
+    #     # src = self.signal_layer_norm(src)
+    #     ### CONV ENCODER ###
+    #     src = src.permute(0, 2, 1) # to N, F1, L
+    #     for conv in self.convEnc:
+    #         src = conv(src)
+    #     # e_src.shape = N, F2, L'
+    #     # src = self.SE_enc(src)
+
+    #     src = src.permute(0, 2, 1)  # to N, L', F2
+    #     xmd_embedding = self.xmd_emb(x_metadata)
+    #     src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+    #     src = self.xmd_fusion(src)
+
+    #     ### TRANSFORMER ENCODER ###
+    #     if self.pos_enc != "relative":
+    #         src = self.posEnc(src)
+    #         src = self.transformer_encoder(src)
+    #     else:
+    #         for enc in self.transformer_encoder:
+    #             src = enc(src)
+
+    #     ### Count Decoder ###
+    #     ymd_embedding = self.ymd_emb(y_metadata)
+    #     src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+    #     src_count = self.ymd_fusion(src_count)
+        
+    #     src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+    #     for dconv in self.deconv_count:
+    #         src_count = dconv(src_count)
+
+    #     src_count = src_count.permute(0, 2, 1) # to N, L, F1
+    #     p, n = self.neg_binom_layer(src_count)
+
+    #     ### Pval Decoder ###
+    #     src_pval = src.permute(0, 2, 1) # to N, F2, L'
+    #     for dconv in self.deconv_pval:
+    #         src_pval = dconv(src_pval)
+
+    #     src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
+    #     mu, var = self.gaussian_layer(src_pval)
+
+    #     return p, n, mu, var
+
     def forward(self, src, x_metadata, y_metadata, availability):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
-        # availability = torch.where(availability == -2, torch.tensor(-1, device=availability.device), availability)
 
-        # src = self.signal_layer_norm(src)
         ### CONV ENCODER ###
-        src = src.permute(0, 2, 1) # to N, F1, L
+        src = src.permute(0, 2, 1)  # to N, F1, L
+        encoder_outputs = []  # List to store encoder outputs for skip connections
         for conv in self.convEnc:
             src = conv(src)
-        # e_src.shape = N, F2, L'
-        # src = self.SE_enc(src)
+            encoder_outputs.append(src)  # Store the intermediate outputs
 
         src = src.permute(0, 2, 1)  # to N, L', F2
         xmd_embedding = self.xmd_emb(x_metadata)
@@ -105,23 +152,32 @@ class CANDI(nn.Module):
         ymd_embedding = self.ymd_emb(y_metadata)
         src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src_count = self.ymd_fusion(src_count)
-        
-        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv_count:
+
+        src_count = src_count.permute(0, 2, 1)  # to N, F2, L'
+
+        # Decoder with Skip Connections
+        for i, dconv in enumerate(self.deconv_count):
+            skip_connection = encoder_outputs[-(i + 1)]  # Get the corresponding encoder output
+            src_count = torch.cat([src_count, skip_connection], dim=1)  # Concatenate along the channel dimension
             src_count = dconv(src_count)
 
-        src_count = src_count.permute(0, 2, 1) # to N, L, F1
+        src_count = src_count.permute(0, 2, 1)  # to N, L, F1
         p, n = self.neg_binom_layer(src_count)
 
         ### Pval Decoder ###
-        src_pval = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv_pval:
+        src_pval = src.permute(0, 2, 1)  # to N, F2, L'
+
+        # Decoder with Skip Connections for p-values
+        for i, dconv in enumerate(self.deconv_pval):
+            skip_connection = encoder_outputs[-(i + 1)]  # Get the corresponding encoder output
+            src_pval = torch.cat([src_pval, skip_connection], dim=1)  # Concatenate along the channel dimension
             src_pval = dconv(src_pval)
 
-        src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
+        src_pval = src_pval.permute(0, 2, 1)  # to N, L, F1
         mu, var = self.gaussian_layer(src_pval)
 
         return p, n, mu, var
+
 
 class CANDI_DNA(nn.Module):
     def __init__(
@@ -987,4 +1043,4 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep9-relpos-imponly", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="Sep12-relpos-imponly", prog_mask=prg)
