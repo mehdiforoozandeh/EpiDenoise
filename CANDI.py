@@ -9,7 +9,8 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class CANDI(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", expansion_factor=2):
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=2000, pos_enc="relative", 
+        expansion_factor=2):
         super(CANDI, self).__init__()
 
         self.pos_enc = pos_enc
@@ -17,19 +18,19 @@ class CANDI(nn.Module):
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
         self.f1 = signal_dim 
-        self.f2 = (self.f1 * (2**(n_cnn_layers)))
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
 
-        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         # self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
-                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
                 conv_kernel_size[i], S=1, D=1,
                 pool_type="avg", residuals=True,
                 groups=self.f1,
@@ -61,13 +62,13 @@ class CANDI(nn.Module):
 
         self.deconv_count = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.deconv_pval = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
@@ -859,7 +860,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.85)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.9)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
