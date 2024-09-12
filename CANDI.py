@@ -135,7 +135,7 @@ class CANDI_DNA(nn.Module):
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
         self.f1 = signal_dim 
-        self.f2 = (self.f1 * (2**(n_cnn_layers)))
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
 
@@ -195,15 +195,15 @@ class CANDI_DNA(nn.Module):
         
         ################################################################################
 
-        conv_channels = [(self.f1)*(2**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [2 * x for x in conv_channels[::-1]]
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
         conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         # self.signal_layer_norm = nn.LayerNorm(self.f1)
 
         self.convEnc = nn.ModuleList(
             [ConvTower(
-                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else 2 * conv_channels[i],
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
                 conv_kernel_size_list[i], S=1, D=1,
                 pool_type="avg", residuals=True,
                 groups=self.f1,
@@ -243,13 +243,13 @@ class CANDI_DNA(nn.Module):
 
         self.deconv_count = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
                 conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
 
         self.deconv_pval = nn.ModuleList(
             [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / 2),
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
                 conv_kernel_size_list[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
         
@@ -833,6 +833,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     n_cnn_layers = hyper_parameters["n_cnn_layers"]
     conv_kernel_size = hyper_parameters["conv_kernel_size"]
     pool_size = hyper_parameters["pool_size"]
+    expansion_factor = hyper_parameters["expansion_factor"]
 
     if "relpos" in arch:
         pos_enc = "relative"
@@ -851,11 +852,13 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     if DNA:
         model = CANDI_DNA(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, pos_enc=pos_enc)
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
+            pos_enc=pos_enc, expansion_factor=expansion_factor)
     else:
         model = CANDI(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, pos_enc=pos_enc)
+            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
+            pos_enc=pos_enc, expansion_factor=expansion_factor)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -942,6 +945,7 @@ if __name__ == "__main__":
         "n_cnn_layers": 3,
         "conv_kernel_size" : 5,
         "pool_size": 2,
+        "expansion_factor":3,
 
         "nhead": 9,
         "n_sab_layers": 4,
