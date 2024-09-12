@@ -944,12 +944,12 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
 
-        "n_cnn_layers": 4,
+        "n_cnn_layers": 3,
         "conv_kernel_size" : 5,
         "pool_size": 2,
-        "expansion_factor":2,
+        "expansion_factor":3,
 
-        "nhead": 8,
+        "nhead": 9,
         "n_sab_layers": 4,
         "epochs": 20,
         "inner_epochs": 1,
