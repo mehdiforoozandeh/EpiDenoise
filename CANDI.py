@@ -810,7 +810,7 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                if chr0 != chr1 or len(list(self.dataset.loci.keys()))==1:
+                if chr0 != chr1 or next_epoch:
                     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
