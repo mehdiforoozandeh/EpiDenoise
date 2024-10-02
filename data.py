@@ -1991,6 +1991,9 @@ class ExtendedEncodeDataHandler:
         elif loci_gen == "random":
             print("generating random loci")
             self.generate_random_loci(m, context_length)
+        elif loci_gen == "debug":
+            self.generate_full_chr_loci(context_length, chrs=["chr19"])
+            self.m_regions = self.m_regions[(len(self.m_regions) - m) // 2 : (len(self.m_regions) + m) // 2]
         else:
             self.generate_full_chr_loci(context_length, chrs=loci_gen)
 
