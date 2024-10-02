@@ -382,7 +382,7 @@ class PRETRAIN(object):
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=True, DNA=False, 
-        early_stop=False, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=1):
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=1):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -810,7 +810,7 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                if chr0 != chr1:
+                if chr0 != chr1 or len(list(self.dataset.loci.keys()))==1:
                     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
@@ -1024,7 +1024,7 @@ if __name__ == "__main__":
         "context_length": 400,
         "batch_size": 50,
         "learning_rate": 1e-3,
-        "num_loci": 100,#3750,
+        "num_loci": 10,#3750,
         "lr_halflife":1,
         "min_avail":5}
 
