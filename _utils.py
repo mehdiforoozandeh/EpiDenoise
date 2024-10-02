@@ -632,7 +632,34 @@ class MONITOR_VALIDATION(object): # CANDI
         - R2_pval: mean={ups_r2_pval_stats[0]:.2f}, min={ups_r2_pval_stats[1]:.2f}, max={ups_r2_pval_stats[2]:.2f}
         """
 
-        return print_statement
+        metrics_dict = {
+            "imputed_counts": {
+                "MSE_count": {"mean": imp_mse_count_stats[0], "min": imp_mse_count_stats[1], "max": imp_mse_count_stats[2]},
+                "PCC_count": {"mean": imp_pearson_count_stats[0], "min": imp_pearson_count_stats[1], "max": imp_pearson_count_stats[2]},
+                "SRCC_count": {"mean": imp_spearman_count_stats[0], "min": imp_spearman_count_stats[1], "max": imp_spearman_count_stats[2]},
+                "R2_count": {"mean": imp_r2_count_stats[0], "min": imp_r2_count_stats[1], "max": imp_r2_count_stats[2]},
+            },
+            "imputed_pvals": {
+                "MSE_pval": {"mean": imp_mse_pval_stats[0], "min": imp_mse_pval_stats[1], "max": imp_mse_pval_stats[2]},
+                "PCC_pval": {"mean": imp_pearson_pval_stats[0], "min": imp_pearson_pval_stats[1], "max": imp_pearson_pval_stats[2]},
+                "SRCC_pval": {"mean": imp_spearman_pval_stats[0], "min": imp_spearman_pval_stats[1], "max": imp_spearman_pval_stats[2]},
+                "R2_pval": {"mean": imp_r2_pval_stats[0], "min": imp_r2_pval_stats[1], "max": imp_r2_pval_stats[2]},
+            },
+            "upsampled_counts": {
+                "MSE_count": {"mean": ups_mse_count_stats[0], "min": ups_mse_count_stats[1], "max": ups_mse_count_stats[2]},
+                "PCC_count": {"mean": ups_pearson_count_stats[0], "min": ups_pearson_count_stats[1], "max": ups_pearson_count_stats[2]},
+                "SRCC_count": {"mean": ups_spearman_count_stats[0], "min": ups_spearman_count_stats[1], "max": ups_spearman_count_stats[2]},
+                "R2_count": {"mean": ups_r2_count_stats[0], "min": ups_r2_count_stats[1], "max": ups_r2_count_stats[2]},
+            },
+            "upsampled_pvals": {
+                "MSE_pval": {"mean": ups_mse_pval_stats[0], "min": ups_mse_pval_stats[1], "max": ups_mse_pval_stats[2]},
+                "PCC_pval": {"mean": ups_pearson_pval_stats[0], "min": ups_pearson_pval_stats[1], "max": ups_pearson_pval_stats[2]},
+                "SRCC_pval": {"mean": ups_spearman_pval_stats[0], "min": ups_spearman_pval_stats[1], "max": ups_spearman_pval_stats[2]},
+                "R2_pval": {"mean": ups_r2_pval_stats[0], "min": ups_r2_pval_stats[1], "max": ups_r2_pval_stats[2]}
+            }}
+
+
+        return print_statement, metrics_dict
 
     def generate_training_gif_frame(self, model, fig_title):
         def gen_subplt(

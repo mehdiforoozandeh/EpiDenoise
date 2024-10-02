@@ -381,7 +381,9 @@ class PRETRAIN(object):
 
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
-        arch="", mask_percentage=0.15, hook=True, DNA=False):
+        arch="", mask_percentage=0.15, hook=True, DNA=False, 
+        early_stop=False, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=1):
+
         log_strs = []
         log_strs.append(str(self.device))
         log_strs.append(f"CANDI{arch} # model_parameters: {count_parameters(self.model)}")
@@ -413,7 +415,27 @@ class PRETRAIN(object):
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
+
+        best_metric = None
+
         for epoch in range(num_epochs):
+            if early_stop:
+                epoch_rec = {
+                    "ups_count_r2":[], "imp_count_r2":[],
+                    "ups_pval_r2":[], "imp_pval_r2":[],
+                    "ups_count_spearman":[], "imp_count_spearman":[],
+                    "ups_pval_spearman":[], "imp_pval_spearman":[],
+                    "ups_count_pearson":[], "imp_count_pearson":[],
+                    "ups_pval_pearson":[], "imp_pval_pearson":[],
+
+                    "val_count_mean_ups_r2":[], "val_count_mean_imp_r2":[], 
+                    "val_pval_mean_ups_r2":[], "val_pval_mean_imp_r2":[], 
+                    "val_count_mean_ups_pcc":[], "val_count_mean_imp_pcc":[], 
+                    "val_pval_mean_ups_pcc":[], "val_pval_mean_imp_pcc":[], 
+                    "val_count_mean_ups_srcc":[], "val_count_mean_imp_srcc":[], 
+                    "val_pval_mean_ups_srcc":[], "val_pval_mean_imp_srcc":[]
+                    }
+
             self.dataset.new_epoch()
             next_epoch = False
 
@@ -455,7 +477,7 @@ class PRETRAIN(object):
                     "ups_count_spearman":[], "imp_count_spearman":[],
                     "ups_pval_spearman":[], "imp_pval_spearman":[],
                     "ups_count_pearson":[], "imp_count_pearson":[],
-                    "ups_pval_pearson":[], "imp_pval_pearson":[],
+                    "ups_pval_pearson":[], "imp_pval_pearson":[], 
                     "grad_norm":[]
                     }
 
@@ -699,42 +721,34 @@ class PRETRAIN(object):
                     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
                     f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer / len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
                     f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}", "\n",
-
                     f"Imp_nbNLL {np.mean(batch_rec['imp_count_loss']):.2f}",
                     f"Ups_nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"Imp_gNLL {np.mean(batch_rec['imp_pval_loss']):.2f}",
                     f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", "\n",
-
                     f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
                     f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
                     f"Imp_Pval_R2 {np.mean(batch_rec['imp_pval_r2']):.2f}",
                     f"Ups_Pval_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}", "\n",
-
                     f"Imp_Count_PP {np.mean(batch_rec['imp_count_pp']):.2f}",
                     f"Ups_Count_PP {np.mean(batch_rec['ups_count_pp']):.2f}",
                     f"Imp_Pval_PP {np.mean(batch_rec['imp_pval_pp']):.2f}",
                     f"Ups_Pval_PP {np.mean(batch_rec['ups_pval_pp']):.2f}", "\n",
-
                     f"Imp_Count_Conf {np.mean(batch_rec['imp_count_conf']):.2f}",
                     f"Ups_Count_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
                     f"Imp_Pval_Conf {np.mean(batch_rec['imp_pval_conf']):.2f}",
                     f"Ups_Pval_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}", "\n",
-                    
                     f"Imp_Count_MSE {np.mean(batch_rec['imp_count_mse']):.2f}",
                     f"Ups_Count_MSE {np.mean(batch_rec['ups_count_mse']):.2f}",
                     f"Imp_Pval_MSE {np.mean(batch_rec['imp_pval_mse']):.2f}",
                     f"Ups_Pval_MSE {np.mean(batch_rec['ups_pval_mse']):.2f}", "\n",
-
                     f"Imp_Count_SRCC {np.mean(batch_rec['imp_count_spearman']):.2f}",
                     f"Ups_Count_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
                     f"Imp_Pval_SRCC {np.mean(batch_rec['imp_pval_spearman']):.2f}",
                     f"Ups_Pval_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}", "\n",
-
                     f"Imp_Count_PCC {np.mean(batch_rec['imp_count_pearson']):.2f}",
                     f"Ups_Count_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
-
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"took {int(minutes)}:{int(seconds):02d}"
                 ]
@@ -753,6 +767,20 @@ class PRETRAIN(object):
                 logfile.close()
                 
                 #################################################################################
+                #################################################################################
+                if early_stop:
+                    epoch_rec["imp_count_r2"].append(np.mean(batch_rec['imp_count_r2']))
+                    epoch_rec["ups_count_r2"].append(np.mean(batch_rec['ups_count_r2']))
+                    epoch_rec["imp_pval_r2"].append(np.mean(batch_rec['imp_pval_r2']))
+                    epoch_rec["ups_pval_r2"].append(np.mean(batch_rec['ups_pval_r2']))
+                    epoch_rec["imp_count_spearman"].append(np.mean(batch_rec['imp_count_spearman']))
+                    epoch_rec["ups_count_spearman"].append(np.mean(batch_rec['ups_count_spearman']))
+                    epoch_rec["imp_pval_spearman"].append(np.mean(batch_rec['imp_pval_spearman']))
+                    epoch_rec["ups_pval_spearman"].append(np.mean(batch_rec['ups_pval_spearman']))
+                    epoch_rec["imp_count_pearson"].append(np.mean(batch_rec['imp_count_pearson']))
+                    epoch_rec["ups_count_pearson"].append(np.mean(batch_rec['ups_count_pearson']))
+                    epoch_rec["imp_pval_pearson"].append(np.mean(batch_rec['imp_pval_pearson']))
+                    epoch_rec["ups_pval_pearson"].append(np.mean(batch_rec['ups_pval_pearson']))
                 #################################################################################
                 #################################################################################
 
@@ -782,16 +810,55 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                # if chr0 != chr1:
-                #     validation_set_eval = val_eval.get_validation(self.model)
-                #     torch.cuda.empty_cache()
-                #     log_strs.append(validation_set_eval)
-                #     print(validation_set_eval)
-                #     log_resource_usage()
-            
+                if chr0 != chr1:
+                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
+
+                    if early_stop:
+                        epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                        epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                        epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                        
+                        epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                        epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+
             self.scheduler.step()
             print("learning rate scheduler step...")
-            if epoch%4==0 and epoch != (num_epochs-1):
+
+            if early_stop:
+                # Initialize the best metrics if it's the first epoch
+                if best_metric is None:
+                    best_metric = {key: None for key in epoch_rec.keys()}
+                    patience_counter = {key: 0 for key in epoch_rec.keys()}
+
+                # Loop over all metrics
+                for metric_name in epoch_rec.keys():
+                    current_metric = np.mean(epoch_rec[metric_name])  # Calculate the current epoch's mean for this metric
+
+                    if best_metric[metric_name] is None or current_metric > best_metric[metric_name] + early_stop_delta:
+                        best_metric[metric_name] = current_metric  # Update the best metric for this key
+                        patience_counter[metric_name] = 0  # Reset the patience counter
+                    else:
+                        patience_counter[metric_name] += 1  # Increment the patience counter if no improvement
+
+                # Check if all patience counters have exceeded the limit (e.g., 3 epochs of no improvement)
+                if all(patience_counter[metric] >= patience for metric in patience_counter.keys()):
+                    print(f"Early stopping at epoch {epoch}. No significant improvement across metrics.")
+                    return  self.model
+                else:
+                    print(f"best metric records so far: \n{best_metric}")
+                
+            if epoch%5==0 and epoch != (num_epochs-1):
                 try:
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
@@ -845,7 +912,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen=["chr20"],#"ccre", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -954,7 +1021,7 @@ if __name__ == "__main__":
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.2, # not used
-        "context_length": 800,
+        "context_length": 400,
         "batch_size": 50,
         "learning_rate": 1e-3,
         "num_loci": 3750,
