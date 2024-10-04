@@ -1014,7 +1014,7 @@ if __name__ == "__main__":
         "n_cnn_layers": 3,
         "conv_kernel_size" : 5,
         "pool_size": 2,
-        "expansion_factor":2,
+        "expansion_factor":3,
 
         "nhead": 9,
         "n_sab_layers": 4,
@@ -1061,6 +1061,6 @@ if __name__ == "__main__":
     if "prog_mask" in sys.argv:
         prg = True
 
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="oct1-expan3_relpos", prog_mask=prg)
+    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="oct4-expan2_relpos", prog_mask=prg)
 
     # imponly was not as good
