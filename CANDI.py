@@ -893,6 +893,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     else:
         arch = f"{arch}_random_mask"
 
+
     arch = f"{arch}_{suffix}"
     # Defining the hyperparameters
     resolution = 25
@@ -916,11 +917,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     conv_kernel_size = hyper_parameters["conv_kernel_size"]
     pool_size = hyper_parameters["pool_size"]
     expansion_factor = hyper_parameters["expansion_factor"]
-
-    if "relpos" in arch:
-        pos_enc = "relative"
-    else:
-        pos_enc = "absolute"
+    pos_enc = hyper_parameters["pos_enc"]
 
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
@@ -1032,6 +1029,7 @@ def main():
 
     parser.add_argument('--nhead', type=int, default=8, help='Number of attention heads')
     parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
+    parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
@@ -1041,6 +1039,7 @@ def main():
     parser.add_argument('--num_loci', type=int, default=3750, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=5, help='Minimum available')
+    
 
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1060,6 +1059,7 @@ def main():
         "expansion_factor": args.expansion_factor,
         "nhead": args.nhead,
         "n_sab_layers": args.n_sab_layers,
+        "pos_enc": args.pos_enc,
         "epochs": args.epochs,
         "inner_epochs": args.inner_epochs,
         "mask_percentage": args.mask_percentage,
@@ -1072,7 +1072,7 @@ def main():
     }
 
     # Call your training function with parsed arguments
-    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct4-expan2_relpos", prog_mask=args.prog_mask)
+    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct4-expan2", prog_mask=args.prog_mask)
 
 if __name__ == "__main__":
     main()
