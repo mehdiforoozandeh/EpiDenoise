@@ -102,7 +102,7 @@ if __name__ == "__main__":
         "min_avail": 1,
         "eic":True,
     }
-    hyperparameters_list = [
+    hyperparameter_space = [
         {"n_cnn_layers": 3, "conv_kernel_size": 5,
         "expansion_factor": 2, "nhead": 8,
         "n_sab_layers": 1, "context_length": 200,
@@ -128,6 +128,11 @@ if __name__ == "__main__":
         "dna":False},
     ]
     
+    hyperparameters_list = []
+    for s in hyperparameter_space:
+        merged_dict = base_hyperparameters | s
+        hyperparameters_list.append(merged_dict)
+
     # Make sure to set the correct start method for multiprocessing
     multiprocessing.set_start_method('spawn', force=True)
 
