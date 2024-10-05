@@ -1,35 +1,185 @@
-class BayesianOptimization:
-    def __init__(self, model, param_space):
-        """
-        Initialize the Bayesian Optimization class.
-        
-        Parameters:
-        model: The deep learning model to be optimized.
-        param_space: A dictionary defining the hyperparameters search space.
-        """
-        self.model = model
-        self.param_space = param_space
+from CANDI import *
+import torch
+import multiprocessing
+import os
+import time
 
-    def objective_function(self, params):
-        """
-        Define the objective function to be optimized. This function should take a set of hyperparameters and return the evaluation metric for those hyperparameters.
-        
-        Parameters:
-        params: A set of hyperparameters from the search space.
-        """
-        pass
+# Function to check available GPUs
+def get_available_gpus():
+    available_gpus = []
+    if torch.cuda.is_available():
+        for i in range(torch.cuda.device_count()):
+            mem_free = torch.cuda.memory_allocated(i)
+            total_mem = torch.cuda.get_device_properties(i).total_memory
+            mem_used_ratio = mem_free / total_mem
+            # Assume GPU is free if less than 5% of memory is being used
+            if mem_used_ratio < 0.05:
+                available_gpus.append(i)
+    return available_gpus
 
-    def optimize(self, n_iter):
-        """
-        Perform the Bayesian optimization over the hyperparameters space.
-        
-        Parameters:
-        n_iter: The number of iterations to perform.
-        """
-        pass
+# Worker function to train the model on a specific GPU
+def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
+    device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
+    print(f"Training on GPU {gpu_id}")
+    
+    # Call the Train_CANDI function to train the model on this GPU
+    model, metrics = Train_CANDI(hyper_parameters, eic=hyper_parameters["eic"], DNA=hyper_parameters["dna"], device=device)
+    
+    # After training, save the results in a dictionary
+    result = {
+        "gpu_id": gpu_id,
+        "hyper_parameters": hyper_parameters,
+        "metrics": metrics
+    }
+    
+    # Put the result into the queue
+    result_queue.put(result)
 
-    def get_best_params(self):
-        """
-        Return the best set of hyperparameters found during the optimization.
-        """
-        pass
+# Function to manage GPU assignment and training
+def distribute_models_across_gpus(hyperparameters_list):
+    available_gpus = get_available_gpus()
+    print(f"Available GPUs: {available_gpus}")
+    
+    # Queue to store results
+    result_queue = multiprocessing.Queue()
+
+    # List to keep track of active processes
+    active_processes = []
+    
+    def start_training():
+        for hyper_parameters in hyperparameters_list:
+            if available_gpus:
+                # Pop a GPU from the available list
+                gpu_id = available_gpus.pop(0)
+                # Create a new process for training on this GPU
+                p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
+                active_processes.append(p)
+                p.start()
+            else:
+                # If no GPU is available, break the loop
+                break
+
+    # Start initial training processes
+    start_training()
+
+    # Collect results and assign new tasks when GPUs are free
+    completed_models = []
+    while len(completed_models) < len(hyperparameters_list):
+        for p in active_processes:
+            if not p.is_alive():
+                # Collect the result
+                result = result_queue.get()
+                print(f"Model training completed on GPU {result['gpu_id']}")
+                completed_models.append(result)
+                
+                # Release the GPU back to the pool
+                available_gpus.append(result['gpu_id'])
+                
+                # Remove process from the list safely
+                if p in active_processes:
+                    active_processes.remove(p)
+
+                # Start new training if GPUs are available
+                start_training()
+
+    # Wait for all remaining processes to finish
+    for p in active_processes:
+        p.join()
+
+    return completed_models
+
+if __name__ == "__main__":
+    # Example list of hyperparameter dictionaries
+    hyperparameters_list = [
+        {"data_path": "/project/compbio-lab/encode_data/",
+        "dropout": 0.1,
+        "n_cnn_layers": 3,
+        "conv_kernel_size": 5,
+        "pool_size": 2,
+        "expansion_factor": 2,
+        "nhead": 8,
+        "n_sab_layers": 4,
+        "epochs": 20,
+        "inner_epochs": 1,
+        "mask_percentage": 0.1,
+        "context_length": 200,
+        "batch_size": 50,
+        "learning_rate": 1e-3,
+        "num_loci": 1000,
+        "lr_halflife": 1,
+        "min_avail": 1,
+        "eic":True,
+        "dna":False},
+
+        {"data_path": "/project/compbio-lab/encode_data/",
+        "dropout": 0.1,
+        "n_cnn_layers": 2,
+        "conv_kernel_size": 5,
+        "pool_size": 2,
+        "expansion_factor": 2,
+        "nhead": 4,
+        "n_sab_layers": 4,
+        "epochs": 20,
+        "inner_epochs": 1,
+        "mask_percentage": 0.1,
+        "context_length": 400,
+        "batch_size": 50,
+        "learning_rate": 1e-3,
+        "num_loci": 1000,
+        "lr_halflife": 1,
+        "min_avail": 1,
+        "eic":True,
+        "dna":True},
+
+        {"data_path": "/project/compbio-lab/encode_data/",
+        "dropout": 0.1,
+        "n_cnn_layers": 2,
+        "conv_kernel_size": 7,
+        "pool_size": 2,
+        "expansion_factor": 2,
+        "nhead": 4,
+        "n_sab_layers": 1,
+        "epochs": 20,
+        "inner_epochs": 1,
+        "mask_percentage": 0.1,
+        "context_length": 800,
+        "batch_size": 50,
+        "learning_rate": 1e-3,
+        "num_loci": 1000,
+        "lr_halflife": 1,
+        "min_avail": 1,
+        "eic":True,
+        "dna":True},
+
+        {"data_path": "/project/compbio-lab/encode_data/",
+        "dropout": 0.1,
+        "n_cnn_layers": 2,
+        "conv_kernel_size": 3,
+        "pool_size": 2,
+        "expansion_factor": 2,
+        "nhead": 4,
+        "n_sab_layers": 2,
+        "epochs": 20,
+        "inner_epochs": 1,
+        "mask_percentage": 0.1,
+        "context_length": 400,
+        "batch_size": 50,
+        "learning_rate": 1e-3,
+        "num_loci": 100,
+        "lr_halflife": 1,
+        "min_avail": 1,
+        "eic":True,
+        "dna":True}
+
+    ]
+    
+    # Make sure to set the correct start method for multiprocessing
+    multiprocessing.set_start_method('spawn', force=True)
+
+    # Distribute and train models across GPUs
+    results = distribute_models_across_gpus(hyperparameters_list)
+
+    # Print results
+    for result in results:
+        print(f"Results for hyperparameters: {result['hyper_parameters']}")
+        print(f"Metrics: {result['metrics']}")

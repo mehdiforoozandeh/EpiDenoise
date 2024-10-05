@@ -1,5 +1,5 @@
 from model import *
-import tracemalloc
+import tracemalloc, sys, argparse
 
 # tracemalloc.start()
 
@@ -369,12 +369,16 @@ class CANDI_LOSS(nn.Module):
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
 class PRETRAIN(object):
-    def __init__(self, model, dataset, criterion, optimizer, scheduler):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    def __init__(self, model, dataset, criterion, optimizer, scheduler, device=None, HPO=False):
+        if device == None:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = device
         print(f"Training on device: {self.device}.")
 
         self.model = model.to(self.device)
         self.dataset = dataset
+        self.HPO = HPO
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -795,7 +799,7 @@ class PRETRAIN(object):
                 bios_pointer1 = self.dataset.bios_pointer
 
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
-                if chr0 != chr1:
+                if self.HPO==False and chr0 != chr1:
                     # Generate and process the plot
                     fig_title = " | ".join([
                         f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
@@ -858,15 +862,18 @@ class PRETRAIN(object):
                 else:
                     print(f"best metric records so far: \n{best_metric}")
                 
-            if epoch%5==0 and epoch != (num_epochs-1):
+            if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1):
                 try:
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
                     pass
-                
-        return self.model
+        
+        if early_stop:
+            return self.model, best_metric
+        else:
+            return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None):
     if eic:
         arch="eic"
     else:
@@ -949,7 +956,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
 
     start_time = time.time()
 
-    trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler)
+    trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler, device=device)
     model = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
         batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)
@@ -1006,61 +1013,60 @@ class CANDI_LOADER(object):
         model = model.to(self.device)
         return model
 
+def main():
+    parser = argparse.ArgumentParser(description="Train the model with specified hyperparameters")
+
+    # Hyperparameters
+    parser.add_argument('--data_path', type=str, default="/project/compbio-lab/encode_data/", help='Path to the data')
+    parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
+    parser.add_argument('--n_cnn_layers', type=int, default=3, help='Number of CNN layers')
+    parser.add_argument('--conv_kernel_size', type=int, default=5, help='Convolution kernel size')
+    parser.add_argument('--pool_size', type=int, default=2, help='Pooling size')
+    parser.add_argument('--expansion_factor', type=int, default=2, help='Expansion factor for the model')
+
+    parser.add_argument('--nhead', type=int, default=8, help='Number of attention heads')
+    parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
+    parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
+    parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
+    parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
+    parser.add_argument('--context_length', type=int, default=800, help='Context length')
+    parser.add_argument('--batch_size', type=int, default=50, help='Batch size')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
+    parser.add_argument('--num_loci', type=int, default=3750, help='Number of loci')
+    parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
+    parser.add_argument('--min_avail', type=int, default=5, help='Minimum available')
+
+    # Flags for DNA and EIC
+    parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
+    parser.add_argument('--dna', action='store_true', help='Flag to enable DNA')
+    parser.add_argument('--prog_mask', action='store_true', help='Flag to enable progressive masking')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Convert parsed arguments into a dictionary for hyperparameters
+    hyper_parameters = {
+        "data_path": args.data_path,
+        "dropout": args.dropout,
+        "n_cnn_layers": args.n_cnn_layers,
+        "conv_kernel_size": args.conv_kernel_size,
+        "pool_size": args.pool_size,
+        "expansion_factor": args.expansion_factor,
+        "nhead": args.nhead,
+        "n_sab_layers": args.n_sab_layers,
+        "epochs": args.epochs,
+        "inner_epochs": args.inner_epochs,
+        "mask_percentage": args.mask_percentage,
+        "context_length": args.context_length,
+        "batch_size": args.batch_size,
+        "learning_rate": args.learning_rate,
+        "num_loci": args.num_loci,
+        "lr_halflife": args.lr_halflife,
+        "min_avail": args.min_avail
+    }
+
+    # Call your training function with parsed arguments
+    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct4-expan2_relpos", prog_mask=args.prog_mask)
+
 if __name__ == "__main__":
-    hyper_parameters_L = {
-        "data_path": "/project/compbio-lab/encode_data/",
-        "dropout": 0.1,
-
-        "n_cnn_layers": 3,
-        "conv_kernel_size" : 5,
-        "pool_size": 2,
-        "expansion_factor":3,
-
-        "nhead": 9,
-        "n_sab_layers": 4,
-        "epochs": 20,
-        "inner_epochs": 1,
-        "mask_percentage": 0.2, # not used
-        "context_length": 800,
-        "batch_size": 50,
-        "learning_rate": 1e-3,
-        "num_loci": 3750,
-        "lr_halflife":1,
-        "min_avail":5}
-
-    hyper_parameters_S = {
-        "data_path": "/project/compbio-lab/encode_data/",
-        "dropout": 0.1,
-
-        "n_cnn_layers": 3,
-        "conv_kernel_size" : 5,
-        "pool_size": 2,
-
-        "nhead": 4,
-        "n_sab_layers": 1,
-        "epochs": 5,
-        "inner_epochs": 1,
-        "mask_percentage": 0.2,
-        "context_length": 400,
-        "batch_size": 50,
-        "learning_rate": 1e-3,
-        "num_loci": 100,
-        "lr_halflife":1,
-        "min_avail":10}
-
-    eic = False
-    DNA = False
-    prg = False
-    unm = False
-
-    if "eic" in sys.argv or "EIC" in sys.argv:
-        eic = True
-    if "dna" in sys.argv or "DNA" in sys.argv:
-        DNA = True
-
-    if "prog_mask" in sys.argv:
-        prg = True
-
-    Train_CANDI(hyper_parameters_L, eic=eic, DNA=DNA, suffix="oct4-expan2_relpos", prog_mask=prg)
-
-    # imponly was not as good
+    main()
