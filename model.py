@@ -451,12 +451,14 @@ class RelativePosition(nn.Module):
         distance_mat = range_vec_k[None, :] - range_vec_q[:, None]
         distance_mat_clipped = torch.clamp(distance_mat, -self.max_relative_position, self.max_relative_position)
         final_mat = distance_mat_clipped + self.max_relative_position
-        if torch.cuda.is_available():
-            final_mat = torch.LongTensor(final_mat).cuda()
-            embeddings = self.embeddings_table[final_mat].cuda()
-        else:
-            final_mat = torch.LongTensor(final_mat)
-            embeddings = self.embeddings_table[final_mat]
+
+        # Get the current device from embeddings_table
+        device = self.embeddings_table.device
+
+        # Move final_mat to the same device as embeddings_table
+        final_mat = final_mat.to(device)
+
+        embeddings = self.embeddings_table[final_mat]
 
         return embeddings
 
