@@ -414,9 +414,9 @@ class PRETRAIN(object):
             register_hooks(self.model)
         
         if "eic" in arch:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
         else:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
 
@@ -858,9 +858,15 @@ class PRETRAIN(object):
                 # Check if all patience counters have exceeded the limit (e.g., 3 epochs of no improvement)
                 if all(patience_counter[metric] >= patience for metric in patience_counter.keys()):
                     print(f"Early stopping at epoch {epoch}. No significant improvement across metrics.")
+                    logfile = open(f"models/CANDI{arch}_log.txt", "w")
+                    logfile.write(f"best metric records: \n{best_metric}")
+                    logfile.close()
                     return  self.model
                 else:
                     print(f"best metric records so far: \n{best_metric}")
+                    logfile = open(f"models/CANDI{arch}_log.txt", "w")
+                    logfile.write(f"best metric records so far: \n{best_metric}")
+                    logfile.close()
                 
             if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1):
                 try:
@@ -957,7 +963,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     start_time = time.time()
 
     trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler, device=device)
-    model = trainer.pretrain_CANDI(
+    model, best_metric = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
         batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)
 
@@ -979,7 +985,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
         f.write(json.dumps(description, indent=4))
 
-    return model
+    return model, best_metric
 
 class CANDI_LOADER(object):
     def __init__(self, model_path, hyper_parameters, DNA=False):

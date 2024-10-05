@@ -140,7 +140,7 @@ class MONITOR_VALIDATION(object): # CANDI
     def __init__(
         self, data_path, context_length, batch_size, 
         chr_sizes_file="data/hg38.chrom.sizes", DNA=False, eic=False, resolution=25, split="val", 
-        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}):
+        token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}, device=None):
 
         self.data_path = data_path
         self.context_length = context_length
@@ -155,7 +155,10 @@ class MONITOR_VALIDATION(object): # CANDI
             bios_min_exp_avail_threshold=10, eic=eic)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        if device == None:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = device
 
         self.example_coords = [
             (33481539//self.resolution, 33588914//self.resolution), # GART
