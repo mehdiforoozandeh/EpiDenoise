@@ -103,12 +103,6 @@ if __name__ == "__main__":
         "eic":True,
     }
     hyperparameter_space = [
-        {"n_cnn_layers": 2, "conv_kernel_size": 5,
-        "expansion_factor": 2, "nhead": 4,
-        "n_sab_layers": 1, "context_length": 200, "pos_enc": "relative",
-        "batch_size": 50, "learning_rate": 1e-3,
-        "dna":False},
-
         {"n_cnn_layers": 3, "conv_kernel_size": 5, "expansion_factor": 2, 
         "nhead": 4, "n_sab_layers": 2, "context_length": 400, "pos_enc": "relative", 
         "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Base
