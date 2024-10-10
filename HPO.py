@@ -3,6 +3,8 @@ import torch
 import multiprocessing
 import os
 import time
+from multiprocessing import Lock
+
 
 # Function to check available GPUs
 def get_available_gpus():
