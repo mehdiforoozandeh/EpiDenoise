@@ -2,7 +2,6 @@ from CANDI import *
 import torch
 import multiprocessing
 import os
-from multiprocessing import Lock
 import time
 
 # Function to check available GPUs
@@ -10,11 +9,11 @@ def get_available_gpus():
     available_gpus = []
     if torch.cuda.is_available():
         for i in range(torch.cuda.device_count()):
-            mem_free = torch.cuda.memory_reserved(i) - torch.cuda.memory_allocated(i)
+            mem_free = torch.cuda.memory_allocated(i)
             total_mem = torch.cuda.get_device_properties(i).total_memory
-            mem_free_ratio = mem_free / total_mem
-            # Assume GPU is free if more than 95% memory is available
-            if mem_free_ratio > 0.95:
+            mem_used_ratio = mem_free / total_mem
+            # Assume GPU is free if less than 5% of memory is being used
+            if mem_used_ratio < 0.05:
                 available_gpus.append(i)
     return available_gpus
 
@@ -36,7 +35,6 @@ def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
     
     # Put the result into the queue
     result_queue.put(result)
-
 # Function to manage GPU assignment and training
 def distribute_models_across_gpus(hyperparameters_list):
     available_gpus = get_available_gpus()
@@ -105,7 +103,6 @@ def distribute_models_across_gpus(hyperparameters_list):
 
     return completed_models
 
-
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
     base_hyperparameters = {
@@ -150,6 +147,7 @@ if __name__ == "__main__":
     for s in hyperparameter_space:
         merged_dict = base_hyperparameters | s
         hyperparameters_list.append(merged_dict)
+    print(hyperparameters_list)
     # Make sure to set the correct start method for multiprocessing
     multiprocessing.set_start_method('spawn', force=True)
 
