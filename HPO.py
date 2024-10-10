@@ -131,7 +131,8 @@ if __name__ == "__main__":
     for s in hyperparameter_space:
         merged_dict = base_hyperparameters | s
         hyperparameters_list.append(merged_dict)
-
+    print(hyperparameters_list)
+    exit()
     # Make sure to set the correct start method for multiprocessing
     multiprocessing.set_start_method('spawn', force=True)
 
