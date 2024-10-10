@@ -109,24 +109,46 @@ if __name__ == "__main__":
         "batch_size": 50, "learning_rate": 1e-3,
         "dna":False},
 
-        {"n_cnn_layers": 2, "conv_kernel_size": 3,
-        "expansion_factor": 3, "nhead": 9,
-        "n_sab_layers": 1, "context_length": 200, "pos_enc": "relative",
-        "batch_size": 50, "learning_rate": 1e-3,
-        "dna":False},
-
-        {"n_cnn_layers": 4, "conv_kernel_size": 3,
-        "expansion_factor": 2, "nhead": 8,
-        "n_sab_layers": 1, "context_length": 800, "pos_enc": "relative",
-        "batch_size": 50, "learning_rate": 1e-3,
-        "dna":False},
-
-        {"n_cnn_layers": 3, "conv_kernel_size": 5,
-        "expansion_factor": 2, "nhead": 8,
-        "n_sab_layers": 2, "context_length": 400, "pos_enc": "relative",
-        "batch_size": 50, "learning_rate": 1e-3,
-        "dna":False},
-    ]
+        {"n_cnn_layers": 3, "conv_kernel_size": 5, "expansion_factor": 2, 
+        "nhead": 4, "n_sab_layers": 2, "context_length": 400, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Base
+        
+        {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 2, 
+        "nhead": 2, "n_sab_layers": 3, "context_length": 800, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Larger context length, fewer heads
+        
+        {"n_cnn_layers": 2, "conv_kernel_size": 3, "expansion_factor": 2, 
+        "nhead": 4, "n_sab_layers": 2, "context_length": 1600, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max context length with fewer SAB layers
+        
+        {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 3, 
+        "nhead": 3, "n_sab_layers": 4, "context_length": 800, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max expansion factor, moderate context:
+        
+        {"n_cnn_layers": 4, "conv_kernel_size": 5, "expansion_factor": 2, 
+        "nhead": 2, "n_sab_layers": 1, "context_length": 1200, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #More CNN layers, reduced SAB and heads:
+        
+        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 2, 
+        "nhead": 4, "n_sab_layers": 3, "context_length": 600, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Moderate all settings:
+        
+        {"n_cnn_layers": 1, "conv_kernel_size": 7, "expansion_factor": 2, 
+        "nhead": 8, "n_sab_layers": 6, "context_length": 400, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Fewer CNN layers, max heads and SAB layers
+        
+        {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 2, 
+        "nhead": 4, "n_sab_layers": 6, "context_length": 200, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Small context, max SAB layers
+        
+        {"n_cnn_layers": 2, "conv_kernel_size": 3, "expansion_factor": 3, 
+        "nhead": 3, "n_sab_layers": 2, "context_length": 1000, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max expansion factor, fewer heads
+        
+        {"n_cnn_layers": 1, "conv_kernel_size": 5, "expansion_factor": 2, 
+        "nhead": 2, "n_sab_layers": 1, "context_length": 1200, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":False} #Increased context, minimal other settings
+        ]
     
     hyperparameters_list = []
     for s in hyperparameter_space:
