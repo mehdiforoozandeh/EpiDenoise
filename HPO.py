@@ -105,43 +105,47 @@ if __name__ == "__main__":
     hyperparameter_space = [
         {"n_cnn_layers": 3, "conv_kernel_size": 5, "expansion_factor": 2, 
         "nhead": 4, "n_sab_layers": 2, "context_length": 400, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Base
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Base
         
         {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 2, 
         "nhead": 2, "n_sab_layers": 3, "context_length": 800, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Larger context length, fewer heads
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Larger context length, fewer heads
         
         {"n_cnn_layers": 2, "conv_kernel_size": 3, "expansion_factor": 2, 
         "nhead": 4, "n_sab_layers": 2, "context_length": 1600, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max context length with fewer SAB layers
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Max context length with fewer SAB layers
         
         {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 3, 
         "nhead": 3, "n_sab_layers": 4, "context_length": 800, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max expansion factor, moderate context:
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Max expansion factor, moderate context:
         
         {"n_cnn_layers": 4, "conv_kernel_size": 5, "expansion_factor": 2, 
         "nhead": 2, "n_sab_layers": 1, "context_length": 1200, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #More CNN layers, reduced SAB and heads:
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #More CNN layers, reduced SAB and heads:
         
         {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 2, 
         "nhead": 4, "n_sab_layers": 3, "context_length": 600, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Moderate all settings:
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Moderate all settings:
         
         {"n_cnn_layers": 1, "conv_kernel_size": 7, "expansion_factor": 2, 
         "nhead": 8, "n_sab_layers": 6, "context_length": 400, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Fewer CNN layers, max heads and SAB layers
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Fewer CNN layers, max heads and SAB layers
         
         {"n_cnn_layers": 2, "conv_kernel_size": 5, "expansion_factor": 2, 
         "nhead": 4, "n_sab_layers": 6, "context_length": 200, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Small context, max SAB layers
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Small context, max SAB layers
         
         {"n_cnn_layers": 2, "conv_kernel_size": 3, "expansion_factor": 3, 
         "nhead": 3, "n_sab_layers": 2, "context_length": 1000, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False}, #Max expansion factor, fewer heads
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Max expansion factor, fewer heads
+
+        {"n_cnn_layers": 2, "conv_kernel_size": 3, "expansion_factor": 3, 
+        "nhead": 3, "n_sab_layers": 2, "context_length": 1000, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #Max expansion factor, fewer heads
         
-        {"n_cnn_layers": 1, "conv_kernel_size": 5, "expansion_factor": 2, 
-        "nhead": 2, "n_sab_layers": 1, "context_length": 1200, "pos_enc": "relative", 
-        "batch_size": 50, "learning_rate": 1e-3, "dna":False} #Increased context, minimal other settings
+        {"n_cnn_layers": 5, "conv_kernel_size": 3, "expansion_factor": 2, 
+        "nhead": 8, "n_sab_layers": 4, "context_length": 2000, "pos_enc": "relative", 
+        "batch_size": 50, "learning_rate": 1e-3, "dna":True} #Largest
         ]
     
     hyperparameters_list = []
