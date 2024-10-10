@@ -2,6 +2,7 @@ from CANDI import *
 import torch
 import multiprocessing
 import os
+from multiprocessing import Lock
 import time
 
 # Function to check available GPUs
@@ -9,11 +10,11 @@ def get_available_gpus():
     available_gpus = []
     if torch.cuda.is_available():
         for i in range(torch.cuda.device_count()):
-            mem_free = torch.cuda.memory_allocated(i)
+            mem_free = torch.cuda.memory_reserved(i) - torch.cuda.memory_allocated(i)
             total_mem = torch.cuda.get_device_properties(i).total_memory
-            mem_used_ratio = mem_free / total_mem
-            # Assume GPU is free if less than 5% of memory is being used
-            if mem_used_ratio < 0.05:
+            mem_free_ratio = mem_free / total_mem
+            # Assume GPU is free if more than 95% memory is available
+            if mem_free_ratio > 0.95:
                 available_gpus.append(i)
     return available_gpus
 
@@ -46,19 +47,33 @@ def distribute_models_across_gpus(hyperparameters_list):
 
     # List to keep track of active processes
     active_processes = []
-    
+
+    # Lock for safe GPU allocation
+    lock = Lock()
+
+    # Set to track used hyperparameters to avoid re-running the same
+    used_hyperparameters = set()
+
+    # Function to start training on available GPUs
     def start_training():
-        for hyper_parameters in hyperparameters_list:
-            if available_gpus:
-                # Pop a GPU from the available list
-                gpu_id = available_gpus.pop(0)
-                # Create a new process for training on this GPU
-                p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
-                active_processes.append(p)
-                p.start()
-            else:
-                # If no GPU is available, break the loop
-                break
+        with lock:
+            for hyper_parameters in hyperparameters_list:
+                # Avoid re-running the same hyperparameters
+                if str(hyper_parameters) in used_hyperparameters:
+                    continue
+                used_hyperparameters.add(str(hyper_parameters))
+                
+                if available_gpus:
+                    # Pop a GPU from the available list
+                    gpu_id = available_gpus.pop(0)
+                    # Create a new process for training on this GPU
+                    p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
+                    active_processes.append(p)
+                    p.start()
+                    time.sleep(0.1)  # Small sleep to avoid rapid allocation (optional)
+                else:
+                    # If no GPU is available, break the loop
+                    break
 
     # Start initial training processes
     start_training()
@@ -72,10 +87,11 @@ def distribute_models_across_gpus(hyperparameters_list):
                 result = result_queue.get()
                 print(f"Model training completed on GPU {result['gpu_id']}")
                 completed_models.append(result)
-                
-                # Release the GPU back to the pool
-                available_gpus.append(result['gpu_id'])
-                
+
+                with lock:
+                    # Release the GPU back to the pool
+                    available_gpus.append(result['gpu_id'])
+
                 # Remove process from the list safely
                 if p in active_processes:
                     active_processes.remove(p)
@@ -88,6 +104,7 @@ def distribute_models_across_gpus(hyperparameters_list):
         p.join()
 
     return completed_models
+
 
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
