@@ -21,6 +21,7 @@ def get_available_gpus():
 def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
     print(f"Training on GPU {gpu_id}")
+    print(hyper_parameters)
     
     # Call the Train_CANDI function to train the model on this GPU
     model, metrics = Train_CANDI(hyper_parameters, eic=hyper_parameters["eic"], DNA=hyper_parameters["dna"], device=device)
