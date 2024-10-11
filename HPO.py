@@ -124,6 +124,10 @@ if __name__ == "__main__":
             "nhead": 4, "n_sab_layers": 8, "context_length": 1600, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":True},
 
+        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 3, 
+            "nhead": 9, "n_sab_layers": 8, "context_length": 1600, "pos_enc": "relative", 
+            "batch_size": 50, "learning_rate": 1e-3, "dna":True},
+
         {"n_cnn_layers": 4, "conv_kernel_size": 5, "expansion_factor": 2, 
             "nhead": 8, "n_sab_layers": 4, "context_length": 1200, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":True},
@@ -140,6 +144,10 @@ if __name__ == "__main__":
 
         {"n_cnn_layers": 3, "conv_kernel_size": 9, "expansion_factor": 2, 
             "nhead": 4, "n_sab_layers": 8, "context_length": 1600, "pos_enc": "relative", 
+            "batch_size": 50, "learning_rate": 1e-3, "dna":False},
+
+        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 3, 
+            "nhead": 9, "n_sab_layers": 8, "context_length": 1600, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":False},
 
         {"n_cnn_layers": 4, "conv_kernel_size": 5, "expansion_factor": 2, 
@@ -165,7 +173,13 @@ if __name__ == "__main__":
     # Distribute and train models across GPUs
     results = distribute_models_across_gpus(hyperparameters_list)
 
-    # Print results
-    for result in results:
-        print(f"Results for hyperparameters: {result['hyper_parameters']}")
-        print(f"Metrics: {result['metrics']}")
+    with open("hpo_results.txt", "w") as file:
+        # Print results
+        for result in results:
+            print(f"Results for hyperparameters: {result['hyper_parameters']}")
+            print(f"Metrics: {result['metrics']}")
+            file.write(str(result['hyper_parameters']))
+            file.write(str(result['metrics']))
+            file.write("\n\n\n")
+
+    
