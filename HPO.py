@@ -152,8 +152,7 @@ if __name__ == "__main__":
 
         {"n_cnn_layers": 5, "conv_kernel_size": 3, "expansion_factor": 2, 
             "nhead": 8, "n_sab_layers": 4, "context_length": 1600, "pos_enc": "relative", 
-            "batch_size": 50, "learning_rate": 1e-3, "dna":False},
-        ]
+            "batch_size": 50, "learning_rate": 1e-3, "dna":False}]
 
     hyperparameters_list = []
     for s in hyperparameter_space:
