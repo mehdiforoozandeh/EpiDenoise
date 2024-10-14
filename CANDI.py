@@ -76,7 +76,7 @@ class CANDI(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
-    def forward(self, src, x_metadata, y_metadata, availability):
+    def forward(self, src, x_metadata, y_metadata, availability, return_z=False):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
@@ -105,8 +105,9 @@ class CANDI(nn.Module):
 
         ### Count Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src_count = self.ymd_fusion(src_count)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
+        z = src
         
         src_count = src_count.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
@@ -123,7 +124,10 @@ class CANDI(nn.Module):
         src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
         mu, var = self.gaussian_layer(src_pval)
 
-        return p, n, mu, var
+        if return_z:
+            return p, n, mu, var, z
+        else:
+            return p, n, mu, var
 
 class CANDI_DNA(nn.Module):
     def __init__(
@@ -258,7 +262,7 @@ class CANDI_DNA(nn.Module):
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1, FF=False)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1, FF=False)
     
-    def forward(self, src, seq, x_metadata, y_metadata, availability):
+    def forward(self, src, seq, x_metadata, y_metadata, availability, return_z=False):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
@@ -308,10 +312,11 @@ class CANDI_DNA(nn.Module):
 
         ### Count Decoder ###
         ymd_embedding = self.ymd_emb(y_metadata)
-        src_count = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src_count = self.ymd_fusion(src_count)
-        
-        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
+        z = src
+
+        src_count = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
             src_count = dconv(src_count)
 
@@ -326,7 +331,11 @@ class CANDI_DNA(nn.Module):
         src_pval = src_pval.permute(0, 2, 1) # to N, L, F1
         mu, var = self.gaussian_layer(src_pval)
 
-        return p, n, mu, var
+        if return_z:
+            return p, n, mu, var, z
+            
+        else:
+            return p, n, mu, var
 
 class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
