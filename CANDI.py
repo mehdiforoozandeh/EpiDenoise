@@ -774,17 +774,17 @@ class PRETRAIN(object):
                 #################################################################################
                 if early_stop:
                     epoch_rec["imp_count_r2"].append(np.mean(batch_rec['imp_count_r2']))
-                    epoch_rec["ups_count_r2"].append(np.mean(batch_rec['ups_count_r2']))
+                    # epoch_rec["ups_count_r2"].append(np.mean(batch_rec['ups_count_r2']))
                     epoch_rec["imp_pval_r2"].append(np.mean(batch_rec['imp_pval_r2']))
-                    epoch_rec["ups_pval_r2"].append(np.mean(batch_rec['ups_pval_r2']))
+                    # epoch_rec["ups_pval_r2"].append(np.mean(batch_rec['ups_pval_r2']))
                     epoch_rec["imp_count_spearman"].append(np.mean(batch_rec['imp_count_spearman']))
-                    epoch_rec["ups_count_spearman"].append(np.mean(batch_rec['ups_count_spearman']))
+                    # epoch_rec["ups_count_spearman"].append(np.mean(batch_rec['ups_count_spearman']))
                     epoch_rec["imp_pval_spearman"].append(np.mean(batch_rec['imp_pval_spearman']))
-                    epoch_rec["ups_pval_spearman"].append(np.mean(batch_rec['ups_pval_spearman']))
+                    # epoch_rec["ups_pval_spearman"].append(np.mean(batch_rec['ups_pval_spearman']))
                     epoch_rec["imp_count_pearson"].append(np.mean(batch_rec['imp_count_pearson']))
-                    epoch_rec["ups_count_pearson"].append(np.mean(batch_rec['ups_count_pearson']))
+                    # epoch_rec["ups_count_pearson"].append(np.mean(batch_rec['ups_count_pearson']))
                     epoch_rec["imp_pval_pearson"].append(np.mean(batch_rec['imp_pval_pearson']))
-                    epoch_rec["ups_pval_pearson"].append(np.mean(batch_rec['ups_pval_pearson']))
+                    # epoch_rec["ups_pval_pearson"].append(np.mean(batch_rec['ups_pval_pearson']))
                 #################################################################################
                 #################################################################################
 
@@ -822,18 +822,18 @@ class PRETRAIN(object):
                     log_resource_usage()
 
                     if early_stop:
-                        epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
+                        # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
                         epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                        epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
+                        # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                        epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
+                        # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                        epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
 
             self.scheduler.step()
@@ -879,7 +879,7 @@ class PRETRAIN(object):
         else:
             return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None, HPO=False):
     if eic:
         arch="eic"
     else:
@@ -959,7 +959,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
 
     start_time = time.time()
 
-    trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler, device=device)
+    trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler, device=device, HPO=HPO)
     model, best_metric = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
         batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)

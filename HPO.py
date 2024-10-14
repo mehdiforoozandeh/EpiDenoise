@@ -26,7 +26,8 @@ def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
     print(hyper_parameters)
     
     # Call the Train_CANDI function to train the model on this GPU
-    model, metrics = Train_CANDI(hyper_parameters, eic=hyper_parameters["eic"], DNA=hyper_parameters["dna"], device=device)
+    model, metrics = Train_CANDI(
+        hyper_parameters, eic=hyper_parameters["eic"], DNA=hyper_parameters["dna"], device=device, HPO=True)
     
     # After training, save the results in a dictionary
     result = {
