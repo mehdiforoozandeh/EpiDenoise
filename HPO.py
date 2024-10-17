@@ -6,7 +6,6 @@ import psutil
 from multiprocessing import Lock
 from CANDI import *
 
-
 # Function to check available GPUs
 def get_available_gpus():
     available_gpus = []
@@ -20,18 +19,10 @@ def get_available_gpus():
                 available_gpus.append(i)
     return available_gpus
 
-# Worker function to train the model on a specific GPU and CPU core
-def train_model_on_gpu(hyper_parameters, gpu_id, result_queue, cpu_core=None):
-    if cpu_core is not None:
-        p = psutil.Process()
-        available_cores = psutil.cpu_count(logical=False)  # Get available physical cores
-        if cpu_core < available_cores:
-            p.cpu_affinity([cpu_core])  # Assign the process to the specific CPU core
-        else:
-            print(f"CPU Core {cpu_core} is not available. Using default CPU core assignment.")
-    
+# Worker function to train the model on a specific GPU
+def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
-    print(f"Training on GPU {gpu_id}, CPU Core {cpu_core if cpu_core is not None else 'Default'}")
+    print(f"Training on GPU {gpu_id}")
     print(hyper_parameters)
     
     # Call the Train_CANDI function to train the model on this GPU
@@ -47,14 +38,10 @@ def train_model_on_gpu(hyper_parameters, gpu_id, result_queue, cpu_core=None):
     
     result_queue.put(result)
 
-# Function to manage GPU and CPU core assignment and training
+# Function to manage GPU assignment and training
 def distribute_models_across_gpus(hyperparameters_list):
     available_gpus = get_available_gpus()
     print(f"Available GPUs: {available_gpus}")
-    
-    # Get the total number of available CPU cores (logical)
-    available_cpu_cores = list(range(os.cpu_count()))
-    print(f"Available CPU cores: {available_cpu_cores}")
     
     # Queue to store results
     result_queue = multiprocessing.Queue()
@@ -62,13 +49,13 @@ def distribute_models_across_gpus(hyperparameters_list):
     # List to keep track of active processes
     active_processes = []
 
-    # Lock for safe GPU and CPU allocation
+    # Lock for safe GPU allocation
     lock = Lock()
 
     # Set to track used hyperparameters to avoid re-running the same
     used_hyperparameters = set()
 
-    # Function to start training on available GPUs and CPU cores
+    # Function to start training on available GPUs
     def start_training():
         with lock:
             for hyper_parameters in hyperparameters_list:
@@ -77,51 +64,49 @@ def distribute_models_across_gpus(hyperparameters_list):
                     continue
                 used_hyperparameters.add(str(hyper_parameters))
                 
-                if available_gpus and available_cpu_cores:
-                    # Pop a GPU and a CPU core from the available lists
+                if available_gpus:
+                    # Pop a GPU from the available list
                     gpu_id = available_gpus.pop(0)
-                    cpu_core = available_cpu_cores.pop(0) if available_cpu_cores else None
-                    
-                    # Create a new process for training on this GPU and CPU core
-                    p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue, cpu_core))
+                    # Create a new process for training on this GPU
+                    p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
                     active_processes.append(p)
                     p.start()
                     time.sleep(0.1)  # Small sleep to avoid rapid allocation (optional)
                 else:
-                    # If no GPU or CPU core is available, break the loop
+                    # If no GPU is available, break the loop
                     break
 
     # Start initial training processes
     start_training()
 
-    # Collect results and assign new tasks when GPUs and CPU cores are free
+    # Collect results and assign new tasks when GPUs are free
     completed_models = []
     while len(completed_models) < len(hyperparameters_list):
         for p in active_processes:
             if not p.is_alive():
                 # Collect the result
-                result = result_queue.get()
-                print(f"Model training completed on GPU {result['gpu_id']}, CPU Core: {result['hyper_parameters'].get('cpu_core', 'N/A')}")
-                completed_models.append(result)
+                if not result_queue.empty():
+                    result = result_queue.get()
+                    print(f"Model training completed on GPU {result['gpu_id']}")
+                    completed_models.append(result)
 
-                with lock:
-                    # Release the GPU and CPU core back to the pool
-                    available_gpus.append(result['gpu_id'])
-                    if 'cpu_core' in result['hyper_parameters']:
-                        available_cpu_cores.append(result['hyper_parameters']['cpu_core'])
+                    with lock:
+                        # Release the GPU back to the pool
+                        available_gpus.append(result['gpu_id'])
 
-                # Remove process from the list safely
-                if p in active_processes:
-                    active_processes.remove(p)
+                    # Remove process from the list safely
+                    if p in active_processes:
+                        active_processes.remove(p)
 
-                # Start new training if GPUs and CPU cores are available
-                start_training()
+                    # Start new training if GPUs are available
+                    start_training()
 
     # Wait for all remaining processes to finish
     for p in active_processes:
         p.join()
 
     return completed_models
+
 
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
