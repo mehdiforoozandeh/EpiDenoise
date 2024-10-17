@@ -21,30 +21,42 @@ def get_available_gpus():
 
 # Worker function to train the model on a specific GPU
 def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
+    # Limit CPU usage
+    torch.set_num_threads(1)
+
+    # Ensure CUDA is initialized in the child process
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
     print(f"Training on GPU {gpu_id}")
     print(hyper_parameters)
-    
-    # Call the Train_CANDI function to train the model on this GPU
+
+    # Ensure DataLoader uses minimal workers
+    hyper_parameters['num_workers'] = 0  # Or 1, if you prefer
+
+    # Call your training function
     model, metrics = Train_CANDI(
-        hyper_parameters, eic=hyper_parameters["eic"], DNA=hyper_parameters["dna"], device=device, HPO=True, 
-        suffix=f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}")
-    
+        hyper_parameters,
+        eic=hyper_parameters["eic"],
+        DNA=hyper_parameters["dna"],
+        device=device,
+        HPO=True,
+        suffix=f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}"
+    )
+
     result = {
         "gpu_id": gpu_id,
         "hyper_parameters": hyper_parameters,
         "metrics": metrics
     }
-    
+
     result_queue.put(result)
 
 # Function to manage GPU assignment and training
 def distribute_models_across_gpus(hyperparameters_list):
     available_gpus = get_available_gpus()
     print(f"Available GPUs: {available_gpus}")
-    
-    # Queue to store results
-    result_queue = multiprocessing.Queue()
+
+    # Use torch.multiprocessing Queue
+    result_queue = mp.Queue()
 
     # List to keep track of active processes
     active_processes = []
@@ -52,56 +64,48 @@ def distribute_models_across_gpus(hyperparameters_list):
     # Lock for safe GPU allocation
     lock = Lock()
 
-    # Set to track used hyperparameters to avoid re-running the same
+    # Set to track used hyperparameters
     used_hyperparameters = set()
 
     # Function to start training on available GPUs
     def start_training():
         with lock:
             for hyper_parameters in hyperparameters_list:
-                # Avoid re-running the same hyperparameters
                 if str(hyper_parameters) in used_hyperparameters:
                     continue
                 used_hyperparameters.add(str(hyper_parameters))
-                
+
                 if available_gpus:
-                    # Pop a GPU from the available list
                     gpu_id = available_gpus.pop(0)
-                    # Create a new process for training on this GPU
-                    p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
+                    p = mp.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
                     active_processes.append(p)
                     p.start()
-                    time.sleep(0.1)  # Small sleep to avoid rapid allocation (optional)
+                    time.sleep(0.1)  # Optional
                 else:
-                    # If no GPU is available, break the loop
                     break
 
     # Start initial training processes
     start_training()
 
-    # Collect results and assign new tasks when GPUs are free
+    # Collect results and manage processes
     completed_models = []
     while len(completed_models) < len(hyperparameters_list):
         for p in active_processes:
             if not p.is_alive():
-                # Collect the result
                 if not result_queue.empty():
                     result = result_queue.get()
                     print(f"Model training completed on GPU {result['gpu_id']}")
                     completed_models.append(result)
 
                     with lock:
-                        # Release the GPU back to the pool
                         available_gpus.append(result['gpu_id'])
 
-                    # Remove process from the list safely
                     if p in active_processes:
                         active_processes.remove(p)
 
-                    # Start new training if GPUs are available
                     start_training()
 
-    # Wait for all remaining processes to finish
+    # Wait for all processes to finish
     for p in active_processes:
         p.join()
 
