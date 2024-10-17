@@ -23,10 +23,14 @@ def get_available_gpus():
 def train_model_on_gpu(hyper_parameters, gpu_id, result_queue, cpu_core=None):
     if cpu_core is not None:
         p = psutil.Process()
-        p.cpu_affinity([cpu_core])  # Assign the process to the specific CPU core
-
+        available_cores = psutil.cpu_count(logical=False)  # Get available physical cores
+        if cpu_core < available_cores:
+            p.cpu_affinity([cpu_core])  # Assign the process to the specific CPU core
+        else:
+            print(f"CPU Core {cpu_core} is not available. Using default CPU core assignment.")
+    
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
-    print(f"Training on GPU {gpu_id}, CPU Core {cpu_core}")
+    print(f"Training on GPU {gpu_id}, CPU Core {cpu_core if cpu_core is not None else 'Default'}")
     print(hyper_parameters)
     
     # Call the Train_CANDI function to train the model on this GPU
@@ -47,7 +51,7 @@ def distribute_models_across_gpus(hyperparameters_list):
     available_gpus = get_available_gpus()
     print(f"Available GPUs: {available_gpus}")
     
-    # Get the total number of available CPU cores
+    # Get the total number of available CPU cores (logical)
     available_cpu_cores = list(range(os.cpu_count()))
     print(f"Available CPU cores: {available_cpu_cores}")
     
@@ -75,7 +79,7 @@ def distribute_models_across_gpus(hyperparameters_list):
                 if available_gpus and available_cpu_cores:
                     # Pop a GPU and a CPU core from the available lists
                     gpu_id = available_gpus.pop(0)
-                    cpu_core = available_cpu_cores.pop(0)
+                    cpu_core = available_cpu_cores.pop(0) if available_cpu_cores else None
                     
                     # Create a new process for training on this GPU and CPU core
                     p = multiprocessing.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue, cpu_core))
@@ -117,6 +121,8 @@ def distribute_models_across_gpus(hyperparameters_list):
         p.join()
 
     return completed_models
+
+
 
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
