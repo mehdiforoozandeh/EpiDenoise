@@ -169,7 +169,8 @@ if __name__ == "__main__":
             "nhead": 4, "n_sab_layers": 1, "context_length": 400, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":False}
             ]
-
+    random.shuffle(hyperparameter_space)
+    
     hyperparameters_list = []
     for s in hyperparameter_space:
         merged_dict = base_hyperparameters | s
