@@ -109,7 +109,7 @@ class CANDI(nn.Module):
         src = self.ymd_fusion(src)
         z = src
         
-        src_count = src_count.permute(0, 2, 1) # to N, F2, L'
+        src_count = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv_count:
             src_count = dconv(src_count)
 
