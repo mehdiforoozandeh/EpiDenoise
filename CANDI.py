@@ -395,7 +395,7 @@ class PRETRAIN(object):
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=True, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=1):
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.02, patience=1):
 
         log_strs = []
         log_strs.append(str(self.device))
