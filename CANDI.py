@@ -1025,6 +1025,10 @@ class CANDI_LOADER(object):
         model = model.to(self.device)
         return model
 
+def CANDI_SAGA(model):
+    pass
+    
+
 def main():
     parser = argparse.ArgumentParser(description="Train the model with specified hyperparameters")
 
@@ -1081,7 +1085,7 @@ def main():
     }
 
     # Call your training function with parsed arguments
-    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct4-expan2", prog_mask=args.prog_mask)
+    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct17-expan2", prog_mask=args.prog_mask)
 
 if __name__ == "__main__":
     main()
