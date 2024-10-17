@@ -6,6 +6,7 @@ import psutil
 from multiprocessing import Lock
 from CANDI import *
 
+
 # Function to check available GPUs
 def get_available_gpus():
     available_gpus = []
@@ -121,8 +122,6 @@ def distribute_models_across_gpus(hyperparameters_list):
         p.join()
 
     return completed_models
-
-
 
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
