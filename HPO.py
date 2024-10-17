@@ -4,6 +4,7 @@ import os
 import time
 import psutil
 from multiprocessing import Lock
+from CANDI import *
 
 # Function to check available GPUs
 def get_available_gpus():
