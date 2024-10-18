@@ -144,6 +144,7 @@ class CANDI_DNA(nn.Module):
         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
+        self.latent_dim = self.f2
         print("d_model: ", d_model)
 
         ################################################################################
