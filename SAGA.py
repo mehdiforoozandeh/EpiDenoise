@@ -1,17 +1,14 @@
-from re import T
 from CANDI import *
 import sys
 import os
+import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, SpectralClustering, AffinityPropagation
 from sklearn.manifold import TSNE
-import numpy as np
-# import umap
-# from minisom import MiniSom
-# import hdbscan
-# from sklearn.cluster import KernelKMeans
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import umap
 from hmmlearn import hmm
-import numpy as np
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 
@@ -366,20 +363,40 @@ def main():
 
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
-
-    # L = Z.shape[0]
-    # start = L // 2 - L // 6  # 1/6 of L is 15% of the total length
-    # end = L // 2 + L // 6    # This gives us the middle 30%
-    # Z = Z[start:end, :]
     
     # Save latent representations
     os.makedirs("output", exist_ok=True)
     latent_file = f"output/{bios_name}_latent.pt"
     saga.save_latent_representations(Z, latent_file)
+
+    def plot_and_save(embedding, title, filename):
+        plt.figure(figsize=(10, 8))
+        plt.scatter(embedding[:, 0], embedding[:, 1], alpha=0.5)
+        plt.title(title)
+        plt.savefig(filename)
+        plt.close()
+
+    # PCA
+    pca = PCA(n_components=2)
+    pca_result = pca.fit_transform(Z)
+    plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca.png')
+
+    # t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
+    tsne_result = tsne.fit_transform(Z)
+    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
+
+    # UMAP
+    umap_reducer = umap.UMAP(random_state=42)
+    umap_result = umap_reducer.fit_transform(Z)
+    plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap.png')
+
+    print(f"PCA, t-SNE, and UMAP plots saved in the output directory.")
     
     # Perform clustering
-    # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=2)
-    labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=10)
+    # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20)
+    # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=20)
+    labels = saga.cluster(Z, algorithm='kmeans', n_components=number_of_states)
 
     unique_labels, counts = np.unique(labels, return_counts=True)
     total_length = len(labels)
@@ -389,8 +406,8 @@ def main():
         print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
     
     # Save chromatin state bedgraph
-    # bedgraph_file = f"output/{bios_name}_chromatin_states_HMM.bedgraph"
-    bedgraph_file = f"output/{bios_name}_chromatin_states_GMM.bedgraph"
+    bedgraph_file = f"output/{bios_name}_chrlomatin_states_HMM.bedgraph"
+    # bedgraph_file = f"output/{bios_name}_chromatin_states_GMM.bedgraph"
     saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
 
 if __name__ == "__main__":
