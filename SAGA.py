@@ -15,7 +15,7 @@ import numpy as np
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 
-def write_bedgraph(data, chromosome, start_position, resolution, output_file, is_posterior=True):
+def write_bedgraph(data, chromosome, start_position, resolution, output_file, is_posterior=False):
     """
     Write clustering results to a BedGraph file.
 
@@ -336,7 +336,7 @@ class SAGA(object):
         return labels
 
     def save_chromatin_state_bedgraph(self, labels, chromosome, start_position, output_file):
-        write_bedgraph(labels, chromosome, start_position, self.resolution, output_file)
+        write_bedgraph(labels, chromosome, start_position, self.resolution*(self.model.l2//self.model.l1), output_file)
         print(f"BedGraph file written to {output_file}")
 
 def main():
@@ -367,14 +367,6 @@ def main():
     Z_mean = torch.mean(Z, axis=0)
     Z_var = torch.var(Z, axis=0)
     
-    print("Latent variable statistics:")
-    for i in range(Z.shape[1]):
-        print(f"Dimension {i+1}:")
-        print(f"  Mean: {Z_mean[i]:.4f}")
-        print(f"  Variance: {Z_var[i]:.4f}")
-    print("\n")
-
-    exit()
     # Save latent representations
     os.makedirs("output", exist_ok=True)
     latent_file = f"output/{bios_name}_latent.pt"
