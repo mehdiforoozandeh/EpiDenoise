@@ -354,7 +354,7 @@ def main():
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch0.pth"  # Update this with your model path
     hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
     dataset_path = "/project/compbio-lab/encode_data/"
-    number_of_states = 9
+    number_of_states = 2
     DNA = True
     saga = SAGA(model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
 
