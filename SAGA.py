@@ -121,7 +121,7 @@ class sequence_clustering(object):
 class SAGA(object):
     def __init__(
         self, model, hyper_parameters_path, number_of_states, 
-        split="test", DNA=False, chr="chr21", resolution=25,
+        split="test", DNA=False, chr="chr21", resolution=25, context_length=1600,
         savedir="models/evals/", data_path="/project/compbio-lab/encode_data/"):
 
         self.model = model
@@ -130,11 +130,15 @@ class SAGA(object):
         self.resolution = resolution
         self.savedir = savedir
         self.DNA = DNA
+        self.context_length = context_length
         self.data_path = data_path
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
+        self.dataset.init_eval(
+            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
 
         if isinstance(self.model, str):
             with open(hyper_parameters_path, 'rb') as f:
@@ -147,9 +151,6 @@ class SAGA(object):
             self.model = loader.load_CANDI()
 
         print(self.context_length)
-        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
         exit()
         self.model = self.model.to(self.device)
         self.model.eval()
