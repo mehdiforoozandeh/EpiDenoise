@@ -28,7 +28,7 @@ def write_bedgraph(data, chromosome, start_position, resolution, output_file, is
     is_posterior (bool): If True, data contains posterior probabilities. If False, contains cluster assignments.
 
     """
-    L, k = data.shape
+    L = data.shape[0]
     
     with open(output_file, 'w') as f:
         for i in range(L):
