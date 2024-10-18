@@ -382,20 +382,18 @@ def main():
     plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca.png')
     print(f"PCA plot saved as output/{bios_name}_pca.png")
 
-    # t-SNE
-    tsne = TSNE(n_components=2, random_state=42)
-    tsne_result = tsne.fit_transform(Z)
-    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
-    print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
-
     # UMAP
     umap_reducer = umap.UMAP(random_state=42)
     umap_result = umap_reducer.fit_transform(Z)
     plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap.png')
     print(f"UMAP plot saved as output/{bios_name}_umap.png")
 
-    # print(f"PCA, t-SNE, and UMAP plots saved in the output directory.")
-    
+    # t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
+    tsne_result = tsne.fit_transform(Z)
+    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
+    print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
+
     # Perform clustering
     # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20)
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=20)
