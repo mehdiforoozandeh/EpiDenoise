@@ -152,7 +152,6 @@ class SAGA(object):
 
         
         self.model = self.model.to(self.device)
-        self.d_model = self.model.d_model
         self.model.eval()
 
         self.chr_sizes = {}
