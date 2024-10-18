@@ -134,10 +134,7 @@ class SAGA(object):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
-        self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
 
         if isinstance(self.model, str):
             with open(hyper_parameters_path, 'rb') as f:
@@ -150,6 +147,9 @@ class SAGA(object):
             self.model = loader.load_CANDI()
 
         print(self.context_length)
+        self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
+        self.dataset.init_eval(
+            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
         exit()
         self.model = self.model.to(self.device)
         self.model.eval()
