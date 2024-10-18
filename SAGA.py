@@ -244,7 +244,7 @@ class SAGA(object):
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         mu = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         var = torch.empty_like(X, device="cpu", dtype=torch.float32) 
-        Z = torch.empty((X.shape[0], X.shape[1], self.model.latent_dim), device="cpu", dtype=torch.float32)
+        Z = torch.empty((X.shape[0], self.model.l2, self.model.latent_dim), device="cpu", dtype=torch.float32)
 
         for i in range(0, len(X), self.batch_size):
             torch.cuda.empty_cache()
