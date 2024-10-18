@@ -295,7 +295,11 @@ class SAGA(object):
 
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
             torch.cuda.empty_cache()
-
+        n = n.view(n.shape[0] * n.shape[1], n.shape[-1])
+        p = p.view(p.shape[0] * p.shape[1], p.shape[-1])
+        mu = mu.view(mu.shape[0] * mu.shape[1], mu.shape[-1])
+        var = var.view(var.shape[0] * var.shape[1], var.shape[-1])
+        Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
     def get_latent_representations(self, X, mX, mY, avX, seq=None):
