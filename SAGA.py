@@ -336,7 +336,7 @@ class SAGA(object):
         return labels
 
     def save_chromatin_state_bedgraph(self, labels, chromosome, start_position, output_file):
-        write_bedgraph(labels, chromosome, start_position, self.resolution*(self.model.l2//self.model.l1), output_file)
+        write_bedgraph(labels, chromosome, start_position, self.resolution*(self.model.l1//self.model.l2), output_file)
         print(f"BedGraph file written to {output_file}")
 
 def main():
