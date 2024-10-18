@@ -378,7 +378,7 @@ def main():
     saga.save_latent_representations(Z, latent_file)
     
     # Perform clustering
-    labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=10)
+    labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=2)
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=10)
     # labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=10)
 
