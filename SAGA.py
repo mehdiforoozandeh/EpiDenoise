@@ -314,8 +314,13 @@ class SAGA(object):
         torch.save(Z, output_file, _use_new_zipfile_serialization=True)
         print(f"Latent representations saved to {output_file} in compressed format")
 
-    def cluster(self, latent_representations, algorithm='GMM', **kwargs):
+    def cluster(self, latent_representations, algorithm='GMM', pca_components=None, **kwargs):
         sequence_clustering = SequenceClustering()
+        
+        if pca_components is not None:
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components=pca_components)
+            latent_representations = pca.fit_transform(latent_representations)
         
         if algorithm == 'GMM':
             labels, posteriors = sequence_clustering.GMM(latent_representations, **kwargs)
@@ -361,7 +366,7 @@ def main():
         X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=1)
 
     # Get latent representations
-    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
+    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq, pca_components=10)
 
     L = Z.shape[0]
     start = L // 2 - L // 6  # 1/6 of L is 15% of the total length
