@@ -131,7 +131,6 @@ class SAGA(object):
         self.savedir = savedir
         self.DNA = DNA
         self.data_path = data_path
-        
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -146,9 +145,12 @@ class SAGA(object):
                 self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
                 self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
                 self.context_length = self.hyper_parameters["context_length"]
+
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
 
+        print(self.context_length)
+        exit()
         self.model = self.model.to(self.device)
         self.model.eval()
 
