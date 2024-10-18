@@ -362,10 +362,11 @@ def main():
 
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
-
-    # Calculate and print mean and variance for all latent variables
-    Z_mean = torch.mean(Z, axis=0)
-    Z_var = torch.var(Z, axis=0)
+    
+    L = Z.shape[0]
+    start = L // 2 - L // 20
+    end = L // 2 + L // 20
+    Z = Z[start:end, :]
     
     # Save latent representations
     os.makedirs("output", exist_ok=True)
@@ -376,6 +377,13 @@ def main():
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
     labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states)
 
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    total_length = len(labels)
+    print(f"Number of unique labels: {len(unique_labels)}")
+    for label, count in zip(unique_labels, counts):
+        fraction = count / total_length
+        print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
+    
     # Save chromatin state bedgraph
     bedgraph_file = f"output/{bios_name}_chromatin_states.bedgraph"
     saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
