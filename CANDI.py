@@ -395,7 +395,7 @@ class PRETRAIN(object):
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=True, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.02, patience=1):
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.03, patience=1):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -1024,11 +1024,8 @@ class CANDI_LOADER(object):
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
         model = model.to(self.device)
         return model
-
-def CANDI_SAGA(model):
-    pass
     
-
+    
 def main():
     parser = argparse.ArgumentParser(description="Train the model with specified hyperparameters")
 
