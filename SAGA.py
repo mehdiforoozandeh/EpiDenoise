@@ -6,10 +6,10 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, SpectralClustering, AffinityPropagation
 from sklearn.manifold import TSNE
 import numpy as np
-import umap
-from minisom import MiniSom
-import hdbscan
-from sklearn.cluster import KernelKMeans
+# import umap
+# from minisom import MiniSom
+# import hdbscan
+# from sklearn.cluster import KernelKMeans
 from hmmlearn import hmm
 import numpy as np
 
