@@ -364,8 +364,8 @@ def main():
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
 
     # Calculate and print mean and variance for all latent variables
-    Z_mean = np.mean(Z, axis=0)
-    Z_var = np.var(Z, axis=0)
+    Z_mean = torch.mean(Z, axis=0)
+    Z_var = torch.var(Z, axis=0)
     
     print("Latent variable statistics:")
     for i in range(Z.shape[1]):
