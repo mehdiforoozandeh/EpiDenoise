@@ -348,7 +348,7 @@ def main():
     bios_name = sys.argv[1]
 
     # Initialize SAGA
-    model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch0.pth"  # Update this with your model path
+    model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch0.pth" 
     hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
     dataset_path = "/project/compbio-lab/encode_data/"
     number_of_states = 9
@@ -380,18 +380,21 @@ def main():
     pca = PCA(n_components=2)
     pca_result = pca.fit_transform(Z)
     plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca.png')
+    print(f"PCA plot saved as output/{bios_name}_pca.png")
 
     # t-SNE
     tsne = TSNE(n_components=2, random_state=42)
     tsne_result = tsne.fit_transform(Z)
     plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
+    print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
 
     # UMAP
     umap_reducer = umap.UMAP(random_state=42)
     umap_result = umap_reducer.fit_transform(Z)
     plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap.png')
+    print(f"UMAP plot saved as output/{bios_name}_umap.png")
 
-    print(f"PCA, t-SNE, and UMAP plots saved in the output directory.")
+    # print(f"PCA, t-SNE, and UMAP plots saved in the output directory.")
     
     # Perform clustering
     # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20)
@@ -406,8 +409,9 @@ def main():
         print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
     
     # Save chromatin state bedgraph
-    bedgraph_file = f"output/{bios_name}_chrlomatin_states_HMM.bedgraph"
+    bedgraph_file = f"output/{bios_name}_chrlomatin_states_kmeans.bedgraph"
     # bedgraph_file = f"output/{bios_name}_chromatin_states_GMM.bedgraph"
+    # bedgraph_file = f"output/{bios_name}_chromatin_states_HMM.bedgraph"
     saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
 
 if __name__ == "__main__":
