@@ -383,7 +383,9 @@ def main():
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=10)
     # labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=10)
 
+    labels = np.array(labels)
     print(labels)
+    print(labels.shape)
     exit()
 
     unique_labels, counts = np.unique(labels, return_counts=True)
