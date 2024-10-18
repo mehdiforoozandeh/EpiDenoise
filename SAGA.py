@@ -120,12 +120,11 @@ class sequence_clustering(object):
 
 class SAGA(object):
     def __init__(
-        self, model, hyper_parameters_path, dataset, number_of_states, 
+        self, model, hyper_parameters_path, number_of_states, 
         split="test", DNA=False, chr="chr21", resolution=25,
-        savedir="models/evals/", data_path="data/processed_data/encode_data/"):
+        savedir="models/evals/", data_path="/project/compbio-lab/encode_data/"):
 
         self.model = model
-        self.dataset = dataset
         self.number_of_states = number_of_states
         self.chr = chr
         self.resolution = resolution
