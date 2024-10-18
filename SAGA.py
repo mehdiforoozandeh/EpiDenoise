@@ -363,6 +363,18 @@ def main():
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
 
+    # Calculate and print mean and variance for all latent variables
+    Z_mean = np.mean(Z, axis=0)
+    Z_var = np.var(Z, axis=0)
+    
+    print("Latent variable statistics:")
+    for i in range(Z.shape[1]):
+        print(f"Dimension {i+1}:")
+        print(f"  Mean: {Z_mean[i]:.4f}")
+        print(f"  Variance: {Z_var[i]:.4f}")
+    print("\n")
+
+    exit()
     # Save latent representations
     os.makedirs("output", exist_ok=True)
     latent_file = f"output/{bios_name}_latent.pt"
