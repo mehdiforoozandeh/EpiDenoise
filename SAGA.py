@@ -46,7 +46,7 @@ def write_bedgraph(data, chromosome, start_position, resolution, output_file, is
 
     print(f"BedGraph file written to {output_file}")
 
-class sequence_clustering(object):
+class SequenceClustering(object):
     def __init__(self):
         self.models = {}
 
