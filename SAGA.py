@@ -132,6 +132,7 @@ class SAGA(object):
         self.DNA = DNA
         self.context_length = context_length
         self.data_path = data_path
+        self.eic = eic
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
