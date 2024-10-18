@@ -367,10 +367,10 @@ def main():
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
 
-    L = Z.shape[0]
-    start = L // 2 - L // 6  # 1/6 of L is 15% of the total length
-    end = L // 2 + L // 6    # This gives us the middle 30%
-    Z = Z[start:end, :]
+    # L = Z.shape[0]
+    # start = L // 2 - L // 6  # 1/6 of L is 15% of the total length
+    # end = L // 2 + L // 6    # This gives us the middle 30%
+    # Z = Z[start:end, :]
     
     # Save latent representations
     os.makedirs("output", exist_ok=True)
