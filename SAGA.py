@@ -104,7 +104,7 @@ class SequenceClustering(object):
             sequence_embedding = sequence_embedding.reshape(-1, 1)
 
         # Initialize the HMM model
-        model = hmm.GaussianHMM(n_components=n_components, covariance_type="full", random_state=random_state)
+        model = hmm.GaussianHMM(n_components=n_components, covariance_type="full", random_state=random_state, verbose=True)
 
         # Fit the model to the data
         model.fit(sequence_embedding)
