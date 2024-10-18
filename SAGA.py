@@ -364,6 +364,8 @@ def main():
     latent_file = f"output/{bios_name}_latent.pt"
     saga.save_latent_representations(Z, latent_file)
 
+    print(Z.shape)
+    exit()
     # Perform clustering
     labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
 
