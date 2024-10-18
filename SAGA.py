@@ -282,9 +282,9 @@ class SAGA(object):
 
                 if self.DNA:
                     seq_batch = seq_batch.to(self.device)
-                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_latent=True)
+                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
                 else:
-                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch, return_latent=True)
+                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
 
             n[i:i+outputs_n.shape[0], :, :] = outputs_n.cpu()
             p[i:i+outputs_p.shape[0], :, :] = outputs_p.cpu()
