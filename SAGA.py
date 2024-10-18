@@ -295,6 +295,7 @@ class SAGA(object):
 
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
             torch.cuda.empty_cache()
+            
         n = n.view(n.shape[0] * n.shape[1], n.shape[-1])
         p = p.view(p.shape[0] * p.shape[1], p.shape[-1])
         mu = mu.view(mu.shape[0] * mu.shape[1], mu.shape[-1])
@@ -367,9 +368,7 @@ def main():
     os.makedirs("output", exist_ok=True)
     latent_file = f"output/{bios_name}_latent.pt"
     saga.save_latent_representations(Z, latent_file)
-
-    print(Z.shape)
-    exit()
+    
     # Perform clustering
     labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
 
