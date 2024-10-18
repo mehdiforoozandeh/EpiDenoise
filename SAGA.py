@@ -362,7 +362,7 @@ def main():
 
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
-    
+
     L = Z.shape[0]
     start = L // 2 - L // 20
     end = L // 2 + L // 20
@@ -374,8 +374,8 @@ def main():
     saga.save_latent_representations(Z, latent_file)
     
     # Perform clustering
-    # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
-    labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states)
+    labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
+    # labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states)
 
     unique_labels, counts = np.unique(labels, return_counts=True)
     total_length = len(labels)
