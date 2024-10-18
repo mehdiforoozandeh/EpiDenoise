@@ -150,6 +150,7 @@ class SAGA(object):
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
 
+        self.d_model = self.model.d_model
         print(self.context_length)
         exit()
         self.model = self.model.to(self.device)
