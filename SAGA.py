@@ -339,7 +339,6 @@ class SAGA(object):
         write_bedgraph(labels, chromosome, start_position, self.resolution, output_file)
         print(f"BedGraph file written to {output_file}")
 
-
 def main():
     if len(sys.argv) < 2:
         print("Usage: python SAGA.py <bios_name>")
@@ -370,7 +369,8 @@ def main():
     saga.save_latent_representations(Z, latent_file)
     
     # Perform clustering
-    labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
+    # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
+    labels = saga.cluster(Z, algorithm='kmeans', n_components=number_of_states)
 
     # Save chromatin state bedgraph
     bedgraph_file = f"output/{bios_name}_chromatin_states.bedgraph"
