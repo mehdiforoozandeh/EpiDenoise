@@ -388,11 +388,11 @@ def main():
     # plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap.png')
     # print(f"UMAP plot saved as output/{bios_name}_umap.png")
 
-    # # t-SNE
-    # tsne = TSNE(n_components=2, random_state=42)
-    # tsne_result = tsne.fit_transform(Z)
-    # plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
-    # print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
+    # t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
+    tsne_result = tsne.fit_transform(Z)
+    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
+    print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
 
     # Perform clustering
     # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20)
