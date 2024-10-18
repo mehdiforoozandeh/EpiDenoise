@@ -340,13 +340,17 @@ def main():
     hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
     dataset_path = "/project/compbio-lab/encode_data/"
     number_of_states = 16
-    saga = SAGA(model_path, hyper_parameters_path, dataset_path, number_of_states, DNA=True, )
+    DNA = True
+    saga = SAGA(model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
 
     # Load biosample data
-    X, mX, mY, avX = saga.load_bios(bios_name)
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY= saga.load_bios(bios_name, x_dsf=1)
+    else:
+        X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=1)
 
     # Get latent representations
-    Z = saga.get_latent_representations(X, mX, mY, avX)
+    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
 
     # Save latent representations
     os.makedirs("output", exist_ok=True)
