@@ -53,8 +53,9 @@ class SequenceClustering(object):
     def GMM(self, sequence_embedding, n_components=18, covariance_type='full', random_state=42):
         gmm = GaussianMixture(n_components=n_components, covariance_type=covariance_type, random_state=random_state)
         labels = gmm.fit_predict(sequence_embedding)
+        posteriors = gmm.predict_proba(sequence_embedding)
         self.models['GMM'] = gmm
-        return labels
+        return labels, posteriors
 
     def kmeans(self, sequence_embedding, n_clusters=18, random_state=42):
         kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
@@ -96,7 +97,7 @@ class SequenceClustering(object):
         self.models['UMAP'] = (umap_reducer, kmeans)
         return labels
     
-    def hmm(self, sequence_embedding, n_components=18, random_state=42):
+    def HMM(self, sequence_embedding, n_components=18, random_state=42):
         # Ensure the input is a 2D numpy array
         sequence_embedding = np.array(sequence_embedding)
         if len(sequence_embedding.shape) == 1:
@@ -308,21 +309,22 @@ class SAGA(object):
         torch.save(Z, output_file, _use_new_zipfile_serialization=True)
         print(f"Latent representations saved to {output_file} in compressed format")
 
-    def cluster(self, latent_representations, algorithm='gmm', **kwargs):
+    def cluster(self, latent_representations, algorithm='GMM', **kwargs):
         sequence_clustering = SequenceClustering()
         
-        if algorithm == 'gmm':
-            labels = sequence_clustering.gmm_clustering(latent_representations, **kwargs)
+        if algorithm == 'GMM':
+            labels, posteriors = sequence_clustering.GMM(latent_representations, **kwargs)
+        elif algorithm == 'kmeans':
+            labels = sequence_clustering.kmeans(latent_representations, **kwargs)
+        elif algorithm == 'dbscan':
+            labels = sequence_clustering.dbscan(latent_representations, **kwargs)
+        elif algorithm == 'hierarchical':
+            labels = sequence_clustering.hierarchical(latent_representations, **kwargs)
         elif algorithm == 'tsne':
             labels = sequence_clustering.tsne_clustering(latent_representations, **kwargs)
-        elif algorithm == 'umap':
-            labels = sequence_clustering.umap_clustering(latent_representations, **kwargs)
-        elif algorithm == 'som':
-            labels = sequence_clustering.som_clustering(latent_representations, **kwargs)
-        elif algorithm == 'kernel_kmeans':
-            labels = sequence_clustering.kernel_kmeans(latent_representations, **kwargs)
-        elif algorithm == 'hdbscan':
-            labels = sequence_clustering.hdbscan_clustering(latent_representations, **kwargs)
+        elif algorithm == 'HMM':
+            posteriors, labels = sequence_clustering.HMM(latent_representations, **kwargs)
+            return posteriors, labels
         else:
             raise ValueError(f"Unsupported clustering algorithm: {algorithm}")
 
