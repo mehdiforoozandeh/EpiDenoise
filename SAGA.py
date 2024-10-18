@@ -334,7 +334,6 @@ class SAGA(object):
             labels = sequence_clustering.tsne_clustering(latent_representations, **kwargs)
         elif algorithm == 'HMM':
             posteriors, labels = sequence_clustering.HMM(latent_representations, **kwargs)
-            return posteriors, labels
         else:
             raise ValueError(f"Unsupported clustering algorithm: {algorithm}")
 
@@ -383,7 +382,6 @@ def main():
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=10)
     # labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=10)
 
-    labels = np.array(labels)
     print(labels)
     print(labels.shape)
     exit()
