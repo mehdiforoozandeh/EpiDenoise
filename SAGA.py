@@ -366,7 +366,7 @@ def main():
         X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=1)
 
     # Get latent representations
-    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq, pca_components=10)
+    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq)
 
     L = Z.shape[0]
     start = L // 2 - L // 6  # 1/6 of L is 15% of the total length
@@ -381,7 +381,7 @@ def main():
     # Perform clustering
     # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states)
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
-    labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states)
+    labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=10)
 
     unique_labels, counts = np.unique(labels, return_counts=True)
     total_length = len(labels)
