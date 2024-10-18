@@ -378,22 +378,19 @@ def main():
     saga.save_latent_representations(Z, latent_file)
     
     # Perform clustering
-    # labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=2)
+    labels = saga.cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=2)
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=10)
-    # labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=10)
-    labels = saga.cluster(Z, algorithm='tsne', n_components=2, perplexity=30, n_iter=1000, random_state=42)
 
-    print(list(labels))
-
-    # unique_labels, counts = np.unique(labels, return_counts=True)
-    # total_length = len(labels)
-    # print(f"Number of unique labels: {len(unique_labels)}")
-    # for label, count in zip(unique_labels, counts):
-    #     fraction = count / total_length
-    #     print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    total_length = len(labels)
+    print(f"Number of unique labels: {len(unique_labels)}")
+    for label, count in zip(unique_labels, counts):
+        fraction = count / total_length
+        print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
     
     # Save chromatin state bedgraph
-    bedgraph_file = f"output/{bios_name}_chromatin_states.bedgraph"
+    bedgraph_file = f"output/{bios_name}_chromatin_states_HMM.bedgraph"
+    # bedgraph_file = f"output/{bios_name}_chromatin_states_GMM.bedgraph"
     saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
 
 if __name__ == "__main__":
