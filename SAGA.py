@@ -150,7 +150,6 @@ class SAGA(object):
             loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
             self.model = loader.load_CANDI()
 
-        
         self.model = self.model.to(self.device)
         self.model.eval()
 
@@ -162,8 +161,8 @@ class SAGA(object):
                     self.chr_sizes[chr_name] = int(chr_size)
                     break
 
-        self.context_length = self.model.context_length
-        self.batch_size = 50  # You can adjust this as needed
+        self.context_length = self.hyper_parameters["context_length"]
+        self.batch_size = self.hyper_parameters["batch_size"]
         self.token_dict = {
             "missing_mask": -1, 
             "cloze_mask": -2,
