@@ -370,7 +370,7 @@ def main():
     
     # Perform clustering
     # labels = saga.cluster(Z, algorithm='GMM', n_components=number_of_states)
-    labels = saga.cluster(Z, algorithm='kmeans', n_components=number_of_states)
+    labels = saga.cluster(Z, algorithm='kmeans', n_clusters=number_of_states)
 
     # Save chromatin state bedgraph
     bedgraph_file = f"output/{bios_name}_chromatin_states.bedgraph"
