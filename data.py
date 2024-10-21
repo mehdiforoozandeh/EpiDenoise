@@ -1794,6 +1794,7 @@ class ExtendedEncodeDataHandler:
         """Load all available experiments for a given biosample and locus."""
 
         if self.eic and bios_name not in self.navigation.keys():
+            print("bios_name not in navigation! ", bios_name)
             exps = []
             if os.path.isdir(os.path.join(self.base_path, bios_name)):
                 for exp in os.listdir(os.path.join(self.base_path, bios_name)):
