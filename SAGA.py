@@ -397,7 +397,7 @@ def cluster(latent_representations, algorithm='GMM', pca_components=None, **kwar
 
     return labels
 
-def full_pipeline(dsf=1):
+def full_pipeline(dsf=4):
 
     bios_name = sys.argv[1]
 
@@ -720,7 +720,7 @@ def linear_probe_evaluation(latent_file, annotation_bed_file, k_folds=5):
         print(f"  Support: {metrics['support']:.0f}")
         print()
 
-def cluster_and_visualize_latent(latent_file, number_of_states=6):
+def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exponent=1.0):
     # Load the latent representations
     try:
         Z = torch.load(latent_file)
@@ -761,7 +761,9 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6):
     clustering_methods = ['HMM', 'GMM', 'kmeans']
     for method in clustering_methods:
         print(f"\nPerforming {method} clustering...")
-        if method in ['HMM', 'GMM']:
+        if method == 'HMM':
+            labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=20, transition_exponent=transition_exponent)
+        elif method == 'GMM':
             labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=20)
         else:
             labels = cluster(Z, algorithm=method, n_clusters=number_of_states)
