@@ -1801,8 +1801,7 @@ class ExtendedEncodeDataHandler:
                     exp_path = os.path.join(self.base_path, bios_name, exp)
                     if os.path.isdir(exp_path):
                         exps.append(exp)
-            
-            # print(bios_name, exps)
+            print(bios_name, exps)
             
         else:
             exps = list(self.navigation[bios_name].keys())
