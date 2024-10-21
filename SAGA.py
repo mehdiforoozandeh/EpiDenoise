@@ -799,16 +799,15 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6):
 
 # Update the main block to include the new function
 if __name__ == "__main__":
-    if len(sys.argv) < 1:
-        print("Usage: python SAGA.py <latent_file> [annotation_bed_file]")
-        sys.exit(1)
+    print(len(sys.argv))
     
     if len(sys.argv) == 3:
         latent_file = sys.argv[1]
         annotation_bed_file = sys.argv[2]
-        cluster_and_visualization_from_saved_latent_annotation_file(
+        cluster_and_visualization_from_saved_annotation_file(
             latent_file, annotation_bed_file, number_of_states=10, transition_exponent=5)
         linear_probe_evaluation(latent_file, annotation_bed_file)
+
     elif len(sys.argv) == 2:
         latent_file = sys.argv[1]
         cluster_and_visualize_latent(latent_file, number_of_states=10)
