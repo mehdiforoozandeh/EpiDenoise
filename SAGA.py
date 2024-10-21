@@ -397,7 +397,10 @@ def cluster(latent_representations, algorithm='GMM', pca_components=None, **kwar
 
     return labels
 
-def full_pipeline(dsf=4):
+def full_pipeline(dsf=1):
+    if len(sys.argv) < 2:
+        print("Error: Please provide the biosample name as an argument.")
+        sys.exit(1)
 
     bios_name = sys.argv[1]
 
@@ -405,7 +408,8 @@ def full_pipeline(dsf=4):
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth" 
     hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
     dataset_path = "/project/compbio-lab/encode_data/"
-    number_of_states = 6
+    number_of_states = 10
+    transition_exponent = 5
     DNA = True
     saga = SAGA(model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
 
@@ -423,56 +427,8 @@ def full_pipeline(dsf=4):
     latent_file = f"output/{bios_name}_latent.pt"
     saga.save_latent_representations(Z, latent_file)
 
-    def plot_and_save(embedding, title, filename):
-        plt.figure(figsize=(10, 8))
-        plt.scatter(embedding[:, 0], embedding[:, 1], alpha=0.5)
-        plt.title(title)
-        plt.savefig(filename)
-        plt.close()
-
-    # PCA
-    pca = PCA(n_components=2)
-    pca_result = pca.fit_transform(Z)
-    plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca_{dsf}.png')
-    print(f"PCA plot saved as output/{bios_name}_pca_{dsf}.png")
-
-    # UMAP
-    umap_reducer = umap.UMAP(random_state=42)
-    umap_result = umap_reducer.fit_transform(Z)
-    plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap_{dsf}.png')
-    print(f"UMAP plot saved as output/{bios_name}_umap_{dsf}.png")
-
-    # t-SNE
-    tsne = TSNE(n_components=2, random_state=42)
-    tsne_result = tsne.fit_transform(Z)
-    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne_{dsf}.png')
-    print(f"t-SNE plot saved as output/{bios_name}_tsne_{dsf}.png")
-
-    def perform_clustering_and_save_results(saga, Z, bios_name, number_of_states):
-        # Perform clustering using different algorithms
-        algorithms = ['HMM', 'GMM', 'kmeans']
-        for algorithm in algorithms:
-            if algorithm in ['HMM', 'GMM']:
-                labels = saga.cluster(Z, algorithm=algorithm, n_components=number_of_states, pca_components=20)
-            else:
-                labels = saga.cluster(Z, algorithm=algorithm, n_clusters=number_of_states)
-
-            # Analyze clustering results
-            unique_labels, counts = np.unique(labels, return_counts=True)
-            total_length = len(labels)
-            print(f"\nClustering results for {algorithm}:")
-            print(f"Number of unique labels: {len(unique_labels)}")
-            for label, count in zip(unique_labels, counts):
-                fraction = count / total_length
-                print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
-
-            # Save chromatin state bedgraph
-            bedgraph_file = f"output/{bios_name}_chromatin_states_{algorithm}_{dsf}.bedgraph"
-            saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
-            print(f"Chromatin state bedgraph saved as {bedgraph_file}")
-
-    # Call the function with the required parameters
-    perform_clustering_and_save_results(saga, Z, bios_name, number_of_states)
+    # Call cluster_and_visualize_latent function
+    cluster_and_visualize_latent(latent_file, number_of_states=number_of_states, transition_exponent=transition_exponent)
 
 def cluster_and_visualization_from_saved_annotation_file(
     latent_file, annotation_bed_file, number_of_states=6, transition_exponent=1.0):
@@ -584,9 +540,9 @@ def cluster_and_visualization_from_saved_annotation_file(
     plot_and_save(umap_result, labels, 'UMAP of Latent Representations', f'{output_dir}/{bios_name}_umap.png')
 
     # t-SNE
-    tsne = TSNE(n_components=2, random_state=42)
-    tsne_result = tsne.fit_transform(Z)
-    plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
+    # tsne = TSNE(n_components=2, random_state=42)
+    # tsne_result = tsne.fit_transform(Z)
+    # plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
 
     # HMM clustering
     labels_hmm = cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20, transition_exponent=transition_exponent)
@@ -789,10 +745,10 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exp
                       f'{output_dir}/{bios_name}_umap_{method.lower()}.png')
 
         # t-SNE
-        tsne = TSNE(n_components=2, random_state=42)
-        tsne_result = tsne.fit_transform(Z)
-        plot_and_save(tsne_result, labels, f't-SNE of Latent Representations ({method} clusters)', 
-                      f'{output_dir}/{bios_name}_tsne_{method.lower()}.png')
+        # tsne = TSNE(n_components=2, random_state=42)
+        # tsne_result = tsne.fit_transform(Z)
+        # plot_and_save(tsne_result, labels, f't-SNE of Latent Representations ({method} clusters)', 
+        #               f'{output_dir}/{bios_name}_tsne_{method.lower()}.png')
 
     print("\nClustering and visualization complete.")
 
@@ -807,8 +763,8 @@ if __name__ == "__main__":
             latent_file, annotation_bed_file, number_of_states=10, transition_exponent=5)
         linear_probe_evaluation(latent_file, annotation_bed_file)
 
-    # elif len(sys.argv) == 2:
-    #     latent_file = sys.argv[1]
-    #     cluster_and_visualize_latent(latent_file, number_of_states=10)
+    elif len(sys.argv) == 2:
+        latent_file = sys.argv[1]
+        cluster_and_visualize_latent(latent_file, number_of_states=10, transition_exponent=5)
     else:
         full_pipeline()
