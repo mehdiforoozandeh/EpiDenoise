@@ -13,7 +13,6 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import umap
-from intervaltree import IntervalTree
 import matplotlib.patches as mpatches
 from hmmlearn import hmm
 
@@ -800,7 +799,7 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6):
 
 # Update the main block to include the new function
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 1:
         print("Usage: python SAGA.py <latent_file> [annotation_bed_file]")
         sys.exit(1)
 
