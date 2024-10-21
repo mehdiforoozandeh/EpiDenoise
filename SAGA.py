@@ -13,6 +13,7 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import umap
+from intervaltree import IntervalTree
 import matplotlib.patches as mpatches
 from hmmlearn import hmm
 
