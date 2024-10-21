@@ -397,7 +397,7 @@ def cluster(latent_representations, algorithm='GMM', pca_components=None, **kwar
 
     return labels
 
-def full_pipeline():
+def full_pipeline(dsf=1):
     if len(sys.argv) < 2:
         print("Usage: python SAGA.py <bios_name>")
         sys.exit(1)
@@ -414,9 +414,9 @@ def full_pipeline():
 
     # Load biosample data
     if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=1)
+        X, Y, P, seq, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=dsf)
     else:
-        X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=1)
+        X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=dsf)
 
     # Get latent representations
     Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq if DNA else None)
@@ -436,20 +436,20 @@ def full_pipeline():
     # PCA
     pca = PCA(n_components=2)
     pca_result = pca.fit_transform(Z)
-    plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca.png')
-    print(f"PCA plot saved as output/{bios_name}_pca.png")
+    plot_and_save(pca_result, 'PCA of Latent Representations', f'output/{bios_name}_pca_{dsf}.png')
+    print(f"PCA plot saved as output/{bios_name}_pca_{dsf}.png")
 
     # UMAP
     umap_reducer = umap.UMAP(random_state=42)
     umap_result = umap_reducer.fit_transform(Z)
-    plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap.png')
-    print(f"UMAP plot saved as output/{bios_name}_umap.png")
+    plot_and_save(umap_result, 'UMAP of Latent Representations', f'output/{bios_name}_umap_{dsf}.png')
+    print(f"UMAP plot saved as output/{bios_name}_umap_{dsf}.png")
 
     # t-SNE
     tsne = TSNE(n_components=2, random_state=42)
     tsne_result = tsne.fit_transform(Z)
-    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne.png')
-    print(f"t-SNE plot saved as output/{bios_name}_tsne.png")
+    plot_and_save(tsne_result, 't-SNE of Latent Representations', f'output/{bios_name}_tsne_{dsf}.png')
+    print(f"t-SNE plot saved as output/{bios_name}_tsne_{dsf}.png")
 
     def perform_clustering_and_save_results(saga, Z, bios_name, number_of_states):
         # Perform clustering using different algorithms
@@ -470,14 +470,14 @@ def full_pipeline():
                 print(f"Label {label}: {count} occurrences, covering {fraction:.2%} of the sequence")
 
             # Save chromatin state bedgraph
-            bedgraph_file = f"output/{bios_name}_chromatin_states_{algorithm}.bedgraph"
+            bedgraph_file = f"output/{bios_name}_chromatin_states_{algorithm}_{dsf}.bedgraph"
             saga.save_chromatin_state_bedgraph(labels, saga.chr, 0, bedgraph_file)
             print(f"Chromatin state bedgraph saved as {bedgraph_file}")
 
     # Call the function with the required parameters
     perform_clustering_and_save_results(saga, Z, bios_name, number_of_states)
 
-def cluster_and_visualization_from_saved_latent_annotation_file(
+def cluster_and_visualization_from_saved_annotation_file(
     latent_file, annotation_bed_file, number_of_states=6, transition_exponent=1.0):
     # Function now takes arguments directly instead of using sys.argv
     # latent_file: path to the latent representation file
@@ -592,7 +592,7 @@ def cluster_and_visualization_from_saved_latent_annotation_file(
     plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
 
     # HMM clustering
-    labels_hmm = cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=None, transition_exponent=transition_exponent)
+    labels_hmm = cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20, transition_exponent=transition_exponent)
     write_bed(labels_hmm, "chr21", 0, 400, f'models/output/{bios_name}_hmm.bed', 
               is_posterior=False, 
               track_name="HMM Clustering", 
@@ -601,7 +601,7 @@ def cluster_and_visualization_from_saved_latent_annotation_file(
     print(f"HMM clustering results saved as output/{bios_name}_hmm.bed")
 
     # GMM clustering
-    labels_gmm = cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=None)
+    labels_gmm = cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=20)
     write_bed(labels_gmm, "chr21", 0, 400, f'models/output/{bios_name}_gmm.bed', 
               is_posterior=False, 
               track_name="GMM Clustering", 
@@ -610,7 +610,7 @@ def cluster_and_visualization_from_saved_latent_annotation_file(
     print(f"GMM clustering results saved as output/{bios_name}_gmm.bed")
 
     # K-means clustering
-    labels_kmeans = cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=None)
+    labels_kmeans = cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=20)
     write_bed(labels_kmeans, "chr21", 0, 400, f'models/output/{bios_name}_kmeans.bed', 
               is_posterior=False, 
               track_name="K-means Clustering", 
@@ -810,5 +810,7 @@ if __name__ == "__main__":
         cluster_and_visualization_from_saved_latent_annotation_file(
             latent_file, annotation_bed_file, number_of_states=10, transition_exponent=5)
         linear_probe_evaluation(latent_file, annotation_bed_file)
-    else:
+    elif len(sys.argv) == 2:
         cluster_and_visualize_latent(latent_file, number_of_states=10)
+    else:
+        full_pipeline()
