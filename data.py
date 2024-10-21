@@ -1799,7 +1799,8 @@ class ExtendedEncodeDataHandler:
             if os.path.isdir(os.path.join(self.base_path, bios_name)):
                 for exp in os.listdir(os.path.join(self.base_path, bios_name)):
                     exp_path = os.path.join(self.base_path, bios_name, exp)
-                    if os.path.isdir(exp_path) and os.path.isdir(exp_path+"/signal_DSF1_res25"):
+                    if os.path.isdir(exp_path):
+                        print(exp_path, os.listdir(exp_path))
                         exps.append(exp)
             print(bios_name, exps)
             
