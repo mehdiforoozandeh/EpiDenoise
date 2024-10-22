@@ -25,19 +25,18 @@ def get_available_resources():
 # Worker function to train the model on a specific GPU
 def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
     try:
-        # Instead of os.sched_setaffinity, we'll use psutil to limit CPU affinity
+        # Attempt to set CPU affinity, but only use CPUs 0 and 1
         p = psutil.Process()
         try:
-            p.cpu_affinity([cpu_id])
-        except AttributeError:
-            print(f"Warning: CPU affinity not supported on this system. Proceeding without setting CPU affinity.")
+            p.cpu_affinity([cpu_id % 2])  # This will use either 0 or 1
+            print(f"Set CPU affinity to {cpu_id % 2}")
         except Exception as e:
             print(f"Warning: Failed to set CPU affinity: {str(e)}. Proceeding without setting CPU affinity.")
 
         torch.set_num_threads(1)
 
         device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
-        print(f"Training on CPU {cpu_id}, GPU {gpu_id}")
+        print(f"Training on CPU {cpu_id % 2}, GPU {gpu_id}")
         print(hyper_parameters)
 
         hyper_parameters['num_workers'] = 0
@@ -52,7 +51,7 @@ def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
         )
 
         result = {
-            "cpu_id": cpu_id,
+            "cpu_id": cpu_id % 2,
             "gpu_id": gpu_id,
             "hyper_parameters": hyper_parameters,
             "metrics": metrics
@@ -60,12 +59,13 @@ def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
 
         result_queue.put(result)
     except Exception as e:
-        error_msg = f"Error on CPU {cpu_id}, GPU {gpu_id}: {str(e)}\n{traceback.format_exc()}"
+        error_msg = f"Error on CPU {cpu_id % 2}, GPU {gpu_id}: {str(e)}\n{traceback.format_exc()}"
         result_queue.put({"error": error_msg})
 
 # Function to manage GPU assignment and training
 def distribute_models_across_resources(hyperparameters_list):
-    available_cpus, available_gpus = get_available_resources()
+    available_cpus = [0, 1]  # We now know only 0 and 1 are eligible
+    available_gpus = get_available_resources()[1]
     print(f"Available CPUs: {available_cpus}")
     print(f"Available GPUs: {available_gpus}")
 
@@ -82,8 +82,8 @@ def distribute_models_across_resources(hyperparameters_list):
 
     # Start initial batch of processes
     for i, hyper_parameters in enumerate(hyperparameters_list):
-        if i < len(available_cpus) and i < len(available_gpus):
-            start_new_process(hyper_parameters, available_cpus[i], available_gpus[i])
+        if i < len(available_gpus):
+            start_new_process(hyper_parameters, i % 2, available_gpus[i])
         else:
             break
 
@@ -101,7 +101,8 @@ def distribute_models_across_resources(hyperparameters_list):
 
             # Start a new process if there are remaining configurations
             if remaining_configs:
-                start_new_process(remaining_configs.pop(0), result['cpu_id'], result['gpu_id'])
+                freed_gpu = result['gpu_id']
+                start_new_process(remaining_configs.pop(0), freed_gpu % 2, freed_gpu)
 
         # Clean up finished processes
         processes = [p for p in processes if p.is_alive()]
