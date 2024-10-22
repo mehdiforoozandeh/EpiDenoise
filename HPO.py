@@ -25,18 +25,23 @@ def get_available_resources():
 # Worker function to train the model on a specific GPU
 def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
     try:
-        os.sched_setaffinity(0, {cpu_id})
+        # Instead of os.sched_setaffinity, we'll use psutil to limit CPU affinity
+        p = psutil.Process()
+        try:
+            p.cpu_affinity([cpu_id])
+        except AttributeError:
+            print(f"Warning: CPU affinity not supported on this system. Proceeding without setting CPU affinity.")
+        except Exception as e:
+            print(f"Warning: Failed to set CPU affinity: {str(e)}. Proceeding without setting CPU affinity.")
+
         torch.set_num_threads(1)
 
-        # Ensure CUDA is initialized in the child process
         device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
         print(f"Training on CPU {cpu_id}, GPU {gpu_id}")
         print(hyper_parameters)
 
-        # Ensure DataLoader uses minimal workers
-        hyper_parameters['num_workers'] = 0  # Or 1, if you prefer
+        hyper_parameters['num_workers'] = 0
 
-        # Call your training function
         model, metrics = Train_CANDI(
             hyper_parameters,
             eic=hyper_parameters["eic"],
@@ -69,19 +74,22 @@ def distribute_models_across_resources(hyperparameters_list):
     completed_models = []
     errors = []
 
-    for i, hyper_parameters in enumerate(hyperparameters_list):
-        if i >= len(available_cpus) or i >= len(available_gpus):
-            print("Not enough resources to run all configurations in parallel.")
-            break
-
-        cpu_id = available_cpus[i]
-        gpu_id = available_gpus[i]
-
+    # Function to start a new process
+    def start_new_process(hyper_parameters, cpu_id, gpu_id):
         p = mp.Process(target=train_model_on_resources, args=(hyper_parameters, cpu_id, gpu_id, result_queue))
         processes.append(p)
         p.start()
 
-    while len(completed_models) + len(errors) < len(processes):
+    # Start initial batch of processes
+    for i, hyper_parameters in enumerate(hyperparameters_list):
+        if i < len(available_cpus) and i < len(available_gpus):
+            start_new_process(hyper_parameters, available_cpus[i], available_gpus[i])
+        else:
+            break
+
+    # Process results and start new processes as resources become available
+    remaining_configs = hyperparameters_list[len(processes):]
+    while processes or remaining_configs:
         if not result_queue.empty():
             result = result_queue.get()
             if "error" in result:
@@ -91,11 +99,14 @@ def distribute_models_across_resources(hyperparameters_list):
                 completed_models.append(result)
                 print(f"Model training completed on CPU {result['cpu_id']}, GPU {result['gpu_id']}")
 
-    for p in processes:
-        p.join(timeout=10)
-        if p.is_alive():
-            p.terminate()
-            print(f"Process {p.pid} did not terminate properly and was forced to close.")
+            # Start a new process if there are remaining configurations
+            if remaining_configs:
+                start_new_process(remaining_configs.pop(0), result['cpu_id'], result['gpu_id'])
+
+        # Clean up finished processes
+        processes = [p for p in processes if p.is_alive()]
+
+        time.sleep(1)  # Avoid busy waiting
 
     if errors:
         raise Exception("Some processes encountered errors. Check the error messages above.")
