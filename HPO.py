@@ -123,7 +123,7 @@ if __name__ == "__main__":
         "epochs": 20,
         "inner_epochs": 1,
         "mask_percentage": 0.1,
-        "num_loci": 1000,
+        "num_loci": 10,
         "lr_halflife": 1,
         "min_avail": 1,
         "eic":True,
