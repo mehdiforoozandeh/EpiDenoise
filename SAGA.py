@@ -20,6 +20,11 @@ from CANDI import *
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 
+# write bed
+# sequence clustering
+# saga
+
+
 def write_bed(data, chromosome, start_position, resolution, output_file, is_posterior=False, track_name="Custom Track", track_description="Clustering Results", visibility="full"):
     """
     Write clustering results to a BED file compatible with UCSC Genome Browser, including a header.

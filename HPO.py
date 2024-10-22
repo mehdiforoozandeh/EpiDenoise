@@ -1,14 +1,16 @@
 import torch
-import multiprocessing
+import multiprocessing as mp
 import os
 import time
 import psutil
 from multiprocessing import Lock
 from CANDI import *
+import traceback
 
 
 # Function to check available GPUs
-def get_available_gpus():
+def get_available_resources():
+    available_cpus = list(range(psutil.cpu_count(logical=False)))
     available_gpus = []
     if torch.cuda.is_available():
         for i in range(torch.cuda.device_count()):
@@ -18,97 +20,85 @@ def get_available_gpus():
             # Assume GPU is free if less than 5% of memory is being used
             if mem_used_ratio < 0.05:
                 available_gpus.append(i)
-    return available_gpus
+    return available_cpus, available_gpus
 
 # Worker function to train the model on a specific GPU
-def train_model_on_gpu(hyper_parameters, gpu_id, result_queue):
-    # Limit CPU usage
-    torch.set_num_threads(1)
+def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
+    try:
+        os.sched_setaffinity(0, {cpu_id})
+        torch.set_num_threads(1)
 
-    # Ensure CUDA is initialized in the child process
-    device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
-    print(f"Training on GPU {gpu_id}")
-    print(hyper_parameters)
+        # Ensure CUDA is initialized in the child process
+        device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
+        print(f"Training on CPU {cpu_id}, GPU {gpu_id}")
+        print(hyper_parameters)
 
-    # Ensure DataLoader uses minimal workers
-    hyper_parameters['num_workers'] = 0  # Or 1, if you prefer
+        # Ensure DataLoader uses minimal workers
+        hyper_parameters['num_workers'] = 0  # Or 1, if you prefer
 
-    # Call your training function
-    model, metrics = Train_CANDI(
-        hyper_parameters,
-        eic=hyper_parameters["eic"],
-        DNA=hyper_parameters["dna"],
-        device=device,
-        HPO=True,
-        suffix=f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}"
-    )
+        # Call your training function
+        model, metrics = Train_CANDI(
+            hyper_parameters,
+            eic=hyper_parameters["eic"],
+            DNA=hyper_parameters["dna"],
+            device=device,
+            HPO=True,
+            suffix=f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}"
+        )
 
-    result = {
-        "gpu_id": gpu_id,
-        "hyper_parameters": hyper_parameters,
-        "metrics": metrics
-    }
+        result = {
+            "cpu_id": cpu_id,
+            "gpu_id": gpu_id,
+            "hyper_parameters": hyper_parameters,
+            "metrics": metrics
+        }
 
-    result_queue.put(result)
+        result_queue.put(result)
+    except Exception as e:
+        error_msg = f"Error on CPU {cpu_id}, GPU {gpu_id}: {str(e)}\n{traceback.format_exc()}"
+        result_queue.put({"error": error_msg})
 
 # Function to manage GPU assignment and training
-def distribute_models_across_gpus(hyperparameters_list):
-    available_gpus = get_available_gpus()
+def distribute_models_across_resources(hyperparameters_list):
+    available_cpus, available_gpus = get_available_resources()
+    print(f"Available CPUs: {available_cpus}")
     print(f"Available GPUs: {available_gpus}")
 
-    # Use torch.multiprocessing Queue
     result_queue = mp.Queue()
-
-    # List to keep track of active processes
-    active_processes = []
-
-    # Lock for safe GPU allocation
-    lock = Lock()
-
-    # Set to track used hyperparameters
-    used_hyperparameters = set()
-
-    # Function to start training on available GPUs
-    def start_training():
-        with lock:
-            for hyper_parameters in hyperparameters_list:
-                if str(hyper_parameters) in used_hyperparameters:
-                    continue
-                used_hyperparameters.add(str(hyper_parameters))
-
-                if available_gpus:
-                    gpu_id = available_gpus.pop(0)
-                    p = mp.Process(target=train_model_on_gpu, args=(hyper_parameters, gpu_id, result_queue))
-                    active_processes.append(p)
-                    p.start()
-                    time.sleep(0.1)  # Optional
-                else:
-                    break
-
-    # Start initial training processes
-    start_training()
-
-    # Collect results and manage processes
+    processes = []
     completed_models = []
-    while len(completed_models) < len(hyperparameters_list):
-        for p in active_processes:
-            if not p.is_alive():
-                if not result_queue.empty():
-                    result = result_queue.get()
-                    print(f"Model training completed on GPU {result['gpu_id']}")
-                    completed_models.append(result)
+    errors = []
 
-                    with lock:
-                        available_gpus.append(result['gpu_id'])
+    for i, hyper_parameters in enumerate(hyperparameters_list):
+        if i >= len(available_cpus) or i >= len(available_gpus):
+            print("Not enough resources to run all configurations in parallel.")
+            break
 
-                    if p in active_processes:
-                        active_processes.remove(p)
+        cpu_id = available_cpus[i]
+        gpu_id = available_gpus[i]
 
-                    start_training()
+        p = mp.Process(target=train_model_on_resources, args=(hyper_parameters, cpu_id, gpu_id, result_queue))
+        processes.append(p)
+        p.start()
 
-    # Wait for all processes to finish
-    for p in active_processes:
-        p.join()
+    while len(completed_models) + len(errors) < len(processes):
+        if not result_queue.empty():
+            result = result_queue.get()
+            if "error" in result:
+                errors.append(result["error"])
+                print(result["error"])
+            else:
+                completed_models.append(result)
+                print(f"Model training completed on CPU {result['cpu_id']}, GPU {result['gpu_id']}")
+
+    for p in processes:
+        p.join(timeout=10)
+        if p.is_alive():
+            p.terminate()
+            print(f"Process {p.pid} did not terminate properly and was forced to close.")
+
+    if errors:
+        raise Exception("Some processes encountered errors. Check the error messages above.")
 
     return completed_models
 
@@ -172,16 +162,19 @@ if __name__ == "__main__":
     # Make sure to set the correct start method for multiprocessing
     multiprocessing.set_start_method('spawn', force=True)
 
-    # Distribute and train models across GPUs
-    results = distribute_models_across_gpus(hyperparameters_list)
+    try:
+        results = distribute_models_across_resources(hyperparameters_list)
 
-    with open("hpo_results.txt", "w") as file:
-        # Print results
-        for result in results:
-            print(f"Results for hyperparameters: {result['hyper_parameters']}")
-            print(f"Metrics: {result['metrics']}")
-            file.write(str(result['hyper_parameters']))
-            file.write(str(result['metrics']))
-            file.write("\n\n\n")
+        with open("hpo_results.txt", "w") as file:
+            # Print results
+            for result in results:
+                print(f"Results for hyperparameters: {result['hyper_parameters']}")
+                print(f"Metrics: {result['metrics']}")
+                file.write(str(result['hyper_parameters']))
+                file.write(str(result['metrics']))
+                file.write("\n\n\n")
 
-    
+        print("All configurations tested successfully.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        traceback.print_exc()
