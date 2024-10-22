@@ -160,7 +160,7 @@ if __name__ == "__main__":
         hyperparameters_list.append(merged_dict)
     print(hyperparameters_list)
     # Make sure to set the correct start method for multiprocessing
-    multiprocessing.set_start_method('spawn', force=True)
+    mp.set_start_method('spawn', force=True)
 
     try:
         results = distribute_models_across_resources(hyperparameters_list)
