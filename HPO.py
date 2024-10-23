@@ -121,7 +121,7 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
         "pool_size": 2,
-        "epochs": 20,
+        "epochs": 3,
         "inner_epochs": 1,
         "mask_percentage": 0.1,
         "num_loci": 10,
