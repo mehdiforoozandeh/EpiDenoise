@@ -980,7 +980,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # Save the trained model
     model_dir = "models/"
     os.makedirs(model_dir, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+    if not HPO:
+        torch.save(model.state_dict(), os.path.join(model_dir, model_name))
 
     # Write a description text file
     description = {
