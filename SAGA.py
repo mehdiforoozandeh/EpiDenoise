@@ -548,7 +548,7 @@ def visualize_latent(latent_file, annotation_bed_file=None, output_dir="output",
         umap_result = umap_reducer.fit_transform(Z)
         plot_and_save(umap_result, labels, 'UMAP of Latent Representations', f'{output_dir}/{bios_name}_umap.png')
 
-    if visualize_method == "all" or visualize_method == "tsne":
+    # if visualize_method == "all" or visualize_method == "tsne":
         # tsne = TSNE(n_components=2, random_state=42)
         # tsne_result = tsne.fit_transform(Z)
         # plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
