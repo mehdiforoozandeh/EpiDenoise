@@ -831,6 +831,13 @@ def main():
     elif function_name == "visualize_latent":
         print(f"Visualizing latent representations for {bios_name}...")
         latent_file = f"{output_dir}/{bios_name}_latent.pt"
+        if not os.path.exists(latent_file):
+            print(f"Error: File {latent_file} not found.")
+            print(f"Generating and saving latent representations for {bios_name}...")
+            generate_and_save_latent_representations(
+                bios_name, dsf=dsf, output_dir=output_dir, 
+                number_of_states=number_of_states, DNA=DNA
+            )
         visualize_latent(latent_file, output_dir=output_dir)
 
     elif function_name == "annotate_latent":
