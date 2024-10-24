@@ -1800,7 +1800,7 @@ class ExtendedEncodeDataHandler:
                 for exp in os.listdir(os.path.join(self.base_path, bios_name)):
                     exp_path = os.path.join(self.base_path, bios_name, exp)
                     if os.path.isdir(exp_path):
-                        print(exp_path, os.listdir(exp_path))
+                        # print(exp_path, os.listdir(exp_path))
                         exps.append(exp)
             # print(bios_name, exps)
             
