@@ -244,7 +244,7 @@ class CANDIPredictor:
             elif self.split == "val":
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
             
-            print(temp_x.keys(), temp_mx.keys())
+            # print(temp_x.keys(), temp_mx.keys())
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
             
