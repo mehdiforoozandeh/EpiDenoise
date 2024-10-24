@@ -1,31 +1,32 @@
+# Standard library imports
+import os
+import sys
+
+# Third-party imports
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import umap
+from intervaltree import IntervalTree
+from hmmlearn import hmm
+
+# Scikit-learn imports
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, accuracy_score
-import numpy as np
-import torch
-from intervaltree import IntervalTree
-import sys
-import os
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-import umap
-import matplotlib.patches as mpatches
-from hmmlearn import hmm
 
+# Local imports
 from CANDI import *
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 
-# write bed
-# sequence clustering
-# saga
-
-
-def write_bed(data, chromosome, start_position, resolution, output_file, is_posterior=False, track_name="Custom Track", track_description="Clustering Results", visibility="full"):
+def write_bed(data, chromosome, start_position, resolution, output_file, is_posterior=False, track_name="Custom Track", track_description="Clustering Results", visibility="dense"):
     """
     Write clustering results to a BED file compatible with UCSC Genome Browser, including a header.
 
@@ -178,7 +179,8 @@ class SequenceClustering(object):
     def get_model(self, model_name):
         return self.models.get(model_name, None)
 
-class SAGA(object):
+# sequence clustering
+class CANDIPredictor:
     def __init__(
         self, model, hyper_parameters_path, number_of_states, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
@@ -232,6 +234,8 @@ class SAGA(object):
             }
 
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
+        # Load biosample data
+        
         print(f"getting bios vals for {bios_name}")
 
         if self.eic:
@@ -299,7 +303,7 @@ class SAGA(object):
             return X, Y, P, seq, mX, mY, avX, avY
         else:
             return X, Y, P, mX, mY, avX, avY
-    
+
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
@@ -370,19 +374,32 @@ class SAGA(object):
             _, _, _, _, Z = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
         return Z
 
-    def save_latent_representations(self, Z, output_file):
-        torch.save(Z, output_file, _use_new_zipfile_serialization=True)
-        print(f"Latent representations saved to {output_file} in compressed format")
+    def get_decoded_signal(self, X, mX, mY, avX, seq=None):
+        if self.DNA:
+            p, n, mu, var, _ = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            p, n, mu, var, _ = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
 
-    def save_chromatin_state_bedgraph(self, labels, chromosome, start_position, output_file):
-        write_bed(labels, chromosome, start_position, self.resolution*(self.model.l1//self.model.l2), output_file)
-        print(f"BedGraph file written to {output_file}")
+        count_dist = NegativeBinomial(p, n)
+        pval_dist = Gaussian(mu, var)
+        
+        return count_dist.mean(), pval_dist.mean()
 
-def cluster(latent_representations, algorithm='GMM', pca_components=None, **kwargs):
+
+#########################################################
+
+def save_latent_representations(Z, output_file):
+    torch.save(Z, output_file, _use_new_zipfile_serialization=True)
+    print(f"Latent representations saved to {output_file} in compressed format")
+
+def save_chromatin_state_bedgraph(labels, output_file, chromosome="chr21", start_position=0, resolution=400):
+    write_bed(labels, chromosome, start_position, resolution, output_file)
+    print(f"BedGraph file written to {output_file}")
+
+def cluster(latent_representations, algorithm='HMM', pca_components=None, **kwargs):
     sequence_clustering = SequenceClustering()
     
     if pca_components is not None:
-        from sklearn.decomposition import PCA
         pca = PCA(n_components=pca_components)
         latent_representations = pca.fit_transform(latent_representations)
     
@@ -403,51 +420,31 @@ def cluster(latent_representations, algorithm='GMM', pca_components=None, **kwar
 
     return labels
 
-def full_pipeline(dsf=1):
-    if len(sys.argv) < 2:
-        print("Error: Please provide the biosample name as an argument.")
-        sys.exit(1)
+def generate_and_save_latent_representations(bios_name, dsf=1,
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="output",
+    number_of_states=10,
+    DNA=True):
 
-    bios_name = sys.argv[1]
-
-    # Initialize SAGA
-    model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth" 
-    hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
-    dataset_path = "/project/compbio-lab/encode_data/"
-    number_of_states = 10
-    transition_exponent = 5
-    DNA = True
-    saga = SAGA(model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
-
-    # Load biosample data
-    if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=dsf)
-    else:
-        X, Y, P, mX, mY, avX, avY = saga.load_bios(bios_name, x_dsf=dsf)
-
-    # Get latent representations
-    Z = saga.get_latent_representations(X, mX, mY, avX, seq=seq if DNA else None)
+    CANDIP = CANDIPredictor(
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     
-    # Save latent representations
-    os.makedirs("output", exist_ok=True)
-    latent_file = f"output/{bios_name}_latent.pt"
-    saga.save_latent_representations(Z, latent_file)
+    os.makedirs(output_dir, exist_ok=True)
+    latent_file = f"{output_dir}/{bios_name}_latent.pt"
 
-    # Call cluster_and_visualize_latent function
-    cluster_and_visualize_latent(latent_file, number_of_states=number_of_states, transition_exponent=transition_exponent)
 
-def cluster_and_visualization_from_saved_annotation_file(
-    latent_file, annotation_bed_file, number_of_states=6, transition_exponent=1.0):
-    # Function now takes arguments directly instead of using sys.argv
-    # latent_file: path to the latent representation file
-    # annotation_bed_file: path to the annotation BED file
-    # number_of_states: number of states for clustering (default: 6)
-    # transition_exponent: exponent for transition probabilities (default: 1.0)
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+    else:
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        seq = None
+        
+    Z = CANDIP.get_latent_representations(X, mX, mY, avX, seq=seq if DNA else None)
+    save_latent_representations(Z, latent_file)
 
-    if not latent_file or not annotation_bed_file:
-        print("Error: Both latent_file and annotation_bed_file must be provided.")
-        return
-
+def visualize_latent(latent_file, annotation_bed_file=None, output_dir="output", visualize_method="all"):
     # Load the latent representations
     try:
         Z = torch.load(latent_file)
@@ -467,61 +464,66 @@ def cluster_and_visualization_from_saved_annotation_file(
     # Derive bios_name from the latent file name
     bios_name = latent_file.split('/')[-1].split('_latent.pt')[0]
 
-    # Read the annotation BED file and build an interval tree
-    chromatin_states = {}
-    with open(annotation_bed_file, 'r') as bed_file:
-        for line in bed_file:
-            if line.startswith('track') or line.startswith('#'):
-                continue
-            fields = line.strip().split('\t')
-            if len(fields) < 4:
-                continue
-            chrom, start, end, state = fields[0], int(fields[1]), int(fields[2]), fields[3]
-            if chrom not in chromatin_states:
-                chromatin_states[chrom] = IntervalTree()
-            chromatin_states[chrom][start:end] = state
+    # Initialize labels
+    labels = None
 
-    print("Chromatin state annotations loaded.")
+    # Read the annotation BED file and build an interval tree if provided
+    if annotation_bed_file:
+        chromatin_states = {}
+        try:
+            with open(annotation_bed_file, 'r') as bed_file:
+                for line in bed_file:
+                    if line.startswith('track') or line.startswith('#'):
+                        continue
+                    fields = line.strip().split('\t')
+                    if len(fields) < 4:
+                        continue
+                    chrom, start, end, state = fields[0], int(fields[1]), int(fields[2]), fields[3]
+                    if chrom not in chromatin_states:
+                        chromatin_states[chrom] = IntervalTree()
+                    chromatin_states[chrom][start:end] = state
 
-    # Now, for each latent representation, find the overlapping chromatin state
+            print("Chromatin state annotations loaded.")
 
-    # Define the genomic coordinates for each latent representation
-    # Adjust 'chromosome', 'start_position', and 'resolution' based on your data
-    chromosome = 'chr21'
-    start_position = 0  # Starting genomic coordinate
-    resolution = 400    # Resolution or bin size (e.g., 400 bp)
+            # Define the genomic coordinates for each latent representation
+            chromosome = 'chr21'
+            start_position = 0
+            resolution = 400
 
-    L = Z.shape[0]  # Number of positions
+            L = Z.shape[0]  # Number of positions
 
-    labels = []
-    for i in range(L):
-        start = start_position + i * resolution
-        end = start + resolution
-        intervals = chromatin_states.get(chromosome, IntervalTree())
-        overlapping = intervals[start:end]
-        if overlapping:
-            # If multiple overlaps, pick the most frequent or the first one
-            # Here, we pick the first overlapping state
-            label = sorted(overlapping)[0].data
-        else:
-            label = 'Unknown'
-        labels.append(label)
+            labels = []
+            for i in range(L):
+                start = start_position + i * resolution
+                end = start + resolution
+                intervals = chromatin_states.get(chromosome, IntervalTree())
+                overlapping = intervals[start:end]
+                if overlapping:
+                    label = sorted(overlapping)[0].data
+                else:
+                    label = 'Unknown'
+                labels.append(label)
 
-    print("Labels assigned to latent representations.")
+            print("Labels assigned to latent representations.")
+        except FileNotFoundError:
+            print(f"Warning: Annotation file {annotation_bed_file} not found. Proceeding without labels.")
+            labels = None
+        except Exception as e:
+            print(f"Warning: Error reading annotation file: {e}. Proceeding without labels.")
+            labels = None
 
     def plot_and_save(embedding, labels, title, filename):
         plt.figure(figsize=(10, 8))
-        unique_labels = sorted(set(labels))
-        label_to_int = {label: idx for idx, label in enumerate(unique_labels)}
-        colors = plt.cm.get_cmap('tab20', len(unique_labels))
-
-        ints = [label_to_int[label] for label in labels]
-        scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=ints, cmap=colors, alpha=0.3, s=5)  # Reduced size by 10x
-
-        # Create legend
-        handles = [mpatches.Patch(color=colors(idx), label=label) for label, idx in label_to_int.items()]
-        plt.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-
+        if labels:
+            unique_labels = sorted(set(labels))
+            label_to_int = {label: idx for idx, label in enumerate(unique_labels)}
+            colors = plt.cm.get_cmap('tab20', len(unique_labels))
+            ints = [label_to_int[label] for label in labels]
+            scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=ints, cmap=colors, alpha=0.3, s=5)
+            handles = [mpatches.Patch(color=colors(idx), label=label) for label, idx in label_to_int.items()]
+            plt.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+        else:
+            plt.scatter(embedding[:, 0], embedding[:, 1], alpha=0.3, s=5)
         plt.title(title)
         plt.xlabel('Component 1')
         plt.ylabel('Component 2')
@@ -535,47 +537,21 @@ def cluster_and_visualization_from_saved_annotation_file(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # PCA
-    pca = PCA(n_components=2)
-    pca_result = pca.fit_transform(Z)
-    plot_and_save(pca_result, labels, 'PCA of Latent Representations', f'{output_dir}/{bios_name}_pca.png')
+    # Generate visualizations based on the specified method
+    if visualize_method == "all" or visualize_method == "pca":
+        pca = PCA(n_components=2)
+        pca_result = pca.fit_transform(Z)
+        plot_and_save(pca_result, labels, 'PCA of Latent Representations', f'{output_dir}/{bios_name}_pca.png')
 
-    # UMAP
-    umap_reducer = umap.UMAP(random_state=42)
-    umap_result = umap_reducer.fit_transform(Z)
-    plot_and_save(umap_result, labels, 'UMAP of Latent Representations', f'{output_dir}/{bios_name}_umap.png')
+    if visualize_method == "all" or visualize_method == "umap":
+        umap_reducer = umap.UMAP(random_state=42)
+        umap_result = umap_reducer.fit_transform(Z)
+        plot_and_save(umap_result, labels, 'UMAP of Latent Representations', f'{output_dir}/{bios_name}_umap.png')
 
-    # t-SNE
-    # tsne = TSNE(n_components=2, random_state=42)
-    # tsne_result = tsne.fit_transform(Z)
-    # plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
-
-    # HMM clustering
-    labels_hmm = cluster(Z, algorithm='HMM', n_components=number_of_states, pca_components=20, transition_exponent=transition_exponent)
-    write_bed(labels_hmm, "chr21", 0, 400, f'models/output/{bios_name}_hmm.bed', 
-              is_posterior=False, 
-              track_name="HMM Clustering", 
-              track_description="HMM Clustering Results", 
-              visibility="dense")
-    print(f"HMM clustering results saved as output/{bios_name}_hmm.bed")
-
-    # GMM clustering
-    labels_gmm = cluster(Z, algorithm='GMM', n_components=number_of_states, pca_components=20)
-    write_bed(labels_gmm, "chr21", 0, 400, f'models/output/{bios_name}_gmm.bed', 
-              is_posterior=False, 
-              track_name="GMM Clustering", 
-              track_description="GMM Clustering Results", 
-              visibility="dense")
-    print(f"GMM clustering results saved as output/{bios_name}_gmm.bed")
-
-    # K-means clustering
-    labels_kmeans = cluster(Z, algorithm='kmeans', n_clusters=number_of_states, pca_components=20)
-    write_bed(labels_kmeans, "chr21", 0, 400, f'models/output/{bios_name}_kmeans.bed', 
-              is_posterior=False, 
-              track_name="K-means Clustering", 
-              track_description="K-means Clustering Results", 
-              visibility="dense")
-    print(f"K-means clustering results saved as output/{bios_name}_kmeans.bed")
+    if visualize_method == "all" or visualize_method == "tsne":
+        tsne = TSNE(n_components=2, random_state=42)
+        tsne_result = tsne.fit_transform(Z)
+        plot_and_save(tsne_result, labels, 't-SNE of Latent Representations', f'{output_dir}/{bios_name}_tsne.png')
 
 def linear_probe_evaluation(latent_file, annotation_bed_file, k_folds=5):
     # Load the latent representations
@@ -682,7 +658,7 @@ def linear_probe_evaluation(latent_file, annotation_bed_file, k_folds=5):
         print(f"  Support: {metrics['support']:.0f}")
         print()
 
-def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exponent=1.0):
+def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exponent=1.0, pca_components=20):
     # Load the latent representations
     try:
         Z = torch.load(latent_file)
@@ -724,9 +700,9 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exp
     for method in clustering_methods:
         print(f"\nPerforming {method} clustering...")
         if method == 'HMM':
-            labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=20, transition_exponent=transition_exponent)
+            labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=pca_components, transition_exponent=transition_exponent)
         elif method == 'GMM':
-            labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=20)
+            labels = cluster(Z, algorithm=method, n_components=number_of_states, pca_components=pca_components)
         else:
             labels = cluster(Z, algorithm=method, n_clusters=number_of_states)
 
@@ -751,26 +727,138 @@ def cluster_and_visualize_latent(latent_file, number_of_states=6, transition_exp
                       f'{output_dir}/{bios_name}_umap_{method.lower()}.png')
 
         # t-SNE
-        # tsne = TSNE(n_components=2, random_state=42)
-        # tsne_result = tsne.fit_transform(Z)
-        # plot_and_save(tsne_result, labels, f't-SNE of Latent Representations ({method} clusters)', 
-        #               f'{output_dir}/{bios_name}_tsne_{method.lower()}.png')
+        tsne = TSNE(n_components=2, random_state=42)
+        tsne_result = tsne.fit_transform(Z)
+        plot_and_save(tsne_result, labels, f't-SNE of Latent Representations ({method} clusters)', 
+                      f'{output_dir}/{bios_name}_tsne_{method.lower()}.png')
 
     print("\nClustering and visualization complete.")
 
-# Update the main block to include the new function
-if __name__ == "__main__":
-    print(len(sys.argv))
-    
-    if len(sys.argv) == 3:
-        latent_file = sys.argv[1]
-        annotation_bed_file = sys.argv[2]
-        cluster_and_visualization_from_saved_annotation_file(
-            latent_file, annotation_bed_file, number_of_states=10, transition_exponent=5)
-        linear_probe_evaluation(latent_file, annotation_bed_file)
+def annotate_latent(latent_file, output_dir="output", number_of_states=6, transition_exponent=1.0, pca_components=20):
+    # Load the latent representations
+    try:
+        Z = torch.load(latent_file)
+        print(f"Latent representations loaded from {latent_file}")
+        print(f"Shape of loaded tensor: {Z.shape}")
+    except FileNotFoundError:
+        print(f"Error: File {latent_file} not found.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error loading file: {e}")
+        sys.exit(1)
 
-    # elif len(sys.argv) == 2:
-    #     latent_file = sys.argv[1]
-    #     cluster_and_visualize_latent(latent_file, number_of_states=10, transition_exponent=5)
+    # Convert to numpy array if it's a torch tensor
+    if isinstance(Z, torch.Tensor):
+        Z = Z.cpu().numpy()
+
+    # Derive bios_name from the latent file name
+    bios_name = latent_file.split('/')[-1].split('_latent.pt')[0]
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    labels = cluster(Z, algorithm="HMM", n_components=number_of_states, pca_components=pca_components, transition_exponent=transition_exponent)
+
+    # Save clustering results as BED file
+    write_bed(labels, "chr21", 0, 400, f'{output_dir}/{bios_name}_latent_{pca_components}PC_hmm.bed', 
+                is_posterior=False, 
+                track_name=f"HMM Clustering", 
+                track_description=f"HMM Clustering Results", 
+                visibility="dense")
+    print(f"HMM clustering results saved as {output_dir}/{bios_name}_latent_{pca_components}PC_hmm.bed")
+
+def annotate_decoded_data(bios_name, annotate_based_on="count", dsf=1, transition_exponent=1.0,
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="output",
+    number_of_states=10,
+    DNA=True):
+
+    CANDIP = CANDIPredictor(
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+    
+    os.makedirs(output_dir, exist_ok=True)
+
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
     else:
-        full_pipeline()
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        seq = None
+        
+    count, pval = CANDIP.get_decoded_signal(X, mX, mY, avX, seq=seq if DNA else None)
+
+    if annotate_based_on == "count":
+        labels = cluster(count, algorithm="HMM", n_components=number_of_states, transition_exponent=transition_exponent)
+    else:
+        labels = cluster(pval, algorithm="HMM", n_components=number_of_states, transition_exponent=transition_exponent)
+
+    # Save clustering results as BED file
+    write_bed(labels, "chr21", 0, 400, f'{output_dir}/{bios_name}_decoded_hmm.bed', 
+        is_posterior=False, 
+        track_name=f"HMM Clustering",     
+        track_description=f"HMM Clustering Results", 
+        visibility="dense")
+    print(f"HMM clustering results saved as {output_dir}/{bios_name}_decoded_hmm.bed")
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: python script.py <bios_name> <function_name> [additional_args]")
+        print("Available functions: generate_latent, visualize_latent, annotate_latent, annotate_decoded")
+        sys.exit(1)
+
+    bios_name = sys.argv[1]
+    function_name = sys.argv[2]
+
+    # Default parameters
+    output_dir = "models/output"
+    number_of_states = 10
+    DNA = True
+    dsf = 1
+    pca_components = 20
+    transition_exponent = 1.0
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    if function_name == "generate_latent":
+        print(f"Generating and saving latent representations for {bios_name}...")
+        generate_and_save_latent_representations(
+            bios_name, dsf=dsf, output_dir=output_dir, 
+            number_of_states=number_of_states, DNA=DNA
+        )
+
+    elif function_name == "visualize_latent":
+        print(f"Visualizing latent representations for {bios_name}...")
+        latent_file = f"{output_dir}/{bios_name}_latent.pt"
+        visualize_latent(latent_file, output_dir=output_dir)
+
+    elif function_name == "annotate_latent":
+        print(f"Annotating latent representations for {bios_name}...")
+        latent_file = f"{output_dir}/{bios_name}_latent.pt"
+        annotate_latent(
+            latent_file, pca_components=pca_components,
+            transition_exponent=transition_exponent, output_dir=output_dir,
+            number_of_states=number_of_states
+        )
+
+    elif function_name == "annotate_decoded":
+        print(f"Annotating decoded data for {bios_name}...")
+        annotate_decoded_data(
+            bios_name, annotate_based_on="count", dsf=dsf, 
+            transition_exponent=transition_exponent, 
+            output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
+        )
+
+    else:
+        print(f"Unknown function: {function_name}")
+        sys.exit(1)
+
+    print("Operation completed successfully.")
+
+if __name__ == "__main__":
+    main()
+
+
+
+

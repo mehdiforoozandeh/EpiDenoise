@@ -88,24 +88,24 @@ def distribute_models_across_resources(hyperparameters_list):
             break
 
     # Process results and start new processes as resources become available
-    remaining_configs = hyperparameters_list[len(processes):]
+    remaining_configs = hyperparameters_list[len(available_gpus):]
     while processes or remaining_configs:
-        if not result_queue.empty():
-            result = result_queue.get()
-            if "error" in result:
-                errors.append(result["error"])
-                print(result["error"])
-            else:
-                completed_models.append(result)
-                print(f"Model training completed on CPU {result['cpu_id']}, GPU {result['gpu_id']}")
+        for p in processes[:]:
+            if not p.is_alive():
+                processes.remove(p)
+                if not result_queue.empty():
+                    result = result_queue.get()
+                    if "error" in result:
+                        errors.append(result["error"])
+                        print(result["error"])
+                    else:
+                        completed_models.append(result)
+                        print(f"Model training completed on CPU {result['cpu_id']}, GPU {result['gpu_id']}")
 
-            # Start a new process if there are remaining configurations
-            if remaining_configs:
-                freed_gpu = result['gpu_id']
-                start_new_process(remaining_configs.pop(0), freed_gpu % 2, freed_gpu)
-
-        # Clean up finished processes
-        processes = [p for p in processes if p.is_alive()]
+                    # Start a new process if there are remaining configurations
+                    if remaining_configs:
+                        freed_gpu = result['gpu_id']
+                        start_new_process(remaining_configs.pop(0), freed_gpu % 2, freed_gpu)
 
         time.sleep(1)  # Avoid busy waiting
 
@@ -113,7 +113,6 @@ def distribute_models_across_resources(hyperparameters_list):
         raise Exception("Some processes encountered errors. Check the error messages above.")
 
     return completed_models
-
 
 if __name__ == "__main__":
     # Example list of hyperparameter dictionaries
