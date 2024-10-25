@@ -455,7 +455,7 @@ class CANDIPredictor:
                 
             pos_in_window = self.context_length // 2
             print(Z_ref.shape)
-            returns
+            return
             # Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
 
             # Iterate over offsets
