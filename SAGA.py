@@ -792,14 +792,15 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
     decoded_bins = count.shape[0]
     annotation_bins = decoded_bins * decoded_resolution // annotation_resolution
     
-    print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
-    exit()
+    # print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
     # Reshape and average for count
     count_reshaped = count.reshape(count.shape[0], annotation_bins, -1).mean(axis=2)
     
     # Reshape and average for pval
     pval_reshaped = pval.reshape(pval.shape[0], annotation_bins, -1).mean(axis=2)
-    
+
+    print(f"Decoded data shape: {count.shape}")
+    print(f"Annotation data shape: {count_reshaped.shape}")
     print(f"Decoded data shape: {count.shape}")
     print(f"Annotation data shape: {count_reshaped.shape}")
     
