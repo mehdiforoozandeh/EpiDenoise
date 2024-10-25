@@ -446,7 +446,7 @@ class CANDIPredictor:
                 
             # Position of pos within context window
             pos_in_window = int((pos - start) * (self.model.l2 / self.model.l1))
-            print(f"ref position in window {pos_in_window}")
+            # print(f"ref position in window {pos_in_window}")
             Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
 
             # Iterate over offsets
