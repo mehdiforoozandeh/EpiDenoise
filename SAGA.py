@@ -415,7 +415,7 @@ class CANDIPredictor:
 
         # Randomly select positions avoiding edges
         positions = np.random.randint(self.context_length//2, total_length - self.context_length//2, size=n_positions)
-        offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, 100)
+        offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, 10)
 
         # Initialize arrays to store distances
         cosine_distances = np.zeros((n_positions, len(offsets)))
@@ -474,7 +474,7 @@ class CANDIPredictor:
                 
                 # Position of pos within the shifted context window
                 pos_in_window_shifted = int((pos - start) * (self.model.l2 / self.model.l1))
-                if pos_in_window_shifted >= self.model.l2:
+                if pos_in_window_shifted == self.model.l2:
                     pos_in_window_shifted -= 1
                 # print(f"shifted position in window {pos_in_window_shifted}")
                 Z_pos = Z[pos_in_window_shifted].cpu().numpy()
@@ -500,8 +500,8 @@ class CANDIPredictor:
         axes[2].set_title('Manhattan Distance vs. Position in Context Window')
         axes[2].set_xlabel('Offset from Center')
         axes[2].set_ylabel('Manhattan Distance')
-        for ax in axes:
-            ax.legend()
+        # for ax in axes:
+        #     ax.legend()
         plt.tight_layout()
         plt.savefig(os.path.join(self.savedir, 'latent_position_dependency_lineplots.png'))
         plt.close()
@@ -1052,7 +1052,7 @@ def main():
     elif function_name == "position_dependency":
         print(f"Performing latent position dependency experiment for {bios_name}...")
         latent_position_dependency_experiment(
-            bios_name, n_positions=200)
+            bios_name, n_positions=50)
     else:
         print(f"Unknown function: {function_name}")
         sys.exit(1)
