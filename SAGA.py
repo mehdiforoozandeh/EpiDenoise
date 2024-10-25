@@ -809,7 +809,8 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
         original_mean = original.mean()
         reshaped_mean = reshaped.mean()
         adjustment_factor = original_mean / reshaped_mean
-        return reshaped * adjustment_factor
+        print(f"Adjustment factor: {adjustment_factor}")
+        return reshaped 
 
     # Adjust count_reshaped to maintain the original mean
     count_reshaped = adjust_mean(count, count_reshaped)
