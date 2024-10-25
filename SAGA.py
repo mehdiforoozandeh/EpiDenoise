@@ -792,17 +792,17 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
     decoded_bins = count.shape[0]
     annotation_bins = decoded_bins * decoded_resolution // annotation_resolution
     
-    # print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
+    print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
+    print(f"Original count shape: {count.shape}")
+    
     # Reshape and average for count
-    count_reshaped = count.reshape(count.shape[0], annotation_bins, -1).mean(axis=2)
+    count_reshaped = count.reshape(annotation_bins, -1).mean(axis=1)
     
     # Reshape and average for pval
-    pval_reshaped = pval.reshape(pval.shape[0], annotation_bins, -1).mean(axis=2)
+    pval_reshaped = pval.reshape(annotation_bins, -1).mean(axis=1)
 
-    print(f"Decoded data shape: {count.shape}")
-    print(f"Annotation data shape: {count_reshaped.shape}")
-    print(f"Decoded data shape: {count.shape}")
-    print(f"Annotation data shape: {count_reshaped.shape}")
+    print(f"Reshaped count shape: {count_reshaped.shape}")
+    print(f"Reshaped pval shape: {pval_reshaped.shape}")
 
     # Ensure the mean of the reshaped tensor is the same as the original one
     def adjust_mean(original, reshaped):
