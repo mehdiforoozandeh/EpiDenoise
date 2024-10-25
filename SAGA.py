@@ -254,6 +254,7 @@ class CANDIPredictor:
             temp_y, temp_my = self.dataset.load_bios(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
             Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
             if fill_in_y_prompt:
+                print(mY.shape)
                 mY = self.dataset.fill_in_y_prompt(mY)
             del temp_y, temp_my
 
