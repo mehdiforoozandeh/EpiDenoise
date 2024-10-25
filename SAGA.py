@@ -450,11 +450,13 @@ class CANDIPredictor:
                 
                 # Continue with the rest of the code instead of exiting
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
-                Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
+                
             pos_in_window = self.context_length // 2
-            Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
+            print(Z_ref.shape)
+            returns
+            # Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
 
             # Iterate over offsets
             for i, offset in enumerate(offsets):
