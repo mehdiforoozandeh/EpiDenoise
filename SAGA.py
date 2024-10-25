@@ -1052,7 +1052,7 @@ def main():
     elif function_name == "position_dependency":
         print(f"Performing latent position dependency experiment for {bios_name}...")
         latent_position_dependency_experiment(
-            bios_name, n_positions=50)
+            bios_name, n_positions=100)
     else:
         print(f"Unknown function: {function_name}")
         sys.exit(1)
