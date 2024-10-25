@@ -445,7 +445,7 @@ class CANDIPredictor:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
                 
             # Position of pos within context window
-            pos_in_window = (pos - start) * float(self.model.l2 / self.model.l1)
+            pos_in_window = int((pos - start) * (self.model.l2 / self.model.l1))
             print(f"ref position in window {pos_in_window}")
             Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
 
@@ -473,7 +473,7 @@ class CANDIPredictor:
                     Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
                 
                 # Position of pos within the shifted context window
-                pos_in_window_shifted = (pos - start) * (self.model.l2 // self.model.l1)
+                pos_in_window_shifted = int((pos - start) * (self.model.l2 // self.model.l1))
                 print(f"shifted position in window {pos_in_window_shifted}")
                 Z_pos = Z[pos_in_window_shifted].cpu().numpy()
                 
