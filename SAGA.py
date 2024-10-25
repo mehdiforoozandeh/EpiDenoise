@@ -803,6 +803,24 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
     print(f"Annotation data shape: {count_reshaped.shape}")
     print(f"Decoded data shape: {count.shape}")
     print(f"Annotation data shape: {count_reshaped.shape}")
+
+    # Ensure the mean of the reshaped tensor is the same as the original one
+    def adjust_mean(original, reshaped):
+        original_mean = original.mean()
+        reshaped_mean = reshaped.mean()
+        adjustment_factor = original_mean / reshaped_mean
+        return reshaped * adjustment_factor
+
+    # Adjust count_reshaped to maintain the original mean
+    count_reshaped = adjust_mean(count, count_reshaped)
+
+    # Adjust pval_reshaped to maintain the original mean
+    pval_reshaped = adjust_mean(pval, pval_reshaped)
+
+    print(f"Original count mean: {count.mean():.6f}")
+    print(f"Adjusted count_reshaped mean: {count_reshaped.mean():.6f}")
+    print(f"Original pval mean: {pval.mean():.6f}")
+    print(f"Adjusted pval_reshaped mean: {pval_reshaped.mean():.6f}")
     
     # Update count and pval with the new resolution
     count = count_reshaped
