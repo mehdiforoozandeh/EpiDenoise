@@ -474,7 +474,7 @@ class CANDIPredictor:
                 
                 # Position of pos within the shifted context window
                 pos_in_window_shifted = int((pos - start) * (self.model.l2 / self.model.l1))
-                if pos_in_window_shifted > self.model.l2:
+                if pos_in_window_shifted >= self.model.l2:
                     pos_in_window_shifted -= 1
                 print(f"shifted position in window {pos_in_window_shifted}")
                 Z_pos = Z[pos_in_window_shifted].cpu().numpy()
