@@ -804,25 +804,6 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
     print(f"Reshaped count shape: {count_reshaped.shape}")
     print(f"Reshaped pval shape: {pval_reshaped.shape}")
 
-    # Ensure the mean of the reshaped tensor is the same as the original one
-    def adjust_mean(original, reshaped):
-        original_mean = original.mean()
-        reshaped_mean = reshaped.mean()
-        adjustment_factor = original_mean / reshaped_mean
-        print(f"Adjustment factor: {adjustment_factor}")
-        return reshaped 
-
-    # Adjust count_reshaped to maintain the original mean
-    count_reshaped = adjust_mean(count, count_reshaped)
-
-    # Adjust pval_reshaped to maintain the original mean
-    pval_reshaped = adjust_mean(pval, pval_reshaped)
-
-    print(f"Original count mean: {count.mean():.6f}")
-    print(f"Adjusted count_reshaped mean: {count_reshaped.mean():.6f}")
-    print(f"Original pval mean: {pval.mean():.6f}")
-    print(f"Adjusted pval_reshaped mean: {pval_reshaped.mean():.6f}")
-    
     # Update count and pval with the new resolution
     count = count_reshaped
     pval = pval_reshaped
@@ -833,12 +814,12 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
         labels = cluster(pval, algorithm="HMM", n_components=number_of_states, transition_exponent=transition_exponent)
 
     # Save clustering results as BED file
-    write_bed(labels, "chr21", 0, 400, f'{output_dir}/{bios_name}_decoded_hmm.bed', 
+    write_bed(labels, "chr21", 0, 400, f'{output_dir}/{bios_name}_decoded_hmm_{annotate_based_on}.bed', 
         is_posterior=False, 
         track_name=f"HMM Clustering",     
         track_description=f"HMM Clustering Results", 
         visibility="dense")
-    print(f"HMM clustering results saved as {output_dir}/{bios_name}_decoded_hmm.bed")
+    print(f"HMM clustering results saved as {output_dir}/{bios_name}_decoded_hmm_{annotate_based_on}.bed")
 
 def main():
     if len(sys.argv) < 3:
@@ -892,6 +873,11 @@ def main():
         print(f"Annotating decoded data for {bios_name}...")
         annotate_decoded_data(
             bios_name, annotate_based_on="count", dsf=dsf, 
+            transition_exponent=transition_exponent, 
+            output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
+        )
+        annotate_decoded_data(
+            bios_name, annotate_based_on="pval", dsf=dsf, 
             transition_exponent=transition_exponent, 
             output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
         )
