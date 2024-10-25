@@ -254,7 +254,6 @@ class CANDIPredictor:
             temp_y, temp_my = self.dataset.load_bios(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
             Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
             if fill_in_y_prompt:
-                print(mY.shape)
                 mY = self.dataset.fill_in_y_prompt(mY)
             del temp_y, temp_my
 
@@ -994,10 +993,80 @@ def latent_position_dependency_experiment(
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
+def compare_decoded_outputs(bios_name, dsf=1,
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="output",
+    number_of_states=10,
+    DNA=True):
+
+    CANDIP = CANDIPredictor(
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+    
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Function to get decoded signals
+    def get_decoded_signals(fill_in_y_prompt):
+        if DNA:
+            X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
+        else:
+            X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
+            seq = None
+        
+        count, pval = CANDIP.get_decoded_signal(X, mX, mY, avX, seq=seq if DNA else None)
+        return count, pval
+
+    # Get decoded signals for both cases
+    count_true, pval_true = get_decoded_signals(fill_in_y_prompt=True)
+    count_false, pval_false = get_decoded_signals(fill_in_y_prompt=False)
+
+    # Compare the results
+    count_diff = np.abs(count_true - count_false)
+    pval_diff = np.abs(pval_true - pval_false)
+
+    # Calculate statistics
+    count_mean_diff = np.mean(count_diff)
+    count_max_diff = np.max(count_diff)
+    pval_mean_diff = np.mean(pval_diff)
+    pval_max_diff = np.max(pval_diff)
+
+    # Plot the differences
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10))
+
+    ax1.plot(count_diff)
+    ax1.set_title('Absolute Difference in Count Predictions')
+    ax1.set_xlabel('Position')
+    ax1.set_ylabel('Absolute Difference')
+
+    ax2.plot(pval_diff)
+    ax2.set_title('Absolute Difference in P-value Predictions')
+    ax2.set_xlabel('Position')
+    ax2.set_ylabel('Absolute Difference')
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/{bios_name}_decoded_comparison.png')
+    plt.close()
+
+    # Print statistics
+    print(f"Count prediction differences:")
+    print(f"  Mean absolute difference: {count_mean_diff}")
+    print(f"  Max absolute difference: {count_max_diff}")
+    print(f"P-value prediction differences:")
+    print(f"  Mean absolute difference: {pval_mean_diff}")
+    print(f"  Max absolute difference: {pval_max_diff}")
+
+    # Save the differences to a file
+    np.savez(f'{output_dir}/{bios_name}_decoded_differences.npz', 
+             count_diff=count_diff, pval_diff=pval_diff)
+
+    print(f"Comparison results saved to {output_dir}/{bios_name}_decoded_comparison.png")
+    print(f"Difference data saved to {output_dir}/{bios_name}_decoded_differences.npz")
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: python script.py <bios_name> <function_name> [additional_args]")
-        print("Available functions: generate_latent, visualize_latent, annotate_latent, annotate_decoded")
+        print("Available functions: generate_latent, visualize_latent, annotate_latent, annotate_decoded, position_dependency, compare_decoded")
         sys.exit(1)
 
     bios_name = sys.argv[1]
@@ -1049,11 +1118,19 @@ def main():
             transition_exponent=transition_exponent, 
             output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
         )
-
+    
     elif function_name == "position_dependency":
         print(f"Performing latent position dependency experiment for {bios_name}...")
         latent_position_dependency_experiment(
             bios_name, n_positions=100)
+
+    elif function_name == "compare_decoded":
+        print(f"Comparing decoded outputs for {bios_name}...")
+        compare_decoded_outputs(
+            bios_name, dsf=dsf, output_dir=output_dir, 
+            number_of_states=number_of_states, DNA=DNA
+        )
+
     else:
         print(f"Unknown function: {function_name}")
         sys.exit(1)
