@@ -405,15 +405,23 @@ class CANDIPredictor:
             seq_flat = seq.reshape(-1, seq.shape[-1])
         total_length = X_flat.shape[0]
 
-        # Print shapes of flattened tensors
-        print("Shapes of flattened tensors:")
+        # Print shapes before flattening
+        print("Shapes before flattening:")
+        print(f"X shape: {X.shape}")
+        print(f"mX shape: {mX.shape}")
+        print(f"mY shape: {mY.shape}")
+        print(f"avX shape: {avX.shape}")
+        if self.DNA:
+            print(f"seq shape: {seq.shape}")
+
+        # Print shapes after flattening
+        print("\nShapes after flattening:")
         print(f"X_flat shape: {X_flat.shape}")
         print(f"mX_flat shape: {mX_flat.shape}")
         print(f"mY_flat shape: {mY_flat.shape}")
         print(f"avX_flat shape: {avX_flat.shape}")
         if self.DNA:
             print(f"seq_flat shape: {seq_flat.shape}")
-        
         # Exit the function
         return
 
