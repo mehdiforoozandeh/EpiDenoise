@@ -440,20 +440,13 @@ class CANDIPredictor:
             
             # Get reference latent representation
             if self.DNA:
-                # Print shapes of all input tensors
-                # print("Shapes of input tensors:")
-                # print(f"X_ref shape: {X_ref.shape}")
-                # print(f"mX_ref shape: {mX_ref.shape}")
-                # print(f"mY_ref shape: {mY_ref.shape}")
-                # print(f"avX_ref shape: {avX_ref.shape}")
-                # print(f"seq_ref shape: {seq_ref.shape}")
-                
-                # Continue with the rest of the code instead of exiting
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
                 
-            pos_in_window = self.context_length // self.resolution // 2
+            # Position of pos within context window
+            pos_in_window = pos - start
+            print(f"ref position in window {pos_in_window}")
             Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
 
             # Iterate over offsets
@@ -478,7 +471,11 @@ class CANDIPredictor:
                     Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=seq_window)
                 else:
                     Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
-                Z_pos = Z[pos_in_window].cpu().numpy()
+                
+                # Position of pos within the shifted context window
+                pos_in_window_shifted = pos - start
+                print(f"shifted position in window {pos_in_window_shifted}")
+                Z_pos = Z[pos_in_window_shifted].cpu().numpy()
                 
                 # Compute distances
                 cosine_distances[idx, i] = cosine(Z_ref_pos, Z_pos)
