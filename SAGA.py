@@ -836,7 +836,7 @@ def main():
     DNA = True
     dsf = 1
     pca_components = 20
-    transition_exponent = 1.0
+    transition_exponent = 10.0
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
