@@ -1,6 +1,10 @@
 # Standard library imports
 import os
 import sys
+from tqdm import tqdm
+from scipy.spatial.distance import cosine, euclidean, cityblock
+import seaborn as sns
+
 
 # Third-party imports
 import numpy as np
@@ -385,6 +389,151 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
+    def latent_position_dependency_experiment(self, bios_name, n_positions=10):
+        # Load the data
+        print("Loading data...")
+        if self.DNA:
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
+        else:
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
+        # Flatten data
+        X_flat = X.view(-1, X.shape[-1])
+        mX_flat = mX.view(-1, mX.shape[-1])
+        mY_flat = mY.view(-1, mY.shape[-1])
+        avX_flat = avX.view(-1)
+        if self.DNA:
+            seq_flat = seq.view(-1, seq.shape[-1])
+        total_length = X_flat.shape[0]
+
+        # Randomly select positions avoiding edges
+        positions = np.random.randint(self.context_length//2, total_length - self.context_length//2, size=n_positions)
+        offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, 100)
+
+        # Initialize arrays to store distances
+        cosine_distances = np.zeros((n_positions, len(offsets)))
+        euclidean_distances = np.zeros((n_positions, len(offsets)))
+        manhattan_distances = np.zeros((n_positions, len(offsets)))
+
+        for idx, pos in enumerate(tqdm(positions, desc='Processing positions')):
+            # Reference context window centered at pos
+            start = pos - self.context_length//2
+            end = pos + self.context_length//2
+            X_ref = X_flat[start:end]
+            mX_ref = mX_flat[start:end]
+            mY_ref = mY_flat[start:end]
+            avX_ref = avX_flat[start:end]
+            if self.DNA:
+                seq_ref = seq_flat[(start*self.resolution):(end*self.resolution)]
+            # Expand dims
+            X_ref = X_ref.unsqueeze(0)
+            mX_ref = mX_ref.unsqueeze(0)
+            mY_ref = mY_ref.unsqueeze(0)
+            avX_ref = avX_ref.unsqueeze(0)
+            if self.DNA:
+                seq_ref = seq_ref.unsqueeze(0)
+            # Get reference latent representation
+            if self.DNA:
+                Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
+            else:
+                Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
+            pos_in_window = self.context_length // 2
+            Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
+
+            # Iterate over offsets
+            for i, offset in enumerate(offsets):
+                new_pos = pos + offset
+                start = new_pos - self.context_length//2
+                end = new_pos + self.context_length//2
+                if start < 0 or end > total_length:
+                    cosine_distances[idx, i] = np.nan
+                    euclidean_distances[idx, i] = np.nan
+                    manhattan_distances[idx, i] = np.nan
+                    continue
+                X_window = X_flat[start:end]
+                mX_window = mX_flat[start:end]
+                mY_window = mY_flat[start:end]
+                avX_window = avX_flat[start:end]
+                if self.DNA:
+                    seq_window = seq_flat[(start*self.resolution):(end*self.resolution)]
+                X_window = X_window.unsqueeze(0)
+                mX_window = mX_window.unsqueeze(0)
+                mY_window = mY_window.unsqueeze(0)
+                avX_window = avX_window.unsqueeze(0)
+                if self.DNA:
+                    seq_window = seq_window.unsqueeze(0)
+                if self.DNA:
+                    Z = self.get_latent_representations(X_window, mX_window, mY_window, avX_window, seq=seq_window)
+                else:
+                    Z = self.get_latent_representations(X_window, mX_window, mY_window, avX_window, seq=None)
+                Z_pos = Z[pos_in_window].cpu().numpy()
+                # Compute distances
+                cosine_distances[idx, i] = cosine(Z_ref_pos, Z_pos)
+                euclidean_distances[idx, i] = euclidean(Z_ref_pos, Z_pos)
+                manhattan_distances[idx, i] = cityblock(Z_ref_pos, Z_pos)
+
+        # Plotting
+        # Line plots for each position
+        fig, axes = plt.subplots(3, 1, figsize=(10, 15))
+        for idx in range(n_positions):
+            axes[0].plot(offsets, cosine_distances[idx], label=f'Pos {idx+1}')
+            axes[1].plot(offsets, euclidean_distances[idx], label=f'Pos {idx+1}')
+            axes[2].plot(offsets, manhattan_distances[idx], label=f'Pos {idx+1}')
+        axes[0].set_title('Cosine Distance vs. Position in Context Window')
+        axes[0].set_xlabel('Offset from Center')
+        axes[0].set_ylabel('Cosine Distance')
+        axes[1].set_title('Euclidean Distance vs. Position in Context Window')
+        axes[1].set_xlabel('Offset from Center')
+        axes[1].set_ylabel('Euclidean Distance')
+        axes[2].set_title('Manhattan Distance vs. Position in Context Window')
+        axes[2].set_xlabel('Offset from Center')
+        axes[2].set_ylabel('Manhattan Distance')
+        for ax in axes:
+            ax.legend()
+        plt.tight_layout()
+        plt.savefig('latent_position_dependency_lineplots.png')
+        plt.close()
+
+        # Heatmaps
+        fig, axes = plt.subplots(1, 3, figsize=(20, 5))
+        sns.heatmap(cosine_distances, ax=axes[0], cmap='viridis', xticklabels=offsets)
+        axes[0].set_title('Cosine Distance Heatmap')
+        axes[0].set_xlabel('Offset from Center')
+        axes[0].set_ylabel('Position Index')
+        sns.heatmap(euclidean_distances, ax=axes[1], cmap='viridis', xticklabels=offsets)
+        axes[1].set_title('Euclidean Distance Heatmap')
+        axes[1].set_xlabel('Offset from Center')
+        axes[1].set_ylabel('Position Index')
+        sns.heatmap(manhattan_distances, ax=axes[2], cmap='viridis', xticklabels=offsets)
+        axes[2].set_title('Manhattan Distance Heatmap')
+        axes[2].set_xlabel('Offset from Center')
+        axes[2].set_ylabel('Position Index')
+        plt.tight_layout()
+        plt.savefig('latent_position_dependency_heatmaps.png')
+        plt.close()
+
+        # Average distances with error bars
+        cosine_mean = np.nanmean(cosine_distances, axis=0)
+        cosine_std = np.nanstd(cosine_distances, axis=0)
+        euclidean_mean = np.nanmean(euclidean_distances, axis=0)
+        euclidean_std = np.nanstd(euclidean_distances, axis=0)
+        manhattan_mean = np.nanmean(manhattan_distances, axis=0)
+        manhattan_std = np.nanstd(manhattan_distances, axis=0)
+        fig, axes = plt.subplots(3, 1, figsize=(10, 15))
+        axes[0].errorbar(offsets, cosine_mean, yerr=cosine_std, fmt='-o')
+        axes[0].set_title('Average Cosine Distance vs. Position in Context Window')
+        axes[0].set_xlabel('Offset from Center')
+        axes[0].set_ylabel('Cosine Distance')
+        axes[1].errorbar(offsets, euclidean_mean, yerr=euclidean_std, fmt='-o')
+        axes[1].set_title('Average Euclidean Distance vs. Position in Context Window')
+        axes[1].set_xlabel('Offset from Center')
+        axes[1].set_ylabel('Euclidean Distance')
+        axes[2].errorbar(offsets, manhattan_mean, yerr=manhattan_std, fmt='-o')
+        axes[2].set_title('Average Manhattan Distance vs. Position in Context Window')
+        axes[2].set_xlabel('Offset from Center')
+        axes[2].set_ylabel('Manhattan Distance')
+        plt.tight_layout()
+        plt.savefig('latent_position_dependency_average.png')
+        plt.close()
 
 #########################################################
 
@@ -767,7 +916,7 @@ def annotate_latent(latent_file, output_dir="output", number_of_states=6, transi
                 visibility="dense")
     print(f"HMM clustering results saved as {output_dir}/{bios_name}_latent_{pca_components}PC_hmm.bed")
 
-def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolution=200, annotate_based_on="count", dsf=1, transition_exponent=1.0,
+def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolution=200, annotate_based_on="pval", dsf=1, transition_exponent=1.0,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
     dataset_path="/project/compbio-lab/encode_data/",
@@ -814,12 +963,23 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
         labels = cluster(pval, algorithm="HMM", n_components=number_of_states, transition_exponent=transition_exponent)
 
     # Save clustering results as BED file
-    write_bed(labels, "chr21", 0, 400, f'{output_dir}/{bios_name}_decoded_hmm_{annotate_based_on}.bed', 
+    write_bed(labels, "chr21", 0, annotation_resolution, f'{output_dir}/{bios_name}_decoded_hmm_{annotate_based_on}.bed', 
         is_posterior=False, 
         track_name=f"HMM Clustering",     
         track_description=f"HMM Clustering Results", 
         visibility="dense")
     print(f"HMM clustering results saved as {output_dir}/{bios_name}_decoded_hmm_{annotate_based_on}.bed")
+
+def latent_position_dependency_experiment(
+    bios_name, 
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="output", number_of_states=10, DNA=True, n_positions=10):
+    predictor = CANDIPredictor(
+        
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+    predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
 def main():
     if len(sys.argv) < 3:
@@ -872,16 +1032,15 @@ def main():
     elif function_name == "annotate_decoded":
         print(f"Annotating decoded data for {bios_name}...")
         annotate_decoded_data(
-            bios_name, annotate_based_on="count", dsf=dsf, 
-            transition_exponent=transition_exponent, 
-            output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
-        )
-        annotate_decoded_data(
             bios_name, annotate_based_on="pval", dsf=dsf, 
             transition_exponent=transition_exponent, 
             output_dir=output_dir, number_of_states=number_of_states, DNA=DNA
         )
 
+    elif function_name == "position_dependency":
+        print(f"Performing latent position dependency experiment for {bios_name}...")
+        latent_position_dependency_experiment(
+            bios_name, n_positions=100)
     else:
         print(f"Unknown function: {function_name}")
         sys.exit(1)
