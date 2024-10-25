@@ -415,7 +415,7 @@ class CANDIPredictor:
 
         # Randomly select positions avoiding edges
         positions = np.random.randint(self.context_length//2, total_length - self.context_length//2, size=n_positions)
-        offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, (self.model.l1 // self.model.l2))
+        offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, (self.model.l1 // self.model.l2)*5)
 
         # Initialize arrays to store distances
         cosine_distances = np.zeros((n_positions, len(offsets)))
