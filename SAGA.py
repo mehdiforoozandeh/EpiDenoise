@@ -789,7 +789,7 @@ def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolutio
     count, pval = CANDIP.get_decoded_signal(X, mX, mY, avX, seq=seq if DNA else None)
 
     # Convert decoded resolution to annotation resolution
-    decoded_bins = count.shape[1]
+    decoded_bins = count.shape[0]
     annotation_bins = decoded_bins * decoded_resolution // annotation_resolution
     
     print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
