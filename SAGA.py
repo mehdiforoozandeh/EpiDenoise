@@ -188,7 +188,7 @@ class CANDIPredictor:
     def __init__(
         self, model, hyper_parameters_path, number_of_states, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
-        savedir="models/evals/", data_path="/project/compbio-lab/encode_data/"):
+        savedir="models/output/", data_path="/project/compbio-lab/encode_data/"):
 
         self.model = model
         self.number_of_states = number_of_states
@@ -490,25 +490,25 @@ class CANDIPredictor:
         for ax in axes:
             ax.legend()
         plt.tight_layout()
-        plt.savefig('latent_position_dependency_lineplots.png')
+        plt.savefig(os.path.join(self.savedir, 'latent_position_dependency_lineplots.png'))
         plt.close()
 
         # Heatmaps
         fig, axes = plt.subplots(1, 3, figsize=(20, 5))
-        sns.heatmap(cosine_distances, ax=axes[0], cmap='viridis', xticklabels=offsets)
+        sns.heatmap(cosine_distances, ax=axes[0], cmap='viridis', xticklabels=offsets.astype(str))
         axes[0].set_title('Cosine Distance Heatmap')
         axes[0].set_xlabel('Offset from Center')
         axes[0].set_ylabel('Position Index')
-        sns.heatmap(euclidean_distances, ax=axes[1], cmap='viridis', xticklabels=offsets)
+        sns.heatmap(euclidean_distances, ax=axes[1], cmap='viridis', xticklabels=offsets.astype(str))
         axes[1].set_title('Euclidean Distance Heatmap')
         axes[1].set_xlabel('Offset from Center')
         axes[1].set_ylabel('Position Index')
-        sns.heatmap(manhattan_distances, ax=axes[2], cmap='viridis', xticklabels=offsets)
+        sns.heatmap(manhattan_distances, ax=axes[2], cmap='viridis', xticklabels=offsets.astype(str))
         axes[2].set_title('Manhattan Distance Heatmap')
         axes[2].set_xlabel('Offset from Center')
         axes[2].set_ylabel('Position Index')
         plt.tight_layout()
-        plt.savefig('latent_position_dependency_heatmaps.png')
+        plt.savefig(os.path.join(self.savedir, 'latent_position_dependency_heatmaps.png'))
         plt.close()
 
         # Average distances with error bars
@@ -532,7 +532,7 @@ class CANDIPredictor:
         axes[2].set_xlabel('Offset from Center')
         axes[2].set_ylabel('Manhattan Distance')
         plt.tight_layout()
-        plt.savefig('latent_position_dependency_average.png')
+        plt.savefig(os.path.join(self.savedir, 'latent_position_dependency_average.png'))
         plt.close()
 
 #########################################################
@@ -977,7 +977,6 @@ def latent_position_dependency_experiment(
     dataset_path="/project/compbio-lab/encode_data/",
     output_dir="output", number_of_states=10, DNA=True, n_positions=10):
     predictor = CANDIPredictor(
-        
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
