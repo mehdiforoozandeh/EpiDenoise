@@ -405,6 +405,18 @@ class CANDIPredictor:
             seq_flat = seq.reshape(-1, seq.shape[-1])
         total_length = X_flat.shape[0]
 
+        # Print shapes of flattened tensors
+        print("Shapes of flattened tensors:")
+        print(f"X_flat shape: {X_flat.shape}")
+        print(f"mX_flat shape: {mX_flat.shape}")
+        print(f"mY_flat shape: {mY_flat.shape}")
+        print(f"avX_flat shape: {avX_flat.shape}")
+        if self.DNA:
+            print(f"seq_flat shape: {seq_flat.shape}")
+        
+        # Exit the function
+        return
+
         # Randomly select positions avoiding edges
         positions = np.random.randint(self.context_length//2, total_length - self.context_length//2, size=n_positions)
         offsets = np.arange(-self.context_length//2, self.context_length//2 + 1, 100)
