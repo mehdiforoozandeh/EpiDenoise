@@ -1006,7 +1006,7 @@ def compare_decoded_outputs(bios_name, dsf=1,
     
     os.makedirs(output_dir, exist_ok=True)
 
-    # Function to get decoded signals
+    # Function to get decoded signals and availability information
     def get_decoded_signals(fill_in_y_prompt):
         if DNA:
             X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
@@ -1015,17 +1015,28 @@ def compare_decoded_outputs(bios_name, dsf=1,
             seq = None
         
         count, pval = CANDIP.get_decoded_signal(X, mX, mY, avX, seq=seq if DNA else None)
-        return count, pval
-
+        return count, pval, avX, avY
+    
     # Get decoded signals for both cases
-    count_true, pval_true = get_decoded_signals(fill_in_y_prompt=True)
-    count_false, pval_false = get_decoded_signals(fill_in_y_prompt=False)
+    count_true, pval_true, avX_true, avY_true = get_decoded_signals(fill_in_y_prompt=True)
+    count_false, pval_false, avX_false, avY_false = get_decoded_signals(fill_in_y_prompt=False)
 
     # Convert PyTorch tensors to NumPy arrays
     count_true = count_true.cpu().numpy()
     count_false = count_false.cpu().numpy()
     pval_true = pval_true.cpu().numpy()
     pval_false = pval_false.cpu().numpy()
+    avX_true = avX_true.cpu().numpy()
+    avY_true = avY_true.cpu().numpy()
+
+    # Print available features
+    print("Available features in avX:")
+    for i, available in enumerate(avX_true[0]):
+        print(f"Feature {i+1}: {'Available' if available else 'Not Available'}")
+    
+    print("\nAvailable features in avY:")
+    for i, available in enumerate(avY_true[0]):
+        print(f"Feature {i+1}: {'Available' if available else 'Not Available'}")
 
     # Compare the results
     count_diff = count_true - count_false
@@ -1044,13 +1055,17 @@ def compare_decoded_outputs(bios_name, dsf=1,
     for i in range(num_features):
         # Count difference histogram
         axes[i, 0].hist(count_diff[:, i], bins=100, edgecolor='black')
-        axes[i, 0].set_title(f'Count Difference - Feature {i+1}')
+        axes[i, 0].set_title(f'Count Difference - Feature {i+1}\n' +
+                             f'({"Available" if avX_true[0, i] else "Not Available"} in avX, ' +
+                             f'{"Available" if avY_true[0, i] else "Not Available"} in avY)')
         axes[i, 0].set_xlabel('Difference')
         axes[i, 0].set_ylabel('Frequency')
         
         # P-value difference histogram
         axes[i, 1].hist(pval_diff[:, i], bins=100, edgecolor='black')
-        axes[i, 1].set_title(f'P-value Difference - Feature {i+1}')
+        axes[i, 1].set_title(f'P-value Difference - Feature {i+1}\n' +
+                             f'({"Available" if avX_true[0, i] else "Not Available"} in avX, ' +
+                             f'{"Available" if avY_true[0, i] else "Not Available"} in avY)')
         axes[i, 1].set_xlabel('Difference')
         axes[i, 1].set_ylabel('Frequency')
 
@@ -1066,12 +1081,7 @@ def compare_decoded_outputs(bios_name, dsf=1,
     print(f"  Mean difference: {pval_mean_diff}")
     print(f"  Standard deviation of difference: {pval_std_diff}")
 
-    # Save the differences to a file
-    np.savez(f'{output_dir}/{bios_name}_decoded_differences.npz', 
-             count_diff=count_diff, pval_diff=pval_diff)
-
     print(f"Comparison results saved to {output_dir}/{bios_name}_decoded_comparison_histograms.png")
-    print(f"Difference data saved to {output_dir}/{bios_name}_decoded_differences.npz")
 
 def main():
     if len(sys.argv) < 3:
