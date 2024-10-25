@@ -767,7 +767,7 @@ def annotate_latent(latent_file, output_dir="output", number_of_states=6, transi
                 visibility="dense")
     print(f"HMM clustering results saved as {output_dir}/{bios_name}_latent_{pca_components}PC_hmm.bed")
 
-def annotate_decoded_data(bios_name, annotate_based_on="count", dsf=1, transition_exponent=1.0,
+def annotate_decoded_data(bios_name, decoded_resolution=25, annotation_resolution=200, annotate_based_on="count", dsf=1, transition_exponent=1.0,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
     dataset_path="/project/compbio-lab/encode_data/",
@@ -787,6 +787,25 @@ def annotate_decoded_data(bios_name, annotate_based_on="count", dsf=1, transitio
         seq = None
         
     count, pval = CANDIP.get_decoded_signal(X, mX, mY, avX, seq=seq if DNA else None)
+
+    # Convert decoded resolution to annotation resolution
+    decoded_bins = count.shape[1]
+    annotation_bins = decoded_bins * decoded_resolution // annotation_resolution
+    
+    print(f"Decoded bins: {decoded_bins}, Annotation bins: {annotation_bins}")
+    exit()
+    # Reshape and average for count
+    count_reshaped = count.reshape(count.shape[0], annotation_bins, -1).mean(axis=2)
+    
+    # Reshape and average for pval
+    pval_reshaped = pval.reshape(pval.shape[0], annotation_bins, -1).mean(axis=2)
+    
+    print(f"Decoded data shape: {count.shape}")
+    print(f"Annotation data shape: {count_reshaped.shape}")
+    
+    # Update count and pval with the new resolution
+    count = count_reshaped
+    pval = pval_reshaped
 
     if annotate_based_on == "count":
         labels = cluster(count, algorithm="HMM", n_components=number_of_states, transition_exponent=transition_exponent)
