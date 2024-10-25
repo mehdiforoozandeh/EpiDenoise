@@ -440,6 +440,16 @@ class CANDIPredictor:
             
             # Get reference latent representation
             if self.DNA:
+                # Print shapes of all input tensors
+                print("Shapes of input tensors:")
+                print(f"X_ref shape: {X_ref.shape}")
+                print(f"mX_ref shape: {mX_ref.shape}")
+                print(f"mY_ref shape: {mY_ref.shape}")
+                print(f"avX_ref shape: {avX_ref.shape}")
+                print(f"seq_ref shape: {seq_ref.shape}")
+                
+                # Exit after printing shapes
+                sys.exit(0)
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
