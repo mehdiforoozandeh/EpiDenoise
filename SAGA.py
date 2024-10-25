@@ -1021,6 +1021,12 @@ def compare_decoded_outputs(bios_name, dsf=1,
     count_true, pval_true = get_decoded_signals(fill_in_y_prompt=True)
     count_false, pval_false = get_decoded_signals(fill_in_y_prompt=False)
 
+    # Convert PyTorch tensors to NumPy arrays
+    count_true = count_true.cpu().numpy()
+    count_false = count_false.cpu().numpy()
+    pval_true = pval_true.cpu().numpy()
+    pval_false = pval_false.cpu().numpy()
+
     # Compare the results
     count_diff = np.abs(count_true - count_false)
     pval_diff = np.abs(pval_true - pval_false)
@@ -1031,21 +1037,41 @@ def compare_decoded_outputs(bios_name, dsf=1,
     pval_mean_diff = np.mean(pval_diff)
     pval_max_diff = np.max(pval_diff)
 
-    # Plot the differences
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10))
+    # Create a heatmap of the differences
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10))
 
-    ax1.plot(count_diff)
+    # Reshape the difference arrays to 2D for better visualization
+    reshape_size = int(np.sqrt(count_diff.shape[0]))
+    count_diff_2d = count_diff[:reshape_size**2].reshape(reshape_size, reshape_size)
+    pval_diff_2d = pval_diff[:reshape_size**2].reshape(reshape_size, reshape_size)
+
+    im1 = ax1.imshow(count_diff_2d, cmap='viridis', aspect='auto')
     ax1.set_title('Absolute Difference in Count Predictions')
-    ax1.set_xlabel('Position')
-    ax1.set_ylabel('Absolute Difference')
+    plt.colorbar(im1, ax=ax1)
 
-    ax2.plot(pval_diff)
+    im2 = ax2.imshow(pval_diff_2d, cmap='viridis', aspect='auto')
     ax2.set_title('Absolute Difference in P-value Predictions')
-    ax2.set_xlabel('Position')
-    ax2.set_ylabel('Absolute Difference')
+    plt.colorbar(im2, ax=ax2)
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/{bios_name}_decoded_comparison.png')
+    plt.savefig(f'{output_dir}/{bios_name}_decoded_comparison_heatmap.png')
+    plt.close()
+
+    # Create histograms of the differences
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10))
+
+    ax1.hist(count_diff, bins=100, edgecolor='black')
+    ax1.set_title('Distribution of Absolute Differences in Count Predictions')
+    ax1.set_xlabel('Absolute Difference')
+    ax1.set_ylabel('Frequency')
+
+    ax2.hist(pval_diff, bins=100, edgecolor='black')
+    ax2.set_title('Distribution of Absolute Differences in P-value Predictions')
+    ax2.set_xlabel('Absolute Difference')
+    ax2.set_ylabel('Frequency')
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/{bios_name}_decoded_comparison_histogram.png')
     plt.close()
 
     # Print statistics
@@ -1060,7 +1086,7 @@ def compare_decoded_outputs(bios_name, dsf=1,
     np.savez(f'{output_dir}/{bios_name}_decoded_differences.npz', 
              count_diff=count_diff, pval_diff=pval_diff)
 
-    print(f"Comparison results saved to {output_dir}/{bios_name}_decoded_comparison.png")
+    print(f"Comparison results saved to {output_dir}/{bios_name}_decoded_comparison_heatmap.png and {output_dir}/{bios_name}_decoded_comparison_histogram.png")
     print(f"Difference data saved to {output_dir}/{bios_name}_decoded_differences.npz")
 
 def main():
