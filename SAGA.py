@@ -185,8 +185,7 @@ class SequenceClustering(object):
 
 # sequence clustering
 class CANDIPredictor:
-    def __init__(
-        self, model, hyper_parameters_path, number_of_states, 
+    def __init__(self, model, hyper_parameters_path, number_of_states, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
         savedir="models/output/", data_path="/project/compbio-lab/encode_data/"):
 
@@ -396,34 +395,23 @@ class CANDIPredictor:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
         else:
             X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
-        # Flatten data
+        
+        # Flatten only X and seq
         X_flat = X.reshape(-1, X.shape[-1])
-        mX_flat = mX.reshape(-1, mX.shape[-1])
-        mY_flat = mY.reshape(-1, mY.shape[-1])
-        avX_flat = avX.reshape(-1)
         if self.DNA:
             seq_flat = seq.reshape(-1, seq.shape[-1])
         total_length = X_flat.shape[0]
 
-        # Print shapes before flattening
-        print("Shapes before flattening:")
+        # Print shapes
+        print("Shapes of tensors:")
         print(f"X shape: {X.shape}")
+        print(f"X_flat shape: {X_flat.shape}")
         print(f"mX shape: {mX.shape}")
         print(f"mY shape: {mY.shape}")
         print(f"avX shape: {avX.shape}")
         if self.DNA:
             print(f"seq shape: {seq.shape}")
-
-        # Print shapes after flattening
-        print("\nShapes after flattening:")
-        print(f"X_flat shape: {X_flat.shape}")
-        print(f"mX_flat shape: {mX_flat.shape}")
-        print(f"mY_flat shape: {mY_flat.shape}")
-        print(f"avX_flat shape: {avX_flat.shape}")
-        if self.DNA:
             print(f"seq_flat shape: {seq_flat.shape}")
-        # Exit the function
-        return
 
         # Randomly select positions avoiding edges
         positions = np.random.randint(self.context_length//2, total_length - self.context_length//2, size=n_positions)
@@ -439,18 +427,17 @@ class CANDIPredictor:
             start = pos - self.context_length//2
             end = pos + self.context_length//2
             X_ref = X_flat[start:end]
-            mX_ref = mX_flat[start:end]
-            mY_ref = mY_flat[start:end]
-            avX_ref = avX_flat[start:end]
+            mX_ref = mX
+            mY_ref = mY
+            avX_ref = avX
             if self.DNA:
                 seq_ref = seq_flat[(start*self.resolution):(end*self.resolution)]
-            # Expand dims
+            
+            # Expand dims for X_ref
             X_ref = X_ref.unsqueeze(0)
-            mX_ref = mX_ref.unsqueeze(0)
-            mY_ref = mY_ref.unsqueeze(0)
-            avX_ref = avX_ref.unsqueeze(0)
             if self.DNA:
                 seq_ref = seq_ref.unsqueeze(0)
+            
             # Get reference latent representation
             if self.DNA:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
@@ -470,22 +457,19 @@ class CANDIPredictor:
                     manhattan_distances[idx, i] = np.nan
                     continue
                 X_window = X_flat[start:end]
-                mX_window = mX_flat[start:end]
-                mY_window = mY_flat[start:end]
-                avX_window = avX_flat[start:end]
                 if self.DNA:
                     seq_window = seq_flat[(start*self.resolution):(end*self.resolution)]
+                
                 X_window = X_window.unsqueeze(0)
-                mX_window = mX_window.unsqueeze(0)
-                mY_window = mY_window.unsqueeze(0)
-                avX_window = avX_window.unsqueeze(0)
                 if self.DNA:
                     seq_window = seq_window.unsqueeze(0)
+                
                 if self.DNA:
-                    Z = self.get_latent_representations(X_window, mX_window, mY_window, avX_window, seq=seq_window)
+                    Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=seq_window)
                 else:
-                    Z = self.get_latent_representations(X_window, mX_window, mY_window, avX_window, seq=None)
+                    Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
                 Z_pos = Z[pos_in_window].cpu().numpy()
+                
                 # Compute distances
                 cosine_distances[idx, i] = cosine(Z_ref_pos, Z_pos)
                 euclidean_distances[idx, i] = euclidean(Z_ref_pos, Z_pos)
