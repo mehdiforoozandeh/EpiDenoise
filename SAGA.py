@@ -397,12 +397,12 @@ class CANDIPredictor:
         else:
             X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
         # Flatten data
-        X_flat = X.view(-1, X.shape[-1])
-        mX_flat = mX.view(-1, mX.shape[-1])
-        mY_flat = mY.view(-1, mY.shape[-1])
-        avX_flat = avX.view(-1)
+        X_flat = X.reshape(-1, X.shape[-1])
+        mX_flat = mX.reshape(-1, mX.shape[-1])
+        mY_flat = mY.reshape(-1, mY.shape[-1])
+        avX_flat = avX.reshape(-1)
         if self.DNA:
-            seq_flat = seq.view(-1, seq.shape[-1])
+            seq_flat = seq.reshape(-1, seq.shape[-1])
         total_length = X_flat.shape[0]
 
         # Randomly select positions avoiding edges
