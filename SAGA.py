@@ -427,9 +427,9 @@ class CANDIPredictor:
             start = pos - self.context_length//2
             end = pos + self.context_length//2
             X_ref = X_flat[start:end]
-            mX_ref = mX
-            mY_ref = mY
-            avX_ref = avX
+            mX_ref = mX[0].unsqueeze(0)
+            mY_ref = mY[0].unsqueeze(0)
+            avX_ref = avX[0].unsqueeze(0)
             if self.DNA:
                 seq_ref = seq_flat[(start*self.resolution):(end*self.resolution)]
             
@@ -441,15 +441,15 @@ class CANDIPredictor:
             # Get reference latent representation
             if self.DNA:
                 # Print shapes of all input tensors
-                print("Shapes of input tensors:")
-                print(f"X_ref shape: {X_ref.shape}")
-                print(f"mX_ref shape: {mX_ref.shape}")
-                print(f"mY_ref shape: {mY_ref.shape}")
-                print(f"avX_ref shape: {avX_ref.shape}")
-                print(f"seq_ref shape: {seq_ref.shape}")
+                # print("Shapes of input tensors:")
+                # print(f"X_ref shape: {X_ref.shape}")
+                # print(f"mX_ref shape: {mX_ref.shape}")
+                # print(f"mY_ref shape: {mY_ref.shape}")
+                # print(f"avX_ref shape: {avX_ref.shape}")
+                # print(f"seq_ref shape: {seq_ref.shape}")
                 
-                # Exit after printing shapes
-                sys.exit(0)
+                # Continue with the rest of the code instead of exiting
+                Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
