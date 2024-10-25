@@ -445,6 +445,8 @@ class CANDIPredictor:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
                 
             # Position of pos within context window
+            print(f"l1: {self.model.l1}, l2: {self.model.l2}")
+            return
             pos_in_window = pos - start * float(self.model.l2 / self.model.l1)
             print(f"ref position in window {pos_in_window}")
             Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
