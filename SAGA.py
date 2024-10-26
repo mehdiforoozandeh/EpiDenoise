@@ -507,24 +507,43 @@ class CANDIPredictor:
                     outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
                         x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
 
+            # Add debugging information
+            print(f"Batch size: {x_batch.shape[0]}")
+            print(f"Latent shape: {latent.shape}")
+            print(f"Valid positions in window shape: {len(valid_positions_in_window_batch)}")
+
             batch_size_actual = x_batch.shape[0]
             for b in range(batch_size_actual):
-                # Get valid positions
                 valid_pos_in_window_b = valid_positions_in_window_batch[b]
                 valid_pos_in_seq_b = valid_positions_in_seq_batch[b]
 
-                n_valid = outputs_n[b, valid_pos_in_window_b].cpu()
-                p_valid = outputs_p[b, valid_pos_in_window_b].cpu()
-                mu_valid = outputs_mu[b, valid_pos_in_window_b].cpu()
-                var_valid = outputs_var[b, valid_pos_in_window_b].cpu()
-                Z_valid = latent[b, valid_pos_in_window_b].cpu()
+                # Add more debugging information
+                print(f"Window {b}:")
+                print(f"  Valid positions in window: {valid_pos_in_window_b}")
+                print(f"  Max index in valid_pos_in_window_b: {valid_pos_in_window_b.max()}")
+                print(f"  Latent shape for this window: {latent[b].shape}")
 
-                # Assign predictions to full tensors
-                n_full[valid_pos_in_seq_b] = n_valid
-                p_full[valid_pos_in_seq_b] = p_valid
-                mu_full[valid_pos_in_seq_b] = mu_valid
-                var_full[valid_pos_in_seq_b] = var_valid
-                Z_full[valid_pos_in_seq_b] = Z_valid
+                # Check if the maximum index is within bounds
+                if valid_pos_in_window_b.max() >= latent[b].shape[0]:
+                    print(f"  WARNING: Index out of bounds for window {b}")
+                    continue  # Skip this window
+
+                try:
+                    n_valid = outputs_n[b, valid_pos_in_window_b].cpu()
+                    p_valid = outputs_p[b, valid_pos_in_window_b].cpu()
+                    mu_valid = outputs_mu[b, valid_pos_in_window_b].cpu()
+                    var_valid = outputs_var[b, valid_pos_in_window_b].cpu()
+                    Z_valid = latent[b, valid_pos_in_window_b].cpu()
+
+                    # Assign predictions to full tensors
+                    n_full[valid_pos_in_seq_b] = n_valid
+                    p_full[valid_pos_in_seq_b] = p_valid
+                    mu_full[valid_pos_in_seq_b] = mu_valid
+                    var_full[valid_pos_in_seq_b] = var_valid
+                    Z_full[valid_pos_in_seq_b] = Z_valid
+                except IndexError as e:
+                    print(f"  IndexError in window {b}: {str(e)}")
+                    continue  # Skip this window
 
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
             torch.cuda.empty_cache()
