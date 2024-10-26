@@ -307,7 +307,7 @@ class CANDIPredictor:
         else:
             return X, Y, P, mX, mY, avX, avY
 
-    def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
+    def _OLD_pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         mu = torch.empty_like(X, device="cpu", dtype=torch.float32) 
@@ -369,6 +369,176 @@ class CANDIPredictor:
         var = var.view(var.shape[0] * var.shape[1], var.shape[-1])
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
+
+    def pred(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
+        """
+        Predicts over the input data X, mX, mY, avail, possibly seq.
+        Handles overlapping windows to ensure all positions are predicted in the center (non-edge) of some window.
+        Crops a percentage from the edges of each window, except for the first and last windows.
+        Assembles the predictions into final outputs.
+        """
+        # Calculate crop length and valid length
+        crop_len = int(crop_percent * self.context_length)
+        valid_len = self.context_length - 2 * crop_len
+        stride = valid_len
+
+        total_length = X.shape[0] * X.shape[1]  # Total number of positions
+        feature_dim = X.shape[-1]
+        latent_dim = self.model.latent_dim
+
+        # Flatten X, mX, mY, avail for convenience
+        X_flat = X.view(-1, feature_dim)
+        mX_flat = mX.view(-1, feature_dim)
+        mY_flat = mY.view(-1, feature_dim)
+        avail_flat = avail.view(-1, avail.shape[-1])
+        if self.DNA:
+            seq_flat = seq.view(-1, seq.shape[-1])
+
+        # Generate start indices for windows
+        starts = list(range(0, total_length - self.context_length + 1, stride))
+        if starts[-1] + self.context_length < total_length:
+            starts.append(total_length - self.context_length)
+        num_windows = len(starts)
+
+        # Prepare windows
+        X_windows = []
+        mX_windows = []
+        mY_windows = []
+        avail_windows = []
+        if self.DNA:
+            seq_windows = []
+        valid_positions_in_window = []  # Relative indices
+        valid_positions_in_seq = []     # Absolute indices
+
+        for start in starts:
+            end = start + self.context_length
+            X_window = X_flat[start:end]
+            mX_window = mX_flat[start:end]
+            mY_window = mY_flat[start:end]
+            avail_window = avail_flat[start:end]
+            if self.DNA:
+                seq_window = seq_flat[start*self.resolution:end*self.resolution]
+                seq_windows.append(seq_window)
+
+            X_windows.append(X_window)
+            mX_windows.append(mX_window)
+            mY_windows.append(mY_window)
+            avail_windows.append(avail_window)
+
+            # Determine valid positions
+            if start == 0:
+                # First window
+                valid_start = 0
+                valid_end = self.context_length - crop_len
+            elif end >= total_length:
+                # Last window
+                valid_start = crop_len
+                valid_end = self.context_length
+            else:
+                # Middle windows
+                valid_start = crop_len
+                valid_end = self.context_length - crop_len
+
+            # Store valid positions
+            valid_pos_in_window = torch.arange(valid_start, valid_end)
+            valid_pos_in_seq = torch.arange(start + valid_start, start + valid_end)
+            valid_positions_in_window.append(valid_pos_in_window)
+            valid_positions_in_seq.append(valid_pos_in_seq)
+
+        # Stack windows
+        X_stacked = torch.stack(X_windows)
+        mX_stacked = torch.stack(mX_windows)
+        mY_stacked = torch.stack(mY_windows)
+        avail_stacked = torch.stack(avail_windows)
+        if self.DNA:
+            seq_stacked = torch.stack(seq_windows)
+
+        # Initialize full tensors
+        n_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+        p_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+        mu_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+        var_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+        Z_full = torch.full((total_length, latent_dim), float('nan'), device="cpu", dtype=torch.float32)
+
+        num_windows = X_stacked.shape[0]
+
+        for idx in range(0, num_windows, self.batch_size):
+            torch.cuda.empty_cache()
+
+            x_batch = X_stacked[idx:idx + self.batch_size]
+            mX_batch = mX_stacked[idx:idx + self.batch_size]
+            mY_batch = mY_stacked[idx:idx + self.batch_size]
+            avail_batch = avail_stacked[idx:idx + self.batch_size]
+
+            valid_positions_in_window_batch = valid_positions_in_window[idx:idx + self.batch_size]
+            valid_positions_in_seq_batch = valid_positions_in_seq[idx:idx + self.batch_size]
+
+            if self.DNA:
+                seq_batch = seq_stacked[idx:idx + self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                if len(imp_target) > 0:
+                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    avail_batch[:, imp_target] = 0
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                if self.DNA:
+                    seq_batch = seq_batch.to(self.device)
+                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
+                        x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
+                else:
+                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
+                        x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
+
+            batch_size_actual = x_batch.shape[0]
+            for b in range(batch_size_actual):
+                # Get valid positions
+                valid_pos_in_window_b = valid_positions_in_window_batch[b]
+                valid_pos_in_seq_b = valid_positions_in_seq_batch[b]
+
+                n_valid = outputs_n[b, valid_pos_in_window_b].cpu()
+                p_valid = outputs_p[b, valid_pos_in_window_b].cpu()
+                mu_valid = outputs_mu[b, valid_pos_in_window_b].cpu()
+                var_valid = outputs_var[b, valid_pos_in_window_b].cpu()
+                Z_valid = latent[b, valid_pos_in_window_b].cpu()
+
+                # Assign predictions to full tensors
+                n_full[valid_pos_in_seq_b] = n_valid
+                p_full[valid_pos_in_seq_b] = p_valid
+                mu_full[valid_pos_in_seq_b] = mu_valid
+                var_full[valid_pos_in_seq_b] = var_valid
+                Z_full[valid_pos_in_seq_b] = Z_valid
+
+            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
+            torch.cuda.empty_cache()
+
+        # Reshape full tensors to match original data shape
+        num_samples = X.shape[0]
+        context_length = X.shape[1]
+        n_full = n_full.view(num_samples, context_length, feature_dim)
+        p_full = p_full.view(num_samples, context_length, feature_dim)
+        mu_full = mu_full.view(num_samples, context_length, feature_dim)
+        var_full = var_full.view(num_samples, context_length, feature_dim)
+        Z_full = Z_full.view(num_samples, context_length, latent_dim)
+
+        return n_full, p_full, mu_full, var_full, Z_full
 
     def get_latent_representations(self, X, mX, mY, avX, seq=None):
         if self.DNA:
