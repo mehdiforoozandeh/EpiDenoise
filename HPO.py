@@ -120,10 +120,10 @@ if __name__ == "__main__":
         "data_path": "/project/compbio-lab/encode_data/",
         "dropout": 0.1,
         "pool_size": 2,
-        "epochs": 3,
+        "epochs": 10,
         "inner_epochs": 1,
         "mask_percentage": 0.1,
-        "num_loci": 10,
+        "num_loci": 1000,
         "lr_halflife": 1,
         "min_avail": 1,
         "eic":True,
@@ -141,8 +141,8 @@ if __name__ == "__main__":
             "nhead": 8, "n_sab_layers": 4, "context_length": 1600, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #large
         
-        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 2, 
-            "nhead": 4, "n_sab_layers": 1, "context_length": 400, "pos_enc": "relative", 
+        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 3, 
+            "nhead": 3, "n_sab_layers": 1, "context_length": 400, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":True}, #small
 
         ################################################################################
@@ -159,8 +159,8 @@ if __name__ == "__main__":
             "nhead": 8, "n_sab_layers": 4, "context_length": 1600, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":False},
 
-        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 2, 
-            "nhead": 4, "n_sab_layers": 1, "context_length": 400, "pos_enc": "relative", 
+        {"n_cnn_layers": 3, "conv_kernel_size": 3, "expansion_factor": 3, 
+            "nhead": 3, "n_sab_layers": 1, "context_length": 400, "pos_enc": "relative", 
             "batch_size": 50, "learning_rate": 1e-3, "dna":False}
             ]
     random.shuffle(hyperparameter_space)

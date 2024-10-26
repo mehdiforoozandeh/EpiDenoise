@@ -397,7 +397,7 @@ class PRETRAIN(object):
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=True, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.03, patience=1):
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.02, patience=1):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -933,7 +933,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="debug",#"ccre ", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#"debug ", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
