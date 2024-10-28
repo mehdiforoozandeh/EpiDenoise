@@ -633,6 +633,7 @@ class CANDIPredictor:
                 else:
                     Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
                 
+                Z = Z_ref.squeeze(0)
                 # Position of pos within the shifted context window
                 pos_in_window_shifted = int((pos - start) * (self.model.l2 / self.model.l1))
                 if pos_in_window_shifted == self.model.l2:
