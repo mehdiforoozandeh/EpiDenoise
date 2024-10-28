@@ -494,7 +494,12 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
-def latent_position_dependency_experiment(bios_name, n_positions=10):
+def latent_position_dependency_experiment(
+    bios_name, n_positions=10, 
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="models/output"):
     predictor = CANDIPredictor(
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
@@ -503,7 +508,7 @@ def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
     dataset_path="/project/compbio-lab/encode_data/",
-    output_dir="output",
+    output_dir="models/output",
     number_of_states=10,
     DNA=True):
 
