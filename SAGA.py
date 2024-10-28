@@ -501,7 +501,7 @@ def latent_position_dependency_experiment(
     dataset_path="/project/compbio-lab/encode_data/",
     output_dir="models/output"):
     predictor = CANDIPredictor(
-        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+        model_path, hyper_parameters_path, number_of_states=10, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
 def compare_decoded_outputs(bios_name, dsf=1,
