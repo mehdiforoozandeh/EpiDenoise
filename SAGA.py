@@ -643,6 +643,7 @@ class CANDIPredictor:
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
             
+            Z_ref = Z_ref.squeeze(0)
             print(Z_ref.shape)
             exit()
 
