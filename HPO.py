@@ -39,16 +39,21 @@ def train_model_on_resources(hyper_parameters, cpu_id, gpu_id, result_queue):
         print(f"Training on CPU {cpu_id % 2}, GPU {gpu_id}")
         print(hyper_parameters)
 
+        suffix = f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}"
         hyper_parameters['num_workers'] = 0
 
-        model, metrics = Train_CANDI(
-            hyper_parameters,
-            eic=hyper_parameters["eic"],
-            DNA=hyper_parameters["dna"],
-            device=device,
-            HPO=True,
-            suffix=f"CL{hyper_parameters['context_length']}_nC{hyper_parameters['n_cnn_layers']}_nSAB{hyper_parameters['n_sab_layers']}"
-        )
+        files_nav = os.listdir("models/")
+        for file in files_nav:
+            if suffix in file:
+                return
+            else:
+                model, metrics = Train_CANDI(
+                    hyper_parameters,
+                    eic=hyper_parameters["eic"],
+                    DNA=hyper_parameters["dna"],
+                    device=device,
+                    HPO=True,
+                    suffix=suffix)
 
         result = {
             "cpu_id": cpu_id % 2,

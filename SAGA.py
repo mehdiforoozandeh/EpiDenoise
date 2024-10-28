@@ -381,6 +381,7 @@ class CANDIPredictor:
         crop_len = int(crop_percent * self.context_length)
         valid_len = self.context_length - 2 * crop_len
         stride = valid_len
+        print(f"stride: {stride}")
 
         total_length = X.shape[0] * X.shape[1]  # Total number of positions
         feature_dim = X.shape[-1]
@@ -632,7 +633,8 @@ class CANDIPredictor:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
-                
+            
+
             # Position of pos within context window
             pos_in_window = int((pos - start) * (self.model.l2 / self.model.l1))
             # print(f"ref position in window {pos_in_window}")
@@ -737,6 +739,7 @@ class CANDIPredictor:
         plt.savefig(os.path.join(self.savedir, 'latent_position_dependency_average.png'))
         plt.close()
 
+    
 #########################################################
 
 def save_latent_representations(Z, output_file):
