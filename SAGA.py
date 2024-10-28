@@ -494,10 +494,10 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
-    def latent_position_dependency_experiment(self, bios_name, n_positions=10):
-        predictor = CANDIPredictor(
-            model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
-        predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
+def latent_position_dependency_experiment(bios_name, n_positions=10):
+    predictor = CANDIPredictor(
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+    predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
 def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
