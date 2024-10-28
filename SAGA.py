@@ -370,204 +370,164 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
+    def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         """
         Predicts over the input data X, mX, mY, avail, possibly seq.
         Handles overlapping windows to ensure all positions are predicted in the center (non-edge) of some window.
-        Crops a percentage from the edges of each window, except for the first and last windows.
-        Assembles the predictions into final outputs.
+        Assembles the predictions into final outputs with the same format as _OLD_pred.
         """
-        # Calculate crop length and valid length
+        # Parameters
+        crop_percent = 0.1  # You can adjust this value if needed
         crop_len = int(crop_percent * self.context_length)
         valid_len = self.context_length - 2 * crop_len
         stride = valid_len
-        print(f"stride: {stride}")
 
-        total_length = X.shape[0] * X.shape[1]  # Total number of positions
-        feature_dim = X.shape[-1]
+        total_samples, context_length, feature_dim = X.shape
         latent_dim = self.model.latent_dim
 
-        # Flatten X, mX, mY, avail for convenience
-        X_flat = X.view(-1, feature_dim)
-        mX_flat = mX.view(-1, feature_dim)
-        mY_flat = mY.view(-1, feature_dim)
-        avail_flat = avail.view(-1, avail.shape[-1])
-
-        if self.DNA:
-            seq_flat = seq.view(-1, seq.shape[-1])
-
-        # Generate start indices for windows
-        starts = list(range(0, total_length - self.context_length + 1, stride))
-        if starts[-1] + self.context_length < total_length:
-            starts.append(total_length - self.context_length)
-        num_windows = len(starts)
-
-        # Prepare windows
-        X_windows = []
-        mX_windows = []
-        mY_windows = []
-        avail_windows = []
-        if self.DNA:
-            seq_windows = []
-        valid_positions_in_window = []  # Relative indices
-        valid_positions_in_seq = []     # Absolute indices
-
-        for start in starts:
-            end = start + self.context_length
-            X_window = X_flat[start:end]
-            mX_window = mX_flat[start:end]
-            mY_window = mY_flat[start:end]
-            avail_window = avail_flat[start:end]
-            if self.DNA:
-                seq_window = seq_flat[start*self.resolution:end*self.resolution]
-                seq_windows.append(seq_window)
-
-            X_windows.append(X_window)
-            mX_windows.append(mX_window)
-            mY_windows.append(mY_window)
-            avail_windows.append(avail_window)
-
-            # Determine valid positions
-            if start == 0:
-                # First window
-                valid_start = 0
-                valid_end = self.context_length - crop_len
-            elif end >= total_length:
-                # Last window
-                valid_start = crop_len
-                valid_end = self.context_length
-            else:
-                # Middle windows
-                valid_start = crop_len
-                valid_end = self.context_length - crop_len
-
-            # Store valid positions
-            valid_pos_in_window = torch.arange(valid_start, valid_end)
-            valid_pos_in_seq = torch.arange(start + valid_start, start + valid_end)
-            valid_positions_in_window.append(valid_pos_in_window)
-            valid_positions_in_seq.append(valid_pos_in_seq)
-
-        # Stack windows
-        X_stacked = torch.stack(X_windows)
-        mX_stacked = torch.stack(mX_windows)
-        mY_stacked = torch.stack(mY_windows)
-        avail_stacked = torch.stack(avail_windows)
-        if self.DNA:
-            seq_stacked = torch.stack(seq_windows)
-
         # Initialize full tensors
-        n_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
-        p_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
-        mu_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
-        var_full = torch.full((total_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
-        # Modified: Initialize Z_full with correct dimensions
-        Z_full = torch.full((total_length // (self.context_length // self.model.l2), self.model.latent_dim), 
-                            float('nan'), device="cpu", dtype=torch.float32)
+        n_full = torch.empty((total_samples, context_length, feature_dim), device="cpu", dtype=torch.float32)
+        p_full = torch.empty((total_samples, context_length, feature_dim), device="cpu", dtype=torch.float32)
+        mu_full = torch.empty((total_samples, context_length, feature_dim), device="cpu", dtype=torch.float32)
+        var_full = torch.empty((total_samples, context_length, feature_dim), device="cpu", dtype=torch.float32)
+        Z_full = torch.empty((total_samples, self.model.l2, latent_dim), device="cpu", dtype=torch.float32)
 
-        num_windows = X_stacked.shape[0]
-
-        for idx in range(0, num_windows, self.batch_size):
-            torch.cuda.empty_cache()
-
-            x_batch = X_stacked[idx:idx + self.batch_size]
-            mX_batch = mX_stacked[idx:idx + self.batch_size]
-            mY_batch = mY_stacked[idx:idx + self.batch_size]
-            avail_batch = avail_stacked[idx:idx + self.batch_size]
-
-            valid_positions_in_window_batch = valid_positions_in_window[idx:idx + self.batch_size]
-            valid_positions_in_seq_batch = valid_positions_in_seq[idx:idx + self.batch_size]
-
+        for sample_idx in range(0, total_samples):
+            X_sample = X[sample_idx]
+            mX_sample = mX[sample_idx]
+            mY_sample = mY[sample_idx]
+            avail_sample = avail[sample_idx]
             if self.DNA:
-                seq_batch = seq_stacked[idx:idx + self.batch_size]
+                seq_sample = seq[sample_idx]
 
-            with torch.no_grad():
-                x_batch = x_batch.clone()
-                avail_batch = avail_batch.clone()
-                mX_batch = mX_batch.clone()
-                mY_batch = mY_batch.clone()
+            # Generate start indices for windows
+            sample_length = X_sample.shape[0]
+            starts = list(range(0, sample_length - self.context_length + 1, stride))
+            if starts[-1] + self.context_length < sample_length:
+                starts.append(sample_length - self.context_length)
+            num_windows = len(starts)
 
-                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
-                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
-                avail_batch_missing_vals = (avail_batch == 0)
+            # Initialize tensors for the sample
+            n_sample = torch.full((sample_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+            p_sample = torch.full((sample_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+            mu_sample = torch.full((sample_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+            var_sample = torch.full((sample_length, feature_dim), float('nan'), device="cpu", dtype=torch.float32)
+            Z_sample = torch.full((sample_length, latent_dim), float('nan'), device="cpu", dtype=torch.float32)
 
-                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
-                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
-
-                if len(imp_target) > 0:
-                    x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
-                    mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
-                    avail_batch[:, imp_target] = 0
-
-                x_batch = x_batch.to(self.device)
-                mX_batch = mX_batch.to(self.device)
-                mY_batch = mY_batch.to(self.device)
-                avail_batch = avail_batch.to(self.device)
-
+            for start in starts:
+                end = start + self.context_length
+                if end > sample_length:
+                    end = sample_length
+                X_window = X_sample[start:end]
+                mX_window = mX_sample[start:end]
+                mY_window = mY_sample[start:end]
+                avail_window = avail_sample[start:end]
                 if self.DNA:
-                    seq_batch = seq_batch.to(self.device)
-                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
-                        x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
+                    seq_window = seq_sample[start * self.resolution:end * self.resolution]
+
+                # Determine valid positions
+                window_length = end - start
+                if start == 0:
+                    valid_start = 0
+                    valid_end = window_length - crop_len
+                elif end >= sample_length:
+                    valid_start = crop_len
+                    valid_end = window_length
                 else:
-                    outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
-                        x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
+                    valid_start = crop_len
+                    valid_end = window_length - crop_len
 
-            # Add debugging information
-            print(f"Batch size: {x_batch.shape[0]}")
-            print(f"Latent shape: {latent.shape}")
-            print(f"Valid positions in window shape: {len(valid_positions_in_window_batch)}")
+                valid_pos_in_window = torch.arange(valid_start, valid_end)
+                valid_pos_in_seq = torch.arange(start + valid_start, start + valid_end)
 
-            batch_size_actual = x_batch.shape[0]
-            for b in range(batch_size_actual):
-                valid_pos_in_window_b = valid_positions_in_window_batch[b]
-                valid_pos_in_seq_b = valid_positions_in_seq_batch[b]
+                # Prepare batch tensors
+                x_batch = X_window.unsqueeze(0)
+                mX_batch = mX_window.unsqueeze(0)
+                mY_batch = mY_window.unsqueeze(0)
+                avail_batch = avail_window.unsqueeze(0)
+                if self.DNA:
+                    seq_batch = seq_window.unsqueeze(0)
 
-                # Add more debugging information
-                print(f"Window {b}:")
-                print(f"  Valid positions in window: {valid_pos_in_window_b}")
-                print(f"  Max index in valid_pos_in_window_b: {valid_pos_in_window_b.max()}")
-                print(f"  Latent shape for this window: {latent[b].shape}")
+                with torch.no_grad():
+                    x_batch = x_batch.clone()
+                    mX_batch = mX_batch.clone()
+                    mY_batch = mY_batch.clone()
+                    avail_batch = avail_batch.clone()
 
-                # Check if the maximum index is within bounds
-                if valid_pos_in_window_b.max() >= latent[b].shape[0]:
-                    print(f"  WARNING: Index out of bounds for window {b}")
-                    continue  # Skip this window
+                    x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                    mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+
+                    x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                    mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                    if len(imp_target) > 0:
+                        x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                        mX_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                        avail_batch[:, :, imp_target] = 0
+
+                    x_batch = x_batch.to(self.device)
+                    mX_batch = mX_batch.to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+                    avail_batch = avail_batch.to(self.device)
+
+                    if self.DNA:
+                        seq_batch = seq_batch.to(self.device)
+                        outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
+                            x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
+                    else:
+                        outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(
+                            x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
+
+                output_seq_len = outputs_n.shape[1]
+                input_seq_len = x_batch.shape[1]
+                sequence_length_ratio = output_seq_len / input_seq_len
+
+                adjusted_valid_pos_in_window = (valid_pos_in_window.float() * sequence_length_ratio).long()
+                adjusted_valid_pos_in_window = adjusted_valid_pos_in_window.clamp(0, output_seq_len - 1)
 
                 try:
-                    n_valid = outputs_n[b, valid_pos_in_window_b].cpu()
-                    p_valid = outputs_p[b, valid_pos_in_window_b].cpu()
-                    mu_valid = outputs_mu[b, valid_pos_in_window_b].cpu()
-                    var_valid = outputs_var[b, valid_pos_in_window_b].cpu()
-                    # Modified: Handle latent representation differently
-                    Z_valid = latent[b].cpu()  # Take the entire latent sequence for this batch
-                    
-                    # Assign predictions to full tensors
-                    n_full[valid_pos_in_seq_b] = n_valid
-                    p_full[valid_pos_in_seq_b] = p_valid
-                    mu_full[valid_pos_in_seq_b] = mu_valid
-                    var_full[valid_pos_in_seq_b] = var_valid
-                    
-                    # Modified: Calculate correct indices for latent representation
-                    z_start = (valid_pos_in_seq_b[0] // (self.context_length // self.model.l2))
-                    z_end = (valid_pos_in_seq_b[-1] // (self.context_length // self.model.l2)) + 1
-                    Z_full[z_start:z_end] = Z_valid
+                    n_valid = outputs_n[0, adjusted_valid_pos_in_window].cpu()
+                    p_valid = outputs_p[0, adjusted_valid_pos_in_window].cpu()
+                    mu_valid = outputs_mu[0, adjusted_valid_pos_in_window].cpu()
+                    var_valid = outputs_var[0, adjusted_valid_pos_in_window].cpu()
+
+                    # For latent representation
+                    latent_seq_len = latent.shape[1]
+                    latent_indices = (valid_pos_in_window.float() * (latent_seq_len / input_seq_len)).long()
+                    latent_indices = latent_indices.clamp(0, latent_seq_len - 1)
+                    Z_valid = latent[0, latent_indices].cpu()
+
+                    # Assign predictions to sample tensors
+                    n_sample[valid_pos_in_seq] = n_valid
+                    p_sample[valid_pos_in_seq] = p_valid
+                    mu_sample[valid_pos_in_seq] = mu_valid
+                    var_sample[valid_pos_in_seq] = var_valid
+                    Z_sample[valid_pos_in_seq] = Z_valid
                 except IndexError as e:
-                    print(f"  IndexError in window {b}: {str(e)}")
-                    continue  # Skip this window
+                    print(f"IndexError at sample {sample_idx}, window starting at {start}: {str(e)}")
+                    continue
 
-            del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
-            torch.cuda.empty_cache()
+                del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var, latent
+                torch.cuda.empty_cache()
 
-        # Reshape full tensors to match original data shape
-        num_samples = X.shape[0]
-        context_length = X.shape[1]
-        n_full = n_full.view(num_samples, context_length, feature_dim)
-        p_full = p_full.view(num_samples, context_length, feature_dim)
-        mu_full = mu_full.view(num_samples, context_length, feature_dim)
-        var_full = var_full.view(num_samples, context_length, feature_dim)
-        # Modified: Reshape Z_full correctly
-        Z_full = Z_full.view(num_samples, self.model.l2, self.model.latent_dim)
+            # Reshape Z_sample to (self.model.l2, latent_dim) by averaging over overlapping positions
+            Z_sample = Z_sample.view(-1, latent_dim)
+            valid_Z_positions = ~torch.isnan(Z_sample[:, 0])
+            if valid_Z_positions.any():
+                Z_valid = Z_sample[valid_Z_positions]
+                # Assuming that each position corresponds to a latent representation
+                Z_sample_final = torch.mean(Z_valid, dim=0)
+            else:
+                Z_sample_final = torch.zeros(latent_dim)
+
+            Z_full[sample_idx] = Z_sample_final
+            n_full[sample_idx] = n_sample
+            p_full[sample_idx] = p_sample
+            mu_full[sample_idx] = mu_sample
+            var_full[sample_idx] = var_sample
 
         return n_full, p_full, mu_full, var_full, Z_full
+
 
     def get_latent_representations(self, X, mX, mY, avX, seq=None):
         if self.DNA:
