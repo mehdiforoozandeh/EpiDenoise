@@ -307,7 +307,7 @@ class CANDIPredictor:
         else:
             return X, Y, P, mX, mY, avX, avY
 
-    def _OLD_pred(self, X, mX, mY, avail, imp_target=[], seq=None):
+    def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         p = torch.empty_like(X, device="cpu", dtype=torch.float32) 
         mu = torch.empty_like(X, device="cpu", dtype=torch.float32) 
@@ -370,14 +370,14 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
+    def pred_crop(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent = 0.1):
         """
         Predicts over the input data X, mX, mY, avail, possibly seq.
         Handles overlapping windows to ensure all positions are predicted in the center (non-edge) of some window.
         Assembles the predictions into final outputs with the same format as _OLD_pred.
         """
         # Parameters
-        crop_percent = 0.1  # You can adjust this value if needed
+         # You can adjust this value if needed
         crop_len = int(crop_percent * self.context_length)
         valid_len = self.context_length - 2 * crop_len
         stride = valid_len
@@ -528,7 +528,6 @@ class CANDIPredictor:
 
         return n_full, p_full, mu_full, var_full, Z_full
 
-
     def get_latent_representations(self, X, mX, mY, avX, seq=None):
         if self.DNA:
             _, _, _, _, Z = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
@@ -602,8 +601,6 @@ class CANDIPredictor:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
             else:
                 Z_ref = self.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
-            
-            Z_ref = Z_ref.squeeze(0)
 
             # Position of pos within context window
             pos_in_window = int((pos - start) * (self.model.l2 / self.model.l1))
@@ -633,7 +630,6 @@ class CANDIPredictor:
                 else:
                     Z = self.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
                 
-                Z = Z_ref.squeeze(0)
                 # Position of pos within the shifted context window
                 pos_in_window_shifted = int((pos - start) * (self.model.l2 / self.model.l1))
                 if pos_in_window_shifted == self.model.l2:
