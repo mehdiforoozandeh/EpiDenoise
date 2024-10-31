@@ -776,10 +776,6 @@ class PRETRAIN(object):
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
-
-                logfile = open(f"models/CANDI{arch}_log.txt", "w")
-                logfile.write("\n".join(log_strs))
-                logfile.close()
                 
                 #################################################################################
                 #################################################################################
@@ -808,6 +804,11 @@ class PRETRAIN(object):
                 dsf_pointer1 = self.dataset.dsf_pointer
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
+
+                if chr0 != chr1:
+                    logfile = open(f"models/CANDI{arch}_log.txt", "w")
+                    logfile.write("\n".join(log_strs))
+                    logfile.close()
 
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
                 if self.HPO==False and chr0 != chr1:
@@ -870,13 +871,19 @@ class PRETRAIN(object):
                 if all(patience_counter[metric] >= patience for metric in patience_counter.keys()):
                     print(f"Early stopping at epoch {epoch}. No significant improvement across metrics.")
                     logfile = open(f"models/CANDI{arch}_log.txt", "w")
-                    logfile.write(f"best metric records: \n{best_metric}")
+                    logfile.write("\n".join(log_strs))
+                    logfile.write(f"\n\nFinal best metric records:\n")
+                    for metric_name, value in best_metric.items():
+                        logfile.write(f"{metric_name}: {value}\n")
                     logfile.close()
-                    return  self.model
+                    return self.model
                 else:
                     print(f"best metric records so far: \n{best_metric}")
-                    logfile = open(f"models/CANDI{arch}_log.txt", "w")
-                    logfile.write(f"best metric records so far: \n{best_metric}")
+                    logfile = open(f"models/CANDI{arch}_log.txt", "w") 
+                    logfile.write("\n".join(log_strs))
+                    logfile.write(f"\n\nBest metric records so far:\n")
+                    for metric_name, value in best_metric.items():
+                        logfile.write(f"{metric_name}: {value}\n")
                     logfile.close()
                 
             if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1):
@@ -953,7 +960,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.75)
 
     if checkpoint_path is not None:
         print("loading pretrained model...")
