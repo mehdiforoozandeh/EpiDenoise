@@ -825,27 +825,27 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                # if next_epoch:
-                #     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                #     torch.cuda.empty_cache()
-                #     log_strs.append(validation_set_eval)
-                #     print(validation_set_eval)
-                #     log_resource_usage()
+                if next_epoch:
+                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
 
-                #     if early_stop:
-                #         # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
-                #         epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                #         # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
-                #         epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                #         # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
-                #         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                    if early_stop:
+                        # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                        # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                        # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                #         # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
-                #         epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                #         # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
-                #         epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                #         # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
-                #         epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
 
             self.scheduler.step()
             print("learning rate scheduler step...")
@@ -933,7 +933,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="debug",#"debug ", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#"debug ", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -963,7 +963,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     summary(model)
     
     model_name = f"CANDI{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters_{arch}_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     criterion = CANDI_LOSS()
