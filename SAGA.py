@@ -1178,13 +1178,36 @@ def compare_cropped_noncropped(bios_name, dsf=1,
         p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX)
         p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX)
 
-    # Convert to numpy for analysis
-    p, p_crop = p.cpu().numpy(), p_crop.cpu().numpy()
-    n, n_crop = n.cpu().numpy(), n_crop.cpu().numpy()
-    mu, mu_crop = mu.cpu().numpy(), mu_crop.cpu().numpy()
-    var, var_crop = var.cpu().numpy(), var_crop.cpu().numpy()
-    Z, Z_crop = Z.cpu().numpy(), Z_crop.cpu().numpy()
-    
+    # Convert to numpy and reshape arrays
+    def prepare_arrays(arr1, arr2):
+        arr1 = arr1.cpu().numpy()
+        arr2 = arr2.cpu().numpy()
+        if len(arr2.shape) == 3:
+            arr2 = arr2.reshape(-1, arr2.shape[-1])
+        return arr1, arr2
+
+    p, p_crop = prepare_arrays(p, p_crop)
+    n, n_crop = prepare_arrays(n, n_crop)
+    mu, mu_crop = prepare_arrays(mu, mu_crop)
+    var, var_crop = prepare_arrays(var, var_crop)
+    Z, Z_crop = prepare_arrays(Z, Z_crop)
+
+    # Print shapes for debugging
+    print(f"Shapes after reshaping:")
+    print(f"p: {p.shape}, p_crop: {p_crop.shape}")
+    print(f"n: {n.shape}, n_crop: {n_crop.shape}")
+    print(f"mu: {mu.shape}, mu_crop: {mu_crop.shape}")
+    print(f"var: {var.shape}, var_crop: {var_crop.shape}")
+    print(f"Z: {Z.shape}, Z_crop: {Z_crop.shape}")
+
+    # Ensure arrays have the same length
+    min_length = min(p.shape[0], p_crop.shape[0])
+    p, p_crop = p[:min_length], p_crop[:min_length]
+    n, n_crop = n[:min_length], n_crop[:min_length]
+    mu, mu_crop = mu[:min_length], mu_crop[:min_length]
+    var, var_crop = var[:min_length], var_crop[:min_length]
+    Z, Z_crop = Z[:min_length], Z_crop[:min_length]
+
     # 1. Basic Statistical Comparison
     def compute_stats(arr1, arr2, name):
         diff = arr1 - arr2
