@@ -1178,6 +1178,23 @@ def compare_cropped_noncropped(bios_name, dsf=1,
         p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX)
         p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX)
 
+
+    # Print shapes of original and cropped predictions
+    print("\nShape Analysis of Predictions:")
+    print(f"Original predictions:")
+    print(f"p shape: {p.shape}")
+    print(f"n shape: {n.shape}") 
+    print(f"mu shape: {mu.shape}")
+    print(f"var shape: {var.shape}")
+    print(f"Z shape: {Z.shape}")
+    
+    print(f"\nCropped predictions:")
+    print(f"p_crop shape: {p_crop.shape}")
+    print(f"n_crop shape: {n_crop.shape}")
+    print(f"mu_crop shape: {mu_crop.shape}")
+    print(f"var_crop shape: {var_crop.shape}")
+    print(f"Z_crop shape: {Z_crop.shape}")
+    exit()
     # Convert to numpy arrays
     def to_numpy(tensor):
         return tensor.cpu().numpy()
