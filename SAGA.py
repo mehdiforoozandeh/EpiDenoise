@@ -1155,27 +1155,140 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
     dataset_path="/project/compbio-lab/encode_data/",
-    output_dir="models/output",
+    output_dir="output",
     number_of_states=10,
     DNA=True):
-
+    """
+    Compare predictions from cropped and non-cropped approaches.
+    """
     CANDIP = CANDIPredictor(
-        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+        model_path, hyper_parameters_path, number_of_states, 
+        data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     
     os.makedirs(output_dir, exist_ok=True)
 
+    # Load data
     if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
-        p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX, seq=seq, imp_target=[])
-        p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX, seq=seq, imp_target=[])
-
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        # Get predictions from both methods
+        p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX, seq=seq)
+        p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX, seq=seq)
     else:
-        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
-        seq = None
-        p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX, seq=None, imp_target=[])
-        p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX, seq=None, imp_target=[])
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX)
+        p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX)
 
+    # Convert to numpy for analysis
+    p, p_crop = p.cpu().numpy(), p_crop.cpu().numpy()
+    n, n_crop = n.cpu().numpy(), n_crop.cpu().numpy()
+    mu, mu_crop = mu.cpu().numpy(), mu_crop.cpu().numpy()
+    var, var_crop = var.cpu().numpy(), var_crop.cpu().numpy()
+    Z, Z_crop = Z.cpu().numpy(), Z_crop.cpu().numpy()
+    
+    # 1. Basic Statistical Comparison
+    def compute_stats(arr1, arr2, name):
+        diff = arr1 - arr2
+        stats = {
+            'mean_diff': np.mean(diff),
+            'std_diff': np.std(diff),
+            'max_diff': np.max(np.abs(diff)),
+            'correlation': np.corrcoef(arr1.flatten(), arr2.flatten())[0,1]
+        }
+        print(f"\n{name} Statistics:")
+        for key, value in stats.items():
+            print(f"{key}: {value:.4f}")
+        return stats
 
+    stats_p = compute_stats(p, p_crop, "Probability")
+    stats_n = compute_stats(n, n_crop, "Count")
+    stats_mu = compute_stats(mu, mu_crop, "Mean")
+    stats_var = compute_stats(var, var_crop, "Variance")
+    stats_Z = compute_stats(Z, Z_crop, "Latent")
+
+    # 2. Visualization of Differences
+    def plot_comparison(arr1, arr2, title, output_path):
+        fig, axes = plt.subplots(2, 2, figsize=(15, 15))
+        
+        # Scatter plot
+        axes[0,0].scatter(arr1.flatten(), arr2.flatten(), alpha=0.1)
+        axes[0,0].plot([arr1.min(), arr1.max()], [arr1.min(), arr1.max()], 'r--')
+        axes[0,0].set_title(f'{title} Correlation Plot')
+        axes[0,0].set_xlabel('Non-cropped')
+        axes[0,0].set_ylabel('Cropped')
+        
+        # Difference histogram
+        diff = arr1 - arr2
+        axes[0,1].hist(diff.flatten(), bins=100)
+        axes[0,1].set_title(f'{title} Difference Distribution')
+        axes[0,1].set_xlabel('Difference (Non-cropped - Cropped)')
+        
+        # Time series of a random feature
+        feature_idx = np.random.randint(arr1.shape[1])
+        axes[1,0].plot(arr1[:100, feature_idx], label='Non-cropped')
+        axes[1,0].plot(arr2[:100, feature_idx], label='Cropped')
+        axes[1,0].set_title(f'{title} Time Series (Feature {feature_idx})')
+        axes[1,0].legend()
+        
+        # Heatmap of differences
+        im = axes[1,1].imshow(diff[:100,:], aspect='auto', cmap='RdBu')
+        axes[1,1].set_title(f'{title} Difference Heatmap')
+        plt.colorbar(im, ax=axes[1,1])
+        
+        plt.tight_layout()
+        plt.savefig(output_path)
+        plt.close()
+
+    plot_comparison(p, p_crop, "Probability", f'{output_dir}/{bios_name}_prob_comparison.png')
+    plot_comparison(n, n_crop, "Count", f'{output_dir}/{bios_name}_count_comparison.png')
+    plot_comparison(mu, mu_crop, "Mean", f'{output_dir}/{bios_name}_mean_comparison.png')
+    plot_comparison(var, var_crop, "Variance", f'{output_dir}/{bios_name}_var_comparison.png')
+    plot_comparison(Z, Z_crop, "Latent", f'{output_dir}/{bios_name}_latent_comparison.png')
+
+    # 3. Edge Effect Analysis
+    def analyze_edge_effects(arr1, arr2, window_size=100):
+        """Analyze differences near edges vs center"""
+        edge_diff = np.mean(np.abs(arr1[:window_size] - arr2[:window_size]))
+        center_diff = np.mean(np.abs(arr1[window_size:-window_size] - arr2[window_size:-window_size]))
+        print(f"\nEdge Effect Analysis (window_size={window_size}):")
+        print(f"Mean absolute difference at edges: {edge_diff:.4f}")
+        print(f"Mean absolute difference in center: {center_diff:.4f}")
+        print(f"Edge/Center ratio: {edge_diff/center_diff:.4f}")
+        return edge_diff, center_diff
+
+    analyze_edge_effects(p, p_crop)
+    analyze_edge_effects(n, n_crop)
+    analyze_edge_effects(mu, mu_crop)
+    analyze_edge_effects(var, var_crop)
+    analyze_edge_effects(Z, Z_crop)
+
+    # 4. Feature-wise Analysis
+    def feature_analysis(arr1, arr2, name):
+        feature_corrs = [np.corrcoef(arr1[:,i], arr2[:,i])[0,1] for i in range(arr1.shape[1])]
+        feature_diffs = np.mean(np.abs(arr1 - arr2), axis=0)
+        
+        plt.figure(figsize=(10, 5))
+        plt.subplot(1, 2, 1)
+        plt.hist(feature_corrs, bins=20)
+        plt.title(f'{name} Feature-wise Correlations')
+        plt.xlabel('Correlation')
+        
+        plt.subplot(1, 2, 2)
+        plt.bar(range(len(feature_diffs)), feature_diffs)
+        plt.title(f'{name} Feature-wise Mean Absolute Differences')
+        plt.xlabel('Feature Index')
+        plt.ylabel('Mean Absolute Difference')
+        
+        plt.tight_layout()
+        plt.savefig(f'{output_dir}/{bios_name}_{name.lower()}_feature_analysis.png')
+        plt.close()
+
+    feature_analysis(p, p_crop, "Probability")
+    feature_analysis(n, n_crop, "Count")
+    feature_analysis(mu, mu_crop, "Mean")
+    feature_analysis(var, var_crop, "Variance")
+    feature_analysis(Z, Z_crop, "Latent")
+
+    print(f"\nAll comparison results have been saved to {output_dir}/")
 
 def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
@@ -1270,7 +1383,7 @@ def compare_decoded_outputs(bios_name, dsf=1,
 def main():
     if len(sys.argv) < 3:
         print("Usage: python script.py <bios_name> <function_name> [additional_args]")
-        print("Available functions: generate_latent, visualize_latent, annotate_latent, annotate_decoded, position_dependency, compare_decoded")
+        print("Available functions: generate_latent, visualize_latent, annotate_latent, annotate_decoded, position_dependency, compare_decoded, compare_cropped")
         sys.exit(1)
 
     bios_name = sys.argv[1]
@@ -1335,9 +1448,18 @@ def main():
             number_of_states=number_of_states, DNA=DNA
         )
 
+    elif function_name == "compare_cropped":
+        print(f"Comparing cropped and non-cropped predictions for {bios_name}...")
+        compare_cropped_noncropped(
+            bios_name, dsf=dsf, output_dir=output_dir,
+            number_of_states=number_of_states, DNA=DNA
+        )
+
     else:
         print(f"Unknown function: {function_name}")
         sys.exit(1)
+    
+    
 
     print("Operation completed successfully.")
 
