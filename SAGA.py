@@ -1250,8 +1250,6 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     print(f"var_crop shape: {var_crop.shape}")
     print(f"Z_crop shape: {Z_crop.shape}")
 
-    exit()
-
     # Function to compute binned differences for a single feature
     def compute_binned_differences_single_feature(arr1, arr2, feature_idx, n_bins=n_bins):
         """Compute differences between two arrays for a single feature across position bins."""
