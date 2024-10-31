@@ -376,6 +376,25 @@ class CANDIPredictor:
         Handles overlapping windows to ensure all positions are predicted in the center (non-edge) of some window.
         Assembles the predictions into final outputs with the same format as _OLD_pred.
         """
+
+        print(f"X shape before flattening: {X.shape}")
+        X = X.view(-1, X.shape[-1])
+        print(f"X shape after flattening: {X.shape}")
+
+        print(f"mX shape before flattening: {mX.shape}")
+        mX = mX.view(-1, mX.shape[-1])
+        print(f"mX shape after flattening: {mX.shape}")
+
+        print(f"mY shape before flattening: {mY.shape}")
+        mY = mY.view(-1, mY.shape[-1])
+        print(f"mY shape after flattening: {mY.shape}")
+
+        # avail = avail.view(-1)
+        if self.DNA:
+            print(f"seq shape before flattening: {seq.shape}")
+            seq = seq.view(-1, seq.shape[-1])
+            print(f"seq shape after flattening: {seq.shape}")
+        
         # Parameters
         crop_len = int(crop_percent * self.context_length)
         valid_len = self.context_length - 2 * crop_len
