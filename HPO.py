@@ -7,7 +7,6 @@ from multiprocessing import Lock
 from CANDI import *
 import traceback
 
-
 # Function to check available GPUs
 def get_available_resources():
     available_cpus = list(range(psutil.cpu_count(logical=False)))

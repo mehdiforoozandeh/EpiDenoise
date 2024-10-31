@@ -825,27 +825,27 @@ class PRETRAIN(object):
                     plot_buf.close()
                     imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
 
-                if next_epoch:
-                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                # if next_epoch:
+                #     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                #     torch.cuda.empty_cache()
+                #     log_strs.append(validation_set_eval)
+                #     print(validation_set_eval)
+                #     log_resource_usage()
 
-                    if early_stop:
-                        # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                        # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                        # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                #     if early_stop:
+                #         # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
+                #         epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                #         # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
+                #         epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                #         # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
+                #         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                #         # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                #         epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                #         # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                #         epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                #         # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                #         epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
 
             self.scheduler.step()
             print("learning rate scheduler step...")
@@ -933,7 +933,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
-        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="ccre",#"debug ", #["chr19", "chr20"], 
+        bios_batchsize=batch_size, loci_batchsize=1, loci_gen="debug",#"debug ", #["chr19", "chr20"], 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
 
     signal_dim = dataset.signal_dim
@@ -1052,7 +1052,8 @@ def main():
     parser.add_argument('--num_loci', type=int, default=3750, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=5, help='Minimum available')
-    
+    parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
+    parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
 
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1081,11 +1082,12 @@ def main():
         "learning_rate": args.learning_rate,
         "num_loci": args.num_loci,
         "lr_halflife": args.lr_halflife,
-        "min_avail": args.min_avail
+        "min_avail": args.min_avail,
+        "hpo": args.hpo
     }
 
     # Call your training function with parsed arguments
-    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix="oct17-expan2", prog_mask=args.prog_mask)
+    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
 
 if __name__ == "__main__":
     main()

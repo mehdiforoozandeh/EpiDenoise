@@ -1151,6 +1151,28 @@ def latent_position_dependency_experiment(
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
 
+def compare_cropped_noncropped(bios_name, dsf=1,
+    model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
+    hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
+    dataset_path="/project/compbio-lab/encode_data/",
+    output_dir="output",
+    number_of_states=10,
+    DNA=True):
+
+    CANDIP = CANDIPredictor(
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+    
+    os.makedirs(output_dir, exist_ok=True)
+
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
+        p, n, mu, var, Z = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        
+    else:
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=fill_in_y_prompt)
+        seq = None
+        p, n, mu, var, Z = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
+
 def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
@@ -1240,6 +1262,8 @@ def compare_decoded_outputs(bios_name, dsf=1,
     print(f"  Standard deviation of difference: {pval_std_diff}")
 
     print(f"Comparison results saved to {output_dir}/{bios_name}_decoded_comparison_histograms.png")
+
+
 
 def main():
     if len(sys.argv) < 3:
