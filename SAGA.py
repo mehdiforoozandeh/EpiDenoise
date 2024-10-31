@@ -1178,6 +1178,12 @@ def compare_cropped_noncropped(bios_name, dsf=1,
         p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX)
         p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX)
 
+    # Flatten first two dimensions of cropped tensors
+    p_crop = p_crop.reshape(-1, p_crop.shape[-1])  # [1167*1600, 35]
+    n_crop = n_crop.reshape(-1, n_crop.shape[-1])  # [1167*1600, 35] 
+    mu_crop = mu_crop.reshape(-1, mu_crop.shape[-1])  # [1167*1600, 35]
+    var_crop = var_crop.reshape(-1, var_crop.shape[-1])  # [1167*1600, 35]
+    Z_crop = Z_crop.reshape(-1, Z_crop.shape[-1])  # [1167*100, 560]
 
     # Print shapes of original and cropped predictions
     print("\nShape Analysis of Predictions:")
@@ -1194,7 +1200,7 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     print(f"mu_crop shape: {mu_crop.shape}")
     print(f"var_crop shape: {var_crop.shape}")
     print(f"Z_crop shape: {Z_crop.shape}")
-    exit()
+
     # Convert to numpy arrays
     def to_numpy(tensor):
         return tensor.cpu().numpy()
@@ -1227,6 +1233,24 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     latent_dim = Z.shape[-1]
     Z = Z.reshape(-1, latent_window_size, latent_dim)
     Z_crop = Z_crop.reshape(-1, latent_window_size, latent_dim)
+
+    # Print shapes of original and cropped predictions
+    print("\nShape Analysis of Predictions:")
+    print(f"Original predictions:")
+    print(f"p shape: {p.shape}")
+    print(f"n shape: {n.shape}") 
+    print(f"mu shape: {mu.shape}")
+    print(f"var shape: {var.shape}")
+    print(f"Z shape: {Z.shape}")
+    
+    print(f"\nCropped predictions:")
+    print(f"p_crop shape: {p_crop.shape}")
+    print(f"n_crop shape: {n_crop.shape}")
+    print(f"mu_crop shape: {mu_crop.shape}")
+    print(f"var_crop shape: {var_crop.shape}")
+    print(f"Z_crop shape: {Z_crop.shape}")
+
+    exit()
 
     # Function to compute binned differences for a single feature
     def compute_binned_differences_single_feature(arr1, arr2, feature_idx, n_bins=n_bins):
