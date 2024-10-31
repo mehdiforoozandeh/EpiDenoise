@@ -1250,6 +1250,25 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     print(f"var_crop shape: {var_crop.shape}")
     print(f"Z_crop shape: {Z_crop.shape}")
 
+
+    # Check for NaN values in all tensors
+    print("\nNaN Value Analysis:")
+    print("Original predictions:")
+    print(f"p NaN count: {np.isnan(p).sum()}")
+    print(f"n NaN count: {np.isnan(n).sum()}")
+    print(f"mu NaN count: {np.isnan(mu).sum()}")
+    print(f"var NaN count: {np.isnan(var).sum()}")
+    print(f"Z NaN count: {np.isnan(Z).sum()}")
+    print(f"nbinom_mean NaN count: {np.isnan(nbinom_mean).sum()}")
+
+    print("\nCropped predictions:")
+    print(f"p_crop NaN count: {np.isnan(p_crop).sum()}")
+    print(f"n_crop NaN count: {np.isnan(n_crop).sum()}")
+    print(f"mu_crop NaN count: {np.isnan(mu_crop).sum()}")
+    print(f"var_crop NaN count: {np.isnan(var_crop).sum()}")
+    print(f"Z_crop NaN count: {np.isnan(Z_crop).sum()}")
+    print(f"nbinom_mean_crop NaN count: {np.isnan(nbinom_mean_crop).sum()}")
+    exit()
     # Function to compute binned differences for a single feature
     def compute_binned_differences_single_feature(arr1, arr2, feature_idx, n_bins=n_bins):
         """Compute differences between two arrays for a single feature across position bins."""
