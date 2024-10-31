@@ -983,16 +983,16 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     if not HPO:
         torch.save(model.state_dict(), os.path.join(model_dir, model_name))
 
-    # Write a description text file
-    description = {
-        "hyper_parameters": hyper_parameters,
-        "model_architecture": str(model),
-        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "number_of_model_parameters": count_parameters(model),
-        "training_duration": int(end_time - start_time)
-    }
-    with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
-        f.write(json.dumps(description, indent=4))
+        # Write a description text file
+        description = {
+            "hyper_parameters": hyper_parameters,
+            "model_architecture": str(model),
+            "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "number_of_model_parameters": count_parameters(model),
+            "training_duration": int(end_time - start_time)
+        }
+        with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
+            f.write(json.dumps(description, indent=4))
 
     return model, best_metric
 
