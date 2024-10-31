@@ -377,13 +377,15 @@ class CANDIPredictor:
         Assembles the predictions into final outputs with the same format as _OLD_pred.
         """
         # Parameters
-         # You can adjust this value if needed
         crop_len = int(crop_percent * self.context_length)
         valid_len = self.context_length - 2 * crop_len
         stride = valid_len
 
         total_samples, context_length, feature_dim = X.shape
         latent_dim = self.model.latent_dim
+
+        print(f"total samples: {total_samples}")
+        exit()
 
         # Initialize full tensors
         n_full = torch.empty((total_samples, context_length, feature_dim), device="cpu", dtype=torch.float32)
@@ -1185,21 +1187,21 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     var_crop = var_crop.reshape(-1, var_crop.shape[-1])  # [1167*1600, 35]
     Z_crop = Z_crop.reshape(-1, Z_crop.shape[-1])  # [1167*100, 560]
 
-    # Print shapes of original and cropped predictions
-    print("\nShape Analysis of Predictions:")
-    print(f"Original predictions:")
-    print(f"p shape: {p.shape}")
-    print(f"n shape: {n.shape}") 
-    print(f"mu shape: {mu.shape}")
-    print(f"var shape: {var.shape}")
-    print(f"Z shape: {Z.shape}")
+    # # Print shapes of original and cropped predictions
+    # print("\nShape Analysis of Predictions:")
+    # print(f"Original predictions:")
+    # print(f"p shape: {p.shape}")
+    # print(f"n shape: {n.shape}") 
+    # print(f"mu shape: {mu.shape}")
+    # print(f"var shape: {var.shape}")
+    # print(f"Z shape: {Z.shape}")
     
-    print(f"\nCropped predictions:")
-    print(f"p_crop shape: {p_crop.shape}")
-    print(f"n_crop shape: {n_crop.shape}")
-    print(f"mu_crop shape: {mu_crop.shape}")
-    print(f"var_crop shape: {var_crop.shape}")
-    print(f"Z_crop shape: {Z_crop.shape}")
+    # print(f"\nCropped predictions:")
+    # print(f"p_crop shape: {p_crop.shape}")
+    # print(f"n_crop shape: {n_crop.shape}")
+    # print(f"mu_crop shape: {mu_crop.shape}")
+    # print(f"var_crop shape: {var_crop.shape}")
+    # print(f"Z_crop shape: {Z_crop.shape}")
 
     # Convert to numpy arrays
     def to_numpy(tensor):
@@ -1233,23 +1235,6 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     latent_dim = Z.shape[-1]
     Z = Z.reshape(-1, latent_window_size, latent_dim)
     Z_crop = Z_crop.reshape(-1, latent_window_size, latent_dim)
-
-    # Print shapes of original and cropped predictions
-    print("\nShape Analysis of Predictions:")
-    print(f"Original predictions:")
-    print(f"p shape: {p.shape}")
-    print(f"n shape: {n.shape}") 
-    print(f"mu shape: {mu.shape}")
-    print(f"var shape: {var.shape}")
-    print(f"Z shape: {Z.shape}")
-    
-    print(f"\nCropped predictions:")
-    print(f"p_crop shape: {p_crop.shape}")
-    print(f"n_crop shape: {n_crop.shape}")
-    print(f"mu_crop shape: {mu_crop.shape}")
-    print(f"var_crop shape: {var_crop.shape}")
-    print(f"Z_crop shape: {Z_crop.shape}")
-
 
     # Check for NaN values in all tensors
     print("\nNaN Value Analysis:")
