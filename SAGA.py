@@ -1157,9 +1157,10 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     dataset_path="/project/compbio-lab/encode_data/",
     output_dir="output",
     number_of_states=10,
-    DNA=True):
+    DNA=True,
+    n_bins=20):
     """
-    Compare predictions from cropped and non-cropped approaches.
+    Compare predictions from cropped and non-cropped approaches using binned positional analysis.
     """
     CANDIP = CANDIPredictor(
         model_path, hyper_parameters_path, number_of_states, 
@@ -1167,10 +1168,9 @@ def compare_cropped_noncropped(bios_name, dsf=1,
     
     os.makedirs(output_dir, exist_ok=True)
 
-    # Load data
+    # Load data and get predictions
     if DNA:
         X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
-        # Get predictions from both methods
         p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX, seq=seq)
         p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX, seq=seq)
     else:
@@ -1178,140 +1178,148 @@ def compare_cropped_noncropped(bios_name, dsf=1,
         p, n, mu, var, Z = CANDIP.pred(X, mX, mY, avX)
         p_crop, n_crop, mu_crop, var_crop, Z_crop = CANDIP.pred_crop(X, mX, mY, avX)
 
-    # Convert to numpy and reshape arrays
-    def prepare_arrays(arr1, arr2):
-        arr1 = arr1.cpu().numpy()
-        arr2 = arr2.cpu().numpy()
-        if len(arr2.shape) == 3:
-            arr2 = arr2.reshape(-1, arr2.shape[-1])
-        return arr1, arr2
+    # Convert to numpy arrays
+    def to_numpy(tensor):
+        return tensor.cpu().numpy()
 
-    p, p_crop = prepare_arrays(p, p_crop)
-    n, n_crop = prepare_arrays(n, n_crop)
-    mu, mu_crop = prepare_arrays(mu, mu_crop)
-    var, var_crop = prepare_arrays(var, var_crop)
-    Z, Z_crop = prepare_arrays(Z, Z_crop)
+    # Reshape signal outputs to [batch, window, feature]
+    window_size = CANDIP.context_length
+    feature_dim = p.shape[-1]
+    
+    def reshape_signal(arr):
+        arr = to_numpy(arr)
+        total_windows = arr.shape[0] // window_size
+        return arr[:total_windows * window_size].reshape(total_windows, window_size, feature_dim)
 
-    # Print shapes for debugging
-    print(f"Shapes after reshaping:")
-    print(f"p: {p.shape}, p_crop: {p_crop.shape}")
-    print(f"n: {n.shape}, n_crop: {n_crop.shape}")
-    print(f"mu: {mu.shape}, mu_crop: {mu_crop.shape}")
-    print(f"var: {var.shape}, var_crop: {var_crop.shape}")
-    print(f"Z: {Z.shape}, Z_crop: {Z_crop.shape}")
+    # Convert p, n to NegativeBinomial mean
+    def get_nbinom_mean(p, n):
+        return (n * (1 - p)) / p
 
-    # Ensure arrays have the same length
-    min_length = min(p.shape[0], p_crop.shape[0])
-    p, p_crop = p[:min_length], p_crop[:min_length]
-    n, n_crop = n[:min_length], n_crop[:min_length]
-    mu, mu_crop = mu[:min_length], mu_crop[:min_length]
-    var, var_crop = var[:min_length], var_crop[:min_length]
-    Z, Z_crop = Z[:min_length], Z_crop[:min_length]
+    # Process signal outputs (p, n, mu, var)
+    p, p_crop = reshape_signal(p), reshape_signal(p_crop)
+    n, n_crop = reshape_signal(n), reshape_signal(n_crop)
+    mu, mu_crop = reshape_signal(mu), reshape_signal(mu_crop)
+    
+    # Calculate means
+    nbinom_mean = get_nbinom_mean(p, n)
+    nbinom_mean_crop = get_nbinom_mean(p_crop, n_crop)
+    
+    # Process latent representations
+    Z, Z_crop = to_numpy(Z), to_numpy(Z_crop)
+    latent_window_size = CANDIP.model.l2
+    latent_dim = Z.shape[-1]
+    Z = Z.reshape(-1, latent_window_size, latent_dim)
+    Z_crop = Z_crop.reshape(-1, latent_window_size, latent_dim)
 
-    # 1. Basic Statistical Comparison
-    def compute_stats(arr1, arr2, name):
-        diff = arr1 - arr2
-        stats = {
-            'mean_diff': np.mean(diff),
-            'std_diff': np.std(diff),
-            'max_diff': np.max(np.abs(diff)),
-            'correlation': np.corrcoef(arr1.flatten(), arr2.flatten())[0,1]
-        }
-        print(f"\n{name} Statistics:")
-        for key, value in stats.items():
-            print(f"{key}: {value:.4f}")
-        return stats
-
-    stats_p = compute_stats(p, p_crop, "Probability")
-    stats_n = compute_stats(n, n_crop, "Count")
-    stats_mu = compute_stats(mu, mu_crop, "Mean")
-    stats_var = compute_stats(var, var_crop, "Variance")
-    stats_Z = compute_stats(Z, Z_crop, "Latent")
-
-    # 2. Visualization of Differences
-    def plot_comparison(arr1, arr2, title, output_path):
-        fig, axes = plt.subplots(2, 2, figsize=(15, 15))
+    # Function to compute binned differences for a single feature
+    def compute_binned_differences_single_feature(arr1, arr2, feature_idx, n_bins=n_bins):
+        """Compute differences between two arrays for a single feature across position bins."""
+        _, seq_len, _ = arr1.shape
+        bin_size = seq_len // n_bins
         
-        # Scatter plot
-        axes[0,0].scatter(arr1.flatten(), arr2.flatten(), alpha=0.1)
-        axes[0,0].plot([arr1.min(), arr1.max()], [arr1.min(), arr1.max()], 'r--')
-        axes[0,0].set_title(f'{title} Correlation Plot')
-        axes[0,0].set_xlabel('Non-cropped')
-        axes[0,0].set_ylabel('Cropped')
+        mean_diffs = np.zeros(n_bins)
+        std_diffs = np.zeros(n_bins)
         
-        # Difference histogram
-        diff = arr1 - arr2
-        axes[0,1].hist(diff.flatten(), bins=100)
-        axes[0,1].set_title(f'{title} Difference Distribution')
-        axes[0,1].set_xlabel('Difference (Non-cropped - Cropped)')
-        
-        # Time series of a random feature
-        feature_idx = np.random.randint(arr1.shape[1])
-        axes[1,0].plot(arr1[:100, feature_idx], label='Non-cropped')
-        axes[1,0].plot(arr2[:100, feature_idx], label='Cropped')
-        axes[1,0].set_title(f'{title} Time Series (Feature {feature_idx})')
-        axes[1,0].legend()
-        
-        # Heatmap of differences
-        im = axes[1,1].imshow(diff[:100,:], aspect='auto', cmap='RdBu')
-        axes[1,1].set_title(f'{title} Difference Heatmap')
-        plt.colorbar(im, ax=axes[1,1])
-        
-        plt.tight_layout()
-        plt.savefig(output_path)
-        plt.close()
+        for bin_idx in range(n_bins):
+            start_idx = bin_idx * bin_size
+            end_idx = start_idx + bin_size if bin_idx < n_bins - 1 else seq_len
+            
+            bin_diff = arr1[:, start_idx:end_idx, feature_idx] - arr2[:, start_idx:end_idx, feature_idx]
+            mean_diffs[bin_idx] = np.mean(bin_diff)
+            std_diffs[bin_idx] = np.std(bin_diff)
+            
+        return mean_diffs, std_diffs
 
-    plot_comparison(p, p_crop, "Probability", f'{output_dir}/{bios_name}_prob_comparison.png')
-    plot_comparison(n, n_crop, "Count", f'{output_dir}/{bios_name}_count_comparison.png')
-    plot_comparison(mu, mu_crop, "Mean", f'{output_dir}/{bios_name}_mean_comparison.png')
-    plot_comparison(var, var_crop, "Variance", f'{output_dir}/{bios_name}_var_comparison.png')
-    plot_comparison(Z, Z_crop, "Latent", f'{output_dir}/{bios_name}_latent_comparison.png')
-
-    # 3. Edge Effect Analysis
-    def analyze_edge_effects(arr1, arr2, window_size=100):
-        """Analyze differences near edges vs center"""
-        edge_diff = np.mean(np.abs(arr1[:window_size] - arr2[:window_size]))
-        center_diff = np.mean(np.abs(arr1[window_size:-window_size] - arr2[window_size:-window_size]))
-        print(f"\nEdge Effect Analysis (window_size={window_size}):")
-        print(f"Mean absolute difference at edges: {edge_diff:.4f}")
-        print(f"Mean absolute difference in center: {center_diff:.4f}")
-        print(f"Edge/Center ratio: {edge_diff/center_diff:.4f}")
-        return edge_diff, center_diff
-
-    analyze_edge_effects(p, p_crop)
-    analyze_edge_effects(n, n_crop)
-    analyze_edge_effects(mu, mu_crop)
-    analyze_edge_effects(var, var_crop)
-    analyze_edge_effects(Z, Z_crop)
-
-    # 4. Feature-wise Analysis
-    def feature_analysis(arr1, arr2, name):
-        feature_corrs = [np.corrcoef(arr1[:,i], arr2[:,i])[0,1] for i in range(arr1.shape[1])]
-        feature_diffs = np.mean(np.abs(arr1 - arr2), axis=0)
+    # Function to compute latent differences
+    def compute_latent_differences(Z1, Z2, n_bins=n_bins):
+        """Compute euclidean and cosine distances for latent representations across bins."""
+        _, seq_len, n_features = Z1.shape
+        bin_size = seq_len // n_bins
         
-        plt.figure(figsize=(10, 5))
-        plt.subplot(1, 2, 1)
-        plt.hist(feature_corrs, bins=20)
-        plt.title(f'{name} Feature-wise Correlations')
-        plt.xlabel('Correlation')
+        euclidean_dists = np.zeros(n_bins)
+        cosine_dists = np.zeros(n_bins)
         
-        plt.subplot(1, 2, 2)
-        plt.bar(range(len(feature_diffs)), feature_diffs)
-        plt.title(f'{name} Feature-wise Mean Absolute Differences')
-        plt.xlabel('Feature Index')
-        plt.ylabel('Mean Absolute Difference')
+        for bin_idx in range(n_bins):
+            start_idx = bin_idx * bin_size
+            end_idx = start_idx + bin_size if bin_idx < n_bins - 1 else seq_len
+            
+            Z1_bin = Z1[:, start_idx:end_idx, :].reshape(-1, n_features)
+            Z2_bin = Z2[:, start_idx:end_idx, :].reshape(-1, n_features)
+            
+            euclidean_dists[bin_idx] = np.mean([euclidean(z1, z2) for z1, z2 in zip(Z1_bin, Z2_bin)])
+            cosine_dists[bin_idx] = np.mean([cosine(z1, z2) for z1, z2 in zip(Z1_bin, Z2_bin)])
+            
+        return euclidean_dists, cosine_dists
+
+    # Compute latent differences
+    latent_euclidean, latent_cosine = compute_latent_differences(Z, Z_crop)
+
+    # Create subplots for each feature
+    n_features = feature_dim
+    fig, axes = plt.subplots(n_features + 1, 2, figsize=(20, 5*(n_features + 1)))
+    
+    # Plot differences for each feature
+    for feature_idx in range(n_features):
+        # NegativeBinomial mean differences
+        nbinom_mean_diffs, nbinom_std_diffs = compute_binned_differences_single_feature(
+            nbinom_mean, nbinom_mean_crop, feature_idx)
         
-        plt.tight_layout()
-        plt.savefig(f'{output_dir}/{bios_name}_{name.lower()}_feature_analysis.png')
-        plt.close()
+        # Gaussian mean differences
+        mu_mean_diffs, mu_std_diffs = compute_binned_differences_single_feature(
+            mu, mu_crop, feature_idx)
+        
+        # Plot NegativeBinomial differences
+        axes[feature_idx, 0].errorbar(range(n_bins), nbinom_mean_diffs, 
+                                    yerr=nbinom_std_diffs, 
+                                    label=f'Feature {feature_idx+1}')
+        axes[feature_idx, 0].set_title(f'NegativeBinomial Mean Differences - Feature {feature_idx+1}')
+        axes[feature_idx, 0].set_xlabel('Position Bin')
+        axes[feature_idx, 0].set_ylabel('Mean Difference')
+        
+        # Plot Gaussian differences
+        axes[feature_idx, 1].errorbar(range(n_bins), mu_mean_diffs, 
+                                    yerr=mu_std_diffs, 
+                                    label=f'Feature {feature_idx+1}')
+        axes[feature_idx, 1].set_title(f'Gaussian Mean Differences - Feature {feature_idx+1}')
+        axes[feature_idx, 1].set_xlabel('Position Bin')
+        axes[feature_idx, 1].set_ylabel('Mean Difference')
+    
+    # Plot Latent distances in the last row
+    axes[-1, 0].plot(range(n_bins), latent_euclidean, label='Euclidean Distance')
+    axes[-1, 0].set_title('Latent Space Euclidean Distance')
+    axes[-1, 0].set_xlabel('Position Bin')
+    axes[-1, 0].set_ylabel('Distance')
+    axes[-1, 0].legend()
+    
+    axes[-1, 1].plot(range(n_bins), latent_cosine, label='Cosine Distance')
+    axes[-1, 1].set_title('Latent Space Cosine Distance')
+    axes[-1, 1].set_xlabel('Position Bin')
+    axes[-1, 1].set_ylabel('Distance')
+    axes[-1, 1].legend()
+    
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/{bios_name}_binned_comparison_by_feature.png')
+    plt.close()
 
-    feature_analysis(p, p_crop, "Probability")
-    feature_analysis(n, n_crop, "Count")
-    feature_analysis(mu, mu_crop, "Mean")
-    feature_analysis(var, var_crop, "Variance")
-    feature_analysis(Z, Z_crop, "Latent")
-
-    print(f"\nAll comparison results have been saved to {output_dir}/")
+    # Print summary statistics for each feature
+    print("\nSummary Statistics by Feature:")
+    for feature_idx in range(n_features):
+        nbinom_mean_diffs, _ = compute_binned_differences_single_feature(
+            nbinom_mean, nbinom_mean_crop, feature_idx)
+        mu_mean_diffs, _ = compute_binned_differences_single_feature(
+            mu, mu_crop, feature_idx)
+        
+        print(f"\nFeature {feature_idx+1}:")
+        print(f"NegativeBinomial Mean Differences:")
+        print(f"  Mean: {np.mean(nbinom_mean_diffs):.4f}")
+        print(f"  Std: {np.std(nbinom_mean_diffs):.4f}")
+        print(f"Gaussian Mean Differences:")
+        print(f"  Mean: {np.mean(mu_mean_diffs):.4f}")
+        print(f"  Std: {np.std(mu_mean_diffs):.4f}")
+    
+    print("\nLatent Space Distances:")
+    print(f"Mean Euclidean: {np.mean(latent_euclidean):.4f}")
+    print(f"Mean Cosine: {np.mean(latent_cosine):.4f}")
 
 def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
