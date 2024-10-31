@@ -381,14 +381,6 @@ class CANDIPredictor:
         X = X.view(-1, X.shape[-1])
         print(f"X shape after flattening: {X.shape}")
 
-        print(f"mX shape before flattening: {mX.shape}")
-        mX = mX.view(-1, mX.shape[-1])
-        print(f"mX shape after flattening: {mX.shape}")
-
-        print(f"mY shape before flattening: {mY.shape}")
-        mY = mY.view(-1, mY.shape[-1])
-        print(f"mY shape after flattening: {mY.shape}")
-
         # avail = avail.view(-1)
         if self.DNA:
             print(f"seq shape before flattening: {seq.shape}")
