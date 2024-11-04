@@ -1,7 +1,7 @@
 import torch
 import pickle
 import os
-from _utils import NegativeBinomial, Gaussian
+from CANDI import *
 
 
 # sequence clustering
