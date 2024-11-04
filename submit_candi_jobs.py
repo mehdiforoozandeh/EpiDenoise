@@ -89,7 +89,7 @@ srun python CANDI.py {script_args}
 cpus_per_task = 2
 num_gpus = 1
 time_limit = 4  # Time limit in days
-memory = '50G'
+memory = '60G'
 n_simultaneous_jobs = 3  # Number of jobs to run simultaneously
 
 # Keep track of jobs
