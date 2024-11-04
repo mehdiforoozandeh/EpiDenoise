@@ -224,6 +224,9 @@ if __name__ == "__main__":
     output_dir = "output"
     number_of_states = 10
     DNA = True
+    bios_name = "ENCBS674MPN"
+    dsf = 1
+
 
     CANDIP = CANDIPredictor(
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
