@@ -2,7 +2,6 @@ import subprocess
 import time
 import copy
 
-
 # base_hyperparameters = {
 #     "data_path": "/project/compbio-lab/encode_data/",
 #     "dropout": 0.1,
@@ -15,6 +14,7 @@ import copy
 #     "min_avail": 1,
 #     "eic":True,
 # }
+
 # hyperparameter_space = [
 #     {"n_cnn_layers": 3, "conv_kernel_size": 9, "expansion_factor": 2, 
 #         "nhead": 4, "n_sab_layers": 8, "context_length": 1600, "pos_enc": "relative", 
@@ -52,9 +52,7 @@ import copy
 #         ]
 
 
-# Define your hyperparameter settings (list of command-line arguments)
 hyperparameters_list = [
-    # Include all 8 hyperparameter settings as strings
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 4 --conv_kernel_size 3 --expansion_factor 2 --nhead 8 --n_sab_layers 4 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC4_k3",
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 4 --conv_kernel_size 5 --expansion_factor 2 --nhead 8 --n_sab_layers 4 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC4_k5",
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 7 --expansion_factor 2 --nhead 4 --n_sab_layers 4 --context_length 1600 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1600_nC3_k7",
@@ -65,8 +63,6 @@ hyperparameters_list = [
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 7 --expansion_factor 2 --nhead 4 --n_sab_layers 4 --context_length 1600 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --suffix CL1600_nC3_k7",
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 9 --expansion_factor 2 --nhead 4 --n_sab_layers 4 --context_length 1600 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --suffix CL1600_nC3_k9",
 ]
-
-    
 
 # SLURM job template
 job_template = """#!/bin/bash

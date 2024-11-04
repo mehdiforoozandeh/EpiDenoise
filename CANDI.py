@@ -876,7 +876,7 @@ class PRETRAIN(object):
                     for metric_name, value in best_metric.items():
                         logfile.write(f"{metric_name}: {value}\n")
                     logfile.close()
-                    return self.model
+                    return self.model, best_metric
                 else:
                     print(f"best metric records so far: \n{best_metric}")
                     logfile = open(f"models/CANDI{arch}_log.txt", "w") 
@@ -1035,25 +1035,24 @@ class CANDI_LOADER(object):
         model = model.to(self.device)
         return model
     
-    
 def main():
     parser = argparse.ArgumentParser(description="Train the model with specified hyperparameters")
 
     # Hyperparameters
     parser.add_argument('--data_path', type=str, default="/project/compbio-lab/encode_data/", help='Path to the data')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
-    parser.add_argument('--n_cnn_layers', type=int, default=3, help='Number of CNN layers')
+    parser.add_argument('--n_cnn_layers', type=int, default=4, help='Number of CNN layers')
     parser.add_argument('--conv_kernel_size', type=int, default=5, help='Convolution kernel size')
     parser.add_argument('--pool_size', type=int, default=2, help='Pooling size')
     parser.add_argument('--expansion_factor', type=int, default=2, help='Expansion factor for the model')
 
     parser.add_argument('--nhead', type=int, default=8, help='Number of attention heads')
-    parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
+    parser.add_argument('--n_sab_layers', type=int, default=8, help='Number of SAB layers')
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
-    parser.add_argument('--context_length', type=int, default=800, help='Context length')
+    parser.add_argument('--context_length', type=int, default=1600, help='Context length')
     parser.add_argument('--batch_size', type=int, default=50, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--num_loci', type=int, default=3750, help='Number of loci')
