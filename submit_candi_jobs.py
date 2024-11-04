@@ -59,9 +59,11 @@ hyperparameters_list = [
 
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 3 --expansion_factor 3 --nhead 9 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k3_ef3",
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 5 --expansion_factor 3 --nhead 9 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k5_ef3",
+    "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 9 --expansion_factor 3 --nhead 9 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k9_ef3",
+    "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 15 --expansion_factor 3 --nhead 9 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k15_ef3",
     
     "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 9 --expansion_factor 2 --nhead 4 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k9_ef2",
-    "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 9 --expansion_factor 2 --nhead 4 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k15_ef2",
+    "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 3 --conv_kernel_size 15 --expansion_factor 2 --nhead 4 --n_sab_layers 2 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --dna --suffix CL1200_nC3_k15_ef2",
 
     # "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 4 --conv_kernel_size 3 --expansion_factor 2 --nhead 8 --n_sab_layers 4 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --suffix CL1200_nC4_k3",
     # "--data_path /project/compbio-lab/encode_data/ --dropout 0.1 --pool_size 2 --epochs 10 --inner_epochs 1 --mask_percentage 0.1 --num_loci 1500 --lr_halflife 1 --min_avail 1 --hpo --eic --n_cnn_layers 4 --conv_kernel_size 5 --expansion_factor 2 --nhead 8 --n_sab_layers 4 --context_length 1200 --pos_enc relative --batch_size 50 --learning_rate 1e-3 --suffix CL1200_nC4_k5",
@@ -89,7 +91,7 @@ srun python CANDI.py {script_args}
 cpus_per_task = 2
 num_gpus = 1
 time_limit = 4  # Time limit in days
-memory = '60G'
+memory = '45G'
 n_simultaneous_jobs = 3  # Number of jobs to run simultaneously
 
 # Keep track of jobs
