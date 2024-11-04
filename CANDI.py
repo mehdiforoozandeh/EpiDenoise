@@ -1092,7 +1092,7 @@ def main():
         "hpo": args.hpo
     }
 
-    print(hyper_parameters)
+    # print(hyper_parameters)
     # Call your training function with parsed arguments
     Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
 
