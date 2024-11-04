@@ -622,10 +622,174 @@ def latent_position_dependency_experiment(
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
     hyper_parameters_path="models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl",
     dataset_path="/project/compbio-lab/encode_data/",
-    output_dir="output", number_of_states=10, DNA=True, n_positions=10):
+    output_dir="output",
+    number_of_states=10,
+    DNA=True,
+    n_positions=10):
+    
+    # Create CANDIPredictor instance
     predictor = CANDIPredictor(
-        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
-    predictor.latent_position_dependency_experiment(bios_name, n_positions=n_positions)
+        model_path, hyper_parameters_path, number_of_states, 
+        data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25
+    )
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Load the data
+    print("Loading data...")
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = predictor.load_bios(bios_name, x_dsf=1)
+    else:
+        X, Y, P, mX, mY, avX, avY = predictor.load_bios(bios_name, x_dsf=1)
+    
+    # Flatten only X and seq
+    X_flat = X.reshape(-1, X.shape[-1])
+    if DNA:
+        seq_flat = seq.reshape(-1, seq.shape[-1])
+    total_length = X_flat.shape[0]
+
+    # Print shapes
+    print("Shapes of tensors:")
+    print(f"X shape: {X.shape}")
+    print(f"X_flat shape: {X_flat.shape}")
+    print(f"mX shape: {mX.shape}")
+    print(f"mY shape: {mY.shape}")
+    print(f"avX shape: {avX.shape}")
+    if DNA:
+        print(f"seq shape: {seq.shape}")
+        print(f"seq_flat shape: {seq_flat.shape}")
+
+    # Randomly select positions avoiding edges
+    positions = np.random.randint(predictor.context_length//2, total_length - predictor.context_length//2, size=n_positions)
+    offsets = np.arange(-predictor.context_length//2, predictor.context_length//2 + 1, (predictor.model.l1 // predictor.model.l2)*5)
+
+    # Initialize arrays to store distances
+    cosine_distances = np.zeros((n_positions, len(offsets)))
+    euclidean_distances = np.zeros((n_positions, len(offsets)))
+    manhattan_distances = np.zeros((n_positions, len(offsets)))
+
+    for idx, pos in enumerate(tqdm(positions, desc='Processing positions')):
+        # Reference context window centered at pos
+        start = pos - predictor.context_length//2
+        end = pos + predictor.context_length//2
+        X_ref = X_flat[start:end]
+        mX_ref = mX[0].unsqueeze(0)
+        mY_ref = mY[0].unsqueeze(0)
+        avX_ref = avX[0].unsqueeze(0)
+        if DNA:
+            seq_ref = seq_flat[(start*predictor.resolution):(end*predictor.resolution)]
+        
+        # Expand dims for X_ref
+        X_ref = X_ref.unsqueeze(0)
+        if DNA:
+            seq_ref = seq_ref.unsqueeze(0)
+        
+        # Get reference latent representation
+        if DNA:
+            Z_ref = predictor.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=seq_ref)
+        else:
+            Z_ref = predictor.get_latent_representations(X_ref, mX_ref, mY_ref, avX_ref, seq=None)
+
+        # Position of pos within context window
+        pos_in_window = int((pos - start) * (predictor.model.l2 / predictor.model.l1))
+        Z_ref_pos = Z_ref[pos_in_window].cpu().numpy()
+
+        # Iterate over offsets
+        for i, offset in enumerate(offsets):
+            new_pos = pos + offset
+            start = new_pos - predictor.context_length//2
+            end = new_pos + predictor.context_length//2
+            if start < 0 or end > total_length:
+                cosine_distances[idx, i] = np.nan
+                euclidean_distances[idx, i] = np.nan
+                manhattan_distances[idx, i] = np.nan
+                continue
+            X_window = X_flat[start:end]
+            if DNA:
+                seq_window = seq_flat[(start*predictor.resolution):(end*predictor.resolution)]
+            
+            X_window = X_window.unsqueeze(0)
+            if DNA:
+                seq_window = seq_window.unsqueeze(0)
+            
+            if DNA:
+                Z = predictor.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=seq_window)
+            else:
+                Z = predictor.get_latent_representations(X_window, mX_ref, mY_ref, avX_ref, seq=None)
+            
+            # Position of pos within the shifted context window
+            pos_in_window_shifted = int((pos - start) * (predictor.model.l2 / predictor.model.l1))
+            if pos_in_window_shifted == predictor.model.l2:
+                pos_in_window_shifted -= 1
+            Z_pos = Z[pos_in_window_shifted].cpu().numpy()
+            
+            # Compute distances
+            cosine_distances[idx, i] = cosine(Z_ref_pos, Z_pos)
+            euclidean_distances[idx, i] = euclidean(Z_ref_pos, Z_pos)
+            manhattan_distances[idx, i] = cityblock(Z_ref_pos, Z_pos)
+
+    # Plotting
+    # Line plots for each position
+    fig, axes = plt.subplots(3, 1, figsize=(10, 15))
+    for idx in range(n_positions):
+        axes[0].plot(offsets, cosine_distances[idx], label=f'Pos {idx+1}')
+        axes[1].plot(offsets, euclidean_distances[idx], label=f'Pos {idx+1}')
+        axes[2].plot(offsets, manhattan_distances[idx], label=f'Pos {idx+1}')
+    axes[0].set_title('Cosine Distance vs. Position in Context Window')
+    axes[0].set_xlabel('Offset from Center')
+    axes[0].set_ylabel('Cosine Distance')
+    axes[1].set_title('Euclidean Distance vs. Position in Context Window')
+    axes[1].set_xlabel('Offset from Center')
+    axes[1].set_ylabel('Euclidean Distance')
+    axes[2].set_title('Manhattan Distance vs. Position in Context Window')
+    axes[2].set_xlabel('Offset from Center')
+    axes[2].set_ylabel('Manhattan Distance')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'latent_position_dependency_lineplots.png'))
+    plt.close()
+
+    # Heatmaps
+    fig, axes = plt.subplots(1, 3, figsize=(20, 5))
+    sns.heatmap(cosine_distances, ax=axes[0], cmap='viridis', xticklabels=offsets.astype(str))
+    axes[0].set_title('Cosine Distance Heatmap')
+    axes[0].set_xlabel('Offset from Center')
+    axes[0].set_ylabel('Position Index')
+    sns.heatmap(euclidean_distances, ax=axes[1], cmap='viridis', xticklabels=offsets.astype(str))
+    axes[1].set_title('Euclidean Distance Heatmap')
+    axes[1].set_xlabel('Offset from Center')
+    axes[1].set_ylabel('Position Index')
+    sns.heatmap(manhattan_distances, ax=axes[2], cmap='viridis', xticklabels=offsets.astype(str))
+    axes[2].set_title('Manhattan Distance Heatmap')
+    axes[2].set_xlabel('Offset from Center')
+    axes[2].set_ylabel('Position Index')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'latent_position_dependency_heatmaps.png'))
+    plt.close()
+
+    # Average distances with error bars
+    cosine_mean = np.nanmean(cosine_distances, axis=0)
+    cosine_std = np.nanstd(cosine_distances, axis=0)
+    euclidean_mean = np.nanmean(euclidean_distances, axis=0)
+    euclidean_std = np.nanstd(euclidean_distances, axis=0)
+    manhattan_mean = np.nanmean(manhattan_distances, axis=0)
+    manhattan_std = np.nanstd(manhattan_distances, axis=0)
+    fig, axes = plt.subplots(3, 1, figsize=(10, 15))
+    axes[0].errorbar(offsets, cosine_mean, yerr=cosine_std, fmt='-o')
+    axes[0].set_title('Average Cosine Distance vs. Position in Context Window')
+    axes[0].set_xlabel('Offset from Center')
+    axes[0].set_ylabel('Cosine Distance')
+    axes[1].errorbar(offsets, euclidean_mean, yerr=euclidean_std, fmt='-o')
+    axes[1].set_title('Average Euclidean Distance vs. Position in Context Window')
+    axes[1].set_xlabel('Offset from Center')
+    axes[1].set_ylabel('Euclidean Distance')
+    axes[2].errorbar(offsets, manhattan_mean, yerr=manhattan_std, fmt='-o')
+    axes[2].set_title('Average Manhattan Distance vs. Position in Context Window')
+    axes[2].set_xlabel('Offset from Center')
+    axes[2].set_ylabel('Manhattan Distance')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'latent_position_dependency_average.png'))
+    plt.close()
 
 def compare_decoded_outputs(bios_name, dsf=1,
     model_path="models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth",
