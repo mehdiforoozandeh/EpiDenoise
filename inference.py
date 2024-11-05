@@ -191,11 +191,111 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None):
-        """
-        given 
-        """
-        pass
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
+        # Calculate dimensions
+        crop_size = int(self.context_length * crop_percent)
+        stride = self.context_length - crop_size
+        num_windows = X.shape[0]
+        total_length = num_windows * self.context_length
+        
+        # Flatten only X and seq
+        X_flat = X.view(-1, X.shape[-1])  # [total_length, feature_dim]
+        if self.DNA:
+            seq_flat = seq.view(-1, seq.shape[-1])  # [total_length*resolution, 4]
+        
+        # Initialize output tensors
+        n = torch.zeros_like(X_flat, device="cpu")
+        p = torch.zeros_like(X_flat, device="cpu")
+        mu = torch.zeros_like(X_flat, device="cpu")
+        var = torch.zeros_like(X_flat, device="cpu")
+        counts = torch.zeros(total_length, device="cpu")
+        
+        # Coverage tracking tensor
+        coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
+        
+        # Process sliding windows
+        for i in range(0, total_length - self.context_length + 1, stride):
+            # Extract window
+            window_end = i + self.context_length
+            x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
+            
+            # Use original metadata tensors directly
+            mx_window = mX  # Already in shape [1, context_length, feature_dim]
+            my_window = mY  # Already in shape [1, context_length, feature_dim]
+            avail_window = avail  # Already in shape [1, feature_dim]
+            
+            if self.DNA:
+                seq_start = i * self.resolution
+                seq_end = window_end * self.resolution
+                seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
+            
+            # Get predictions
+            with torch.no_grad():
+                if self.DNA:
+                    outputs = self.model(
+                        x_window.float().to(self.device),
+                        seq_window.to(self.device),
+                        mx_window.to(self.device),
+                        my_window.to(self.device),
+                        avail_window.to(self.device),
+                        return_z=True
+                    )
+                else:
+                    outputs = self.model(
+                        x_window.float().to(self.device),
+                        mx_window.to(self.device),
+                        my_window.to(self.device),
+                        avail_window.to(self.device),
+                        return_z=True
+                    )
+                
+                outputs_n, outputs_p, outputs_mu, outputs_var, _ = outputs
+            
+            # Determine which part of predictions to keep
+            if i == 0:  # First window
+                start_idx = 0
+                end_idx = self.context_length - crop_size
+            elif i + self.context_length >= total_length:  # Last window
+                start_idx = crop_size
+                end_idx = self.context_length
+            else:  # Middle windows
+                start_idx = crop_size
+                end_idx = self.context_length - crop_size
+            
+            # Update predictions
+            target_start = i + start_idx
+            target_end = i + end_idx
+            
+            n[target_start:target_end] += outputs_n[0, start_idx:end_idx].cpu()
+            p[target_start:target_end] += outputs_p[0, start_idx:end_idx].cpu()
+            mu[target_start:target_end] += outputs_mu[0, start_idx:end_idx].cpu()
+            var[target_start:target_end] += outputs_var[0, start_idx:end_idx].cpu()
+            counts[target_start:target_end] += 1
+            
+            # Update coverage mask
+            coverage_mask[target_start:target_end] = True
+            
+            del outputs
+            torch.cuda.empty_cache()
+        
+        # Verify complete coverage
+        assert coverage_mask.all(), f"Missing predictions for {(~coverage_mask).sum()} positions"
+        
+        # Average predictions where windows overlapped
+        valid_counts = counts > 0
+        n[valid_counts] /= counts[valid_counts]
+        p[valid_counts] /= counts[valid_counts]
+        mu[valid_counts] /= counts[valid_counts]
+        var[valid_counts] /= counts[valid_counts]
+        
+        # Verify all positions have at least one prediction
+        assert valid_counts.all(), "Some positions have no predictions"
+        
+        # Reshape Z to match the number of windows
+        num_output_windows = (total_length - crop_size) // stride
+        Z = torch.empty((num_output_windows, self.model.latent_dim), device="cpu")
+        
+        return n, p, mu, var, Z
 
     def get_latent_representations(self, X, mX, mY, avX, seq=None):
         if self.DNA:
@@ -241,3 +341,6 @@ if __name__ == "__main__":
         
     print(X.shape, Y.shape, P.shape)
     print(mX.shape, mY.shape, avX.shape, avY.shape)
+
+    n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
+    
