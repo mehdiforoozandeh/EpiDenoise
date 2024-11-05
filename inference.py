@@ -194,7 +194,7 @@ class CANDIPredictor:
     def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
-        stride = self.context_length - crop_size
+        stride = self.context_length - (crop_size * 2)
         num_windows = X.shape[0]
         total_length = num_windows * self.context_length
         
@@ -279,7 +279,9 @@ class CANDIPredictor:
             torch.cuda.empty_cache()
         
         # Verify complete coverage
-        assert coverage_mask.all(), f"Missing predictions for {(~coverage_mask).sum()} positions"
+        if not coverage_mask.all():
+            print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
+            raise ValueError("Missing predictions")
         
         # Average predictions where windows overlapped
         valid_counts = counts > 0
