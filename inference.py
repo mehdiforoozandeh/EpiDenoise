@@ -204,11 +204,11 @@ class CANDIPredictor:
             seq_flat = seq.view(-1, seq.shape[-1])  # [total_length*resolution, 4]
         
         # Initialize output tensors
-        n = torch.zeros_like(X_flat, device="cpu")
-        p = torch.zeros_like(X_flat, device="cpu")
-        mu = torch.zeros_like(X_flat, device="cpu")
-        var = torch.zeros_like(X_flat, device="cpu")
-        counts = torch.zeros(total_length, device="cpu")
+        n = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
+        p = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
+        mu = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
+        var = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
+        counts = torch.zeros(total_length, dtype=torch.int64, device="cpu")
         
         # Coverage tracking tensor
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
