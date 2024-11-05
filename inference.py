@@ -250,6 +250,8 @@ class CANDIPredictor:
                     )
                 
                 outputs_n, outputs_p, outputs_mu, outputs_var, _ = outputs
+                print(outputs_n.shape, outputs_p.shape, outputs_mu.shape, outputs_var.shape)
+                exit()
             
             # Determine which part of predictions to keep
             if i == 0:  # First window
