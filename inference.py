@@ -214,7 +214,7 @@ class CANDIPredictor:
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
         
         # Process sliding windows
-        for i in range(0, total_length - self.context_length + 1, stride):
+        for i in range(0, total_length, stride):
             # Extract window
             window_end = i + self.context_length
             x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
@@ -255,7 +255,7 @@ class CANDIPredictor:
             if i == 0:  # First window
                 start_idx = 0
                 end_idx = self.context_length - crop_size
-            elif i + self.context_length + 1 >= total_length:  # Last window
+            elif i + self.context_length >= total_length:  # Last window
                 start_idx = crop_size
                 end_idx = self.context_length
                 # print(i, start_idx, end_idx)
