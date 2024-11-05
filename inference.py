@@ -230,6 +230,13 @@ class CANDIPredictor:
                 seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
             
             # Get predictions
+            print("Input shapes:")
+            print(f"x_window: {x_window.shape}")
+            if self.DNA:
+                print(f"seq_window: {seq_window.shape}")
+            print(f"mx_window: {mx_window.shape}")
+            print(f"my_window: {my_window.shape}")
+            print(f"avail_window: {avail_window.shape}")
             with torch.no_grad():
                 if self.DNA:
                     outputs = self.model(
@@ -259,7 +266,7 @@ class CANDIPredictor:
                 start_idx = crop_size
                 end_idx = self.context_length
                 print(i, start_idx, end_idx)
-                
+
             else:  # Middle windows
                 start_idx = crop_size
                 end_idx = self.context_length - crop_size
