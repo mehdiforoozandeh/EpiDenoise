@@ -210,6 +210,8 @@ class CANDIPredictor:
         var = torch.zeros_like(X_flat, device="cpu")
         counts = torch.zeros(total_length, device="cpu")
         
+        print(n.shape, p.shape, mu.shape, var.shape, counts.shape)
+        exit()
         # Coverage tracking tensor
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
         
@@ -268,10 +270,10 @@ class CANDIPredictor:
             target_start = i + start_idx
             target_end = i + end_idx
             
-            n[target_start:target_end] += outputs_n[0, start_idx:end_idx].cpu()
-            p[target_start:target_end] += outputs_p[0, start_idx:end_idx].cpu()
-            mu[target_start:target_end] += outputs_mu[0, start_idx:end_idx].cpu()
-            var[target_start:target_end] += outputs_var[0, start_idx:end_idx].cpu()
+            n[target_start:target_end] += outputs_n[0, start_idx:end_idx, :].cpu()
+            p[target_start:target_end] += outputs_p[0, start_idx:end_idx, :].cpu()
+            mu[target_start:target_end] += outputs_mu[0, start_idx:end_idx, :].cpu()
+            var[target_start:target_end] += outputs_var[0, start_idx:end_idx, :].cpu()
             counts[target_start:target_end] += 1
             
             # Update coverage mask
