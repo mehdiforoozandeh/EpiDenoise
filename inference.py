@@ -258,13 +258,12 @@ class CANDIPredictor:
             elif i + self.context_length + 1 >= total_length:  # Last window
                 start_idx = crop_size
                 end_idx = self.context_length
-                print(i, start_idx, end_idx)
-                exit()
+                # print(i, start_idx, end_idx)
+                # exit()
             else:  # Middle windows
                 start_idx = crop_size
                 end_idx = self.context_length - crop_size
                 
-            
             # Update predictions
             target_start = i + start_idx
             target_end = i + end_idx
@@ -281,6 +280,8 @@ class CANDIPredictor:
             del outputs
             torch.cuda.empty_cache()
         
+        print(i)
+        exit()
         # Verify complete coverage
         if not coverage_mask.all():
             print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
