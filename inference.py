@@ -258,11 +258,12 @@ class CANDIPredictor:
             elif i + self.context_length >= total_length:  # Last window
                 start_idx = crop_size
                 end_idx = self.context_length
+                print(i, start_idx, end_idx)
+                exit()
             else:  # Middle windows
                 start_idx = crop_size
                 end_idx = self.context_length - crop_size
-                print(i, start_idx, end_idx)
-                exit()
+                
             
             # Update predictions
             target_start = i + start_idx
