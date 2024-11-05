@@ -220,9 +220,9 @@ class CANDIPredictor:
             x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
             
             # Use original metadata tensors directly
-            mx_window = mX  # Already in shape [1, context_length, feature_dim]
-            my_window = mY  # Already in shape [1, context_length, feature_dim]
-            avail_window = avail  # Already in shape [1, feature_dim]
+            mx_window = mX[0]  # Already in shape [1, context_length, feature_dim]
+            my_window = mY[0]  # Already in shape [1, context_length, feature_dim]
+            avail_window = avail[0]  # Already in shape [1, feature_dim]
             
             if self.DNA:
                 seq_start = i * self.resolution
