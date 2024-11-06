@@ -430,7 +430,7 @@ class CANDIPredictor:
 
     #     return metrics_regular, metrics_cropped
 
-    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, pred_crop=False):
+    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None):
         """
         Performs leave-one-out evaluation and returns metrics for both count and p-value predictions.
         
@@ -457,10 +457,7 @@ class CANDIPredictor:
         var_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
         
         # Get upsampling predictions (without masking)
-        if pred_crop:
-            n_ups, p_ups, mu_ups, var_ups, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
-        else:
-            n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+        n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
         
         # Perform leave-one-out predictions
         for leave_one_out in available_indices:
