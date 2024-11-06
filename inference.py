@@ -339,4 +339,23 @@ if __name__ == "__main__":
     print(mX.shape, mY.shape, avX.shape, avY.shape)
 
     n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
+
+    # Get predictions from both methods
+    n_regular, p_regular, mu_regular, var_regular, Z_regular = CANDIP.pred(X, mX, mY, avX, seq=seq)
+    n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
+
+    # Compare predictions
+    def compare_predictions(pred1, pred2, name):
+        # Calculate fraction of non-identical positions per feature
+        diff_fractions = (pred1 != pred2).float().mean(dim=0)
+        print(f"\n{name} differences per feature:")
+        for i, frac in enumerate(diff_fractions):
+            print(f"Feature {i}: {frac:.4f}")
+
+    compare_predictions(n_regular, n_cropped, "n")
+    compare_predictions(p_regular, p_cropped, "p")
+    compare_predictions(mu_regular, mu_cropped, "mu")
+    compare_predictions(var_regular, var_cropped, "var")
+
+    
     
