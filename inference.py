@@ -394,7 +394,7 @@ class CANDIPredictor:
                 imp_mse = torch.mean((true_vals - imp_vals) ** 2).item()
                 ups_mse = torch.mean((true_vals - ups_vals) ** 2).item()
                 
-                metrics[idx] = {
+                metrics[idx.item()] = {  # Convert idx to int to avoid KeyError
                     'imp_pearson': imp_pearson,
                     'ups_pearson': ups_pearson,
                     'imp_mse': imp_mse,
@@ -405,7 +405,7 @@ class CANDIPredictor:
             print("Feature | Imp Pearson | Ups Pearson | Imp MSE | Ups MSE")
             print("-" * 60)
             for idx in available_indices:
-                m = metrics[idx]
+                m = metrics[idx.item()]  # Convert idx to int to access metrics
                 print(f"{idx:7d} | {m['imp_pearson']:10.4f} | {m['ups_pearson']:10.4f} | "
                       f"{m['imp_mse']:7.4f} | {m['ups_mse']:7.4f}")
             
