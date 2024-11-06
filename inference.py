@@ -193,7 +193,7 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.2):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
