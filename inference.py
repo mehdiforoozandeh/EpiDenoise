@@ -356,7 +356,15 @@ if __name__ == "__main__":
     n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
 
     # Compare predictions
-    def compare_predictions(pred1, pred2, name):
+    def compare_predictions(n1, p1, n2, p2, name):
+        # Create NegativeBinomial distributions
+        nb1 = NegativeBinomial(p1, n1)
+        nb2 = NegativeBinomial(p2, n2)
+        
+        # Get means
+        pred1 = nb1.mean()
+        pred2 = nb2.mean()
+        
         # Calculate differences
         differences = pred1 - pred2
         
@@ -406,10 +414,8 @@ if __name__ == "__main__":
                   f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
                   f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f} | {r2_scores[i]:6.4f}")
 
-    compare_predictions(n_regular, n_cropped, "n")
-    compare_predictions(p_regular, p_cropped, "p")
-    compare_predictions(mu_regular, mu_cropped, "mu")
-    compare_predictions(var_regular, var_cropped, "var")
+    compare_predictions(n_regular, p_regular, n_cropped, p_cropped, "NegativeBinomial mean")
+    compare_predictions(mu_regular, var_regular, mu_cropped, var_cropped, "Gaussian mean")
 
     
 
