@@ -208,7 +208,6 @@ class CANDIPredictor:
         p = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         mu = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         var = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
-        counts = torch.zeros(total_length, dtype=torch.int64, device="cpu")
         
         # Coverage tracking tensor
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
@@ -284,7 +283,6 @@ class CANDIPredictor:
             p[target_start:target_end, :] += outputs_p[0, start_idx:end_idx, :].cpu()
             mu[target_start:target_end, :] += outputs_mu[0, start_idx:end_idx, :].cpu()
             var[target_start:target_end, :] += outputs_var[0, start_idx:end_idx, :].cpu()
-            counts[target_start:target_end] += 1
             
             # Update coverage mask
             coverage_mask[target_start:target_end] = True
@@ -297,15 +295,6 @@ class CANDIPredictor:
             print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
             raise ValueError("Missing predictions")
         
-        # Average predictions where windows overlapped
-        valid_counts = counts > 0
-        n[valid_counts] /= counts[valid_counts]
-        p[valid_counts] /= counts[valid_counts]
-        mu[valid_counts] /= counts[valid_counts]
-        var[valid_counts] /= counts[valid_counts]
-        
-        # Verify all positions have at least one prediction
-        assert valid_counts.all(), "Some positions have no predictions"
         
         # Reshape Z to match the number of windows
         num_output_windows = (total_length - crop_size) // stride
