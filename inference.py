@@ -576,8 +576,7 @@ if __name__ == "__main__":
         seq = None
 
     print("Evaluating leave-one-out for initial analysis...")
-    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, pred_crop=False)
-    metrics_cropped = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, pred_crop=True)
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
     # print("Metrics for initial analysis:", metrics)
     # print("Metrics for cropped predictions:", metrics_cropped)
 
