@@ -375,9 +375,10 @@ if __name__ == "__main__":
         rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
         nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
         
-        # Calculate correlations
+        # Calculate correlations and R²
         pearson_corrs = []
         spearman_corrs = []
+        r2_scores = []
         for i in range(pred1.shape[1]):
             # Convert to numpy for scipy stats
             p1 = pred1[:, i].numpy()
@@ -390,14 +391,20 @@ if __name__ == "__main__":
             # Calculate Spearman correlation
             spearman_corr = stats.spearmanr(p1, p2)[0]
             spearman_corrs.append(spearman_corr)
+            
+            # Calculate R² score
+            ss_res = np.sum((p1 - p2) ** 2)
+            ss_tot = np.sum((p1 - np.mean(p1)) ** 2)
+            r2 = 1 - (ss_res / ss_tot)
+            r2_scores.append(r2)
         
         print(f"\n{name} differences per feature:")
-        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman")
-        print("-" * 95)
+        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman | R²")
+        print("-" * 105)
         for i in range(len(mean_diff)):
             print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
                   f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
-                  f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f}")
+                  f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f} | {r2_scores[i]:6.4f}")
 
     compare_predictions(n_regular, n_cropped, "n")
     compare_predictions(p_regular, p_cropped, "p")
