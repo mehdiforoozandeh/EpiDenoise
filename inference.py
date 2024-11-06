@@ -346,11 +346,18 @@ if __name__ == "__main__":
 
     # Compare predictions
     def compare_predictions(pred1, pred2, name):
-        # Calculate fraction of non-identical positions per feature
-        diff_fractions = (pred1 != pred2).float().mean(dim=0)
+        # Calculate differences
+        differences = pred1 - pred2
+        
+        # Calculate mean and variance of differences per feature
+        mean_diff = differences.mean(dim=0)
+        var_diff = differences.var(dim=0)
+        
         print(f"\n{name} differences per feature:")
-        for i, frac in enumerate(diff_fractions):
-            print(f"Feature {i}: {frac:.4f}")
+        print("Feature | Mean Difference | Variance of Difference")
+        print("-" * 50)
+        for i, (mean, var) in enumerate(zip(mean_diff, var_diff)):
+            print(f"{i:7d} | {mean:14.6f} | {var:20.6f}")
 
     compare_predictions(n_regular, n_cropped, "n")
     compare_predictions(p_regular, p_cropped, "p")
