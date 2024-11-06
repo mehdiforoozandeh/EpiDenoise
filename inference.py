@@ -243,6 +243,11 @@ class CANDIPredictor:
                 seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
             
             with torch.no_grad():
+
+                if len(imp_target)>0:
+                    x_window[:, :, imp_target] = self.token_dict["cloze_mask"]
+                    mx_window[:, :, imp_target] = self.token_dict["cloze_mask"]
+
                 if self.DNA:
                     outputs = self.model(
                         x_window.float().to(self.device),
@@ -280,20 +285,20 @@ class CANDIPredictor:
             target_start = i + start_idx
             target_end = i + end_idx
             
-            if torch.any(n[target_start:target_end, :] != 0):
-                print(f"{target_start} Fraction of positions being overwritten in n: {torch.sum(n[target_start:target_end, :] != 0).item() / n[target_start:target_end, :].numel()}")
+            # if torch.any(n[target_start:target_end, :] != 0):
+                # print(f"{target_start} Fraction of positions being overwritten in n: {torch.sum(n[target_start:target_end, :] != 0).item() / n[target_start:target_end, :].numel()}")
             n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
             
-            if torch.any(p[target_start:target_end, :] != 0):
-                print(f"{target_start} Fraction of positions being overwritten in p: {torch.sum(p[target_start:target_end, :] != 0).item() / p[target_start:target_end, :].numel()}")
+            # if torch.any(p[target_start:target_end, :] != 0):
+                # print(f"{target_start} Fraction of positions being overwritten in p: {torch.sum(p[target_start:target_end, :] != 0).item() / p[target_start:target_end, :].numel()}")
             p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
             
-            if torch.any(mu[target_start:target_end, :] != 0):
-                print(f"{target_start} Fraction of positions being overwritten in mu: {torch.sum(mu[target_start:target_end, :] != 0).item() / mu[target_start:target_end, :].numel()}")
+            # if torch.any(mu[target_start:target_end, :] != 0):
+                # print(f"{target_start} Fraction of positions being overwritten in mu: {torch.sum(mu[target_start:target_end, :] != 0).item() / mu[target_start:target_end, :].numel()}")
             mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
             
-            if torch.any(var[target_start:target_end, :] != 0):
-                print(f"{target_start} Fraction of positions being overwritten in var: {torch.sum(var[target_start:target_end, :] != 0).item() / var[target_start:target_end, :].numel()}")
+            # if torch.any(var[target_start:target_end, :] != 0):
+                # print(f"{target_start} Fraction of positions being overwritten in var: {torch.sum(var[target_start:target_end, :] != 0).item() / var[target_start:target_end, :].numel()}")
             var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
         
             # Update coverage mask
