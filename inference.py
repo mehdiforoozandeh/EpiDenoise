@@ -232,15 +232,6 @@ class CANDIPredictor:
                 seq_end = window_end * self.resolution
                 seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
             
-            # Get predictions
-            print("Input shapes:")
-            print(f"x_window: {x_window.shape}")
-            if self.DNA:
-                print(f"seq_window: {seq_window.shape}")
-            print(f"mx_window: {mx_window.shape}")
-            print(f"my_window: {my_window.shape}")
-            print(f"avail_window: {avail_window.shape}")
-            
             with torch.no_grad():
                 if self.DNA:
                     outputs = self.model(
