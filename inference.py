@@ -487,15 +487,15 @@ if __name__ == "__main__":
         X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
         seq = None
 
-    # print("Evaluating leave-one-out for initial analysis...")
-    # start_time = time.time()
-    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
-    # end_time = time.time()
-    # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-    
+    print("Evaluating leave-one-out for initial analysis...")
     start_time = time.time()
-    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=False)
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
     end_time = time.time()
-    print(f"Evaluation with crop_edges=False took {end_time - start_time:.2f} seconds.")
+    print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
+    
+    # start_time = time.time()
+    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=False)
+    # end_time = time.time()
+    # print(f"Evaluation with crop_edges=False took {end_time - start_time:.2f} seconds.")
     
     
