@@ -269,11 +269,14 @@ class CANDIPredictor:
             # Update predictions
             target_start = i + start_idx
             target_end = i + end_idx
-            
-            n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
-            p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
-            mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
-            var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
+            if torch.all(n[target_start:target_end, :] == 0):
+                n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
+            if torch.all(p[target_start:target_end, :] == 0):
+                p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
+            if torch.all(mu[target_start:target_end, :] == 0):
+                mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
+            if torch.all(var[target_start:target_end, :] == 0):
+                var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
             
             # Update coverage mask
             coverage_mask[target_start:target_end] = True
