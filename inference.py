@@ -1,6 +1,6 @@
 import torch
 import pickle
-import os
+import os, time
 from CANDI import *
 from scipy import stats
 import numpy as np
@@ -483,7 +483,14 @@ if __name__ == "__main__":
         seq = None
 
     print("Evaluating leave-one-out for initial analysis...")
+    start_time = time.time()
     metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
+    end_time = time.time()
+    print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
+    
+    start_time = time.time()
     metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=False)
+    end_time = time.time()
+    print(f"Evaluation with crop_edges=False took {end_time - start_time:.2f} seconds.")
     
     
