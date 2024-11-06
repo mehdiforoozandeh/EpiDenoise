@@ -224,10 +224,21 @@ class CANDIPredictor:
             window_end = i + self.context_length
             x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
             
-            # Use original metadata tensors directly
-            mx_window = mX[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
-            my_window = mY[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
-            avail_window = avail[0].unsqueeze(0)  # Already in shape [1, feature_dim]
+            # Check if all rows in metadata tensors are identical before selecting one
+            if torch.all(torch.all(mX == mX[0], dim=1), dim=0):
+                mx_window = mX[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
+            else:
+                raise ValueError("Rows in mX are not identical.")
+                
+            if torch.all(torch.all(mY == mY[0], dim=1), dim=0):
+                my_window = mY[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
+            else:
+                raise ValueError("Rows in mY are not identical.")
+                
+            if torch.all(torch.all(avail == avail[0], dim=1), dim=0):
+                avail_window = avail[0].unsqueeze(0)  # Already in shape [1, feature_dim]
+            else:
+                raise ValueError("Rows in avail are not identical.")
             
             if self.DNA:
                 seq_start = i * self.resolution
