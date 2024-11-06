@@ -561,7 +561,6 @@ if __name__ == "__main__":
     bios_name = "ENCBS674MPN"
     dsf = 1
 
-
     CANDIP = CANDIPredictor(
         model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
     
@@ -577,89 +576,33 @@ if __name__ == "__main__":
 
     print("Evaluating leave-one-out for initial analysis...")
     metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
-    # print("Metrics for initial analysis:", metrics)
-    # print("Metrics for cropped predictions:", metrics_cropped)
-
-
-    # n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
-    # Get predictions from both methods
-    # n_regular, p_regular, mu_regular, var_regular, Z_regular = CANDIP.pred(X, mX, mY, avX, seq=seq)
-    # n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
-    
-    # metrics_regular, metrics_cropped = CANDIP.compare_prediction_methods(X, mX, mY, avX, Y, seq=seq)
-    # print(metrics_regular)
-    # print(metrics_cropped)
-    exit()
-    # Compare predictions
-    # def compare_predictions(n1, p1, n2, p2, name):
-    #     # Create NegativeBinomial distributions
-
-    #     if name == "NegativeBinomial mean":
-    #         nb1 = NegativeBinomial(p1, n1)
-    #         nb2 = NegativeBinomial(p2, n2)
-            
-    #         # Get means
-    #         pred1 = nb1.mean()
-    #         pred2 = nb2.mean()
-    #     elif name == "Gaussian mean":
-    #         pred1 = torch.sinh(n1)
-    #         pred2 = torch.sinh(n2)
-        
-    #     # Calculate differences
-    #     differences = pred1 - pred2
-        
-    #     # Calculate statistics per feature
-    #     mean_diff = differences.mean(dim=0)
-    #     var_diff = differences.var(dim=0)
-        
-    #     # Calculate relative metrics
-    #     relative_diff = mean_diff / pred1.mean(dim=0)  # Relative difference compared to original values
-        
-    #     # Calculate Cohen's d effect size
-    #     pooled_std = torch.sqrt((pred1.var(dim=0) + pred2.var(dim=0)) / 2)
-    #     cohens_d = mean_diff / pooled_std
-        
-    #     # Calculate normalized RMSE
-    #     rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
-    #     nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
-        
-    #     # Calculate correlations and R²
-    #     pearson_corrs = []
-    #     spearman_corrs = []
-    #     r2_scores = []
-    #     for i in range(pred1.shape[1]):
-    #         # Convert to numpy for scipy stats
-    #         p1 = pred1[:, i].numpy()
-    #         p2 = pred2[:, i].numpy()
-            
-    #         # Calculate Pearson correlation
-    #         pearson_corr = stats.pearsonr(p1, p2)[0]
-    #         pearson_corrs.append(pearson_corr)
-            
-    #         # Calculate Spearman correlation
-    #         spearman_corr = stats.spearmanr(p1, p2)[0]
-    #         spearman_corrs.append(spearman_corr)
-            
-    #         # Calculate R² score
-    #         ss_res = np.sum((p1 - p2) ** 2)
-    #         ss_tot = np.sum((p1 - np.mean(p1)) ** 2)
-    #         r2 = 1 - (ss_res / ss_tot)
-    #         r2_scores.append(r2)
-        
-    #     print(f"\n{name} differences per feature:")
-    #     print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman | R²")
-    #     print("-" * 105)
-    #     for i in range(len(mean_diff)):
-    #         print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
-    #               f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
-    #               f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f} | {r2_scores[i]:6.4f}")
-
-    # compare_predictions(n_regular, p_regular, n_cropped, p_cropped, "NegativeBinomial mean")
-    # compare_predictions(mu_regular, var_regular, mu_cropped, var_cropped, "Gaussian mean")
 
     
 
+    print("Loading biosample data for DNA analysis...")
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=2, fill_in_y_prompt=False)
+    else:
+        print("Loading biosample data for non-DNA analysis...")
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=2, fill_in_y_prompt=False)
+        seq = None
+
+    print("Evaluating leave-one-out for initial analysis...")
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
+
+
     
+    print("Loading biosample data for DNA analysis...")
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=4, fill_in_y_prompt=False)
+    else:
+        print("Loading biosample data for non-DNA analysis...")
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=4, fill_in_y_prompt=False)
+        seq = None
+
+    print("Evaluating leave-one-out for initial analysis...")
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
+
 
     
     
