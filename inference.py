@@ -358,12 +358,17 @@ if __name__ == "__main__":
     # Compare predictions
     def compare_predictions(n1, p1, n2, p2, name):
         # Create NegativeBinomial distributions
-        nb1 = NegativeBinomial(p1, n1)
-        nb2 = NegativeBinomial(p2, n2)
-        
-        # Get means
-        pred1 = nb1.mean()
-        pred2 = nb2.mean()
+
+        if name == "NegativeBinomial mean":
+            nb1 = NegativeBinomial(p1, n1)
+            nb2 = NegativeBinomial(p2, n2)
+            
+            # Get means
+            pred1 = nb1.mean()
+            pred2 = nb2.mean()
+        elif name == "Gaussian mean":
+            pred1 = torch.sinh(mu1)
+            pred2 = torch.sinh(mu2)
         
         # Calculate differences
         differences = pred1 - pred2
