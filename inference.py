@@ -331,6 +331,105 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
+    def compare_prediction_methods(self, X, mX, mY, avX, Y, seq=None):
+        available_indices = torch.where(avX[0, :] == 1)[0]
+        
+        # Initialize tensors for both methods
+        n_imp_regular = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        p_imp_regular = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        n_imp_cropped = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        p_imp_cropped = torch.empty_like(X, device="cpu", dtype=torch.float32)
+
+        # Perform leave-one-out validation for both methods
+        for leave_one_out in available_indices:
+            # Regular predictions
+            n_reg, p_reg, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
+            n_imp_regular[:, :, leave_one_out] = n_reg[:, :, leave_one_out]
+            p_imp_regular[:, :, leave_one_out] = p_reg[:, :, leave_one_out]
+            
+            # Cropped predictions
+            n_crop, p_crop, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
+            n_imp_cropped[:, :, leave_one_out] = n_crop[:, :, leave_one_out]
+            p_imp_cropped[:, :, leave_one_out] = p_crop[:, :, leave_one_out]
+            
+            print(f"Completed imputations for feature #{leave_one_out+1}")
+
+        # Get full predictions without masking
+        n_ups_regular, p_ups_regular, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+        n_ups_cropped, p_ups_cropped, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+        
+        # Reshape tensors
+        def reshape_predictions(n_imp, p_imp, n_ups, p_ups, Y):
+            p_imp = p_imp.view(-1, p_imp.shape[-1])
+            n_imp = n_imp.view(-1, n_imp.shape[-1])
+            p_ups = p_ups.view(-1, p_ups.shape[-1])
+            n_ups = n_ups.view(-1, n_ups.shape[-1])
+            Y = Y.view(-1, Y.shape[-1])
+            
+            return NegativeBinomial(p_imp, n_imp), NegativeBinomial(p_ups, n_ups), Y
+
+        # Create distributions
+        imp_dist_regular, ups_dist_regular, Y_flat = reshape_predictions(
+            n_imp_regular, p_imp_regular, n_ups_regular, p_ups_regular, Y)
+        imp_dist_cropped, ups_dist_cropped, _ = reshape_predictions(
+            n_imp_cropped, p_imp_cropped, n_ups_cropped, p_ups_cropped, Y)
+
+        # Compare predictions with true values
+        def evaluate_predictions(imp_dist, ups_dist, Y, method_name):
+            imp_mean = imp_dist.mean()
+            ups_mean = ups_dist.mean()
+            
+            metrics = {}
+            for idx in available_indices:
+                # Calculate metrics for each feature
+                true_vals = Y[:, idx]
+                imp_vals = imp_mean[:, idx]
+                ups_vals = ups_mean[:, idx]
+                
+                # Calculate correlations
+                imp_pearson = stats.pearsonr(true_vals, imp_vals)[0]
+                ups_pearson = stats.pearsonr(true_vals, ups_vals)[0]
+                
+                # Calculate MSE
+                imp_mse = torch.mean((true_vals - imp_vals) ** 2).item()
+                ups_mse = torch.mean((true_vals - ups_vals) ** 2).item()
+                
+                metrics[idx] = {
+                    'imp_pearson': imp_pearson,
+                    'ups_pearson': ups_pearson,
+                    'imp_mse': imp_mse,
+                    'ups_mse': ups_mse
+                }
+                
+            print(f"\nResults for {method_name}:")
+            print("Feature | Imp Pearson | Ups Pearson | Imp MSE | Ups MSE")
+            print("-" * 60)
+            for idx in available_indices:
+                m = metrics[idx]
+                print(f"{idx:7d} | {m['imp_pearson']:10.4f} | {m['ups_pearson']:10.4f} | "
+                      f"{m['imp_mse']:7.4f} | {m['ups_mse']:7.4f}")
+            
+            return metrics
+
+        # Evaluate both methods
+        metrics_regular = evaluate_predictions(imp_dist_regular, ups_dist_regular, Y_flat, "Regular Prediction")
+        metrics_cropped = evaluate_predictions(imp_dist_cropped, ups_dist_cropped, Y_flat, "Cropped Prediction")
+        
+        # Compare methods directly
+        print("\nMethod Comparison (Cropped vs Regular):")
+        print("Feature | Imp Pearson Diff | Ups Pearson Diff | Imp MSE Diff | Ups MSE Diff")
+        print("-" * 70)
+        for idx in available_indices:
+            imp_pearson_diff = metrics_cropped[idx]['imp_pearson'] - metrics_regular[idx]['imp_pearson']
+            ups_pearson_diff = metrics_cropped[idx]['ups_pearson'] - metrics_regular[idx]['ups_pearson']
+            imp_mse_diff = metrics_cropped[idx]['imp_mse'] - metrics_regular[idx]['imp_mse']
+            ups_mse_diff = metrics_cropped[idx]['ups_mse'] - metrics_regular[idx]['ups_mse']
+            
+            print(f"{idx:7d} | {imp_pearson_diff:15.4f} | {ups_pearson_diff:15.4f} | "
+                  f"{imp_mse_diff:12.4f} | {ups_mse_diff:12.4f}")
+
+        return metrics_regular, metrics_cropped
+
 
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth"
@@ -362,7 +461,11 @@ if __name__ == "__main__":
     # Get predictions from both methods
     n_regular, p_regular, mu_regular, var_regular, Z_regular = CANDIP.pred(X, mX, mY, avX, seq=seq)
     n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
-
+    
+    metrics_regular, metrics_cropped = CANDIP.compare_prediction_methods(X, mX, mY, avX, Y, seq=seq)
+    print(metrics_regular)
+    print(metrics_cropped)
+    exit()
     # Compare predictions
     def compare_predictions(n1, p1, n2, p2, name):
         # Create NegativeBinomial distributions
@@ -429,6 +532,8 @@ if __name__ == "__main__":
 
     compare_predictions(n_regular, p_regular, n_cropped, p_cropped, "NegativeBinomial mean")
     compare_predictions(mu_regular, var_regular, mu_cropped, var_cropped, "Gaussian mean")
+
+    
 
     
 
