@@ -528,15 +528,15 @@ class CANDIPredictor:
         # Print summary
         print("\nEvaluation Results:")
         print("\nCount Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | P0 BG  | P0 FG")
-        print("-" * 75)
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
+        print("-" * 55)
         for idx in available_indices:
             m = metrics[idx.item()]['count_metrics']
             print(f"{idx:7d} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['p0_bg']:6.4f} | {m['p0_fg']:6.4f}")
+                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
             print(f"        | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} |")
-            print("-" * 75)
+                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
+            print("-" * 55)
             
         print("\nP-value Metrics:")
         print("Feature | Type      | Pearson | Spearman | MSE    | R2")
