@@ -59,7 +59,7 @@ class CANDIPredictor:
             "pad": -3
             }
 
-    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=True):
         # Load biosample data
         
         print(f"getting bios vals for {bios_name}")
@@ -331,105 +331,230 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
-    def compare_prediction_methods(self, X, mX, mY, avX, Y, seq=None):
+    # def compare_prediction_methods(self, X, mX, mY, avX, Y, seq=None):
+    #     available_indices = torch.where(avX[0, :] == 1)[0]
+        
+    #     # Initialize tensors for both methods
+    #     n_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+    #     p_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+    #     n_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+    #     p_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+
+    #     # Perform leave-one-out validation for both methods
+    #     for leave_one_out in available_indices:
+    #         # Regular predictions
+    #         n_reg, p_reg, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
+    #         n_imp_regular[:, leave_one_out] = n_reg[:, leave_one_out]
+    #         p_imp_regular[:, leave_one_out] = p_reg[:, leave_one_out]
+            
+    #         # Cropped predictions
+    #         n_crop, p_crop, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
+    #         n_imp_cropped[:, leave_one_out] = n_crop[:, leave_one_out]
+    #         p_imp_cropped[:, leave_one_out] = p_crop[:, leave_one_out]
+            
+    #         print(f"Completed imputations for feature #{leave_one_out+1}")
+
+    #     # Get full predictions without masking
+    #     n_ups_regular, p_ups_regular, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+    #     n_ups_cropped, p_ups_cropped, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+        
+    #     # Reshape tensors
+    #     def reshape_predictions(n_imp, p_imp, n_ups, p_ups, Y):
+    #         # p_imp = p_imp.view(-1, p_imp.shape[-1])
+    #         # n_imp = n_imp.view(-1, n_imp.shape[-1])
+    #         # p_ups = p_ups.view(-1, p_ups.shape[-1])
+    #         # n_ups = n_ups.view(-1, n_ups.shape[-1])
+    #         Y = Y.view(-1, Y.shape[-1])
+            
+    #         return NegativeBinomial(p_imp, n_imp), NegativeBinomial(p_ups, n_ups), Y
+
+    #     # Create distributions
+    #     imp_dist_regular, ups_dist_regular, Y_flat = reshape_predictions(
+    #         n_imp_regular, p_imp_regular, n_ups_regular, p_ups_regular, Y)
+    #     imp_dist_cropped, ups_dist_cropped, _ = reshape_predictions(
+    #         n_imp_cropped, p_imp_cropped, n_ups_cropped, p_ups_cropped, Y)
+
+    #     # Compare predictions with true values
+    #     def evaluate_predictions(imp_dist, ups_dist, Y, method_name):
+    #         imp_mean = imp_dist.mean()
+    #         ups_mean = ups_dist.mean()
+            
+    #         metrics = {}
+    #         for idx in available_indices:
+    #             # Calculate metrics for each feature
+    #             true_vals = Y[:, idx]
+    #             imp_vals = imp_mean[:, idx]
+    #             ups_vals = ups_mean[:, idx]
+                
+    #             # Calculate correlations
+    #             imp_pearson = stats.pearsonr(true_vals, imp_vals)[0]
+    #             ups_pearson = stats.pearsonr(true_vals, ups_vals)[0]
+                
+    #             # Calculate MSE
+    #             imp_mse = torch.mean((true_vals - imp_vals) ** 2).item()
+    #             ups_mse = torch.mean((true_vals - ups_vals) ** 2).item()
+                
+    #             metrics[idx.item()] = {  # Convert idx to int to avoid KeyError
+    #                 'imp_pearson': imp_pearson,
+    #                 'ups_pearson': ups_pearson,
+    #                 'imp_mse': imp_mse,
+    #                 'ups_mse': ups_mse
+    #             }
+                
+    #         print(f"\nResults for {method_name}:")
+    #         print("Feature | Imp Pearson | Ups Pearson | Imp MSE | Ups MSE")
+    #         print("-" * 60)
+    #         for idx in available_indices:
+    #             m = metrics[idx.item()]  # Convert idx to int to access metrics
+    #             print(f"{idx:7d} | {m['imp_pearson']:10.4f} | {m['ups_pearson']:10.4f} | "
+    #                   f"{m['imp_mse']:7.4f} | {m['ups_mse']:7.4f}")
+            
+    #         return metrics
+
+    #     # Evaluate both methods
+    #     metrics_regular = evaluate_predictions(imp_dist_regular, ups_dist_regular, Y_flat, "Regular Prediction")
+    #     metrics_cropped = evaluate_predictions(imp_dist_cropped, ups_dist_cropped, Y_flat, "Cropped Prediction")
+        
+    #     # Compare methods directly
+    #     print("\nMethod Comparison (Cropped vs Regular):")
+    #     print("Feature | Imp Pearson Diff | Ups Pearson Diff | Imp MSE Diff | Ups MSE Diff")
+    #     print("-" * 70)
+    #     for idx in available_indices:
+    #         imp_pearson_diff = metrics_cropped[idx]['imp_pearson'] - metrics_regular[idx]['imp_pearson']
+    #         ups_pearson_diff = metrics_cropped[idx]['ups_pearson'] - metrics_regular[idx]['ups_pearson']
+    #         imp_mse_diff = metrics_cropped[idx]['imp_mse'] - metrics_regular[idx]['imp_mse']
+    #         ups_mse_diff = metrics_cropped[idx]['ups_mse'] - metrics_regular[idx]['ups_mse']
+            
+    #         print(f"{idx:7d} | {imp_pearson_diff:15.4f} | {ups_pearson_diff:15.4f} | "
+    #               f"{imp_mse_diff:12.4f} | {ups_mse_diff:12.4f}")
+
+    #     return metrics_regular, metrics_cropped
+
+    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None):
+        """
+        Performs leave-one-out evaluation and returns metrics for both count and p-value predictions.
+        
+        Returns:
+            Dictionary containing metrics for each feature:
+            {feature_idx: {
+                'count_metrics': {
+                    'imp_pearson': float, 'imp_spearman': float, 'imp_mse': float, 'imp_r2': float,
+                    'ups_pearson': float, 'ups_spearman': float, 'ups_mse': float, 'ups_r2': float,
+                    'p0_bg': float, 'p0_fg': float  # probability of zero in background/foreground
+                },
+                'pval_metrics': {
+                    'imp_pearson': float, 'imp_spearman': float, 'imp_mse': float, 'imp_r2': float,
+                    'ups_pearson': float, 'ups_spearman': float, 'ups_mse': float, 'ups_r2': float
+                }
+            }}
+        """
         available_indices = torch.where(avX[0, :] == 1)[0]
         
-        # Initialize tensors for both methods
-        n_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
-        p_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
-        n_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
-        p_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
-
-        # Perform leave-one-out validation for both methods
+        # Initialize tensors for imputation predictions
+        n_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        p_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        mu_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        var_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        
+        # Get upsampling predictions (without masking)
+        n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+        
+        # Perform leave-one-out predictions
         for leave_one_out in available_indices:
-            # Regular predictions
-            n_reg, p_reg, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
-            n_imp_regular[:, leave_one_out] = n_reg[:, leave_one_out]
-            p_imp_regular[:, leave_one_out] = p_reg[:, leave_one_out]
-            
-            # Cropped predictions
-            n_crop, p_crop, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
-            n_imp_cropped[:, leave_one_out] = n_crop[:, leave_one_out]
-            p_imp_cropped[:, leave_one_out] = p_crop[:, leave_one_out]
-            
-            print(f"Completed imputations for feature #{leave_one_out+1}")
-
-        # Get full predictions without masking
-        n_ups_regular, p_ups_regular, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
-        n_ups_cropped, p_ups_cropped, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+            n, p, mu, var, _ = self.pred(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
+            n_imp[:, leave_one_out] = n[:, leave_one_out]
+            p_imp[:, leave_one_out] = p[:, leave_one_out]
+            mu_imp[:, leave_one_out] = mu[:, leave_one_out]
+            var_imp[:, leave_one_out] = var[:, leave_one_out]
+            print(f"Completed feature {leave_one_out+1}/{len(available_indices)}")
         
-        # Reshape tensors
-        def reshape_predictions(n_imp, p_imp, n_ups, p_ups, Y):
-            # p_imp = p_imp.view(-1, p_imp.shape[-1])
-            # n_imp = n_imp.view(-1, n_imp.shape[-1])
-            # p_ups = p_ups.view(-1, p_ups.shape[-1])
-            # n_ups = n_ups.view(-1, n_ups.shape[-1])
-            Y = Y.view(-1, Y.shape[-1])
-            
-            return NegativeBinomial(p_imp, n_imp), NegativeBinomial(p_ups, n_ups), Y
-
-        # Create distributions
-        imp_dist_regular, ups_dist_regular, Y_flat = reshape_predictions(
-            n_imp_regular, p_imp_regular, n_ups_regular, p_ups_regular, Y)
-        imp_dist_cropped, ups_dist_cropped, _ = reshape_predictions(
-            n_imp_cropped, p_imp_cropped, n_ups_cropped, p_ups_cropped, Y)
-
-        # Compare predictions with true values
-        def evaluate_predictions(imp_dist, ups_dist, Y, method_name):
-            imp_mean = imp_dist.mean()
-            ups_mean = ups_dist.mean()
-            
-            metrics = {}
-            for idx in available_indices:
-                # Calculate metrics for each feature
-                true_vals = Y[:, idx]
-                imp_vals = imp_mean[:, idx]
-                ups_vals = ups_mean[:, idx]
-                
-                # Calculate correlations
-                imp_pearson = stats.pearsonr(true_vals, imp_vals)[0]
-                ups_pearson = stats.pearsonr(true_vals, ups_vals)[0]
-                
-                # Calculate MSE
-                imp_mse = torch.mean((true_vals - imp_vals) ** 2).item()
-                ups_mse = torch.mean((true_vals - ups_vals) ** 2).item()
-                
-                metrics[idx.item()] = {  # Convert idx to int to avoid KeyError
-                    'imp_pearson': imp_pearson,
-                    'ups_pearson': ups_pearson,
-                    'imp_mse': imp_mse,
-                    'ups_mse': ups_mse
-                }
-                
-            print(f"\nResults for {method_name}:")
-            print("Feature | Imp Pearson | Ups Pearson | Imp MSE | Ups MSE")
-            print("-" * 60)
-            for idx in available_indices:
-                m = metrics[idx.item()]  # Convert idx to int to access metrics
-                print(f"{idx:7d} | {m['imp_pearson']:10.4f} | {m['ups_pearson']:10.4f} | "
-                      f"{m['imp_mse']:7.4f} | {m['ups_mse']:7.4f}")
-            
-            return metrics
-
-        # Evaluate both methods
-        metrics_regular = evaluate_predictions(imp_dist_regular, ups_dist_regular, Y_flat, "Regular Prediction")
-        metrics_cropped = evaluate_predictions(imp_dist_cropped, ups_dist_cropped, Y_flat, "Cropped Prediction")
+        # Create distributions and get means
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
         
-        # Compare methods directly
-        print("\nMethod Comparison (Cropped vs Regular):")
-        print("Feature | Imp Pearson Diff | Ups Pearson Diff | Imp MSE Diff | Ups MSE Diff")
-        print("-" * 70)
+        imp_count_dist = NegativeBinomial(p_imp, n_imp)
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+        imp_count_mean = imp_count_dist.mean()
+        ups_count_mean = ups_count_dist.mean()
+        
+        imp_pval_dist = Gaussian(mu_imp, var_imp)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+        imp_pval_mean = imp_pval_dist.mean()
+        ups_pval_mean = ups_pval_dist.mean()
+        
+        # Calculate metrics for each feature
+        metrics = {}
         for idx in available_indices:
-            imp_pearson_diff = metrics_cropped[idx]['imp_pearson'] - metrics_regular[idx]['imp_pearson']
-            ups_pearson_diff = metrics_cropped[idx]['ups_pearson'] - metrics_regular[idx]['ups_pearson']
-            imp_mse_diff = metrics_cropped[idx]['imp_mse'] - metrics_regular[idx]['imp_mse']
-            ups_mse_diff = metrics_cropped[idx]['ups_mse'] - metrics_regular[idx]['ups_mse']
+            count_true = Y[:, idx].numpy()
+            pval_true = P[:, idx].numpy()
             
-            print(f"{idx:7d} | {imp_pearson_diff:15.4f} | {ups_pearson_diff:15.4f} | "
-                  f"{imp_mse_diff:12.4f} | {ups_mse_diff:12.4f}")
-
-        return metrics_regular, metrics_cropped
-
+            # Count predictions
+            imp_count = imp_count_mean[:, idx].numpy()
+            ups_count = ups_count_mean[:, idx].numpy()
+            
+            # P-value predictions (apply arcsinh transformation)
+            imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
+            ups_pval = np.sinh(ups_pval_mean[:, idx].numpy())
+            pval_true = np.sinh(pval_true)
+            
+            # Calculate foreground vs background metrics for counts
+            count_p0bgdf = self.metrics.foreground_vs_background(
+                p_imp[:, idx], n_imp[:, idx], count_true)
+            
+            metrics[idx.item()] = {
+                'count_metrics': {
+                    'imp_pearson': stats.pearsonr(count_true, imp_count)[0],
+                    'imp_spearman': stats.spearmanr(count_true, imp_count)[0],
+                    'imp_mse': np.mean((count_true - imp_count) ** 2),
+                    'imp_r2': 1 - (np.sum((count_true - imp_count) ** 2) / 
+                                 np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'ups_pearson': stats.pearsonr(count_true, ups_count)[0],
+                    'ups_spearman': stats.spearmanr(count_true, ups_count)[0],
+                    'ups_mse': np.mean((count_true - ups_count) ** 2),
+                    'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
+                                 np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'p0_bg': count_p0bgdf["p0_bg"],
+                    'p0_fg': count_p0bgdf["p0_fg"]
+                },
+                'pval_metrics': {
+                    'imp_pearson': stats.pearsonr(pval_true, imp_pval)[0],
+                    'imp_spearman': stats.spearmanr(pval_true, imp_pval)[0],
+                    'imp_mse': np.mean((pval_true - imp_pval) ** 2),
+                    'imp_r2': 1 - (np.sum((pval_true - imp_pval) ** 2) / 
+                                 np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'ups_pearson': stats.pearsonr(pval_true, ups_pval)[0],
+                    'ups_spearman': stats.spearmanr(pval_true, ups_pval)[0],
+                    'ups_mse': np.mean((pval_true - ups_pval) ** 2),
+                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / 
+                                 np.sum((pval_true - np.mean(pval_true)) ** 2))
+                }
+            }
+        
+        # Print summary
+        print("\nEvaluation Results:")
+        print("\nCount Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | P0 BG  | P0 FG")
+        print("-" * 75)
+        for idx in available_indices:
+            m = metrics[idx.item()]['count_metrics']
+            print(f"{idx:7d} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['p0_bg']:6.4f} | {m['p0_fg']:6.4f}")
+            print(f"        | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} |")
+            print("-" * 75)
+            
+        print("\nP-value Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
+        print("-" * 55)
+        for idx in available_indices:
+            m = metrics[idx.item()]['pval_metrics']
+            print(f"{idx:7d} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
+            print(f"        | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
+            print("-" * 55)
+            
+        return metrics
 
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth"
@@ -447,91 +572,107 @@ if __name__ == "__main__":
     
     os.makedirs(output_dir, exist_ok=True)
 
+    print("Loading biosample data for DNA analysis...")
     if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
     else:
-        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf)
+        print("Loading biosample data for non-DNA analysis...")
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
         seq = None
-        
-    print(X.shape, Y.shape, P.shape)
-    print(mX.shape, mY.shape, avX.shape, avY.shape)
 
-    n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
+    print("Evaluating leave-one-out for initial analysis...")
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
+    print("Metrics for initial analysis:", metrics)
 
+    print("Loading biosample data for DNA analysis with fill_in_y_prompt...")
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=True)
+    else:
+        print("Loading biosample data for non-DNA analysis with fill_in_y_prompt...")
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=True)
+        seq = None
+
+    print("Evaluating leave-one-out with fill_in_y_prompt...")
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
+    print("Metrics with fill_in_y_prompt:", metrics)
+
+
+
+    # n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
     # Get predictions from both methods
-    n_regular, p_regular, mu_regular, var_regular, Z_regular = CANDIP.pred(X, mX, mY, avX, seq=seq)
-    n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
+    # n_regular, p_regular, mu_regular, var_regular, Z_regular = CANDIP.pred(X, mX, mY, avX, seq=seq)
+    # n_cropped, p_cropped, mu_cropped, var_cropped, Z_cropped = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
     
-    metrics_regular, metrics_cropped = CANDIP.compare_prediction_methods(X, mX, mY, avX, Y, seq=seq)
-    print(metrics_regular)
-    print(metrics_cropped)
+    # metrics_regular, metrics_cropped = CANDIP.compare_prediction_methods(X, mX, mY, avX, Y, seq=seq)
+    # print(metrics_regular)
+    # print(metrics_cropped)
     exit()
     # Compare predictions
-    def compare_predictions(n1, p1, n2, p2, name):
-        # Create NegativeBinomial distributions
+    # def compare_predictions(n1, p1, n2, p2, name):
+    #     # Create NegativeBinomial distributions
 
-        if name == "NegativeBinomial mean":
-            nb1 = NegativeBinomial(p1, n1)
-            nb2 = NegativeBinomial(p2, n2)
+    #     if name == "NegativeBinomial mean":
+    #         nb1 = NegativeBinomial(p1, n1)
+    #         nb2 = NegativeBinomial(p2, n2)
             
-            # Get means
-            pred1 = nb1.mean()
-            pred2 = nb2.mean()
-        elif name == "Gaussian mean":
-            pred1 = torch.sinh(n1)
-            pred2 = torch.sinh(n2)
+    #         # Get means
+    #         pred1 = nb1.mean()
+    #         pred2 = nb2.mean()
+    #     elif name == "Gaussian mean":
+    #         pred1 = torch.sinh(n1)
+    #         pred2 = torch.sinh(n2)
         
-        # Calculate differences
-        differences = pred1 - pred2
+    #     # Calculate differences
+    #     differences = pred1 - pred2
         
-        # Calculate statistics per feature
-        mean_diff = differences.mean(dim=0)
-        var_diff = differences.var(dim=0)
+    #     # Calculate statistics per feature
+    #     mean_diff = differences.mean(dim=0)
+    #     var_diff = differences.var(dim=0)
         
-        # Calculate relative metrics
-        relative_diff = mean_diff / pred1.mean(dim=0)  # Relative difference compared to original values
+    #     # Calculate relative metrics
+    #     relative_diff = mean_diff / pred1.mean(dim=0)  # Relative difference compared to original values
         
-        # Calculate Cohen's d effect size
-        pooled_std = torch.sqrt((pred1.var(dim=0) + pred2.var(dim=0)) / 2)
-        cohens_d = mean_diff / pooled_std
+    #     # Calculate Cohen's d effect size
+    #     pooled_std = torch.sqrt((pred1.var(dim=0) + pred2.var(dim=0)) / 2)
+    #     cohens_d = mean_diff / pooled_std
         
-        # Calculate normalized RMSE
-        rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
-        nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
+    #     # Calculate normalized RMSE
+    #     rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
+    #     nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
         
-        # Calculate correlations and R²
-        pearson_corrs = []
-        spearman_corrs = []
-        r2_scores = []
-        for i in range(pred1.shape[1]):
-            # Convert to numpy for scipy stats
-            p1 = pred1[:, i].numpy()
-            p2 = pred2[:, i].numpy()
+    #     # Calculate correlations and R²
+    #     pearson_corrs = []
+    #     spearman_corrs = []
+    #     r2_scores = []
+    #     for i in range(pred1.shape[1]):
+    #         # Convert to numpy for scipy stats
+    #         p1 = pred1[:, i].numpy()
+    #         p2 = pred2[:, i].numpy()
             
-            # Calculate Pearson correlation
-            pearson_corr = stats.pearsonr(p1, p2)[0]
-            pearson_corrs.append(pearson_corr)
+    #         # Calculate Pearson correlation
+    #         pearson_corr = stats.pearsonr(p1, p2)[0]
+    #         pearson_corrs.append(pearson_corr)
             
-            # Calculate Spearman correlation
-            spearman_corr = stats.spearmanr(p1, p2)[0]
-            spearman_corrs.append(spearman_corr)
+    #         # Calculate Spearman correlation
+    #         spearman_corr = stats.spearmanr(p1, p2)[0]
+    #         spearman_corrs.append(spearman_corr)
             
-            # Calculate R² score
-            ss_res = np.sum((p1 - p2) ** 2)
-            ss_tot = np.sum((p1 - np.mean(p1)) ** 2)
-            r2 = 1 - (ss_res / ss_tot)
-            r2_scores.append(r2)
+    #         # Calculate R² score
+    #         ss_res = np.sum((p1 - p2) ** 2)
+    #         ss_tot = np.sum((p1 - np.mean(p1)) ** 2)
+    #         r2 = 1 - (ss_res / ss_tot)
+    #         r2_scores.append(r2)
         
-        print(f"\n{name} differences per feature:")
-        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman | R²")
-        print("-" * 105)
-        for i in range(len(mean_diff)):
-            print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
-                  f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
-                  f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f} | {r2_scores[i]:6.4f}")
+    #     print(f"\n{name} differences per feature:")
+    #     print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman | R²")
+    #     print("-" * 105)
+    #     for i in range(len(mean_diff)):
+    #         print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
+    #               f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
+    #               f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f} | {r2_scores[i]:6.4f}")
 
-    compare_predictions(n_regular, p_regular, n_cropped, p_cropped, "NegativeBinomial mean")
-    compare_predictions(mu_regular, var_regular, mu_cropped, var_cropped, "Gaussian mean")
+    # compare_predictions(n_regular, p_regular, n_cropped, p_cropped, "NegativeBinomial mean")
+    # compare_predictions(mu_regular, var_regular, mu_cropped, var_cropped, "Gaussian mean")
 
     
 
