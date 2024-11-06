@@ -59,7 +59,7 @@ class CANDIPredictor:
             "pad": -3
             }
 
-    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=True):
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
         # Load biosample data
         
         print(f"getting bios vals for {bios_name}")
