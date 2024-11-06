@@ -270,10 +270,10 @@ class CANDIPredictor:
             target_start = i + start_idx
             target_end = i + end_idx
             
-            n[target_start:target_end, :] += outputs_n[0, start_idx:end_idx, :].cpu()
-            p[target_start:target_end, :] += outputs_p[0, start_idx:end_idx, :].cpu()
-            mu[target_start:target_end, :] += outputs_mu[0, start_idx:end_idx, :].cpu()
-            var[target_start:target_end, :] += outputs_var[0, start_idx:end_idx, :].cpu()
+            n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
+            p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
+            mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
+            var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
             
             # Update coverage mask
             coverage_mask[target_start:target_end] = True
