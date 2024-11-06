@@ -218,6 +218,9 @@ class CANDIPredictor:
             # Extract window
             window_end = i + self.context_length
             x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
+            if i + self.context_length >= total_length:
+                print(i, window_end)
+                exit()
             
             # Use original metadata tensors directly
             mx_window = mX[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
@@ -237,6 +240,7 @@ class CANDIPredictor:
             print(f"mx_window: {mx_window.shape}")
             print(f"my_window: {my_window.shape}")
             print(f"avail_window: {avail_window.shape}")
+            
             with torch.no_grad():
                 if self.DNA:
                     outputs = self.model(
