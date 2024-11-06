@@ -335,22 +335,22 @@ class CANDIPredictor:
         available_indices = torch.where(avX[0, :] == 1)[0]
         
         # Initialize tensors for both methods
-        n_imp_regular = torch.empty_like(X, device="cpu", dtype=torch.float32)
-        p_imp_regular = torch.empty_like(X, device="cpu", dtype=torch.float32)
-        n_imp_cropped = torch.empty_like(X, device="cpu", dtype=torch.float32)
-        p_imp_cropped = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        n_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        p_imp_regular = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        n_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
+        p_imp_cropped = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
 
         # Perform leave-one-out validation for both methods
         for leave_one_out in available_indices:
             # Regular predictions
             n_reg, p_reg, _, _, _ = self.pred(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
-            n_imp_regular[:, :, leave_one_out] = n_reg[:, :, leave_one_out]
-            p_imp_regular[:, :, leave_one_out] = p_reg[:, :, leave_one_out]
+            n_imp_regular[:, leave_one_out] = n_reg[:, leave_one_out]
+            p_imp_regular[:, leave_one_out] = p_reg[:, leave_one_out]
             
             # Cropped predictions
             n_crop, p_crop, _, _, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
-            n_imp_cropped[:, :, leave_one_out] = n_crop[:, :, leave_one_out]
-            p_imp_cropped[:, :, leave_one_out] = p_crop[:, :, leave_one_out]
+            n_imp_cropped[:, leave_one_out] = n_crop[:, leave_one_out]
+            p_imp_cropped[:, leave_one_out] = p_crop[:, leave_one_out]
             
             print(f"Completed imputations for feature #{leave_one_out+1}")
 
@@ -360,10 +360,10 @@ class CANDIPredictor:
         
         # Reshape tensors
         def reshape_predictions(n_imp, p_imp, n_ups, p_ups, Y):
-            p_imp = p_imp.view(-1, p_imp.shape[-1])
-            n_imp = n_imp.view(-1, n_imp.shape[-1])
-            p_ups = p_ups.view(-1, p_ups.shape[-1])
-            n_ups = n_ups.view(-1, n_ups.shape[-1])
+            # p_imp = p_imp.view(-1, p_imp.shape[-1])
+            # n_imp = n_imp.view(-1, n_imp.shape[-1])
+            # p_ups = p_ups.view(-1, p_ups.shape[-1])
+            # n_ups = n_ups.view(-1, n_ups.shape[-1])
             Y = Y.view(-1, Y.shape[-1])
             
             return NegativeBinomial(p_imp, n_imp), NegativeBinomial(p_ups, n_ups), Y
