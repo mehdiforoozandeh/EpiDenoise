@@ -349,15 +349,28 @@ if __name__ == "__main__":
         # Calculate differences
         differences = pred1 - pred2
         
-        # Calculate mean and variance of differences per feature
+        # Calculate statistics per feature
         mean_diff = differences.mean(dim=0)
         var_diff = differences.var(dim=0)
         
+        # Calculate relative metrics
+        relative_diff = mean_diff / pred1.mean(dim=0)  # Relative difference compared to original values
+        
+        # Calculate Cohen's d effect size
+        # (mean difference / pooled standard deviation)
+        pooled_std = torch.sqrt((pred1.var(dim=0) + pred2.var(dim=0)) / 2)
+        cohens_d = mean_diff / pooled_std
+        
+        # Calculate normalized RMSE
+        rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
+        nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
+        
         print(f"\n{name} differences per feature:")
-        print("Feature | Mean Difference | Variance of Difference")
-        print("-" * 50)
-        for i, (mean, var) in enumerate(zip(mean_diff, var_diff)):
-            print(f"{i:7d} | {mean:14.6f} | {var:20.6f}")
+        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE")
+        print("-" * 75)
+        for i in range(len(mean_diff)):
+            print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
+                  f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f}")
 
     compare_predictions(n_regular, n_cropped, "n")
     compare_predictions(p_regular, p_cropped, "p")
