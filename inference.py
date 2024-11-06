@@ -259,10 +259,10 @@ class CANDIPredictor:
             if i == 0:  # First window
                 start_idx = 0
                 end_idx = self.context_length - crop_size
+
             elif i + self.context_length >= total_length:  # Last window
                 start_idx = crop_size
                 end_idx = self.context_length
-                print(i, start_idx, end_idx)
 
             else:  # Middle windows
                 start_idx = crop_size
@@ -271,15 +271,23 @@ class CANDIPredictor:
             # Update predictions
             target_start = i + start_idx
             target_end = i + end_idx
-            if torch.all(n[target_start:target_end, :] == 0):
-                n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
-            if torch.all(p[target_start:target_end, :] == 0):
-                p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
-            if torch.all(mu[target_start:target_end, :] == 0):
-                mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
-            if torch.all(var[target_start:target_end, :] == 0):
-                var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
             
+            if torch.any(n[target_start:target_end, :] != 0):
+                print(f"Fraction of positions being overwritten in n: {torch.sum(n[target_start:target_end, :] != 0).item() / n[target_start:target_end, :].numel()}")
+            n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
+            
+            if torch.any(p[target_start:target_end, :] != 0):
+                print(f"Fraction of positions being overwritten in p: {torch.sum(p[target_start:target_end, :] != 0).item() / p[target_start:target_end, :].numel()}")
+            p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
+            
+            if torch.any(mu[target_start:target_end, :] != 0):
+                print(f"Fraction of positions being overwritten in mu: {torch.sum(mu[target_start:target_end, :] != 0).item() / mu[target_start:target_end, :].numel()}")
+            mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
+            
+            if torch.any(var[target_start:target_end, :] != 0):
+                print(f"Fraction of positions being overwritten in var: {torch.sum(var[target_start:target_end, :] != 0).item() / var[target_start:target_end, :].numel()}")
+            var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
+        
             # Update coverage mask
             coverage_mask[target_start:target_end] = True
             
