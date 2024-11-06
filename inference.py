@@ -2,6 +2,8 @@ import torch
 import pickle
 import os
 from CANDI import *
+from scipy import stats
+import numpy as np
 
 
 # sequence clustering
@@ -289,7 +291,6 @@ class CANDIPredictor:
             print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
             raise ValueError("Missing predictions")
         
-        
         # Reshape Z to match the number of windows
         num_output_windows = (total_length - crop_size) // stride
         Z = torch.empty((num_output_windows, self.model.latent_dim), device="cpu")
@@ -314,7 +315,6 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
-   
 
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth"
@@ -360,7 +360,6 @@ if __name__ == "__main__":
         relative_diff = mean_diff / pred1.mean(dim=0)  # Relative difference compared to original values
         
         # Calculate Cohen's d effect size
-        # (mean difference / pooled standard deviation)
         pooled_std = torch.sqrt((pred1.var(dim=0) + pred2.var(dim=0)) / 2)
         cohens_d = mean_diff / pooled_std
         
@@ -368,17 +367,36 @@ if __name__ == "__main__":
         rmse = torch.sqrt(((pred1 - pred2) ** 2).mean(dim=0))
         nrmse = rmse / (pred1.max(dim=0)[0] - pred1.min(dim=0)[0])  # Normalized by range
         
+        # Calculate correlations
+        pearson_corrs = []
+        spearman_corrs = []
+        for i in range(pred1.shape[1]):
+            # Convert to numpy for scipy stats
+            p1 = pred1[:, i].numpy()
+            p2 = pred2[:, i].numpy()
+            
+            # Calculate Pearson correlation
+            pearson_corr = stats.pearsonr(p1, p2)[0]
+            pearson_corrs.append(pearson_corr)
+            
+            # Calculate Spearman correlation
+            spearman_corr = stats.spearmanr(p1, p2)[0]
+            spearman_corrs.append(spearman_corr)
+        
         print(f"\n{name} differences per feature:")
-        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE")
-        print("-" * 75)
+        print("Feature | Mean Diff | Var Diff | Rel Diff % | Cohen's d | NRMSE | Pearson | Spearman")
+        print("-" * 95)
         for i in range(len(mean_diff)):
             print(f"{i:7d} | {mean_diff[i]:9.2e} | {var_diff[i]:9.2e} | "
-                  f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f}")
+                  f"{relative_diff[i]*100:9.2f} | {cohens_d[i]:9.2f} | {nrmse[i]:9.2f} | "
+                  f"{pearson_corrs[i]:7.4f} | {spearman_corrs[i]:8.4f}")
 
     compare_predictions(n_regular, n_cropped, "n")
     compare_predictions(p_regular, p_cropped, "p")
     compare_predictions(mu_regular, mu_cropped, "mu")
     compare_predictions(var_regular, var_cropped, "var")
+
+    
 
     
     
