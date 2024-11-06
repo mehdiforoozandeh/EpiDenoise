@@ -215,12 +215,13 @@ class CANDIPredictor:
         
         # Process sliding windows
         for i in range(0, total_length, stride):
+
+            if i + self.context_length >= total_length:
+                i = total_length - self.context_length
+
             # Extract window
             window_end = i + self.context_length
             x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
-            if i + self.context_length >= total_length:
-                print(i, window_end)
-                exit()
             
             # Use original metadata tensors directly
             mx_window = mX[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
