@@ -497,9 +497,6 @@ class CANDIPredictor:
             ups_pval = np.sinh(ups_pval_mean[:, idx].numpy())
             pval_true = np.sinh(pval_true)
             
-            # Calculate foreground vs background metrics for counts
-            count_p0bgdf = self.metrics.foreground_vs_background(
-                p_imp[:, idx], n_imp[:, idx], count_true)
             
             metrics[idx.item()] = {
                 'count_metrics': {
@@ -513,8 +510,6 @@ class CANDIPredictor:
                     'ups_mse': np.mean((count_true - ups_count) ** 2),
                     'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
                                  np.sum((count_true - np.mean(count_true)) ** 2)),
-                    'p0_bg': count_p0bgdf["p0_bg"],
-                    'p0_fg': count_p0bgdf["p0_fg"]
                 },
                 'pval_metrics': {
                     'imp_pearson': stats.pearsonr(pval_true, imp_pval)[0],
