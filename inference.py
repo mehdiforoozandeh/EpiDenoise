@@ -59,7 +59,7 @@ class CANDIPredictor:
             "pad": -3
             }
 
-    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=True):
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
         # Load biosample data
         
         print(f"getting bios vals for {bios_name}")
@@ -430,7 +430,7 @@ class CANDIPredictor:
 
     #     return metrics_regular, metrics_cropped
 
-    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None):
+    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, pred_crop=False):
         """
         Performs leave-one-out evaluation and returns metrics for both count and p-value predictions.
         
@@ -457,7 +457,10 @@ class CANDIPredictor:
         var_imp = torch.empty((X.shape[0]*X.shape[1], X.shape[2]), device="cpu", dtype=torch.float32)
         
         # Get upsampling predictions (without masking)
-        n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+        if pred_crop:
+            n_ups, p_ups, mu_ups, var_ups, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+        else:
+            n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
         
         # Perform leave-one-out predictions
         for leave_one_out in available_indices:
@@ -576,21 +579,10 @@ if __name__ == "__main__":
         seq = None
 
     print("Evaluating leave-one-out for initial analysis...")
-    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
-    print("Metrics for initial analysis:", metrics)
-
-    print("Loading biosample data for DNA analysis with fill_in_y_prompt...")
-    if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=True)
-    else:
-        print("Loading biosample data for non-DNA analysis with fill_in_y_prompt...")
-        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=True)
-        seq = None
-
-    print("Evaluating leave-one-out with fill_in_y_prompt...")
-    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq)
-    print("Metrics with fill_in_y_prompt:", metrics)
-
+    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, pred_crop=False)
+    metrics_cropped = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, pred_crop=True)
+    # print("Metrics for initial analysis:", metrics)
+    # print("Metrics for cropped predictions:", metrics_cropped)
 
 
     # n, p, mu, var, Z = CANDIP.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
