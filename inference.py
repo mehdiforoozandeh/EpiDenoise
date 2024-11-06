@@ -367,8 +367,8 @@ if __name__ == "__main__":
             pred1 = nb1.mean()
             pred2 = nb2.mean()
         elif name == "Gaussian mean":
-            pred1 = torch.sinh(mu1)
-            pred2 = torch.sinh(mu2)
+            pred1 = torch.sinh(n1)
+            pred2 = torch.sinh(n2)
         
         # Calculate differences
         differences = pred1 - pred2
