@@ -327,11 +327,11 @@ class CANDIPredictor:
                 i_z = i * (self.model.l2 / self.model.l1)
                 if start_idx == 0:
                     start_z_idx = 0
-                elif start_idx == self.crop_size:
-                    start_z_idx = self.crop_size_z
+                elif start_idx == crop_size:
+                    start_z_idx = crop_size_z
 
-                if end_idx == self.context_length - self.crop_size:
-                    end_z_idx = self.model.l2 - self.crop_size_z
+                if end_idx == self.context_length - crop_size:
+                    end_z_idx = self.model.l2 - crop_size_z
                 elif end_idx == self.context_length:
                     end_z_idx = self.model.l2
 
