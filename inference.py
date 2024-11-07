@@ -216,8 +216,6 @@ class CANDIPredictor:
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
         z_coverage_mask = torch.zeros(num_windows * self.model.l2, dtype=torch.bool, device="cpu")  # New mask for Z
         
-        print(f"Z shape: {Z.shape}")
-
         # Collect all windows and their metadata
         window_data = []
         target_regions = []
@@ -530,15 +528,53 @@ if __name__ == "__main__":
         X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
         seq = None
 
-    print("Evaluating leave-one-out for initial analysis...")
-    start_time = time.time()
-    metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
-    end_time = time.time()
-    print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-    
+    # print("Evaluating leave-one-out for initial analysis...")
     # start_time = time.time()
-    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=False)
+    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
     # end_time = time.time()
-    # print(f"Evaluation with crop_edges=False took {end_time - start_time:.2f} seconds.")
+    # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
+
+
+    print("Generating predictions with both pred and pred_cropped methods...")
+    start_time_pred = time.time()
+    n_pred, p_pred, mu_pred, var_pred, Z_pred = CANDIP.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+    end_time_pred = time.time()
+    print(f"Prediction with pred method took {end_time_pred - start_time_pred:.2f} seconds.")
+
+    start_time_pred_cropped = time.time()
+    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.05)
+    end_time_pred_cropped = time.time()
+    print(f"Prediction with pred_cropped method took {end_time_pred_cropped - start_time_pred_cropped:.2f} seconds.")
     
+    # Compare latent representations
+    print("\nComparing latent representations...")
+    
+    # Normalize vectors for cosine distance
+    Z_pred_norm = Z_pred / torch.norm(Z_pred, dim=1, keepdim=True)
+    Z_pred_cropped_norm = Z_pred_cropped / torch.norm(Z_pred_cropped, dim=1, keepdim=True)
+    
+    # Calculate cosine distances (1 - cosine similarity)
+    cosine_dist = 1 - torch.sum(Z_pred_norm * Z_pred_cropped_norm, dim=1)
+    
+    # Calculate euclidean distances
+    euclidean_dist = torch.norm(Z_pred - Z_pred_cropped, dim=1)
+    
+    # Define thresholds
+    cosine_thresholds = [0.001, 0.01, 0.1]
+    euclidean_thresholds = [0.1, 1.0, 10.0]
+    
+    print("\nCosine Distance Analysis:")
+    for threshold in cosine_thresholds:
+        fraction = (cosine_dist > threshold).float().mean().item()
+        print(f"Fraction of positions with cosine distance > {threshold:.3f}: {fraction:.4f}")
+    
+    print("\nEuclidean Distance Analysis:")
+    for threshold in euclidean_thresholds:
+        fraction = (euclidean_dist > threshold).float().mean().item()
+        print(f"Fraction of positions with euclidean distance > {threshold:.1f}: {fraction:.4f}")
+    
+    # Print summary statistics
+    print("\nDistance Statistics:")
+    print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
+    print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
     
