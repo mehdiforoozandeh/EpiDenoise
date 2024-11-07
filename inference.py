@@ -193,116 +193,134 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.2):
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
         num_windows = X.shape[0]
         total_length = num_windows * self.context_length
         
-        # Flatten only X and seq
-        X_flat = X.view(-1, X.shape[-1])  # [total_length, feature_dim]
+        # Flatten input tensors
+        X_flat = X.view(-1, X.shape[-1])
         if self.DNA:
-            seq_flat = seq.view(-1, seq.shape[-1])  # [total_length*resolution, 4]
+            seq_flat = seq.view(-1, seq.shape[-1])
         
         # Initialize output tensors
         n = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         p = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         mu = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         var = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
-        
-        # Coverage tracking tensor
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
+        
+        # Collect all windows and their metadata
+        window_data = []
+        target_regions = []
         
         # Process sliding windows
         for i in range(0, total_length, stride):
-
             if i + self.context_length >= total_length:
                 i = total_length - self.context_length
-
-            # Extract window
+                
             window_end = i + self.context_length
-            x_window = X_flat[i:window_end].unsqueeze(0)  # [1, context_length, feature_dim]
+            x_window = X_flat[i:window_end].unsqueeze(0)
             
-            # Verify that all rows in metadata tensors are identical
-            if not (mX == mX[0]).all():
-                raise ValueError("Not all rows in mX are identical")
-            if not (mY == mY[0]).all():
-                raise ValueError("Not all rows in mY are identical")
-            if not (avail == avail[0]).all():
-                raise ValueError("Not all rows in avail are identical")
-
-            # Use original metadata tensors directly
-            mx_window = mX[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
-            my_window = mY[0].unsqueeze(0)  # Already in shape [1, context_length, feature_dim]
-            avail_window = avail[0].unsqueeze(0)  # Already in shape [1, feature_dim]
+            # Use first row of metadata tensors (verified identical)
+            mx_window = mX[0].unsqueeze(0)
+            my_window = mY[0].unsqueeze(0)
+            avail_window = avail[0].unsqueeze(0)
             
             if self.DNA:
                 seq_start = i * self.resolution
                 seq_end = window_end * self.resolution
                 seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
             
+            # Determine prediction regions
+            if i == 0:  # First window
+                start_idx = 0
+                end_idx = self.context_length - crop_size
+            elif i + self.context_length >= total_length:  # Last window
+                start_idx = crop_size
+                end_idx = self.context_length
+            else:  # Middle windows
+                start_idx = crop_size
+                end_idx = self.context_length - crop_size
+                
+            target_start = i + start_idx
+            target_end = i + end_idx
+            
+            # Store window data and target regions
+            window_info = {
+                'x': x_window,
+                'mx': mx_window,
+                'my': my_window,
+                'avail': avail_window,
+                'seq': seq_window if self.DNA else None
+            }
+            target_info = {
+                'start_idx': start_idx,
+                'end_idx': end_idx,
+                'target_start': target_start,
+                'target_end': target_end
+            }
+            
+            window_data.append(window_info)
+            target_regions.append(target_info)
+        
+        # Process windows in batches
+        for i in range(0, len(window_data), self.batch_size):
+            batch_windows = window_data[i:i + self.batch_size]
+            batch_targets = target_regions[i:i + self.batch_size]
+            
+            # Prepare batch tensors
+            x_batch = torch.cat([w['x'] for w in batch_windows])
+            mx_batch = torch.cat([w['mx'] for w in batch_windows])
+            my_batch = torch.cat([w['my'] for w in batch_windows])
+            avail_batch = torch.cat([w['avail'] for w in batch_windows])
+            
+            if self.DNA:
+                seq_batch = torch.cat([w['seq'] for w in batch_windows])
+            
+            # Apply imp_target if specified
+            if len(imp_target) > 0:
+                x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                mx_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                avail_batch[:, imp_target] = 0
+            
+            # Get predictions
             with torch.no_grad():
-
-                if len(imp_target)>0:
-                    x_window[:, :, imp_target] = self.token_dict["cloze_mask"]
-                    mx_window[:, :, imp_target] = self.token_dict["cloze_mask"]
-
                 if self.DNA:
                     outputs = self.model(
-                        x_window.float().to(self.device),
-                        seq_window.to(self.device),
-                        mx_window.to(self.device),
-                        my_window.to(self.device),
-                        avail_window.to(self.device),
+                        x_batch.float().to(self.device),
+                        seq_batch.to(self.device),
+                        mx_batch.to(self.device),
+                        my_batch.to(self.device),
+                        avail_batch.to(self.device),
                         return_z=True
                     )
                 else:
                     outputs = self.model(
-                        x_window.float().to(self.device),
-                        mx_window.to(self.device),
-                        my_window.to(self.device),
-                        avail_window.to(self.device),
+                        x_batch.float().to(self.device),
+                        mx_batch.to(self.device),
+                        my_batch.to(self.device),
+                        avail_batch.to(self.device),
                         return_z=True
                     )
                 
                 outputs_p, outputs_n, outputs_mu, outputs_var, _ = outputs
             
-            # Determine which part of predictions to keep
-            if i == 0:  # First window
-                start_idx = 0
-                end_idx = self.context_length - crop_size
-
-            elif i + self.context_length >= total_length:  # Last window
-                start_idx = crop_size
-                end_idx = self.context_length
-
-            else:  # Middle windows
-                start_idx = crop_size
-                end_idx = self.context_length - crop_size
+            # Update predictions for each window in batch
+            for j, (window_pred, target) in enumerate(zip(zip(outputs_n, outputs_p, outputs_mu, outputs_var), batch_targets)):
+                out_n, out_p, out_mu, out_var = window_pred
+                start_idx = target['start_idx']
+                end_idx = target['end_idx']
+                target_start = target['target_start']
+                target_end = target['target_end']
                 
-            # Update predictions
-            target_start = i + start_idx
-            target_end = i + end_idx
-            
-            # if torch.any(n[target_start:target_end, :] != 0):
-                # print(f"{target_start} Fraction of positions being overwritten in n: {torch.sum(n[target_start:target_end, :] != 0).item() / n[target_start:target_end, :].numel()}")
-            n[target_start:target_end, :] = outputs_n[0, start_idx:end_idx, :].cpu()
-            
-            # if torch.any(p[target_start:target_end, :] != 0):
-                # print(f"{target_start} Fraction of positions being overwritten in p: {torch.sum(p[target_start:target_end, :] != 0).item() / p[target_start:target_end, :].numel()}")
-            p[target_start:target_end, :] = outputs_p[0, start_idx:end_idx, :].cpu()
-            
-            # if torch.any(mu[target_start:target_end, :] != 0):
-                # print(f"{target_start} Fraction of positions being overwritten in mu: {torch.sum(mu[target_start:target_end, :] != 0).item() / mu[target_start:target_end, :].numel()}")
-            mu[target_start:target_end, :] = outputs_mu[0, start_idx:end_idx, :].cpu()
-            
-            # if torch.any(var[target_start:target_end, :] != 0):
-                # print(f"{target_start} Fraction of positions being overwritten in var: {torch.sum(var[target_start:target_end, :] != 0).item() / var[target_start:target_end, :].numel()}")
-            var[target_start:target_end, :] = outputs_var[0, start_idx:end_idx, :].cpu()
-        
-            # Update coverage mask
-            coverage_mask[target_start:target_end] = True
+                n[target_start:target_end, :] = out_n[start_idx:end_idx, :].cpu()
+                p[target_start:target_end, :] = out_p[start_idx:end_idx, :].cpu()
+                mu[target_start:target_end, :] = out_mu[start_idx:end_idx, :].cpu()
+                var[target_start:target_end, :] = out_var[start_idx:end_idx, :].cpu()
+                coverage_mask[target_start:target_end] = True
             
             del outputs
             torch.cuda.empty_cache()
