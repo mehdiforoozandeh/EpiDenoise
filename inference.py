@@ -335,8 +335,8 @@ class CANDIPredictor:
                 elif end_idx == self.context_length:
                     end_z_idx = self.model.l2
 
-                target_z_start = i_z + start_z_idx
-                target_z_end = i_z + end_z_idx
+                target_z_start = int(i_z + start_z_idx)
+                target_z_end = int(i_z + end_z_idx)
                 
                 n[target_start:target_end, :] = out_n[start_idx:end_idx, :].cpu()
                 p[target_start:target_end, :] = out_p[start_idx:end_idx, :].cpu()
