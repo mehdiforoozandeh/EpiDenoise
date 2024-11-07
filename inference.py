@@ -200,7 +200,7 @@ class CANDIPredictor:
         num_windows = X.shape[0]
         total_length = num_windows * self.context_length
 
-        Z_crop_size = int(crop_size * (self.model.l2 // self.model.l1))
+        Z_crop_size = int(crop_size * (self.model.l2 / self.model.l1))
 
         print(f"Z_crop_size: {Z_crop_size}, crop_size: {crop_size}, stride: {stride}")
         
