@@ -193,7 +193,7 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
@@ -202,7 +202,7 @@ class CANDIPredictor:
 
         Z_crop_size = int(crop_size * (self.model.l2 / self.model.l1))
 
-        print(f"Z_crop_size: {Z_crop_size}, crop_size: {crop_size}, stride: {stride}")
+        
         
         # Flatten input tensors
         X_flat = X.view(-1, X.shape[-1])
@@ -217,6 +217,8 @@ class CANDIPredictor:
         Z = torch.zeros((num_windows * self.model.l2, self.model.latent_dim), device="cpu", dtype=torch.float32)
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
         
+        print(f"Z shape: {Z.shape}")
+
         # Collect all windows and their metadata
         window_data = []
         target_regions = []
