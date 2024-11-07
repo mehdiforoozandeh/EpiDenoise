@@ -201,8 +201,6 @@ class CANDIPredictor:
         total_length = num_windows * self.context_length
 
         Z_crop_size = int(crop_size * (self.model.l2 / self.model.l1))
-
-        
         
         # Flatten input tensors
         X_flat = X.view(-1, X.shape[-1])
@@ -216,6 +214,7 @@ class CANDIPredictor:
         var = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         Z = torch.zeros((num_windows * self.model.l2, self.model.latent_dim), device="cpu", dtype=torch.float32)
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
+        z_coverage_mask = torch.zeros(num_windows * self.model.l2, dtype=torch.bool, device="cpu")  # New mask for Z
         
         print(f"Z shape: {Z.shape}")
 
@@ -322,20 +321,43 @@ class CANDIPredictor:
                 end_idx = target['end_idx']
                 target_start = target['target_start']
                 target_end = target['target_end']
+
+                i = target_start - start_idx
+
+                i_z = i * (self.model.l2 / self.model.l1)
+                if start_idx == 0:
+                    start_z_idx = 0
+                elif start_idx == self.crop_size:
+                    start_z_idx = self.crop_size_z
+
+                if end_idx == self.context_length - self.crop_size:
+                    end_z_idx = self.model.l2 - self.crop_size_z
+                elif end_idx == self.context_length:
+                    end_z_idx = self.model.l2
+
+                target_z_start = i_z + start_z_idx
+                target_z_end = i_z + end_z_idx
                 
                 n[target_start:target_end, :] = out_n[start_idx:end_idx, :].cpu()
                 p[target_start:target_end, :] = out_p[start_idx:end_idx, :].cpu()
                 mu[target_start:target_end, :] = out_mu[start_idx:end_idx, :].cpu()
                 var[target_start:target_end, :] = out_var[start_idx:end_idx, :].cpu()
+                Z[target_z_start:target_z_end, :] = out_Z[start_z_idx:end_z_idx, :].cpu()
+                
                 coverage_mask[target_start:target_end] = True
+                z_coverage_mask[target_z_start:target_z_end] = True  # Track Z coverage
             
             del outputs
             torch.cuda.empty_cache()
         
-        # Verify complete coverage
+        # Verify complete coverage for both signal and Z
         if not coverage_mask.all():
             print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
-            raise ValueError("Missing predictions")
+            raise ValueError("Missing signal predictions")
+            
+        if not z_coverage_mask.all():
+            print(f"Missing Z predictions for positions: {torch.where(~z_coverage_mask)[0]}")
+            raise ValueError("Missing Z predictions")
         
         return n, p, mu, var, Z
 
