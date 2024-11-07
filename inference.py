@@ -542,7 +542,7 @@ if __name__ == "__main__":
     print(f"Prediction with pred method took {end_time_pred - start_time_pred:.2f} seconds.")
 
     start_time_pred_cropped = time.time()
-    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.01)
+    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.1)
     end_time_pred_cropped = time.time()
     print(f"Prediction with pred_cropped method took {end_time_pred_cropped - start_time_pred_cropped:.2f} seconds.")
     
