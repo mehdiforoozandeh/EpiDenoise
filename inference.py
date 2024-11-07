@@ -199,6 +199,10 @@ class CANDIPredictor:
         stride = self.context_length - (crop_size * 2)
         num_windows = X.shape[0]
         total_length = num_windows * self.context_length
+
+        Z_crop_size = int(crop_size * (self.model.l2 // self.model.l1))
+
+        print(f"Z_crop_size: {Z_crop_size}, crop_size: {crop_size}, stride: {stride}")
         
         # Flatten input tensors
         X_flat = X.view(-1, X.shape[-1])
