@@ -193,7 +193,7 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
@@ -210,6 +210,7 @@ class CANDIPredictor:
         p = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         mu = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
         var = torch.zeros_like(X_flat, dtype=torch.float32, device="cpu")
+        Z = torch.zeros((num_windows * self.model.l2, self.model.latent_dim), device="cpu", dtype=torch.float32)
         coverage_mask = torch.zeros(total_length, dtype=torch.bool, device="cpu")
         
         # Collect all windows and their metadata
@@ -306,11 +307,11 @@ class CANDIPredictor:
                         return_z=True
                     )
                 
-                outputs_p, outputs_n, outputs_mu, outputs_var, _ = outputs
+                outputs_p, outputs_n, outputs_mu, outputs_var, outputs_Z = outputs
             
             # Update predictions for each window in batch
-            for j, (window_pred, target) in enumerate(zip(zip(outputs_n, outputs_p, outputs_mu, outputs_var), batch_targets)):
-                out_n, out_p, out_mu, out_var = window_pred
+            for j, (window_pred, target) in enumerate(zip(zip(outputs_n, outputs_p, outputs_mu, outputs_var, outputs_Z), batch_targets)):
+                out_n, out_p, out_mu, out_var, out_Z = window_pred
                 start_idx = target['start_idx']
                 end_idx = target['end_idx']
                 target_start = target['target_start']
@@ -329,10 +330,6 @@ class CANDIPredictor:
         if not coverage_mask.all():
             print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
             raise ValueError("Missing predictions")
-        
-        # Reshape Z to match the number of windows
-        num_output_windows = (total_length - crop_size) // stride
-        Z = torch.empty((num_output_windows, self.model.latent_dim), device="cpu")
         
         return n, p, mu, var, Z
 
