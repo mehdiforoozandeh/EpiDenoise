@@ -172,7 +172,8 @@ class CANDI(nn.Module):
             return p, n, mu, var
 
 class CANDI_DNA_Encoder(nn.Module):
-    def __init__(self):
+    def __init__(self, self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3):
         super(CANDI_DNA_Encoder, self).__init__()
 
         self.pos_enc = pos_enc
