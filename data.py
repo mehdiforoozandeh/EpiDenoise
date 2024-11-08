@@ -2563,9 +2563,60 @@ if __name__ == "__main__":
         print(f"retrieval took {t1-t0}")
 
     elif sys.argv[1] == "fix":
-        eed = ExtendedEncodeDataHandler(solar_data_path)
-        # eed.fix_bios(sys.argv[2])
-        eed.mp_fix_DS()
+        # Initialize data handlers
+        d = GET_DATA()
+        d.load_metadata(metadata_file_path=solar_data_path)
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
+
+        # Create directories for missing biosamples and collect missing experiments
+        missing_downloads = []
+        for biosample in d.DF1['Accession']:
+            biosample_path = os.path.join(solar_data_path, biosample)
+            
+            # Create directory if it doesn't exist
+            if not os.path.exists(biosample_path):
+                os.makedirs(biosample_path)
+                # Get all experiments for this biosample
+                expected_exps = d.DF1.loc[d.DF1['Accession'] == biosample].dropna(axis=1).columns.tolist()
+                expected_exps.remove('Accession')
+                
+                # Queue all experiments for download
+                for exp in expected_exps:
+                    exp_downloads = d.get_biosample(
+                        bios=biosample,
+                        df1_ind=0,
+                        metadata_file_path=solar_data_path,
+                        assembly="GRCh38",
+                        exp_list=[exp]
+                    )
+                    missing_downloads.extend(exp_downloads)
+            else:
+                # Check existing biosamples for incomplete experiments
+                expected_exps = d.DF1.loc[d.DF1['Accession'] == biosample].dropna(axis=1).columns.tolist()
+                expected_exps.remove('Accession')
+                
+                for exp in expected_exps:
+                    if not dataset.is_exp_complete(biosample, exp):
+                        exp_downloads = d.get_biosample(
+                            bios=biosample,
+                            df1_ind=0,
+                            metadata_file_path=solar_data_path,
+                            assembly="GRCh38",
+                            exp_list=[exp]
+                        )
+                        missing_downloads.extend(exp_downloads)
+
+        # Shuffle downloads for better distribution
+        random.shuffle(missing_downloads)
+        
+        # Process downloads using multiprocessing
+        total_downloads = len(missing_downloads)
+        print(f"Total downloads queued: {total_downloads}")
+        
+        with mp.Pool(processes=4) as pool:
+            for i, _ in enumerate(pool.imap_unordered(single_download, missing_downloads), 1):
+                print(f'\rProgress: {i}/{total_downloads} ({(i/total_downloads)*100:.2f}%)', end='')
+        print("\nDownload process completed!")
     
     elif sys.argv[1] == "checkup":
         d = GET_DATA()
@@ -2607,7 +2658,7 @@ if __name__ == "__main__":
                         print(f"  - {exp}")
 
         print(f"\nTotal biosamples with incomplete experiments: {incomplete_count}")
-        print(f"Percentage of existing biosamples with all experiments complete: {100 * (1 - incomplete_count/(len(d.DF1['Accession'])-len(missing_biosamples))):.2f}%")
+        print(f"Percentage of existing biosamples with all experiments complete: {100 * ((len(d.DF1['Accession'])-len(missing_biosamples))-incomplete_count)/(len(d.DF1['Accession'])-len(missing_biosamples)):.2f}%")
 
     elif sys.argv[1] == "test":
         from scipy.stats import spearmanr
