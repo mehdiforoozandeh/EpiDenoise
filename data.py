@@ -2570,6 +2570,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "checkup":
         d = GET_DATA()
         d.load_metadata(metadata_file_path=solar_data_path)
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
 
         # Check if each biosample from DF1 exists in solar_data_path
         missing_biosamples = []
@@ -2583,10 +2584,31 @@ if __name__ == "__main__":
         print(f"Total biosamples in DF1: {len(d.DF1['Accession'])}")
         print(f"Percentage complete: {100 * (1 - len(missing_biosamples)/len(d.DF1['Accession'])):.2f}%")
 
-        # Run the existing checkup
-        eed = ExtendedEncodeDataHandler(solar_data_path)
-        print(f"\nDataset completeness (including file integrity): {eed.DS_checkup() * 100:.2f}%")
-    
+        # Check for incomplete experiments in existing biosamples
+        print("\nChecking for incomplete experiments in existing biosamples...")
+        incomplete_count = 0
+        for biosample in d.DF1['Accession']:
+            biosample_path = os.path.join(solar_data_path, biosample)
+            if os.path.exists(biosample_path):
+                # Get expected experiments for this biosample from DF1
+                expected_exps = d.DF1.loc[d.DF1['Accession'] == biosample].dropna(axis=1).columns.tolist()
+                expected_exps.remove('Accession')  # Remove the Accession column
+                
+                # Check each experiment using is_exp_complete
+                incomplete_exps = []
+                for exp in expected_exps:
+                    if not dataset.is_exp_complete(biosample, exp):
+                        incomplete_exps.append(exp)
+                
+                if incomplete_exps:
+                    incomplete_count += 1
+                    print(f"\nBiosample {biosample} has incomplete experiments:")
+                    for exp in incomplete_exps:
+                        print(f"  - {exp}")
+
+        print(f"\nTotal biosamples with incomplete experiments: {incomplete_count}")
+        print(f"Percentage of existing biosamples with all experiments complete: {100 * (1 - incomplete_count/(len(d.DF1['Accession'])-len(missing_biosamples))):.2f}%")
+
     elif sys.argv[1] == "test":
         from scipy.stats import spearmanr
         dataset = ExtendedEncodeDataHandler(solar_data_path)
