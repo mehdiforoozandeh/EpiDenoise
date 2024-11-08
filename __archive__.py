@@ -2580,4 +2580,165 @@ class MONITOR_VALIDATION(object):
     #     version="30d", resolution=25, savedir="/project/compbio-lab/EPD/eval_30d/", mode="eval")
     
     # print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
+
+
+class SyntheticData:
+    def __init__(self, n, p, num_features, sequence_length):
+        self.n = n
+        self.p = p
+        self.num_features = num_features
+        self.sequence_length = sequence_length
+        self.transformations = [
+            (self.transform_scale, {'scale': 2}),
+            (self.transform_exponential, {'base': 1.03, 'scale': 3}),
+            (self.transform_log_scale, {'scale': 40}),
+            (self.transform_sqrt_scale, {'scale': 15}),
+            (self.transform_piecewise_linear, {'scale_factors': [1.5, 50, 0.5, 100, 0.3]}),
+            (self.transform_scaled_sin, {'scale': 30}),
+            (self.transform_scaled_cos, {'scale': 30}),
+            (self.transform_hyperbolic_sinh, {'scale': 10}),
+            (self.transform_polynomial, {'scale': 0.02, 'power': 2}),
+            (self.transform_exponential, {'base': 1.05, 'scale': 2}),
+            (self.transform_log_scale, {'scale': 60}),
+            (self.transform_sqrt_scale, {'scale': 25}),
+            (self.transform_piecewise_linear, {'scale_factors': [2, 60, 0.4, 110, 0.2]}),
+            (self.transform_scaled_sin, {'scale': 60}),
+            (self.transform_scaled_cos, {'scale': 60}),
+            (self.transform_hyperbolic_sinh, {'scale': 15}),
+            (self.transform_polynomial, {'scale': 0.005, 'power': 3}),
+            (self.transform_exponential, {'base': 1.05, 'scale': 1}),
+            (self.transform_log_scale, {'scale': 20}),
+            (self.transform_sqrt_scale, {'scale': 15}),
+            (self.transform_piecewise_linear, {'scale_factors': [2.5, 40, 0.3, 120, 0.25]}),
+            (self.transform_scaled_sin, {'scale': 20}),
+            (self.transform_scaled_cos, {'scale': 20}),
+            (self.transform_hyperbolic_sinh, {'scale': 20}),
+            (self.transform_polynomial, {'scale': 0.01, 'power': 3})
+        ]
+
+    def generate_base_sequence(self):
+        self.base_sequence = np.random.negative_binomial(self.n, self.p, self.sequence_length)
+        return self.base_sequence
+
+    def transform_scale(self, sequence, scale):
+        return np.clip(sequence * scale, 0, 200)
+
+    def transform_exponential(self, sequence, base, scale):
+        return np.clip(np.round(scale * (base ** (sequence))), 0, 1000)
+
+    def transform_log_scale(self, sequence, scale):
+        return np.clip(np.round(scale * np.log1p(sequence)), 0, 1000)
+
+    def transform_sqrt_scale(self, sequence, scale):
+        return np.clip(np.round(scale * np.sqrt(sequence)), 0, 1000)
+
+    def transform_piecewise_linear(self, sequence, scale_factors):
+        transformed = np.zeros_like(sequence)
+        for i, value in enumerate(sequence):
+            if value < 50:
+                transformed[i] = value * scale_factors[0]
+            elif value < 150:
+                transformed[i] = scale_factors[1] + scale_factors[2] * value
+            else:
+                transformed[i] = scale_factors[3] + scale_factors[4] * value
+        return np.clip(np.round(transformed), 0, 1000)
+
+    def transform_scaled_sin(self, sequence, scale):
+        return np.clip(np.round(scale * np.abs(np.sin(sequence))), 0, 1000)
+
+    def transform_scaled_cos(self, sequence, scale):
+        return np.clip(np.round(scale * np.abs(np.cos(sequence))), 0, 1000)
+
+    def transform_hyperbolic_sinh(self, sequence, scale):
+        return np.clip(np.round(scale * np.sinh(sequence / 50)), 0, 1000)
+
+    def transform_polynomial(self, sequence, scale, power):
+        return np.clip(np.round(scale * (sequence ** power)), 0, 1000)
+
+    def apply_transformations(self):
+        transformed_sequences = []
+        for i in range(self.num_features):
+            transform, params = self.transformations[i % len(self.transformations)]
+            transformed_seq = transform(self.base_sequence, **params)
+            transformed_sequences.append((transformed_seq, transform.__name__))
+
+        return transformed_sequences
+
+    def smooth_sequence(self, sequence, sigma=0.001):
+        return gaussian_filter1d(sequence, sigma=sigma)
+
+    def apply_smoothing(self, sequences):
+        return [self.smooth_sequence(seq).astype(int) for seq, name in sequences]
+    
+    def synth_metadata(self, sequences):
+        def depth(seq):
+            return np.log2((3e9*np.sum(seq))/len(seq))
+        def coverage(seq):
+            return 100 * np.abs(np.sin(np.sum(seq)))
+        def read_length(seq):
+            return np.log10(np.sum(seq)+1)
+        def run_type(seq):
+            if np.mean(seq) <= np.median(seq):
+                return 1
+            else:
+                return 0
+
+        return [np.array([depth(seq), coverage(seq), read_length(seq), run_type(seq)]) for seq, name in sequences]
+
+    def miss(self, sequences, metadata, missing_percentage):
+        to_miss = random.choices(range(self.num_features), k=int(self.num_features*missing_percentage))
+        avail = [1 for i in range(self.num_features)]
+
+        for miss in to_miss:
+            sequences[miss, :] = -1
+            metadata[miss, :] = -1
+            avail[miss] = 0
+        
+        return sequences, metadata, avail
+
+    def mask(self, sequences, metadata, avail, mask_percentage):
+        to_mask = random.choices([x for x in range(self.num_features) if avail[x]==1], k=int(self.num_features*mask_percentage))
+
+        for mask in to_mask:
+            sequences[mask, :] = -2
+            metadata[mask, :] = -2
+            avail[mask] = -2
+
+        return sequences, metadata, avail
+
+    def get_batch(self, batch_size, miss_perc_range=(0.3, 0.9), mask_perc_range=(0.1, 0.2)):
+        batch_X, batch_Y = [], []
+        md_batch_X, md_batch_Y = [], []
+        av_batch_X, av_batch_Y = [], []
+        
+        for b in range(batch_size):
+            self.generate_base_sequence()
+            transformed_sequences = self.apply_transformations()
+
+            smoothed_sequences = self.apply_smoothing(transformed_sequences)
+            smoothed_sequences = np.array(smoothed_sequences)
+
+            syn_metadata = self.synth_metadata(transformed_sequences)
+            syn_metadata = np.array(syn_metadata)
+
+            miss_p_b = random.uniform(miss_perc_range[0], miss_perc_range[1])
+            mask_p_b = random.uniform(mask_perc_range[0], mask_perc_range[1])
+            
+            y_b, ymd_b, yav_b = self.miss(smoothed_sequences, syn_metadata, miss_p_b)
+            x_b, xmd_b, xav_b = self.mask(y_b.copy(), ymd_b.copy(), yav_b.copy(), mask_p_b)
+
+            batch_X.append(x_b)
+            batch_Y.append(y_b)
+
+            md_batch_X.append(xmd_b)
+            md_batch_Y.append(ymd_b)
+
+            av_batch_X.append(xav_b)
+            av_batch_Y.append(yav_b)
+        
+        batch_X, batch_Y = torch.Tensor(np.array(batch_X)).permute(0, 2, 1), torch.Tensor(np.array(batch_Y)).permute(0, 2, 1)
+        md_batch_X, md_batch_Y = torch.Tensor(np.array(md_batch_X)).permute(0, 2, 1), torch.Tensor(np.array(md_batch_Y)).permute(0, 2, 1)
+        av_batch_X, av_batch_Y = torch.Tensor(np.array(av_batch_X)), torch.Tensor(np.array(av_batch_Y))
+
+        return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
