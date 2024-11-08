@@ -2779,6 +2779,8 @@ if __name__ == "__main__":
         metadata = get_encode_chromatin_state_annotation_metadata()
         print(metadata)
         print(metadata.columns)
+        for column in metadata.columns:
+            print(f"{column}: {metadata[column]}")
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
