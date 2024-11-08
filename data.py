@@ -2815,6 +2815,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "download_bios":
         d = GET_DATA()
+        d.load_metadata(metadata_file_path=solar_data_path)
         d.get_biosample(
             bios=sys.argv[2],
             df1_ind=0,
