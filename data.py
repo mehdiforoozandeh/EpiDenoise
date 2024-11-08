@@ -557,7 +557,7 @@ class GET_DATA(object):
             print(f"assay: {exp} | biosample: {bios} already exists!")
 
     def get_biosample(self, bios, df1_ind, metadata_file_path, assembly):
-        i = df1_ind
+        # i = df1_ind
         to_download_bios = []
 
         bios_data =  requests.get(f"""https://www.encodeproject.org/biosamples/{bios}""", headers=self.headers)
@@ -1080,21 +1080,28 @@ class ExtendedEncodeDataHandler:
         exp_path = os.path.join(bios_path, exp)
         exp_listdir = os.listdir(exp_path)
 
-        exp_full = True
-        for dsf in required_dsfs:
-            if exp_full == True:
-                if  "file_metadata.json" in exp_listdir:
-                    if f'signal_{dsf}_res25' in exp_listdir:
-                        md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
-                        exp_full = os.path.exists(md1_path)
+        if exp == "RNA-seq":
+            if  "file_metadata.json" in exp_listdir:
+                tsv_files = [f for f in exp_listdir if f.endswith('.tsv')]
+                if len(tsv_files) == 0:
+                    return False
+        else:
+
+            exp_full = True
+            for dsf in required_dsfs:
+                if exp_full == True:
+                    if  "file_metadata.json" in exp_listdir:
+                        if f'signal_{dsf}_res25' in exp_listdir:
+                            md1_path = os.path.join(exp_path, f'signal_{dsf}_res25', "metadata.json")
+                            exp_full = os.path.exists(md1_path)
+                        else:
+                            exp_full = False
                     else:
                         exp_full = False
-                else:
-                    exp_full = False
-        if check_pval:
-            if exp_full:
-                if not self.is_bigwig_complete(bios_name, exp):
-                    exp_full = False
+            if exp != "CAGE" and check_pval:
+                if exp_full:
+                    if not self.is_bigwig_complete(bios_name, exp):
+                        exp_full = False
 
         return exp_full
         
@@ -1314,7 +1321,7 @@ class ExtendedEncodeDataHandler:
             except:
                 print(f"skipped {bios_name}-{exp}")
 
-    def mp_fix_DS(self, n_p=5):
+    def mp_fix_DS(self, n_p=2):
         bios_list = self.df1.Accession.to_list()
         random.shuffle(bios_list)
         with mp.Pool(n_p) as p:
@@ -2805,6 +2812,15 @@ if __name__ == "__main__":
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
         with mp.Pool(processes=2) as pool:
             pool.map(process_pair, todo)
+
+    elif sys.argv[1] == "download_bios":
+        d = GET_DATA()
+        d.get_biosample(
+            bios=sys.argv[2],
+            df1_ind=0,
+            metadata_file_path=solar_data_path,
+            assembly="GRCh38"
+        )
 
     else:
         d = GET_DATA()
