@@ -892,7 +892,7 @@ def main():
     parser.add_argument('--pool_size', type=int, default=2, help='Pooling size')
     parser.add_argument('--expansion_factor', type=int, default=3, help='Expansion factor for the model')
 
-    parser.add_argument('--nhead', type=int, default=8, help='Number of attention heads')
+    parser.add_argument('--nhead', type=int, default=9, help='Number of attention heads')
     parser.add_argument('--n_sab_layers', type=int, default=8, help='Number of SAB layers')
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
