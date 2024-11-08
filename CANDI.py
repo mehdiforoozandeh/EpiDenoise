@@ -887,10 +887,10 @@ def main():
     # Hyperparameters
     parser.add_argument('--data_path', type=str, default="/project/compbio-lab/encode_data/", help='Path to the data')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
-    parser.add_argument('--n_cnn_layers', type=int, default=4, help='Number of CNN layers')
-    parser.add_argument('--conv_kernel_size', type=int, default=5, help='Convolution kernel size')
+    parser.add_argument('--n_cnn_layers', type=int, default=3, help='Number of CNN layers')
+    parser.add_argument('--conv_kernel_size', type=int, default=3, help='Convolution kernel size')
     parser.add_argument('--pool_size', type=int, default=2, help='Pooling size')
-    parser.add_argument('--expansion_factor', type=int, default=2, help='Expansion factor for the model')
+    parser.add_argument('--expansion_factor', type=int, default=3, help='Expansion factor for the model')
 
     parser.add_argument('--nhead', type=int, default=8, help='Number of attention heads')
     parser.add_argument('--n_sab_layers', type=int, default=8, help='Number of SAB layers')
