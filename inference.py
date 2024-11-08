@@ -193,7 +193,7 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.05):
+    def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
@@ -505,7 +505,8 @@ class CANDIPredictor:
             
         return metrics
 
-if __name__ == "__main__":
+
+def test():
     model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth"
     hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
     dataset_path = "/project/compbio-lab/encode_data/"
@@ -577,4 +578,6 @@ if __name__ == "__main__":
     print("\nDistance Statistics:")
     print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
     print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
+if __name__ == "__main__":
+    test()
     
