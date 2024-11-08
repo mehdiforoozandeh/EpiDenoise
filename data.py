@@ -1130,8 +1130,7 @@ class ExtendedEncodeDataHandler:
         missing_exp = self.is_bios_complete(bios_name)
         missingrows = []
         if len(missing_exp) > 0:
-            print(bios_name, missing_exp)
-            return
+            print(f"Biosample: {bios_name}, Missing Experiments: {missing_exp}")
             print(f"fixing {bios_name}!")
             for exp in missing_exp:
                 rows = self.df3.loc[(self.df3["bios"] == bios_name)&(self.df3["exp"] == exp), :]
