@@ -78,6 +78,7 @@ class CANDI_Decoder(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         self.d_model =  self.latent_dim = self.f2
 
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
         reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
