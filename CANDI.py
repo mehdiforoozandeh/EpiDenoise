@@ -68,10 +68,11 @@ class CANDI_Encoder(nn.Module):
         return src
 
 class CANDI_Decoder(nn.Module):
-    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, pool_size=2, expansion_factor=3):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
         super(CANDI_Decoder, self).__init__()
 
-        # self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
         self.f1 = signal_dim 
         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
@@ -128,10 +129,10 @@ class CANDI(nn.Module):
             n_sab_layers, pool_size, dropout, context_length, pos_enc, expansion_factor)
         
         if self.separate_decoders:
-            self.count_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, pool_size, expansion_factor)
-            self.pval_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, pool_size, expansion_factor)
+            self.count_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
+            self.pval_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
         else:
-            self.decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, pool_size, expansion_factor)
+            self.decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
 
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
