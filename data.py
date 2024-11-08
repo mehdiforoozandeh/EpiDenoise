@@ -2419,7 +2419,7 @@ if __name__ == "__main__":
         print(f"Total biosamples in DF1: {len(d.DF1['Accession'])}")
         print(f"Percentage complete: {100 * (1 - len(missing_biosamples)/len(d.DF1['Accession'])):.2f}%")
 
-        dataset.mp_fix_DS()
+        dataset.mp_fix_DS(n_p=2)
     
     elif sys.argv[1] == "checkup":
         d = GET_DATA()
