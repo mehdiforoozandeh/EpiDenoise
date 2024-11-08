@@ -560,12 +560,11 @@ class GET_DATA(object):
         # i = df1_ind
         to_download_bios = []
 
+        i = self.DF1[self.DF1['Accession'] == bios].index[0]
+
         bios_data =  requests.get(f"""https://www.encodeproject.org/biosamples/{bios}""", headers=self.headers)
         bios_data = bios_data.json()
         donor_info = extract_donor_information(bios_data)
-
-        print(bios_data)
-        exit()
 
         if os.path.exists(metadata_file_path + "/" + bios + "/") == False:
             os.mkdir(metadata_file_path + "/" + bios + "/")
