@@ -2776,7 +2776,9 @@ if __name__ == "__main__":
             single_download(exp)
 
     elif sys.argv[1] == "CS_annotaions":
-        print(get_encode_chromatin_state_annotation_metadata())
+        metadata = get_encode_chromatin_state_annotation_metadata()
+        print(metadata)
+        print(metadata.columns)
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
