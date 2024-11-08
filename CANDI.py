@@ -269,7 +269,7 @@ class CANDI_DNA_Encoder(nn.Module):
 class CANDI_DNA(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 
-        expansion_factor=3, separate_decoders=False):
+        expansion_factor=3, separate_decoders=True):
         super(CANDI_DNA, self).__init__()
 
         self.pos_enc = pos_enc
@@ -1037,7 +1037,7 @@ def main():
     parser.add_argument('--expansion_factor', type=int, default=3, help='Expansion factor for the model')
 
     parser.add_argument('--nhead', type=int, default=9, help='Number of attention heads')
-    parser.add_argument('--n_sab_layers', type=int, default=8, help='Number of SAB layers')
+    parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
