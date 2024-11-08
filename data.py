@@ -21,8 +21,6 @@ import concurrent.futures
 from multiprocessing import Pool
 import tracemalloc
 
-
-
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
     """
     Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
@@ -249,6 +247,8 @@ def single_download(dl_dict):
 
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
+
+################################################################################
 
 class GET_DATA(object):
     def __init__(self):
