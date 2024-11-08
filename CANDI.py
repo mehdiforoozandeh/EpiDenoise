@@ -71,7 +71,6 @@ class CANDI_Decoder(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, pool_size=2, expansion_factor=3):
         super(CANDI_Decoder, self).__init__()
 
-        self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
         self.f1 = signal_dim 
