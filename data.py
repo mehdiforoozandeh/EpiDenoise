@@ -2819,12 +2819,12 @@ if __name__ == "__main__":
         d = GET_DATA()
         d.load_metadata(metadata_file_path=solar_data_path)
         print(f"downloading biosample {sys.argv[2]}")
-        d.get_biosample(
+        print(d.get_biosample(
             bios=sys.argv[2],
             df1_ind=0,
             metadata_file_path=solar_data_path,
             assembly="GRCh38"
-        )
+        ))
 
     else:
         d = GET_DATA()
