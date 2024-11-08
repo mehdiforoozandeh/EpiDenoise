@@ -2568,8 +2568,24 @@ if __name__ == "__main__":
         eed.mp_fix_DS()
     
     elif sys.argv[1] == "checkup":
+        d = GET_DATA()
+        d.load_metadata(metadata_file_path=solar_data_path)
+
+        # Check if each biosample from DF1 exists in solar_data_path
+        missing_biosamples = []
+        for biosample in d.DF1['Accession']:
+            biosample_path = os.path.join(solar_data_path, biosample)
+            if not os.path.exists(biosample_path):
+                missing_biosamples.append(biosample)
+                print(f"Missing biosample: {biosample}")
+
+        print(f"\nTotal missing biosamples: {len(missing_biosamples)}")
+        print(f"Total biosamples in DF1: {len(d.DF1['Accession'])}")
+        print(f"Percentage complete: {100 * (1 - len(missing_biosamples)/len(d.DF1['Accession'])):.2f}%")
+
+        # Run the existing checkup
         eed = ExtendedEncodeDataHandler(solar_data_path)
-        print(eed.DS_checkup())
+        print(f"\nDataset completeness (including file integrity): {eed.DS_checkup() * 100:.2f}%")
     
     elif sys.argv[1] == "test":
         from scipy.stats import spearmanr
