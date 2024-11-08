@@ -2595,15 +2595,14 @@ if __name__ == "__main__":
                 expected_exps = d.DF1.loc[d.DF1['Accession'] == biosample].dropna(axis=1).columns.tolist()
                 expected_exps.remove('Accession')
                 
+                exp_downloads = d.get_biosample(
+                    bios=biosample,
+                    df1_ind=0,
+                    metadata_file_path=solar_data_path,
+                    assembly="GRCh38"
+                )
                 for exp in expected_exps:
                     if not dataset.is_exp_complete(biosample, exp):
-                        exp_downloads = d.get_biosample(
-                            bios=biosample,
-                            df1_ind=0,
-                            metadata_file_path=solar_data_path,
-                            assembly="GRCh38",
-                            exp_list=[exp]
-                        )
                         missing_downloads.extend(exp_downloads)
 
         # Shuffle downloads for better distribution
