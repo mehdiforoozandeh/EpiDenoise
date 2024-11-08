@@ -39,12 +39,12 @@ class CANDI_Encoder(nn.Module):
 
         if self.pos_enc == "relative":
             self.transformer_encoder = nn.ModuleList([
-                RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
+                RelativeEncoderLayer(d_model=self.d_model, heads=nhead, feed_forward_hidden=expansion_factor*self.d_model, dropout=dropout) for _ in range(n_sab_layers)])
             
         else:
-            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.posEnc = PositionalEncoding(self.d_model, dropout, self.l2)
             self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
+                d_model=self.d_model, nhead=nhead, dim_feedforward=expansion_factor*self.d_model, dropout=dropout, batch_first=True)
             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
     def forward(self, src, x_metadata):
