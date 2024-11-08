@@ -1082,14 +1082,14 @@ class ExtendedEncodeDataHandler:
         exp_path = os.path.join(bios_path, exp)
         exp_listdir = os.listdir(exp_path)
 
+        exp_full = True # assume the experiment is complete until proven otherwise
+
         if exp == "RNA-seq":
             if  "file_metadata.json" in exp_listdir:
                 tsv_files = [f for f in exp_listdir if f.endswith('.tsv')]
                 if len(tsv_files) == 0:
                     return False
         else:
-
-            exp_full = True
             for dsf in required_dsfs:
                 if exp_full == True:
                     if  "file_metadata.json" in exp_listdir:
