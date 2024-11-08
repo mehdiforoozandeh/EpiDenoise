@@ -926,7 +926,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     pool_size = hyper_parameters["pool_size"]
     expansion_factor = hyper_parameters["expansion_factor"]
     pos_enc = hyper_parameters["pos_enc"]
-
+    separate_decoders = hyper_parameters["separate_decoders"]
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
@@ -940,12 +940,12 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         model = CANDI_DNA(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
-            pos_enc=pos_enc, expansion_factor=expansion_factor)
+            pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
     else:
         model = CANDI(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
-            pos_enc=pos_enc, expansion_factor=expansion_factor)
+            pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
 
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -1049,6 +1049,7 @@ def main():
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=5, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
+    parser.add_argument('--separate_decoders', action='store_true', help='Flag to enable separate decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
 
     # Flags for DNA and EIC
@@ -1079,7 +1080,8 @@ def main():
         "num_loci": args.num_loci,
         "lr_halflife": args.lr_halflife,
         "min_avail": args.min_avail,
-        "hpo": args.hpo
+        "hpo": args.hpo,
+        "separate_decoders": args.separate_decoders
     }
 
     # print(hyper_parameters)
