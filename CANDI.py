@@ -185,7 +185,6 @@ class CANDI_DNA_Encoder(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         d_model = self.f2
         self.latent_dim = self.f2
-        print("d_model: ", d_model)
 
         DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
         DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
@@ -270,7 +269,7 @@ class CANDI_DNA_Encoder(nn.Module):
 class CANDI_DNA(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 
-        expansion_factor=3, separate_decoders=True):
+        expansion_factor=3, separate_decoders=False):
         super(CANDI_DNA, self).__init__()
 
         self.pos_enc = pos_enc
