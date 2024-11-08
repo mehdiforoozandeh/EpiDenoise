@@ -171,20 +171,164 @@ class CANDI(nn.Module):
         else:
             return p, n, mu, var
 
-# class CANDI_DNA_Encoder(nn.Module):
-#     def __init__(self):
-#         super(CANDI_DNA_Encoder, self).__init__()
-    
-#     def forward(self):
-#         pass
+class CANDI_DNA_Encoder(nn.Module):
+    def __init__(self):
+        super(CANDI_DNA_Encoder, self).__init__()
 
-# class CANDI_DNA(nn.Module):
-#     def __init__(self):
-#         super(CANDI_DNA, self).__init__()
-    
-#     def forward(self):
-#         pass    
+        self.pos_enc = pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f2
+        self.latent_dim = self.f2
+        print("d_model: ", d_model)
 
+        DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
+        DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
+
+        self.convEncDNA = nn.ModuleList(
+            [ConvTower(
+                DNA_conv_channels[i], DNA_conv_channels[i + 1],
+                DNA_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)])
+
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.convEnc = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
+                conv_kernel_size_list[i], S=1, D=1,
+                pool_type="avg", residuals=True,
+                groups=self.f1,
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
+        self.xmd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
+
+        self.DNA_Epig_fusion = nn.Sequential(
+            nn.Linear(2*self.f2, self.f2), 
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
+
+        if self.pos_enc == "relative":
+            self.transformer_encoder = nn.ModuleList([
+                RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
+            
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
+            self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
+
+    def forward(self, src, seq, x_metadata):
+        if len(seq.shape) != len(src.shape):
+            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+
+        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
+        seq = seq.float()
+
+        ### DNA CONV ENCODER ###
+        for seq_conv in self.convEncDNA:
+            seq = seq_conv(seq)
+        seq = seq.permute(0, 2, 1)  # to N, L', F2
+
+        ### SIGNAL CONV ENCODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            src = conv(src)
+        src = src.permute(0, 2, 1)  # to N, L', F2
+
+        ### SIGNAL METADATA EMBEDDING ###
+        xmd_embedding = self.xmd_emb(x_metadata)
+        src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.xmd_fusion(src)
+        
+        ### DNA EPIGENETIC SIGNAL FUSION ###
+        src = torch.cat([src, seq], dim=-1)
+        src = self.DNA_Epig_fusion(src)
+
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+            src = self.transformer_encoder(src)
+        else:
+            for enc in self.transformer_encoder:
+                src = enc(src)
+
+        return src
+
+class CANDI_DNA(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 
+        expansion_factor=3, separate_decoders=True):
+        super(CANDI_DNA, self).__init__()
+
+        self.pos_enc = pos_enc
+        self.separate_decoders = separate_decoders
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        self.d_model = self.latent_dim = self.f2
+        print("d_model: ", self.d_model)
+
+        self.encoder = CANDI_DNA_Encoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size, dropout, context_length, pos_enc, expansion_factor)
+        
+        if self.separate_decoders:
+            self.count_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
+            self.pval_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
+        else:
+            self.decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor)
+
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
+    
+    def encode(self, src, seq, x_metadata):
+        """Encode input data into latent representation."""
+        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+        
+        z = self.encoder(src, seq, x_metadata)
+        return z
+    
+    def decode(self, z, y_metadata):
+        """Decode latent representation into predictions."""
+        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        
+        if self.separate_decoders:
+            count_decoded = self.count_decoder(z, y_metadata)
+            pval_decoded = self.pval_decoder(z, y_metadata)
+
+            p, n = self.neg_binom_layer(count_decoded)
+            mu, var = self.gaussian_layer(pval_decoded)
+        else:
+            decoded = self.decoder(z, y_metadata)
+            p, n = self.neg_binom_layer(decoded)
+            mu, var = self.gaussian_layer(decoded)
+            
+        return p, n, mu, var
+
+    def forward(self, src, seq, x_metadata, y_metadata, availability=None, return_z=False):
+        z = self.encode(src, seq, x_metadata)
+        p, n, mu, var = self.decode(z, y_metadata)
+        
+        if return_z:
+            return p, n, mu, var, z
+        else:
+            return p, n, mu, var
+    
 class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
