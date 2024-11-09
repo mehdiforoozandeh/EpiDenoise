@@ -317,11 +317,23 @@ def get_encode_chromatin_state_annotation_metadata(
     df.to_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
     return df
 
-# def get_chromatin_state_annotation_data(metadata_file_path="data/"):
-#     metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
+def get_chromatin_state_annotation_data(metadata_file_path="data/"):
+    metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
 
-#     if os.path.exists(f"{}/chromatin_state_annotations"):
-#         pass
+    if not os.path.exists(f"{metadata_file_path}/chromatin_state_annotations/"):
+        os.mkdir(f"{metadata_file_path}/chromatin_state_annotations/")
+    
+        for index, row in metadata.iterrows():
+            biosample_term_name = row['Biosample term name']
+            bed_file_download_url = row['bed_file_download_url']
+            accession = row['Accession']
+            save_dir_name = f"{metadata_file_path}/chromatin_state_annotations/{biosample_term_name}"
+            if not os.path.exists(save_dir_name):
+                os.mkdir(save_dir_name)
+            download_save(bed_file_download_url, f"{save_dir_name}/temp.bed.gz")
+            with gzip.open(f"{save_dir_name}/temp.bed.gz", 'rb') as f_in, open(f"{save_dir_name}/{accession}.bed", 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            os.remove(f"{save_dir_name}/temp.bed.gz")
     
 ################################################################################
 
@@ -2797,11 +2809,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "CS_annotaions":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
-        print(metadata)
-        print(metadata.columns)
-        for column in metadata.columns:
-            if column == "bigbed_files":
-                print(f"{column}: {metadata[column]}")
+        get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
