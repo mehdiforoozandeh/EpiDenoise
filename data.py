@@ -303,9 +303,8 @@ def get_encode_chromatin_state_annotation_metadata(
                     if is_valid:
                         file_info = {
                             'accession': file_data.get('accession'),
-                            'download_url': file_data.get('href'),
-                            'cloud_metadata': file_data.get('cloud_metadata', {}).get('url')
-                        }
+                            'download_url': file_data.get('href')                        
+                            }
                         bigbed_files.append(file_info)
 
         # Store the bigBed files information in the dataframe
