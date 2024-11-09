@@ -308,7 +308,9 @@ def get_encode_chromatin_state_annotation_metadata(
                         bigbed_files.append(file_info)
 
         # Store the bigBed files information in the dataframe
-        df.loc[i, "bigbed_files"] = json.dumps(bigbed_files) if bigbed_files else None
+        for j, file_info in enumerate(bigbed_files):
+            for key, value in file_info.items():
+                df.loc[i, f"bigbed_file_{j}_{key}"] = value
 
     return df
     
