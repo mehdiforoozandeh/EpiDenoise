@@ -251,7 +251,7 @@ def single_download(dl_dict):
 
 
 def get_encode_chromatin_state_annotation_metadata(
-    url="https://www.encodeproject.org/search/?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38&limit=2000&format=json"):
+    url="https://www.encodeproject.org/search/?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38&limit=1000&format=json"):
     """
     Parse ENCODE metadata JSON file into a pandas DataFrame with key information.
     
