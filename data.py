@@ -310,7 +310,9 @@ def get_encode_chromatin_state_annotation_metadata(
         # Store the bigBed files information in the dataframe
         for j, file_info in enumerate(bigbed_files):
             for key, value in file_info.items():
-                df.loc[i, f"bigbed_file_{j}_{key}"] = value
+                if key == "download_url":
+                    value = base_url + value
+                df.loc[i, f"bigbed_file_{key}"] = value
 
     return df
     
