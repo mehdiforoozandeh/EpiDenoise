@@ -249,58 +249,25 @@ def single_download(dl_dict):
         print(f"assay: {exp} | biosample: {bios} already exists!")
 
 
-
 def get_encode_chromatin_state_annotation_metadata(
-    url="https://www.encodeproject.org/search/?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38&limit=1000&format=json"):
+    url="https://www.encodeproject.org/report.tsv?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38"):
     """
-    Parse ENCODE metadata JSON file into a pandas DataFrame with key information.
+    Downloads and parses the ENCODE chromatin state annotation metadata TSV file.
     
     Args:
-        json_file_path (str): Path to the JSON file containing ENCODE metadata
+        url (str): URL for the ENCODE chromatin state annotation metadata TSV file
         
     Returns:
-        pd.DataFrame: DataFrame containing parsed metadata
+        pandas.DataFrame: DataFrame containing the parsed metadata
     """
-
-    data = requests.get(url, headers = {'accept': 'application/json'})
-    data = data.json()
-    
-    # Extract metadata from each annotation entry
-    metadata_list = []
-    
-    for entry in data['@graph']:
-        metadata = {
-            'accession': entry.get('accession'),
-            'biosample': entry.get('biosample_ontology', {}).get('term_name'),
-            'description': entry.get('description'),
-            'status': entry.get('status'),
-            'lab': entry.get('lab', {}).get('title'),
-            'organism': entry.get('organism', {}).get('scientific_name'),
-            'software': entry.get('software_used', [{}])[0].get('software', {}).get('name'),
-            'project': entry.get('award', {}).get('project'),
-            'life_stage': entry.get('relevant_life_stage'),
-            'timepoint': entry.get('relevant_timepoint'),
-            'timepoint_units': entry.get('relevant_timepoint_units'),
-        }
-        
-        # Extract audit warnings and internal actions if they exist
-        if 'audit' in entry:
-            audit = entry['audit']
-            warnings = [w['detail'] for w in audit.get('WARNING', [])]
-            internal_actions = [a['detail'] for a in audit.get('INTERNAL_ACTION', [])]
-            
-            metadata['warnings'] = '; '.join(warnings)
-            metadata['internal_actions'] = '; '.join(internal_actions)
-        
-        metadata_list.append(metadata)
-    
-    # Create DataFrame
-    df = pd.DataFrame(metadata_list)
-    
-    # Clean up any None values
-    df = df.fillna('')
-    
-    return df
+    # Download the TSV file
+    try:
+        # Read TSV directly from URL, skipping first row which contains field descriptions
+        df = pd.read_csv(url, sep='\t', skiprows=1)
+        return df
+    except Exception as e:
+        print(f"Error downloading/parsing TSV file: {e}")
+        return None
 
 ################################################################################
 
