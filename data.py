@@ -2818,7 +2818,6 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "CS_annotaions":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
-        exit()
         get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
     else:
         d = GET_DATA()
