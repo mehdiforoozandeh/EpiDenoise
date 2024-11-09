@@ -317,11 +317,11 @@ def get_encode_chromatin_state_annotation_metadata(
     df.to_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
     return df
 
-def get_chromatin_state_annotation_data(metadata_file_path="data/"):
-    metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
+# def get_chromatin_state_annotation_data(metadata_file_path="data/"):
+#     metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
 
-    if os.path.exists(f"{}/chromatin_state_annotations"):
-        pass
+#     if os.path.exists(f"{}/chromatin_state_annotations"):
+#         pass
     
 ################################################################################
 
