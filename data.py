@@ -249,7 +249,8 @@ def single_download(dl_dict):
         print(f"assay: {exp} | biosample: {bios} already exists!")
 
 def get_encode_chromatin_state_annotation_metadata(
-    url="https://www.encodeproject.org/report.tsv?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38"):
+    url="https://www.encodeproject.org/report.tsv?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38",
+    metadata_file_path="data/"):
     base_url = "https://www.encodeproject.org"
     # Download the TSV file
     try:
@@ -314,6 +315,7 @@ def get_encode_chromatin_state_annotation_metadata(
                     value = base_url + value
                 df.loc[i, f"bigbed_file_{key}"] = value
 
+    df.to_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
     return df
     
 ################################################################################
