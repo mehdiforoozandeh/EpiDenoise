@@ -323,8 +323,10 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
     if not os.path.exists(f"{metadata_file_path}/chromatin_state_annotations/"):
         os.mkdir(f"{metadata_file_path}/chromatin_state_annotations/")
     
-        for index, row in metadata.iterrows():
+    for index, row in metadata.iterrows():
+        try:
             biosample_term_name = row['Biosample term name'].replace(" ", "_")
+            biosample_term_name = row['Biosample term name'].replace("/", "_")
             print(f"Downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
             bed_file_download_url = row['bed_file_download_url']
             accession = row['Accession']
@@ -336,6 +338,8 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
             with gzip.open(f"{save_dir_name}/temp.bed.gz", 'rb') as f_in, open(f"{save_dir_name}/{accession}.bed", 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
             os.remove(f"{save_dir_name}/temp.bed.gz")
+        except:
+            print(f"Error downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
     
 ################################################################################
 
