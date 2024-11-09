@@ -275,7 +275,7 @@ def get_encode_chromatin_state_annotation_metadata(
                 # Check if it's a file object (has required attributes)
                 if isinstance(file_obj, dict):
                     is_valid = (
-                        file_obj.get('file_format') == 'bed' and
+                        file_obj.get('file_format') == 'bigBed' and
                         file_obj.get('assembly') == 'GRCh38' and
                         file_obj.get('status') == 'released'
                     )
@@ -295,7 +295,7 @@ def get_encode_chromatin_state_annotation_metadata(
                     file_data = file_response.json()
                     
                     is_valid = (
-                        file_data.get('file_format') == 'bed' and
+                        file_data.get('file_format') == 'bigBed' and
                         file_data.get('assembly') == 'GRCh38' and
                         file_data.get('status') == 'released'
                     )
@@ -2815,6 +2815,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "CS_annotaions":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
+        exit()
         get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
     else:
         d = GET_DATA()
