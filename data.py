@@ -267,7 +267,7 @@ def get_encode_chromatin_state_annotation_metadata(
         bios_data = bios_data.json()
 
         # Find bigBed files for GRCh38
-        bigbed_files = []
+        bed_files = []
         
         # Check files in the annotation
         if 'files' in bios_data:
@@ -275,7 +275,7 @@ def get_encode_chromatin_state_annotation_metadata(
                 # Check if it's a file object (has required attributes)
                 if isinstance(file_obj, dict):
                     is_valid = (
-                        file_obj.get('file_format') == 'bigBed' and
+                        file_obj.get('file_format') == 'bed' and
                         file_obj.get('assembly') == 'GRCh38' and
                         file_obj.get('status') == 'released'
                     )
@@ -286,7 +286,7 @@ def get_encode_chromatin_state_annotation_metadata(
                             'download_url': file_obj.get('href'),
                             'cloud_metadata': file_obj.get('cloud_metadata', {}).get('url')
                         }
-                        bigbed_files.append(file_info)
+                        bed_files.append(file_info)
                 
                 # If it's a file reference, fetch the file details
                 elif isinstance(file_obj, str) and file_obj.startswith('/files/ENCFF'):
@@ -295,7 +295,7 @@ def get_encode_chromatin_state_annotation_metadata(
                     file_data = file_response.json()
                     
                     is_valid = (
-                        file_data.get('file_format') == 'bigBed' and
+                        file_data.get('file_format') == 'bed' and
                         file_data.get('assembly') == 'GRCh38' and
                         file_data.get('status') == 'released'
                     )
@@ -305,17 +305,23 @@ def get_encode_chromatin_state_annotation_metadata(
                             'accession': file_data.get('accession'),
                             'download_url': file_data.get('href')                        
                             }
-                        bigbed_files.append(file_info)
+                        bed_files.append(file_info)
 
         # Store the bigBed files information in the dataframe
-        for j, file_info in enumerate(bigbed_files):
+        for j, file_info in enumerate(bed_files):
             for key, value in file_info.items():
                 if key == "download_url":
                     value = base_url + value
-                df.loc[i, f"bigbed_file_{key}"] = value
+                df.loc[i, f"bed_file_{key}"] = value
 
     df.to_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
     return df
+
+def get_chromatin_state_annotation_data(metadata_file_path="data/"):
+    metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
+
+    if os.path.exists(f"{}/chromatin_state_annotations"):
+        pass
     
 ################################################################################
 
