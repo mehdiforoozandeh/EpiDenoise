@@ -251,7 +251,7 @@ def single_download(dl_dict):
 
 def get_encode_chromatin_state_annotation_metadata(
     url="https://www.encodeproject.org/report.tsv?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38"):
-    base_url = "https://www.encodeproject.org/"
+    base_url = "https://www.encodeproject.org"
     # Download the TSV file
     try:
         # Read TSV directly from URL, skipping first row which contains field descriptions
@@ -262,7 +262,55 @@ def get_encode_chromatin_state_annotation_metadata(
     
     for i in range(len(df)):
         df.loc[i, "url"] = base_url + df.loc[i, "ID"]
-    
+
+        bios_data = requests.get(df.loc[i, "url"], headers={'accept': 'application/json'})
+        bios_data = bios_data.json()
+
+        # Find bigBed files for GRCh38
+        bigbed_files = []
+        
+        # Check files in the annotation
+        if 'files' in bios_data:
+            for file_obj in bios_data['files']:
+                # Check if it's a file object (has required attributes)
+                if isinstance(file_obj, dict):
+                    is_valid = (
+                        file_obj.get('file_format') == 'bigBed' and
+                        file_obj.get('assembly') == 'GRCh38' and
+                        file_obj.get('status') == 'released'
+                    )
+                    
+                    if is_valid:
+                        file_info = {
+                            'accession': file_obj.get('accession'),
+                            'download_url': file_obj.get('href'),
+                            'cloud_metadata': file_obj.get('cloud_metadata', {}).get('url')
+                        }
+                        bigbed_files.append(file_info)
+                
+                # If it's a file reference, fetch the file details
+                elif isinstance(file_obj, str) and file_obj.startswith('/files/ENCFF'):
+                    file_url = base_url + file_obj
+                    file_response = requests.get(file_url, headers={'accept': 'application/json'})
+                    file_data = file_response.json()
+                    
+                    is_valid = (
+                        file_data.get('file_format') == 'bigBed' and
+                        file_data.get('assembly') == 'GRCh38' and
+                        file_data.get('status') == 'released'
+                    )
+                    
+                    if is_valid:
+                        file_info = {
+                            'accession': file_data.get('accession'),
+                            'download_url': file_data.get('href'),
+                            'cloud_metadata': file_data.get('cloud_metadata', {}).get('url')
+                        }
+                        bigbed_files.append(file_info)
+
+        # Store the bigBed files information in the dataframe
+        df.loc[i, "bigbed_files"] = json.dumps(bigbed_files) if bigbed_files else None
+
     return df
     
 
