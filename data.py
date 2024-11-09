@@ -333,11 +333,14 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
             save_dir_name = f"{metadata_file_path}/chromatin_state_annotations/{biosample_term_name}"
             if not os.path.exists(save_dir_name):
                 os.mkdir(save_dir_name)
-
-            download_save(bed_file_download_url, f"{save_dir_name}/temp.bed.gz")
-            with gzip.open(f"{save_dir_name}/temp.bed.gz", 'rb') as f_in, open(f"{save_dir_name}/{accession}.bed", 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            os.remove(f"{save_dir_name}/temp.bed.gz")
+                
+            if bed_file_download_url.endswith('.bed.gz'):
+                download_save(bed_file_download_url, f"{save_dir_name}/temp.bed.gz")
+                with gzip.open(f"{save_dir_name}/temp.bed.gz", 'rb') as f_in, open(f"{save_dir_name}/{accession}.bed", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                os.remove(f"{save_dir_name}/temp.bed.gz")
+            elif bed_file_download_url.endswith('.bigBed'):
+                download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
         except:
             print(f"Error downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
     
