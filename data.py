@@ -248,7 +248,6 @@ def single_download(dl_dict):
     else:
         print(f"assay: {exp} | biosample: {bios} already exists!")
 
-
 def get_encode_chromatin_state_annotation_metadata(
     url="https://www.encodeproject.org/report.tsv?type=Annotation&searchTerm=annotation&annotation_type=chromatin+state&organism.scientific_name=Homo+sapiens&software_used.software.name=chromhmm&assembly=GRCh38"):
     base_url = "https://www.encodeproject.org"
@@ -313,7 +312,6 @@ def get_encode_chromatin_state_annotation_metadata(
 
     return df
     
-
 ################################################################################
 
 class GET_DATA(object):
@@ -2790,8 +2788,9 @@ if __name__ == "__main__":
         metadata = get_encode_chromatin_state_annotation_metadata()
         print(metadata)
         print(metadata.columns)
-        # for column in metadata.columns:
-        #     print(f"{column}: {metadata[column]}")
+        for column in metadata.columns:
+            if column == "bigbed_files":
+                print(f"{column}: {metadata[column]}")
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
