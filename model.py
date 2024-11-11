@@ -1,7 +1,7 @@
 import torch, math, random, time, json, os, pickle, sys, gc
 from torch import nn
 import torch.optim as optim
-from data import ENCODE_IMPUTATION_DATASET, ExtendedEncodeDataHandler, SyntheticData
+from data import * 
 import torch.nn.functional as F
 from scipy.stats import spearmanr, pearsonr
 import pandas as pd
