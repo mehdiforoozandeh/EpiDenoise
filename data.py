@@ -1659,9 +1659,15 @@ class ExtendedEncodeDataHandler:
                 for ef in e_fileslist:
                     efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                     efile_results = efile_respond.json()
-                    print(efile_results['file_format'])
-                    print(efile_results['output_type'])
-                    
+                    filter_statement = bool(
+                        efile_results['file_format'] == "bigBed" and 
+                        efile_results['output_type'] == "peaks" and 
+                        efile_results['assembly']==assembly and 
+                        efile_results['status'] == "released")
+                    print(filter_statement)
+                    # print(efile_results['file_format'])
+                    # print(efile_results['output_type'])
+
     def mp_fix_DS(self, n_p=2):
         bios_list = self.df1.Accession.to_list()
         random.shuffle(bios_list)
