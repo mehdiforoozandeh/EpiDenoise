@@ -340,10 +340,104 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
                     shutil.copyfileobj(f_in, f_out)
                 os.remove(f"{save_dir_name}/temp.bed.gz")
             elif bed_file_download_url.endswith('.bigBed'):
-                download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
+                if not os.path.exists(f"{save_dir_name}/{accession}.bigBed"):
+                    download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
+
+                os.mkdir(f"{save_dir_name}/parsed_{accession}/")
+                binned_bw = get_binned_bigBed_annotation(
+                    bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
+                    resolution=25, chr_sizes_file=f"{metadata_file_path}/hg38.chrom.sizes")
+
+                for chr, data in binned_bw.items():
+                    np.savez_compressed(
+                        f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                        np.array(data))
+
         except:
             print(f"Error downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
+
+def get_binned_bigBed_annotation(bigBed_file, resolution=25, chr_sizes_file="data/hg38.chrom.sizes"):
+    main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+    chr_sizes = {}
+    res = {}
+
+    with open(chr_sizes_file, 'r') as f:
+        for line in f:
+            chr_name, chr_size = line.strip().split('\t')
+            if chr_name in main_chrs:
+                chr_sizes[chr_name] = int(chr_size)
+
+    bb = pyBigWig.open(bigBed_file)
+
+    for chr, size in chr_sizes.items():
+        start = 0
+        end = resolution * (size // resolution)
+        
+        num_bins = int((end - start + resolution - 1) // resolution)
+        labels = [None] * num_bins  # Initialize list of labels
+        intervals = bb.entries(chr, start, end)
+        if intervals is None:
+            res[chr] = labels
+            continue
+
+        for interval_start, interval_end, interval_string in intervals:
+            label = interval_string.split('\t')[0]
+            peak_start_adj = max(interval_start, start)
+            peak_end_adj = min(interval_end, end)
+            start_bin = int((peak_start_adj - start) // resolution)
+            end_bin = int((peak_end_adj - start - 1) // resolution)
+
+            for bin_idx in range(start_bin, end_bin + 1):
+                labels[bin_idx] = label
+        
+        res[chr] = np.array(labels)
     
+    for chr, labels in res.items():
+        valid_labels = labels[labels != None]  # Filter out None values
+        unique_labels, counts = np.unique(valid_labels, return_counts=True)
+        proportions = counts / len(valid_labels)  # Use the length of valid_labels for proportion calculation
+        print(f"Chromosome: {chr}")
+        for label, proportion in zip(unique_labels, proportions):
+            print(f"Label: {label}, Proportion: {proportion:.4f}")
+    
+    bb.close()
+    return res
+
+def get_binned_bigBed_peaks(bigBed_file, resolution=25, chr_sizes_file="data/hg38.chrom.sizes"):
+    main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+    chr_sizes = {}
+    res = {}
+
+    with open(chr_sizes_file, 'r') as f:
+        for line in f:
+            chr_name, chr_size = line.strip().split('\t')
+            if chr_name in main_chrs:
+                chr_sizes[chr_name] = int(chr_size)
+
+    bb = pyBigWig.open(bigBed_file)
+
+    for chr, size in chr_sizes.items():
+        start = 0
+        end = resolution * (size // resolution)
+        
+        num_bins = int((end - start + resolution - 1) // resolution)
+        vector = np.zeros(num_bins, dtype=int)
+        intervals = bb.entries(chr, start, end, withString=False)
+        if intervals is None:
+            bb.close()
+            return vector
+        for peak_start, peak_end in intervals:
+            peak_start_adj = max(peak_start, start)
+            peak_end_adj = min(peak_end, end)
+            start_bin = int((peak_start_adj - start) // resolution)
+            end_bin = int((peak_end_adj - start - 1) // resolution)
+            vector[start_bin:end_bin + 1] = 1
+        
+        res[chr] = vector
+
+    bb.close()
+    return res
+
 ################################################################################
 
 class GET_DATA(object):
@@ -2802,6 +2896,27 @@ if __name__ == "__main__":
         with mp.Pool(processes=2) as pool:
             pool.map(process_pair, todo)
 
+    elif sys.argv[1] == "get_peaks":
+        eed = ExtendedEncodeDataHandler(solar_data_path)
+        def process_pair(pair):
+            bios_name, exp = pair
+            eed.get_signal_pval_bigwig(bios_name, exp)
+        
+        todo = []
+        for bs in os.listdir(solar_data_path):
+            # if bs[0] not in ["B", "V", "T"]:
+            #     continue
+            if os.path.isdir(os.path.join(solar_data_path, bs)):
+
+                exps = [x for x in os.listdir(os.path.join(solar_data_path, bs)) if os.path.isdir(os.path.join(solar_data_path, bs, x))]
+                for exp in exps:
+                    todo.append([bs, exp])
+
+        random.shuffle(todo)
+        # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
+        with mp.Pool(processes=2) as pool:
+            pool.map(process_pair, todo)
+
     elif sys.argv[1] == "download_bios":
         d = GET_DATA()
         d.load_metadata(metadata_file_path=solar_data_path)
@@ -2819,6 +2934,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "CS_annotaions":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
         get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
+    
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)

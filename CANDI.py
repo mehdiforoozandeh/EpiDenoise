@@ -1057,6 +1057,10 @@ def main():
     parser.add_argument('--dna', action='store_true', help='Flag to enable DNA')
     parser.add_argument('--prog_mask', action='store_true', help='Flag to enable progressive masking')
 
+    # Add checkpoint argument
+    parser.add_argument('--checkpoint', type=str, default=None, 
+                       help='Path to checkpoint model for continued training')
+
     # Parse the arguments
     args = parser.parse_args()
 
@@ -1085,8 +1089,9 @@ def main():
     }
 
     # print(hyper_parameters)
-    # Call your training function with parsed arguments
-    Train_CANDI(hyper_parameters, eic=args.eic, DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
+    # Call your training function with parsed arguments, including checkpoint
+    Train_CANDI(hyper_parameters, eic=args.eic, checkpoint_path=args.checkpoint, 
+                DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
 
 if __name__ == "__main__":
     main()
