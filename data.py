@@ -1772,11 +1772,12 @@ class ExtendedEncodeDataHandler:
             
             # first look if there are replicate pairs
             replicate_pairs = group_df['isogenic_replicates'].unique()
-            print(replicate_pairs)
-            # if not replicate_pairs.empty:
-            #     print(replicate_pairs)
-            #     continue
-            
+            unique_replicates = [rep for rep in replicate_pairs if pd.notna(rep)]
+            # Split comma-separated replicate pairs into individual replicates
+            all_replicates = [rep.split(',') for rep in unique_replicates]
+            # Flatten the list of lists into a single list of unique replicates
+            unique_replicates = list(set(item for sublist in all_replicates for item in sublist))
+            print(unique_replicates)
 
     def init_eic(self, target_split="train"):
         eic_nav_path = os.path.join(self.base_path, "navigation_eic.json")
