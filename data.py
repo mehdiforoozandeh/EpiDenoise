@@ -1656,18 +1656,6 @@ class ExtendedEncodeDataHandler:
                 
             except:
                 print(f"skipped {bios_name}-{exp}")
-                for ef in e_fileslist:
-                    efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
-                    efile_results = efile_respond.json()
-                    # filter_statement = bool(
-                    #     efile_results['file_format'] == "bigBed" and 
-                    #     efile_results['output_type'] == "peaks" and 
-                    #     efile_results['assembly']==assembly and 
-                    #     efile_results['status'] == "released")
-                    if efile_results['file_format'] == "bigBed":
-                        print(efile_results['output_type'])
-                    # print(efile_results['file_format'])
-                    # print(efile_results['output_type'])
 
     def mp_fix_DS(self, n_p=2):
         bios_list = self.df1.Accession.to_list()
@@ -3071,7 +3059,7 @@ if __name__ == "__main__":
 
         random.shuffle(todo)
         # multiprocess all bios_name, exp pairs in todo for function eed.get_signal_pval_bigwig(bios_name, exp)
-        with mp.Pool(processes=2) as pool:
+        with mp.Pool(processes=5) as pool:
             pool.map(process_pair, todo)
 
     elif sys.argv[1] == "download_bios":
