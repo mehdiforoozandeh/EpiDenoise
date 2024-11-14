@@ -1560,10 +1560,7 @@ class ExtendedEncodeDataHandler:
                     efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                     efile_results = efile_respond.json()
 
-                    print(efile_results['file_format'])
-                    print(efile_results['output_type'])
-                    print(efile_results['assembly'])
-                    print(efile_results['status'])
+                    print(efile_results['file_format'], efile_results['output_type'], efile_results['assembly'], efile_results['status'])
                     continue
 
 
@@ -1613,61 +1610,61 @@ class ExtendedEncodeDataHandler:
 
                         e_files_navigation.append(parsed)
                 
-                e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                        'assay', 'accession', 'biosample', 'file_format', 
-                        'output_type', 'experiment', 'bio_replicate_number', 
-                        'file_size', 'assembly', 'download_url', 'date_created', 
-                        'status', "default", "derived_from_bam", "same_bios"])
+                # e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                #         'assay', 'accession', 'biosample', 'file_format', 
+                #         'output_type', 'experiment', 'bio_replicate_number', 
+                #         'file_size', 'assembly', 'download_url', 'date_created', 
+                #         'status', "default", "derived_from_bam", "same_bios"])
                 
-                # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-                # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+                # # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                # # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
 
-                best_file = select_preferred_row(e_files_navigation)
+                # best_file = select_preferred_row(e_files_navigation)
                 
-                # if len(e_files_navigation) > 0:
-                #     print(e_files_navigation, "\n")
-                # else:
-                #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+                # # if len(e_files_navigation) > 0:
+                # #     print(e_files_navigation, "\n")
+                # # else:
+                # #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
-                # url = "https://www.encodeproject.org{}".format(efile_results['href'])
-                save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
+                # # url = "https://www.encodeproject.org{}".format(efile_results['href'])
+                # save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
                 
-                download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
+                # download_prompt = {"url":best_file["download_url"], "save_dir_name":save_dir_name, "exp":exp, "bios":bios_name}
 
-                try:
-                    if not self.is_bigwig_complete(bios_name, exp):
-                        if os.path.exists(f"{exp_path}/signal_BW_res25/"):
-                            shutil.rmtree(f"{exp_path}/signal_BW_res25/")
-                            print(f"cleaned up old files...")
+                # try:
+                #     if not self.is_bigwig_complete(bios_name, exp):
+                #         if os.path.exists(f"{exp_path}/signal_BW_res25/"):
+                #             shutil.rmtree(f"{exp_path}/signal_BW_res25/")
+                #             print(f"cleaned up old files...")
 
-                        t0 = datetime.datetime.now()
-                        single_download(download_prompt)
-                        t1 = datetime.datetime.now()
-                        print(f"download took {t1-t0}")
-                        binned_bw = get_binned_values(save_dir_name)
-                        t2 = datetime.datetime.now()
-                        print(f"binning took {t2-t1}")
+                #         t0 = datetime.datetime.now()
+                #         single_download(download_prompt)
+                #         t1 = datetime.datetime.now()
+                #         print(f"download took {t1-t0}")
+                #         binned_bw = get_binned_values(save_dir_name)
+                #         t2 = datetime.datetime.now()
+                #         print(f"binning took {t2-t1}")
 
-                        os.mkdir(f"{exp_path}/signal_BW_res25")
+                #         os.mkdir(f"{exp_path}/signal_BW_res25")
 
-                        for chr, data in binned_bw.items():
-                            np.savez_compressed(
-                                f"{exp_path}/signal_BW_res25/{chr}.npz", 
-                                np.array(data))
+                #         for chr, data in binned_bw.items():
+                #             np.savez_compressed(
+                #                 f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                #                 np.array(data))
                         
-                        os.system(f"rm {save_dir_name}")
-                    else:
-                        print(f"{exp_path}/signal_BW_res25/ already exists!")
+                #         os.system(f"rm {save_dir_name}")
+                #     else:
+                #         print(f"{exp_path}/signal_BW_res25/ already exists!")
 
-                except:
-                    print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
-                    if os.path.exists(save_dir_name):
-                        os.system(f"rm {save_dir_name}")
+                # except:
+                #     print(f"failed at downloading/processing {bios_name}-{exp}, attempt={attempt}")
+                #     if os.path.exists(save_dir_name):
+                #         os.system(f"rm {save_dir_name}")
 
-                    attempt +=1
-                    if attempt<10:
-                        print("retrying...")
-                        self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
+                #     attempt +=1
+                #     if attempt<10:
+                #         print("retrying...")
+                #         self.get_signal_pval_bigwig(bios_name, exp, assembly=assembly, attempt=attempt)
                 
             except:
                 print(f"skipped {bios_name}-{exp}")
