@@ -1568,8 +1568,6 @@ class ExtendedEncodeDataHandler:
                     )
 
                     if filter_statement:
-                        print(efile_results['file_format'], efile_results['output_type'], efile_results['assembly'], efile_results['status'])
-                        continue
 
                         if "origin_batches" in efile_results.keys():
                             if ',' not in str(efile_results['origin_batches']):
@@ -1606,6 +1604,7 @@ class ExtendedEncodeDataHandler:
                         else:
                             parsed.append(False)
 
+                        print(parsed)
                         e_files_navigation.append(parsed)
                 
                 # e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
