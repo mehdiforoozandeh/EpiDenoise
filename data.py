@@ -1731,7 +1731,7 @@ class ExtendedEncodeDataHandler:
             for sub_bios in celltypes[ct]:
                 # Get experiments for this biosample
                 if os.path.exists(os.path.join(self.base_path, sub_bios)):
-                    experiments = os.listdir(os.path.join(self.base_path, sub_bios))
+                    experiments = [exp for exp in os.listdir(os.path.join(self.base_path, sub_bios)) if os.path.isdir(os.path.join(self.base_path, sub_bios, exp))]
                 else:
                     continue
                 
