@@ -1773,9 +1773,9 @@ class ExtendedEncodeDataHandler:
             # first look if there are replicate pairs
             replicate_pairs = group_df['isogenic_replicates'].unique()
             print(replicate_pairs)
-            if not replicate_pairs.empty:
-                print(replicate_pairs)
-                continue
+            # if not replicate_pairs.empty:
+            #     print(replicate_pairs)
+            #     continue
             
 
     def init_eic(self, target_split="train"):
