@@ -1894,28 +1894,28 @@ class ExtendedEncodeDataHandler:
                 merged_data[f"{cell_type}_merged"] = merged_group
 
         # # Create new navigation dictionary
-        # new_navigation = {}
-        # for merged_name, info in merged_data.items():
-        #     new_navigation[merged_name] = {}
-        #     for exp in info['experiments']:
-        #         if '_' in info['accession']:  # Merged group
-        #             # Choose best quality experiment from available biosamples
-        #             biosamples = info['accession'].split('_')
-        #             best_quality = None
-        #             for bs in biosamples:
-        #                 exp_path = os.path.join(self.base_path, bs, exp)
-        #                 if os.path.exists(exp_path):
-        #                     if best_quality is None or self.compare_experiment_quality(exp_path, best_quality):
-        #                         best_quality = exp_path
-        #             if best_quality:
-        #                 new_navigation[merged_name][exp] = os.listdir(best_quality)
-        #         else:
-        #             # Single biosample
-        #             exp_path = os.path.join(self.base_path, info['accession'], exp)
-        #             if os.path.exists(exp_path):
-        #                 new_navigation[merged_name][exp] = os.listdir(exp_path)
+        new_navigation = {}
+        for merged_name, info in merged_data.items():
+            new_navigation[merged_name] = {}
+            for exp in info['experiments']:
+                if '_' in info['accession']:  # Merged group
+                    # Choose best quality experiment from available biosamples
+                    biosamples = info['accession'].split('_')
+                    best_quality = None
+                    for bs in biosamples:
+                        exp_path = os.path.join(self.base_path, bs, exp)
+                        if os.path.exists(exp_path):
+                            if best_quality is None or self.compare_experiment_quality(exp_path, best_quality):
+                                best_quality = exp_path
+                    if best_quality:
+                        new_navigation[merged_name][exp] = os.listdir(best_quality)
+                else:
+                    # Single biosample
+                    exp_path = os.path.join(self.base_path, info['accession'], exp)
+                    if os.path.exists(exp_path):
+                        new_navigation[merged_name][exp] = os.listdir(exp_path)
 
-        # self.navigation = new_navigation
+        self.navigation = new_navigation
         
         # Print summary statistics
         print("\nMerging Summary:")
