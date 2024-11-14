@@ -1753,7 +1753,9 @@ class ExtendedEncodeDataHandler:
                         'donor_age': donor_info.get('Age'),
                         'donor_life_stage': donor_info.get('Life stage'),
                         'donor_sex': donor_info.get('Sex'),
-                        'donor_organism': donor_info.get('Organism')
+                        'donor_organism': donor_info.get('Organism'),
+                        'isogenic_replicates': self.df2.loc[self.df2['Accession'] == sub_bios, 'Isogenic replicates'].iloc[0],
+                        'source': self.df2.loc[self.df2['Accession'] == sub_bios, 'Source'].iloc[0]
                     }
                     df_data.append(row)
         
