@@ -1562,7 +1562,7 @@ class ExtendedEncodeDataHandler:
 
                     filter_statement = bool(
                         efile_results['file_format'] == "bigBed" and 
-                        efile_results['output_type'] == "peaks" and 
+                        "peaks" in efile_results['output_type'] and 
                         efile_results['assembly']==assembly and 
                         efile_results['status'] == "released"
                     )
