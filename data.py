@@ -1876,7 +1876,7 @@ class ExtendedEncodeDataHandler:
             used_biosamples = set()
             
             if replicate_pairs:
-                print(replicate_pairs)
+                print(replicate_pairs, "/n/n")
                 continue
                 # Take the best replicate pair
                 best_pair = replicate_pairs[0]
