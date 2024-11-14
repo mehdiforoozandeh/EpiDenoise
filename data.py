@@ -350,7 +350,7 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
 
                 for chr, data in binned_bw.items():
                     np.savez_compressed(
-                        f"{exp_path}/signal_BW_res25/{chr}.npz", 
+                        f"{save_dir_name}/parsed_{accession}/{chr}.npz", 
                         np.array(data))
 
         except:
