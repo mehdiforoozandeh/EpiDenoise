@@ -2742,3 +2742,83 @@ class SyntheticData:
 
         return batch_X, batch_Y, md_batch_X, md_batch_Y, av_batch_X, av_batch_Y
     
+
+    def __new_epoch(self):
+        self.current_bios_batch_pointer = 0
+        self.current_loci_batch_pointer = 0
+    
+    def __update_batch_pointers(self, cycle_biosamples_first=True):
+        if cycle_biosamples_first:
+            # Cycle through all biosamples for each loci before moving to the next loci
+            if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
+                self.current_bios_batch_pointer = 0
+                if self.current_loci_batch_pointer + self.loci_batchsize < self.num_regions:
+                    self.current_loci_batch_pointer += self.loci_batchsize
+                else:
+                    self.current_loci_batch_pointer = 0  # Reset loci pointer after the last one
+                    return True
+            else:
+                self.current_bios_batch_pointer += self.bios_batchsize
+        else:
+            # Cycle through all loci for each batch of biosamples before moving to the next batch of biosamples
+            if self.current_loci_batch_pointer + self.loci_batchsize >= self.num_regions:
+                self.current_loci_batch_pointer = 0
+                if self.current_bios_batch_pointer + self.bios_batchsize < self.num_bios:
+                    self.current_bios_batch_pointer += self.bios_batchsize
+                else:
+                    self.current_bios_batch_pointer = 0  # Reset biosample pointer after the last one
+                    return True
+            else:
+                self.current_loci_batch_pointer += self.loci_batchsize
+
+        return False
+
+    def __get_batch(self, dsf):
+        batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
+        batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
+        
+        batch_data = []
+        batch_metadata = []
+        batch_availability = []
+
+        for locus in batch_loci_list:
+            self.make_region_tensor
+            d, md, avl = self.__make_region_tensor(batch_bios_list, locus, DSF=dsf)
+            batch_data.append(d)
+            batch_metadata.append(md)
+            batch_availability.append(avl)
+        
+        batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
+        return batch_data, batch_metadata, batch_availability
+
+
+    
+    def __make_region_tensor(self, list_bios, locus, DSF, max_workers=-1):
+        """Load and process data for multiple biosamples in parallel."""
+        def load_and_process(bios):
+            try:
+                loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF)
+                return self.make_bios_tensor(loaded_data, loaded_metadata)
+            except Exception as e:
+                print(f"Failed to process {bios}: {e}")
+                return None
+
+        if max_workers == -1:
+            max_workers = self.bios_batchsize//2
+
+        # Use ThreadPoolExecutor to handle biosamples in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(load_and_process, list_bios))
+
+        # Aggregate results
+        data, metadata, availability = [], [], []
+        for result in results:
+            if result is not None:
+                d, md, avl = result
+                data.append(d)
+                metadata.append(md)
+                availability.append(avl)
+
+        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
+        return data, metadata, availability
+

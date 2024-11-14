@@ -1723,7 +1723,9 @@ class ExtendedEncodeDataHandler:
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
-
+        
+        print(celltypes)
+        exit()
         new_nav = {}
         for ct in celltypes.keys():
             for sub_bios in celltypes[ct]:
@@ -2176,31 +2178,6 @@ class ExtendedEncodeDataHandler:
                 "read_length":md2["read_length"], "run_type":md2["run_type"] 
             }
             loaded_metadata[e] = md
-        
-        # Load files in parallel
-        # with ThreadPoolExecutor(max_workers=10) as executor:
-        #     loaded = list(executor.map(self.load_npz, npz_files))
-
-        # loaded = []
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     for result in executor.map(self.load_npz, npz_files):
-        #         if result is not None:
-        #             loaded.append(result)
-        
-        # if len(locus) == 1:
-        #     for l in loaded:
-        #         for exp, data in l.items():
-        #             loaded_data[exp] = data
-
-        # else:
-        #     start_bin = int(locus[1]) // self.resolution
-        #     end_bin = int(locus[2]) // self.resolution
-        #     for l in loaded:
-        #         for exp, data in l.items():
-        #             loaded_data[exp] = data[start_bin:end_bin]
-
-            
-        # return loaded_data, loaded_metadata
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             for result in executor.map(self.load_npz, npz_files):
@@ -2296,35 +2273,6 @@ class ExtendedEncodeDataHandler:
         mdtensor = torch.tensor(np.array(mdtensor)).permute(1, 0)
         availability = torch.tensor(np.array(availability))
         return dtensor, mdtensor, availability
-    
-    def __make_region_tensor(self, list_bios, locus, DSF, max_workers=-1):
-        """Load and process data for multiple biosamples in parallel."""
-        def load_and_process(bios):
-            try:
-                loaded_data, loaded_metadata = self.load_bios(bios, locus, DSF)
-                return self.make_bios_tensor(loaded_data, loaded_metadata)
-            except Exception as e:
-                print(f"Failed to process {bios}: {e}")
-                return None
-
-        if max_workers == -1:
-            max_workers = self.bios_batchsize//2
-
-        # Use ThreadPoolExecutor to handle biosamples in parallel
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            results = list(executor.map(load_and_process, list_bios))
-
-        # Aggregate results
-        data, metadata, availability = [], [], []
-        for result in results:
-            if result is not None:
-                d, md, avl = result
-                data.append(d)
-                metadata.append(md)
-                availability.append(avl)
-
-        data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
-        return data, metadata, availability
 
     def make_region_tensor(self, loaded_data, loaded_metadata):
         data, metadata, availability = [], [], []
@@ -2422,54 +2370,6 @@ class ExtendedEncodeDataHandler:
 
             self.loci[self.m_regions[i][0]].append(self.m_regions[i])
         self.dsf_list = DSF_list
-
-    def __new_epoch(self):
-        self.current_bios_batch_pointer = 0
-        self.current_loci_batch_pointer = 0
-    
-    def __update_batch_pointers(self, cycle_biosamples_first=True):
-        if cycle_biosamples_first:
-            # Cycle through all biosamples for each loci before moving to the next loci
-            if self.current_bios_batch_pointer + self.bios_batchsize >= self.num_bios:
-                self.current_bios_batch_pointer = 0
-                if self.current_loci_batch_pointer + self.loci_batchsize < self.num_regions:
-                    self.current_loci_batch_pointer += self.loci_batchsize
-                else:
-                    self.current_loci_batch_pointer = 0  # Reset loci pointer after the last one
-                    return True
-            else:
-                self.current_bios_batch_pointer += self.bios_batchsize
-        else:
-            # Cycle through all loci for each batch of biosamples before moving to the next batch of biosamples
-            if self.current_loci_batch_pointer + self.loci_batchsize >= self.num_regions:
-                self.current_loci_batch_pointer = 0
-                if self.current_bios_batch_pointer + self.bios_batchsize < self.num_bios:
-                    self.current_bios_batch_pointer += self.bios_batchsize
-                else:
-                    self.current_bios_batch_pointer = 0  # Reset biosample pointer after the last one
-                    return True
-            else:
-                self.current_loci_batch_pointer += self.loci_batchsize
-
-        return False
-
-    def __get_batch(self, dsf):
-        batch_loci_list = self.m_regions[self.current_loci_batch_pointer : self.current_loci_batch_pointer+self.loci_batchsize]
-        batch_bios_list = list(self.navigation.keys())[self.current_bios_batch_pointer : self.current_bios_batch_pointer+self.bios_batchsize]
-        
-        batch_data = []
-        batch_metadata = []
-        batch_availability = []
-
-        for locus in batch_loci_list:
-            self.make_region_tensor
-            d, md, avl = self.__make_region_tensor(batch_bios_list, locus, DSF=dsf)
-            batch_data.append(d)
-            batch_metadata.append(md)
-            batch_availability.append(avl)
-        
-        batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
-        return batch_data, batch_metadata, batch_availability
 
     def new_epoch(self, shuffle_chr=True):
         self.chr_pointer = 0 
@@ -2798,6 +2698,10 @@ if __name__ == "__main__":
         print(f"Percentage of existing biosamples with all experiments complete: {100 * ((len(d.DF1['Accession'])-len(missing_biosamples))-incomplete_count)/(len(d.DF1['Accession'])-len(missing_biosamples)):.2f}%")
 
     elif sys.argv[1] == "test":
+        dataset = ExtendedEncodeDataHandler(solar_data_path)
+        dataset.merge_celltypes()
+
+        exit()
         from scipy.stats import spearmanr
         dataset = ExtendedEncodeDataHandler(solar_data_path)
         dataset.initialize_EED(
