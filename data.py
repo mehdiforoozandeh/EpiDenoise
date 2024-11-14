@@ -1763,6 +1763,7 @@ class ExtendedEncodeDataHandler:
         # Sort by celltype and experiment
         celltype_df = celltype_df.sort_values(['biosample_term_name', 'experiment']).reset_index(drop=True)
         
+        print(celltype_df)
         return celltype_df
         exit()
         new_nav = {}
