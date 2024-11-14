@@ -1737,9 +1737,9 @@ class ExtendedEncodeDataHandler:
 
         for ct in celltypes.keys():
             for sub_bios in celltypes[ct]:
-        donor_info_path = os.path.join(self.base_path, sub_bios, "donor.json")
-        if os.path.exists(donor_info_path):
-            with open(donor_info_path, 'r') as file:
+                donor_info_path = os.path.join(self.base_path, sub_bios, "donor.json")
+                if os.path.exists(donor_info_path):
+                    with open(donor_info_path, 'r') as file:
                 donor_info = json.load(file)
                 print(f"Donor info for {sub_bios}: {donor_info}")
         else:
