@@ -1740,8 +1740,8 @@ class ExtendedEncodeDataHandler:
                 donor_info_path = os.path.join(self.base_path, sub_bios, "donor.json")
                 if os.path.exists(donor_info_path):
                     with open(donor_info_path, 'r') as file:
-                donor_info = json.load(file)
-                print(f"Donor info for {sub_bios}: {donor_info}")
+                    donor_info = json.load(file)
+                    print(f"Donor info for {sub_bios}: {donor_info}")
         else:
             print(f"Donor info file not found for {sub_bios}")
         exit()
