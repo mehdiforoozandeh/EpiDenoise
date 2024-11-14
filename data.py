@@ -3060,7 +3060,7 @@ if __name__ == "__main__":
         eed = ExtendedEncodeDataHandler(solar_data_path)
         def process_pair(pair):
             bios_name, exp = pair
-            eed.get_signal_pval_bigwig(bios_name, exp)
+            eed.get_peaks_bigBed(bios_name, exp)
         
         todo = []
         for bs in os.listdir(solar_data_path):
