@@ -1893,6 +1893,8 @@ class ExtendedEncodeDataHandler:
             if merged_group:
                 merged_data[f"{cell_type}_merged"] = merged_group
 
+        print(merged_data)
+        exit()
         # # Create new navigation dictionary
         new_navigation = {}
         for merged_name, info in merged_data.items():
