@@ -1872,6 +1872,8 @@ class ExtendedEncodeDataHandler:
         merged_data = {}
         for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
             # Find replicate pairs
+            print(group_df)
+            continue
             replicate_pairs = find_optimal_replicates(group_df)
             used_biosamples = set()
             
@@ -1896,7 +1898,7 @@ class ExtendedEncodeDataHandler:
             if merged_group:
                 merged_data[f"{cell_type}_merged"] = merged_group
 
-        print(merged_data)
+        # print(merged_data)
         exit()
         # # Create new navigation dictionary
         new_navigation = {}
