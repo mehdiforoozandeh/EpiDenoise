@@ -1615,7 +1615,7 @@ class ExtendedEncodeDataHandler:
             e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
             e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
 
-            best_file = select_preferred_row(e_files_navigation)
+            # best_file = select_preferred_row(e_files_navigation)
             
             if len(e_files_navigation) > 0:
                 print(e_files_navigation, "\n")
