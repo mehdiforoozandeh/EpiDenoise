@@ -1656,6 +1656,8 @@ class ExtendedEncodeDataHandler:
                 
             except:
                 print(f"skipped {bios_name}-{exp}")
+                print(e_fileslist)
+                exit()
 
     def mp_fix_DS(self, n_p=2):
         bios_list = self.df1.Accession.to_list()
