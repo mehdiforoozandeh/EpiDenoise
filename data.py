@@ -1604,24 +1604,23 @@ class ExtendedEncodeDataHandler:
                         else:
                             parsed.append(False)
 
-                        print(parsed)
                         e_files_navigation.append(parsed)
                 
-                # e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
-                #         'assay', 'accession', 'biosample', 'file_format', 
-                #         'output_type', 'experiment', 'bio_replicate_number', 
-                #         'file_size', 'assembly', 'download_url', 'date_created', 
-                #         'status', "default", "derived_from_bam", "same_bios"])
+                e_files_navigation = pd.DataFrame(e_files_navigation, columns=[
+                        'assay', 'accession', 'biosample', 'file_format', 
+                        'output_type', 'experiment', 'bio_replicate_number', 
+                        'file_size', 'assembly', 'download_url', 'date_created', 
+                        'status', "default", "derived_from_bam", "same_bios"])
                 
-                # # e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
-                # # e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
+                e_files_navigation['date_created'] = pd.to_datetime(e_files_navigation['date_created'])
+                e_files_navigation = e_files_navigation[e_files_navigation['date_created'] == e_files_navigation['date_created'].max()]
 
-                # best_file = select_preferred_row(e_files_navigation)
+                best_file = select_preferred_row(e_files_navigation)
                 
-                # # if len(e_files_navigation) > 0:
-                # #     print(e_files_navigation, "\n")
-                # # else:
-                # #     print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
+                if len(e_files_navigation) > 0:
+                    print(e_files_navigation, "\n")
+                else:
+                    print(bios_name, exp, exp_md["experiment"][list(exp_md["experiment"].keys())[0]])
 
                 # # url = "https://www.encodeproject.org{}".format(efile_results['href'])
                 # save_dir_name = os.path.join(exp_path, best_file['accession']+".bigWig")
