@@ -1723,27 +1723,36 @@ class ExtendedEncodeDataHandler:
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
-        
-        # subcelltype_counts = {}
-        # for celltype, subcelltypes in celltypes.items():
-        #     count = len(subcelltypes)
-        #     if count in subcelltype_counts:
-        #         subcelltype_counts[count].append(celltype)
-        #     else:
-        #         subcelltype_counts[count] = [celltype]
-        
-        # for count, celltypes in subcelltype_counts.items():
-        #     print(f"{len(celltypes)} celltypes have {count} subcelltypes")
 
+        # Create list to store data for DataFrame
+        df_data = []
+        
         for ct in celltypes.keys():
             for sub_bios in celltypes[ct]:
+                # Get experiments for this biosample
+                experiments = []
+                if os.path.exists(os.path.join(self.base_path, sub_bios)):
+                    experiments = os.listdir(os.path.join(self.base_path, sub_bios))
+                
+                # Get donor info
+                donor_info = None
                 donor_info_path = os.path.join(self.base_path, sub_bios, "donor.json")
                 if os.path.exists(donor_info_path):
                     with open(donor_info_path, 'r') as file:
                         donor_info = json.load(file)
-                        print(f"Donor info for {sub_bios}: {donor_info}")
-                else:
-                    print(f"Donor info file not found for {sub_bios}")
+                
+                # Add row to DataFrame data
+                df_data.append({
+                    'biosample_term_name': ct,
+                    'accession': sub_bios,
+                    'experiments': experiments,
+                    'donor_info': donor_info
+                })
+        
+        # Create DataFrame
+        celltype_df = pd.DataFrame(df_data)
+        print(celltype_df)
+        return celltype_df
         exit()
         new_nav = {}
         for ct in celltypes.keys():
