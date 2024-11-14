@@ -1724,16 +1724,16 @@ class ExtendedEncodeDataHandler:
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
         
-        subcelltype_counts = {}
-        for celltype, subcelltypes in celltypes.items():
-            count = len(subcelltypes)
-            if count in subcelltype_counts:
-                subcelltype_counts[count].append(celltype)
-            else:
-                subcelltype_counts[count] = [celltype]
+        # subcelltype_counts = {}
+        # for celltype, subcelltypes in celltypes.items():
+        #     count = len(subcelltypes)
+        #     if count in subcelltype_counts:
+        #         subcelltype_counts[count].append(celltype)
+        #     else:
+        #         subcelltype_counts[count] = [celltype]
         
-        for count, celltypes in subcelltype_counts.items():
-            print(f"{len(celltypes)} celltypes have {count} subcelltypes")
+        # for count, celltypes in subcelltype_counts.items():
+        #     print(f"{len(celltypes)} celltypes have {count} subcelltypes")
 
         for ct in celltypes.keys():
             for sub_bios in celltypes[ct]:
