@@ -1777,7 +1777,10 @@ class ExtendedEncodeDataHandler:
             all_replicates = [rep.split(',') for rep in unique_replicates]
             # Flatten the list of lists into a single list of unique replicates
             unique_replicates = list(set(item for sublist in all_replicates for item in sublist))
+            print(group_df)
             print(unique_replicates)
+            print("\n\n")
+            
 
     def init_eic(self, target_split="train"):
         eic_nav_path = os.path.join(self.base_path, "navigation_eic.json")
