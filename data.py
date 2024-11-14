@@ -331,6 +331,8 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
             bed_file_download_url = row['bed_file_download_url']
             accession = row['Accession']
             save_dir_name = f"{metadata_file_path}/chromatin_state_annotations/{biosample_term_name}"
+            print(save_dir_name)
+            continue
             if not os.path.exists(save_dir_name):
                 os.mkdir(save_dir_name)
                 
@@ -339,6 +341,7 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
                 with gzip.open(f"{save_dir_name}/temp.bed.gz", 'rb') as f_in, open(f"{save_dir_name}/{accession}.bed", 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                 os.remove(f"{save_dir_name}/temp.bed.gz")
+
             elif bed_file_download_url.endswith('.bigBed'):
                 if not os.path.exists(f"{save_dir_name}/{accession}.bigBed"):
                     download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
