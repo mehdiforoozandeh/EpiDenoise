@@ -1560,16 +1560,12 @@ class ExtendedEncodeDataHandler:
                     efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                     efile_results = efile_respond.json()
 
-                    
-
                     filter_statement = bool(
-                        efile_results['file_format'] == "bigWig" and 
-                        efile_results['output_type'] in ["peaks"] and 
+                        efile_results['file_format'] == "bigBed" and 
+                        efile_results['output_type'] == "peaks" and 
                         efile_results['assembly']==assembly and 
                         efile_results['status'] == "released"
                     )
-
-                    
 
                     if filter_statement:
                         print(efile_results['file_format'], efile_results['output_type'], efile_results['assembly'], efile_results['status'])
