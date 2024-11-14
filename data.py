@@ -1509,7 +1509,7 @@ class ExtendedEncodeDataHandler:
             except:
                 print(f"skipped {bios_name}-{exp}")
 
-    def get_peaks_bigBed(self, bios_name, exp, assembly="GRCh38", attempt=0):
+    def get_peaks_bigbed(self, bios_name, exp, assembly="GRCh38", attempt=0):
         def select_preferred_row(df):
             if df.empty:
                 raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
@@ -1657,7 +1657,6 @@ class ExtendedEncodeDataHandler:
             except:
                 print(f"skipped {bios_name}-{exp}")
                 print(e_files_navigation)
-                exit()
 
     def mp_fix_DS(self, n_p=2):
         bios_list = self.df1.Accession.to_list()
@@ -3047,7 +3046,7 @@ if __name__ == "__main__":
         eed = ExtendedEncodeDataHandler(solar_data_path)
         def process_pair(pair):
             bios_name, exp = pair
-            eed.get_peaks_bigBed(bios_name, exp)
+            eed.get_peaks_bigbed(bios_name, exp)
         
         todo = []
         for bs in os.listdir(solar_data_path):
