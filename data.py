@@ -1876,6 +1876,8 @@ class ExtendedEncodeDataHandler:
             used_biosamples = set()
             
             if replicate_pairs:
+                print(replicate_pairs)
+                continue
                 # Take the best replicate pair
                 best_pair = replicate_pairs[0]
                 merged_data[f"{cell_type}_rep1"] = {
@@ -1888,6 +1890,7 @@ class ExtendedEncodeDataHandler:
                 }
                 used_biosamples.update([best_pair['biosample1'], best_pair['biosample2']])
             
+            exit()
             # Merge remaining biosamples
             merged_group = merge_remaining_biosamples(group_df, used_biosamples)
             if merged_group:
