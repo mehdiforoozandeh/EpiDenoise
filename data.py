@@ -1664,7 +1664,8 @@ class ExtendedEncodeDataHandler:
                     #     efile_results['output_type'] == "peaks" and 
                     #     efile_results['assembly']==assembly and 
                     #     efile_results['status'] == "released")
-                    print(efile_results['output_type'])
+                    if efile_results['file_format'] == "bigBed":
+                        print(efile_results['output_type'])
                     # print(efile_results['file_format'])
                     # print(efile_results['output_type'])
 
