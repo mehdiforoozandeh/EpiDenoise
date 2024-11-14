@@ -328,12 +328,11 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/", parse_bigBed
             biosample_term_name = row['Biosample term name']
             biosample_term_name = biosample_term_name.replace(" ", "_")
             biosample_term_name = biosample_term_name.replace("/", "_")
+            biosample_term_name = biosample_term_name.replace("'", "")
             print(f"Downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
             bed_file_download_url = row['bed_file_download_url']
             accession = row['Accession']
             save_dir_name = f"{metadata_file_path}/chromatin_state_annotations/{biosample_term_name}"
-            print(save_dir_name)
-            continue
             if not os.path.exists(save_dir_name):
                 os.mkdir(save_dir_name)
                 
