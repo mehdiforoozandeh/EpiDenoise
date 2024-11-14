@@ -1771,7 +1771,7 @@ class ExtendedEncodeDataHandler:
             # print(group_df)
             
             # first look if there are replicate pairs
-            replicate_pairs = group_df[group_df['isogenic_replicates'] == True]
+            replicate_pairs = group_df['isogenic_replicates'].unique()
             print(replicate_pairs)
             if not replicate_pairs.empty:
                 print(replicate_pairs)
