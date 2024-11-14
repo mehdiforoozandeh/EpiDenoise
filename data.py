@@ -1730,28 +1730,39 @@ class ExtendedEncodeDataHandler:
         for ct in celltypes.keys():
             for sub_bios in celltypes[ct]:
                 # Get experiments for this biosample
-                experiments = []
                 if os.path.exists(os.path.join(self.base_path, sub_bios)):
                     experiments = os.listdir(os.path.join(self.base_path, sub_bios))
+                else:
+                    continue
                 
                 # Get donor info
-                donor_info = None
+                donor_info = {}
                 donor_info_path = os.path.join(self.base_path, sub_bios, "donor.json")
                 if os.path.exists(donor_info_path):
                     with open(donor_info_path, 'r') as file:
                         donor_info = json.load(file)
                 
-                # Add row to DataFrame data
-                df_data.append({
-                    'biosample_term_name': ct,
-                    'accession': sub_bios,
-                    'experiments': experiments,
-                    'donor_info': donor_info
-                })
+                # Create one row per experiment
+                for exp in experiments:
+                    row = {
+                        'biosample_term_name': ct,
+                        'accession': sub_bios,
+                        'experiment': exp,
+                        'donor_status': donor_info.get('Status'),
+                        'donor_accession': donor_info.get('Accession'),
+                        'donor_age': donor_info.get('Age'),
+                        'donor_life_stage': donor_info.get('Life stage'),
+                        'donor_sex': donor_info.get('Sex'),
+                        'donor_organism': donor_info.get('Organism')
+                    }
+                    df_data.append(row)
         
         # Create DataFrame
         celltype_df = pd.DataFrame(df_data)
-        print(celltype_df)
+        
+        # Sort by celltype and experiment
+        celltype_df = celltype_df.sort_values(['biosample_term_name', 'experiment']).reset_index(drop=True)
+        
         return celltype_df
         exit()
         new_nav = {}
