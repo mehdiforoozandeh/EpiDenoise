@@ -1659,12 +1659,12 @@ class ExtendedEncodeDataHandler:
                 for ef in e_fileslist:
                     efile_respond = requests.get("https://www.encodeproject.org{}".format(ef), headers=self.headers)
                     efile_results = efile_respond.json()
-                    filter_statement = bool(
-                        efile_results['file_format'] == "bigBed" and 
-                        efile_results['output_type'] == "peaks" and 
-                        efile_results['assembly']==assembly and 
-                        efile_results['status'] == "released")
-                    print(filter_statement)
+                    # filter_statement = bool(
+                    #     efile_results['file_format'] == "bigBed" and 
+                    #     efile_results['output_type'] == "peaks" and 
+                    #     efile_results['assembly']==assembly and 
+                    #     efile_results['status'] == "released")
+                    print(efile_results['output_type'])
                     # print(efile_results['file_format'])
                     # print(efile_results['output_type'])
 
