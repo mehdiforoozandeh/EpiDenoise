@@ -1761,7 +1761,7 @@ class ExtendedEncodeDataHandler:
         celltype_df = pd.DataFrame(df_data)
         
         # Sort by celltype and experiment
-        celltype_df = celltype_df.sort_values(['biosample_term_name', 'accession']).reset_index(drop=True)
+        celltype_df = celltype_df.sort_values(['biosample_term_name', 'accession', "experiment"]).reset_index(drop=True)
         
         print(celltype_df)
         return celltype_df
