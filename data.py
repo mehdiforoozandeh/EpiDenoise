@@ -392,14 +392,6 @@ def get_binned_bigBed_annotation(bigBed_file, resolution=25, chr_sizes_file="dat
         
         res[chr] = np.array(labels)
     
-    for chr, labels in res.items():
-        valid_labels = labels[labels != None]  # Filter out None values
-        unique_labels, counts = np.unique(valid_labels, return_counts=True)
-        proportions = counts / len(valid_labels)  # Use the length of valid_labels for proportion calculation
-        print(f"Chromosome: {chr}")
-        for label, proportion in zip(unique_labels, proportions):
-            print(f"Label: {label}, Proportion: {proportion:.4f}")
-    
     bb.close()
     return res
 
