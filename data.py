@@ -317,7 +317,7 @@ def get_encode_chromatin_state_annotation_metadata(
     df.to_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
     return df
 
-def get_chromatin_state_annotation_data(metadata_file_path="data/"):
+def get_chromatin_state_annotation_data(metadata_file_path="data/", parse_bigBed=True):
     metadata = pd.read_csv(metadata_file_path + "chromatin_state_annotation_metadata.csv")
 
     if not os.path.exists(f"{metadata_file_path}/chromatin_state_annotations/"):
@@ -325,8 +325,9 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
     
     for index, row in metadata.iterrows():
         try:
-            biosample_term_name = row['Biosample term name'].replace(" ", "_")
-            biosample_term_name = row['Biosample term name'].replace("/", "_")
+            biosample_term_name = row['Biosample term name']
+            biosample_term_name = biosample_term_name.replace(" ", "_")
+            biosample_term_name = biosample_term_name.replace("/", "_")
             print(f"Downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
             bed_file_download_url = row['bed_file_download_url']
             accession = row['Accession']
@@ -347,14 +348,16 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/"):
                     download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
 
                 os.mkdir(f"{save_dir_name}/parsed_{accession}/")
-                binned_bw = get_binned_bigBed_annotation(
-                    bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
-                    resolution=25, chr_sizes_file=f"{metadata_file_path}/hg38.chrom.sizes")
+                if parse_bigBed:
+                    binned_bw = get_binned_bigBed_annotation(
+                        bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
+                        resolution=25, 
+                        chr_sizes_file=f"{metadata_file_path}/hg38.chrom.sizes")
 
-                for chr, data in binned_bw.items():
-                    np.savez_compressed(
-                        f"{save_dir_name}/parsed_{accession}/{chr}.npz", 
-                        np.array(data))
+                    for chr, data in binned_bw.items():
+                        np.savez_compressed(
+                                f"{save_dir_name}/parsed_{accession}/{chr}.npz", 
+                                np.array(data))
 
         except:
             print(f"Error downloading {biosample_term_name}'s chromatin state annotation: {index}/{len(metadata)}")
