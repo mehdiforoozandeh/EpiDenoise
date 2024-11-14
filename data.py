@@ -1768,8 +1768,9 @@ class ExtendedEncodeDataHandler:
         merged_data = {}
         for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
             # Find replicate pairs
-            # print(group_df)
+            print(group_df)
             
+            continue
             # first look if there are replicate pairs
             replicate_pairs = group_df['isogenic_replicates'].unique()
             unique_replicates = [rep for rep in replicate_pairs if pd.notna(rep)]
@@ -1780,6 +1781,11 @@ class ExtendedEncodeDataHandler:
             # print(group_df)
             print(unique_replicates)
             for replicate in unique_replicates:
+                if replicate in group_df['accession'].values:
+                    subset_df_rep2 = group_df[group_df['accession'] == replicate]
+                    print(subset_df_rep2)
+
+                    
                 subset_df = group_df[group_df['accession'] == replicate]
                 print(subset_df)
             print("\n\n")
