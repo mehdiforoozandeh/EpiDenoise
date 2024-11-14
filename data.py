@@ -2931,7 +2931,7 @@ if __name__ == "__main__":
             print(f"downloading {sys.argv[2]}-{exp}")
             single_download(exp)
 
-    elif sys.argv[1] == "CS_annotaions":
+    elif sys.argv[1] == "CS_annotations":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
         get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
     
