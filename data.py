@@ -1765,21 +1765,165 @@ class ExtendedEncodeDataHandler:
         # Sort by celltype and experiment
         celltype_df = celltype_df.sort_values(['biosample_term_name', 'accession', "experiment"]).reset_index(drop=True)
         
-        print(celltype_df.head(10).to_dict())
-        return celltype_df
-        exit()
-        new_nav = {}
-        for ct in celltypes.keys():
-            for sub_bios in celltypes[ct]:
-                if sub_bios in self.navigation.keys():
-                    if ct not in new_nav.keys():
-                        new_nav[ct] = {}
+        # print(celltype_df.head(10).to_dict())
+        def calculate_similarity_score(group_df, biosample1, biosample2):
+            """Calculate similarity score between two biosamples within a cell type group."""
+            score = 0.0
+            max_score = 4.0  # Adjust based on weights below
+            
+            # Get experiments for each biosample
+            exp1 = set(group_df[group_df['accession'] == biosample1]['experiment'])
+            exp2 = set(group_df[group_df['accession'] == biosample2]['experiment'])
+            
+            # 1. Experiment Similarity (weight: 1.0)
+            jaccard = len(exp1.intersection(exp2)) / len(exp1.union(exp2)) if exp1 or exp2 else 0
+            score += jaccard
+            
+            # Get full metadata for each biosample
+            meta1 = group_df[group_df['accession'] == biosample1].iloc[0]
+            meta2 = group_df[group_df['accession'] == biosample2].iloc[0]
+            
+            # 2. Donor Identity (weight: 1.0)
+            if meta1['donor_accession'] == meta2['donor_accession'] and meta1['donor_accession'] is not None:
+                score += 1.0
+                
+            # 3. Source Match (weight: 1.0)
+            if meta1['source'] == meta2['source']:
+                score += 1.0
+                
+            # 4. Donor Metadata Similarity (weight: 1.0)
+            donor_score = 0
+            if meta1['donor_sex'] == meta2['donor_sex'] and meta1['donor_sex'] is not None:
+                donor_score += 0.4
+            if meta1['donor_age'] == meta2['donor_age'] and meta1['donor_age'] is not None:
+                donor_score += 0.3
+            if meta1['donor_life_stage'] == meta2['donor_life_stage'] and meta1['donor_life_stage'] is not None:
+                donor_score += 0.3
+            score += donor_score
+            
+            return score / max_score
 
-                    for exp in self.navigation[sub_bios].keys():
-                        if exp not in new_nav[ct]:
-                            new_nav[ct][exp] = self.navigation[sub_bios][exp]
+        def find_optimal_replicates(group_df):
+            """Find optimal replicate pairs within a cell type group."""
+            biosamples = group_df['accession'].unique()
+            replicate_pairs = []
+            
+            # Create experiment sets for each biosample
+            exp_sets = {bs: set(group_df[group_df['accession'] == bs]['experiment']) 
+                    for bs in biosamples}
+            
+            # Find all possible pairs with identical experiment sets
+            for i, bs1 in enumerate(biosamples):
+                for bs2 in biosamples[i+1:]:
+                    if exp_sets[bs1] == exp_sets[bs2] and len(exp_sets[bs1]) >= 3:  # Minimum 3 experiments
+                        similarity = calculate_similarity_score(group_df, bs1, bs2)
+                        
+                        # Prefer different donors for biological replicates
+                        donor1 = group_df[group_df['accession'] == bs1]['donor_accession'].iloc[0]
+                        donor2 = group_df[group_df['accession'] == bs2]['donor_accession'].iloc[0]
+                        if donor1 != donor2:
+                            similarity += 0.1  # Small bonus for different donors
+                        
+                        replicate_pairs.append({
+                            'biosample1': bs1,
+                            'biosample2': bs2,
+                            'experiments': exp_sets[bs1],
+                            'similarity': similarity
+                        })
+            
+            # Sort by number of experiments and similarity score
+            replicate_pairs.sort(key=lambda x: (len(x['experiments']), x['similarity']), reverse=True)
+            return replicate_pairs
+
+        def merge_remaining_biosamples(group_df, used_biosamples):
+            """Merge remaining biosamples that weren't paired as replicates."""
+            remaining = group_df[~group_df['accession'].isin(used_biosamples)]
+            if remaining.empty:
+                return None
+            
+            biosamples = remaining['accession'].unique()
+            if len(biosamples) == 1:
+                return {'accession': biosamples[0], 'experiments': set(remaining['experiment'])}
+                
+            # Calculate similarity scores between all remaining biosamples
+            similarities = []
+            for i, bs1 in enumerate(biosamples):
+                for bs2 in biosamples[i+1:]:
+                    similarity = calculate_similarity_score(group_df, bs1, bs2)
+                    similarities.append((bs1, bs2, similarity))
+            
+            # Group biosamples based on similarity threshold
+            merged_group = {biosamples[0]}
+            similarities.sort(key=lambda x: x[2], reverse=True)
+            
+            for bs1, bs2, sim in similarities:
+                if sim >= 0.6:  # Adjustable threshold
+                    if bs1 in merged_group:
+                        merged_group.add(bs2)
+                    elif bs2 in merged_group:
+                        merged_group.add(bs1)
+            
+            return {
+                'accession': '_'.join(sorted(merged_group)),
+                'experiments': set(remaining[remaining['accession'].isin(merged_group)]['experiment'])
+            }
+
+        # Process each cell type
+        merged_data = {}
+        for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
+            # Find replicate pairs
+            replicate_pairs = find_optimal_replicates(group_df)
+            used_biosamples = set()
+            
+            if replicate_pairs:
+                # Take the best replicate pair
+                best_pair = replicate_pairs[0]
+                merged_data[f"{cell_type}_rep1"] = {
+                    'accession': best_pair['biosample1'],
+                    'experiments': best_pair['experiments']
+                }
+                merged_data[f"{cell_type}_rep2"] = {
+                    'accession': best_pair['biosample2'],
+                    'experiments': best_pair['experiments']
+                }
+                used_biosamples.update([best_pair['biosample1'], best_pair['biosample2']])
+            
+            # Merge remaining biosamples
+            merged_group = merge_remaining_biosamples(group_df, used_biosamples)
+            if merged_group:
+                merged_data[f"{cell_type}_merged"] = merged_group
+
+        # Create new navigation dictionary
+        new_navigation = {}
+        for merged_name, info in merged_data.items():
+            new_navigation[merged_name] = {}
+            for exp in info['experiments']:
+                if '_' in info['accession']:  # Merged group
+                    # Choose best quality experiment from available biosamples
+                    biosamples = info['accession'].split('_')
+                    best_quality = None
+                    for bs in biosamples:
+                        exp_path = os.path.join(self.base_path, bs, exp)
+                        if os.path.exists(exp_path):
+                            if best_quality is None or self.compare_experiment_quality(exp_path, best_quality):
+                                best_quality = exp_path
+                    if best_quality:
+                        new_navigation[merged_name][exp] = os.listdir(best_quality)
+                else:
+                    # Single biosample
+                    exp_path = os.path.join(self.base_path, info['accession'], exp)
+                    if os.path.exists(exp_path):
+                        new_navigation[merged_name][exp] = os.listdir(exp_path)
+
+        self.navigation = new_navigation
         
-        self.navigation = new_nav
+        # Print summary statistics
+        print("\nMerging Summary:")
+        print(f"Original number of biosamples: {len(celltype_df['accession'].unique())}")
+        print(f"Number of merged cell types: {len(new_navigation)}")
+        print(f"Number of replicate pairs: {sum('rep' in k for k in new_navigation.keys()) // 2}")
+        
+        return new_navigation
 
     def init_eic(self, target_split="train"):
         eic_nav_path = os.path.join(self.base_path, "navigation_eic.json")
