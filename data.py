@@ -1799,10 +1799,10 @@ class ExtendedEncodeDataHandler:
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
 
-            if len(replicates) > 0:
-                print(cell_type, replicates)
+            # if len(replicates) > 0:
+            #     print(cell_type, replicates)
             
-            if len(group_df) > 5:
+            if len(group_df) > 5 and len(replicates) > 0:
                 print(group_df)
                 for rep_gp, shared_exps in replicates:
                     for rep in rep_gp:
@@ -1811,6 +1811,7 @@ class ExtendedEncodeDataHandler:
                             group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
                 print(group_df)
 
+            exit()
         #     # Group replicates by their experiment combinations
         #     exp_groups = {}
         #     for rep, exps in exp_counts.items():
