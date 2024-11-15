@@ -1839,7 +1839,7 @@ class ExtendedEncodeDataHandler:
                                 donor_counts[row['donor_accession']] * 10 +  # Weight donor second
                                 source_counts[row['source']]                 # Weight source third
                             )
-                            scores[row.name] = score
+                            scores[f"{row['accession']}-{row['experiment']}"] = score
                         
                         print(scores)
                         # Select the row with highest score
