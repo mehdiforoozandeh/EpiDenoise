@@ -1845,7 +1845,7 @@ class ExtendedEncodeDataHandler:
                         non_replicate.append(group_df[group_df.index == best_row_idx])
             
             if len(group_df) > 20:
-                print(non_replicate)
+                print(pd.DataFrame(non_replicate))
                 print(replicates)
             
             
