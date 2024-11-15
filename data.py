@@ -1802,9 +1802,9 @@ class ExtendedEncodeDataHandler:
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
             
-            if len(replicates) > 0:
-                print(replicates)
-                exit()
+            # if len(replicates) > 0:
+            #     print(replicates)
+            #     exit()
                 
             for rep_gp, shared_exps in replicates:
                 for rep in rep_gp:
@@ -1841,6 +1841,7 @@ class ExtendedEncodeDataHandler:
                             )
                             scores[row.name] = score
                         
+                        print(scores)
                         # Select the row with highest score
                         best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
                         group_df = group_df[group_df.index != best_row_idx].copy()
