@@ -1781,6 +1781,8 @@ class ExtendedEncodeDataHandler:
                     replicates = row['isogenic_replicates'].split(',')
                     rep_map.append(tuple(sorted(replicates + [row['accession']])))
 
+            rep_map = list(set(rep_map))
+
             # Step 1: Extract replicates with similar experiments
             exp_counts = {}
             for rep in unique_replicates:
@@ -1795,6 +1797,18 @@ class ExtendedEncodeDataHandler:
                 print(rep_map)
                 print('\n\n')   
                 print(list(set(rep_map)))
+
+                replicates = []
+                for rep_gp in rep_map:
+                    shared_exps = set(group_df[group_df['accession'] == rep_gp[0]]['experiment'].values)
+                    for rep in rep_gp[1:]:
+                        exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
+                        shared_exps = shared_exps.intersection(exps)
+                    
+                    if len(shared_exps) > 3:
+                        replicates.append(tuple(rep_gp, shared_exps))
+
+                print(replicates)
                 exit()
             
             # Group replicates by their experiment combinations
@@ -1812,6 +1826,7 @@ class ExtendedEncodeDataHandler:
                 print(group_df)
                 print(unique_replicates)
                 print(sorted_groups)
+
                 exit()
 
             
