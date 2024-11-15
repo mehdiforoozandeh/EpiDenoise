@@ -1795,8 +1795,6 @@ class ExtendedEncodeDataHandler:
                 print(exp_counts)
                 print('\n\n')
                 print(rep_map)
-                print('\n\n')   
-                print(list(set(rep_map)))
 
                 replicates = []
                 for rep_gp in rep_map:
