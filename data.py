@@ -1786,14 +1786,13 @@ class ExtendedEncodeDataHandler:
 
             replicates = []
             non_replicates = []
-            
+
             # Step 1: Extract replicates with similar experiments
             exp_counts = {}
             for rep in unique_replicates:
                 if rep in group_df['accession'].values:
                     exp_counts[rep] = set(group_df[group_df['accession'] == rep]['experiment'].values)
 
-            
             for rep_gp in rep_map:
                 shared_exps = set(group_df[group_df['accession'] == rep_gp[0]]['experiment'].values)
                 for rep in rep_gp[1:]:
@@ -1809,8 +1808,9 @@ class ExtendedEncodeDataHandler:
                         # Remove the row corresponding to rep-exp from group_df
                         group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
             
-            if len(group_df) > 10:
-                print(group_df)
+            print(replicates)
+            exit()
+
             # Handle remaining experiments in group_df
             if not group_df.empty:
                 # Get unique experiments
@@ -1843,9 +1843,13 @@ class ExtendedEncodeDataHandler:
                         # Select the row with highest score
                         best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
                         group_df = group_df[group_df.index != best_row_idx].copy()
-            
+                    else:
+                        non_replicates.append([exp_df.accession.values[0], [exp]])
+
             if len(group_df) > 10:
                 print(group_df)
+                exit()
+            
             
             # now if group_df has anything left, 
             # find unique experiments 
