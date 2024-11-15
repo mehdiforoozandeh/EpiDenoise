@@ -1860,15 +1860,17 @@ class ExtendedEncodeDataHandler:
                             merged_data[name][exp].append(os.path.join(exp_path, f))
 
             non_replicate = pd.DataFrame(non_replicate).reset_index(drop=True)
-            name = f"{cell_type.replace(' ', '_').replace('-', '_')}_nonrep"
-            merged_data[name] = {}
-            for i in range(len(non_replicate)):
-                exp = non_replicate["experiment"][i]
-                merged_data[name][exp] = []
-                exp_path = os.path.join(self.base_path, non_replicate["accession"][i], exp)
-                exp_files = os.listdir(exp_path)
-                for f in exp_files:
-                    merged_data[name][exp].append(os.path.join(exp_path, f))
+            if len(non_replicate) > 0:
+                name = f"{cell_type.replace(' ', '_').replace('-', '_')}_nonrep"
+                merged_data[name] = {}
+                for i in range(len(non_replicate)):
+                    exp = non_replicate["experiment"][i]
+                    merged_data[name][exp] = []
+                    exp_path = os.path.join(self.base_path, non_replicate["accession"][i], exp)
+                    exp_files = os.listdir(exp_path)
+                    for f in exp_files:
+                        merged_data[name][exp].append(os.path.join(exp_path, f))
+                    
         # 1. Number of celltypes
         num_celltypes = len(merged_data.keys())
         print(f"Number of celltypes: {num_celltypes}")
@@ -1893,7 +1895,7 @@ class ExtendedEncodeDataHandler:
             percentage = (count / num_celltypes) * 100
             print(f"{exp}: {count} celltypes ({percentage:.1f}%)")
         exit()
-        
+
         with open(self.merged_navigation_path, 'w') as file:
             json.dump(merged_data, file, indent=4)
 
