@@ -1842,7 +1842,7 @@ class ExtendedEncodeDataHandler:
                         # Select the row with highest score
                         best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
                         # group_df = group_df[group_df.index != best_row_idx].copy()
-                        non_replicate.append(group_df.iloc[best_row_idx, :])
+                        non_replicate.append(group_df[group_df.index == best_row_idx])
             
             if len(group_df) > 20:
                 print(non_replicate)
