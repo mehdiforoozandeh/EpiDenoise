@@ -1844,9 +1844,7 @@ class ExtendedEncodeDataHandler:
                         # group_df = group_df[group_df.index != best_row_idx].copy()
                         non_replicate.append(group_df[group_df.index == best_row_idx].iloc[0])
             
-            if len(group_df) > 20:
-                print(pd.DataFrame(non_replicate))
-                print(replicates)
+            
             
 
             # create merged data for replicate groups and non-replicate experiments
@@ -1862,9 +1860,11 @@ class ExtendedEncodeDataHandler:
                         for f in exp_files:
                             merged_data[name][exp].append(os.path.join(exp_path, f))
                 
-            print(merged_data)
-            exit()
-
+            if len(group_df) > 20:
+                print(pd.DataFrame(non_replicate))
+                print(replicates)
+                print(merged_data)
+                
             for i in range(len(non_replicate)):
                 merged_data[cell_type] = pd.DataFrame(non_replicate)
 
