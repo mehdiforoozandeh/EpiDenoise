@@ -1811,7 +1811,7 @@ class ExtendedEncodeDataHandler:
                             print(rep_gp, shared_exps)
                             print('\n\n')
 
-                # print(replicates)
+                print(replicates)
             
 
         #     # Group replicates by their experiment combinations
