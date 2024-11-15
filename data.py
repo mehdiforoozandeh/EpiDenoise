@@ -1779,7 +1779,7 @@ class ExtendedEncodeDataHandler:
             for i, row in group_df.iterrows():
                 if pd.notna(row['isogenic_replicates']):
                     replicates = row['isogenic_replicates'].split(',')
-                    rep_map.append(tuple(replicates + [row['accession']]))
+                    rep_map.append(tuple(sorted(replicates + [row['accession']])))
 
             # Step 1: Extract replicates with similar experiments
             exp_counts = {}
