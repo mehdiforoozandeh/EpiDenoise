@@ -1806,7 +1806,7 @@ class ExtendedEncodeDataHandler:
                         shared_exps = shared_exps.intersection(exps)
                     
                     if len(shared_exps) > 1:
-                        replicates.append(tuple(rep_gp, shared_exps))
+                        replicates.append([rep_gp, shared_exps])
 
                 print(replicates)
                 exit()
