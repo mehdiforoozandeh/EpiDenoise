@@ -1860,13 +1860,16 @@ class ExtendedEncodeDataHandler:
                         for f in exp_files:
                             merged_data[name][exp].append(os.path.join(exp_path, f))
                 
-            if len(group_df) > 20:
-                print(pd.DataFrame(non_replicate))
-                print(replicates)
-                print(merged_data)
+            # if len(group_df) > 20:
+            #     print(pd.DataFrame(non_replicate))
+            #     print(replicates)
+            #     print(merged_data)
+
+            non_replicate = pd.DataFrame(non_replicate)
+            print(non_replicate)
+
                 
-            for i in range(len(non_replicate)):
-                merged_data[cell_type] = pd.DataFrame(non_replicate)
+
 
 
             # now if group_df has anything left, 
