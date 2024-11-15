@@ -1809,7 +1809,6 @@ class ExtendedEncodeDataHandler:
                         replicates.append([rep_gp, shared_exps])
 
                 print(replicates)
-                exit()
             
             # Group replicates by their experiment combinations
             exp_groups = {}
