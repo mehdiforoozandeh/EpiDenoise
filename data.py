@@ -1849,6 +1849,22 @@ class ExtendedEncodeDataHandler:
                 print(replicates)
             
             
+
+            # create merged data for replicate groups and non-replicate experiments
+            for rep_gp, shared_exps in replicates:
+                i = 0
+                for rep in rep_gp:
+                    name = f"{cell_type}-rep{i}"
+                    merged_data[name] = 
+                    i += 1
+                    for exp in shared_exps:
+                        # Remove the row corresponding to rep-exp from group_df
+                        group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
+
+            for i in range(len(non_replicate)):
+                merged_data[cell_type] = pd.DataFrame(non_replicate)
+
+
             # now if group_df has anything left, 
             # find unique experiments 
             # if for any of the unique experiments, we have multiple options:

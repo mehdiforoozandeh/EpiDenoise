@@ -1051,7 +1051,7 @@ def main():
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--separate_decoders', action='store_true', help='Flag to enable separate decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
-
+    
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
     parser.add_argument('--dna', action='store_true', help='Flag to enable DNA')
