@@ -1867,6 +1867,7 @@ class ExtendedEncodeDataHandler:
 
             non_replicate = pd.DataFrame(non_replicate).reset_index(drop=True)
             name = f"{cell_type.replace(' ', '_').replace('-', '_')}_nonrep"
+            merged_data[name] = {}
             for i in range(len(non_replicate)):
                 exp = non_replicate["experiment"][i]
                 merged_data[name][exp] = []
