@@ -1810,7 +1810,8 @@ class ExtendedEncodeDataHandler:
 
                 print(replicates)
             
-            continue
+                continue
+            
             # Group replicates by their experiment combinations
             exp_groups = {}
             for rep, exps in exp_counts.items():
