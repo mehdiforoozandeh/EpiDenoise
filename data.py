@@ -1793,6 +1793,7 @@ class ExtendedEncodeDataHandler:
 
             if len(group_df) > 10:
                 print(group_df)
+                print(unique_replicates)
                 print(sorted_groups)
                 exit()
 
