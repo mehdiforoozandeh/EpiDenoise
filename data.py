@@ -1834,7 +1834,7 @@ class ExtendedEncodeDataHandler:
                             score = (
                                 accession_counts[row['accession']] * 20 +  # Weight accession highest
                                 donor_counts[row['donor_accession']] * 10 +  # Weight donor second
-                                source_counts[row['source'] * 5]                 # Weight source third
+                                source_counts[row['source']]  * 5                 # Weight source third
                             )
                             scores[row.name] = score
                         
