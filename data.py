@@ -1810,81 +1810,80 @@ class ExtendedEncodeDataHandler:
 
                 print(replicates)
             
-                continue
-            
-            # Group replicates by their experiment combinations
-            exp_groups = {}
-            for rep, exps in exp_counts.items():
-                exp_key = tuple(sorted(exps))
-                if exp_key not in exp_groups:
-                    exp_groups[exp_key] = []
-                exp_groups[exp_key].append(rep)
-            
-            # Sort groups by number of experiments and number of replicates
-            sorted_groups = sorted(exp_groups.items(), key=lambda x: (len(x[0]), len(x[1])), reverse=True)
 
-            if len(group_df) > 10:
-                print(group_df)
-                print(unique_replicates)
-                print(sorted_groups)
+        #     # Group replicates by their experiment combinations
+        #     exp_groups = {}
+        #     for rep, exps in exp_counts.items():
+        #         exp_key = tuple(sorted(exps))
+        #         if exp_key not in exp_groups:
+        #             exp_groups[exp_key] = []
+        #         exp_groups[exp_key].append(rep)
+            
+        #     # Sort groups by number of experiments and number of replicates
+        #     sorted_groups = sorted(exp_groups.items(), key=lambda x: (len(x[0]), len(x[1])), reverse=True)
 
-                exit()
+        #     if len(group_df) > 10:
+        #         print(group_df)
+        #         print(unique_replicates)
+        #         print(sorted_groups)
+
+        #         exit()
 
             
-            # Step 2: Handle remaining experiments and replicates
-            used_replicates = set()
-            merged_data[cell_type] = {}
+        #     # Step 2: Handle remaining experiments and replicates
+        #     used_replicates = set()
+        #     merged_data[cell_type] = {}
             
-            for exps, reps in sorted_groups:
-                if len(reps) > 1:  # We have multiple replicates with same experiments
-                    # Score replicates based on donor similarity and source
-                    rep_scores = {}
-                    for rep in reps:
-                        if rep in used_replicates:
-                            continue
+        #     for exps, reps in sorted_groups:
+        #         if len(reps) > 1:  # We have multiple replicates with same experiments
+        #             # Score replicates based on donor similarity and source
+        #             rep_scores = {}
+        #             for rep in reps:
+        #                 if rep in used_replicates:
+        #                     continue
                             
-                        rep_data = group_df[group_df['accession'] == rep].iloc[0]
-                        score = 0
+        #                 rep_data = group_df[group_df['accession'] == rep].iloc[0]
+        #                 score = 0
                         
-                        # Check donor metadata similarity with already selected replicates
-                        donor_fields = ['donor_age', 'donor_life_stage', 'donor_sex', 'donor_organism']
-                        for field in donor_fields:
-                            if field in merged_data[cell_type]:
-                                if rep_data[field] == merged_data[cell_type][field]:
-                                    score += 1
+        #                 # Check donor metadata similarity with already selected replicates
+        #                 donor_fields = ['donor_age', 'donor_life_stage', 'donor_sex', 'donor_organism']
+        #                 for field in donor_fields:
+        #                     if field in merged_data[cell_type]:
+        #                         if rep_data[field] == merged_data[cell_type][field]:
+        #                             score += 1
                         
-                        # Add source score
-                        if 'source' in merged_data[cell_type]:
-                            if rep_data['source'] == merged_data[cell_type]['source']:
-                                score += 0.5
+        #                 # Add source score
+        #                 if 'source' in merged_data[cell_type]:
+        #                     if rep_data['source'] == merged_data[cell_type]['source']:
+        #                         score += 0.5
                                 
-                        rep_scores[rep] = score
+        #                 rep_scores[rep] = score
                     
-                    # Select the replicate with highest score
-                    if rep_scores:
-                        best_rep = max(rep_scores.items(), key=lambda x: x[1])[0]
-                        best_rep_data = group_df[group_df['accession'] == best_rep].iloc[0]
+        #             # Select the replicate with highest score
+        #             if rep_scores:
+        #                 best_rep = max(rep_scores.items(), key=lambda x: x[1])[0]
+        #                 best_rep_data = group_df[group_df['accession'] == best_rep].iloc[0]
                         
-                        # Add metadata if not already present
-                        for col in group_df.columns:
-                            if col not in merged_data[cell_type]:
-                                merged_data[cell_type][col] = best_rep_data[col]
+        #                 # Add metadata if not already present
+        #                 for col in group_df.columns:
+        #                     if col not in merged_data[cell_type]:
+        #                         merged_data[cell_type][col] = best_rep_data[col]
                         
-                        used_replicates.add(best_rep)
+        #                 used_replicates.add(best_rep)
                 
-                # Handle single replicates or remaining experiments
-                for rep in reps:
-                    if rep not in used_replicates:
-                        rep_data = group_df[group_df['accession'] == rep].iloc[0]
-                        for exp in exp_counts[rep]:
-                            if exp not in merged_data[cell_type].get('experiments', set()):
-                                if 'experiments' not in merged_data[cell_type]:
-                                    merged_data[cell_type]['experiments'] = set()
-                                merged_data[cell_type]['experiments'].add(exp)
-                                merged_data[cell_type][f'{exp}_accession'] = rep
-                        used_replicates.add(rep)
+        #         # Handle single replicates or remaining experiments
+        #         for rep in reps:
+        #             if rep not in used_replicates:
+        #                 rep_data = group_df[group_df['accession'] == rep].iloc[0]
+        #                 for exp in exp_counts[rep]:
+        #                     if exp not in merged_data[cell_type].get('experiments', set()):
+        #                         if 'experiments' not in merged_data[cell_type]:
+        #                             merged_data[cell_type]['experiments'] = set()
+        #                         merged_data[cell_type]['experiments'].add(exp)
+        #                         merged_data[cell_type][f'{exp}_accession'] = rep
+        #                 used_replicates.add(rep)
 
-        return merged_data
+        # return merged_data
 
 
         # merged_data = {}
