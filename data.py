@@ -1800,7 +1800,7 @@ class ExtendedEncodeDataHandler:
 
                 replicates = []
                 for rep_gp in rep_map:
-                    shared_exps = set(group_df[group_df['acccession'] == rep_gp[0]]['experiment'].values)
+                    shared_exps = set(group_df[group_df['accession'] == rep_gp[0]]['experiment'].values)
                     for rep in rep_gp[1:]:
                         exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
                         shared_exps = shared_exps.intersection(exps)
