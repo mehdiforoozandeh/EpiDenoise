@@ -1794,7 +1794,7 @@ class ExtendedEncodeDataHandler:
                 # print(unique_replicates)
                 # print(exp_counts)
                 # print('\n\n')
-                print(rep_map)
+                # print(rep_map)
 
                 replicates = []
                 for rep_gp in rep_map:
@@ -1807,8 +1807,8 @@ class ExtendedEncodeDataHandler:
                         replicates.append([rep_gp, shared_exps])
                         if len(rep_gp) > 2:
                             print(group_df)
-                            print(rep_map)
-                            print(rep_gp)
+                            # print(rep_map)
+                            print(rep_gp, shared_exps)
                             print('\n\n')
 
                 # print(replicates)
