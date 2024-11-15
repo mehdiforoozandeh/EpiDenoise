@@ -1848,18 +1848,22 @@ class ExtendedEncodeDataHandler:
                 print(pd.DataFrame(non_replicate))
                 print(replicates)
             
-            
 
             # create merged data for replicate groups and non-replicate experiments
-            for rep_gp, shared_exps in replicates:
-                i = 0
-                for rep in rep_gp:
-                    name = f"{cell_type}-rep{i}"
-                    merged_data[name] = 0
-                    i += 1
+            for i, (rep_gp, shared_exps) in enumerate(replicates):
+                for j, rep in enumerate(rep_gp):
+                    name = f"{cell_type}_grp{i}_rep{j}"
+                    
+                    merged_data[name] = {}
                     for exp in shared_exps:
-                        # Remove the row corresponding to rep-exp from group_df
-                        group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
+                        merged_data[name][exp] = []
+                        exp_path = os.path.join(self.base_path, rep, exp)
+                        exp_files = os.listdir(exp_path)
+                        for f in exp_files:
+                            merged_data[name][exp].append(os.path.join(exp_path, f))
+                
+            print(merged_data)
+            exit()
 
             for i in range(len(non_replicate)):
                 merged_data[cell_type] = pd.DataFrame(non_replicate)
