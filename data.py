@@ -1808,8 +1808,9 @@ class ExtendedEncodeDataHandler:
                         # Remove the row corresponding to rep-exp from group_df
                         group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
             
-            print(replicates)
-            exit()
+            if len(replicates) > 0:
+                print(replicates)
+                exit()
 
             # Handle remaining experiments in group_df
             if not group_df.empty:
