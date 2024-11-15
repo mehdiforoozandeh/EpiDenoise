@@ -1789,7 +1789,7 @@ class ExtendedEncodeDataHandler:
                 if rep in group_df['accession'].values:
                     exp_counts[rep] = set(group_df[group_df['accession'] == rep]['experiment'].values)
 
-            if len(group_df) > 10:
+            if len(group_df) > 5:
                 print(group_df)
                 print(unique_replicates)
                 print(exp_counts)
@@ -1800,12 +1800,12 @@ class ExtendedEncodeDataHandler:
 
                 replicates = []
                 for rep_gp in rep_map:
-                    shared_exps = set(group_df[group_df['accession'] == rep_gp[0]]['experiment'].values)
+                    shared_exps = set(group_df[group_df['acccession'] == rep_gp[0]]['experiment'].values)
                     for rep in rep_gp[1:]:
                         exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
                         shared_exps = shared_exps.intersection(exps)
                     
-                    if len(shared_exps) > 0:
+                    if len(shared_exps) > 3:
                         replicates.append([rep_gp, shared_exps])
 
                 print(replicates)
