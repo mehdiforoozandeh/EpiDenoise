@@ -1768,7 +1768,9 @@ class ExtendedEncodeDataHandler:
 
         merged_data = {}
         for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
-            
+            replicates = []
+            non_replicates = []
+
             # Find replicate pairs
             replicate_list = group_df['isogenic_replicates'].unique()
             unique_replicates = [rep for rep in replicate_list if pd.notna(rep)]
@@ -1789,7 +1791,7 @@ class ExtendedEncodeDataHandler:
                 if rep in group_df['accession'].values:
                     exp_counts[rep] = set(group_df[group_df['accession'] == rep]['experiment'].values)
 
-            replicates = []
+            
             for rep_gp in rep_map:
                 shared_exps = set(group_df[group_df['accession'] == rep_gp[0]]['experiment'].values)
                 for rep in rep_gp[1:]:
@@ -1798,18 +1800,58 @@ class ExtendedEncodeDataHandler:
                 
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
-
-            # if len(replicates) > 0:
-            #     print(cell_type, replicates)
             
-            if len(group_df) > 5 and len(replicates) > 0:
+            for rep_gp, shared_exps in replicates:
+                for rep in rep_gp:
+                    for exp in shared_exps:
+                        # Remove the row corresponding to rep-exp from group_df
+                        group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
+            
+            if len(group_df) > 10:
                 print(group_df)
-                for rep_gp, shared_exps in replicates:
-                    for rep in rep_gp:
-                        for exp in shared_exps:
-                            # Remove the row corresponding to rep-exp from group_df
-                            group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
+            # Handle remaining experiments in group_df
+            if not group_df.empty:
+                # Get unique experiments
+                unique_exps = group_df['experiment'].unique()
+                
+                for exp in unique_exps:
+                    exp_df = group_df[group_df['experiment'] == exp]
+                    
+                    if len(exp_df) > 1:
+                        # Score each option based on multiple criteria
+                        scores = {}
+                        
+                        # Count prevalence of each accession across all experiments
+                        accession_counts = group_df['accession'].value_counts()
+                        
+                        # Count prevalence of each donor across all experiments
+                        donor_counts = group_df['donor_accession'].value_counts()
+                        
+                        # Count prevalence of each source across all experiments
+                        source_counts = group_df['source'].value_counts()
+                        
+                        for _, row in exp_df.iterrows():
+                            score = (
+                                accession_counts[row['accession']] * 100 +  # Weight accession highest
+                                donor_counts[row['donor_accession']] * 10 +  # Weight donor second
+                                source_counts[row['source']]                 # Weight source third
+                            )
+                            scores[row.name] = score
+                        
+                        # Select the row with highest score
+                        best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
+                        group_df = group_df[group_df.index != best_row_idx].copy()
+            
+            if len(group_df) > 10:
                 print(group_df)
+            
+            # now if group_df has anything left, 
+            # find unique experiments 
+            # if for any of the unique experiments, we have multiple options:
+            #     choose based on first choose the one with highest prevalence of accession (most prevalend accession)
+            #     if there is a tie, choose based on donor similarity with other experiments (most prevalend donor_accession)
+            #     if there is a tie, choose based on source of the donor (most prevalend source)
+            #     if there is still a tie, choose the first one
 
             # exit()
         #     # Group replicates by their experiment combinations
