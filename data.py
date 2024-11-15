@@ -1785,9 +1785,8 @@ class ExtendedEncodeDataHandler:
             rep_map = list(set(rep_map))
 
             replicates = []
-            non_replicates = []
 
-            # Step 1: Extract replicates with similar experiments
+            # Extract replicates with similar experiments
             exp_counts = {}
             for rep in unique_replicates:
                 if rep in group_df['accession'].values:
@@ -1802,16 +1801,14 @@ class ExtendedEncodeDataHandler:
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
             
-            # if len(replicates) > 0:
-            #     print(replicates)
-            #     exit()
-                
             for rep_gp, shared_exps in replicates:
                 for rep in rep_gp:
                     for exp in shared_exps:
                         # Remove the row corresponding to rep-exp from group_df
                         group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
             
+
+            non_replicate = []
             # Handle remaining experiments in group_df
             if not group_df.empty:
                 # Get unique experiments
@@ -1835,19 +1832,21 @@ class ExtendedEncodeDataHandler:
                         
                         for _, row in exp_df.iterrows():
                             score = (
-                                accession_counts[row['accession']] * 100 +  # Weight accession highest
+                                accession_counts[row['accession']] * 20 +  # Weight accession highest
                                 donor_counts[row['donor_accession']] * 10 +  # Weight donor second
-                                source_counts[row['source']]                 # Weight source third
+                                source_counts[row['source'] * 5]                 # Weight source third
                             )
-                            scores[f"{row['accession']}-{row['experiment']}"] = score
+                            scores[row.name] = score
                         
                         print(scores)
                         # Select the row with highest score
                         best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
-                        group_df = group_df[group_df.index != best_row_idx].copy()
-                    else:
-                        non_replicates.append([exp_df.accession.values[0], [exp]])
-
+                        # group_df = group_df[group_df.index != best_row_idx].copy()
+                        non_replicate.append(exp_df.iloc[best_row_idx])
+            
+            if len(group_df) > 20:
+                print(non_replicate)
+                print(replicates)
             
             
             # now if group_df has anything left, 
