@@ -1802,16 +1802,16 @@ class ExtendedEncodeDataHandler:
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
             
+            if len(replicates) > 0:
+                print(replicates)
+                exit()
+                
             for rep_gp, shared_exps in replicates:
                 for rep in rep_gp:
                     for exp in shared_exps:
                         # Remove the row corresponding to rep-exp from group_df
                         group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
             
-            if len(replicates) > 0:
-                print(replicates)
-                exit()
-
             # Handle remaining experiments in group_df
             if not group_df.empty:
                 # Get unique experiments
@@ -1847,9 +1847,6 @@ class ExtendedEncodeDataHandler:
                     else:
                         non_replicates.append([exp_df.accession.values[0], [exp]])
 
-            if len(group_df) > 10:
-                print(group_df)
-                exit()
             
             
             # now if group_df has anything left, 
