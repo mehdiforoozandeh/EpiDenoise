@@ -1798,15 +1798,18 @@ class ExtendedEncodeDataHandler:
                 
                 if len(shared_exps) > 3:
                     replicates.append([rep_gp, shared_exps])
-                    if len(rep_gp) > 2:
-                        print(group_df)
-                        # print(rep_map)
-                        print(rep_gp, shared_exps)
-                        print('\n\n')
 
             if len(replicates) > 0:
                 print(cell_type, replicates)
             
+            if len(group_df) > 5:
+                print(group_df)
+                for rep_gp, shared_exps in replicates:
+                    for rep in rep_gp:
+                        for exp in shared_exps:
+                            # Remove the row corresponding to rep-exp from group_df
+                            group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
+                print(group_df)
 
         #     # Group replicates by their experiment combinations
         #     exp_groups = {}
