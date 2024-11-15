@@ -1194,6 +1194,7 @@ class ExtendedEncodeDataHandler:
         self.chr_sizes_file = os.path.join(self.base_path, "hg38.chrom.sizes")
         self.alias_path = os.path.join(self.base_path, "aliases.json")
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
+        self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
         self.split_path = os.path.join(self.base_path, "train_va_test_split.json")
         
         self.resolution = resolution
@@ -1719,7 +1720,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
-    def merge_celltypes(self):
+    def navigate_merge_celltypes(self, replicate_min_exp=3):
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
@@ -1765,7 +1766,6 @@ class ExtendedEncodeDataHandler:
         # Sort by celltype and experiment
         celltype_df = celltype_df.sort_values(['biosample_term_name', 'accession', "experiment"]).reset_index(drop=True)
 
-
         merged_data = {}
         for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
             
@@ -1798,7 +1798,7 @@ class ExtendedEncodeDataHandler:
                     exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
                     shared_exps = shared_exps.intersection(exps)
                 
-                if len(shared_exps) > 3:
+                if len(shared_exps) > replicate_min_exp:
                     replicates.append([rep_gp, shared_exps])
             
             for rep_gp, shared_exps in replicates:
@@ -1838,7 +1838,6 @@ class ExtendedEncodeDataHandler:
                             )
                             scores[row.name] = score
                         
-                        # print(scores)
                         # Select the row with highest score
                         best_row_idx = max(scores.items(), key=lambda x: x[1])[0]
                         # group_df = group_df[group_df.index != best_row_idx].copy()
@@ -1859,11 +1858,6 @@ class ExtendedEncodeDataHandler:
                         exp_files = os.listdir(exp_path)
                         for f in exp_files:
                             merged_data[name][exp].append(os.path.join(exp_path, f))
-                
-            # if len(group_df) > 20:
-            #     print(pd.DataFrame(non_replicate))
-            #     print(replicates)
-            #     print(merged_data)
 
             non_replicate = pd.DataFrame(non_replicate).reset_index(drop=True)
             name = f"{cell_type.replace(' ', '_').replace('-', '_')}_nonrep"
@@ -1875,141 +1869,33 @@ class ExtendedEncodeDataHandler:
                 exp_files = os.listdir(exp_path)
                 for f in exp_files:
                     merged_data[name][exp].append(os.path.join(exp_path, f))
-            
-        print(merged_data)
+        # 1. Number of celltypes
+        num_celltypes = len(merged_data.keys())
+        print(f"Number of celltypes: {num_celltypes}")
+
+        # 2. Experiment statistics per celltype
+        print("\nExperiment statistics per celltype:")
+        for celltype, data in merged_data.items():
+            num_exps = len(data.keys())
+            print(f"{celltype}:")
+            print(f"  - Number of experiments: {num_exps}")
+
+        # 3. Experiment availability across celltypes
+        exp_counts = {}
+        for celltype, data in merged_data.items():
+            for exp in data.keys():
+                if exp not in exp_counts:
+                    exp_counts[exp] = 0
+                exp_counts[exp] += 1
+
+        print("\nExperiment availability across celltypes:")
+        for exp, count in sorted(exp_counts.items(), key=lambda x: x[1], reverse=True):
+            percentage = (count / num_celltypes) * 100
+            print(f"{exp}: {count} celltypes ({percentage:.1f}%)")
         exit()
-                
-                
-
-
-
-            # now if group_df has anything left, 
-            # find unique experiments 
-            # if for any of the unique experiments, we have multiple options:
-            #     choose based on first choose the one with highest prevalence of accession (most prevalend accession)
-            #     if there is a tie, choose based on donor similarity with other experiments (most prevalend donor_accession)
-            #     if there is a tie, choose based on source of the donor (most prevalend source)
-            #     if there is still a tie, choose the first one
-
-            # exit()
-        #     # Group replicates by their experiment combinations
-        #     exp_groups = {}
-        #     for rep, exps in exp_counts.items():
-        #         exp_key = tuple(sorted(exps))
-        #         if exp_key not in exp_groups:
-        #             exp_groups[exp_key] = []
-        #         exp_groups[exp_key].append(rep)
-            
-        #     # Sort groups by number of experiments and number of replicates
-        #     sorted_groups = sorted(exp_groups.items(), key=lambda x: (len(x[0]), len(x[1])), reverse=True)
-
-        #     if len(group_df) > 10:
-        #         print(group_df)
-        #         print(unique_replicates)
-        #         print(sorted_groups)
-
-        #         exit()
-
-            
-        #     # Step 2: Handle remaining experiments and replicates
-        #     used_replicates = set()
-        #     merged_data[cell_type] = {}
-            
-        #     for exps, reps in sorted_groups:
-        #         if len(reps) > 1:  # We have multiple replicates with same experiments
-        #             # Score replicates based on donor similarity and source
-        #             rep_scores = {}
-        #             for rep in reps:
-        #                 if rep in used_replicates:
-        #                     continue
-                            
-        #                 rep_data = group_df[group_df['accession'] == rep].iloc[0]
-        #                 score = 0
-                        
-        #                 # Check donor metadata similarity with already selected replicates
-        #                 donor_fields = ['donor_age', 'donor_life_stage', 'donor_sex', 'donor_organism']
-        #                 for field in donor_fields:
-        #                     if field in merged_data[cell_type]:
-        #                         if rep_data[field] == merged_data[cell_type][field]:
-        #                             score += 1
-                        
-        #                 # Add source score
-        #                 if 'source' in merged_data[cell_type]:
-        #                     if rep_data['source'] == merged_data[cell_type]['source']:
-        #                         score += 0.5
-                                
-        #                 rep_scores[rep] = score
-                    
-        #             # Select the replicate with highest score
-        #             if rep_scores:
-        #                 best_rep = max(rep_scores.items(), key=lambda x: x[1])[0]
-        #                 best_rep_data = group_df[group_df['accession'] == best_rep].iloc[0]
-                        
-        #                 # Add metadata if not already present
-        #                 for col in group_df.columns:
-        #                     if col not in merged_data[cell_type]:
-        #                         merged_data[cell_type][col] = best_rep_data[col]
-                        
-        #                 used_replicates.add(best_rep)
-                
-        #         # Handle single replicates or remaining experiments
-        #         for rep in reps:
-        #             if rep not in used_replicates:
-        #                 rep_data = group_df[group_df['accession'] == rep].iloc[0]
-        #                 for exp in exp_counts[rep]:
-        #                     if exp not in merged_data[cell_type].get('experiments', set()):
-        #                         if 'experiments' not in merged_data[cell_type]:
-        #                             merged_data[cell_type]['experiments'] = set()
-        #                         merged_data[cell_type]['experiments'].add(exp)
-        #                         merged_data[cell_type][f'{exp}_accession'] = rep
-        #                 used_replicates.add(rep)
-
-        # return merged_data
-
-
-        # merged_data = {}
-        # for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
-        #     # Find replicate pairs
-        #     print(group_df)
-        #      # first look if there are replicate pairs
-        #     replicate_list = group_df['isogenic_replicates'].unique()
-        #     unique_replicates = [rep for rep in replicate_list if pd.notna(rep)]
-        #     # Split comma-separated replicate pairs into individual replicates
-        #     all_replicates = [rep.split(',') for rep in unique_replicates]
-        #     # Flatten the list of lists into a single list of unique replicates
-        #     unique_replicates = list(set(item for sublist in all_replicates for item in sublist))
-
-        #     # our work here has two steps:
-        #     #     1. extract as many replicates as possible that have n number of similar experiments
-        #     #     2. for the remaining experiments, get unique experiments (like H3K9ac, H3K27ac, etc.) and if for any of the unique experiments, we have multiple options:
-        #     #         choose based on 1. donor similarity with other experiments (from donor metadata columns of celltype_df)
-        #     #         if there is a tie, choose based on source of the donor (similar to other experiments)
-        #     #         if there is still a tie, choose the first one
-
-
-            
-        #     continue
-        #     # # first look if there are replicate pairs
-        #     # replicate_pairs = group_df['isogenic_replicates'].unique()
-        #     # unique_replicates = [rep for rep in replicate_pairs if pd.notna(rep)]
-        #     # # Split comma-separated replicate pairs into individual replicates
-        #     # all_replicates = [rep.split(',') for rep in unique_replicates]
-        #     # # Flatten the list of lists into a single list of unique replicates
-        #     # unique_replicates = list(set(item for sublist in all_replicates for item in sublist))
-        #     # # print(group_df)
-        #     # print(unique_replicates)
-        #     # for replicate in unique_replicates:
-        #     #     if replicate in group_df['accession'].values:
-        #     #         subset_df_rep2 = group_df[group_df['accession'] == replicate]
-        #     #         print(subset_df_rep2)
-
-                    
-        #     #     subset_df = group_df[group_df['accession'] == replicate]
-        #     #     print(subset_df)
-        #     # print("\n\n")
-
-
-
+        
+        with open(self.merged_navigation_path, 'w') as file:
+            json.dump(merged_data, file, indent=4)
 
     def init_eic(self, target_split="train"):
         eic_nav_path = os.path.join(self.base_path, "navigation_eic.json")
@@ -2971,7 +2857,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "test":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
-        dataset.merge_celltypes()
+        dataset.navigate_merge_celltypes()
 
         exit()
         from scipy.stats import spearmanr
