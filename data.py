@@ -1768,7 +1768,6 @@ class ExtendedEncodeDataHandler:
 
         merged_data = {}
         for cell_type, group_df in celltype_df.groupby('biosample_term_name'):
-
             
             # Find replicate pairs
             replicate_list = group_df['isogenic_replicates'].unique()
@@ -1776,7 +1775,11 @@ class ExtendedEncodeDataHandler:
             all_replicates = [rep.split(',') for rep in unique_replicates]
             unique_replicates = list(set(item for sublist in all_replicates for item in sublist))
 
-            
+            rep_map = []
+            for i, row in group_df.iterrows():
+                if pd.notna(row['isogenic_replicates']):
+                    replicates = row['isogenic_replicates'].split(',')
+                    rep_map.append((tuple(replicates), row['accession']))
 
             # Step 1: Extract replicates with similar experiments
             exp_counts = {}
@@ -1788,6 +1791,7 @@ class ExtendedEncodeDataHandler:
                 print(group_df)
                 print(unique_replicates)
                 print(exp_counts)
+                print(rep_map)
                 exit()
             
             # Group replicates by their experiment combinations
