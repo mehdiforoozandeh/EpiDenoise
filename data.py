@@ -1805,7 +1805,7 @@ class ExtendedEncodeDataHandler:
                         exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
                         shared_exps = shared_exps.intersection(exps)
                     
-                    if len(shared_exps) > 1:
+                    if len(shared_exps) > 0:
                         replicates.append([rep_gp, shared_exps])
 
                 print(replicates)
