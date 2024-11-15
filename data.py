@@ -1855,7 +1855,7 @@ class ExtendedEncodeDataHandler:
                 i = 0
                 for rep in rep_gp:
                     name = f"{cell_type}-rep{i}"
-                    merged_data[name] = 
+                    merged_data[name] = 0
                     i += 1
                     for exp in shared_exps:
                         # Remove the row corresponding to rep-exp from group_df
