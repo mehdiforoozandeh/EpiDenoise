@@ -1791,9 +1791,9 @@ class ExtendedEncodeDataHandler:
 
             if len(group_df) > 5:
                 print(group_df)
-                print(unique_replicates)
-                print(exp_counts)
-                print('\n\n')
+                # print(unique_replicates)
+                # print(exp_counts)
+                # print('\n\n')
                 print(rep_map)
 
                 replicates = []
