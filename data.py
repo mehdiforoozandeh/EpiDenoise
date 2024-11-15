@@ -1811,7 +1811,7 @@ class ExtendedEncodeDataHandler:
                             group_df = group_df[~((group_df['accession'] == rep) & (group_df['experiment'] == exp))]
                 print(group_df)
 
-            exit()
+            # exit()
         #     # Group replicates by their experiment combinations
         #     exp_groups = {}
         #     for rep, exps in exp_counts.items():
