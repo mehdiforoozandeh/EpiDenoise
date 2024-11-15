@@ -1791,8 +1791,10 @@ class ExtendedEncodeDataHandler:
                 print(group_df)
                 print(unique_replicates)
                 print(exp_counts)
+                print('\n\n')
                 print(rep_map)
-                print(set(rep_map))
+                print('\n\n')   
+                print(list(set(rep_map)))
                 exit()
             
             # Group replicates by their experiment combinations
