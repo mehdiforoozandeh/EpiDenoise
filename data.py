@@ -2475,11 +2475,6 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-
-        # self.filter_nav_complete_exps()
-
-        # print(len(self.navigation))
-
         if merge_ct and eic==False:
             if os.path.exists(self.merged_navigation_path) == False:
                 print("generating merged celltypes navigation file")
@@ -2490,11 +2485,10 @@ class ExtendedEncodeDataHandler:
             
             print(self.navigation)
                 
-        elif merge_ct==False:
-            if eic:
-                self.init_eic(target_split="train")
-            else:
-                self.filter_navigation(exclude=excludes, include=includes)
+        if eic:
+            self.init_eic(target_split="train")
+        else:
+            self.filter_navigation(exclude=excludes, include=includes)
 
             
         exit()
