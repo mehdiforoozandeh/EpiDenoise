@@ -2412,11 +2412,13 @@ class ExtendedEncodeDataHandler:
         npz_files = []
         for e in exps:
             if self.merge_ct:
-                # print("/".join(self.navigation[bios_name][e][0].split("/")[:-1]))
-                # exit()
-                l =    os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
-                jsn1 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
-                jsn2 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), "file_metadata.json")
+                try:
+                    l =    os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+                    jsn1 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+                    jsn2 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), "file_metadata.json")
+                except:
+                    print(self.navigation[bios_name][e])
+                    exit()
             else:
                 l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                 jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
