@@ -2178,7 +2178,7 @@ class ExtendedEncodeDataHandler:
                     else:
                         self.split_dict[key] = 'train'  
         
-        print(self.split_dict)
+        # print(self.split_dict)
         train_count = sum(1 for value in self.split_dict.values() if value == 'train')
         test_count = sum(1 for value in self.split_dict.values() if value == 'test')
         val_count = sum(1 for value in self.split_dict.values() if value == 'val')
