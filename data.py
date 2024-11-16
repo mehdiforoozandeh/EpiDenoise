@@ -2301,7 +2301,7 @@ class ExtendedEncodeDataHandler:
         npz_files = []
         for e in exps:
 
-            l = os.path.join(self.base_path, bios_name, e, f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
+            l = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
             npz_files.append(l)
 
         # Load files in parallel
