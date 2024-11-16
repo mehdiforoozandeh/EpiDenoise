@@ -1720,7 +1720,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
-    def navigate_merge_celltypes(self, min_exp=1):
+    def navigate_merge_celltypes(self, min_exp=3):
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
@@ -2478,7 +2478,7 @@ class ExtendedEncodeDataHandler:
 
         # self.filter_nav_complete_exps()
 
-        print(len(self.navigation))
+        # print(len(self.navigation))
 
         if merge_ct and eic==False:
             if os.path.exists(self.merged_navigation_path) == False:
@@ -2488,7 +2488,7 @@ class ExtendedEncodeDataHandler:
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
             
-            print(len(self.navigation))
+            print(self.navigation)
                 
         elif merge_ct==False:
             if eic:
