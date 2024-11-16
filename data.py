@@ -1196,6 +1196,7 @@ class ExtendedEncodeDataHandler:
         self.navigation_path = os.path.join(self.base_path, "navigation.json")
         self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
         self.split_path = os.path.join(self.base_path, "train_va_test_split.json")
+        self.merged_split_path = os.path.join(self.base_path, "merged_train_va_test_split.json")
         
         self.resolution = resolution
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
@@ -2095,10 +2096,16 @@ class ExtendedEncodeDataHandler:
             return
                         
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
-        if os.path.exists(self.split_path):
-            with open(self.split_path, 'r') as file:
-                self.split_dict = json.load(file)
-            return
+        if self.merge_ct:
+            if os.path.exists(self.merged_split_path):
+                with open(self.merged_split_path, 'r') as file:
+                    self.split_dict = json.load(file)
+                return
+        else:
+            if os.path.exists(self.split_path):
+                with open(self.split_path, 'r') as file:
+                    self.split_dict = json.load(file)
+                return
 
         if sum(splits) != 1:
             raise ValueError("Sum of splits tuple must be 1.")
@@ -2448,7 +2455,7 @@ class ExtendedEncodeDataHandler:
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[], merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
-
+        self.merge_ct = merge_ct
         self.set_alias()
         self.train_val_test_split()
         self.coords(mode="train")
@@ -2475,7 +2482,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'r') as navfile:
             self.navigation  = json.load(navfile)
 
-        if merge_ct and eic==False:
+        if self.merge_ct and eic==False:
             if os.path.exists(self.merged_navigation_path) == False:
                 print("generating merged celltypes navigation file")
                 self.navigate_merge_celltypes()
@@ -2488,19 +2495,19 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
 
-        print(len(self.navigation))
+        print(self.navigation.keys())
+        exit()
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            if eic==False and len(self.navigation[bios]) < 5:
+            if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            # elif self.split_dict[bios] != "train":
-            #     del self.navigation[bios]
+            elif self.split_dict[bios] != "train":
+                del self.navigation[bios]
 
             # elif check_completeness and eic==False: 
             #     if len(self.is_bios_complete(bios))>0:
             #         del self.navigation[bios]
-        print(len(self.navigation))
         
         if shuffle_bios:
             keys = list(self.navigation.keys())
@@ -2516,7 +2523,6 @@ class ExtendedEncodeDataHandler:
         
         for exp, count in unique_exp.items():
             print(f"{exp} in present in {count} biosamples")
-
 
         self.signal_dim = len(self.aliases["experiment_aliases"])
         self.num_regions = len(self.m_regions)
