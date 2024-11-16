@@ -1720,7 +1720,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
-    def navigate_merge_celltypes(self, replicate_min_exp=3):
+    def navigate_merge_celltypes(self, min_exp=3):
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
@@ -1798,7 +1798,7 @@ class ExtendedEncodeDataHandler:
                     exps = set(group_df[group_df['accession'] == rep]['experiment'].values)
                     shared_exps = shared_exps.intersection(exps)
                 
-                if len(shared_exps) > replicate_min_exp:
+                if len(shared_exps) > min_exp:
                     replicates.append([rep_gp, shared_exps])
             
             for rep_gp, shared_exps in replicates:
@@ -1843,9 +1843,6 @@ class ExtendedEncodeDataHandler:
                         # group_df = group_df[group_df.index != best_row_idx].copy()
                         non_replicate.append(group_df[group_df.index == best_row_idx].iloc[0])
             
-            
-            
-
             # create merged data for replicate groups and non-replicate experiments
             for i, (rep_gp, shared_exps) in enumerate(replicates):
                 for j, rep in enumerate(rep_gp):
@@ -1860,7 +1857,7 @@ class ExtendedEncodeDataHandler:
                             merged_data[name][exp].append(os.path.join(exp_path, f))
 
             non_replicate = pd.DataFrame(non_replicate).reset_index(drop=True)
-            if len(non_replicate) > 0:
+            if len(non_replicate) > min_exp:
                 name = f"{cell_type.replace(' ', '_').replace('-', '_')}_nonrep"
                 merged_data[name] = {}
                 for i in range(len(non_replicate)):
