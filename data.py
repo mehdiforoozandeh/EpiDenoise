@@ -2583,7 +2583,7 @@ class ExtendedEncodeDataHandler:
             self.init_eic(target_split="train")
         else:
             self.filter_navigation(exclude=excludes, include=includes)
-        exit()
+
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
