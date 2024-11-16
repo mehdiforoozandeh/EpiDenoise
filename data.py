@@ -1720,7 +1720,7 @@ class ExtendedEncodeDataHandler:
         with open(self.navigation_path, 'w') as file:
             json.dump(navigation, file, indent=4)
 
-    def navigate_merge_celltypes(self, min_exp=2):
+    def navigate_merge_celltypes(self, min_exp=1):
         celltypes = {ct:[] for ct in self.df2["Biosample term name"].unique()}
         for i in range(len(self.df2)):
             celltypes[self.df2["Biosample term name"][i]].append(self.df2["Accession"][i])
