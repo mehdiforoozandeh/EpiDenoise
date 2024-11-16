@@ -2271,6 +2271,10 @@ class ExtendedEncodeDataHandler:
                         
     def generate_full_chr_loci(self, context_length, chrs=["chr19"]):
         self.m_regions = []
+        if chrs == "gw":
+            chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
+            chrs.remove("chr21") # reserved for validation
+            
         for chr in chrs:
             size = (self.chr_sizes[chr] // context_length) * context_length
             for i in range(0, size, context_length):

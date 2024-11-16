@@ -927,6 +927,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     expansion_factor = hyper_parameters["expansion_factor"]
     pos_enc = hyper_parameters["pos_enc"]
     separate_decoders = hyper_parameters["separate_decoders"]
+    merge_ct = hyper_parameters["merge_ct"]
+    loci_gen = hyper_parameters["loci_gen"]
+
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
@@ -947,8 +950,6 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
             pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
 
-    # optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.75)
 
@@ -1051,6 +1052,8 @@ def main():
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--separate_decoders', action='store_true', help='Flag to enable separate decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
+    parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
+    parser.add_argument('--loci_gen', type=str, default='ccre', help='Loci generation method')
     
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1085,7 +1088,9 @@ def main():
         "lr_halflife": args.lr_halflife,
         "min_avail": args.min_avail,
         "hpo": args.hpo,
-        "separate_decoders": args.separate_decoders
+        "separate_decoders": args.separate_decoders,
+        "merge_ct": args.merge_ct,
+        "loci_gen": args.loci_gen
     }
 
     # print(hyper_parameters)
