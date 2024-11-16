@@ -2494,14 +2494,14 @@ class ExtendedEncodeDataHandler:
             if eic==False and len(self.navigation[bios]) < 5:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != "train":
-                del self.navigation[bios]
+            # elif self.split_dict[bios] != "train":
+            #     del self.navigation[bios]
 
             # elif check_completeness and eic==False: 
             #     if len(self.is_bios_complete(bios))>0:
             #         del self.navigation[bios]
         print(len(self.navigation))
-
+        
         if shuffle_bios:
             keys = list(self.navigation.keys())
             random.shuffle(keys)
