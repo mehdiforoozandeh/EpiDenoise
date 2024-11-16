@@ -1312,10 +1312,9 @@ class ExtendedEncodeDataHandler:
         missing_exp = []
         for exp in available_exps:
             if self.merge_ct and self.eic==False:
-                bios_name = self.navigation[bios_name][exp][0].split("/")[-3]
-                print(bios_name)
-
-            exp_full = self.is_exp_complete(bios_name, exp)
+                exp_full = self.is_exp_complete(self.navigation[bios_name][exp][0].split("/")[-3], exp)
+            else:
+                exp_full = self.is_exp_complete(bios_name, exp)
                         
             if not exp_full:
                 missing_exp.append(exp)
