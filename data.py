@@ -2469,19 +2469,20 @@ class ExtendedEncodeDataHandler:
         print(f"num loci: {len(self.m_regions)}")
         
         if os.path.exists(self.navigation_path) == False:
+            print("generating navigation file")
             self.navigate_bios_exps()
             
-        with open(self.navigation_path, 'r') as navfile:
-            self.navigation  = json.load(navfile)
+        # with open(self.navigation_path, 'r') as navfile:
+        #     self.navigation  = json.load(navfile)
 
-        if eic:
-            self.init_eic(target_split="train")
-        else:
-            self.filter_navigation(exclude=excludes, include=includes)
+        # if eic:
+        #     self.init_eic(target_split="train")
+        # else:
+        #     self.filter_navigation(exclude=excludes, include=includes)
 
-        self.filter_nav_complete_exps()
+        # self.filter_nav_complete_exps()
 
-        print(len(self.navigation))
+        # print(len(self.navigation))
 
         if merge_ct and eic==False:
             if os.path.exists(self.merged_navigation_path) == False:
