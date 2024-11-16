@@ -2095,17 +2095,100 @@ class ExtendedEncodeDataHandler:
         else:
             return
                         
+    def merged_train_val_test_split(self, random_seed=42):
+        """
+        Split cell types according to specific rules:
+        1. All nonrep samples go to training
+        2. For n>2 groups: n-2 groups to train, 1 to test, 1 to val
+        3. For n=2 groups: 1 group to train, 1 randomly to test or val
+        4. For n=1 group: 1 replicate to test, others to train
+        """
+        if os.path.exists(self.merged_split_path):
+            with open(self.merged_split_path, 'r') as file:
+                self.split_dict = json.load(file)
+            return
+
+        random.seed(random_seed)
+        self.split_dict = {}
+        
+        # Group keys by cell type
+        cell_types = {}
+        for key in self.navigation.keys():
+            cell_name = key.split('_grp')[0] if '_grp' in key else key.split('_nonrep')[0]
+            if cell_name not in cell_types:
+                cell_types[cell_name] = {
+                    'replicate_groups': {},
+                    'nonrep': None
+                }
+            
+            if '_nonrep' in key:
+                cell_types[cell_name]['nonrep'] = key
+            else:
+                group_num = int(key.split('_grp')[1].split('_')[0])
+                if group_num not in cell_types[cell_name]['replicate_groups']:
+                    cell_types[cell_name]['replicate_groups'][group_num] = []
+                cell_types[cell_name]['replicate_groups'][group_num].append(key)
+
+        # Process each cell type according to rules
+        for cell_name, data in cell_types.items():
+            # Rule 1: All nonrep samples go to training
+            if data['nonrep']:
+                self.split_dict[data['nonrep']] = 'train'
+            
+            num_groups = len(data['replicate_groups'])
+            groups = list(data['replicate_groups'].values())
+            
+            if num_groups > 2:  # Rule 2: n>2 groups
+                # Randomly select groups for test and val
+                test_val_groups = random.sample(groups, 2)
+                test_group = test_val_groups[0]
+                val_group = test_val_groups[1]
+                
+                # Assign splits
+                for group in groups:
+                    if group == test_group:
+                        for key in group:
+                            self.split_dict[key] = 'test'
+                    elif group == val_group:
+                        for key in group:
+                            self.split_dict[key] = 'val'
+                    else:
+                        for key in group:
+                            self.split_dict[key] = 'train'
+                            
+            elif num_groups == 2:  # Rule 3: n=2 groups
+                # Randomly assign second group to test or val
+                split_choice = random.choice(['test', 'val'])
+                
+                # First group always goes to train
+                for key in groups[0]:
+                    self.split_dict[key] = 'train'
+                
+                # Second group goes to randomly chosen split
+                for key in groups[1]:
+                    self.split_dict[key] = split_choice
+                    
+            elif num_groups == 1:  # Rule 4: n=1 group
+                # Take first replicate for test, rest for train
+                first_rep = True
+                for key in groups[0]:
+                    if first_rep:
+                        self.split_dict[key] = 'test'
+                        first_rep = False
+                    else:
+                        self.split_dict[key] = 'train'  
+        
+        print(self.split_dict)
+        exit()
+        # Save split dictionary
+        with open(self.merged_split_path, 'w') as file:
+            json.dump(self.split_dict, file, indent=4)
+
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
-        if self.merge_ct:
-            if os.path.exists(self.merged_split_path):
-                with open(self.merged_split_path, 'r') as file:
-                    self.split_dict = json.load(file)
-                return
-        else:
-            if os.path.exists(self.split_path):
-                with open(self.split_path, 'r') as file:
-                    self.split_dict = json.load(file)
-                return
+        if os.path.exists(self.split_path):
+            with open(self.split_path, 'r') as file:
+                self.split_dict = json.load(file)
+            return
 
         if sum(splits) != 1:
             raise ValueError("Sum of splits tuple must be 1.")
@@ -2457,7 +2540,10 @@ class ExtendedEncodeDataHandler:
         self.eic = eic
         self.merge_ct = merge_ct
         self.set_alias()
-        self.train_val_test_split()
+        if self.merge_ct:
+            self.merged_train_val_test_split()
+        else:
+            self.train_val_test_split()
         self.coords(mode="train")
 
         if loci_gen == "ccre":
