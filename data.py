@@ -2582,6 +2582,10 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
+                
+        for key in self.navigation.keys():
+            if self.navigation[key] == []:
+                print(f"Empty value for key: {key}")
 
         # print(self.navigation.keys())
         if self.merge_ct:
@@ -2606,6 +2610,11 @@ class ExtendedEncodeDataHandler:
             #     if len(self.is_bios_complete(bios))>0:
             #         del self.navigation[bios]
         
+
+        for key in self.navigation.keys():
+            if self.navigation[key] == []:
+                print(f"after filtering Empty value for key: {key}")
+
         if shuffle_bios:
             keys = list(self.navigation.keys())
             random.shuffle(keys)
