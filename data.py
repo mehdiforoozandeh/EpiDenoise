@@ -1870,31 +1870,6 @@ class ExtendedEncodeDataHandler:
                         continue
                     for f in exp_files:
                         merged_data[name][exp].append(os.path.join(exp_path, f))
-                    
-        # # 1. Number of celltypes
-        # num_celltypes = len(merged_data.keys())
-        # print(f"Number of celltypes: {num_celltypes}")
-
-        # # 2. Experiment statistics per celltype
-        # print("\nExperiment statistics per celltype:")
-        # for celltype, data in merged_data.items():
-        #     num_exps = len(data.keys())
-        #     print(f"{celltype}:")
-        #     print(f"  - Number of experiments: {num_exps}")
-
-        # # 3. Experiment availability across celltypes
-        # exp_counts = {}
-        # for celltype, data in merged_data.items():
-        #     for exp in data.keys():
-        #         if exp not in exp_counts:
-        #             exp_counts[exp] = 0
-        #         exp_counts[exp] += 1
-
-        # print("\nExperiment availability across celltypes:")
-        # for exp, count in sorted(exp_counts.items(), key=lambda x: x[1], reverse=True):
-        #     percentage = (count / num_celltypes) * 100
-        #     print(f"{exp}: {count} celltypes ({percentage:.1f}%)")
-        # exit()
 
         with open(self.merged_navigation_path, 'w') as file:
             json.dump(merged_data, file, indent=4)
