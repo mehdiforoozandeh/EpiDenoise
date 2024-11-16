@@ -2482,9 +2482,7 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-            
-            print(self.navigation)
-                
+                            
         if eic:
             self.init_eic(target_split="train")
         else:
