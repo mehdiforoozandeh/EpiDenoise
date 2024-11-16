@@ -2179,6 +2179,18 @@ class ExtendedEncodeDataHandler:
                         self.split_dict[key] = 'train'  
         
         print(self.split_dict)
+        train_count = sum(1 for value in self.split_dict.values() if value == 'train')
+        test_count = sum(1 for value in self.split_dict.values() if value == 'test')
+        val_count = sum(1 for value in self.split_dict.values() if value == 'val')
+        total_count = len(self.split_dict)
+
+        train_proportion = train_count / total_count
+        test_proportion = test_count / total_count
+        val_proportion = val_count / total_count
+
+        print(f"Proportion of data in train set: {train_proportion:.2f}")
+        print(f"Proportion of data in test set: {test_proportion:.2f}")
+        print(f"Proportion of data in validation set: {val_proportion:.2f}")
         exit()
         # Save split dictionary
         with open(self.merged_split_path, 'w') as file:
