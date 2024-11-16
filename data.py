@@ -1866,9 +1866,7 @@ class ExtendedEncodeDataHandler:
                     
                     exp_path = os.path.join(self.base_path, non_replicate["accession"][i], exp)
                     exp_files = os.listdir(exp_path)
-                    if len(exp_files) == 0:
-                        continue
-                    merged_data[name][exp] = []
+                    if 
                     for f in exp_files:
                         merged_data[name][exp].append(os.path.join(exp_path, f))
                     
@@ -2585,12 +2583,7 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-                
-        for key in self.navigation.keys():
-            for exp in self.navigation[key]:
-                if self.navigation[key][exp] == []:
-                    print(f"Empty value for key: {key}-{exp}")
-        exit()
+            
 
         # print(self.navigation.keys())
         if self.merge_ct:
@@ -2615,10 +2608,6 @@ class ExtendedEncodeDataHandler:
             #     if len(self.is_bios_complete(bios))>0:
             #         del self.navigation[bios]
         
-
-        for key in self.navigation.keys():
-            if self.navigation[key] == []:
-                print(f"after filtering Empty value for key: {key}")
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
