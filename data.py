@@ -2540,10 +2540,7 @@ class ExtendedEncodeDataHandler:
         self.eic = eic
         self.merge_ct = merge_ct
         self.set_alias()
-        if self.merge_ct:
-            self.merged_train_val_test_split()
-        else:
-            self.train_val_test_split()
+        
         self.coords(mode="train")
 
         if loci_gen == "ccre":
@@ -2581,7 +2578,11 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
 
-        print(self.navigation.keys())
+        # print(self.navigation.keys())
+        if self.merge_ct:
+            self.merged_train_val_test_split()
+        else:
+            self.train_val_test_split()
         exit()
         # filter biosamples
         for bios in list(self.navigation.keys()):
