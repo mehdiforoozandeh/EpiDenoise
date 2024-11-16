@@ -2482,13 +2482,13 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-                            
+                
         if eic:
             self.init_eic(target_split="train")
         else:
             self.filter_navigation(exclude=excludes, include=includes)
 
-            
+        print(self.navigation)
         exit()
 
         # filter biosamples
