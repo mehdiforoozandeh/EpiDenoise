@@ -2546,8 +2546,7 @@ class ExtendedEncodeDataHandler:
 
         if loci_gen == "ccre":
             print("generating cCRE loci")
-            # self.generate_ccre_loci(m, context_length)
-            self.generate_random_loci(m, context_length)
+            self.generate_ccre_loci(m, context_length)
         elif loci_gen == "random":
             print("generating random loci")
             self.generate_random_loci(m, context_length)
@@ -2957,7 +2956,10 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "test":
         dataset = ExtendedEncodeDataHandler(solar_data_path)
-        dataset.navigate_merge_celltypes()
+        dataset.initialize_EED(
+            m=100, context_length=1600*25, 
+            bios_batchsize=1, loci_batchsize=1, loci_gen="random",
+            bios_min_exp_avail_threshold=10, check_completeness=True, eic=False)
 
         exit()
         from scipy.stats import spearmanr
