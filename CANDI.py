@@ -1042,7 +1042,6 @@ def main():
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
-    parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
     parser.add_argument('--context_length', type=int, default=1600, help='Context length')
     parser.add_argument('--batch_size', type=int, default=50, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
