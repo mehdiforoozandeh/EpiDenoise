@@ -2472,8 +2472,8 @@ class ExtendedEncodeDataHandler:
             print("generating navigation file")
             self.navigate_bios_exps()
             
-        # with open(self.navigation_path, 'r') as navfile:
-        #     self.navigation  = json.load(navfile)
+        with open(self.navigation_path, 'r') as navfile:
+            self.navigation  = json.load(navfile)
 
 
         # self.filter_nav_complete_exps()
