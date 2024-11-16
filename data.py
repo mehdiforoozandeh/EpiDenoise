@@ -1297,7 +1297,7 @@ class ExtendedEncodeDataHandler:
         return exp_full
         
     def is_bios_complete(self, bios_name):
-        print(f"checking {bios_name} completeness")
+        
         if self.merge_ct and self.eic==False:
             available_exps = list(self.navigation[bios_name].keys())
         else:
@@ -1309,6 +1309,7 @@ class ExtendedEncodeDataHandler:
 
         missing_exp = []
         for exp in available_exps:
+            print(f"checking {bios_name} completeness for {exp}")
             if self.merge_ct and self.eic==False:
                 exp_full = self.is_exp_complete(self.navigation[bios_name][exp][0].split("/")[-3], exp)
             else:
