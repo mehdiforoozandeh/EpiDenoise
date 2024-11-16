@@ -2410,14 +2410,19 @@ class ExtendedEncodeDataHandler:
 
         npz_files = []
         for e in exps:
-            l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
-            npz_files.append(l)
+            if self.merge_ct:
+                l = os.path.join("/".join(self.navigation[bios_name][e].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+                jsn1 = os.path.join("/".join(self.navigation[bios_name][e].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+                jsn2 = os.path.join("/".join(self.navigation[bios_name][e].split("/")[:-1]), "file_metadata.json")
+            else:
+                l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+                jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+                jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
 
-            jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+            npz_files.append(l)
             with open(jsn1, 'r') as jsnfile:
                 md1 = json.load(jsnfile)
 
-            jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
             with open(jsn2, 'r') as jsnfile:
                 md2 = json.load(jsnfile)
 
