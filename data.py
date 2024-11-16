@@ -2791,7 +2791,7 @@ class ExtendedEncodeDataHandler:
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], eic=False): #split in ["test", "val"]
+        includes=[], eic=False, merge_ct=True): #split in ["test", "val"]
         self.set_alias()
         self.merge_ct = merge_ct
         self.train_val_test_split()
