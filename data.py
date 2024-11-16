@@ -2412,7 +2412,7 @@ class ExtendedEncodeDataHandler:
         npz_files = []
         for e in exps:
             if self.merge_ct:
-                l = os.path.join(self.navigation[bios_name][e][0].split("/")), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+                l = os.path.join(self.navigation[bios_name][e][0].split("/"), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                 jsn1 = os.path.join(self.navigation[bios_name][e][0].split("/"), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
                 jsn2 = os.path.join(self.navigation[bios_name][e][0].split("/"), "file_metadata.json")
             else:
