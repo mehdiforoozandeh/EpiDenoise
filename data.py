@@ -2455,7 +2455,8 @@ class ExtendedEncodeDataHandler:
 
         if loci_gen == "ccre":
             print("generating cCRE loci")
-            self.generate_ccre_loci(m, context_length)
+            # self.generate_ccre_loci(m, context_length)
+            self.generate_random_loci(m, context_length)
         elif loci_gen == "random":
             print("generating random loci")
             self.generate_random_loci(m, context_length)
@@ -2489,7 +2490,7 @@ class ExtendedEncodeDataHandler:
 
         print(len(self.navigation))
         exit()
-        
+
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
