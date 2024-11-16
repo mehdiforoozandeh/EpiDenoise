@@ -1866,7 +1866,8 @@ class ExtendedEncodeDataHandler:
                     
                     exp_path = os.path.join(self.base_path, non_replicate["accession"][i], exp)
                     exp_files = os.listdir(exp_path)
-                    if 
+                    if len(exp_files) == 0:
+                        continue
                     for f in exp_files:
                         merged_data[name][exp].append(os.path.join(exp_path, f))
                     
