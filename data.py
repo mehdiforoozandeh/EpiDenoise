@@ -2444,7 +2444,7 @@ class ExtendedEncodeDataHandler:
 
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
-        bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
+        bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[], merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
@@ -2488,12 +2488,10 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
 
-        print(self.navigation)
-        exit()
-
+        print(len(self.navigation))
         # filter biosamples
         for bios in list(self.navigation.keys()):
-            if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+            if eic==False and len(self.navigation[bios]) < 5:
                 del self.navigation[bios]
 
             elif self.split_dict[bios] != "train":
@@ -2502,6 +2500,7 @@ class ExtendedEncodeDataHandler:
             # elif check_completeness and eic==False: 
             #     if len(self.is_bios_complete(bios))>0:
             #         del self.navigation[bios]
+        print(len(self.navigation))
 
         if shuffle_bios:
             keys = list(self.navigation.keys())
