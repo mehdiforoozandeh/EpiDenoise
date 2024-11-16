@@ -1297,9 +1297,7 @@ class ExtendedEncodeDataHandler:
         return exp_full
         
     def is_bios_complete(self, bios_name):
-        """Check if a biosample has all required files."""
-        required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
-
+        print(f"checking {bios_name} completeness")
         if self.merge_ct and self.eic==False:
             available_exps = list(self.navigation[bios_name].keys())
         else:
