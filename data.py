@@ -2584,8 +2584,10 @@ class ExtendedEncodeDataHandler:
                 self.navigation  = json.load(navfile)
                 
         for key in self.navigation.keys():
-            if self.navigation[key] == []:
-                print(f"Empty value for key: {key}")
+            for exp in self.navigation[key]:
+                if self.navigation[key][exp] == []:
+                    print(f"Empty value for key: {key}-{exp}")
+        exit()
 
         # print(self.navigation.keys())
         if self.merge_ct:
