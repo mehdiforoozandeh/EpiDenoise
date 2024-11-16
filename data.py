@@ -2793,6 +2793,7 @@ class ExtendedEncodeDataHandler:
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
         includes=[], eic=False): #split in ["test", "val"]
         self.set_alias()
+        self.merge_ct = merge_ct
         self.train_val_test_split()
         self.coords(mode="eval")
         
