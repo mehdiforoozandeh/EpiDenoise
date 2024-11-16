@@ -1846,7 +1846,7 @@ class ExtendedEncodeDataHandler:
             # create merged data for replicate groups and non-replicate experiments
             for i, (rep_gp, shared_exps) in enumerate(replicates):
                 for j, rep in enumerate(rep_gp):
-                    name = f"{cell_type.replace(' ', '_').replace('-', '_')}_grp{i}_rep{j}"
+                    name = f"{cell_type.replace(' ', '_').replace('-', '_')}_grp{i+1}_rep{j+1}"
                     
                     merged_data[name] = {}
                     for exp in shared_exps:
