@@ -1868,30 +1868,30 @@ class ExtendedEncodeDataHandler:
                     for f in exp_files:
                         merged_data[name][exp].append(os.path.join(exp_path, f))
                     
-        # 1. Number of celltypes
-        num_celltypes = len(merged_data.keys())
-        print(f"Number of celltypes: {num_celltypes}")
+        # # 1. Number of celltypes
+        # num_celltypes = len(merged_data.keys())
+        # print(f"Number of celltypes: {num_celltypes}")
 
-        # 2. Experiment statistics per celltype
-        print("\nExperiment statistics per celltype:")
-        for celltype, data in merged_data.items():
-            num_exps = len(data.keys())
-            print(f"{celltype}:")
-            print(f"  - Number of experiments: {num_exps}")
+        # # 2. Experiment statistics per celltype
+        # print("\nExperiment statistics per celltype:")
+        # for celltype, data in merged_data.items():
+        #     num_exps = len(data.keys())
+        #     print(f"{celltype}:")
+        #     print(f"  - Number of experiments: {num_exps}")
 
-        # 3. Experiment availability across celltypes
-        exp_counts = {}
-        for celltype, data in merged_data.items():
-            for exp in data.keys():
-                if exp not in exp_counts:
-                    exp_counts[exp] = 0
-                exp_counts[exp] += 1
+        # # 3. Experiment availability across celltypes
+        # exp_counts = {}
+        # for celltype, data in merged_data.items():
+        #     for exp in data.keys():
+        #         if exp not in exp_counts:
+        #             exp_counts[exp] = 0
+        #         exp_counts[exp] += 1
 
-        print("\nExperiment availability across celltypes:")
-        for exp, count in sorted(exp_counts.items(), key=lambda x: x[1], reverse=True):
-            percentage = (count / num_celltypes) * 100
-            print(f"{exp}: {count} celltypes ({percentage:.1f}%)")
-        exit()
+        # print("\nExperiment availability across celltypes:")
+        # for exp, count in sorted(exp_counts.items(), key=lambda x: x[1], reverse=True):
+        #     percentage = (count / num_celltypes) * 100
+        #     print(f"{exp}: {count} celltypes ({percentage:.1f}%)")
+        # exit()
 
         with open(self.merged_navigation_path, 'w') as file:
             json.dump(merged_data, file, indent=4)
@@ -2446,7 +2446,7 @@ class ExtendedEncodeDataHandler:
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=4, check_completeness=True, shuffle_bios=True, 
         excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], merge_ct=False, eic=False, DSF_list=[1, 2, 4]):
+        includes=[], merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
 
         self.set_alias()
@@ -2480,9 +2480,16 @@ class ExtendedEncodeDataHandler:
 
         self.filter_nav_complete_exps()
 
+        print(len(self.navigation))
+
         if merge_ct and eic==False:
             self.merge_celltypes()
+            with open(self.merged_navigation_path, 'r') as navfile:
+                self.navigation  = json.load(navfile)
 
+        print(len(self.navigation))
+        exit()
+        
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
