@@ -2300,8 +2300,10 @@ class ExtendedEncodeDataHandler:
         loaded_data = {}
         npz_files = []
         for e in exps:
-
-            l = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
+            if self.merge_ct and self.eic==False:
+                l = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
+            else:
+                l = os.path.join(self.base_path, bios_name, e, f"signal_BW_res{self.resolution}", f"{locus[0]}.{f_format}")
             npz_files.append(l)
 
         # Load files in parallel
@@ -2389,14 +2391,12 @@ class ExtendedEncodeDataHandler:
 
         npz_files = []
         for e in exps:
-            if self.merge_ct:
+            if self.merge_ct and self.eic==False:
                 try:
                     l =    os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                     jsn1 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
                     jsn2 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), "file_metadata.json")
-                except:
-                    print(self.navigation[bios_name][e])
-                    exit()
+
             else:
                 l = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                 jsn1 = os.path.join(self.base_path, bios_name, e, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
