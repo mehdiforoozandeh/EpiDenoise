@@ -2786,58 +2786,63 @@ class ExtendedEncodeDataHandler:
                 batch_data, batch_metadata, batch_availability = torch.concat(batch_data), torch.concat(batch_metadata), torch.concat(batch_availability)
                 return batch_data, batch_metadata, batch_availability
         
-    def init_eval(
-        self, context_length, bios_min_exp_avail_threshold=5, 
-        check_completeness=False, split="test",
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], eic=False, merge_ct=True): #split in ["test", "val"]
-        self.set_alias()
-        self.merge_ct = merge_ct
-        self.train_val_test_split()
-        self.coords(mode="eval")
-        
-        if os.path.exists(self.navigation_path) == False:
-            self.navigate_bios_exps()
+        def init_eval(
+            self, context_length, bios_min_exp_avail_threshold=5, 
+            check_completeness=False, split="test",
+            excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+            includes=[], eic=False, merge_ct=True): #split in ["test", "val"]
             
-        with open(self.navigation_path, 'r') as navfile:
-            self.navigation  = json.load(navfile)
-    
-        if eic:
+            self.set_alias()
+            self.merge_ct = merge_ct
             self.eic = eic
-            self.init_eic(target_split=split)
-        else:
-            self.eic = False
-            self.filter_navigation(exclude=excludes, include=includes)
-        
-        self.signal_dim = len(self.aliases["experiment_aliases"])
+            self.coords(mode="eval")
+            
+            if os.path.exists(self.navigation_path) == False:
+                self.navigate_bios_exps()
+                
+            with open(self.navigation_path, 'r') as navfile:
+                self.navigation  = json.load(navfile)
 
-        # filter biosamples
-        for bios in list(self.navigation.keys()):
-            if split == "test" and self.has_rnaseq(bios):
-                continue
+            if self.merge_ct and eic==False:
+                if os.path.exists(self.merged_navigation_path) == False:
+                    print("generating merged celltypes navigation file")
+                    self.navigate_merge_celltypes()
 
-            elif eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
-                del self.navigation[bios]
+                with open(self.merged_navigation_path, 'r') as navfile:
+                    self.navigation  = json.load(navfile)
+                
+                self.merged_train_val_test_split()
+            else:
+                self.train_val_test_split()
 
-            elif self.split_dict[bios] != split:
-                del self.navigation[bios]
+            if eic:
+                self.init_eic(target_split=split)
+            else:
+                self.filter_navigation(exclude=excludes, include=includes)
+            
+            self.signal_dim = len(self.aliases["experiment_aliases"])
 
-            elif eic==False and check_completeness:
-                if len(self.is_bios_complete(bios))>0:
+            # filter biosamples
+            for bios in list(self.navigation.keys()):
+                if split == "test" and self.has_rnaseq(bios):
+                    continue
+
+                elif eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                     del self.navigation[bios]
-        
-        self.num_bios = len(self.navigation)
-        self.test_bios = []
-        for b, s in self.split_dict.items():
-            if s == split:
-                if b in list(self.navigation.keys()):
-                    self.test_bios.append(b)        
 
-    def has_rnaseq(self, bios_name):
-        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
-            return True
-        else:
-            return False
+                elif self.split_dict[bios] != split:
+                    del self.navigation[bios]
+
+                elif eic==False and check_completeness:
+                    if len(self.is_bios_complete(bios))>0:
+                        del self.navigation[bios]
+            
+            self.num_bios = len(self.navigation)
+            self.test_bios = []
+            for b, s in self.split_dict.items():
+                if s == split:
+                    if b in list(self.navigation.keys()):
+                        self.test_bios.append(b)
 
     def load_rna_seq_data(self, bios_name, gene_coord):
         directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
