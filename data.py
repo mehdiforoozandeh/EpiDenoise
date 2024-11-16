@@ -1314,7 +1314,6 @@ class ExtendedEncodeDataHandler:
             if self.merge_ct and self.eic==False:
                 bios_name = self.navigation[bios_name][exp][0].split("/")[-3]
                 print(bios_name)
-                exit()
 
             exp_full = self.is_exp_complete(bios_name, exp)
                         
