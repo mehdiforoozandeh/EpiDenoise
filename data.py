@@ -1300,14 +1300,22 @@ class ExtendedEncodeDataHandler:
         """Check if a biosample has all required files."""
         required_dsfs = ['DSF1', 'DSF2', 'DSF4', 'DSF8']
 
-        try:
-            available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]
-            available_exps.remove("Accession")
-        except Exception as e:
-            return f"Error reading DF1.csv: {e}"
+        if self.merge_ct and self.eic==False:
+            available_exps = list(self.navigation[bios_name].keys())
+        else:
+            try:
+                available_exps = self.df1.loc[self.df1['Accession'] == bios_name].dropna(axis=1).columns.tolist()[1:]
+                available_exps.remove("Accession")
+            except Exception as e:
+                return f"Error reading DF1.csv: {e}"
 
         missing_exp = []
         for exp in available_exps:
+            if self.merge_ct and self.eic==False:
+                bios_name = self.navigation[bios_name][exp][0].split("/")[-2]
+                print(bios_name)
+                exit()
+
             exp_full = self.is_exp_complete(bios_name, exp)
                         
             if not exp_full:
@@ -2584,11 +2592,10 @@ class ExtendedEncodeDataHandler:
             elif self.split_dict[bios] != "train":
                 del self.navigation[bios]
 
-            # elif check_completeness and eic==False: 
-            #     if len(self.is_bios_complete(bios))>0:
-            #         del self.navigation[bios]
+            elif check_completeness and eic==False: 
+                if len(self.is_bios_complete(bios))>0:
+                    del self.navigation[bios]
         
-
         if shuffle_bios:
             keys = list(self.navigation.keys())
             random.shuffle(keys)
