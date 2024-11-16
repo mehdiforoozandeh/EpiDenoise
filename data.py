@@ -2099,9 +2099,9 @@ class ExtendedEncodeDataHandler:
         """
         Split cell types according to specific rules:
         1. All nonrep samples go to training
-        2. For n>2 groups: n-2 groups to train, 1 to test, 1 to val
-        3. For n=2 groups: 1 group to train, 1 randomly to test or val
-        4. For n=1 group: 1 replicate to test, others to train
+        2. For n>=2 groups: n-1 groups to train, 1 randomly to test or val
+        3. For n=1 group: 1 replicate to test, others to train
+        4. For any of the self.navigation keys, if self.has_rnaseq(key) is true, assign it to test
         """
         if os.path.exists(self.merged_split_path):
             with open(self.merged_split_path, 'r') as file:
@@ -2114,6 +2114,12 @@ class ExtendedEncodeDataHandler:
         # Group keys by cell type
         cell_types = {}
         for key in self.navigation.keys():
+            # Check RNA-seq rule first (Rule 4)
+            if self.has_rnaseq(key):
+                self.split_dict[key] = 'test'
+                continue
+                
+            # Group by cell type
             cell_name = key.split('_grp')[0] if '_grp' in key else key.split('_nonrep')[0]
             if cell_name not in cell_types:
                 cell_types[cell_name] = {
@@ -2125,6 +2131,7 @@ class ExtendedEncodeDataHandler:
                 cell_types[cell_name]['nonrep'] = key
             else:
                 group_num = int(key.split('_grp')[1].split('_')[0])
+                rep_num = int(key.split('_rep')[1])
                 if group_num not in cell_types[cell_name]['replicate_groups']:
                     cell_types[cell_name]['replicate_groups'][group_num] = []
                 cell_types[cell_name]['replicate_groups'][group_num].append(key)
@@ -2136,65 +2143,47 @@ class ExtendedEncodeDataHandler:
                 self.split_dict[data['nonrep']] = 'train'
             
             num_groups = len(data['replicate_groups'])
-            groups = list(data['replicate_groups'].values())
             
-            if num_groups > 2:  # Rule 2: n>2 groups
-                # Randomly select groups for test and val
-                test_val_groups = random.sample(groups, 2)
-                test_group = test_val_groups[0]
-                val_group = test_val_groups[1]
+            if num_groups >= 2:  # Rule 2: n>=2 groups
+                # Randomly select one group for test/val
+                groups = list(data['replicate_groups'].values())
+                test_val_group = random.choice(groups)
+                split_choice = random.choice(['test', 'val'])
                 
                 # Assign splits
                 for group in groups:
-                    if group == test_group:
+                    if group == test_val_group:
                         for key in group:
-                            self.split_dict[key] = 'test'
-                    elif group == val_group:
-                        for key in group:
-                            self.split_dict[key] = 'val'
+                            self.split_dict[key] = split_choice
                     else:
                         for key in group:
                             self.split_dict[key] = 'train'
                             
-            elif num_groups == 2:  # Rule 3: n=2 groups
-                # Randomly assign second group to test or val
-                split_choice = random.choice(['test', 'val'])
-                
-                # First group always goes to train
-                for key in groups[0]:
-                    self.split_dict[key] = 'train'
-                
-                # Second group goes to randomly chosen split
-                for key in groups[1]:
-                    self.split_dict[key] = split_choice
-                    
-            elif num_groups == 1:  # Rule 4: n=1 group
+            elif num_groups == 1:  # Rule 3: n=1 group
                 # Take first replicate for test, rest for train
+                group = list(data['replicate_groups'].values())[0]
                 first_rep = True
-                for key in groups[0]:
+                for key in group:
                     if first_rep:
                         self.split_dict[key] = 'test'
                         first_rep = False
                     else:
-                        self.split_dict[key] = 'train'  
-        
-        # print(self.split_dict)
+                        self.split_dict[key] = 'train'
+
+        # Save split dictionary
+        with open(self.merged_split_path, 'w') as file:
+            json.dump(self.split_dict, file, indent=4)
+
+        # Print statistics
         train_count = sum(1 for value in self.split_dict.values() if value == 'train')
         test_count = sum(1 for value in self.split_dict.values() if value == 'test')
         val_count = sum(1 for value in self.split_dict.values() if value == 'val')
         total_count = len(self.split_dict)
 
-        train_proportion = train_count / total_count
-        test_proportion = test_count / total_count
-        val_proportion = val_count / total_count
-
-        print(f"Proportion of data in train set: {train_proportion:.2f}")
-        print(f"Proportion of data in test set: {test_proportion:.2f}")
-        print(f"Proportion of data in validation set: {val_proportion:.2f}")
-        exit()
-        # Save split dictionary
-        with open(self.merged_split_path, 'w') as file:
-            json.dump(self.split_dict, file, indent=4)
+        print("\nSplit Statistics:")
+        print(f"Train set: {train_count} samples ({train_count/total_count:.1%})")
+        print(f"Test set: {test_count} samples ({test_count/total_count:.1%})")
+        print(f"Validation set: {val_count} samples ({val_count/total_count:.1%})")
 
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
@@ -2584,17 +2573,17 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-                
-        if eic:
-            self.init_eic(target_split="train")
-        else:
-            self.filter_navigation(exclude=excludes, include=includes)
 
         # print(self.navigation.keys())
         if self.merge_ct:
             self.merged_train_val_test_split()
         else:
             self.train_val_test_split()
+
+        if eic:
+            self.init_eic(target_split="train")
+        else:
+            self.filter_navigation(exclude=excludes, include=includes)
         exit()
         # filter biosamples
         for bios in list(self.navigation.keys()):
