@@ -2567,11 +2567,7 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-        
-        print(f"navigation: {len(self.navigation)}")
-        exit()
 
-        # print(self.navigation.keys())
         if self.merge_ct:
             self.merged_train_val_test_split()
         else:
@@ -2711,7 +2707,7 @@ class ExtendedEncodeDataHandler:
         
         return False
 
-    def get_batch(self, side="x", y_prompt=False, pval=False, dna_seq=False):
+    def get_batch(self, side="x", y_prompt=True, pval=False, dna_seq=False):
         """
         select subset of loci in working chr
         chr_loci = [locus for locus in self.loci if locus[0] == working_chr]
@@ -2754,6 +2750,7 @@ class ExtendedEncodeDataHandler:
                 del loc_d
 
                 if y_prompt:
+                    print(f"filling in y prompt for {locus}")
                     md = self.fill_in_y_prompt(md)
 
                 if pval:
