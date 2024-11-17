@@ -2446,38 +2446,35 @@ class ExtendedEncodeDataHandler:
         return region
 
     def fill_in_y_prompt(self, md, missing_value=-1):
+        # Create lookup dictionary once outside the loops
+        median_lookup = {}
+        for assay in self.aliases["experiment_aliases"]:
+            median_lookup[assay] = {
+                "depth": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "Median"].values[0],
+                "coverage": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "Median"].values[0],
+                "read_length": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "Median"].values[0]
+            }
 
         if len(md.shape) == 2:
-            i = 0
-            for assay, alias in self.aliases["experiment_aliases"].items():
+            for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                 assert i+1 == int(alias.replace("M",""))
                 
                 if torch.all(md[:, i] == missing_value):
-                    md[0, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "Median"].values[0]
-                    md[1, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "Median"].values[0]
-                    md[2, i] = self.expstats.loc[
-                        (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "Median"].values[0]
+                    md[0, i] = median_lookup[assay]["depth"]
+                    md[1, i] = median_lookup[assay]["coverage"] 
+                    md[2, i] = median_lookup[assay]["read_length"]
                     md[3, i] = 1
-
-                i += 1
         else:
-            i = 0
-            for assay, alias in self.aliases["experiment_aliases"].items():
+            for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                 assert i+1 == int(alias.replace("M",""))
                 
                 for b in range(md.shape[0]):
-                    if torch.all(md[b, :, i]  == missing_value):
-                        md[b, 0, i] = self.expstats.loc[
-                            (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "Median"].values[0]
-                        md[b, 1, i] = self.expstats.loc[
-                            (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "Median"].values[0]
-                        md[b, 2, i] = self.expstats.loc[
-                            (self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "Median"].values[0]
+                    if torch.all(md[b, :, i] == missing_value):
+                        md[b, 0, i] = median_lookup[assay]["depth"]
+                        md[b, 1, i] = median_lookup[assay]["coverage"]
+                        md[b, 2, i] = median_lookup[assay]["read_length"]
                         md[b, 3, i] = 1
 
-                i += 1
         return md
          
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
@@ -2750,7 +2747,7 @@ class ExtendedEncodeDataHandler:
                 del loc_d
 
                 if y_prompt:
-                    print(f"filling in y prompt for {locus}")
+                    # print(f"filling in y prompt for {locus}")
                     md = self.fill_in_y_prompt(md)
 
                 if pval:
