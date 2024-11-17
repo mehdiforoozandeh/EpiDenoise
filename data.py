@@ -2567,7 +2567,9 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-            
+        
+        print(f"navigation: {len(self.navigation)}")
+        exit()
 
         # print(self.navigation.keys())
         if self.merge_ct:
