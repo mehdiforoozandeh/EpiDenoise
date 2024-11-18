@@ -1050,7 +1050,7 @@ def main():
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=3, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
-    parser.add_argument('--separate_decoders', action='store_true', help='Flag to enable separate decoders for pval and count')
+    parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
     parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
     parser.add_argument('--loci_gen', type=str, default='ccre', help='Loci generation method')
@@ -1066,6 +1066,7 @@ def main():
 
     # Parse the arguments
     args = parser.parse_args()
+    separate_decoders = not args.shared_decoders
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
@@ -1088,7 +1089,7 @@ def main():
         "lr_halflife": args.lr_halflife,
         "min_avail": args.min_avail,
         "hpo": args.hpo,
-        "separate_decoders": args.separate_decoders,
+        "separate_decoders": separate_decoders,
         "merge_ct": args.merge_ct,
         "loci_gen": args.loci_gen
     }
