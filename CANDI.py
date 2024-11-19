@@ -386,8 +386,8 @@ class PRETRAIN(object):
 
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
-        arch="", mask_percentage=0.15, hook=True, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.02, patience=1):
+        arch="", mask_percentage=0.15, hook=False, DNA=False, 
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -1043,10 +1043,10 @@ def main():
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
-    parser.add_argument('--context_length', type=int, default=1600, help='Context length')
+    parser.add_argument('--context_length', type=int, default=1200, help='Context length')
     parser.add_argument('--batch_size', type=int, default=50, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
-    parser.add_argument('--num_loci', type=int, default=3750, help='Number of loci')
+    parser.add_argument('--num_loci', type=int, default=3000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=3, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
