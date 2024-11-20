@@ -570,8 +570,7 @@ class MONITOR_VALIDATION(object): # CANDI
         del self.model
         del model
         df = pd.DataFrame(full_res)
-        print(df)
-        exit()
+
         # Separate the data based on comparison type
         imputed_df = df[df['comparison'] == 'imputed']
         upsampled_df = df[df['comparison'] == 'upsampled']

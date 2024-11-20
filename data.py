@@ -2528,10 +2528,10 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
-        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        # includes=[], 
-        excludes=[], 
-        includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3"], 
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        includes=[], 
+        # excludes=[], 
+        # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3"], 
         merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
         self.merge_ct = merge_ct
@@ -2790,10 +2790,10 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
-        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        # includes=[], 
-        excludes=[], 
-        includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3"], 
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        includes=[], 
+        # excludes=[], 
+        # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3"], 
         eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
