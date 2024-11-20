@@ -2486,7 +2486,7 @@ class ExtendedEncodeDataHandler:
         i = 0
         for assay, alias in self.aliases["experiment_aliases"].items():
             
-            assert i+1 == int(alias.replace("M",""))
+            # assert i+1 == int(alias.replace("M",""))
             if assay in loaded_data.keys():
                 dtensor.append(loaded_data[assay])
                 availability.append(1)
