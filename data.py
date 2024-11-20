@@ -2485,6 +2485,7 @@ class ExtendedEncodeDataHandler:
         L = len(loaded_data[list(loaded_data.keys())[0]])
         i = 0
         for assay, alias in self.aliases["experiment_aliases"].items():
+            print(assay, alias)
             
             assert i+1 == int(alias.replace("M",""))
             if assay in loaded_data.keys():
@@ -2790,8 +2791,11 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=5, 
         check_completeness=False, split="test",
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        includes=[], eic=False, merge_ct=True): #split in ["test", "val"]
+        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        # includes=[], 
+        excludes=[], 
+        includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3"], 
+         eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
         self.merge_ct = merge_ct
