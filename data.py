@@ -2797,8 +2797,6 @@ class ExtendedEncodeDataHandler:
         eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
-        print(self.aliases)
-        exit()
         self.merge_ct = merge_ct
         self.eic = eic
         self.coords(mode="eval")
