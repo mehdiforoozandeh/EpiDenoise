@@ -2144,12 +2144,11 @@ class ExtendedEncodeDataHandler:
 
         for bios in self.navigation.keys():
             if "RNA-seq" in self.navigation[bios].keys():
-                print(self.navigation[bios]["RNA-seq"])
-        # print(self.split_dict)
-        # exit()
+                self.split_dict[bios] = "test"
+
         # # Save split dictionary
-        # with open(self.merged_split_path, 'w') as file:
-        #     json.dump(self.split_dict, file, indent=4)
+        with open(self.merged_split_path, 'w') as file:
+            json.dump(self.split_dict, file, indent=4)
 
         # Print statistics
         train_count = sum(1 for v in self.split_dict.values() if v == 'train')
