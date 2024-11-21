@@ -2142,6 +2142,9 @@ class ExtendedEncodeDataHandler:
         for key in rna_seq_keys:
             self.split_dict[key] = 'test'
 
+        for bios in self.navigation.keys():
+            if "RNA-seq" in self.navigation[bios].keys():
+                self.split_dict[bios] = "test"
         print(self.split_dict)
         # exit()
         # # Save split dictionary
@@ -2164,6 +2167,8 @@ class ExtendedEncodeDataHandler:
         print(f"Val samples: {val_count} ({val_count/total_count:.1%})")
         print(f"Test samples: {test_count} ({test_count/total_count:.1%})")
         print(f"RNA-seq samples in test: {len(rna_seq_keys)}")
+
+        
 
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
