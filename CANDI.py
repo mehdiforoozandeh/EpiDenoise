@@ -802,26 +802,32 @@ class PRETRAIN(object):
 
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
                 if self.HPO==False and chr0 != chr1:
-                    # Generate and process the plot
-                    fig_title = " | ".join([
-                        f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
-                        f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
-                    
-                    if "eic" in arch:
-                        plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
-                    else:
-                        plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+                    try:
+                        # Generate and process the plot
+                        fig_title = " | ".join([
+                            f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                            f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                        
+                        if "eic" in arch:
+                            plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
+                        else:
+                            plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
 
-                    images.append(imageio.imread(plot_buf))
-                    plot_buf.close()
-                    imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                        images.append(imageio.imread(plot_buf))
+                        plot_buf.close()
+                        imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                    except Exception as e:
+                        pass
 
                 if next_epoch:
-                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                    try:
+                        validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                        torch.cuda.empty_cache()
+                        log_strs.append(validation_set_eval)
+                        print(validation_set_eval)
+                        log_resource_usage()
+                    except:
+                        pass
 
                     if early_stop:
                         # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
@@ -831,12 +837,15 @@ class PRETRAIN(object):
                         # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                        try:
+                            # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                            epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                            # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                            epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                            # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                            epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                        except:
+                            pass
 
             self.scheduler.step()
             print("learning rate scheduler step...")
@@ -876,8 +885,10 @@ class PRETRAIN(object):
                         logfile.write(f"{metric_name}: {value}\n")
                     logfile.close()
                 
-            if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1):
+            # if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1) and epoch != 0:
+            if self.HPO==False and epoch != (num_epochs-1):
                 try:
+                    os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch-1}.pth")
                     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}.pth')
                 except:
                     pass
