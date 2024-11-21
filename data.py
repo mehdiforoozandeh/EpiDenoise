@@ -2077,12 +2077,11 @@ class ExtendedEncodeDataHandler:
         else:
             return
                         
-    def merged_train_val_test_split(self, random_seed=42, splits=(0.7, 0.15, 0.15)):
+    def merged_train_val_test_split(self, random_seed=42, splits=(0.8, 0.10, 0.10)):
         """
         Split cell types according to specific rules and proportions:
-        1. All nonrep samples go to training
-        2. Split cell types into train (70%), validation (15%), and test (15%) sets
-        3. For any of the self.navigation keys, if self.has_rnaseq(key) is true, assign it to test
+        1. Split cell types into train (70%), validation (15%), and test (15%) sets
+        2. For any of the self.navigation keys, if self.has_rnaseq(key) is true, assign it to test
         """
         if os.path.exists(self.merged_split_path):
             with open(self.merged_split_path, 'r') as file:
@@ -2848,10 +2847,17 @@ class ExtendedEncodeDataHandler:
                     self.test_bios.append(b)
     
     def has_rnaseq(self, bios_name):
-        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
-            return True
+        if self.merge_ct:
+            if "RNA-seq" in self.navigation[bios_name]:
+                return True
+            else:
+                return False
+
         else:
-            return False
+            if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
+                return True
+            else:
+                return False
 
     def load_rna_seq_data(self, bios_name, gene_coord):
         directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
