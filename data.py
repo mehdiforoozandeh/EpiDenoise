@@ -2079,96 +2079,92 @@ class ExtendedEncodeDataHandler:
                         
     def merged_train_val_test_split(self, random_seed=42):
         """
-        Split cell types according to specific rules:
+        Split cell types according to specific rules and proportions:
         1. All nonrep samples go to training
-        2. For n>=2 groups: n-1 groups to train, 1 randomly to test or val
-        3. For n=1 group: 1 replicate to test, others to train
-        4. For any of the self.navigation keys, if self.has_rnaseq(key) is true, assign it to test
+        2. Split cell types into train (70%), validation (15%), and test (15%) sets
+        3. For any of the self.navigation keys, if self.has_rnaseq(key) is true, assign it to test
         """
         if os.path.exists(self.merged_split_path):
             with open(self.merged_split_path, 'r') as file:
                 self.split_dict = json.load(file)
             return
 
+        if sum(splits) != 1:
+            raise ValueError("Split proportions must sum to 1")
+
         random.seed(random_seed)
         self.split_dict = {}
         
         # Group keys by cell type
         cell_types = {}
+        rna_seq_keys = []
+        
+        # First pass: organize keys and handle RNA-seq cases
         for key in self.navigation.keys():
-            # Check RNA-seq rule first (Rule 4)
             if self.has_rnaseq(key):
-                self.split_dict[key] = 'test'
+                rna_seq_keys.append(key)
                 continue
                 
-            # Group by cell type
             cell_name = key.split('_grp')[0] if '_grp' in key else key.split('_nonrep')[0]
             if cell_name not in cell_types:
-                cell_types[cell_name] = {
-                    'replicate_groups': {},
-                    'nonrep': None
-                }
-            
-            if '_nonrep' in key:
-                cell_types[cell_name]['nonrep'] = key
-            else:
-                group_num = int(key.split('_grp')[1].split('_')[0])
-                rep_num = int(key.split('_rep')[1])
-                if group_num not in cell_types[cell_name]['replicate_groups']:
-                    cell_types[cell_name]['replicate_groups'][group_num] = []
-                cell_types[cell_name]['replicate_groups'][group_num].append(key)
-        
-        print(cell_types)
+                cell_types[cell_name] = []
+            cell_types[cell_name].append(key)
+
+        # Calculate split sizes
+        train_size, val_size, test_size = splits
+        num_cell_types = len(cell_types)
+        train_ct = int(num_cell_types * train_size)
+        val_ct = int(num_cell_types * val_size)
+        # test_ct will be the remainder
+
+        # Randomly shuffle cell types
+        cell_type_names = list(cell_types.keys())
+        random.shuffle(cell_type_names)
+
+        # Split cell types into train/val/test
+        train_types = cell_type_names[:train_ct]
+        val_types = cell_type_names[train_ct:train_ct + val_ct]
+        test_types = cell_type_names[train_ct + val_ct:]
+
+        # Assign splits based on cell type
+        for cell_type in train_types:
+            for key in cell_types[cell_type]:
+                self.split_dict[key] = 'train'
+
+        for cell_type in val_types:
+            for key in cell_types[cell_type]:
+                self.split_dict[key] = 'val'
+
+        for cell_type in test_types:
+            for key in cell_types[cell_type]:
+                self.split_dict[key] = 'test'
+
+        # Handle RNA-seq keys (always go to test)
+        for key in rna_seq_keys:
+            self.split_dict[key] = 'test'
+
+        print(self.split_dict)
         exit()
-
-        # Process each cell type according to rules
-        for cell_name, data in cell_types.items():
-            # Rule 1: All nonrep samples go to training
-            if data['nonrep']:
-                self.split_dict[data['nonrep']] = 'train'
-            
-            num_groups = len(data['replicate_groups'])
-            
-            if num_groups >= 2:  # Rule 2: n>=2 groups
-                # Randomly select one group for test/val
-                groups = list(data['replicate_groups'].values())
-                test_val_group = random.choice(groups)
-                split_choice = random.choice(['test', 'val'])
-                
-                # Assign splits
-                for group in groups:
-                    if group == test_val_group:
-                        for key in group:
-                            self.split_dict[key] = split_choice
-                    else:
-                        for key in group:
-                            self.split_dict[key] = 'train'
-                            
-            elif num_groups == 1:  # Rule 3: n=1 group
-                # Take first replicate for test, rest for train
-                group = list(data['replicate_groups'].values())[0]
-                first_rep = True
-                for key in group:
-                    if first_rep:
-                        self.split_dict[key] = 'test'
-                        first_rep = False
-                    else:
-                        self.split_dict[key] = 'train'
-
         # Save split dictionary
         with open(self.merged_split_path, 'w') as file:
             json.dump(self.split_dict, file, indent=4)
 
         # Print statistics
-        train_count = sum(1 for value in self.split_dict.values() if value == 'train')
-        test_count = sum(1 for value in self.split_dict.values() if value == 'test')
-        val_count = sum(1 for value in self.split_dict.values() if value == 'val')
+        train_count = sum(1 for v in self.split_dict.values() if v == 'train')
+        val_count = sum(1 for v in self.split_dict.values() if v == 'val')
+        test_count = sum(1 for v in self.split_dict.values() if v == 'test')
         total_count = len(self.split_dict)
 
         print("\nSplit Statistics:")
-        print(f"Train set: {train_count} samples ({train_count/total_count:.1%})")
-        print(f"Test set: {test_count} samples ({test_count/total_count:.1%})")
-        print(f"Validation set: {val_count} samples ({val_count/total_count:.1%})")
+        print(f"Total cell types: {num_cell_types}")
+        print(f"Train cell types: {len(train_types)} ({len(train_types)/num_cell_types:.1%})")
+        print(f"Val cell types: {len(val_types)} ({len(val_types)/num_cell_types:.1%})")
+        print(f"Test cell types: {len(test_types)} ({len(test_types)/num_cell_types:.1%})")
+        print(f"\nTotal samples: {total_count}")
+        print(f"Train samples: {train_count} ({train_count/total_count:.1%})")
+        print(f"Val samples: {val_count} ({val_count/total_count:.1%})")
+        print(f"Test samples: {test_count} ({test_count/total_count:.1%})")
+        print(f"RNA-seq samples in test: {len(rna_seq_keys)}")
 
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
@@ -2856,7 +2852,7 @@ class ExtendedEncodeDataHandler:
             return True
         else:
             return False
-            
+
     def load_rna_seq_data(self, bios_name, gene_coord):
         directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
         tsv_files = glob.glob(os.path.join(directory, '*.tsv'))
