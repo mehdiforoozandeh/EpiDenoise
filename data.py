@@ -2077,7 +2077,7 @@ class ExtendedEncodeDataHandler:
         else:
             return
                         
-    def merged_train_val_test_split(self, random_seed=42):
+    def merged_train_val_test_split(self, random_seed=42, splits=(0.7, 0.15, 0.15)):
         """
         Split cell types according to specific rules and proportions:
         1. All nonrep samples go to training
