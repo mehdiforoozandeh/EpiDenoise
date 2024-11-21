@@ -2167,8 +2167,6 @@ class ExtendedEncodeDataHandler:
         print(f"Test samples: {test_count} ({test_count/total_count:.1%})")
         print(f"RNA-seq samples in test: {len(rna_seq_keys)}")
 
-        
-
     def train_val_test_split(self, splits=(0.7, 0.15, 0.15), random_seed=42):
         if os.path.exists(self.split_path):
             with open(self.split_path, 'r') as file:
