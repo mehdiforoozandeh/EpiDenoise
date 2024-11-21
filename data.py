@@ -2144,10 +2144,10 @@ class ExtendedEncodeDataHandler:
             self.split_dict[key] = 'test'
 
         print(self.split_dict)
-        exit()
-        # Save split dictionary
-        with open(self.merged_split_path, 'w') as file:
-            json.dump(self.split_dict, file, indent=4)
+        # exit()
+        # # Save split dictionary
+        # with open(self.merged_split_path, 'w') as file:
+        #     json.dump(self.split_dict, file, indent=4)
 
         # Print statistics
         train_count = sum(1 for v in self.split_dict.values() if v == 'train')
