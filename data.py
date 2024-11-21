@@ -2850,7 +2850,13 @@ class ExtendedEncodeDataHandler:
             if s == split:
                 if b in list(self.navigation.keys()):
                     self.test_bios.append(b)
-
+    
+    def has_rnaseq(self, bios_name):
+        if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
+            return True
+        else:
+            return False
+            
     def load_rna_seq_data(self, bios_name, gene_coord):
         directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
         tsv_files = glob.glob(os.path.join(directory, '*.tsv'))
