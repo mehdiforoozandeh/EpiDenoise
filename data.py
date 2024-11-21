@@ -2144,8 +2144,8 @@ class ExtendedEncodeDataHandler:
 
         for bios in self.navigation.keys():
             if "RNA-seq" in self.navigation[bios].keys():
-                self.split_dict[bios] = "test"
-        print(self.split_dict)
+                print(bios)
+        # print(self.split_dict)
         # exit()
         # # Save split dictionary
         # with open(self.merged_split_path, 'w') as file:
