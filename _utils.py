@@ -489,7 +489,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
                     metrics = {
                         'bios':bios_name,
-                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'feature': self.mark_dict[f"M{str(j+1).zfill(2)}"],
                         'comparison': comparison,
                         'available assays': len(availability),
 
