@@ -183,10 +183,6 @@ class MONITOR_VALIDATION(object): # CANDI
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)
 
-
-        print(self.mark_dict)
-        exit()
-
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         # Initialize a tensor to store all predictions
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
