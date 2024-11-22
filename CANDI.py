@@ -834,15 +834,12 @@ class PRETRAIN(object):
                         # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                        try:
-                            # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
-                            epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                            # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
-                            epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                            # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
-                            epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
-                        except:
-                            pass
+                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
 
             self.scheduler.step()
             print("learning rate scheduler step...")
