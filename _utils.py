@@ -550,8 +550,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         full_res = []
         bioses = list(self.dataset.navigation.keys())
-        print(bioses)
-        exit()
+
         for bios_name in bioses:
             if self.eic:
                 # try:
