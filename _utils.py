@@ -182,7 +182,11 @@ class MONITOR_VALIDATION(object): # CANDI
                 chr_name, chr_size = line.strip().split('\t')
                 if chr_name in main_chrs:
                     self.chr_sizes[chr_name] = int(chr_size)
-    
+
+
+        print(self.mark_dict)
+        exit()
+
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         # Initialize a tensor to store all predictions
         n = torch.empty_like(X, device="cpu", dtype=torch.float32) 
@@ -564,6 +568,8 @@ class MONITOR_VALIDATION(object): # CANDI
                 # try:
                 imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+
+                
                 full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
                 # except:
                     # pass
