@@ -820,14 +820,11 @@ class PRETRAIN(object):
                         pass
 
                 if next_epoch:
-                    try:
-                        validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                        torch.cuda.empty_cache()
-                        log_strs.append(validation_set_eval)
-                        print(validation_set_eval)
-                        log_resource_usage()
-                    except:
-                        pass
+                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
 
                     if early_stop:
                         # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
