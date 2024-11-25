@@ -2832,7 +2832,11 @@ class ExtendedEncodeDataHandler:
                 unique_exp[exp] += 1
 
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
+
+        print(unique_exp)
+        print(self.alias)
         print(f"signal_dim: {self.signal_dim}")
+        exit()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
