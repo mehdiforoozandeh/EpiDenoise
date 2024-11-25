@@ -2586,9 +2586,9 @@ class ExtendedEncodeDataHandler:
             elif self.split_dict[bios] != "train":
                 del self.navigation[bios]
 
-            elif check_completeness and eic==False: 
-                if len(self.is_bios_complete(bios))>0:
-                    del self.navigation[bios]
+            # elif check_completeness and eic==False: 
+            #     if len(self.is_bios_complete(bios))>0:
+            #         del self.navigation[bios]
         
         if shuffle_bios:
             keys = list(self.navigation.keys())
@@ -2609,7 +2609,7 @@ class ExtendedEncodeDataHandler:
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
         print(len(self.aliases["experiment_aliases"]))
         for k, v in self.aliases["experiment_aliases"].items():
-            print(v,unique_exp[v])
+            print(k, unique_exp[k])
         exit()
         print(f"signal_dim: {self.signal_dim}")
         self.num_regions = len(self.m_regions)
