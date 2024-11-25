@@ -2528,7 +2528,9 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2"], 
+        excludes=[
+            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
+            "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2796,7 +2798,9 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=1, 
         check_completeness=False, split="test",
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2"], 
+        excludes=[
+            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", 
+            "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
