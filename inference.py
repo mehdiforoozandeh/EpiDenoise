@@ -512,7 +512,7 @@ def test():
     # bios_name = "ENCBS674MPN"
 
 
-    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
+    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch1.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125144500_params45093285.pkl"
     eic = False
     bios_name = "upper_lobe_of_left_lung_nonrep"
