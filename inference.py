@@ -510,10 +510,12 @@ class CANDIPredictor:
 def test():
     # model_path = "models/CANDIeic_DNA_random_mask_Nov19_model_checkpoint_epoch10.pth"
     # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov19_20241122012038_params45093285.pkl"
+    # eic = True
 
 
     model_path = "models/CANDIfull_DNA_random_mask_Nov21_model_checkpoint_epoch2.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Nov21_20241122144620_params3739658.pkl"
+    eic = False
 
 
     dataset_path = "/project/compbio-lab/encode_data/"
@@ -524,7 +526,7 @@ def test():
     dsf = 1
 
     CANDIP = CANDIPredictor(
-        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25)
+        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
     
     os.makedirs(output_dir, exist_ok=True)
 
