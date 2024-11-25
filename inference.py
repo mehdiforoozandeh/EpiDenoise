@@ -506,16 +506,16 @@ class CANDIPredictor:
 
 
 def test():
-    model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
-    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
-    eic = True
-    bios_name = "ENCBS674MPN"
+    # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
+    # eic = True
+    # bios_name = "ENCBS674MPN"
 
 
-    # model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125144500_params45093285.pkl"
-    # eic = False
-    # bios_name = "upper_lobe_of_left_lung_nonrep"
+    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125144500_params45093285.pkl"
+    eic = False
+    bios_name = "upper_lobe_of_left_lung_nonrep"
 
     dataset_path = "/project/compbio-lab/encode_data/"
     output_dir = "output"
