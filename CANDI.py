@@ -1018,9 +1018,8 @@ class CANDI_LOADER(object):
         conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
         pool_size = self.hyper_parameters["pool_size"]
 
-        print(self.hyper_parameters)
+        
         signal_dim = metadata_embedding_dim = 10
-        # exit()
 
         if self.DNA:
             model = CANDI_DNA(
@@ -1032,6 +1031,10 @@ class CANDI_LOADER(object):
                 n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
+        print(self.hyper_parameters)
+        print(model)
+        exit()
+        
         model = model.to(self.device)
         return model
     
@@ -1076,6 +1079,7 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     separate_decoders = not args.shared_decoders
+    merge_ct = True
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
@@ -1099,7 +1103,7 @@ def main():
         "min_avail": args.min_avail,
         "hpo": args.hpo,
         "separate_decoders": separate_decoders,
-        "merge_ct": args.merge_ct,
+        "merge_ct": merge_ct,
         "loci_gen": args.loci_gen
     }
 
