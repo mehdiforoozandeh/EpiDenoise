@@ -2839,6 +2839,10 @@ class ExtendedEncodeDataHandler:
 
         self.signal_dim = len(self.aliases["experiment_aliases"])
 
+        for k in list(self.aliases["experiment_aliases"].keys()):
+            if unique_exp[k] == 0:
+                del self.aliases["experiment_aliases"][k]
+
         # filter biosamples
         for bios in list(self.navigation.keys()):
             if split == "test" and self.has_rnaseq(bios):
