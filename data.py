@@ -2808,8 +2808,6 @@ class ExtendedEncodeDataHandler:
             self.navigation  = json.load(navfile)
 
         if self.merge_ct and eic==False:
-            print("hi")
-            exit()
             if os.path.exists(self.merged_navigation_path) == False:
                 print("generating merged celltypes navigation file")
                 self.navigate_merge_celltypes()
