@@ -506,7 +506,7 @@ class CANDIPredictor:
 
 
 def test():
-    model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.txt"
+    model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
     eic = True
     bios_name = "ENCBS674MPN"
