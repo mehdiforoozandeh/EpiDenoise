@@ -2824,7 +2824,18 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
         
-        self.signal_dim = len(self.aliases["experiment_aliases"])
+        # print num_bios per assay
+        unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
+        for bios in self.navigation.keys():
+            for exp in self.navigation[bios].keys():
+
+                unique_exp[exp] += 1
+        
+        for exp, count in unique_exp.items():
+            print(f"{exp} in present in {count} biosamples")
+
+        self.signal_dim = unique_exp
+        print(f"signal_dim: {self.signal_dim}")
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
