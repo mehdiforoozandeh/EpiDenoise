@@ -2833,9 +2833,6 @@ class ExtendedEncodeDataHandler:
 
         self.signal_dim = len(self.aliases["experiment_aliases"])
 
-        # print(self.aliases["experiment_aliases"])
-        # print(f"signal_dim: {self.signal_dim}")
-        # exit()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
@@ -2853,6 +2850,9 @@ class ExtendedEncodeDataHandler:
                     del self.navigation[bios]
         
         self.num_bios = len(self.navigation)
+        print(f"num_bios: {self.num_bios}")
+        print(self.navigation.keys())
+        exit()
         self.test_bios = []
         for b, s in self.split_dict.items():
             if s == split:
