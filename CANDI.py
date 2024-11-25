@@ -243,10 +243,7 @@ class CANDI_DNA_Encoder(nn.Module):
 
         ### SIGNAL CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
-        for conv in self.convEnc:
-            print(src.shape)
             src = conv(src)
-        print(src.shape)
         src = src.permute(0, 2, 1)  # to N, L', F2
 
         ### SIGNAL METADATA EMBEDDING ###
@@ -302,8 +299,6 @@ class CANDI_DNA(nn.Module):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         
-        print(src.shape, seq.shape, x_metadata.shape)
-        exit()
         z = self.encoder(src, seq, x_metadata)
         return z
     
