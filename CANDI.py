@@ -1032,9 +1032,9 @@ class CANDI_LOADER(object):
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
         print(self.hyper_parameters)
-        print(model)
-        exit()
-        
+        # print(model)
+        # exit()
+
         model = model.to(self.device)
         return model
     
