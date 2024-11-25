@@ -1019,7 +1019,8 @@ class CANDI_LOADER(object):
         pool_size = self.hyper_parameters["pool_size"]
 
         print(self.hyper_parameters)
-        exit()
+        signal_dim = metadata_embedding_dim = 10
+        # exit()
 
         if self.DNA:
             model = CANDI_DNA(
