@@ -819,7 +819,7 @@ class PRETRAIN(object):
                     except Exception as e:
                         pass
 
-                if next_epoch:
+                if False and next_epoch:
                     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
