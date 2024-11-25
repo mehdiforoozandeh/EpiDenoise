@@ -244,7 +244,9 @@ class CANDI_DNA_Encoder(nn.Module):
         ### SIGNAL CONV ENCODER ###
         src = src.permute(0, 2, 1) # to N, F1, L
         for conv in self.convEnc:
+            print(src.shape)
             src = conv(src)
+        print(src.shape)
         src = src.permute(0, 2, 1)  # to N, L', F2
 
         ### SIGNAL METADATA EMBEDDING ###
