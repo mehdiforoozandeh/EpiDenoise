@@ -2814,8 +2814,6 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
-            print(self.navigation)
-            exit()
             
             self.merged_train_val_test_split()
         else:
@@ -2836,7 +2834,7 @@ class ExtendedEncodeDataHandler:
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
 
         print(unique_exp)
-        print(self.aliases)
+        print(self.aliases["experiment_aliases"])
         print(f"signal_dim: {self.signal_dim}")
         exit()
 
