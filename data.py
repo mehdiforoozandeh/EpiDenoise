@@ -2850,6 +2850,8 @@ class ExtendedEncodeDataHandler:
                     del self.navigation[bios]
         
         self.num_bios = len(self.navigation)
+        for bios in self.navigation.keys():
+            print(list(self.navigation[bios].keys()))
         self.test_bios = []
         for b, s in self.split_dict.items():
             if s == split:
