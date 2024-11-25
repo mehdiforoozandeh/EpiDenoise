@@ -302,6 +302,8 @@ class CANDI_DNA(nn.Module):
         src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
         x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
         
+        print(src.shape, seq.shape, x_metadata.shape)
+        exit()
         z = self.encoder(src, seq, x_metadata)
         return z
     
