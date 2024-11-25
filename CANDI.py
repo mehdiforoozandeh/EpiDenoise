@@ -1018,8 +1018,6 @@ class CANDI_LOADER(object):
         conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
         pool_size = self.hyper_parameters["pool_size"]
         
-        signal_dim = metadata_embedding_dim = 10
-
         if self.DNA:
             model = CANDI_DNA(
                 signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
