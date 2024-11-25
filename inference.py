@@ -507,8 +507,14 @@ class CANDIPredictor:
 
 
 def test():
-    model_path = "models/CANDIeic_DNA_random_mask_oct17-expan2_model_checkpoint_epoch5.pth"
-    hyper_parameters_path = "models/hyper_parameters_eic_DNA_random_mask_oct17-expan2_CANDIeic_DNA_random_mask_oct17-expan2_20241017130209_params14059878.pkl"
+    model_path = "models/CANDIeic_DNA_random_mask_Nov19_model_checkpoint_epoch10.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov19_20241122012038_params45093285.pkl"
+
+
+    # model_path = "models/CANDIfull_DNA_random_mask_Nov21_model_checkpoint_epoch2.pth"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Nov21_20241122144620_params3739658.pkl"
+
+
     dataset_path = "/project/compbio-lab/encode_data/"
     output_dir = "output"
     number_of_states = 10
@@ -578,6 +584,7 @@ def test():
     print("\nDistance Statistics:")
     print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
     print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
+
 if __name__ == "__main__":
     test()
     
