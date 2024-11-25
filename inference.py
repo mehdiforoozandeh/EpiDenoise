@@ -28,7 +28,7 @@ class CANDIPredictor:
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
         self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
+            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic, merge_ct=True)
 
         if isinstance(self.model, str):
             with open(hyper_parameters_path, 'rb') as f:
