@@ -2602,8 +2602,10 @@ class ExtendedEncodeDataHandler:
 
                 unique_exp[exp] += 1
         
-        for exp, count in unique_exp.items():
+        sorted_exp = {k: v for k, v in sorted(unique_exp.items(), key=lambda item: item[1], reverse=True)}
+        for exp, count in sorted_exp.items():
             print(f"{exp} in present in {count} biosamples")
+        exit()
 
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
         print(f"signal_dim: {self.signal_dim}")
