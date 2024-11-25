@@ -2607,10 +2607,11 @@ class ExtendedEncodeDataHandler:
             print(f"{exp} in present in {count} biosamples")
 
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
-        print(len(self.aliases["experiment_aliases"]))
+        # print(len(self.aliases["experiment_aliases"]))
         for k, v in self.aliases["experiment_aliases"].items():
-            print(k, unique_exp[k])
-        exit()
+            if unique_exp[k] == 0:
+                del self.aliases["experiment_aliases"][k]
+
         print(f"signal_dim: {self.signal_dim}")
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
