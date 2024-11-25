@@ -2814,6 +2814,8 @@ class ExtendedEncodeDataHandler:
 
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
+            print(self.navigation)
+            exit()
             
             self.merged_train_val_test_split()
         else:
