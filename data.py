@@ -2608,7 +2608,7 @@ class ExtendedEncodeDataHandler:
 
         self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
         # print(len(self.aliases["experiment_aliases"]))
-        for k in self.aliases["experiment_aliases"].keys():
+        for k in list(self.aliases["experiment_aliases"].keys()):
             if unique_exp[k] == 0:
                 del self.aliases["experiment_aliases"][k]
 
