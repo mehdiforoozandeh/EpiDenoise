@@ -2830,9 +2830,6 @@ class ExtendedEncodeDataHandler:
             for exp in self.navigation[bios].keys():
 
                 unique_exp[exp] += 1
-        
-        for exp, count in unique_exp.items():
-            print(f"{exp} in present in {count} biosamples")
 
         self.signal_dim = unique_exp
         print(f"signal_dim: {self.signal_dim}")

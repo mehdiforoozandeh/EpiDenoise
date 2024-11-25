@@ -1021,7 +1021,6 @@ class CANDI_LOADER(object):
         n_cnn_layers = self.hyper_parameters["n_cnn_layers"]
         conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
         pool_size = self.hyper_parameters["pool_size"]
-
         
         signal_dim = metadata_embedding_dim = 10
 
