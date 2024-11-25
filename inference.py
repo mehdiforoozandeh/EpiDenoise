@@ -173,6 +173,8 @@ class CANDIPredictor:
 
                 if self.DNA:
                     seq_batch = seq_batch.to(self.device)
+                    print(x_batch.shape, seq_batch.shape, mX_batch.shape, mY_batch.shape, avail_batch.shape)
+                    exit()
                     outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
                 else:
                     outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
