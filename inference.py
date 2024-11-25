@@ -543,9 +543,6 @@ def test():
     # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
     # end_time = time.time()
     # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-    
-    print(X.shape, Y.shape, P.shape, seq.shape, mX.shape, mY.shape, avX.shape, avY.shape)
-    exit()
 
     print("Generating predictions with both pred and pred_cropped methods...")
     start_time_pred = time.time()
