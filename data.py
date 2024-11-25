@@ -2605,7 +2605,7 @@ class ExtendedEncodeDataHandler:
         for exp, count in unique_exp.items():
             print(f"{exp} in present in {count} biosamples")
 
-        self.signal_dim = unique_exp
+        self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
         print(f"signal_dim: {self.signal_dim}")
         self.num_regions = len(self.m_regions)
         self.num_bios = len(self.navigation)
@@ -2831,7 +2831,7 @@ class ExtendedEncodeDataHandler:
 
                 unique_exp[exp] += 1
 
-        self.signal_dim = unique_exp
+        self.signal_dim = sum(1 for value in unique_exp.values() if value > 0)
         print(f"signal_dim: {self.signal_dim}")
 
         # filter biosamples
