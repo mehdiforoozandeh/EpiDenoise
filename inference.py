@@ -26,8 +26,6 @@ class CANDIPredictor:
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
-        print(self.eic)
-        exit()
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic, merge_ct=True)
 
