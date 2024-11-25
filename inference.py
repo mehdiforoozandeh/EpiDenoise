@@ -173,8 +173,6 @@ class CANDIPredictor:
 
                 if self.DNA:
                     seq_batch = seq_batch.to(self.device)
-                    print(x_batch.shape, seq_batch.shape, mX_batch.shape, mY_batch.shape, avail_batch.shape)
-                    exit()
                     outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), seq_batch, mX_batch, mY_batch, avail_batch, return_z=True)
                 else:
                     outputs_p, outputs_n, outputs_mu, outputs_var, latent = self.model(x_batch.float(), mX_batch, mY_batch, avail_batch, return_z=True)
@@ -542,7 +540,9 @@ def test():
     # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
     # end_time = time.time()
     # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-
+    
+    print(X.shape, Y.shape, P.shape, seq.shape, mX.shape, mY.shape, avX.shape, avY.shape)
+    exit()
 
     print("Generating predictions with both pred and pred_cropped methods...")
     start_time_pred = time.time()
