@@ -2852,7 +2852,7 @@ class ExtendedEncodeDataHandler:
         self.num_bios = len(self.navigation)
         print(f"num_bios: {self.num_bios}")
         for k, v in self.navigation.items():
-            print(f"{k}: {len(v)}")
+            print(f"{k}: {v.keys()}")
         exit()
         self.test_bios = []
         for b, s in self.split_dict.items():
