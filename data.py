@@ -2528,7 +2528,7 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
-        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2602,8 +2602,8 @@ class ExtendedEncodeDataHandler:
 
                 unique_exp[exp] += 1
         
-        sorted_exp = {k: v for k, v in sorted(unique_exp.items(), key=lambda item: item[1], reverse=True)}
-        for exp, count in sorted_exp.items():
+        unique_exp = {k: v for k, v in sorted(unique_exp.items(), key=lambda item: item[1], reverse=True)}
+        for exp, count in unique_exp.items():
             print(f"{exp} in present in {count} biosamples")
         exit()
 
@@ -2792,10 +2792,10 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=1, 
         check_completeness=False, split="test",
-        # excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac"], 
-        # includes=[], 
-        excludes=[], 
-        includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
+        excludes=["CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2"], 
+        includes=[], 
+        # excludes=[], 
+        # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
         eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
