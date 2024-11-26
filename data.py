@@ -2531,13 +2531,11 @@ class ExtendedEncodeDataHandler:
         # excludes=[
         #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
         #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
-        # excludes=[
-        #     "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
-        #     "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"],
+        # includes=[], 
         excludes=[], 
-        includes=[], 
-        # excludes=[], 
-        # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
+        includes = [
+            "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
+            "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"],
         merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
         self.eic = eic
         self.merge_ct = merge_ct
@@ -2805,14 +2803,11 @@ class ExtendedEncodeDataHandler:
         # excludes=[
         #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
         #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
-        # excludes=[
-        #     "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
-        #     "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
+        # includes=[], 
         excludes=[], 
-        includes=[], 
-        # excludes=[], 
-        # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
-        eic=False, merge_ct=True): #split in ["test", "val"]
+        includes = [
+            "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
+            "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"], eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
         self.merge_ct = merge_ct
