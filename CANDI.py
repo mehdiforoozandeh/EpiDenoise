@@ -697,16 +697,17 @@ class PRETRAIN(object):
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
                     for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
-                        progress_monitor[k].append(np.mean(batch_rec[k]))
+                        mean_value = np.mean(batch_rec[k]) if not np.isnan(np.mean(batch_rec[k])) else 0
+                        progress_monitor[k].append(mean_value)
 
                         if k not in prog_mon_ema.keys():
-                            prog_mon_ema[k] = np.mean(batch_rec[k])
+                            prog_mon_ema[k] = mean_value
                         else:
                             alpha = 2 / (len(progress_monitor[k]) + 1)
-                            prog_mon_ema[k] = alpha*np.mean(batch_rec[k]) + (1-alpha)*prog_mon_ema[k]
+                            prog_mon_ema[k] = alpha*mean_value + (1-alpha)*prog_mon_ema[k]
 
                         if k not in prog_mon_best_so_far.keys():
-                            prog_mon_best_so_far[k] = np.mean(batch_rec[k])
+                            prog_mon_best_so_far[k] = mean_value
                         else:
                             prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
                         
