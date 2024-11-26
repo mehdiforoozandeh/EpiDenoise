@@ -814,7 +814,9 @@ class PRETRAIN(object):
                     f"ema_imp_count_pearson {prog_mon_ema['imp_count_pearson']:.2f}",
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", 
-                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}"
+                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
+                    f"LR {self.optimizer.param_groups[0]['lr']:.2f}",
+                    f"LR_patience {no_prog_mon_improvement}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
