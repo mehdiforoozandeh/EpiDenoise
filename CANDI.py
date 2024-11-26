@@ -708,8 +708,6 @@ class PRETRAIN(object):
 
                         if k not in prog_mon_best_so_far.keys():
                             prog_mon_best_so_far[k] = mean_value
-                        else:
-                            prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
                         
                     # check if improvement in EMA
                     statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"])
@@ -718,6 +716,9 @@ class PRETRAIN(object):
                     statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"])
                     statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"])
                     statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"])
+
+                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
+                        prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
 
                     if not any([
                         statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
