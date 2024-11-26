@@ -2531,9 +2531,10 @@ class ExtendedEncodeDataHandler:
         # excludes=[
         #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
         #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
-        excludes=[
-            "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
-            "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
+        # excludes=[
+        #     "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
+        #     "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"],
+        excludes=[], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2804,9 +2805,10 @@ class ExtendedEncodeDataHandler:
         # excludes=[
         #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
         #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
-        excludes=[
-            "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
-            "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
+        # excludes=[
+        #     "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
+        #     "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
+        excludes=[], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
