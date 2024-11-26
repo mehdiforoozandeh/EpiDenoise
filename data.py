@@ -2799,8 +2799,8 @@ class ExtendedEncodeDataHandler:
         self, context_length, bios_min_exp_avail_threshold=1, 
         check_completeness=False, split="test",
         excludes=[
-            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", "CEBPB", 
-            "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
+            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
+            "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2842,10 +2842,14 @@ class ExtendedEncodeDataHandler:
                 unique_exp[exp] += 1
 
         self.signal_dim = len(self.aliases["experiment_aliases"])
+        print(f"signal_dim: {self.signal_dim}")
 
         for k in list(self.aliases["experiment_aliases"].keys()):
             if unique_exp[k] == 0:
                 del self.aliases["experiment_aliases"][k]
+        
+        print(f"signal_dim: {self.signal_dim}")
+        exit()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
