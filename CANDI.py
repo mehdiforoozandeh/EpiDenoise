@@ -387,7 +387,8 @@ class PRETRAIN(object):
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2):
+        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
+        prog_monitor_patience=10, prog_monitor_delta=0.005):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -422,6 +423,18 @@ class PRETRAIN(object):
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
 
         best_metric = None
+
+        progress_monitor = {
+            "ups_count_r2":[], "imp_count_r2":[],
+            "ups_pval_r2":[], "imp_pval_r2":[],
+            "ups_count_spearman":[], "imp_count_spearman":[],
+            "ups_pval_spearman":[], "imp_pval_spearman":[],
+            "ups_count_pearson":[], "imp_count_pearson":[],
+            "ups_pval_pearson":[], "imp_pval_pearson":[]}
+        
+        prog_mon_ema = {}
+        prog_mon_best_so_far = {}
+        no_prog_mon_improvement = 0
 
         for epoch in range(num_epochs):
             if early_stop:
@@ -683,6 +696,43 @@ class PRETRAIN(object):
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
+                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
+                        progress_monitor[k].append(np.mean(batch_rec[k]))
+
+                        if k not in prog_mon_ema.keys():
+                            prog_mon_ema[k] = np.mean(batch_rec[k])
+                        else:
+                            alpha = 2 / (len(progress_monitor[k]) + 1)
+                            prog_mon_ema[k] = alpha*np.mean(batch_rec[k]) + (1-alpha)*prog_mon_ema[k]
+
+                        if k not in prog_mon_best_so_far.keys():
+                            prog_mon_best_so_far[k] = np.mean(batch_rec[k])
+                        else:
+                            prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+                        
+                    # check if improvement in EMA
+                    statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"])
+                    statement_prog_imp_pval_pearson = bool(prog_mon_ema["imp_pval_pearson"] > prog_mon_best_so_far["imp_pval_pearson"])
+                    statement_prog_imp_pval_spearman = bool(prog_mon_ema["imp_pval_spearman"] > prog_mon_best_so_far["imp_pval_spearman"])
+                    statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"])
+                    statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"])
+                    statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"])
+
+                    if not any([
+                        statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
+                        statement_prog_imp_count_r2, statement_prog_imp_count_pearson, statement_prog_imp_count_spearman]):
+                        no_prog_mon_improvement += 1
+                    else:
+                        no_prog_mon_improvement = 0
+                    
+                    if no_prog_mon_improvement >= prog_monitor_patience:
+                        print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
+                        current_lr = self.optimizer.param_groups[0]['lr']
+                        self.scheduler.step()
+                        new_lr = self.optimizer.param_groups[0]['lr']
+                        print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
+                        no_prog_mon_improvement = 0  # Reset counter after taking step
+
                     del output_p, output_n, output_mu, output_var, loss, obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss
                     del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
                     if DNA:
@@ -754,7 +804,13 @@ class PRETRAIN(object):
                     f"Ups_Count_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
-                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
+                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}", "\n",
+                    f"ema_imp_pval_r2 {prog_mon_ema['imp_pval_r2']:.2f}",
+                    f"ema_imp_pval_pearson {prog_mon_ema['imp_pval_pearson']:.2f}",
+                    f"ema_imp_pval_spearman {prog_mon_ema['imp_pval_spearman']:.2f}", "\n",
+                    f"ema_imp_count_r2 {prog_mon_ema['imp_count_r2']:.2f}",
+                    f"ema_imp_count_pearson {prog_mon_ema['imp_count_pearson']:.2f}",
+                    f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
@@ -819,7 +875,7 @@ class PRETRAIN(object):
                     except Exception as e:
                         pass
 
-                if False and next_epoch:
+                if next_epoch:
                     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                     torch.cuda.empty_cache()
                     log_strs.append(validation_set_eval)
@@ -841,8 +897,8 @@ class PRETRAIN(object):
                         # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
 
-            self.scheduler.step()
-            print("learning rate scheduler step...")
+            # self.scheduler.step()
+            # print("learning rate scheduler step...")
 
             if early_stop:
                 # Initialize the best metrics if it's the first epoch
