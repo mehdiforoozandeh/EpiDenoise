@@ -2528,9 +2528,12 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
+        # excludes=[
+        #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
+        #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         excludes=[
-            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
-            "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
+            "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
+            "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2798,9 +2801,12 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=1, 
         check_completeness=False, split="test",
+        # excludes=[
+        #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
+        #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         excludes=[
-            "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
-            "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
+            "CAGE", "CEBPB", "CTCF", "ChIA-PET", "EP300", "EZH2", "JUND", "MAX", 
+            "MYC", "POLR2A", "POLR2AphosphoS5", "RAD21", "REST", "RNA-seq", "YY1"], 
         includes=[], 
         # excludes=[], 
         # includes=["ATAC-seq", "DNase-seq", "H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1","H3K4me3", "H3K9ac", "H3K9me3", "CTCF"], 
@@ -2835,6 +2841,7 @@ class ExtendedEncodeDataHandler:
             self.filter_navigation(exclude=excludes, include=includes)
         
         self.signal_dim = len(self.aliases["experiment_aliases"])
+        print(f"eval signal_dim: {self.signal_dim}")
 
         # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
         # for bios in self.navigation.keys():
