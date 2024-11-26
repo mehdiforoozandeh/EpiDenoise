@@ -388,7 +388,7 @@ class PRETRAIN(object):
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
         early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
-        prog_monitor_patience=200):
+        prog_monitor_patience=20):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -435,6 +435,7 @@ class PRETRAIN(object):
         prog_mon_ema = {}
         prog_mon_best_so_far = {}
         no_prog_mon_improvement = 0
+        lr_sch_steps_taken = 0
 
         for epoch in range(num_epochs):
             if early_stop:
@@ -731,6 +732,7 @@ class PRETRAIN(object):
                         print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
                         current_lr = self.optimizer.param_groups[0]['lr']
                         self.scheduler.step()
+                        lr_sch_steps_taken += 1
                         new_lr = self.optimizer.param_groups[0]['lr']
                         print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
                         no_prog_mon_improvement = 0  # Reset counter after taking step
@@ -815,7 +817,7 @@ class PRETRAIN(object):
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
-                    f"LR {self.optimizer.param_groups[0]['lr']:.2f}",
+                    f"LR_sch_steps_taken {lr_sch_steps_taken}",
                     f"LR_patience {no_prog_mon_improvement}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
