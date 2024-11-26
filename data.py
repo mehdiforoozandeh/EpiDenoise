@@ -2834,21 +2834,19 @@ class ExtendedEncodeDataHandler:
         else:
             self.filter_navigation(exclude=excludes, include=includes)
         
-        # print num_bios per assay
-        unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
-        for bios in self.navigation.keys():
-            for exp in self.navigation[bios].keys():
-
-                unique_exp[exp] += 1
-
         self.signal_dim = len(self.aliases["experiment_aliases"])
-        print(len(self.aliases["experiment_aliases"]))
 
-        for k in list(self.aliases["experiment_aliases"].keys()):
-            if unique_exp[k] == 0:
-                del self.aliases["experiment_aliases"][k]
+        # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
+        # for bios in self.navigation.keys():
+        #     for exp in self.navigation[bios].keys():
+
+        #         unique_exp[exp] += 1
+
+        # for k in list(self.aliases["experiment_aliases"].keys()):
+        #     if unique_exp[k] == 0:
+        #         del self.aliases["experiment_aliases"][k]
         
-        print(len(self.aliases["experiment_aliases"]))
+        # print(len(self.aliases["experiment_aliases"]))
 
         exit()
 
