@@ -388,7 +388,7 @@ class PRETRAIN(object):
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
         early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
-        prog_monitor_patience=10, prog_monitor_delta=0.005):
+        prog_monitor_patience=200):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -805,14 +805,15 @@ class PRETRAIN(object):
                     f"Ups_Count_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
-                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}", "\n",
+                    
                     f"ema_imp_pval_r2 {prog_mon_ema['imp_pval_r2']:.2f}",
                     f"ema_imp_pval_pearson {prog_mon_ema['imp_pval_pearson']:.2f}",
                     f"ema_imp_pval_spearman {prog_mon_ema['imp_pval_spearman']:.2f}", "\n",
                     f"ema_imp_count_r2 {prog_mon_ema['imp_count_r2']:.2f}",
                     f"ema_imp_count_pearson {prog_mon_ema['imp_count_pearson']:.2f}",
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
-                    f"took {int(minutes)}:{int(seconds):02d}"
+                    f"took {int(minutes)}:{int(seconds):02d}", 
+                    f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
