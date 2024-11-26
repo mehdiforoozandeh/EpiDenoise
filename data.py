@@ -2848,7 +2848,7 @@ class ExtendedEncodeDataHandler:
         
         # print(len(self.aliases["experiment_aliases"]))
 
-        exit()
+        # exit()
 
         # filter biosamples
         for bios in list(self.navigation.keys()):
