@@ -388,7 +388,7 @@ class PRETRAIN(object):
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
         early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
-        prog_monitor_patience=50, prog_monitor_delta=1e-3):
+        prog_monitor_patience=100, prog_monitor_delta=1e-5):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -433,6 +433,7 @@ class PRETRAIN(object):
             "ups_pval_pearson":[], "imp_pval_pearson":[]}
         
         prog_mon_ema = {}
+        prog_mon_best_so_far = {}
         no_prog_mon_improvement = 0
         lr_sch_steps_taken = 0
 
@@ -696,20 +697,33 @@ class PRETRAIN(object):
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
-                    improve_statements = []
                     for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
                         mean_value = np.mean(batch_rec[k]) if not np.isnan(np.mean(batch_rec[k])) else 0
                         progress_monitor[k].append(mean_value)
 
                         if k not in prog_mon_ema.keys():
                             prog_mon_ema[k] = mean_value
-                            improve_statements.append(True)
                         else:
-                            improve_statements.append(mean_value > prog_mon_ema[k] + prog_monitor_delta)
                             alpha = 2 / (len(progress_monitor[k]) + 1)
                             prog_mon_ema[k] = alpha*mean_value + (1-alpha)*prog_mon_ema[k]
 
-                    if not any(improve_statements):
+                        if k not in prog_mon_best_so_far.keys():
+                            prog_mon_best_so_far[k] = mean_value
+                        
+                    # check if improvement in EMA
+                    statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"] + prog_monitor_delta)
+                    statement_prog_imp_pval_pearson = bool(prog_mon_ema["imp_pval_pearson"] > prog_mon_best_so_far["imp_pval_pearson"] + prog_monitor_delta)
+                    statement_prog_imp_pval_spearman = bool(prog_mon_ema["imp_pval_spearman"] > prog_mon_best_so_far["imp_pval_spearman"] + prog_monitor_delta)
+                    statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"] + prog_monitor_delta)
+                    statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"] + prog_monitor_delta)
+                    statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"] + prog_monitor_delta)
+
+                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
+                        prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+
+                    if not any([
+                        statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
+                        statement_prog_imp_count_r2, statement_prog_imp_count_pearson, statement_prog_imp_count_spearman]):
                         no_prog_mon_improvement += 1
                     else:
                         no_prog_mon_improvement = 0
@@ -1116,6 +1130,7 @@ def main():
     parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
     parser.add_argument('--loci_gen', type=str, default='ccre', help='Loci generation method')
     
+    # python CANDI.py --eic --dna --checkpoint models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth --suffix Nov28 --learning_rate 1e-4
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
     parser.add_argument('--dna', action='store_true', help='Flag to enable DNA')
