@@ -1007,7 +1007,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen=loci_gen, 
-        bios_min_exp_avail_threshold=min_avail, check_completeness=True, eic=eic)
+        bios_min_exp_avail_threshold=min_avail, check_completeness=True, 
+        eic=eic, merge_ct=merge_ct)
 
     signal_dim = dataset.signal_dim
     metadata_embedding_dim = dataset.signal_dim
