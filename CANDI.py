@@ -719,7 +719,10 @@ class PRETRAIN(object):
                     statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"] + prog_monitor_delta)
 
                     for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
-                        prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+                        if epoch > 10:
+                            prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+                        else:
+                            prog_mon_best_so_far[k] = 0.0
 
                     if not any([
                         statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
