@@ -505,6 +505,42 @@ class CANDIPredictor:
         return metrics
 
 
+"""
+# given a model, i want to train a linear probe on the latent space
+# and evaluate the performance of the linear probe on the linear probe dataset.
+# implemented using pytorch
+# we want one class per probe
+# we want one train function per probe
+# we want one evaluate function per probe
+
+the following are different probes that i will implement
+1. chromatin_state_classification probe:
+    - input: CANDI latent representation
+    - output: 18 state classification
+    - loss function: cross entropy
+
+2. peak_calling probe:
+    - input: CANDI latent representation
+    - output: binary peak/no peak
+    - loss function: binary cross entropy
+
+3. activity_prediction_probe:
+    - input: CANDI latent representation
+    - output: binary active/inactive
+    - loss function: binary cross entropy
+
+4. conservation_prediction_probe:
+    - input: CANDI latent representation
+    - output: conservation score
+    - loss function: mean squared error
+
+5. expression_prediction_probe:
+    - input: CANDI latent representation for a window of sequence
+    - output: expression (TPM) prediction
+    - loss function: mean squared error
+"""
+
+
 def test():
     # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
     # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"

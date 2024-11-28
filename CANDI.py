@@ -433,7 +433,6 @@ class PRETRAIN(object):
             "ups_pval_pearson":[], "imp_pval_pearson":[]}
         
         prog_mon_ema = {}
-        prog_mon_best_so_far = {}
         no_prog_mon_improvement = 0
         lr_sch_steps_taken = 0
 
@@ -697,33 +696,20 @@ class PRETRAIN(object):
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
+                    improve_statements = []
                     for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
                         mean_value = np.mean(batch_rec[k]) if not np.isnan(np.mean(batch_rec[k])) else 0
                         progress_monitor[k].append(mean_value)
 
                         if k not in prog_mon_ema.keys():
                             prog_mon_ema[k] = mean_value
+                            improve_statements.append(True)
                         else:
+                            improve_statements.append(mean_value > prog_mon_ema[k] + prog_monitor_delta)
                             alpha = 2 / (len(progress_monitor[k]) + 1)
                             prog_mon_ema[k] = alpha*mean_value + (1-alpha)*prog_mon_ema[k]
 
-                        if k not in prog_mon_best_so_far.keys():
-                            prog_mon_best_so_far[k] = mean_value
-                        
-                    # check if improvement in EMA
-                    statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"] + prog_monitor_delta)
-                    statement_prog_imp_pval_pearson = bool(prog_mon_ema["imp_pval_pearson"] > prog_mon_best_so_far["imp_pval_pearson"] + prog_monitor_delta)
-                    statement_prog_imp_pval_spearman = bool(prog_mon_ema["imp_pval_spearman"] > prog_mon_best_so_far["imp_pval_spearman"] + prog_monitor_delta)
-                    statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"] + prog_monitor_delta)
-                    statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"] + prog_monitor_delta)
-                    statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"] + prog_monitor_delta)
-
-                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
-                        prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
-
-                    if not any([
-                        statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
-                        statement_prog_imp_count_r2, statement_prog_imp_count_pearson, statement_prog_imp_count_spearman]):
+                    if not any(improve_statements):
                         no_prog_mon_improvement += 1
                     else:
                         no_prog_mon_improvement = 0
@@ -733,6 +719,7 @@ class PRETRAIN(object):
                         current_lr = self.optimizer.param_groups[0]['lr']
                         self.scheduler.step()
                         lr_sch_steps_taken += 1
+                        prog_monitor_patience *= 1.05
                         new_lr = self.optimizer.param_groups[0]['lr']
                         print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
                         no_prog_mon_improvement = 0  # Reset counter after taking step
@@ -829,6 +816,10 @@ class PRETRAIN(object):
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
+
+                if lr_sch_steps_taken >= 50 and early_stop:
+                    print("Early stopping due to super small learning rate...")
+                    return self.model, best_metric
                 
                 #################################################################################
                 #################################################################################
