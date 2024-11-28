@@ -388,7 +388,7 @@ class PRETRAIN(object):
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
         early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
-        prog_monitor_patience=100, prog_monitor_delta=1e-5):
+        prog_monitor_patience=150, prog_monitor_delta=1e-5):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -1143,7 +1143,7 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     separate_decoders = not args.shared_decoders
-    merge_ct = True
+    merge_ct = False
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
