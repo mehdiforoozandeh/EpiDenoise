@@ -1144,7 +1144,7 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     separate_decoders = not args.shared_decoders
-    merge_ct = False
+    merge_ct = True
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
