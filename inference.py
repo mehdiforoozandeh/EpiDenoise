@@ -702,11 +702,11 @@ def get_chromatin_state_dataset(
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", 
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
-    model = CANDIPredictor(
+    candi = CANDIPredictor(
         model_path, hyper_parameters_path, 
         data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
 
-    probe = ChromatinStateProbe(model.d_model, 18)
+    probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = prepare_chromatin_state_dataset(dataset_path)
 
