@@ -470,6 +470,7 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
         # The npz file contains a single array
         chr_data = data['arr_0']
         print(chr_data.shape)
+        print(f"Number of unique chromatin states: {len(np.unique(chr_data))}")
         
         # Extract the region of interest
         if start_bin >= len(chr_data) or end_bin > len(chr_data):
