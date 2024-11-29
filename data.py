@@ -348,14 +348,19 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/", parse_bigBed
 
                 os.mkdir(f"{save_dir_name}/parsed_{accession}/")
                 if parse_bigBed:
+                    # binned_bw = get_binned_bigBed_annotation(
+                    #     bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
+                    #     resolution=25, 
+                    #     chr_sizes_file=f"{metadata_file_path}/hg38.chrom.sizes")
+
                     binned_bw = get_binned_bigBed_annotation(
                         bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
-                        resolution=25, 
+                        resolution=200, 
                         chr_sizes_file=f"{metadata_file_path}/hg38.chrom.sizes")
 
                     for chr, data in binned_bw.items():
                         np.savez_compressed(
-                                f"{save_dir_name}/parsed_{accession}/{chr}.npz", 
+                                f"{save_dir_name}/parsed200_{accession}/{chr}.npz", 
                                 np.array(data))
 
         except:
@@ -434,7 +439,6 @@ def get_binned_bigBed_peaks(bigBed_file, resolution=25, chr_sizes_file="data/hg3
 
     bb.close()
     return res
-
 
 def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     """
