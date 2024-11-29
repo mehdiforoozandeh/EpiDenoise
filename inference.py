@@ -682,9 +682,12 @@ if __name__ == "__main__":
     
     # Find shared items between cleaned biosample names and chromatin state names
     shared_names = list(set(bios_names_cleaned) & set(cs_names))
+    print(f"\nNumber of shared cell types: {len(shared_names)}")
     
     print("\nShared cell types between biosamples and chromatin states:")
     for name in shared_names:
         print(name)
+
+
 
 
