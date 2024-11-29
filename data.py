@@ -346,7 +346,8 @@ def get_chromatin_state_annotation_data(metadata_file_path="data/", parse_bigBed
                 if not os.path.exists(f"{save_dir_name}/{accession}.bigBed"):
                     download_save(bed_file_download_url, f"{save_dir_name}/{accession}.bigBed")
 
-                os.mkdir(f"{save_dir_name}/parsed_{accession}/")
+                print(f"Parsing {accession}'s chromatin state annotation")
+                os.mkdir(f"{save_dir_name}/parsed200_{accession}/")
                 if parse_bigBed:
                     # binned_bw = get_binned_bigBed_annotation(
                     #     bigBed_file=f"{save_dir_name}/{accession}.bigBed", 
