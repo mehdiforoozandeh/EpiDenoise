@@ -709,8 +709,6 @@ def train_chromatin_state_probe(
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, eic=eic)
-    # print(candi.chr_sizes)
-    # exit()
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
@@ -728,12 +726,8 @@ def train_chromatin_state_probe(
             parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
             for idx, parsed_cs in enumerate(parsed_dirs):
-                chr_cs = get_chromatin_state_dataset(
-                    parsed_dir=parsed_cs,
-                    chr=chr,
-                    start=0,
-                    end=candi.chr_sizes[chr]  
-                )
+                print(parsed_cs)
+                chr_cs = load_region_chromatin_states(parsed_cs, chr, 0, candi.chr_sizes[chr]  , resolution=resolution)
                 cs_data[f"{cs_name}_{idx}"] = chr_cs
         
         # Convert to numpy array for easier processing
