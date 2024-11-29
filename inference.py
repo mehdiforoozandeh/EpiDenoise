@@ -737,13 +737,16 @@ def train_chromatin_state_probe(
         # Find valid columns (no None values)
         valid_cols = ~np.any(cs_matrix == None, axis=0)
         
-        # Create coverage matrix (18 states × regions)
-        num_states = 18
-        coverage_matrix = np.zeros((num_states, cs_matrix.shape[1]))
+        # Find unique labels in cs_matrix
+        unique_labels = np.unique(cs_matrix[cs_matrix != None])
+        assert len(unique_labels) == 18, f"Expected 18 unique labels, got {len(unique_labels)}"
         
-        # Calculate coverage percentages for each state in each region
-        for state in range(num_states):
-            coverage_matrix[state] = np.mean(cs_matrix == state, axis=0)
+        # Create coverage matrix (18 states × regions)
+        coverage_matrix = np.zeros((len(unique_labels), cs_matrix.shape[1]))
+        
+        # Calculate coverage percentages for each unique label in each region
+        for i, label in enumerate(unique_labels):
+            coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
 
         # Print sum of column values for valid columns only
         valid_sums = np.sum(coverage_matrix[:, valid_cols], axis=0)
