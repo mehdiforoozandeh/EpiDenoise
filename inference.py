@@ -711,7 +711,7 @@ def train_chromatin_state_probe(
     splits = prepare_chromatin_state_dataset(dataset_path)
 
     for t in splits["train"]:
-        X, Y, P, seq, mX, mY, avX, avY = model.load_bios(t["biosample"], x_dsf=1)
+        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(t["biosample"], x_dsf=1)
         print(X.shape, Y.shape)
         # Z = model.get_latent_representations(X, mX, mY, avX, seq=seq, imp_target=[])
         # probe.train_loop(X, Y, num_epochs, learning_rate)
