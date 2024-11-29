@@ -459,7 +459,6 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     # Load the chromosome's data
     npz_file = os.path.join(parsed_path, f"{chrom}.npz")
     if not os.path.exists(npz_file):
-
         raise FileNotFoundError(f"No data file found for chromosome {chrom}")
         
     # Calculate bin indices
@@ -470,8 +469,6 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     with np.load(npz_file, allow_pickle=True) as data:
         # The npz file contains a single array
         chr_data = data['arr_0']
-        print(chr_data.shape)
-        exit()
         
         # Extract the region of interest
         if start_bin >= len(chr_data) or end_bin > len(chr_data):
@@ -3349,7 +3346,7 @@ if __name__ == "__main__":
         parsed_dir = next(d for d in os.listdir(cs_dir) if d.startswith('parsed_'))
         print(f"Found parsed directory: {parsed_dir}")
         parsed_path = os.path.join(cs_dir, parsed_dir)
-        cs = load_region_chromatin_states(parsed_path, "chr1", 1000000, 1000100)
+        cs = load_region_chromatin_states(parsed_path, "chr1", 1000000, 1000000+200)
         print(cs)
     else:
         d = GET_DATA()
