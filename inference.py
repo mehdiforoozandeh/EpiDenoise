@@ -562,7 +562,7 @@ class ChromatinStateProbe(nn.Module):
     
     def train_loop(self, X, Y, num_epochs, learning_rate):
         for epoch in range(num_epochs):
-            
+
             self.train(X, Y, learning_rate)
 
 class ChromatinStateProbe(BaseProbe):
@@ -673,6 +673,8 @@ if __name__ == "__main__":
     # test()
     model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
-    eic = Truee th
+    eic = True
+
+    print([t for t in os.listdir("/project/compbio-lab/encode_data/") if t.startswith("T_")])
 
 
