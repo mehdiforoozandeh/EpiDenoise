@@ -748,6 +748,9 @@ def train_chromatin_state_probe(
         for i, label in enumerate(unique_labels):
             coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
 
+        print(np.mean(coverage_matrix), axis=1)
+        exit()
+
         # Print sum of column values for valid columns only
         valid_sums = np.sum(coverage_matrix[:, valid_cols], axis=0)
         print(f"Coverage sums for valid columns: {valid_sums}")
