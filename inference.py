@@ -731,8 +731,11 @@ def train_chromatin_state_probe(
                 cs_data[f"{cs_name}_{idx}"] = chr_cs
         
         # Convert to numpy array for easier processing
+        cs_matrix = []
         cell_types = list(cs_data.keys())
-        cs_matrix = np.stack([cs_data[ct] for ct in cell_types])
+        for ct in cell_types:
+            cs_matrix.append(cs_data[ct])
+        cs_matrix=np.array(cs_matrix)
 
         # Find valid columns (no None values)
         valid_cols = ~np.any(cs_matrix == None, axis=0)
@@ -748,16 +751,7 @@ def train_chromatin_state_probe(
         for i, label in enumerate(unique_labels):
             coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
 
-        label_coverage = np.mean(coverage_matrix, axis=1)
-        for label, coverage in zip(unique_labels, label_coverage):
-            print(label, coverage)
-        exit()
-
-        # Print sum of column values for valid columns only
-        valid_sums = np.sum(coverage_matrix[:, valid_cols], axis=0)
-        print(f"Coverage sums for valid columns: {valid_sums}")
-        print(f"Mean coverage sum: {np.mean(valid_sums):.3f}")
-        print(f"Number of valid columns: {np.sum(valid_cols)}")
+        label_soft_coverage = np.mean(coverage_matrix, axis=1)
 
         # Calculate entropy for each region
         epsilon = 1e-10  # Small constant to avoid log(0)
@@ -769,6 +763,7 @@ def train_chromatin_state_probe(
         # Select top regions based on entropy
         regions_per_chr = num_regions // len(chrs)
         top_indices = np.argsort(entropy)[-regions_per_chr:]
+        print(top_indices)
 
         # Store selected regions and their coordinates
         selected_regions = []
