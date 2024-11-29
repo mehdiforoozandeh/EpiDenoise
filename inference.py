@@ -760,10 +760,34 @@ def train_chromatin_state_probe(
         # Only consider entropy for valid columns
         entropy[~valid_cols] = -np.inf
 
-        # Select top regions based on entropy
+        # Select top regions based on entropy, ensuring minimum distance between regions
         regions_per_chr = num_regions // len(chrs)
-        top_indices = np.argsort(entropy)[-regions_per_chr:]
-        print(top_indices)
+        min_distance = 150  # minimum distance between regions
+        
+        # Get all indices sorted by entropy (highest to lowest)
+        sorted_indices = np.argsort(entropy)[::-1]
+        
+        # Initialize selected indices list
+        top_indices = []
+        
+        # Iterate through sorted indices to find valid regions
+        for idx in sorted_indices:
+            # Skip if we already have enough regions
+            if len(top_indices) >= regions_per_chr:
+                break
+                
+            # Check if current index is far enough from all selected indices
+            is_valid = True
+            for selected_idx in top_indices:
+                if abs(idx - selected_idx) < min_distance:
+                    is_valid = False
+                    break
+            
+            # Add index if it's valid
+            if is_valid:
+                top_indices.append(idx)
+        
+        top_indices = np.array(top_indices)
 
         # Store selected regions and their coordinates
         selected_regions = []
@@ -773,7 +797,6 @@ def train_chromatin_state_probe(
                 'start': idx * resolution,
                 'end': (idx + 1) * resolution,
                 'entropy': entropy[idx],
-                'state_distribution': coverage_matrix[:, idx]
             }
             selected_regions.append(region_info)
 
