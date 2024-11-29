@@ -705,7 +705,7 @@ def get_chromatin_state_dataset(
     return load_region_chromatin_states(parsed_dir, chr, start, end, resolution=resolution)
 
 def train_chromatin_state_probe(
-    model_path, hyper_parameters_path, num_regions,
+    model_path, hyper_parameters_path, num_regions=100,
     dataset_path="/project/compbio-lab/encode_data/", 
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
