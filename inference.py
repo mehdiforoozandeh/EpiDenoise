@@ -45,9 +45,9 @@ class CANDIPredictor:
         with open("data/hg38.chrom.sizes", 'r') as f:
             for line in f:
                 chr_name, chr_size = line.strip().split('\t')
-                if chr_name == self.chr:
-                    self.chr_sizes[chr_name] = int(chr_size)
-                    break
+                # if chr_name == self.chr:
+                self.chr_sizes[chr_name] = int(chr_size)
+                    # break
 
         self.context_length = self.hyper_parameters["context_length"]
         self.batch_size = self.hyper_parameters["batch_size"]
