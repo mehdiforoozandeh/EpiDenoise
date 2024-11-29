@@ -540,6 +540,17 @@ the following are different probes that i will implement
     - loss function: mean squared error
 """
 
+class BaseProbe(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
+        
+    def forward(self, x):
+        return self.linear(x)
+
+class ChromatinStateProbe(BaseProbe):
+    def __init__(self, input_dim):
+        super().__init__(input_dim, 18)
 
 def test():
     # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
@@ -627,3 +638,5 @@ if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
+
+

@@ -435,6 +435,48 @@ def get_binned_bigBed_peaks(bigBed_file, resolution=25, chr_sizes_file="data/hg3
     bb.close()
     return res
 
+
+def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
+    """
+    Load chromatin state labels for a specific genomic region from parsed npz files.
+    
+    Args:
+        parsed_path (str): Path to directory containing parsed npz files (e.g. "data/chromatin_state_annotations/cell_type/parsed_ENCSR123ABC/")
+        chrom (str): Chromosome name (e.g. "chr1")
+        start (int): Start position (0-based)
+        end (int): End position (exclusive)
+        resolution (int): Resolution of binned data in base pairs
+        
+    Returns:
+        numpy.ndarray: Array of chromatin state labels for the specified region
+    """
+    try:
+        # Load the chromosome's data
+        npz_file = os.path.join(parsed_path, f"{chrom}.npz")
+        if not os.path.exists(npz_file):
+            raise FileNotFoundError(f"No data file found for chromosome {chrom}")
+            
+        # Calculate bin indices
+        start_bin = start // resolution
+        end_bin = (end + resolution - 1) // resolution  # Round up to include partial bins
+        
+        # Load the data
+        with np.load(npz_file) as data:
+            # The npz file contains a single array
+            chr_data = data['arr_0']
+            
+            # Extract the region of interest
+            if start_bin >= len(chr_data) or end_bin > len(chr_data):
+                raise ValueError(f"Requested region [{start}-{end}] exceeds chromosome length")
+                
+            region_data = chr_data[start_bin:end_bin]
+            
+        return region_data
+        
+    except Exception as e:
+        print(f"Error loading chromatin states: {str(e)}")
+        return None
+
 ################################################################################
 
 class GET_DATA(object):
@@ -3293,6 +3335,13 @@ if __name__ == "__main__":
         metadata = get_encode_chromatin_state_annotation_metadata(metadata_file_path=solar_data_path)
         get_chromatin_state_annotation_data(metadata_file_path=solar_data_path)
     
+    elif sys.argv[1] == "load_CS_annotations":
+        # Find the parsed directory in chromatin state annotations
+        cs_dir = os.path.join(solar_data_path, "chromatin_state_annotations", sys.argv[2])
+        parsed_dir = next(d for d in os.listdir(cs_dir) if d.startswith('parsed_'))
+        print(f"Found parsed directory: {parsed_dir}")
+        cs = load_region_chromatin_states(parsed_dir, "chr1", 1000000, 1000100)
+        print(cs)
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
