@@ -706,7 +706,7 @@ def train_chromatin_state_probe(
         model_path, hyper_parameters_path, 
         data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
 
-    probe = ChromatinStateProbe(input_dim, output_dim)
+    probe = ChromatinStateProbe(model.d_model, 18)
 
     splits = prepare_chromatin_state_dataset(dataset_path)
 
