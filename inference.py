@@ -824,6 +824,7 @@ if __name__ == "__main__":
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
 
+    train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", eic=eic)
 
     
 
