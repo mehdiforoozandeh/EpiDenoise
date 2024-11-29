@@ -57,16 +57,21 @@ class CANDIPredictor:
             "pad": -3
             }
 
-    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
         
         print(f"getting bios vals for {bios_name}")
 
+        if chr is None:
+            chr = self.chr
+            start = 0 
+            end = self.chr_sizes[self.chr]
+
         if self.eic:
             if self.split == "test":
-                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr, start, end], x_dsf)
             elif self.split == "val":
-                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr, start, end], x_dsf)
             
             # print(temp_x.keys(), temp_mx.keys())
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
@@ -700,20 +705,28 @@ def get_chromatin_state_dataset(
     return load_region_chromatin_states(parsed_dir, chr, start, end, resolution=resolution)
 
 def train_chromatin_state_probe(
-    model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", 
+    model_path, hyper_parameters_path, num_regions,
+    dataset_path="/project/compbio-lab/encode_data/", 
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
-    candi = CANDIPredictor(
-        model_path, hyper_parameters_path, 
-        data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
+
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, eic=eic)
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = prepare_chromatin_state_dataset(dataset_path)
 
-    for t in splits["train"]:
-        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(t["biosample"], x_dsf=1)
+    def get_bios_data(bios_name, chr, start, end):
+        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1, chr=chr, start=start, end=end)
 
-        print(X.shape, Y.shape, mX.shape, mY.shape, avX.shape, avY.shape)
+        X = X.reshape(-1, X.shape[-1])
+        Y = Y.reshape(-1, Y.shape[-1])
+        
+        return X, Y
+
+    for t in splits["train"]:
+        X, Y = get_bios_data(t["biosample"], t["chr"], t["start"], t["end"])
+
+        print(X.shape, Y.shape)
         # Z = model.get_latent_representations(X, mX, mY, avX, seq=seq, imp_target=[])
         # probe.train_loop(X, Y, num_epochs, learning_rate)
 
