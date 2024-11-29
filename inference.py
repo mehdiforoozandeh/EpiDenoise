@@ -745,7 +745,35 @@ def train_chromatin_state_probe(
         for state in range(num_states):
             coverage_matrix[state] = np.mean(cs_matrix == state, axis=0)
 
-        print(coverage_matrix)
+        # Calculate entropy for each region
+        epsilon = 1e-10  # Small constant to avoid log(0)
+        entropy = -np.sum(coverage_matrix * np.log(coverage_matrix + epsilon), axis=0)
+        
+        # Only consider entropy for valid columns
+        entropy[~valid_cols] = -np.inf
+
+        # Select top regions based on entropy
+        regions_per_chr = num_regions // len(chrs)
+        top_indices = np.argsort(entropy)[-regions_per_chr:]
+
+        # Store selected regions and their coordinates
+        selected_regions = []
+        for idx in top_indices:
+            region_info = {
+                'chr': chr,
+                'start': idx * resolution,
+                'end': (idx + 1) * resolution,
+                'entropy': entropy[idx],
+                'state_distribution': coverage_matrix[:, idx]
+            }
+            selected_regions.append(region_info)
+
+        print(f"\nSelected {len(selected_regions)} regions from {chr}")
+        print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
+
+        exit()
+
+
 
         """
         given this aligned loaded data in cs_matrix with shape (80, 1244782):
