@@ -713,7 +713,8 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = prepare_chromatin_state_dataset(dataset_path)
-
+    
+    chromatin_state_data = {}
     # Process each chromosome
     for chr in chrs:
         cs_data = {}
@@ -728,13 +729,14 @@ def train_chromatin_state_probe(
             for idx, parsed_cs in enumerate(parsed_dirs):
                 # print(parsed_cs)
                 chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
-                cs_data[f"{cs_name}_{idx}"] = chr_cs
+                cs_data[f"{cs_name}|{idx}"] = chr_cs
         
         # Convert to numpy array for easier processing
         cs_matrix = []
         cell_types = list(cs_data.keys())
         for ct in cell_types:
             cs_matrix.append(cs_data[ct])
+
         cs_matrix=np.array(cs_matrix)
 
         # Find valid columns (no None values)
@@ -762,7 +764,7 @@ def train_chromatin_state_probe(
 
         # Select top regions based on entropy, ensuring minimum distance between regions
         regions_per_chr = num_regions // len(chrs)
-        min_distance = 150  # minimum distance between regions
+        min_distance = candi.model.l1 // resolution   # minimum distance between regions
         
         # Get all indices sorted by entropy (highest to lowest)
         sorted_indices = np.argsort(entropy)[::-1]
@@ -801,20 +803,32 @@ def train_chromatin_state_probe(
             selected_regions.append(region_info)
 
         print(selected_regions)
-        print(f"\nSelected {len(selected_regions)} regions from {chr}")
-        print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
 
-        exit()
+        chromatin_state_data[chr] = []
+        for region in selected_regions:
+            for ct in cell_types:
+                chromatin_state_data[chr].append([
+                    ct.split("|")[0], region['chr'], region['start'], region['end'], 
+                    cs_data[ct][(region['start'])//resolution:(region['end'])//resolution]
+                    ])
+
+    print(chromatin_state_data)
+
+    
+    # print(f"\nSelected {len(selected_regions)} regions from {chr}")
+    # print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
+
+    # exit()
 
 
 
-        """
-        given this aligned loaded data in cs_matrix with shape (80, 1244782):
-        find indices (columns) meeting the two following criteria:
-            1. no None values across all rows
-            2. most variability of labels (across different rows)
-        give me a matrix of length 18 * 1244782 where 18 is the number of unique labels and for each region, what is the pecentage of coverage of each label. most variable regions should have higher entropy in this coverage matrix
-        """
+    """
+    given this aligned loaded data in cs_matrix with shape (80, 1244782):
+    find indices (columns) meeting the two following criteria:
+        1. no None values across all rows
+        2. most variability of labels (across different rows)
+    give me a matrix of length 18 * 1244782 where 18 is the number of unique labels and for each region, what is the pecentage of coverage of each label. most variable regions should have higher entropy in this coverage matrix
+    """
     
     
     """
