@@ -753,7 +753,6 @@ def train_chromatin_state_probe(
         print(f"Coverage sums for valid columns: {valid_sums}")
         print(f"Mean coverage sum: {np.mean(valid_sums):.3f}")
         print(f"Number of valid columns: {np.sum(valid_cols)}")
-        exit()
 
         # Calculate entropy for each region
         epsilon = 1e-10  # Small constant to avoid log(0)
