@@ -680,14 +680,31 @@ if __name__ == "__main__":
     # Remove 'T_' prefix from biosample names for comparison
     bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
     
-    # Find shared items between cleaned biosample names and chromatin state names
-    shared_names = list(set(bios_names_cleaned) & set(cs_names))
-    print(f"\nNumber of shared cell types: {len(shared_names)}")
+    from difflib import SequenceMatcher
+
+    def similar(a, b, threshold=0.85):
+        return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
+
+    # Find exact and similar matches
+    shared_names = set()
+    similar_matches = {}  # Store similar but not exact matches
+    
+    for bios_name in bios_names_cleaned:
+        if bios_name in cs_names:
+            shared_names.add(bios_name)
+        else:
+            # Look for similar names
+            for cs_name in cs_names:
+                if similar(bios_name, cs_name):
+                    similar_matches[bios_name] = cs_name
+                    shared_names.add(cs_name)  # Add the CS name as it's the reference
+
+    print(f"\nNumber of shared cell types (including similar matches): {len(shared_names)}")
 
     # Add 'T_' prefix back to shared names for comparison with original bios_names
     shared_names_with_prefix = [f"T_{name}" for name in shared_names]
     
-    # Find unshared biosamples by comparing with original bios_names
+    # Find unshared biosamples
     unshared_bios = [name for name in bios_names if name not in shared_names_with_prefix]
     
     print("\nBiosamples without matching chromatin states:")
@@ -697,6 +714,11 @@ if __name__ == "__main__":
     print("\nShared cell types between biosamples and chromatin states:")
     for name in shared_names:
         print(name)
+        
+    if similar_matches:
+        print("\nSimilar name matches found:")
+        for bios_name, cs_name in similar_matches.items():
+            print(f"Biosample: {bios_name} -> Chromatin State: {cs_name}")
 
 
 
