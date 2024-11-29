@@ -454,6 +454,7 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     # Load the chromosome's data
     npz_file = os.path.join(parsed_path, f"{chrom}.npz")
     if not os.path.exists(npz_file):
+        print(npz_file)
         raise FileNotFoundError(f"No data file found for chromosome {chrom}")
         
     # Calculate bin indices
