@@ -673,7 +673,7 @@ if __name__ == "__main__":
     eic = True
 
     bios_names = [t for t in os.listdir("/project/compbio-lab/encode_data/") if t.startswith("T_")]
-    print(bios_names)
+    # print(bios_names)
 
     cs_names = [t for t in os.listdir("/project/compbio-lab/encode_data/chromatin_state_annotations/")]
 
@@ -682,7 +682,7 @@ if __name__ == "__main__":
     
     from difflib import SequenceMatcher
 
-    def similar(a, b, threshold=0.85):
+    def similar(a, b, threshold=0.7):
         return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
 
     # Find exact and similar matches
