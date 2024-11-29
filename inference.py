@@ -715,22 +715,20 @@ if __name__ == "__main__":
     for name in shared_names:
         print(name)
         
-    if similar_matches:
-        print("\nSimilar name matches found:")
-        for bios_name, cs_name in similar_matches.items():
-            print(f"Biosample: {bios_name} -> Chromatin State: {cs_name}")
+    print("\nSimilar name matches found:")
+    print(f"Biosample: {bios_name} -> Chromatin State: {cs_name}")
 
 
-            print("\nAll paired biosamples and chromatin states:")
-            print("Format: Biosample -> Chromatin State")
-            print("-" * 50)
-            
-            # Print exact matches (where biosample name without T_ prefix matches CS name)
-            for name in shared_names:
-                if name in bios_names_cleaned:  # It's an exact match
-                    print(f"T_{name} -> {name}")
-            
-            # Print similar matches
-            for bios_name, cs_name in similar_matches.items():
-                print(f"T_{bios_name} -> {cs_name}")
+    print("\nAll paired biosamples and chromatin states:")
+    print("Format: Biosample -> Chromatin State")
+    print("-" * 50)
+    
+    # Print exact matches (where biosample name without T_ prefix matches CS name)
+    for name in shared_names:
+        if name in bios_names_cleaned:  # It's an exact match
+            print(f"T_{name} -> {name}")
+    
+    # Print similar matches
+    for bios_name, cs_name in similar_matches.items():
+        print(f"T_{bios_name} -> {cs_name}")
 
