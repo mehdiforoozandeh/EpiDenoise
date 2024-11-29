@@ -709,8 +709,8 @@ def train_chromatin_state_probe(
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, eic=eic)
-    print(candi.chr_sizes)
-    exit()
+    # print(candi.chr_sizes)
+    # exit()
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
