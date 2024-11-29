@@ -540,17 +540,53 @@ the following are different probes that i will implement
     - loss function: mean squared error
 """
 
-class BaseProbe(nn.Module):
+class ChromatinStateProbe(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
+        self.softmax = nn.Softmax(dim=1)
         
     def forward(self, x):
-        return self.linear(x)
+        x = self.linear(x)
+        x = self.softmax(x)
+        return x
+
+    def train(self, X, Y, learning_rate):
+        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
+        criterion = nn.CrossEntropyLoss()
+        optimizer.zero_grad()
+        output = self(X)
+        loss = criterion(output, Y)
+        loss.backward()
+        optimizer.step()
+    
+    def train_loop(self, X, Y, num_epochs, learning_rate):
+        for epoch in range(num_epochs):
+            
+            self.train(X, Y, learning_rate)
 
 class ChromatinStateProbe(BaseProbe):
     def __init__(self, input_dim):
         super().__init__(input_dim, 18)
+
+"""
+for all cellypes with chromatin state annotations:
+    match the input data to CANDI with its corresponding chromatin state annotation
+
+for all chromosomes other than chr21:
+    select num_regions random regions
+
+for each epoch:
+    for batch in range(0, num_regions, batch_size):
+        create a batch of inputs to CANDI and corresponding chromatin state annotations (batch_size regions)
+        for each region:
+            retrieve chromatin state annotation for that region
+            retrive the input data to CANDI for that region
+    
+        for that batch, get the latent representations from CANDI
+        use latent representations as input to probe
+        train probe using cross entropy loss on chromatin state annotations
+"""
 
 def test():
     # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
@@ -637,6 +673,6 @@ if __name__ == "__main__":
     # test()
     model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
-    eic = True
+    eic = Truee th
 
 
