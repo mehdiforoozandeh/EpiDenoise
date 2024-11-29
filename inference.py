@@ -794,15 +794,21 @@ def train_chromatin_state_probe(
         # Store selected regions and their coordinates
         selected_regions = []
         for idx in top_indices:
+
+            offset = np.random.randint(0, min_distance)
+            start = (idx - offset) * resolution
+            end = start + candi.model.l1
+            
+
             region_info = {
                 'chr': chr,
-                'start': idx * resolution,
-                'end': (idx + 1) * resolution,
+                'start': start,
+                'end': end,
                 'entropy': entropy[idx],
             }
             selected_regions.append(region_info)
 
-        print(selected_regions)
+        # print(selected_regions)
 
         chromatin_state_data[chr] = []
         for region in selected_regions:
