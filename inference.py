@@ -732,7 +732,7 @@ def train_chromatin_state_probe(
         
         # Convert to numpy array for easier processing
         cell_types = list(cs_data.keys())
-        cs_matrix = np.stack([cs_data[ct] for ct in cell_types])
+        cs_matrix = pd.DataFrame(np.stack([cs_data[ct] for ct in cell_types]))
     
         print(cs_matrix)
         exit()
