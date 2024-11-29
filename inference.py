@@ -682,7 +682,7 @@ if __name__ == "__main__":
     
     from difflib import SequenceMatcher
 
-    def similar(a, b, threshold=0.75):
+    def similar(a, b, threshold=0.70):
         return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
 
     # Find exact and similar matches
