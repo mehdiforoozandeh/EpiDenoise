@@ -727,7 +727,7 @@ def train_chromatin_state_probe(
 
             for idx, parsed_cs in enumerate(parsed_dirs):
                 # print(parsed_cs)
-                chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr, 0, candi.chr_sizes[chr]//resolution, resolution=resolution)
+                chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
                 cs_data[f"{cs_name}_{idx}"] = chr_cs
         
         # Convert to numpy array for easier processing
