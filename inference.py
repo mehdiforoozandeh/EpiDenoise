@@ -672,6 +672,19 @@ if __name__ == "__main__":
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
 
-    print([t for t in os.listdir("/project/compbio-lab/encode_data/") if t.startswith("T_")])
+    bios_names = [t for t in os.listdir("/project/compbio-lab/encode_data/") if t.startswith("T_")]
+    print(bios_names)
+
+    cs_names = [t for t in os.listdir("/project/compbio-lab/encode_data/chromatin_state_annotations/")]
+
+    # Remove 'T_' prefix from biosample names for comparison
+    bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
+    
+    # Find shared items between cleaned biosample names and chromatin state names
+    shared_names = list(set(bios_names_cleaned) & set(cs_names))
+    
+    print("\nShared cell types between biosamples and chromatin states:")
+    for name in shared_names:
+        print(name)
 
 
