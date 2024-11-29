@@ -726,15 +726,16 @@ def train_chromatin_state_probe(
             parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
             for idx, parsed_cs in enumerate(parsed_dirs):
-                print(parsed_cs)
+                # print(parsed_cs)
                 chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr, 0, candi.chr_sizes[chr]//resolution, resolution=resolution)
                 cs_data[f"{cs_name}_{idx}"] = chr_cs
         
         # Convert to numpy array for easier processing
         cell_types = list(cs_data.keys())
-        cs_matrix = pd.DataFrame(np.stack([cs_data[ct] for ct in cell_types]))
+        cs_matrix = np.stack([cs_data[ct] for ct in cell_types])
     
         print(cs_matrix)
+        print(cs_matrix.shape)
         exit()
     
     """
