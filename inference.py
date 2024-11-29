@@ -667,7 +667,6 @@ def test():
     print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
 
 if __name__ == "__main__":
-    # test()
     model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
@@ -731,4 +730,73 @@ if __name__ == "__main__":
     # Print similar matches
     for bios_name, cs_name in similar_matches.items():
         print(f"T_{bios_name} -> {cs_name}")
+
+    # Create a list of all valid pairs
+    paired_data = []
+    
+    # Add exact matches
+    for name in shared_names:
+        if name in bios_names_cleaned:  # It's an exact match
+            paired_data.append({
+                'biosample': f"T_{name}",
+                'chromatin_state': name
+            })
+    
+    # Add similar matches
+    for bios_name, cs_name in similar_matches.items():
+        paired_data.append({
+            'biosample': f"T_{bios_name}",
+            'chromatin_state': cs_name
+        })
+
+    # Shuffle the pairs randomly
+    import random
+    random.seed(42)  # For reproducibility
+    random.shuffle(paired_data)
+
+    # Calculate split sizes
+    total_samples = len(paired_data)
+    train_size = int(0.7 * total_samples)
+    val_size = int(0.15 * total_samples)
+    # test_size will be the remainder
+
+    # Split the data
+    train_pairs = paired_data[:train_size]
+    val_pairs = paired_data[train_size:train_size + val_size]
+    test_pairs = paired_data[train_size + val_size:]
+
+    # Print the splits
+    print(f"\nTotal number of paired samples: {total_samples}")
+    print(f"Train samples: {len(train_pairs)}")
+    print(f"Validation samples: {len(val_pairs)}")
+    print(f"Test samples: {len(test_pairs)}")
+
+    print("\nTrain Split:")
+    print("-" * 50)
+    for pair in train_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    print("\nValidation Split:")
+    print("-" * 50)
+    for pair in val_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    print("\nTest Split:")
+    print("-" * 50)
+    for pair in test_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    # Optionally, save the splits to files
+    import json
+    
+    splits = {
+        'train': train_pairs,
+        'val': val_pairs,
+        'test': test_pairs
+    }
+    
+    with open('celltype_splits.json', 'w') as f:
+        json.dump(splits, f, indent=2)
+
+    
 
