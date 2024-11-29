@@ -454,15 +454,15 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     # Load the chromosome's data
     npz_file = os.path.join(parsed_path, f"{chrom}.npz")
     if not os.path.exists(npz_file):
-        print(npz_file)
+
         raise FileNotFoundError(f"No data file found for chromosome {chrom}")
         
     # Calculate bin indices
     start_bin = start // resolution
     end_bin = (end + resolution - 1) // resolution  # Round up to include partial bins
     
-    # Load the data
-    with np.load(npz_file) as data:
+    # Load the data with allow_pickle=True
+    with np.load(npz_file, allow_pickle=True) as data:
         # The npz file contains a single array
         chr_data = data['arr_0']
         print(chr_data.shape)
