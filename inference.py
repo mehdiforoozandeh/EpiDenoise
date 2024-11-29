@@ -705,7 +705,7 @@ def get_chromatin_state_dataset(
 
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, num_regions=1000, chrs=["chr1", "chr2", "chr3"],
-    dataset_path="/project/compbio-lab/encode_data/", 
+    dataset_path="/project/compbio-lab/encode_data/", resolution=200,
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, eic=eic)
