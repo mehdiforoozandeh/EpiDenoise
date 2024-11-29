@@ -745,6 +745,13 @@ def train_chromatin_state_probe(
         for state in range(num_states):
             coverage_matrix[state] = np.mean(cs_matrix == state, axis=0)
 
+        # Print sum of column values for valid columns only
+        valid_sums = np.sum(coverage_matrix[:, valid_cols], axis=0)
+        print(f"Coverage sums for valid columns: {valid_sums}")
+        print(f"Mean coverage sum: {np.mean(valid_sums):.3f}")
+        print(f"Number of valid columns: {np.sum(valid_cols)}")
+        exit()
+
         # Calculate entropy for each region
         epsilon = 1e-10  # Small constant to avoid log(0)
         entropy = -np.sum(coverage_matrix * np.log(coverage_matrix + epsilon), axis=0)
