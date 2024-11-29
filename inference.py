@@ -565,9 +565,6 @@ class ChromatinStateProbe(nn.Module):
 
             self.train(X, Y, learning_rate)
 
-class ChromatinStateProbe(BaseProbe):
-    def __init__(self, input_dim):
-        super().__init__(input_dim, 18)
 
 """
 for all cellypes with chromatin state annotations:
