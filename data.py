@@ -3345,7 +3345,9 @@ if __name__ == "__main__":
     elif sys.argv[1] == "load_CS_annotations":
         # Find the parsed directory in chromatin state annotations
         cs_dir = os.path.join(solar_data_path, "chromatin_state_annotations", sys.argv[2])
-        parsed_dir = next(d for d in os.listdir(cs_dir) if d.startswith('parsed200_'))
+        parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith('parsed200_')]
+        print(f"Found parsed directories: {parsed_dirs}")
+        parsed_dir = parsed_dirs[0]  # Use first one by default
         # parsed_dir = next(d for d in os.listdir(cs_dir) if d.startswith('parsed_'))
         # print(f"Found parsed directory: {parsed_dir}")
         parsed_path = os.path.join(cs_dir, parsed_dir)
