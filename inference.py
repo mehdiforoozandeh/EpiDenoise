@@ -704,7 +704,7 @@ def get_chromatin_state_dataset(
     return load_region_chromatin_states(parsed_dir, chr, start, end, resolution=resolution)
 
 def train_chromatin_state_probe(
-    model_path, hyper_parameters_path, num_regions=1000, chrs=["chr1", "chr2", "chr3"],
+    model_path, hyper_parameters_path, num_regions=30, chrs=["chr1", "chr2", "chr3"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200,
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
@@ -768,6 +768,7 @@ def train_chromatin_state_probe(
             }
             selected_regions.append(region_info)
 
+        print(selected_regions)
         print(f"\nSelected {len(selected_regions)} regions from {chr}")
         print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
 
