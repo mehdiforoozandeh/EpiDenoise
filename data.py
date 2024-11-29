@@ -3344,7 +3344,7 @@ if __name__ == "__main__":
         parsed_dir = next(d for d in os.listdir(cs_dir) if d.startswith('parsed_'))
         print(f"Found parsed directory: {parsed_dir}")
         parsed_path = os.path.join(cs_dir, parsed_dir)
-        cs = load_region_chromatin_states(parsed_dir, "chr1", 1000000, 1000100)
+        cs = load_region_chromatin_states(parsed_path, "chr1", 1000000, 1000100)
         print(cs)
     else:
         d = GET_DATA()
