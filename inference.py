@@ -733,10 +733,28 @@ def train_chromatin_state_probe(
         # Convert to numpy array for easier processing
         cell_types = list(cs_data.keys())
         cs_matrix = np.stack([cs_data[ct] for ct in cell_types])
+
+        # Find valid columns (no None values)
+        valid_cols = ~np.any(cs_matrix == None, axis=0)
+        
+        # Create coverage matrix (18 states × regions)
+        num_states = 18
+        coverage_matrix = np.zeros((num_states, cs_matrix.shape[1]))
+        
+        # Calculate coverage percentages for each state in each region
+        for state in range(num_states):
+            coverage_matrix[state] = np.mean(cs_matrix == state, axis=0)
+
+        print(coverage_matrix)
+
+        """
+        given this aligned loaded data in cs_matrix with shape (80, 1244782):
+        find indices (columns) meeting the two following criteria:
+            1. no None values across all rows
+            2. most variability of labels (across different rows)
+        give me a matrix of length 18 * 1244782 where 18 is the number of unique labels and for each region, what is the pecentage of coverage of each label. most variable regions should have higher entropy in this coverage matrix
+        """
     
-        print(cs_matrix)
-        print(cs_matrix.shape)
-        exit()
     
     """
     chromatin_state_data = {}
