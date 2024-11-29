@@ -8,12 +8,11 @@ import numpy as np
 
 # sequence clustering
 class CANDIPredictor:
-    def __init__(self, model, hyper_parameters_path, number_of_states, 
+    def __init__(self, model, hyper_parameters_path, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
         savedir="models/output/", data_path="/project/compbio-lab/encode_data/"):
 
         self.model = model
-        self.number_of_states = number_of_states
         self.chr = chr
         self.resolution = resolution
         self.savedir = savedir
@@ -505,6 +504,7 @@ class CANDIPredictor:
         return metrics
 
 
+
 """
 # given a model, i want to train a linear probe on the latent space
 # and evaluate the performance of the linear probe on the linear probe dataset.
@@ -565,116 +565,11 @@ class ChromatinStateProbe(nn.Module):
 
             self.train(X, Y, learning_rate)
 
-
-"""
-for all cellypes with chromatin state annotations:
-    match the input data to CANDI with its corresponding chromatin state annotation
-
-for all chromosomes other than chr21:
-    select num_regions random regions
-
-for each epoch:
-    for batch in range(0, num_regions, batch_size):
-        create a batch of inputs to CANDI and corresponding chromatin state annotations (batch_size regions)
-        for each region:
-            retrieve chromatin state annotation for that region
-            retrive the input data to CANDI for that region
-    
-        for that batch, get the latent representations from CANDI
-        use latent representations as input to probe
-        train probe using cross entropy loss on chromatin state annotations
-"""
-
-def test():
-    # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
-    # eic = True
-    # bios_name = "ENCBS674MPN"
-
-
-    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125150741_params45093285.pkl"
-    eic = False
-    bios_name = "upper_lobe_of_left_lung_nonrep"
-
-    dataset_path = "/project/compbio-lab/encode_data/"
-    output_dir = "output"
-    number_of_states = 10
-    DNA = True
-    
-    dsf = 1
-
-    CANDIP = CANDIPredictor(
-        model_path, hyper_parameters_path, number_of_states, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
-    
-    os.makedirs(output_dir, exist_ok=True)
-
-    print("Loading biosample data for DNA analysis...")
-    if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
-    else:
-        print("Loading biosample data for non-DNA analysis...")
-        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
-        seq = None
-
-    # print("Evaluating leave-one-out for initial analysis...")
-    # start_time = time.time()
-    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
-    # end_time = time.time()
-    # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-
-    print("Generating predictions with both pred and pred_cropped methods...")
-    start_time_pred = time.time()
-    n_pred, p_pred, mu_pred, var_pred, Z_pred = CANDIP.pred(X, mX, mY, avX, seq=seq, imp_target=[])
-    end_time_pred = time.time()
-    print(f"Prediction with pred method took {end_time_pred - start_time_pred:.2f} seconds.")
-
-    start_time_pred_cropped = time.time()
-    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.1)
-    end_time_pred_cropped = time.time()
-    print(f"Prediction with pred_cropped method took {end_time_pred_cropped - start_time_pred_cropped:.2f} seconds.")
-    
-    # Compare latent representations
-    print("\nComparing latent representations...")
-    
-    # Normalize vectors for cosine distance
-    Z_pred_norm = Z_pred / torch.norm(Z_pred, dim=1, keepdim=True)
-    Z_pred_cropped_norm = Z_pred_cropped / torch.norm(Z_pred_cropped, dim=1, keepdim=True)
-    
-    # Calculate cosine distances (1 - cosine similarity)
-    cosine_dist = 1 - torch.sum(Z_pred_norm * Z_pred_cropped_norm, dim=1)
-    
-    # Calculate euclidean distances
-    euclidean_dist = torch.norm(Z_pred - Z_pred_cropped, dim=1)
-    
-    # Define thresholds
-    cosine_thresholds = [0.001, 0.01, 0.1]
-    euclidean_thresholds = [0.1, 1.0, 10.0]
-    
-    print("\nCosine Distance Analysis:")
-    for threshold in cosine_thresholds:
-        fraction = (cosine_dist > threshold).float().mean().item()
-        print(f"Fraction of positions with cosine distance > {threshold:.3f}: {fraction:.4f}")
-    
-    print("\nEuclidean Distance Analysis:")
-    for threshold in euclidean_thresholds:
-        fraction = (euclidean_dist > threshold).float().mean().item()
-        print(f"Fraction of positions with euclidean distance > {threshold:.1f}: {fraction:.4f}")
-    
-    # Print summary statistics
-    print("\nDistance Statistics:")
-    print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
-    print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
-
-if __name__ == "__main__":
-    model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
-    eic = True
-
-    bios_names = [t for t in os.listdir("/project/compbio-lab/encode_data/") if t.startswith("T_")]
+def prepare_chromatin_state_dataset(solar_data_path="/project/compbio-lab/encode_data/"):
+    bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
     # print(bios_names)
 
-    cs_names = [t for t in os.listdir("/project/compbio-lab/encode_data/chromatin_state_annotations/")]
+    cs_names = [t for t in os.listdir(os.path.join(solar_data_path, "chromatin_state_annotations"))]
 
     # Remove 'T_' prefix from biosample names for comparison
     bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
@@ -795,8 +690,140 @@ if __name__ == "__main__":
         'test': test_pairs
     }
     
-    with open('celltype_splits.json', 'w') as f:
-        json.dump(splits, f, indent=2)
+    return splits
+
+def get_chromatin_state_dataset(
+    bios_name, parsed_dir, 
+    chr, start, end, resolution=200, 
+    solar_data_path="/project/compbio-lab/encode_data/"):
+
+    return load_region_chromatin_states(parsed_dir, chr, start, end, resolution=resolution)
+
+def train_chromatin_state_probe(
+    model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", 
+    DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
+    model = CANDIPredictor(
+        model_path, hyper_parameters_path, 
+        data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
+
+    probe = ChromatinStateProbe(input_dim, output_dim)
+
+    splits = prepare_chromatin_state_dataset(dataset_path)
+
+    for t in splits["train"]:
+        X, Y, P, seq, mX, mY, avX, avY = model.load_bios(t["biosample"], x_dsf=1)
+        print(X.shape, Y.shape)
+        # Z = model.get_latent_representations(X, mX, mY, avX, seq=seq, imp_target=[])
+        # probe.train_loop(X, Y, num_epochs, learning_rate)
+
+
+
+"""
+for all cellypes with chromatin state annotations:
+    match the input data to CANDI with its corresponding chromatin state annotation
+
+for all chromosomes other than chr21:
+    select num_regions random regions
+
+for each epoch:
+    for batch in range(0, num_regions, batch_size):
+        create a batch of inputs to CANDI and corresponding chromatin state annotations (batch_size regions)
+        for each region:
+            retrieve chromatin state annotation for that region
+            retrive the input data to CANDI for that region
+    
+        for that batch, get the latent representations from CANDI
+        use latent representations as input to probe
+        train probe using cross entropy loss on chromatin state annotations
+"""
+
+def test():
+    # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
+    # eic = True
+    # bios_name = "ENCBS674MPN"
+
+
+    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125150741_params45093285.pkl"
+    eic = False
+    bios_name = "upper_lobe_of_left_lung_nonrep"
+
+    dataset_path = "/project/compbio-lab/encode_data/"
+    output_dir = "output"
+    DNA = True
+    
+    dsf = 1
+
+    CANDIP = CANDIPredictor(
+        model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
+    
+    os.makedirs(output_dir, exist_ok=True)
+
+    print("Loading biosample data for DNA analysis...")
+    if DNA:
+        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
+    else:
+        print("Loading biosample data for non-DNA analysis...")
+        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
+        seq = None
+
+    # print("Evaluating leave-one-out for initial analysis...")
+    # start_time = time.time()
+    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
+    # end_time = time.time()
+    # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
+
+    print("Generating predictions with both pred and pred_cropped methods...")
+    start_time_pred = time.time()
+    n_pred, p_pred, mu_pred, var_pred, Z_pred = CANDIP.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+    end_time_pred = time.time()
+    print(f"Prediction with pred method took {end_time_pred - start_time_pred:.2f} seconds.")
+
+    start_time_pred_cropped = time.time()
+    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.1)
+    end_time_pred_cropped = time.time()
+    print(f"Prediction with pred_cropped method took {end_time_pred_cropped - start_time_pred_cropped:.2f} seconds.")
+    
+    # Compare latent representations
+    print("\nComparing latent representations...")
+    
+    # Normalize vectors for cosine distance
+    Z_pred_norm = Z_pred / torch.norm(Z_pred, dim=1, keepdim=True)
+    Z_pred_cropped_norm = Z_pred_cropped / torch.norm(Z_pred_cropped, dim=1, keepdim=True)
+    
+    # Calculate cosine distances (1 - cosine similarity)
+    cosine_dist = 1 - torch.sum(Z_pred_norm * Z_pred_cropped_norm, dim=1)
+    
+    # Calculate euclidean distances
+    euclidean_dist = torch.norm(Z_pred - Z_pred_cropped, dim=1)
+    
+    # Define thresholds
+    cosine_thresholds = [0.001, 0.01, 0.1]
+    euclidean_thresholds = [0.1, 1.0, 10.0]
+    
+    print("\nCosine Distance Analysis:")
+    for threshold in cosine_thresholds:
+        fraction = (cosine_dist > threshold).float().mean().item()
+        print(f"Fraction of positions with cosine distance > {threshold:.3f}: {fraction:.4f}")
+    
+    print("\nEuclidean Distance Analysis:")
+    for threshold in euclidean_thresholds:
+        fraction = (euclidean_dist > threshold).float().mean().item()
+        print(f"Fraction of positions with euclidean distance > {threshold:.1f}: {fraction:.4f}")
+    
+    # Print summary statistics
+    print("\nDistance Statistics:")
+    print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
+    print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
+
+
+
+if __name__ == "__main__":
+    model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
+    eic = True
+
 
     
 
