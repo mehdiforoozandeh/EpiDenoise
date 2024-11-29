@@ -450,32 +450,32 @@ def load_region_chromatin_states(parsed_path, chrom, start, end, resolution=25):
     Returns:
         numpy.ndarray: Array of chromatin state labels for the specified region
     """
-    try:
-        # Load the chromosome's data
-        npz_file = os.path.join(parsed_path, f"{chrom}.npz")
-        if not os.path.exists(npz_file):
-            raise FileNotFoundError(f"No data file found for chromosome {chrom}")
-            
-        # Calculate bin indices
-        start_bin = start // resolution
-        end_bin = (end + resolution - 1) // resolution  # Round up to include partial bins
+    # try:
+    # Load the chromosome's data
+    npz_file = os.path.join(parsed_path, f"{chrom}.npz")
+    if not os.path.exists(npz_file):
+        raise FileNotFoundError(f"No data file found for chromosome {chrom}")
         
-        # Load the data
-        with np.load(npz_file) as data:
-            # The npz file contains a single array
-            chr_data = data['arr_0']
-            
-            # Extract the region of interest
-            if start_bin >= len(chr_data) or end_bin > len(chr_data):
-                raise ValueError(f"Requested region [{start}-{end}] exceeds chromosome length")
-                
-            region_data = chr_data[start_bin:end_bin]
-            
-        return region_data
+    # Calculate bin indices
+    start_bin = start // resolution
+    end_bin = (end + resolution - 1) // resolution  # Round up to include partial bins
+    
+    # Load the data
+    with np.load(npz_file) as data:
+        # The npz file contains a single array
+        chr_data = data['arr_0']
         
-    except Exception as e:
-        print(f"Error loading chromatin states: {str(e)}")
-        return None
+        # Extract the region of interest
+        if start_bin >= len(chr_data) or end_bin > len(chr_data):
+            raise ValueError(f"Requested region [{start}-{end}] exceeds chromosome length")
+            
+        region_data = chr_data[start_bin:end_bin]
+        
+    return region_data
+        
+    # except Exception as e:
+    #     print(f"Error loading chromatin states: {str(e)}")
+    #     return None
 
 ################################################################################
 
