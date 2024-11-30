@@ -1038,7 +1038,7 @@ def train_chromatin_state_probe(
                         except:
                             print(start, end, end - start)
                             print(region[1], region[2], region[2] - region[1])
-                            exit()
+                            print(x_input.shapes, seq_input.shapes, mx_input.shapes)
 
                     z = z.cpu()
 
