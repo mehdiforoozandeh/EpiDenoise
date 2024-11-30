@@ -793,8 +793,6 @@ def train_chromatin_state_probe(
             # Sort indices for consistency
             top_indices = np.sort(top_indices)
 
-            
-
             # Store selected regions and their coordinates
             selected_regions = []
             for idx in top_indices:
@@ -806,8 +804,7 @@ def train_chromatin_state_probe(
                 region_info = {
                     'chr': chr,
                     'start': start,
-                    'end': end,
-                    'entropy': entropy[idx],
+                    'end': end
                 }
                 selected_regions.append(region_info)
 
