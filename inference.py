@@ -841,9 +841,9 @@ def train_chromatin_state_probe(
                 end = region[2] // 25
 
                 # Move input tensors to the same device as the model
-                x_input = X[start:end].unsqueeze(0).to(candi.device)
-                seq_input = seq[region[1]:region[2]].unsqueeze(0).to(candi.device)
-                mx_input = mX.unsqueeze(0).to(candi.device)
+                x_input = X[start:end].unsqueeze(0).float().to(candi.device)
+                seq_input = seq[region[1]:region[2]].float().unsqueeze(0).to(candi.device)
+                mx_input = mX.unsqueeze(0).float().to(candi.device)
 
                 z = candi.model.encode(x_input, seq_input, mx_input)
 
@@ -853,8 +853,8 @@ def train_chromatin_state_probe(
                 z = z.cpu()
 
 
-                # chromatin_state_data[chr][cs_name][idx] = (
-                #     chromatin_state_data[chr][cs_name][idx], 
+                # chromatin_state_data[chr][cs_name] = (
+                #     chromatin_state_data[chr][cs_name], 
                 #     [X[start:end], seq[region[1]:region[2]], mX, mY, avX, avY])
             
             del X, Y, P, seq, mX, mY, avX, avY
