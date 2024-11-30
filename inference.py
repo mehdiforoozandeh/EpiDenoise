@@ -1157,7 +1157,9 @@ def train_chromatin_state_probe(
                 cs_name = pair['chromatin_state']
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
                 
+                
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
+                print(X.shape, seq.shape, mX.shape, Z.shape)
 
                 X = X.reshape(-1, X.shape[-1])
                 seq = seq.reshape(-1, seq.shape[-1])
