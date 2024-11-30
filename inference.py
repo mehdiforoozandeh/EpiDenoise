@@ -739,6 +739,43 @@ def latent_reproducibility(
 
     del X1, X2, seq1, seq2, mX1, mX2
 
+    # Normalize vectors for cosine similarity
+    Z1_normalized = F.normalize(Z1, p=2, dim=1)
+    Z2_normalized = F.normalize(Z2, p=2, dim=1)
+    cosine_similarities = torch.sum(Z1_normalized * Z2_normalized, dim=1)
+    cosine_distances = 1 - cosine_similarities  # Convert similarity to distance
+
+    # Calculate summary statistics
+    stats = {
+        'euclidean': {
+            'mean': euclidean_distances.mean().item(),
+            'std': euclidean_distances.std().item(),
+            'median': euclidean_distances.median().item(),
+            'min': euclidean_distances.min().item(),
+            'max': euclidean_distances.max().item()
+        },
+        'cosine': {
+            'mean': cosine_distances.mean().item(),
+            'std': cosine_distances.std().item(),
+            'median': cosine_distances.median().item(),
+            'min': cosine_distances.min().item(),
+            'max': cosine_distances.max().item()
+        }
+    }
+
+    print(f"\nLatent Space Reproducibility Analysis between {repr1_bios} and {repr2_bios}")
+    print("-" * 80)
+    
+    for metric in ['euclidean', 'cosine']:
+        print(f"\n{metric.capitalize()} Distance Statistics:")
+        print(f"Mean: {stats[metric]['mean']:.4f}")
+        print(f"Std:  {stats[metric]['std']:.4f}")
+        print(f"Med:  {stats[metric]['median']:.4f}")
+        print(f"Min:  {stats[metric]['min']:.4f}")
+        print(f"Max:  {stats[metric]['max']:.4f}")
+
+    return stats, euclidean_distances, cosine_distances
+
     """
     for i in range(Z1.shape[0]):
         get euclidean distance between Z1[i] and Z2[i]
