@@ -709,7 +709,7 @@ def train_chromatin_state_probe(
 
     splits = prepare_chromatin_state_dataset(dataset_path)
     
-    chromatin_state_data = {}
+    chromatin_state_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
     # Process each chromosome
     for chr in chrs:
         cs_data = {}
@@ -759,7 +759,7 @@ def train_chromatin_state_probe(
 
         # Select top regions based on entropy, ensuring minimum distance between regions
         regions_per_chr = num_regions // len(chrs)
-        min_distance = candi.model.l1 // resolution   # minimum distance between regions
+        min_distance = candi.model.l1 * 25   # minimum distance between regions
         
         # Get all indices sorted by entropy (highest to lowest)
         sorted_indices = np.argsort(entropy)[::-1]
@@ -791,7 +791,7 @@ def train_chromatin_state_probe(
         for idx in top_indices:
 
             offset = np.random.randint(0, min_distance)
-            start = ((idx - offset) * resolution)
+            start = ((idx * resolution) - offset)
             end = start + (candi.model.l1 * 25)
             
             region_info = {
@@ -804,19 +804,58 @@ def train_chromatin_state_probe(
 
         # print(selected_regions)
 
-        chromatin_state_data[chr] = []
+        chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
         for region in selected_regions:
+            
+            print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
+                  f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
+
             for ct in cell_types:
-                chromatin_state_data[chr].append([
+                chromatin_state_data[chr][ct] = []
+
+                chromatin_state_data[chr][ct].append([
                     ct.split("|")[0], region['chr'], region['start'], region['end'], 
                     cs_data[ct][
                         ((region['start'])//resolution):
                         ((region['end'])//resolution)]
                     ])
-
-    print(chromatin_state_data)
-
     
+
+    input("enter to continue")
+    input_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
+    for chr in chrs:
+        input_data[chr] = {}
+        
+        # Load chromatin state data for each cell type in training split
+        for pair in splits['train']:
+            bios_name = pair['biosample']
+            cs_name = pair['chromatin_state']
+            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+
+            X = X.reshape(-1, X.shape[-1])
+            seq = seq.reshape(-1, seq.shape[-1])
+            mX = mX[0]
+            mY = mY[0]
+            avX = avX[0]
+            avY = avY[0]
+
+            for region in chromatin_state_data[chr][cs_name]:
+ 
+                start = region[1] // 25
+                end = region[2] // 25
+
+                print(f"Region {chr} {start}-{end} | X shape: {X[start:end].shape} (orig: {X.shape}), "
+                      f"seq shape: {seq[start*25:end*25].shape} (orig: {seq.shape}), "
+                      f"mX len: {mX.shape}, mY len: {mY.shape}, "
+                      f"avX len: {avX.shape}, avY len: {avY.shape}, "
+                      f"Bins: {end-start}")
+
+#                 input_data[chr][cs_name].append([
+#                     chr, start, end, X, seq, mX, mY, avX, avY
+# ])
+                
+
+
     # print(f"\nSelected {len(selected_regions)} regions from {chr}")
     # print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
 
