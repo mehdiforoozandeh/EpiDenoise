@@ -733,12 +733,13 @@ def latent_reproducibility(
     model_path, hyper_parameters_path, 
     repr1_bios, repr2_bios, 
     chr="chr21", dataset_path="/project/compbio-lab/encode_data/"):
+
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
 
     candi.chr = chr
 
-    X1, seq1, mX1 = candi.load_encoder_input_bios(repr1_bios, dataset_path=dataset_path)
-    X2, seq2, mX2 = candi.load_encoder_input_bios(repr2_bios, dataset_path=dataset_path)
+    X1, seq1, mX1 = candi.load_encoder_input_bios(repr1_bios)
+    X2, seq2, mX2 = candi.load_encoder_input_bios(repr2_bios)
 
     print("X1 shape:", X1.shape)
     print("X2 shape:", X2.shape)
