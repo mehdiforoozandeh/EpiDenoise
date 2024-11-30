@@ -1,6 +1,6 @@
 import torch
 import pickle
-import os, time
+import os, time, gc
 from CANDI import *
 from scipy import stats
 import numpy as np
@@ -845,6 +845,9 @@ def train_chromatin_state_probe(
                       f"mX len: {mX.shape}, mY len: {mY.shape}, "
                       f"avX len: {avX.shape}, avY len: {avY.shape}, "
                       f"Bins: {end-start}")
+            
+            del X, Y, P, seq, mX, mY, avX, avY
+            gc.collect()
 
 #                 input_data[chr][cs_name].append([
 #                     chr, start, end, X, seq, mX, mY, avX, avY
