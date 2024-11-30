@@ -1156,28 +1156,33 @@ def train_chromatin_state_probe(
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
+                
+                Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
 
                 X = X.reshape(-1, X.shape[-1])
                 seq = seq.reshape(-1, seq.shape[-1])
                 mX = mX[0]
 
                 for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
-                    start = region[1] // 25
-                    end = region[2] // 25
+                    # start = region[1] // 25
+                    # end = region[2] // 25
 
-                    # Move input tensors to the same device as the model
-                    x_input = X[start:end].unsqueeze(0).float().to(candi.device)
-                    seq_input = seq[region[1]:region[2]].unsqueeze(0).float().to(candi.device)
-                    mx_input = mX.unsqueeze(0).float().to(candi.device)
+                    # # Move input tensors to the same device as the model
+                    # x_input = X[start:end].unsqueeze(0).float().to(candi.device)
+                    # seq_input = seq[region[1]:region[2]].unsqueeze(0).float().to(candi.device)
+                    # mx_input = mX.unsqueeze(0).float().to(candi.device)
 
-                    with torch.no_grad():
-                        try:
-                            z = candi.model.encode(x_input, seq_input, mx_input)
-                        except:
-                            print(f"Popping {region[0]}:{region[1]}-{region[2]} from {cs_name}")
-                            chromatin_state_data[chr][cs_name].pop(idx)
+                    # with torch.no_grad():
+                    #     try:
+                    #         z = candi.model.encode(x_input, seq_input, mx_input)
+                    #     except:
+                    #         print(f"Popping {region[0]}:{region[1]}-{region[2]} from {cs_name}")
+                    #         chromatin_state_data[chr][cs_name].pop(idx)
 
-                    z = z.cpu()
+                    # z = z.cpu()
+
+                    z = Z[region[1] // resolution:region[2] // resolution]
+
                     chromatin_state_data[chr][cs_name][idx] = (region, z)
 
                     del x_input, seq_input, mx_input
