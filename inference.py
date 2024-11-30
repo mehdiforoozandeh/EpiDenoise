@@ -1037,6 +1037,7 @@ def train_chromatin_state_probe(
                             z = candi.model.encode(x_input, seq_input, mx_input)
                         except:
                             print(start, end, end - start)
+                            print(region[1], region[2], region[2] - region[1])
 
                     z = z.cpu()
 
