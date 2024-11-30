@@ -862,14 +862,11 @@ def train_chromatin_state_probe(
         for pair in splits['train']:
             bios_name = pair['biosample']
             cs_name = pair['chromatin_state']
-            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
 
             X = X.reshape(-1, X.shape[-1])
             seq = seq.reshape(-1, seq.shape[-1])
             mX = mX[0]
-            mY = mY[0]
-            avX = avX[0]
-            avY = avY[0]
 
             for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
                 start = region[1] // 25
