@@ -745,7 +745,6 @@ def train_chromatin_state_probe(
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
     splits["train"] = splits["train"][:3]
-    exit()
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
