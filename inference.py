@@ -738,6 +738,9 @@ def latent_reproducibility(
     Z2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
 
     del X1, X2, seq1, seq2, mX1, mX2
+    
+    # Calculate distances
+    euclidean_distances = torch.norm(Z1 - Z2, dim=1)  # Euclidean distance for each pair
 
     # Normalize vectors for cosine similarity
     Z1_normalized = F.normalize(Z1, p=2, dim=1)
