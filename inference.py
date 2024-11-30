@@ -607,7 +607,7 @@ class ChromatinStateProbe(nn.Module):
 
             self.train(X, Y, learning_rate)
 
-def prepare_chromatin_state_dataset_eic(solar_data_path="/project/compbio-lab/encode_data/"):
+def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
     # print(bios_names)
 
@@ -734,7 +734,9 @@ def prepare_chromatin_state_dataset_eic(solar_data_path="/project/compbio-lab/en
     return splits
 
 def train_chromatin_state_probe(
-    model_path, hyper_parameters_path, num_regions=30, chrs=["chrX"],
+    model_path, hyper_parameters_path, 
+    num_train_regions=30, num_val_regions=30, num_test_regions=30, 
+    train_chrs=["chr1"], val_chrs=["chrX"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200,
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
@@ -744,181 +746,166 @@ def train_chromatin_state_probe(
 
     splits = prepare_chromatin_state_dataset_eic(dataset_path)
     
-    chromatin_state_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
-    # Process each chromosome
-    for chr in chrs:
-        cs_data = {}
-        
-        # Load chromatin state data for each cell type in training split
-        for pair in splits['train'][-3:]:
-            bios_name = pair['biosample']
-            cs_name = pair['chromatin_state']
-            cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
-            parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
+    def prepare_data(split, chrs, num_regions):
+        chromatin_state_data = {}
+        # Process each chromosome
+        for chr in chrs:
+            cs_data = {}
 
-            for idx, parsed_cs in enumerate(parsed_dirs):
-                # print(parsed_cs)
-                chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
-                cs_data[f"{cs_name}|{idx}"] = chr_cs
-        
-        # Convert to numpy array for easier processing
-        cs_matrix = []
-        cell_types = list(cs_data.keys())
-        for ct in cell_types:
-            cs_matrix.append(cs_data[ct])
+            # Load chromatin state data for each cell type in training split
+            for pair in splits[split][-3:]:
+                bios_name = pair['biosample']
+                cs_name = pair['chromatin_state']
+                cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
+                parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
-        cs_matrix=np.array(cs_matrix)
-
-        # Find valid columns (no None values)
-        valid_cols = ~np.any(cs_matrix == None, axis=0)
-        
-        # Find unique labels in cs_matrix
-        unique_labels = np.unique(cs_matrix[cs_matrix != None])
-        assert len(unique_labels) == 18, f"Expected 18 unique labels, got {len(unique_labels)}"
-        
-        # Create coverage matrix (18 states × regions)
-        coverage_matrix = np.zeros((len(unique_labels), cs_matrix.shape[1]))
-        
-        # Calculate coverage percentages for each unique label in each region
-        for i, label in enumerate(unique_labels):
-            coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
-
-        label_soft_coverage = np.mean(coverage_matrix, axis=1)
-
-        # Calculate entropy for each region
-        epsilon = 1e-10  # Small constant to avoid log(0)
-        entropy = -np.sum(coverage_matrix * np.log(coverage_matrix + epsilon), axis=0)
-        
-        # Only consider entropy for valid columns
-        entropy[~valid_cols] = -np.inf
-
-        # Select top regions based on entropy, ensuring minimum distance between regions
-        regions_per_chr = num_regions // len(chrs)
-        min_distance = candi.model.l1 * 25   # minimum distance between regions
-        
-        # Get all indices sorted by entropy (highest to lowest)
-        sorted_indices = np.argsort(entropy)[::-1]
-        
-        # Initialize selected indices list
-        top_indices = []
-        
-        # Iterate through sorted indices to find valid regions
-        for idx in sorted_indices:
-            # Skip if we already have enough regions
-            if len(top_indices) >= regions_per_chr:
-                break
-                
-            # Check if current index is far enough from all selected indices
-            is_valid = True
-            for selected_idx in top_indices:
-                if abs(idx - selected_idx) < min_distance:
-                    is_valid = False
-                    break
+                for idx, parsed_cs in enumerate(parsed_dirs):
+                    # print(parsed_cs)
+                    chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
+                    cs_data[f"{cs_name}|{idx}"] = chr_cs
             
-            # Add index if it's valid
-            if is_valid:
-                top_indices.append(idx)
-        
-        top_indices = np.array(top_indices)
-
-        # Store selected regions and their coordinates
-        selected_regions = []
-        for idx in top_indices:
-
-            offset = np.random.randint(0, min_distance)
-            start = ((idx * resolution) - offset)
-            end = start + (candi.model.l1 * 25)
-            
-            region_info = {
-                'chr': chr,
-                'start': start,
-                'end': end,
-                'entropy': entropy[idx],
-            }
-            selected_regions.append(region_info)
-
-        # print(selected_regions)
-
-        chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
-        for region in selected_regions:
-            
-            print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
-                  f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
-
+            # Convert to numpy array for easier processing
+            cs_matrix = []
+            cell_types = list(cs_data.keys())
             for ct in cell_types:
-                if ct.split("|")[0] not in chromatin_state_data[chr]:
-                    chromatin_state_data[chr][ct.split("|")[0]] = []
+                cs_matrix.append(cs_data[ct])
 
-                chromatin_state_data[chr][ct.split("|")[0]].append([
-                    region['chr'], region['start'], region['end'], 
-                    cs_data[ct][
-                        ((region['start'])//resolution):
-                        ((region['end'])//resolution)]
-                    ])
-    
-    for chr in chrs:
-        candi.chr = chr
-        # Load chromatin state data for each cell type in training split
-        for pair in splits['train'][-3:]:
-            bios_name = pair['biosample']
-            cs_name = pair['chromatin_state']
-            X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
+            cs_matrix=np.array(cs_matrix)
 
-            X = X.reshape(-1, X.shape[-1])
-            seq = seq.reshape(-1, seq.shape[-1])
-            mX = mX[0]
-
-            for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
-                start = region[1] // 25
-                end = region[2] // 25
-
-                # Move input tensors to the same device as the model
-                x_input = X[start:end].unsqueeze(0).float().to(candi.device)
-                seq_input = seq[region[1]:region[2]].float().unsqueeze(0).to(candi.device)
-                mx_input = mX.unsqueeze(0).float().to(candi.device)
-
-                with torch.no_grad():
-                    z = candi.model.encode(x_input, seq_input, mx_input)
-
-
-                # Optional: Move z back to CPU if needed for storage
-                z = z.cpu()
-
-                chromatin_state_data[chr][cs_name][idx] = (region, z)
+            # Find valid columns (no None values)
+            valid_cols = ~np.any(cs_matrix == None, axis=0)
             
-            del X, seq, mX
-            gc.collect()
+            # Find unique labels in cs_matrix
+            unique_labels = np.unique(cs_matrix[cs_matrix != None])
+            assert len(unique_labels) == 18, f"Expected 18 unique labels, got {len(unique_labels)}"
+            
+            # Create coverage matrix (18 states × regions)
+            coverage_matrix = np.zeros((len(unique_labels), cs_matrix.shape[1]))
+            
+            # Calculate coverage percentages for each unique label in each region
+            for i, label in enumerate(unique_labels):
+                coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
 
-    print(chromatin_state_data.keys())
-    print(chromatin_state_data["chrX"].keys())
-    print(chromatin_state_data["chrX"][list(chromatin_state_data["chrX"].keys())[0]])
-    print(chromatin_state_data["chrX"][list(chromatin_state_data["chrX"].keys())[0]][-1])
+            label_soft_coverage = np.mean(coverage_matrix, axis=1)
 
+            # Calculate entropy for each region
+            epsilon = 1e-10  # Small constant to avoid log(0)
+            entropy = -np.sum(coverage_matrix * np.log(coverage_matrix + epsilon), axis=0)
+            
+            # Only consider entropy for valid columns
+            entropy[~valid_cols] = -np.inf
 
-
-
-
-#                 input_data[chr][cs_name].append([
-#                     chr, start, end, X, seq, mX, mY, avX, avY
-# ])
+            # Select top regions based on entropy, ensuring minimum distance between regions
+            regions_per_chr = num_regions // len(chrs)
+            min_distance = candi.model.l1 * 25   # minimum distance between regions
+            
+            # Get all indices sorted by entropy (highest to lowest)
+            sorted_indices = np.argsort(entropy)[::-1]
+            
+            # Initialize selected indices list
+            top_indices = []
+            
+            # Iterate through sorted indices to find valid regions
+            for idx in sorted_indices:
+                # Skip if we already have enough regions
+                if len(top_indices) >= regions_per_chr:
+                    break
+                    
+                # Check if current index is far enough from all selected indices
+                is_valid = True
+                for selected_idx in top_indices:
+                    if abs(idx - selected_idx) < min_distance:
+                        is_valid = False
+                        break
                 
+                # Add index if it's valid
+                if is_valid:
+                    top_indices.append(idx)
+            
+            top_indices = np.array(top_indices)
 
-    # print(f"\nSelected {len(selected_regions)} regions from {chr}")
-    # print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
+            # Store selected regions and their coordinates
+            selected_regions = []
+            for idx in top_indices:
 
-    # exit()
+                offset = np.random.randint(0, min_distance)
+                start = ((idx * resolution) - offset)
+                end = start + (candi.model.l1 * 25)
+                
+                region_info = {
+                    'chr': chr,
+                    'start': start,
+                    'end': end,
+                    'entropy': entropy[idx],
+                }
+                selected_regions.append(region_info)
+
+            # print(selected_regions)
+
+            chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
+            for region in selected_regions:
+                
+                print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
+                    f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
+
+                for ct in cell_types:
+                    if ct.split("|")[0] not in chromatin_state_data[chr]:
+                        chromatin_state_data[chr][ct.split("|")[0]] = []
+
+                    chromatin_state_data[chr][ct.split("|")[0]].append([
+                        region['chr'], region['start'], region['end'], 
+                        cs_data[ct][
+                            ((region['start'])//resolution):
+                            ((region['end'])//resolution)]
+                        ])
+        
+        for chr in chrs:
+            candi.chr = chr
+            # Load chromatin state data for each cell type in training split
+            for pair in splits[split][-3:]:
+                bios_name = pair['biosample']
+                cs_name = pair['chromatin_state']
+                X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
+
+                X = X.reshape(-1, X.shape[-1])
+                seq = seq.reshape(-1, seq.shape[-1])
+                mX = mX[0]
+
+                for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
+                    start = region[1] // 25
+                    end = region[2] // 25
+
+                    # Move input tensors to the same device as the model
+                    x_input = X[start:end].unsqueeze(0).float().to(candi.device)
+                    seq_input = seq[region[1]:region[2]].float().unsqueeze(0).to(candi.device)
+                    mx_input = mX.unsqueeze(0).float().to(candi.device)
+
+                    with torch.no_grad():
+                        z = candi.model.encode(x_input, seq_input, mx_input)
+
+                    z = z.cpu()
+
+                    train_chromatin_state_data[chr][cs_name][idx] = (region, z)
+                
+                del X, seq, mX
+                gc.collect()
+
+        return chromatin_state_data
+
+    # structure ->  chr : cell_type : ([chromosome, start_pos, end_pos, chromatin_state_array], z_tensor)
+    train_chromatin_state_data = prepare_data("train", train_chrs, num_train_regions)
+    val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
+    test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
+
+    print(train_chromatin_state_data.keys())
+    print(train_chromatin_state_data["chr1"].keys())
+    print(train_chromatin_state_data["chr1"][list(train_chromatin_state_data["chr1"].keys())[0]])
+    print(train_chromatin_state_data["chr1"][list(train_chromatin_state_data["chr1"].keys())[0]][-1])
 
 
 
-    """
-    given this aligned loaded data in cs_matrix with shape (80, 1244782):
-    find indices (columns) meeting the two following criteria:
-        1. no None values across all rows
-        2. most variability of labels (across different rows)
-    give me a matrix of length 18 * 1244782 where 18 is the number of unique labels and for each region, what is the pecentage of coverage of each label. most variable regions should have higher entropy in this coverage matrix
-    """
-    
-    
+
+
     """
     chromatin_state_data = {}
     for chr in chrs:
