@@ -325,14 +325,12 @@ class CANDIPredictor:
                     outputs = self.model.encode(
                         x_batch.float().to(self.device),
                         seq_batch.to(self.device),
-                        mx_batch.to(self.device),
-                        return_z=True
+                        mx_batch.to(self.device)
                     )
                 else:
                     outputs = self.model.encode(
                         x_batch.float().to(self.device),
-                        mx_batch.to(self.device),
-                        return_z=True
+                        mx_batch.to(self.device)
                     )
                 
                 outputs_Z = outputs
