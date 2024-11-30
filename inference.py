@@ -621,8 +621,7 @@ class ChromatinStateProbe(nn.Module):
     def train_batch(self, X, y, optimizer, criterion):
         optimizer.zero_grad()
         output = self(X)
-        y_one_hot = self.to_one_hot(y)
-        loss = criterion(output, y_one_hot)
+        loss = criterion(output, y)
         loss.backward()
         optimizer.step()
         return loss.item()
@@ -631,9 +630,8 @@ class ChromatinStateProbe(nn.Module):
         self.eval()
         with torch.no_grad():
             output = self(X)
-            y_one_hot = self.to_one_hot(y)
             criterion = nn.BCELoss()  # Changed to BCE since we're using one-hot
-            val_loss = criterion(output, y_one_hot)
+            val_loss = criterion(output, y)
             
             # Calculate accuracy
             _, predicted = torch.max(output.data, 1)
