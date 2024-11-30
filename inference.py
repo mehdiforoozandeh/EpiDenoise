@@ -840,10 +840,11 @@ def train_chromatin_state_probe(
                 }
                 selected_regions.append(region_info)
 
-            # print(selected_regions)
+            print(f"Number of selected regions: {len(selected_regions)} from chr {chr}")
 
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
             for region in selected_regions:
+                
                 
                 # print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
                 #     f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
