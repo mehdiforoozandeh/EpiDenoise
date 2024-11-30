@@ -840,13 +840,17 @@ def train_chromatin_state_probe(
                 start = region[1] // 25
                 end = region[2] // 25
 
-                # chromatin_state_data[chr][cs_name][idx] contains:
-                # - CS data: [chr, start, end, chromatin_state_array]
-                # - CANDI inputs: [X , DNA sequence, metadata X, metadata Y, available X, available Y]
+                # Move input tensors to the same device as the model
+                x_input = X[start:end].unsqueeze(0).to(candi.device)
+                seq_input = seq[region[1]:region[2]].unsqueeze(0).to(candi.device)
+                mx_input = mX.unsqueeze(0).to(candi.device)
 
-                z = candi.model.encode(X[start:end].unsqueeze(0), seq[region[1]:region[2]].unsqueeze(0), mX.unsqueeze(0))
+                z = candi.model.encode(x_input, seq_input, mx_input)
 
                 print(z.shape)
+
+                # Optional: Move z back to CPU if needed for storage
+                z = z.cpu()
 
 
                 # chromatin_state_data[chr][cs_name][idx] = (
