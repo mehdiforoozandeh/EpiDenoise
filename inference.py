@@ -690,7 +690,7 @@ the following are different probes that i will implement
 #                     # torch.save(self.state_dict(), 'best_model.pt')
 
 class ChromatinStateProbe(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim=18):
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
         self.softmax = nn.Softmax(dim=1)
@@ -698,7 +698,7 @@ class ChromatinStateProbe(nn.Module):
 
     def forward(self, x):
         x = self.linear(x)
-        return self.softmax(x)
+        return x
 
     def encode_class_indices(self, class_names):
         """
@@ -923,56 +923,21 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"]
+    splits["train"] = splits["train"][:5]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"]
+    splits["val"] = splits["val"][:3]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
         # Process each chromosome
         for chr in chrs:
-            cs_data = {}
-
-            # Load chromatin state data for each cell type in training split
-            for pair in splits[split]:
-                bios_name = pair['biosample']
-                cs_name = pair['chromatin_state']
-                cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
-                parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
-
-                for idx, parsed_cs in enumerate(parsed_dirs):
-                    # print(parsed_cs)
-                    chr_cs = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
-                    cs_data[f"{cs_name}|{idx}"] = chr_cs
             
-            # Convert to numpy array for easier processing
-            cs_matrix = []
-            cell_types = list(cs_data.keys())
-            for ct in cell_types:
-                cs_matrix.append(cs_data[ct])
-
-            cs_matrix=np.array(cs_matrix)
-
-            # Find valid columns (no None values)
-            valid_cols = ~np.any(cs_matrix == None, axis=0)
-            
-            # Find valid indices (where no None values exist)
-            valid_indices = np.where(valid_cols)[0]
-
             # Calculate number of regions needed per chromosome
             regions_per_chr = num_regions // len(chrs)
             min_distance = candi.model.l1 * 25   # minimum distance between regions
 
-            # Randomly select indices from valid indices
-            if len(valid_indices) < regions_per_chr:
-                print(f"Warning: Only {len(valid_indices)} valid regions available for {chr}, less than requested {regions_per_chr}")
-                top_indices = valid_indices
-            else:
-                # Randomly select regions_per_chr indices
-                top_indices = np.random.choice(valid_indices, size=regions_per_chr, replace=False)
-
-            # Sort indices for consistency
-            top_indices = np.sort(top_indices)
+            # Randomly select regions_per_chr indices
+            top_indices = np.random.choice(candi.chr_sizes[chr] // resolution, size=regions_per_chr, replace=False)
 
             # Store selected regions and their coordinates
             selected_regions = []
@@ -994,13 +959,20 @@ def train_chromatin_state_probe(
 
             print(f"Number of selected regions: {len(selected_regions)} from chr {chr}")
 
+            cs_data = {}
+            # Load chromatin state data for each cell type in training split
+            for pair in splits[split]:
+                bios_name = pair['biosample']
+                cs_name = pair['chromatin_state']
+                cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
+                parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
+
+                for idx, parsed_cs in enumerate(parsed_dirs):
+                    cs_data[f"{cs_name}|{idx}"] = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
+
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
             for region in selected_regions:
-                
-                # print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
-                #     f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
-
-                for ct in cell_types:
+                for ct in cs_data.keys():
                     if ct.split("|")[0] not in chromatin_state_data[chr]:
                         chromatin_state_data[chr][ct.split("|")[0]] = []
 
@@ -1029,7 +1001,7 @@ def train_chromatin_state_probe(
 
                     # Move input tensors to the same device as the model
                     x_input = X[start:end].unsqueeze(0).float().to(candi.device)
-                    seq_input = seq[region[1]:region[2]].float().unsqueeze(0).to(candi.device)
+                    seq_input = seq[region[1]:region[2]].unsqueeze(0).float().to(candi.device)
                     mx_input = mX.unsqueeze(0).float().to(candi.device)
 
                     with torch.no_grad():
@@ -1041,8 +1013,9 @@ def train_chromatin_state_probe(
                             print(x_input.shape, seq_input.shapes, mx_input.shapes)
 
                     z = z.cpu()
-
                     chromatin_state_data[chr][cs_name][idx] = (region, z)
+
+                    del x_input, seq_input, mx_input
                 
                 del X, seq, mX
                 gc.collect()
