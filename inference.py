@@ -734,18 +734,17 @@ def latent_reproducibility(
     X1, seq1, mX1 = candi.load_encoder_input_bios(repr1_bios)
     X2, seq2, mX2 = candi.load_encoder_input_bios(repr2_bios)
 
-    print("X1 shape:", X1.shape)
-    print("X2 shape:", X2.shape)
-    print("seq1 shape:", seq1.shape)
-    print("seq2 shape:", seq2.shape)
-    print("mX1 shape:", mX1.shape)
-    print("mX2 shape:", mX2.shape)
+    Z1 = candi.get_latent_representations_cropped(X1, mX1, seq=seq1)
+    Z2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
 
-    z1 = candi.get_latent_representations_cropped(X1, mX1, seq=seq1)
-    z2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
-    
-    print("z1 shape:", z1.shape)
-    print("z2 shape:", z2.shape)
+    del X1, X2, seq1, seq2, mX1, mX2
+
+    """
+    for i in range(Z1.shape[0]):
+        get euclidean distance between Z1[i] and Z2[i]
+        get cosine distance between Z1[i] and Z2[i]
+    """
+
 
 # class ChromatinStateProbe(nn.Module):
 #     def __init__(self, input_dim, output_dim):
@@ -1187,7 +1186,7 @@ def train_chromatin_state_probe(
 
                     chromatin_state_data[chr][cs_name][idx] = (region, z)
 
-                    del x_input, seq_input, mx_input
+                    # del x_input, seq_input, mx_input
                 
                 del X, seq, mX
                 gc.collect()
