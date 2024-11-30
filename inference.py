@@ -914,6 +914,7 @@ def train_chromatin_state_probe(
     
     # Convert lists to tensors first since Z contains torch tensors
     Z = np.stack(Z)
+    Y = np.array(Y)
     print(Y)
     
     print(f"Shape of Z (latent vectors): {Z.shape}")
