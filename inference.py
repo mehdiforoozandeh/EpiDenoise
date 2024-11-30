@@ -60,7 +60,7 @@ class CANDIPredictor:
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
         
-        print(f"getting bios vals for {bios_name}")
+        # print(f"getting bios vals for {bios_name}")
 
         if self.eic:
             if self.split == "test":
@@ -815,9 +815,6 @@ def train_chromatin_state_probe(
                         ((region['end'])//resolution)]
                     ])
     
-
-    # input("enter to continue")
-    input_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
     for chr in chrs:
         input_data[chr] = {}
         candi.chr = chr
@@ -845,20 +842,24 @@ def train_chromatin_state_probe(
                 seq_input = seq[region[1]:region[2]].float().unsqueeze(0).to(candi.device)
                 mx_input = mX.unsqueeze(0).float().to(candi.device)
 
-                z = candi.model.encode(x_input, seq_input, mx_input)
+                with torch.no_grad():
+                    z = candi.model.encode(x_input, seq_input, mx_input)
 
                 print(z.shape)
 
                 # Optional: Move z back to CPU if needed for storage
                 z = z.cpu()
 
-
-                # chromatin_state_data[chr][cs_name] = (
-                #     chromatin_state_data[chr][cs_name], 
-                #     [X[start:end], seq[region[1]:region[2]], mX, mY, avX, avY])
+                chromatin_state_data[chr][cs_name][idx] = (region, z)
             
             del X, Y, P, seq, mX, mY, avX, avY
             gc.collect()
+
+    print(chromatin_state_data.keys())
+    print(chromatin_state_data["chrX"].keys())
+    print(chromatin_state_data["chrX"]["H1-hESC"])
+    print(chromatin_state_data["chrX"]["H1-hESC"][-1])
+
 
 
 
