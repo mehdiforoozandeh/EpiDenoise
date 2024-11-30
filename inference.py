@@ -886,7 +886,7 @@ def train_chromatin_state_probe(
 
                 chromatin_state_data[chr][cs_name][idx] = (region, z)
             
-            del X, Y, P, seq, mX, mY, avX, avY
+            del X, seq, mX
             gc.collect()
 
     print(chromatin_state_data.keys())
