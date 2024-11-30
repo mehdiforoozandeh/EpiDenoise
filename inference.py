@@ -750,7 +750,7 @@ def train_chromatin_state_probe(
         cs_data = {}
         
         # Load chromatin state data for each cell type in training split
-        for pair in splits['train'][:3]:
+        for pair in splits['train']:
             bios_name = pair['biosample']
             cs_name = pair['chromatin_state']
             cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
