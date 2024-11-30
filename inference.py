@@ -81,7 +81,7 @@ class CANDIPredictor:
             seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
-        X, = X[:num_rows, :]
+        X = X[:num_rows, :]
 
         if self.DNA:
             seq = seq[:num_rows*self.resolution, :]
