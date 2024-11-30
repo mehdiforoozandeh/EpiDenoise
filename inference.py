@@ -907,11 +907,11 @@ def train_chromatin_state_probe(
                     label = region[bin]
                     latent_vector = z[bin]
 
-                if label is not None:
-                    print(latent_vector.shape)
-                    print(label.shape)
-                    Z.append(latent_vector)
-                    Y.append(label)
+                    if label is not None:
+                        print(latent_vector.shape)
+                        print(label.shape)
+                        Z.append(latent_vector)
+                        Y.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
     Z = np.stack(Z)
