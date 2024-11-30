@@ -748,8 +748,8 @@ def latent_reproducibility(
     print("mX1 shape:", mX1.shape)
     print("mX2 shape:", mX2.shape)
 
-    z1 = candi.get_latent_representations_cropped(X1, mX1, mY1, avX1, seq=seq1)
-    z2 = candi.get_latent_representations_cropped(X2, mX2, mY2, avX2, seq=seq2)
+    z1 = candi.get_latent_representations_cropped(X1, mX1, seq=seq1)
+    z2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
     
     print("z1 shape:", z1.shape)
     print("z2 shape:", z2.shape)
