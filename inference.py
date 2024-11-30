@@ -62,11 +62,6 @@ class CANDIPredictor:
         
         print(f"getting bios vals for {bios_name}")
 
-        # if chr is None:
-        #     chr = self.chr
-        #     start = 0 
-        #     end = self.chr_sizes[self.chr]
-
         if self.eic:
             if self.split == "test":
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
@@ -697,7 +692,6 @@ def prepare_chromatin_state_dataset(solar_data_path="/project/compbio-lab/encode
     
     return splits
 
-
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, num_regions=30, chrs=["chr1"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200,
@@ -715,7 +709,7 @@ def train_chromatin_state_probe(
         cs_data = {}
         
         # Load chromatin state data for each cell type in training split
-        for pair in splits['train']:
+        for pair in splits['train'][:3]:
             bios_name = pair['biosample']
             cs_name = pair['chromatin_state']
             cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
@@ -847,7 +841,7 @@ def train_chromatin_state_probe(
                 end = region[2] // 25
 
                 print(f"Region {chr} {start}-{end} | X shape: {X[start:end].shape} (orig: {X.shape}), "
-                      f"seq shape: {seq[start*25:end*25].shape} (orig: {seq.shape}), "
+                      f"seq shape: {seq[region[1]:region[2]].shape} (orig: {seq.shape}), "
                       f"mX len: {mX.shape}, mY len: {mY.shape}, "
                       f"avX len: {avX.shape}, avY len: {avY.shape}, "
                       f"Bins: {end-start}")
