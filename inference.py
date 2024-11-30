@@ -966,8 +966,8 @@ def train_chromatin_state_probe(
                         Y_train.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
-    Z_train = np.stack(Z)
-    Y_train = np.array(Y)
+    Z_train = np.stack(Z_train)
+    Y_train = np.array(Y_train)
 
     val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
     Z_val = [] 
@@ -986,8 +986,8 @@ def train_chromatin_state_probe(
                         Y_val.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
-    Z_val = np.stack(Z)
-    Y_val = np.array(Y)
+    Z_val = np.stack(Z_val)
+    Y_val = np.array(Y_val)
 
     test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
     Z_test = [] 
@@ -1006,8 +1006,8 @@ def train_chromatin_state_probe(
                         Y_test.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
-    Z_test = np.stack(Z)
-    Y_test = np.array(Y)
+    Z_test = np.stack(Z_test)
+    Y_test = np.array(Y_test)
 
 
 
