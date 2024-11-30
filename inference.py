@@ -733,7 +733,7 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
     
     return splits
 
-def prepare_chromatin_state_data_eic(
+def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
     num_train_regions=1000, num_val_regions=30, num_test_regions=30, 
     train_chrs=["chr19", "chr20"], val_chrs=["chrX"], test_chrs=["chr21"],
@@ -1078,7 +1078,7 @@ if __name__ == "__main__":
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
 
-    train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", eic=eic)
+    train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
 
     
 
