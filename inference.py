@@ -796,10 +796,9 @@ def train_chromatin_state_probe(
         for idx in top_indices:
 
             offset = np.random.randint(0, min_distance)
-            start = (idx - offset) * resolution
-            end = start + candi.model.l1
+            start = ((idx - offset) * resolution) * 25
+            end = (start + candi.model.l1) * 25
             
-
             region_info = {
                 'chr': chr,
                 'start': start,
@@ -815,7 +814,9 @@ def train_chromatin_state_probe(
             for ct in cell_types:
                 chromatin_state_data[chr].append([
                     ct.split("|")[0], region['chr'], region['start'], region['end'], 
-                    cs_data[ct][(region['start'])//resolution:(region['end'])//resolution]
+                    cs_data[ct][
+                        ((region['start'])//resolution)*25:
+                        ((region['end'])//resolution)*25]
                     ])
 
     print(chromatin_state_data)
