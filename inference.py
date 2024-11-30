@@ -811,10 +811,11 @@ def train_chromatin_state_probe(
                   f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
 
             for ct in cell_types:
-                chromatin_state_data[chr][ct] = []
+                if ct.split("|")[0] not in chromatin_state_data[chr]:
+                    chromatin_state_data[chr][ct] = []
 
-                chromatin_state_data[chr][ct].append([
-                    ct.split("|")[0], region['chr'], region['start'], region['end'], 
+                chromatin_state_data[chr][ct.split("|")[0]].append([
+                    region['chr'], region['start'], region['end'], 
                     cs_data[ct][
                         ((region['start'])//resolution):
                         ((region['end'])//resolution)]
@@ -840,7 +841,7 @@ def train_chromatin_state_probe(
             avY = avY[0]
 
             for region in chromatin_state_data[chr][cs_name]:
- 
+                print(bios_name, cs_name)
                 start = region[1] // 25
                 end = region[2] // 25
 
