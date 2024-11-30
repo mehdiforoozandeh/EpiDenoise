@@ -1033,7 +1033,10 @@ def train_chromatin_state_probe(
                     mx_input = mX.unsqueeze(0).float().to(candi.device)
 
                     with torch.no_grad():
-                        z = candi.model.encode(x_input, seq_input, mx_input)
+                        try:
+                            z = candi.model.encode(x_input, seq_input, mx_input)
+                        except:
+                            print(start, end, end - start)
 
                     z = z.cpu()
 
