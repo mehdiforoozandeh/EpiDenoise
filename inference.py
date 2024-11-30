@@ -1105,7 +1105,7 @@ def train_chromatin_state_probe(
 
 
 
-    probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=10, learning_rate=0.01, batch_size=200)
+    probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=2000, learning_rate=0.001, batch_size=200)
 
 
 
