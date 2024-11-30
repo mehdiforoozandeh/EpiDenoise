@@ -786,7 +786,6 @@ class ChromatinStateProbe(nn.Module):
                 # Optionally save model weights here
                 # torch.save(self.state_dict(), 'best_model.pt')
 
-
 def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
     # print(bios_names)
@@ -915,8 +914,8 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
-    num_train_regions=1000, num_val_regions=30, num_test_regions=30, 
-    train_chrs=["chr19"], val_chrs=["chrX"], test_chrs=["chr21"],
+    num_train_regions=3000, num_val_regions=1000, num_test_regions=30, 
+    train_chrs=["chr19", "chr20", "chr21"], val_chrs=["chrX"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic)
@@ -924,9 +923,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:2]
-    splits["test"] = splits["test"][:1]
-    splits["val"] = splits["train"][:1]
+    splits["train"] = splits["train"]
+    # splits["test"] = splits["test"][:1]
+    splits["val"] = splits["val"]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -980,8 +979,11 @@ def train_chromatin_state_probe(
             for idx in top_indices:
 
                 offset = np.random.randint(0, min_distance)
-                start = ((idx * resolution) - offset)
+                start = max(0, ((idx * resolution) - offset))
                 end = start + (candi.model.l1 * 25)
+
+                if end >= candi.chr_sizes[chr]:
+                    continue
                 
                 region_info = {
                     'chr': chr,
@@ -1084,32 +1086,28 @@ def train_chromatin_state_probe(
     Z_val = np.stack(Z_val)
     Y_val = np.array(Y_val)
 
-    test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
-    Z_test = [] 
-    Y_test = []
-    for chr in test_chromatin_state_data.keys():
-        for ct in test_chromatin_state_data[chr].keys():
-            for region, z in test_chromatin_state_data[chr][ct]:
-                z = z.squeeze(0)
-                annots = region[3]
-                for bin in range(len(region)):
-                    label = annots[bin]
-                    latent_vector = z[bin]
+    # test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
+    # Z_test = [] 
+    # Y_test = []
+    # for chr in test_chromatin_state_data.keys():
+    #     for ct in test_chromatin_state_data[chr].keys():
+    #         for region, z in test_chromatin_state_data[chr][ct]:
+    #             z = z.squeeze(0)
+    #             annots = region[3]
+    #             for bin in range(len(region)):
+    #                 label = annots[bin]
+    #                 latent_vector = z[bin]
 
-                    if label is not None:
-                        Z_test.append(latent_vector)
-                        Y_test.append(label)
+    #                 if label is not None:
+    #                     Z_test.append(latent_vector)
+    #                     Y_test.append(label)
     
-    # Convert lists to tensors first since Z contains torch tensors
-    Z_test = np.stack(Z_test)
-    Y_test = np.array(Y_test)
+    # # Convert lists to tensors first since Z contains torch tensors
+    # Z_test = np.stack(Z_test)
+    # Y_test = np.array(Y_test)
 
 
-
-    probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=2000, learning_rate=0.001, batch_size=200)
-
-
-
+    probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=2000, learning_rate=0.005, batch_size=200)
 
     """
     chromatin_state_data = {}
@@ -1126,31 +1124,6 @@ def train_chromatin_state_probe(
 
         chromatin_state_data[name of the celltype and coordinates as a list] = corresponding chromatin state 
     """ 
-
-
-
-
-
-
-
-
-
-
-    # def get_bios_data(bios_name, chr, start, end):
-    #     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1, chr=chr, start=start, end=end)
-
-    #     X = X.reshape(-1, X.shape[-1])
-    #     Y = Y.reshape(-1, Y.shape[-1])
-        
-    #     return X, Y
-
-    # for t in splits["train"]:
-    #     X, Y = get_bios_data(t["biosample"])
-
-    #     print(X.shape, Y.shape)
-        # Z = model.get_latent_representations(X, mX, mY, avX, seq=seq, imp_target=[])
-        # probe.train_loop(X, Y, num_epochs, learning_rate)
-
 
 
 """
