@@ -937,7 +937,7 @@ def train_chromatin_state_probe(
             min_distance = candi.model.l1 * 25   # minimum distance between regions
 
             # Randomly select regions_per_chr indices
-            top_indices = np.random.choice(candi.chr_sizes[chr] // resolution, size=regions_per_chr, replace=False)
+            top_indices = np.random.choice((candi.chr_sizes[chr]-min_distance) // resolution, size=regions_per_chr, replace=False)
 
             # Store selected regions and their coordinates
             selected_regions = []
