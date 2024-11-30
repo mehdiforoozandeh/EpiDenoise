@@ -845,8 +845,8 @@ def train_chromatin_state_probe(
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
             for region in selected_regions:
                 
-                print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
-                    f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
+                # print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
+                #     f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
 
                 for ct in cell_types:
                     if ct.split("|")[0] not in chromatin_state_data[chr]:
