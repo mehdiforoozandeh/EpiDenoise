@@ -835,19 +835,27 @@ def train_chromatin_state_probe(
             avX = avX[0]
             avY = avY[0]
 
-            for region in chromatin_state_data[chr][cs_name]:
+            for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
                 print(bios_name, cs_name)
                 start = region[1] // 25
                 end = region[2] // 25
 
-                print(f"Region {chr} {start}-{end} | X shape: {X[start:end].shape} (orig: {X.shape}), "
-                      f"seq shape: {seq[region[1]:region[2]].shape} (orig: {seq.shape}), "
-                      f"mX len: {mX.shape}, mY len: {mY.shape}, "
-                      f"avX len: {avX.shape}, avY len: {avY.shape}, "
-                      f"Bins: {end-start}")
+                # chromatin_state_data[chr][cs_name][idx] contains:
+                # - CS data: [chr, start, end, chromatin_state_array]
+                # - CANDI inputs: [X , DNA sequence, metadata X, metadata Y, available X, available Y]
+
+                candi.model.encode
+                (X[start:end].unsqueeze(0), seq[region[1]:region[2]].unsqueeze(0), mX.unsqueeze(0))
+
+                chromatin_state_data[chr][cs_name][idx] = (
+                    chromatin_state_data[chr][cs_name][idx], 
+                    [X[start:end], seq[region[1]:region[2]], mX, mY, avX, avY])
             
             del X, Y, P, seq, mX, mY, avX, avY
             gc.collect()
+
+
+
 
 #                 input_data[chr][cs_name].append([
 #                     chr, start, end, X, seq, mX, mY, avX, avY
