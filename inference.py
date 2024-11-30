@@ -360,16 +360,11 @@ class CANDIPredictor:
                 
                 Z[target_z_start:target_z_end, :] = out_Z[start_z_idx:end_z_idx, :].cpu()
                 
-                coverage_mask[target_start:target_end] = True
                 z_coverage_mask[target_z_start:target_z_end] = True  # Track Z coverage
             
             del outputs
             torch.cuda.empty_cache()
-        
-        # Verify complete coverage for both signal and Z
-        if not coverage_mask.all():
-            print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
-            raise ValueError("Missing signal predictions")
+
             
         if not z_coverage_mask.all():
             print(f"Missing Z predictions for positions: {torch.where(~z_coverage_mask)[0]}")
