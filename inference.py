@@ -862,7 +862,7 @@ def train_chromatin_state_probe(
         for chr in chrs:
             candi.chr = chr
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-3:]:
+            for pair in splits[split][-2:]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
