@@ -693,7 +693,7 @@ class ChromatinStateProbe(nn.Module):
     def __init__(self, input_dim, output_dim=18):
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
         self.class_to_index = None  # Placeholder for the class-to-index mapping
 
     def forward(self, x):
@@ -1083,6 +1083,33 @@ def train_chromatin_state_probe(
     # # Convert lists to tensors first since Z contains torch tensors
     # Z_test = np.stack(Z_test)
     # Y_test = np.array(Y_test)
+
+    
+    # Analysis of training data
+    print("\nTraining Dataset Analysis:")
+    print(f"Z_train shape: {Z_train.shape}")
+    print(f"Y_train shape: {Y_train.shape}")
+
+    # Calculate label distribution for training set
+    unique_train_labels, train_counts = np.unique(Y_train, return_counts=True)
+    train_distribution = {f"state_{label}": count/len(Y_train) for label, count in zip(unique_train_labels, train_counts)}
+    
+    print("\nTraining Label Distribution:")
+    for label, fraction in sorted(train_distribution.items()):
+        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train))} samples)")
+
+    # Analysis of validation data
+    print("\nValidation Dataset Analysis:")
+    print(f"Z_val shape: {Z_val.shape}")
+    print(f"Y_val shape: {Y_val.shape}")
+    
+    # Calculate label distribution for validation set
+    unique_val_labels, val_counts = np.unique(Y_val, return_counts=True)
+    val_distribution = {f"state_{label}": count/len(Y_val) for label, count in zip(unique_val_labels, val_counts)}
+    
+    print("\nValidation Label Distribution:")
+    for label, fraction in sorted(val_distribution.items()):
+        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_val))} samples)")
 
 
     probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=2000, learning_rate=0.005, batch_size=200)
