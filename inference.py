@@ -903,8 +903,9 @@ def train_chromatin_state_probe(
         for ct in train_chromatin_state_data[chr].keys():
             for region, z in train_chromatin_state_data[chr][ct]:
                 z = z.squeeze(0)
+                annots = region[3]
                 for bin in range(len(region)):
-                    label = region[bin]
+                    label = annots[bin]
                     latent_vector = z[bin]
 
                     if label is not None:
