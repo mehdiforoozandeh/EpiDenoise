@@ -822,10 +822,11 @@ def train_chromatin_state_probe(
                     ])
     
 
-    input("enter to continue")
+    # input("enter to continue")
     input_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
     for chr in chrs:
         input_data[chr] = {}
+        candi.chr = chr
         
         # Load chromatin state data for each cell type in training split
         for pair in splits['train']:
