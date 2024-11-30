@@ -1010,7 +1010,7 @@ def train_chromatin_state_probe(
                         except:
                             print(start, end, end - start)
                             print(region[1], region[2], region[2] - region[1])
-                            print(x_input.shape, seq_input.shapes, mx_input.shapes)
+                            print(x_input.shape, seq_input.shape, mx_input.shape)
 
                     z = z.cpu()
                     chromatin_state_data[chr][cs_name][idx] = (region, z)
