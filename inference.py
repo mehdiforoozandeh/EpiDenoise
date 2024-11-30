@@ -1084,7 +1084,7 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
-    num_train_regions=5000, num_val_regions=100, num_test_regions=30, 
+    num_train_regions=100000, num_val_regions=100, num_test_regions=30, 
     train_chrs=["chr19"], val_chrs=["chrX"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True):
 
