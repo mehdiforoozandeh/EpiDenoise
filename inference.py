@@ -845,7 +845,6 @@ def train_chromatin_state_probe(
                 with torch.no_grad():
                     z = candi.model.encode(x_input, seq_input, mx_input)
 
-                print(z.shape)
 
                 # Optional: Move z back to CPU if needed for storage
                 z = z.cpu()
