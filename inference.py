@@ -607,7 +607,7 @@ class ChromatinStateProbe(nn.Module):
 
             self.train(X, Y, learning_rate)
 
-def prepare_chromatin_state_dataset(solar_data_path="/project/compbio-lab/encode_data/"):
+def prepare_chromatin_state_dataset_eic(solar_data_path="/project/compbio-lab/encode_data/"):
     bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
     # print(bios_names)
 
@@ -742,7 +742,7 @@ def train_chromatin_state_probe(
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
-    splits = prepare_chromatin_state_dataset(dataset_path)
+    splits = prepare_chromatin_state_dataset_eic(dataset_path)
     
     chromatin_state_data = {} # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
     # Process each chromosome
@@ -891,8 +891,8 @@ def train_chromatin_state_probe(
 
     print(chromatin_state_data.keys())
     print(chromatin_state_data["chrX"].keys())
-    print(chromatin_state_data["chrX"]["H1-hESC"])
-    print(chromatin_state_data["chrX"]["H1-hESC"][-1])
+    print(chromatin_state_data["chrX"][list(chromatin_state_data["chrX"].keys())[0]])
+    print(chromatin_state_data["chrX"][list(chromatin_state_data["chrX"].keys())[0]][-1])
 
 
 
