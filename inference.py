@@ -234,7 +234,7 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
-    def get_latent_representations_cropped(self, X, mX, seq=None, crop_percent=0.1):
+    def get_latent_representations_cropped(self, X, mX, imp_target=[], seq=None, crop_percent=0.1):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
         stride = self.context_length - (crop_size * 2)
