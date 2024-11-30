@@ -908,6 +908,8 @@ def train_chromatin_state_probe(
                     latent_vector = z[bin]
 
                 if label is not None:
+                    print(latent_vector.shape)
+                    print(label.shape)
                     Z.append(latent_vector)
                     Y.append(label)
     
@@ -922,8 +924,8 @@ def train_chromatin_state_probe(
     assert None not in Y, "Found None values in labels"
     
     # Convert Y to numpy for unique value analysis
-    Y_np = Y.numpy()
-    unique_labels = np.unique(Y_np)
+    # Y_np = Y.numpy()
+    unique_labels = np.unique(Y)
     print(f"Number of unique labels: {len(unique_labels)}")
     print(f"Unique labels: {unique_labels}")
 
