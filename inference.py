@@ -1298,62 +1298,62 @@ def train_chromatin_state_probe(
     print(f"Z_train shape: {Z_train.shape}")
     print(f"Y_train shape: {Y_train.shape}")
 
-    # Calculate label distribution for training set
-    unique_train_labels, train_counts = np.unique(Y_train, return_counts=True)
-    min_count = min(train_counts)  # Get the count of the least represented class
+    # # Calculate label distribution for training set
+    # unique_train_labels, train_counts = np.unique(Y_train, return_counts=True)
+    # min_count = min(train_counts)  # Get the count of the least represented class
     
-    # Create stratified indices
-    stratified_indices = []
-    for label in unique_train_labels:
-        label_indices = np.where(Y_train == label)[0]
-        # Randomly select min_count samples from each class
-        selected_indices = np.random.choice(
-            label_indices, 
-            size=min_count, 
-            replace=len(label_indices) < min_count  # Allow replacement if we don't have enough samples
-        )
-        stratified_indices.extend(selected_indices)
+    # # Create stratified indices
+    # stratified_indices = []
+    # for label in unique_train_labels:
+    #     label_indices = np.where(Y_train == label)[0]
+    #     # Randomly select min_count samples from each class
+    #     selected_indices = np.random.choice(
+    #         label_indices, 
+    #         size=min_count, 
+    #         replace=len(label_indices) < min_count  # Allow replacement if we don't have enough samples
+    #     )
+    #     stratified_indices.extend(selected_indices)
     
-    # Shuffle the stratified indices
-    np.random.shuffle(stratified_indices)
+    # # Shuffle the stratified indices
+    # np.random.shuffle(stratified_indices)
     
-    # Create stratified datasets
-    Z_train_stratified = Z_train[stratified_indices]
-    Y_train_stratified = Y_train[stratified_indices]
+    # # Create stratified datasets
+    # Z_train_stratified = Z_train[stratified_indices]
+    # Y_train_stratified = Y_train[stratified_indices]
     
-    # Print distribution after stratification
-    print("\nTraining Dataset Analysis (After Stratification):")
-    print(f"Z_train_stratified shape: {Z_train_stratified.shape}")
-    print(f"Y_train_stratified shape: {Y_train_stratified.shape}")
+    # # Print distribution after stratification
+    # print("\nTraining Dataset Analysis (After Stratification):")
+    # print(f"Z_train_stratified shape: {Z_train_stratified.shape}")
+    # print(f"Y_train_stratified shape: {Y_train_stratified.shape}")
     
-    unique_stratified_labels, stratified_counts = np.unique(Y_train_stratified, return_counts=True)
-    stratified_distribution = {
-        f"state_{label}": count/len(Y_train_stratified) 
-        for label, count in zip(unique_stratified_labels, stratified_counts)
-    }
+    # unique_stratified_labels, stratified_counts = np.unique(Y_train_stratified, return_counts=True)
+    # stratified_distribution = {
+    #     f"state_{label}": count/len(Y_train_stratified) 
+    #     for label, count in zip(unique_stratified_labels, stratified_counts)
+    # }
     
-    print("\nStratified Training Label Distribution:")
-    for label, fraction in sorted(stratified_distribution.items()):
-        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train_stratified))} samples)")
+    # print("\nStratified Training Label Distribution:")
+    # for label, fraction in sorted(stratified_distribution.items()):
+    #     print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train_stratified))} samples)")
 
-    # Analysis of validation data remains the same
-    print("\nValidation Dataset Analysis:")
-    print(f"Z_val shape: {Z_val.shape}")
-    print(f"Y_val shape: {Y_val.shape}")
+    # # Analysis of validation data remains the same
+    # print("\nValidation Dataset Analysis:")
+    # print(f"Z_val shape: {Z_val.shape}")
+    # print(f"Y_val shape: {Y_val.shape}")
     
-    # Calculate label distribution for validation set
-    unique_val_labels, val_counts = np.unique(Y_val, return_counts=True)
-    val_distribution = {
-        f"state_{label}": count/len(Y_val) 
-        for label, count in zip(unique_val_labels, val_counts)
-    }
+    # # Calculate label distribution for validation set
+    # unique_val_labels, val_counts = np.unique(Y_val, return_counts=True)
+    # val_distribution = {
+    #     f"state_{label}": count/len(Y_val) 
+    #     for label, count in zip(unique_val_labels, val_counts)
+    # }
     
-    print("\nValidation Label Distribution:")
-    for label, fraction in sorted(val_distribution.items()):
-        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_val))} samples)")
+    # print("\nValidation Label Distribution:")
+    # for label, fraction in sorted(val_distribution.items()):
+    #     print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_val))} samples)")
 
     # Use stratified training data for model training
-    probe.train_loop(Z_train_stratified, Y_train_stratified, Z_val, Y_val, 
+    probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
                     num_epochs=500, learning_rate=0.005, batch_size=100)
 
 
