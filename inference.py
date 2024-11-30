@@ -370,7 +370,7 @@ class CANDIPredictor:
             print(f"Missing Z predictions for positions: {torch.where(~z_coverage_mask)[0]}")
             raise ValueError("Missing Z predictions")
         
-        return n, p, mu, var, Z
+        return Z
 
 
 
