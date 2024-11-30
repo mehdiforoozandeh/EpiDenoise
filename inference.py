@@ -816,7 +816,6 @@ def train_chromatin_state_probe(
                     ])
     
     for chr in chrs:
-        input_data[chr] = {}
         candi.chr = chr
         
         # Load chromatin state data for each cell type in training split
@@ -868,7 +867,7 @@ def train_chromatin_state_probe(
 # ])
                 
 
-
+p
     # print(f"\nSelected {len(selected_regions)} regions from {chr}")
     # print(f"Average entropy of selected regions: {np.mean([r['entropy'] for r in selected_regions]):.3f}")
 
