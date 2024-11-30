@@ -234,6 +234,11 @@ class CANDIPredictor:
         Z = Z.view(Z.shape[0] * Z.shape[1], Z.shape[-1])
         return n, p, mu, var, Z
 
+    def get_latent_representations_cropped(self, X, mX, seq=None, crop_percent=0.1):
+        pass
+
+
+
     def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
@@ -580,6 +585,12 @@ the following are different probes that i will implement
     - output: expression (TPM) prediction
     - loss function: mean squared error
 """
+
+def latent_reproducibility(model_path, hyper_parameters_path, chr="chr21", dataset_path="/project/compbio-lab/encode_data/"):
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
+
+    z1 = candi.get_latent_representations(X1, mX1, mY1, avX1, seq=seq1)
+    z2 = candi.get_latent_representations(X2, mX2, mY2, avX2, seq=seq2)
 
 # class ChromatinStateProbe(nn.Module):
 #     def __init__(self, input_dim, output_dim):
@@ -1145,8 +1156,7 @@ def train_chromatin_state_probe(
 
     # Use stratified training data for model training
     probe.train_loop(Z_train_stratified, Y_train_stratified, Z_val, Y_val, 
-                    num_epochs=2000, learning_rate=0.005, batch_size=200)
-
+                    num_epochs=500, learning_rate=0.005, batch_size=100)
 
 
 if __name__ == "__main__":
@@ -1154,7 +1164,13 @@ if __name__ == "__main__":
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
     eic = True
 
-    train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
+    if sys.argv[1] == "cs_probe":
+        train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
 
+    elif sys.argv[1] == "latent_repr":
+        repr1 = "ENCBS674MPN"
+        repr2 = "ENCBS639AAA"
+
+        latent_reproducibility(model_path, hyper_parameters_path, repr1, repr2, dataset_path="/project/compbio-lab/encode_data/")
     
 
