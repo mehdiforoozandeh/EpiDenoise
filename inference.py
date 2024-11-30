@@ -812,7 +812,7 @@ def train_chromatin_state_probe(
 
             for ct in cell_types:
                 if ct.split("|")[0] not in chromatin_state_data[chr]:
-                    chromatin_state_data[chr][ct] = []
+                    chromatin_state_data[chr][ct.split("|")[0]] = []
 
                 chromatin_state_data[chr][ct.split("|")[0]].append([
                     region['chr'], region['start'], region['end'], 
