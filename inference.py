@@ -58,7 +58,7 @@ class CANDIPredictor:
             "pad": -3
             }
 
-    def load_encoder_input_bios(self, bios_name, x_dsf, chr=None, y_dsf=1):
+    def load_encoder_input_bios(self, bios_name, x_dsf=1, chr=None, y_dsf=1):
         print("loading encoder inputs for biosample: ", bios_name)
         if chr == None:
             chr = self.chr
@@ -235,7 +235,150 @@ class CANDIPredictor:
         return n, p, mu, var, Z
 
     def get_latent_representations_cropped(self, X, mX, seq=None, crop_percent=0.1):
-        pass
+        # Calculate dimensions
+        crop_size = int(self.context_length * crop_percent)
+        stride = self.context_length - (crop_size * 2)
+        num_windows = X.shape[0]
+        total_length = num_windows * self.context_length
+
+        Z_crop_size = int(crop_size * (self.model.l2 / self.model.l1))
+        
+        # Flatten input tensors
+        X_flat = X.view(-1, X.shape[-1])
+        if self.DNA:
+            seq_flat = seq.view(-1, seq.shape[-1])
+        
+        # Initialize output tensors
+        Z = torch.zeros((num_windows * self.model.l2, self.model.latent_dim), device="cpu", dtype=torch.float32)
+        z_coverage_mask = torch.zeros(num_windows * self.model.l2, dtype=torch.bool, device="cpu")  # New mask for Z
+        
+        # Collect all windows and their metadata
+        window_data = []
+        target_regions = []
+        
+        # Process sliding windows
+        for i in range(0, total_length, stride):
+            if i + self.context_length >= total_length:
+                i = total_length - self.context_length
+                
+            window_end = i + self.context_length
+            x_window = X_flat[i:window_end].unsqueeze(0)
+            
+            # Use first row of metadata tensors (verified identical)
+            mx_window = mX[0].unsqueeze(0)
+            
+            if self.DNA:
+                seq_start = i * self.resolution
+                seq_end = window_end * self.resolution
+                seq_window = seq_flat[seq_start:seq_end].unsqueeze(0)
+            
+            # Determine prediction regions
+            if i == 0:  # First window
+                start_idx = 0
+                end_idx = self.context_length - crop_size
+            elif i + self.context_length >= total_length:  # Last window
+                start_idx = crop_size
+                end_idx = self.context_length
+            else:  # Middle windows
+                start_idx = crop_size
+                end_idx = self.context_length - crop_size
+                
+            target_start = i + start_idx
+            target_end = i + end_idx
+            
+            # Store window data and target regions
+            window_info = {
+                'x': x_window,
+                'mx': mx_window,
+                'seq': seq_window if self.DNA else None
+            }
+            target_info = {
+                'start_idx': start_idx,
+                'end_idx': end_idx,
+                'target_start': target_start,
+                'target_end': target_end
+            }
+            
+            window_data.append(window_info)
+            target_regions.append(target_info)
+        
+        # Process windows in batches
+        for i in range(0, len(window_data), self.batch_size):
+            batch_windows = window_data[i:i + self.batch_size]
+            batch_targets = target_regions[i:i + self.batch_size]
+            
+            # Prepare batch tensors
+            x_batch = torch.cat([w['x'] for w in batch_windows])
+            mx_batch = torch.cat([w['mx'] for w in batch_windows])
+            
+            if self.DNA:
+                seq_batch = torch.cat([w['seq'] for w in batch_windows])
+            
+            # Apply imp_target if specified
+            if len(imp_target) > 0:
+                x_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+                mx_batch[:, :, imp_target] = self.token_dict["cloze_mask"]
+            
+            # Get predictions
+            with torch.no_grad():
+                if self.DNA:
+                    outputs = self.model.encode(
+                        x_batch.float().to(self.device),
+                        seq_batch.to(self.device),
+                        mx_batch.to(self.device),
+                        return_z=True
+                    )
+                else:
+                    outputs = self.model.encode(
+                        x_batch.float().to(self.device),
+                        mx_batch.to(self.device),
+                        return_z=True
+                    )
+                
+                outputs_Z = outputs
+            
+            # Update predictions for each window in batch
+            for j, (out_Z, target) in enumerate(zip(outputs_Z, batch_targets)):
+                start_idx = target['start_idx']
+                end_idx = target['end_idx']
+                target_start = target['target_start']
+                target_end = target['target_end']
+
+                i = target_start - start_idx
+
+                i_z = i * (self.model.l2 / self.model.l1)
+                if start_idx == 0:
+                    start_z_idx = 0
+                elif start_idx == crop_size:
+                    start_z_idx = Z_crop_size
+
+                if end_idx == self.context_length - crop_size:
+                    end_z_idx = self.model.l2 - Z_crop_size
+                elif end_idx == self.context_length:
+                    end_z_idx = self.model.l2
+
+                target_z_start = int(i_z + start_z_idx)
+                target_z_end = int(i_z + end_z_idx)
+                
+                Z[target_z_start:target_z_end, :] = out_Z[start_z_idx:end_z_idx, :].cpu()
+                
+                coverage_mask[target_start:target_end] = True
+                z_coverage_mask[target_z_start:target_z_end] = True  # Track Z coverage
+            
+            del outputs
+            torch.cuda.empty_cache()
+        
+        # Verify complete coverage for both signal and Z
+        if not coverage_mask.all():
+            print(f"Missing predictions for positions: {torch.where(~coverage_mask)[0]}")
+            raise ValueError("Missing signal predictions")
+            
+        if not z_coverage_mask.all():
+            print(f"Missing Z predictions for positions: {torch.where(~z_coverage_mask)[0]}")
+            raise ValueError("Missing Z predictions")
+        
+        return n, p, mu, var, Z
+
 
 
 
@@ -586,11 +729,27 @@ the following are different probes that i will implement
     - loss function: mean squared error
 """
 
-def latent_reproducibility(model_path, hyper_parameters_path, chr="chr21", dataset_path="/project/compbio-lab/encode_data/"):
+def latent_reproducibility(
+    model_path, hyper_parameters_path, 
+    repr1_bios, repr2_bios, 
+    chr="chr21", dataset_path="/project/compbio-lab/encode_data/"):
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
 
-    z1 = candi.get_latent_representations(X1, mX1, mY1, avX1, seq=seq1)
-    z2 = candi.get_latent_representations(X2, mX2, mY2, avX2, seq=seq2)
+    candi.chr = chr
+
+    X1, seq1, mX1 = candi.load_encoder_input_bios(repr1_bios, dataset_path=dataset_path)
+    X2, seq2, mX2 = candi.load_encoder_input_bios(repr2_bios, dataset_path=dataset_path)
+
+    print("X1 shape:", X1.shape)
+    print("X2 shape:", X2.shape)
+    print("seq1 shape:", seq1.shape)
+    print("seq2 shape:", seq2.shape)
+    print("mX1 shape:", mX1.shape)
+    print("mX2 shape:", mX2.shape)
+    exit()
+
+    z1 = candi.get_latent_representations_cropped(X1, mX1, mY1, avX1, seq=seq1)
+    z2 = candi.get_latent_representations_cropped(X2, mX2, mY2, avX2, seq=seq2)
 
 # class ChromatinStateProbe(nn.Module):
 #     def __init__(self, input_dim, output_dim):
