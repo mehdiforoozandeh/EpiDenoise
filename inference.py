@@ -923,7 +923,7 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:5]
+    splits["train"] = splits["train"][:1]
     # splits["test"] = splits["test"][:1]
     splits["val"] = splits["val"][:1]
     
@@ -1084,7 +1084,7 @@ def train_chromatin_state_probe(
     # Z_test = np.stack(Z_test)
     # Y_test = np.array(Y_test)
 
-    
+
     # Analysis of training data
     print("\nTraining Dataset Analysis:")
     print(f"Z_train shape: {Z_train.shape}")
