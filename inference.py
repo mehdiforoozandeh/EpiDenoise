@@ -57,6 +57,48 @@ class CANDIPredictor:
             "pad": -3
             }
 
+    def load_encoder_input_bios(self, bios_name, x_dsf, chr=None, y_dsf=1):
+        print("loading encoder inputs for biosample: ", bios_name)
+        if chr == None:
+            chr = self.chr
+
+        if self.eic:
+            if self.split == "test":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr, 0, self.chr_sizes[chr]], x_dsf)
+            elif self.split == "val":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr, 0, self.chr_sizes[chr]], x_dsf)
+
+        else:
+            temp_x, temp_mx = self.dataset.load_bios(bios_name, [chr, 0, self.chr_sizes[chr]], x_dsf)
+            X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+            del temp_x, temp_mx
+            
+        # print(temp_x.keys(), temp_mx.keys())
+        X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+        del temp_x, temp_mx
+
+        if self.DNA:
+            seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
+
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X, = X[:num_rows, :]
+
+        if self.DNA:
+            seq = seq[:num_rows*self.resolution, :]
+            
+        X = X.view(-1, self.context_length, X.shape[-1])
+
+        if self.DNA:
+            seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
+
+        mX= mX.expand(X.shape[0], -1, -1)
+        avX = avX.expand(X.shape[0], -1)
+
+        if self.DNA:
+            return X, seq, mX
+        else:
+            return X, mX
+
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
         
@@ -504,7 +546,6 @@ class CANDIPredictor:
         return metrics
 
 
-
 """
 # given a model, i want to train a linear probe on the latent space
 # and evaluate the performance of the linear probe on the linear probe dataset.
@@ -831,7 +872,6 @@ def train_chromatin_state_probe(
             avY = avY[0]
 
             for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
-                print(bios_name, cs_name)
                 start = region[1] // 25
                 end = region[2] // 25
 
