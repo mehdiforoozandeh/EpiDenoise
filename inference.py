@@ -776,8 +776,9 @@ class ChromatinStateProbe(nn.Module):
             avg_loss = total_loss / n_batches
             print(f'Epoch {epoch + 1}/{num_epochs}: Training Loss: {avg_loss:.4f}')
 
-            # Validate every epoch
-            val_loss, val_acc = self.validate(X_val, y_val)
+            if epoch % 5 == 0:
+                # Validate every epoch
+                val_loss, val_acc = self.validate(X_val, y_val)
 
             # Save best model
             if val_loss < best_val_loss:
