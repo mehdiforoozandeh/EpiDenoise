@@ -1008,9 +1008,8 @@ def train_chromatin_state_probe(
                         try:
                             z = candi.model.encode(x_input, seq_input, mx_input)
                         except:
-                            print(start, end, end - start)
-                            print(region[1], region[2], region[2] - region[1])
-                            print(x_input.shape, seq_input.shape, mx_input.shape)
+                            print(f"Popping {region[0]}:{region[1]}-{region[2]} from {cs_name}")
+                            chromatin_state_data[chr][cs_name].pop(idx)
 
                     z = z.cpu()
                     chromatin_state_data[chr][cs_name][idx] = (region, z)
@@ -1085,150 +1084,68 @@ def train_chromatin_state_probe(
     # Y_test = np.array(Y_test)
 
 
-    # Analysis of training data
-    print("\nTraining Dataset Analysis:")
+    # Analysis and stratification of training data
+    print("\nTraining Dataset Analysis (Before Stratification):")
     print(f"Z_train shape: {Z_train.shape}")
     print(f"Y_train shape: {Y_train.shape}")
 
     # Calculate label distribution for training set
     unique_train_labels, train_counts = np.unique(Y_train, return_counts=True)
-    train_distribution = {f"state_{label}": count/len(Y_train) for label, count in zip(unique_train_labels, train_counts)}
+    min_count = min(train_counts)  # Get the count of the least represented class
     
-    print("\nTraining Label Distribution:")
-    for label, fraction in sorted(train_distribution.items()):
-        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train))} samples)")
+    # Create stratified indices
+    stratified_indices = []
+    for label in unique_train_labels:
+        label_indices = np.where(Y_train == label)[0]
+        # Randomly select min_count samples from each class
+        selected_indices = np.random.choice(
+            label_indices, 
+            size=min_count, 
+            replace=len(label_indices) < min_count  # Allow replacement if we don't have enough samples
+        )
+        stratified_indices.extend(selected_indices)
+    
+    # Shuffle the stratified indices
+    np.random.shuffle(stratified_indices)
+    
+    # Create stratified datasets
+    Z_train_stratified = Z_train[stratified_indices]
+    Y_train_stratified = Y_train[stratified_indices]
+    
+    # Print distribution after stratification
+    print("\nTraining Dataset Analysis (After Stratification):")
+    print(f"Z_train_stratified shape: {Z_train_stratified.shape}")
+    print(f"Y_train_stratified shape: {Y_train_stratified.shape}")
+    
+    unique_stratified_labels, stratified_counts = np.unique(Y_train_stratified, return_counts=True)
+    stratified_distribution = {
+        f"state_{label}": count/len(Y_train_stratified) 
+        for label, count in zip(unique_stratified_labels, stratified_counts)
+    }
+    
+    print("\nStratified Training Label Distribution:")
+    for label, fraction in sorted(stratified_distribution.items()):
+        print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train_stratified))} samples)")
 
-    # Analysis of validation data
+    # Analysis of validation data remains the same
     print("\nValidation Dataset Analysis:")
     print(f"Z_val shape: {Z_val.shape}")
     print(f"Y_val shape: {Y_val.shape}")
     
     # Calculate label distribution for validation set
     unique_val_labels, val_counts = np.unique(Y_val, return_counts=True)
-    val_distribution = {f"state_{label}": count/len(Y_val) for label, count in zip(unique_val_labels, val_counts)}
+    val_distribution = {
+        f"state_{label}": count/len(Y_val) 
+        for label, count in zip(unique_val_labels, val_counts)
+    }
     
     print("\nValidation Label Distribution:")
     for label, fraction in sorted(val_distribution.items()):
         print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_val))} samples)")
 
-
-    probe.train_loop(Z_train, Y_train, Z_val, Y_val, num_epochs=2000, learning_rate=0.005, batch_size=200)
-
-    """
-    chromatin_state_data = {}
-    for chr in chrs:
-        cs data = {}
-        for members of the train split:
-            chr_cs = get_chromatin_state_dataset(for the whole length of that chr)
-            cs data[celltype name] = chr_cs
-
-        all chr_cs in the cs data should have the same length. 
-        find regions with most variability across different celltypes i.e. highest entropy across celltypes
-        select top num_regions // len(chrs) of them 
-        find their corresponding coordinates : chr, start = chr_cs_index * resolution end = (chr_cs_index * resolution )+ resolution
-
-        chromatin_state_data[name of the celltype and coordinates as a list] = corresponding chromatin state 
-    """ 
-
-
-"""
-for all cellypes with chromatin state annotations:
-    match the input data to CANDI with its corresponding chromatin state annotation
-
-for all chromosomes other than chr21:
-    select num_regions random regions
-
-for each epoch:
-    for batch in range(0, num_regions, batch_size):
-        create a batch of inputs to CANDI and corresponding chromatin state annotations (batch_size regions)
-        for each region:
-            retrieve chromatin state annotation for that region
-            retrive the input data to CANDI for that region
-    
-        for that batch, get the latent representations from CANDI
-        use latent representations as input to probe
-        train probe using cross entropy loss on chromatin state annotations
-"""
-
-def test():
-    # model_path = "models/CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pt"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_test_20241125144433_params45093285.pkl"
-    # eic = True
-    # bios_name = "ENCBS674MPN"
-
-
-    model_path = "models/CANDIfull_DNA_random_mask_test_model_checkpoint_epoch0.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_test_20241125150741_params45093285.pkl"
-    eic = False
-    bios_name = "upper_lobe_of_left_lung_nonrep"
-
-    dataset_path = "/project/compbio-lab/encode_data/"
-    output_dir = "output"
-    DNA = True
-    
-    dsf = 1
-
-    CANDIP = CANDIPredictor(
-        model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, split="test", chr="chr21", resolution=25, eic=eic)
-    
-    os.makedirs(output_dir, exist_ok=True)
-
-    print("Loading biosample data for DNA analysis...")
-    if DNA:
-        X, Y, P, seq, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
-    else:
-        print("Loading biosample data for non-DNA analysis...")
-        X, Y, P, mX, mY, avX, avY = CANDIP.load_bios(bios_name, x_dsf=dsf, fill_in_y_prompt=False)
-        seq = None
-
-    # print("Evaluating leave-one-out for initial analysis...")
-    # start_time = time.time()
-    # metrics = CANDIP.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True)
-    # end_time = time.time()
-    # print(f"Evaluation with crop_edges=True took {end_time - start_time:.2f} seconds.")
-
-    print("Generating predictions with both pred and pred_cropped methods...")
-    start_time_pred = time.time()
-    n_pred, p_pred, mu_pred, var_pred, Z_pred = CANDIP.pred(X, mX, mY, avX, seq=seq, imp_target=[])
-    end_time_pred = time.time()
-    print(f"Prediction with pred method took {end_time_pred - start_time_pred:.2f} seconds.")
-
-    start_time_pred_cropped = time.time()
-    n_pred_cropped, p_pred_cropped, mu_pred_cropped, var_pred_cropped, Z_pred_cropped = CANDIP.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq, crop_percent=0.1)
-    end_time_pred_cropped = time.time()
-    print(f"Prediction with pred_cropped method took {end_time_pred_cropped - start_time_pred_cropped:.2f} seconds.")
-    
-    # Compare latent representations
-    print("\nComparing latent representations...")
-    
-    # Normalize vectors for cosine distance
-    Z_pred_norm = Z_pred / torch.norm(Z_pred, dim=1, keepdim=True)
-    Z_pred_cropped_norm = Z_pred_cropped / torch.norm(Z_pred_cropped, dim=1, keepdim=True)
-    
-    # Calculate cosine distances (1 - cosine similarity)
-    cosine_dist = 1 - torch.sum(Z_pred_norm * Z_pred_cropped_norm, dim=1)
-    
-    # Calculate euclidean distances
-    euclidean_dist = torch.norm(Z_pred - Z_pred_cropped, dim=1)
-    
-    # Define thresholds
-    cosine_thresholds = [0.001, 0.01, 0.1]
-    euclidean_thresholds = [0.1, 1.0, 10.0]
-    
-    print("\nCosine Distance Analysis:")
-    for threshold in cosine_thresholds:
-        fraction = (cosine_dist > threshold).float().mean().item()
-        print(f"Fraction of positions with cosine distance > {threshold:.3f}: {fraction:.4f}")
-    
-    print("\nEuclidean Distance Analysis:")
-    for threshold in euclidean_thresholds:
-        fraction = (euclidean_dist > threshold).float().mean().item()
-        print(f"Fraction of positions with euclidean distance > {threshold:.1f}: {fraction:.4f}")
-    
-    # Print summary statistics
-    print("\nDistance Statistics:")
-    print(f"Cosine Distance - Mean: {cosine_dist.mean():.6f}, Std: {cosine_dist.std():.6f}")
-    print(f"Euclidean Distance - Mean: {euclidean_dist.mean():.6f}, Std: {euclidean_dist.std():.6f}")
+    # Use stratified training data for model training
+    probe.train_loop(Z_train_stratified, Y_train_stratified, Z_val, Y_val, 
+                    num_epochs=2000, learning_rate=0.005, batch_size=200)
 
 
 
