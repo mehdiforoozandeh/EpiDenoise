@@ -911,9 +911,9 @@ def train_chromatin_state_probe(
                     Z.append(latent_vector)
                     Y.append(label)
     
-    # Convert lists to numpy arrays for shape inspection
-    Z = np.array(Z)
-    Y = np.array(Y)
+    # Convert lists to tensors first since Z contains torch tensors
+    Z = torch.stack(Z)
+    Y = torch.tensor(Y)
     
     print(f"Shape of Z (latent vectors): {Z.shape}")
     print(f"Shape of Y (labels): {Y.shape}")
@@ -921,15 +921,11 @@ def train_chromatin_state_probe(
     # Assert no None labels
     assert None not in Y, "Found None values in labels"
     
-    # Print number of unique labels
-    unique_labels = np.unique(Y)
+    # Convert Y to numpy for unique value analysis
+    Y_np = Y.numpy()
+    unique_labels = np.unique(Y_np)
     print(f"Number of unique labels: {len(unique_labels)}")
     print(f"Unique labels: {unique_labels}")
-    
-    # Convert to tensors
-    Z = torch.tensor(Z)
-    Y = torch.tensor(Y)
-
 
 
 
