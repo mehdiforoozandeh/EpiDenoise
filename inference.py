@@ -915,7 +915,7 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
     num_train_regions=2000, num_val_regions=1000, num_test_regions=30, 
-    train_chrs=["chr19", "chr20", "chr21"], val_chrs=["chrX"], test_chrs=["chr21"],
+    train_chrs=["chr19"], val_chrs=["chrX"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic)
@@ -923,7 +923,7 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:5]
+    splits["train"] = splits["train"][:6]
     # splits["test"] = splits["test"][:1]
     splits["val"] = splits["val"][:3]
     
