@@ -1,3 +1,4 @@
+import random
 import torch
 import pickle
 import os, time, gc
@@ -686,7 +687,6 @@ def prepare_chromatin_state_dataset(solar_data_path="/project/compbio-lab/encode
         })
 
     # Shuffle the pairs randomly
-    import random
     random.seed(42)  # For reproducibility
     random.shuffle(paired_data)
 
@@ -750,7 +750,7 @@ def train_chromatin_state_probe(
         cs_data = {}
         
         # Load chromatin state data for each cell type in training split
-        for pair in splits['train']:
+        for pair in splits['train'][-3:]:
             bios_name = pair['biosample']
             cs_name = pair['chromatin_state']
             cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
@@ -859,7 +859,7 @@ def train_chromatin_state_probe(
     for chr in chrs:
         candi.chr = chr
         # Load chromatin state data for each cell type in training split
-        for pair in splits['train']:
+        for pair in splits['train'][-3:]:
             bios_name = pair['biosample']
             cs_name = pair['chromatin_state']
             X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
