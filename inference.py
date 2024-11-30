@@ -735,8 +735,8 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
-    num_train_regions=30, num_val_regions=30, num_test_regions=30, 
-    train_chrs=["chr1"], val_chrs=["chrX"], test_chrs=["chr21"],
+    num_train_regions=50, num_val_regions=30, num_test_regions=30, 
+    train_chrs=["chr19", "chr20"], val_chrs=["chrX"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200,
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
@@ -753,7 +753,7 @@ def train_chromatin_state_probe(
             cs_data = {}
 
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-3:]:
+            for pair in splits[split][-2:]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
@@ -894,13 +894,17 @@ def train_chromatin_state_probe(
 
     # structure ->  chr : cell_type : ([chromosome, start_pos, end_pos, chromatin_state_array], z_tensor)
     train_chromatin_state_data = prepare_data("train", train_chrs, num_train_regions)
-    val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
-    test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
+    # val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
+    # test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
+    
+    Z = [] 
+    Y = []
+    for chr in train_chromatin_state_data.keys():
+        for ct in train_chromatin_state_data[chr].keys():
+            for region, z in train_chromatin_state_data[chr][ct]:
+                print(chr, ct, region[3].shape, z.shape)
 
-    print(train_chromatin_state_data.keys())
-    print(train_chromatin_state_data["chr1"].keys())
-    print(train_chromatin_state_data["chr1"][list(train_chromatin_state_data["chr1"].keys())[0]])
-    print(train_chromatin_state_data["chr1"][list(train_chromatin_state_data["chr1"].keys())[0]][-1])
+
 
 
 
