@@ -844,12 +844,14 @@ def train_chromatin_state_probe(
                 # - CS data: [chr, start, end, chromatin_state_array]
                 # - CANDI inputs: [X , DNA sequence, metadata X, metadata Y, available X, available Y]
 
-                candi.model.encode
-                (X[start:end].unsqueeze(0), seq[region[1]:region[2]].unsqueeze(0), mX.unsqueeze(0))
+                z = candi.model.encode(X[start:end].unsqueeze(0), seq[region[1]:region[2]].unsqueeze(0), mX.unsqueeze(0))
 
-                chromatin_state_data[chr][cs_name][idx] = (
-                    chromatin_state_data[chr][cs_name][idx], 
-                    [X[start:end], seq[region[1]:region[2]], mX, mY, avX, avY])
+                print(z.shape)
+
+
+                # chromatin_state_data[chr][cs_name][idx] = (
+                #     chromatin_state_data[chr][cs_name][idx], 
+                #     [X[start:end], seq[region[1]:region[2]], mX, mY, avX, avY])
             
             del X, Y, P, seq, mX, mY, avX, avY
             gc.collect()
