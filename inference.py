@@ -733,18 +733,19 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
     
     return splits
 
-def train_chromatin_state_probe(
+def prepare_chromatin_state_data_eic(
     model_path, hyper_parameters_path, 
     num_train_regions=1000, num_val_regions=30, num_test_regions=30, 
     train_chrs=["chr19", "chr20"], val_chrs=["chrX"], test_chrs=["chr21"],
-    dataset_path="/project/compbio-lab/encode_data/", resolution=200,
-    DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
+    dataset_path="/project/compbio-lab/encode_data/", resolution=200):
 
-    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=DNA, eic=eic)
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
+    print(splits)
+    exit()
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -753,7 +754,7 @@ def train_chromatin_state_probe(
             cs_data = {}
 
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-5:]:
+            for pair in splits[split]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
@@ -830,7 +831,7 @@ def train_chromatin_state_probe(
         for chr in chrs:
             candi.chr = chr
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-5:]:
+            for pair in splits[split]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
@@ -861,12 +862,10 @@ def train_chromatin_state_probe(
         return chromatin_state_data
 
     # structure ->  chr : cell_type : ([chromosome, start_pos, end_pos, chromatin_state_array], z_tensor)
-    train_chromatin_state_data = prepare_data("train", train_chrs, num_train_regions)
-    # val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
-    # test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
     
-    Z = [] 
-    Y = []
+    train_chromatin_state_data = prepare_data("train", train_chrs, num_train_regions)
+    Z_train = [] 
+    Y_train = []
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
             for region, z in train_chromatin_state_data[chr][ct]:
@@ -877,24 +876,54 @@ def train_chromatin_state_probe(
                     latent_vector = z[bin]
 
                     if label is not None:
-                        Z.append(latent_vector)
-                        Y.append(label)
+                        Z_train.append(latent_vector)
+                        Y_train.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
-    Z = np.stack(Z)
-    Y = np.array(Y)
+    Z_train = np.stack(Z)
+    Y_train = np.array(Y)
+
+    val_chromatin_state_data = prepare_data("val", train_chrs, num_val_regions)
+    Z_val = [] 
+    Y_val = []
+    for chr in val_chromatin_state_data.keys():
+        for ct in val_chromatin_state_data[chr].keys():
+            for region, z in val_chromatin_state_data[chr][ct]:
+                z = z.squeeze(0)
+                annots = region[3]
+                for bin in range(len(region)):
+                    label = annots[bin]
+                    latent_vector = z[bin]
+
+                    if label is not None:
+                        Z_val.append(latent_vector)
+                        Y_val.append(label)
     
-    print(f"Shape of Z (latent vectors): {Z.shape}")
-    print(f"Shape of Y (labels): {Y.shape}")
+    # Convert lists to tensors first since Z contains torch tensors
+    Z_val = np.stack(Z)
+    Y_val = np.array(Y)
+
+    test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
+    Z_test = [] 
+    Y_test = []
+    for chr in test_chromatin_state_data.keys():
+        for ct in test_chromatin_state_data[chr].keys():
+            for region, z in test_chromatin_state_data[chr][ct]:
+                z = z.squeeze(0)
+                annots = region[3]
+                for bin in range(len(region)):
+                    label = annots[bin]
+                    latent_vector = z[bin]
+
+                    if label is not None:
+                        Z_test.append(latent_vector)
+                        Y_test.append(label)
     
-    # Assert no None labels
-    assert None not in Y, "Found None values in labels"
-    
-    # Convert Y to numpy for unique value analysis
-    # Y_np = Y.numpy()
-    unique_labels = np.unique(Y)
-    print(f"Number of unique labels: {len(unique_labels)}")
-    print(f"Unique labels: {unique_labels}")
+    # Convert lists to tensors first since Z contains torch tensors
+    Z_test = np.stack(Z)
+    Y_test = np.array(Y)
+
+
 
 
 
