@@ -885,7 +885,7 @@ def train_chromatin_state_probe(
 
                     z = z.cpu()
 
-                    train_chromatin_state_data[chr][cs_name][idx] = (region, z)
+                    chromatin_state_data[chr][cs_name][idx] = (region, z)
                 
                 del X, seq, mX
                 gc.collect()
