@@ -775,54 +775,25 @@ def train_chromatin_state_probe(
             # Find valid columns (no None values)
             valid_cols = ~np.any(cs_matrix == None, axis=0)
             
-            # Find unique labels in cs_matrix
-            unique_labels = np.unique(cs_matrix[cs_matrix != None])
-            assert len(unique_labels) == 18, f"Expected 18 unique labels, got {len(unique_labels)}"
-            
-            # Create coverage matrix (18 states × regions)
-            coverage_matrix = np.zeros((len(unique_labels), cs_matrix.shape[1]))
-            
-            # Calculate coverage percentages for each unique label in each region
-            for i, label in enumerate(unique_labels):
-                coverage_matrix[i, :] = np.mean(cs_matrix == label, axis=0)
+            # Find valid indices (where no None values exist)
+            valid_indices = np.where(valid_cols)[0]
 
-            label_soft_coverage = np.mean(coverage_matrix, axis=1)
-
-            # Calculate entropy for each region
-            epsilon = 1e-10  # Small constant to avoid log(0)
-            entropy = -np.sum(coverage_matrix * np.log(coverage_matrix + epsilon), axis=0)
-            
-            # Only consider entropy for valid columns
-            entropy[~valid_cols] = -np.inf
-
-            # Select top regions based on entropy, ensuring minimum distance between regions
+            # Calculate number of regions needed per chromosome
             regions_per_chr = num_regions // len(chrs)
             min_distance = candi.model.l1 * 25   # minimum distance between regions
+
+            # Randomly select indices from valid indices
+            if len(valid_indices) < regions_per_chr:
+                print(f"Warning: Only {len(valid_indices)} valid regions available for {chr}, less than requested {regions_per_chr}")
+                top_indices = valid_indices
+            else:
+                # Randomly select regions_per_chr indices
+                top_indices = np.random.choice(valid_indices, size=regions_per_chr, replace=False)
+
+            # Sort indices for consistency
+            top_indices = np.sort(top_indices)
+
             
-            # Get all indices sorted by entropy (highest to lowest)
-            sorted_indices = np.argsort(entropy)[::-1]
-            
-            # Initialize selected indices list
-            top_indices = []
-            
-            # Iterate through sorted indices to find valid regions
-            for idx in sorted_indices:
-                # Skip if we already have enough regions
-                if len(top_indices) >= regions_per_chr:
-                    break
-                    
-                # Check if current index is far enough from all selected indices
-                is_valid = True
-                for selected_idx in top_indices:
-                    if abs(idx - selected_idx) < min_distance:
-                        is_valid = False
-                        break
-                
-                # Add index if it's valid
-                if is_valid:
-                    top_indices.append(idx)
-            
-            top_indices = np.array(top_indices)
 
             # Store selected regions and their coordinates
             selected_regions = []
@@ -844,7 +815,6 @@ def train_chromatin_state_probe(
 
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
             for region in selected_regions:
-                
                 
                 # print(f"CS data length: {len(cs_data[ct])}, Region start: {region['start']}, Region end: {region['end']}, "
                 #     f"Region size: {region['end'] - region['start']}, Bins: {(region['end'] - region['start']) // resolution}")
