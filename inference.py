@@ -753,7 +753,7 @@ def train_chromatin_state_probe(
             cs_data = {}
 
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-2:]:
+            for pair in splits[split][-5:]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
@@ -862,7 +862,7 @@ def train_chromatin_state_probe(
         for chr in chrs:
             candi.chr = chr
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split][-2:]:
+            for pair in splits[split][-5:]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
@@ -915,7 +915,6 @@ def train_chromatin_state_probe(
     # Convert lists to tensors first since Z contains torch tensors
     Z = np.stack(Z)
     Y = np.array(Y)
-    print(Y)
     
     print(f"Shape of Z (latent vectors): {Z.shape}")
     print(f"Shape of Y (labels): {Y.shape}")
