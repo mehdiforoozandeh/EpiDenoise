@@ -697,14 +697,9 @@ def prepare_chromatin_state_dataset(solar_data_path="/project/compbio-lab/encode
     
     return splits
 
-def get_chromatin_state_dataset(
-    parsed_dir, chr, start, end, resolution=200, 
-    solar_data_path="/project/compbio-lab/encode_data/"):
-
-    return load_region_chromatin_states(parsed_dir, chr, start, end, resolution=resolution)
 
 def train_chromatin_state_probe(
-    model_path, hyper_parameters_path, num_regions=30, chrs=["chr1", "chr2", "chr3"],
+    model_path, hyper_parameters_path, num_regions=30, chrs=["chr1"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200,
     DNA=True, eic=True, learning_rate=0.001, num_epochs=10):
 
