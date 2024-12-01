@@ -1015,7 +1015,7 @@ class ChromatinStateProbe(nn.Module):
 
             if epoch % 5 == 0:
                 # Validate every epoch
-                val_loss, val_acc = self.validate(X_val, y_val)
+                val_loss, val_acc, per_class_metrics = self.validate(X_val, y_val)
 
             # Save best model
             if val_loss < best_val_loss:
