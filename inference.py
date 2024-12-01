@@ -1208,7 +1208,7 @@ def train_chromatin_state_probe(
             z, annots = train_chromatin_state_data[chr][ct]
             for annot in annots:
 
-                assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
+                assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
                 for bin in range(len(annot)):
                     label = annot[bin]
                     latent_vector = z[bin]
@@ -1229,7 +1229,7 @@ def train_chromatin_state_probe(
             z, annots = val_chromatin_state_data[chr][ct]
             for annot in annots:
 
-                assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
+                assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
                 for bin in range(len(annot)):
                     label = annot[bin]
                     latent_vector = z[bin]
