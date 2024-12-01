@@ -1207,7 +1207,7 @@ def train_chromatin_state_probe(
                 del X, seq, mX
 
                 for annot in chromatin_state_data[chr][cs_name]:
-                    chromatin_state_data[chr][cs_name][idx] = (annot, Z)
+                    chromatin_state_data[chr][cs_name].append((annot, Z))
 
                 del X, seq, mX
                 gc.collect()
