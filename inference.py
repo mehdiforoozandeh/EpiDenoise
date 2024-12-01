@@ -1294,7 +1294,7 @@ def train_chromatin_state_probe(
     y_val_encoded = label_encoder.transform(Y_val)
 
     # Shuffle the training data (optional but recommended)
-    X_train, y_train_encoded = shuffle(X_train, y_train_encoded, random_state=42)
+    Z_train, y_train_encoded = shuffle(Z_train, y_train_encoded, random_state=42)
 
     # Create the Random Forest classifier
     rfc = RandomForestClassifier(
@@ -1305,7 +1305,7 @@ def train_chromatin_state_probe(
     )
 
     # Train the classifier
-    rfc.fit(X_train, y_train_encoded)
+    rfc.fit(Z_train, y_train_encoded)
 
     # Make predictions on the validation set
     y_pred = rfc.predict(X_val)
