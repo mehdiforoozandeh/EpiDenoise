@@ -897,7 +897,7 @@ class ChromatinStateProbe(nn.Module):
         # self.softmax = nn.Softmax(dim=1)
         self.class_to_index = None  # Placeholder for the class-to-index mapping
 
-    def forward(self, x, normalize=True):
+    def forward(self, x, normalize=False):
         if normalize:
             x = F.normalize(x, p=2, dim=1)
         x = self.linear(x)
@@ -1156,16 +1156,16 @@ def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
     num_train_regions=10000, num_val_regions=3000, num_test_regions=30, 
     train_chrs=["chr19"], val_chrs=["chr21"], test_chrs=["chr21"],
-    dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True, stratified=False):
+    dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True, stratified=True):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic)
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:5]
+    splits["train"] = splits["train"][:4]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:3]
+    splits["val"] = splits["val"][:2]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
