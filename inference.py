@@ -1191,7 +1191,7 @@ def train_chromatin_state_probe(
 
                 annot = cs_data[ct]
                 # Make length divisible by (candi.model.l1 // resolution)
-                target_len = ((len(annot) // (candi.model.l1 // resolution)) * (candi.model.l1 // resolution))
+                target_len = ((len(annot) // ((candi.model.l1 *25) // resolution)) * (candi.model.l1 // resolution))
                 annot = annot[:target_len]
 
                 chromatin_state_data[chr][ct.split("|")[0]].append(annot)
@@ -1204,7 +1204,6 @@ def train_chromatin_state_probe(
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
                 del X, seq, mX
-
 
                 for idx, annot in enumerate(chromatin_state_data[chr][cs_name]):
                     print(Z.shape, annot.shape)
