@@ -1,7 +1,7 @@
 import random
 import torch
 import pickle
-import os, time, gc
+import os, time, gc, psutil
 from CANDI import *
 from scipy import stats
 import numpy as np
@@ -1210,7 +1210,18 @@ def train_chromatin_state_probe(
                 for annot in chromatin_state_data[chr][cs_name]:
                     print(f"annot shape: {annot.shape}, Z shape: {Z.shape}")
                     print(f"Z memory usage: {Z.element_size() * Z.nelement() / (1024*1024):.2f} MB")
-                    # chromatin_state_data[chr][cs_name].append((annot, Z))
+                    
+                    # Get available memory
+                    available_mem = psutil.virtual_memory().available / (1024 * 1024) # Convert to MB
+                    print(f"Available memory: {available_mem:.2f} MB")
+                    print()
+                    
+                    # Only append if we have enough memory (e.g. 2x the tensor size)
+                    z_size = Z.element_size() * Z.nelement() / (1024*1024)
+                    if available_mem > 2 * z_size:
+                        chromatin_state_data[chr][cs_name].append((annot, Z))
+                    else:
+                        print("Warning: Not enough memory to store tensor")
 
                 gc.collect()
 
