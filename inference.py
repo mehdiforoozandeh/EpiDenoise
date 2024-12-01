@@ -777,7 +777,7 @@ def latent_reproducibility(
         print(f"Max:  {stats[metric]['max']:.4f}")
 
     return stats, euclidean_distances, cosine_distances
-    
+
     """
     for i in range(Z1.shape[0]):
         get euclidean distance between Z1[i] and Z2[i]
@@ -900,7 +900,9 @@ class ChromatinStateProbe(nn.Module):
         # self.softmax = nn.Softmax(dim=1)
         self.class_to_index = None  # Placeholder for the class-to-index mapping
 
-    def forward(self, x):
+    def forward(self, x, normalize=True):
+        if normalize:
+            x = F.normalize(x, p=2, dim=1)
         x = self.linear(x)
         return x
 
@@ -1296,7 +1298,7 @@ def train_chromatin_state_probe(
 
 
     # Analysis and stratification of training data
-    print("\nTraining Dataset Analysis (Before Stratification):")
+    print("\nTraining Dataset Analysis :")
     print(f"Z_train shape: {Z_train.shape}")
     print(f"Y_train shape: {Y_train.shape}")
 
