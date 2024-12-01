@@ -1106,7 +1106,7 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
         })
 
     # Shuffle the pairs randomly
-    random.seed(42)  # For reproducibility
+    random.seed(7)  # For reproducibility
     random.shuffle(paired_data)
 
     # Calculate split sizes
