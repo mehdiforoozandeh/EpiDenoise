@@ -1207,58 +1207,42 @@ def train_chromatin_state_probe(
     Y_train = []
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
-            for region, z in train_chromatin_state_data[chr][ct]:
-                annots = region
-                for bin in range(len(region)):
-                    label = annots[bin]
-                    latent_vector = z[bin]
+            for Z, annots in train_chromatin_state_data[chr][ct]:
+                for annot in annots:
 
-                    if label is not None:
-                        Z_train.append(latent_vector)
-                        Y_train.append(label)
+                    assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
+                    for bin in range(len(annot)):
+                        label = annot[bin]
+                        latent_vector = z[bin]
+
+                        if label is not None:
+                            Z_train.append(latent_vector)
+                            Y_train.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
-    Z_train = np.stack(Z_train)
-    Y_train = np.array(Y_train)
+    Z_train = np.stack(Z_train) 
+    Y_train = np.array(Y_train) 
 
     val_chromatin_state_data = prepare_data("val", val_chrs, num_val_regions)
     Z_val = [] 
     Y_val = []
     for chr in val_chromatin_state_data.keys():
         for ct in val_chromatin_state_data[chr].keys():
-            for region, z in val_chromatin_state_data[chr][ct]:
-                annots = region
-                for bin in range(len(region)):
-                    label = annots[bin]
-                    latent_vector = z[bin]
+            for Z, annots in val_chromatin_state_data[chr][ct]:
+                for annot in annots:
 
-                    if label is not None:
-                        Z_val.append(latent_vector)
-                        Y_val.append(label)
+                    assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
+                    for bin in range(len(annot)):
+                        label = annot[bin]
+                        latent_vector = z[bin]
+
+                        if label is not None:
+                            Z_val.append(latent_vector)
+                            Y_val.append(label)
     
     # Convert lists to tensors first since Z contains torch tensors
     Z_val = np.stack(Z_val)
     Y_val = np.array(Y_val)
-
-    # test_chromatin_state_data = prepare_data("test", train_chrs, num_test_regions)
-    # Z_test = [] 
-    # Y_test = []
-    # for chr in test_chromatin_state_data.keys():
-    #     for ct in test_chromatin_state_data[chr].keys():
-    #         for region, z in test_chromatin_state_data[chr][ct]:
-    #             annots = region
-    #             for bin in range(len(region)):
-    #                 label = annots[bin]
-    #                 latent_vector = z[bin]
-
-    #                 if label is not None:
-    #                     Z_test.append(latent_vector)
-    #                     Y_test.append(label)
-    
-    # # Convert lists to tensors first since Z contains torch tensors
-    # Z_test = np.stack(Z_test)
-    # Y_test = np.array(Y_test)
-
 
     #  Analysis and stratification of training data
     print("\nTraining Dataset Analysis:")
