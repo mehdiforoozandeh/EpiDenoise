@@ -4,6 +4,10 @@ import pickle
 import os, time, gc, psutil
 from CANDI import *
 from scipy import stats
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import shuffle
 import numpy as np
 
 
@@ -1280,10 +1284,45 @@ def train_chromatin_state_probe(
         for label, count in zip(unique_labels, counts):
             print(f"Class {label}: {count} examples")
 
-    # Use stratified training data for model training
-    probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
-        num_epochs=500, learning_rate=0.001, batch_size=100)
+    # # Use stratified training data for model training
+    # probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
+    #     num_epochs=500, learning_rate=0.001, batch_size=100)
 
+    # Encode class names to integer labels
+    label_encoder = LabelEncoder()
+    y_train_encoded = label_encoder.fit_transform(y_train)
+    y_val_encoded = label_encoder.transform(y_val)
+
+    # Shuffle the training data (optional but recommended)
+    X_train, y_train_encoded = shuffle(X_train, y_train_encoded, random_state=42)
+
+    # Create the Random Forest classifier
+    rfc = RandomForestClassifier(
+        n_estimators=100,      # Number of trees
+        max_depth=None,        # Expand nodes until all leaves are pure or contain less than min_samples_split samples
+        random_state=42,       # Seed for reproducibility
+        n_jobs=-1              # Use all available cores
+    )
+
+    # Train the classifier
+    rfc.fit(X_train, y_train_encoded)
+
+    # Make predictions on the validation set
+    y_pred = rfc.predict(X_val)
+
+    # Calculate overall accuracy
+    accuracy = accuracy_score(y_val_encoded, y_pred)
+    print(f'Validation Accuracy: {accuracy * 100:.2f}%\n')
+
+    # Generate a classification report
+    report = classification_report(
+        y_val_encoded,
+        y_pred,
+        target_names=label_encoder.classes_,
+        digits=4
+    )
+    print('Classification Report:')
+    print(report)
 
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
