@@ -1206,10 +1206,10 @@ def train_chromatin_state_probe(
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
                 del X, seq, mX
 
+                Z = Z.cpu()
                 for annot in chromatin_state_data[chr][cs_name]:
                     chromatin_state_data[chr][cs_name].append((annot, Z))
 
-                del X, seq, mX, Z
                 gc.collect()
 
         return chromatin_state_data
