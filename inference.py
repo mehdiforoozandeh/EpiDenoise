@@ -372,9 +372,6 @@ class CANDIPredictor:
         
         return Z
 
-
-
-
     def pred_cropped(self, X, mX, mY, avail, imp_target=[], seq=None, crop_percent=0.1):
         # Calculate dimensions
         crop_size = int(self.context_length * crop_percent)
@@ -939,14 +936,48 @@ class ChromatinStateProbe(nn.Module):
             criterion = nn.CrossEntropyLoss()
             val_loss = criterion(output, y)
             
-            # Calculate accuracy
+            # Calculate overall accuracy
             _, predicted = torch.max(output, 1)
+            total = y.size(0)
             correct = (predicted == y).sum().item()
-            accuracy = 100 * correct / y.size(0)
+            overall_accuracy = 100 * correct / total
             
-            print(f'Validation Loss: {val_loss:.4f}, Accuracy: {accuracy:.2f}%')
+            # Calculate per-class metrics
+            unique_labels = torch.unique(y)
+            per_class_metrics = {}
+            
+            for label in unique_labels:
+                # Create mask for current class
+                mask = (y == label)
+                
+                # True positives, false positives, false negatives
+                true_pos = ((predicted == label) & (y == label)).sum().item()
+                false_pos = ((predicted == label) & (y != label)).sum().item()
+                false_neg = ((predicted != label) & (y == label)).sum().item()
+                
+                # Calculate metrics
+                precision = true_pos / (true_pos + false_pos) if (true_pos + false_pos) > 0 else 0
+                recall = true_pos / (true_pos + false_neg) if (true_pos + false_neg) > 0 else 0
+                f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+                accuracy = true_pos / mask.sum().item() if mask.sum().item() > 0 else 0
+                
+                per_class_metrics[label.item()] = {
+                    'accuracy': 100 * accuracy,
+                    'f1': f1,
+                    'support': mask.sum().item()
+                }
+            
+            # Print metrics
+            print(f'\nOverall Validation Loss: {val_loss:.4f}, Accuracy: {overall_accuracy:.2f}%')
+            print('\nPer-class metrics:')
+            print('Label | Accuracy |   F1   | Support')
+            print('-' * 40)
+            for label in sorted(per_class_metrics.keys()):
+                metrics = per_class_metrics[label]
+                print(f'{label:5d} | {metrics["accuracy"]:7.2f}% | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
+            
         self.train()
-        return val_loss.item(), accuracy
+        return val_loss.item(), overall_accuracy, per_class_metrics
 
     def train_loop(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.01, batch_size=200):
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
@@ -1298,63 +1329,20 @@ def train_chromatin_state_probe(
 
 
     # Analysis and stratification of training data
-    print("\nTraining Dataset Analysis :")
+    print("\nTraining Dataset Analysis:")
     print(f"Z_train shape: {Z_train.shape}")
     print(f"Y_train shape: {Y_train.shape}")
-
-    # # Calculate label distribution for training set
-    # unique_train_labels, train_counts = np.unique(Y_train, return_counts=True)
-    # min_count = min(train_counts)  # Get the count of the least represented class
     
-    # # Create stratified indices
-    # stratified_indices = []
-    # for label in unique_train_labels:
-    #     label_indices = np.where(Y_train == label)[0]
-    #     # Randomly select min_count samples from each class
-    #     selected_indices = np.random.choice(
-    #         label_indices, 
-    #         size=min_count, 
-    #         replace=len(label_indices) < min_count  # Allow replacement if we don't have enough samples
-    #     )
-    #     stratified_indices.extend(selected_indices)
+    # Analyze class distribution
+    unique_labels, counts = np.unique(Y_train, return_counts=True)
+    total_samples = len(Y_train)
     
-    # # Shuffle the stratified indices
-    # np.random.shuffle(stratified_indices)
-    
-    # # Create stratified datasets
-    # Z_train_stratified = Z_train[stratified_indices]
-    # Y_train_stratified = Y_train[stratified_indices]
-    
-    # # Print distribution after stratification
-    # print("\nTraining Dataset Analysis (After Stratification):")
-    # print(f"Z_train_stratified shape: {Z_train_stratified.shape}")
-    # print(f"Y_train_stratified shape: {Y_train_stratified.shape}")
-    
-    # unique_stratified_labels, stratified_counts = np.unique(Y_train_stratified, return_counts=True)
-    # stratified_distribution = {
-    #     f"state_{label}": count/len(Y_train_stratified) 
-    #     for label, count in zip(unique_stratified_labels, stratified_counts)
-    # }
-    
-    # print("\nStratified Training Label Distribution:")
-    # for label, fraction in sorted(stratified_distribution.items()):
-    #     print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_train_stratified))} samples)")
-
-    # # Analysis of validation data remains the same
-    # print("\nValidation Dataset Analysis:")
-    # print(f"Z_val shape: {Z_val.shape}")
-    # print(f"Y_val shape: {Y_val.shape}")
-    
-    # # Calculate label distribution for validation set
-    # unique_val_labels, val_counts = np.unique(Y_val, return_counts=True)
-    # val_distribution = {
-    #     f"state_{label}": count/len(Y_val) 
-    #     for label, count in zip(unique_val_labels, val_counts)
-    # }
-    
-    # print("\nValidation Label Distribution:")
-    # for label, fraction in sorted(val_distribution.items()):
-    #     print(f"{label}: {fraction:.4f} ({int(fraction * len(Y_val))} samples)")
+    print("\nClass Distribution:")
+    print("Label | Count | Percentage")
+    print("-" * 30)
+    for label, count in zip(unique_labels, counts):
+        percentage = (count / total_samples) * 100
+        print(f"{label:5d} | {count:5d} | {percentage:6.2f}%")
 
     # Use stratified training data for model training
     probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
