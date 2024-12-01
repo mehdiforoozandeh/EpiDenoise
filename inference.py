@@ -974,7 +974,7 @@ class ChromatinStateProbe(nn.Module):
             print('-' * 40)
             for label in sorted(per_class_metrics.keys()):
                 metrics = per_class_metrics[label]
-                print(f'{label:5d} | {metrics["accuracy"]:7.2f}% | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
+                print(f'{label:5s} | {metrics["accuracy"]:7.2f}% | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
             
         self.train()
         return val_loss.item(), overall_accuracy, per_class_metrics
