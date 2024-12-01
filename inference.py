@@ -1194,7 +1194,6 @@ def train_chromatin_state_probe(
                 context_len = (candi.model.l1 * 25) // resolution
                 target_len = ((len(annot) // context_len) * context_len)
                 annot = annot[:target_len]
-                print(type(annot))
 
 
                 chromatin_state_data[chr][ct.split("|")[0]].append(annot)
@@ -1210,7 +1209,8 @@ def train_chromatin_state_probe(
 
                 Z = Z.cpu()
                 for annot in chromatin_state_data[chr][cs_name]:
-                    print(f"annot shape: {annot.shape}, Z shape: {Z.shape}")
+                    print(type(annot))
+                    # print(f"annot shape: {annot.shape}, Z shape: {Z.shape}")
                     print(f"Z memory usage: {Z.element_size() * Z.nelement() / (1024*1024):.2f} MB")
                     
                     # Get available memory
