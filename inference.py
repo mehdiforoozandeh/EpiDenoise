@@ -1163,9 +1163,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:1]
+    splits["train"] = splits["train"][:5]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:1]
+    splits["val"] = splits["val"][:3]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
