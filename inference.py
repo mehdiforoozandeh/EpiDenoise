@@ -910,6 +910,7 @@ class ChromatinStateProbe(nn.Module):
         if self.class_to_index is None:
             unique_classes = sorted(set(class_names))
             self.class_to_index = {name: idx for idx, name in enumerate(unique_classes)}
+            self.index_to_class = {idx: name for name, idx in self.class_to_index.items()}
         return [self.class_to_index[name] for name in class_names]
 
     def decode_class_indices(self, class_indices):
@@ -918,8 +919,7 @@ class ChromatinStateProbe(nn.Module):
         """
         if self.class_to_index is None:
             raise ValueError("class_to_index mapping is not defined.")
-        index_to_class = {idx: name for name, idx in self.class_to_index.items()}
-        return [index_to_class[idx] for idx in class_indices]
+        return [self.index_to_class[idx] for idx in class_indices]
 
     def train_batch(self, X, y, optimizer, criterion):
         optimizer.zero_grad()
@@ -961,7 +961,7 @@ class ChromatinStateProbe(nn.Module):
                 f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
                 accuracy = true_pos / mask.sum().item() if mask.sum().item() > 0 else 0
                 
-                per_class_metrics[label.item()] = {
+                per_class_metrics[self.index_to_class[label.item()]] = {
                     'accuracy': 100 * accuracy,
                     'f1': f1,
                     'support': mask.sum().item()
@@ -1328,25 +1328,25 @@ def train_chromatin_state_probe(
     # Y_test = np.array(Y_test)
 
 
-    # Analysis and stratification of training data
+    #  Analysis and stratification of training data
     print("\nTraining Dataset Analysis:")
     print(f"Z_train shape: {Z_train.shape}")
     print(f"Y_train shape: {Y_train.shape}")
-    
+
     # Analyze class distribution
     unique_labels, counts = np.unique(Y_train, return_counts=True)
     total_samples = len(Y_train)
-    
+
     print("\nClass Distribution:")
     print("Label | Count | Percentage")
     print("-" * 30)
     for label, count in zip(unique_labels, counts):
         percentage = (count / total_samples) * 100
-        print(f"{label:5d} | {count:5d} | {percentage:6.2f}%")
+        print(f"{label:5s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
 
     # Use stratified training data for model training
     probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
-                    num_epochs=500, learning_rate=0.005, batch_size=100)
+        num_epochs=500, learning_rate=0.005, batch_size=100)
 
 
 if __name__ == "__main__":
