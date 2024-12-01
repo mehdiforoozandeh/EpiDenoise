@@ -963,6 +963,8 @@ class ChromatinStateProbe(nn.Module):
                 
                 per_class_metrics[self.index_to_class[label.item()]] = {
                     'accuracy': 100 * accuracy,
+                    'precision': precision,
+                    'recall': recall,
                     'f1': f1,
                     'support': mask.sum().item()
                 }
@@ -970,11 +972,12 @@ class ChromatinStateProbe(nn.Module):
             # Print metrics
             print(f'\nOverall Validation Loss: {val_loss:.4f}, Accuracy: {overall_accuracy:.2f}%')
             print('\nPer-class metrics:')
-            print('Label | Accuracy |   F1   | Support')
-            print('-' * 40)
+            print('Label | Accuracy | Precision | Recall |   F1   | Support')
+            print('-' * 60)
             for label in sorted(per_class_metrics.keys()):
                 metrics = per_class_metrics[label]
-                print(f'{label:5s} | {metrics["accuracy"]:7.2f}% | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
+                print(f'{label:5s} | {metrics["accuracy"]:7.2f}% | {metrics["precision"]:8.4f} | {metrics["recall"]:6.4f} | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
+            print('-' * 60)
             
         self.train()
         return val_loss.item(), overall_accuracy, per_class_metrics
