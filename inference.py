@@ -1191,7 +1191,8 @@ def train_chromatin_state_probe(
 
                 annot = cs_data[ct]
                 # Make length divisible by (candi.model.l1 // resolution)
-                target_len = ((len(annot) // ((candi.model.l1 *25) // resolution)) * (candi.model.l1 // resolution))
+                context_len = (candi.model.l1 * 25) // resolution
+                target_len = ((len(annot) // context_len) * context_len)
                 annot = annot[:target_len]
 
                 chromatin_state_data[chr][ct.split("|")[0]].append(annot)
