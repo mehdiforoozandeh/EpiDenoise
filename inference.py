@@ -1156,16 +1156,16 @@ def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
     num_train_regions=10000, num_val_regions=3000, num_test_regions=30, 
     train_chrs=["chr19"], val_chrs=["chr21"], test_chrs=["chr21"],
-    dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True):
+    dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True, stratified=True):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic)
 
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:2]
+    splits["train"] = splits["train"][:5]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:1]
+    splits["val"] = splits["val"][:3]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -1258,28 +1258,28 @@ def train_chromatin_state_probe(
         percentage = (count / total_samples) * 100
         print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
 
-    # Stratify training data to have equal examples per class
-    min_count = min(counts)
-    stratified_indices = []
-    for label in unique_labels:
-        label_indices = np.where(Y_train == label)[0]
-        selected_indices = np.random.choice(label_indices, min_count, replace=False)
-        stratified_indices.extend(selected_indices)
+    if stratified:
+        # Stratify training data to have equal examples per class
+        min_count = min(counts)
+        stratified_indices = []
+        for label in unique_labels:
+            label_indices = np.where(Y_train == label)[0]
+            selected_indices = np.random.choice(label_indices, min_count, replace=False)
+            stratified_indices.extend(selected_indices)
 
-    # Shuffle the stratified indices
-    np.random.shuffle(stratified_indices)
-    
-    # Update training data to be stratified
-    Z_train = Z_train[stratified_indices]
-    Y_train = Y_train[stratified_indices]
+        # Shuffle the stratified indices
+        np.random.shuffle(stratified_indices)
+        
+        # Update training data to be stratified
+        Z_train = Z_train[stratified_indices]
+        Y_train = Y_train[stratified_indices]
 
-    print("\nAfter stratification:")
-    print(f"Z_train shape: {Z_train.shape}")
-    unique_labels, counts = np.unique(Y_train, return_counts=True)
-    for label, count in zip(unique_labels, counts):
-        print(f"Class {label}: {count} examples")
+        print("\nAfter stratification:")
+        print(f"Z_train shape: {Z_train.shape}")
+        unique_labels, counts = np.unique(Y_train, return_counts=True)
+        for label, count in zip(unique_labels, counts):
+            print(f"Class {label}: {count} examples")
 
-    exit()
     # Use stratified training data for model training
     probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
         num_epochs=500, learning_rate=0.005, batch_size=100)
