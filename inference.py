@@ -976,7 +976,7 @@ class ChromatinStateProbe(nn.Module):
             print('-' * 60)
             for label in sorted(per_class_metrics.keys()):
                 metrics = per_class_metrics[label]
-                print(f'{label:5s} | {metrics["accuracy"]:7.2f}% | {metrics["precision"]:8.4f} | {metrics["recall"]:6.4f} | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
+                print(f'{label:10s} | {metrics["accuracy"]:7.2f}% | {metrics["precision"]:8.4f} | {metrics["recall"]:6.4f} | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
             print('-' * 60)
             
         self.train()
