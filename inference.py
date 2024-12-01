@@ -1170,34 +1170,8 @@ def train_chromatin_state_probe(
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
         # Process each chromosome
-        for chr in chrs:
-            
-            # Calculate number of regions needed per chromosome
-            regions_per_chr = num_regions // len(chrs)
-            min_distance = candi.model.l1 * 25   # minimum distance between regions
-
-            # Randomly select regions_per_chr indices
-            top_indices = np.random.choice((candi.chr_sizes[chr]-min_distance) // resolution, size=regions_per_chr, replace=False)
-
-            # Store selected regions and their coordinates
-            selected_regions = []
-            for idx in top_indices:
-
-                offset = np.random.randint(0, min_distance)
-                start = max(0, ((idx * resolution) - offset))
-                end = start + (candi.model.l1 * 25)
-
-                if end >= candi.chr_sizes[chr]:
-                    continue
-                
-                region_info = {
-                    'chr': chr,
-                    'start': start,
-                    'end': end
-                }
-                selected_regions.append(region_info)
-
-            print(f"Number of selected regions: {len(selected_regions)} from chr {chr}")
+        for chr in chrs:  
+            candi.chr = chr
 
             cs_data = {}
             # Load chromatin state data for each cell type in training split
@@ -1211,58 +1185,31 @@ def train_chromatin_state_probe(
                     cs_data[f"{cs_name}|{idx}"] = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
 
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
-            for region in selected_regions:
-                for ct in cs_data.keys():
-                    if ct.split("|")[0] not in chromatin_state_data[chr]:
-                        chromatin_state_data[chr][ct.split("|")[0]] = []
+            for ct in cs_data.keys():
+                if ct.split("|")[0] not in chromatin_state_data[chr]:
+                    chromatin_state_data[chr][ct.split("|")[0]] = []
 
-                    chromatin_state_data[chr][ct.split("|")[0]].append([
-                        region['chr'], region['start'], region['end'], 
-                        cs_data[ct][
-                            ((region['start'])//resolution):
-                            ((region['end'])//resolution)]
-                        ])
+                chromatin_state_data[chr][ct.split("|")[0]].append(cs_data[ct])
         
-        for chr in chrs:
-            candi.chr = chr
             # Load chromatin state data for each cell type in training split
             for pair in splits[split]:
                 bios_name = pair['biosample']
                 cs_name = pair['chromatin_state']
+
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
-                
-                
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
-                print(X.shape, seq.shape, mX.shape, Z.shape)
+                del X, seq, mX
 
-                X = X.reshape(-1, X.shape[-1])
-                seq = seq.reshape(-1, seq.shape[-1])
-                mX = mX[0]
 
-                for idx, region in enumerate(chromatin_state_data[chr][cs_name]):
-                    # start = region[1] // 25
-                    # end = region[2] // 25
+                for idx, annot in enumerate(chromatin_state_data[chr][cs_name]):
+                    print(Z.shape, annot.shape)
 
-                    # # Move input tensors to the same device as the model
-                    # x_input = X[start:end].unsqueeze(0).float().to(candi.device)
-                    # seq_input = seq[region[1]:region[2]].unsqueeze(0).float().to(candi.device)
-                    # mx_input = mX.unsqueeze(0).float().to(candi.device)
+                    # z = Z[region[1] // resolution:region[2] // resolution]
 
-                    # with torch.no_grad():
-                    #     try:
-                    #         z = candi.model.encode(x_input, seq_input, mx_input)
-                    #     except:
-                    #         print(f"Popping {region[0]}:{region[1]}-{region[2]} from {cs_name}")
-                    #         chromatin_state_data[chr][cs_name].pop(idx)
-
-                    # z = z.cpu()
-
-                    z = Z[region[1] // resolution:region[2] // resolution]
-
-                    chromatin_state_data[chr][cs_name][idx] = (region, z)
+                    # chromatin_state_data[chr][cs_name][idx] = (region, z)
 
                     # del x_input, seq_input, mx_input
-                
+                exit()
                 del X, seq, mX
                 gc.collect()
 
