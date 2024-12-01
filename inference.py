@@ -1194,6 +1194,8 @@ def train_chromatin_state_probe(
                 context_len = (candi.model.l1 * 25) // resolution
                 target_len = ((len(annot) // context_len) * context_len)
                 annot = annot[:target_len]
+                print(type(annot))
+
 
                 chromatin_state_data[chr][ct.split("|")[0]].append(annot)
         
