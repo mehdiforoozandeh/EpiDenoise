@@ -1208,7 +1208,8 @@ def train_chromatin_state_probe(
 
                 Z = Z.cpu()
                 for annot in chromatin_state_data[chr][cs_name]:
-                    chromatin_state_data[chr][cs_name].append((annot, Z))
+                    print(annot.shape, Z.shape)
+                    # chromatin_state_data[chr][cs_name].append((annot, Z))
 
                 gc.collect()
 
