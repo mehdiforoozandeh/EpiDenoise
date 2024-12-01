@@ -1209,7 +1209,9 @@ def train_chromatin_state_probe(
 
                 Z = Z.cpu()
                 for annot in chromatin_state_data[chr][cs_name]:
-                    print(type(annot))
+                    print(annot)
+                    exit()
+                    # print(type(annot))
                     # print(f"annot shape: {annot.shape}, Z shape: {Z.shape}")
                     print(f"Z memory usage: {Z.element_size() * Z.nelement() / (1024*1024):.2f} MB")
                     
