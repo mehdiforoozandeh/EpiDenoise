@@ -1205,7 +1205,7 @@ def train_chromatin_state_probe(
     Y_train = []
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
-            Z, annots = train_chromatin_state_data[chr][ct]
+            z, annots = train_chromatin_state_data[chr][ct]
             for annot in annots:
 
                 assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
@@ -1226,7 +1226,7 @@ def train_chromatin_state_probe(
     Y_val = []
     for chr in val_chromatin_state_data.keys():
         for ct in val_chromatin_state_data[chr].keys():
-            Z, annots = val_chromatin_state_data[chr][ct]
+            z, annots = val_chromatin_state_data[chr][ct]
             for annot in annots:
 
                 assert len(annot) == len(Z), f"annot and Z are not the same length for {ct} on {chr}"
