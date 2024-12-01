@@ -1206,15 +1206,9 @@ def train_chromatin_state_probe(
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
                 del X, seq, mX
 
-                for idx, annot in enumerate(chromatin_state_data[chr][cs_name]):
-                    print(Z.shape, annot.shape)
+                for annot in chromatin_state_data[chr][cs_name]:
+                    chromatin_state_data[chr][cs_name][idx] = (annot, Z)
 
-                    # z = Z[region[1] // resolution:region[2] // resolution]
-
-                    # chromatin_state_data[chr][cs_name][idx] = (region, z)
-
-                    # del x_input, seq_input, mx_input
-                exit()
                 del X, seq, mX
                 gc.collect()
 
@@ -1228,8 +1222,7 @@ def train_chromatin_state_probe(
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
             for region, z in train_chromatin_state_data[chr][ct]:
-                z = z.squeeze(0)
-                annots = region[3]
+                annots = region
                 for bin in range(len(region)):
                     label = annots[bin]
                     latent_vector = z[bin]
@@ -1248,8 +1241,7 @@ def train_chromatin_state_probe(
     for chr in val_chromatin_state_data.keys():
         for ct in val_chromatin_state_data[chr].keys():
             for region, z in val_chromatin_state_data[chr][ct]:
-                z = z.squeeze(0)
-                annots = region[3]
+                annots = region
                 for bin in range(len(region)):
                     label = annots[bin]
                     latent_vector = z[bin]
@@ -1268,8 +1260,7 @@ def train_chromatin_state_probe(
     # for chr in test_chromatin_state_data.keys():
     #     for ct in test_chromatin_state_data[chr].keys():
     #         for region, z in test_chromatin_state_data[chr][ct]:
-    #             z = z.squeeze(0)
-    #             annots = region[3]
+    #             annots = region
     #             for bin in range(len(region)):
     #                 label = annots[bin]
     #                 latent_vector = z[bin]
@@ -1299,6 +1290,7 @@ def train_chromatin_state_probe(
         percentage = (count / total_samples) * 100
         print(f"{label:5s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
 
+    exit()
     # Use stratified training data for model training
     probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
         num_epochs=500, learning_rate=0.005, batch_size=100)
