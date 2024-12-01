@@ -731,22 +731,21 @@ def latent_reproducibility(
 
     candi.chr = chr
 
+    # Load latent representations
     X1, seq1, mX1 = candi.load_encoder_input_bios(repr1_bios)
     X2, seq2, mX2 = candi.load_encoder_input_bios(repr2_bios)
 
-    Z1 = candi.get_latent_representations_cropped(X1, mX1, seq=seq1)
-    Z2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
+    latent_repr1 = candi.get_latent_representations_cropped(X1, mX1, seq=seq1)
+    latent_repr2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
 
     del X1, X2, seq1, seq2, mX1, mX2
-    
-    # Calculate distances
-    euclidean_distances = torch.norm(Z1 - Z2, dim=1)  # Euclidean distance for each pair
 
-    # Normalize vectors for cosine similarity
-    Z1_normalized = F.normalize(Z1, p=2, dim=1)
-    Z2_normalized = F.normalize(Z2, p=2, dim=1)
-    cosine_similarities = torch.sum(Z1_normalized * Z2_normalized, dim=1)
-    cosine_distances = 1 - cosine_similarities  # Convert similarity to distance
+    # Calculate Euclidean distances
+    euclidean_distances = torch.norm(latent_repr1 - latent_repr2, dim=1)
+
+    # Calculate Cosine distances
+    cosine_similarities = F.cosine_similarity(latent_repr1, latent_repr2, dim=1)
+    cosine_distances = 1 - cosine_similarities
 
     # Calculate summary statistics
     stats = {
@@ -778,7 +777,7 @@ def latent_reproducibility(
         print(f"Max:  {stats[metric]['max']:.4f}")
 
     return stats, euclidean_distances, cosine_distances
-
+    
     """
     for i in range(Z1.shape[0]):
         get euclidean distance between Z1[i] and Z2[i]
