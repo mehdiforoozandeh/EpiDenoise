@@ -1172,8 +1172,8 @@ def train_chromatin_state_probe(
         # Process each chromosome
         for chr in chrs:  
             candi.chr = chr
+            chromatin_state_data[chr] = {}
 
-            cs_data = {}
             # Load chromatin state data for each cell type in training split
             for pair in splits[split]:
                 bios_name = pair['biosample']
@@ -1181,52 +1181,21 @@ def train_chromatin_state_probe(
                 cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
                 parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
-                for idx, parsed_cs in enumerate(parsed_dirs):
-                    cs_data[f"{cs_name}|{idx}"] = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr) 
-
-            chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
-            for ct in cs_data.keys():
-                if ct.split("|")[0] not in chromatin_state_data[chr]:
-                    chromatin_state_data[chr][ct.split("|")[0]] = []
-
-                annot = cs_data[ct]
-                # Make length divisible by (candi.model.l1 // resolution)
-                context_len = (candi.model.l1 * 25) // resolution
-                target_len = ((len(annot) // context_len) * context_len)
-                annot = annot[:target_len]
-
-
-                chromatin_state_data[chr][ct.split("|")[0]].append(annot)
-        
-            # Load chromatin state data for each cell type in training split
-            for pair in splits[split]:
-                bios_name = pair['biosample']
-                cs_name = pair['chromatin_state']
-
                 X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
                 Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
                 del X, seq, mX
-
                 Z = Z.cpu()
-                for annot in chromatin_state_data[chr][cs_name]:
-                    print(cs_name, len(annot))
-                    continue
-                    # print(type(annot))
-                    # print(f"annot shape: {annot.shape}, Z shape: {Z.shape}")
-                    print(f"Z memory usage: {Z.element_size() * Z.nelement() / (1024*1024):.2f} MB")
-                    
-                    # Get available memory
-                    available_mem = psutil.virtual_memory().available / (1024 * 1024) # Convert to MB
-                    print(f"Available memory: {available_mem:.2f} MB")
-                    print()
-                    
-                    # Only append if we have enough memory (e.g. 2x the tensor size)
-                    z_size = Z.element_size() * Z.nelement() / (1024*1024)
-                    if available_mem > 2 * z_size:
-                        chromatin_state_data[chr][cs_name].append((annot, Z))
-                    else:
-                        print("Warning: Not enough memory to store tensor")
 
+                chromatin_state_data[chr][cs_name] = (Z, [])
+                for idx, parsed_cs in enumerate(parsed_dirs):
+                    annot = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr) 
+                    context_len = (candi.model.l1 * 25) // resolution
+                    target_len = ((len(annot) // context_len) * context_len)
+                    annot = annot[:target_len]
+
+                    chromatin_state_data[chr][cs_name][1].append(annot)
+                
+                del Z 
                 gc.collect()
 
         return chromatin_state_data
