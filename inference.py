@@ -1193,8 +1193,8 @@ def train_chromatin_state_probe(
                 # Make length divisible by (candi.model.l1 // resolution)
                 target_len = ((len(annot) // (candi.model.l1 // resolution)) * (candi.model.l1 // resolution))
                 annot = annot[:target_len]
-                
-                chromatin_state_data[chr][ct.split("|")[0]].append()
+
+                chromatin_state_data[chr][ct.split("|")[0]].append(annot)
         
             # Load chromatin state data for each cell type in training split
             for pair in splits[split]:
