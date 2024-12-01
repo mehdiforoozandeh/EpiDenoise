@@ -1256,7 +1256,28 @@ def train_chromatin_state_probe(
     print("-" * 30)
     for label, count in zip(unique_labels, counts):
         percentage = (count / total_samples) * 100
-        print(f"{label:5s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
+        print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
+
+    # Stratify training data to have equal examples per class
+    min_count = min(counts)
+    stratified_indices = []
+    for label in unique_labels:
+        label_indices = np.where(Y_train == label)[0]
+        selected_indices = np.random.choice(label_indices, min_count, replace=False)
+        stratified_indices.extend(selected_indices)
+
+    # Shuffle the stratified indices
+    np.random.shuffle(stratified_indices)
+    
+    # Update training data to be stratified
+    Z_train = Z_train[stratified_indices]
+    Y_train = Y_train[stratified_indices]
+
+    print("\nAfter stratification:")
+    print(f"Z_train shape: {Z_train.shape}")
+    unique_labels, counts = np.unique(Y_train, return_counts=True)
+    for label, count in zip(unique_labels, counts):
+        print(f"Class {label}: {count} examples")
 
     exit()
     # Use stratified training data for model training
