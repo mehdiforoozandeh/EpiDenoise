@@ -1182,14 +1182,19 @@ def train_chromatin_state_probe(
                 parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
                 for idx, parsed_cs in enumerate(parsed_dirs):
-                    cs_data[f"{cs_name}|{idx}"] = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr)
+                    cs_data[f"{cs_name}|{idx}"] = load_region_chromatin_states(os.path.join(cs_dir, parsed_cs), chr) 
 
             chromatin_state_data[chr] = {}  # chr : cell_type : [chromosome, start_pos, end_pos, chromatin_state_array]
             for ct in cs_data.keys():
                 if ct.split("|")[0] not in chromatin_state_data[chr]:
                     chromatin_state_data[chr][ct.split("|")[0]] = []
 
-                chromatin_state_data[chr][ct.split("|")[0]].append(cs_data[ct])
+                annot = cs_data[ct]
+                # Make length divisible by (candi.model.l1 // resolution)
+                target_len = ((len(annot) // (candi.model.l1 // resolution)) * (candi.model.l1 // resolution))
+                annot = annot[:target_len]
+                
+                chromatin_state_data[chr][ct.split("|")[0]].append()
         
             # Load chromatin state data for each cell type in training split
             for pair in splits[split]:
