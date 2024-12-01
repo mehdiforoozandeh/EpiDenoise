@@ -9,6 +9,8 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import shuffle
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy import integrate
 
 
 # sequence clustering
@@ -729,7 +731,6 @@ def latent_reproducibility(
     chr="chr21", dataset_path="/project/compbio-lab/encode_data/"):
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
-
     candi.chr = chr
 
     # Load latent representations
@@ -741,12 +742,11 @@ def latent_reproducibility(
 
     del X1, X2, seq1, seq2, mX1, mX2
 
-    # Calculate Euclidean distances
+    # Calculate distances/similarities
     euclidean_distances = torch.norm(latent_repr1 - latent_repr2, dim=1)
-
-    # Calculate Cosine distances
     cosine_similarities = F.cosine_similarity(latent_repr1, latent_repr2, dim=1)
     cosine_distances = 1 - cosine_similarities
+    dot_products = torch.sum(latent_repr1 * latent_repr2, dim=1)
 
     # Calculate summary statistics
     stats = {
@@ -763,27 +763,86 @@ def latent_reproducibility(
             'median': cosine_distances.median().item(),
             'min': cosine_distances.min().item(),
             'max': cosine_distances.max().item()
+        },
+        'dot_product': {
+            'mean': dot_products.mean().item(),
+            'std': dot_products.std().item(),
+            'median': dot_products.median().item(),
+            'min': dot_products.min().item(),
+            'max': dot_products.max().item()
         }
     }
 
+    # Create cumulative distribution plots
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Function to plot CDF and calculate AUC
+    def plot_cdf(ax, data, title, xlabel, color='blue'):
+        sorted_data = np.sort(data.cpu().numpy())
+        cumulative = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
+        
+        # Plot CDF
+        ax.plot(sorted_data, cumulative, color=color)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel('Fraction of bins')
+        ax.grid(True, alpha=0.3)
+        
+        # Calculate AUC using trapezoidal rule
+        auc = integrate.trapz(cumulative, sorted_data)
+        return auc
+    
+    # Plot for cosine distance
+    auc_cosine = plot_cdf(
+        axes[0], 
+        cosine_distances,
+        'Cosine Distance CDF',
+        'Cosine Distance',
+        'blue'
+    )
+    
+    # Plot for euclidean distance
+    auc_euclidean = plot_cdf(
+        axes[1],
+        euclidean_distances,
+        'Euclidean Distance CDF',
+        'Euclidean Distance',
+        'green'
+    )
+    
+    # Plot for dot product
+    auc_dot = plot_cdf(
+        axes[2],
+        dot_products,
+        'Dot Product CDF',
+        'Dot Product',
+        'red'
+    )
+    
+    plt.tight_layout()
+    
+    # Print statistics and AUC values
     print(f"\nLatent Space Reproducibility Analysis between {repr1_bios} and {repr2_bios}")
     print("-" * 80)
     
-    for metric in ['euclidean', 'cosine']:
-        print(f"\n{metric.capitalize()} Distance Statistics:")
+    for metric in ['euclidean', 'cosine', 'dot_product']:
+        print(f"\n{metric.capitalize()} Statistics:")
         print(f"Mean: {stats[metric]['mean']:.4f}")
         print(f"Std:  {stats[metric]['std']:.4f}")
         print(f"Med:  {stats[metric]['median']:.4f}")
         print(f"Min:  {stats[metric]['min']:.4f}")
         print(f"Max:  {stats[metric]['max']:.4f}")
+    
+    print("\nArea Under Curve (AUC) Values:")
+    print(f"Cosine Distance AUC:    {auc_cosine:.4f}")
+    print(f"Euclidean Distance AUC: {auc_euclidean:.4f}")
+    print(f"Dot Product AUC:        {auc_dot:.4f}")
+    
+    # Save the plot
+    plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-    return stats, euclidean_distances, cosine_distances
-
-    """
-    for i in range(Z1.shape[0]):
-        get euclidean distance between Z1[i] and Z2[i]
-        get cosine distance between Z1[i] and Z2[i]
-    """
+    return stats, euclidean_distances, cosine_distances, dot_products
 
 
 # class ChromatinStateProbe(nn.Module):
@@ -1308,7 +1367,7 @@ def train_chromatin_state_probe(
     rfc.fit(Z_train, y_train_encoded)
 
     # Make predictions on the validation set
-    y_pred = rfc.predict(X_val)
+    y_pred = rfc.predict(Z_val)
 
     # Calculate overall accuracy
     accuracy = accuracy_score(y_val_encoded, y_pred)
