@@ -746,13 +746,11 @@ def latent_reproducibility(
     assert latent_repr1.shape == latent_repr2.shape, "latent_repr1 and latent_repr2 must have the same shape"
 
     # Convert cosine similarity to cosine distance
-    cosine_distances = 1 -  F.cosine_similarity(latent_repr1, latent_repr2, dim=-1)  # Shape: (L,)
-    euclidean_distances = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
-    # dot_products = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
+    cosine_distances = 1 - F.cosine_similarity(latent_repr1, latent_repr2, dim=-1)  # Shape: (L,)
+    euclidean_distances = torch.sqrt(torch.sum((latent_repr1 - latent_repr2)**2, dim=1))
 
-    for i in range(len(latent_repr1)):
-        euclidean_distances[i] = torch.sqrt(torch.sum((latent_repr1[i, :] - latent_repr2[i, :])**2, dim=-1))
-        # dot_products[i] = torch.sum(latent_repr1[i, :] * latent_repr2[i, :], dim=-1)
+    # Scale cosine distances by 1/2
+    cosine_distances_scaled = cosine_distances / 2
 
     # Calculate summary statistics
     stats = {
@@ -764,52 +762,48 @@ def latent_reproducibility(
             'max': euclidean_distances.max().item()
         },
         'cosine': {
-            'mean': cosine_distances.mean().item(),
-            'std': cosine_distances.std().item(),
-            'median': cosine_distances.median().item(),
-            'min': cosine_distances.min().item(),
-            'max': cosine_distances.max().item()
-        },
-        # 'dot_product': {
-        #     'mean': dot_products.mean().item(),
-        #     'std': dot_products.std().item(),
-        #     'median': dot_products.median().item(),
-        #     'min': dot_products.min().item(),
-        #     'max': dot_products.max().item()
-        # }
+            'mean': cosine_distances_scaled.mean().item(),
+            'std': cosine_distances_scaled.std().item(),
+            'median': cosine_distances_scaled.median().item(),
+            'min': cosine_distances_scaled.min().item(),
+            'max': cosine_distances_scaled.max().item()
+        }
     }
 
     # Create cumulative distribution plots
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     
     # Function to plot CDF and calculate AUC
     def plot_cdf(ax, data, title, xlabel, color='blue', is_cosine=False):
         sorted_data = np.sort(data.cpu().numpy())
         cumulative = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
         
+        # Extend the CDF to cover the entire x-axis range
+        sorted_data = np.concatenate([[0], sorted_data, [1 if is_cosine else sorted_data[-1]]])
+        cumulative = np.concatenate([[0], cumulative, [1]])
+        
         # Plot CDF
-        ax.plot(sorted_data, cumulative, color=color)
+        ax.plot(sorted_data, cumulative, color=color, label=f"AUC: {auc:.4f}" if is_cosine else None)
         ax.set_title(title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel('Fraction of bins')
         ax.grid(True, alpha=0.3)
         
-        # Set x-axis limits
-        if is_cosine:
-            ax.set_xlim(0, 2)
-        else:
-            ax.set_xlim(0, sorted_data.max())
-        
         # Calculate AUC using trapezoidal rule
         auc = integrate.trapz(cumulative, sorted_data)
+        
+        # Annotate AUC on the plot
+        if is_cosine:
+            ax.text(0.7, 0.2, f"AUC: {auc:.4f}", transform=ax.transAxes, color=color, fontsize=10)
+        
         return auc
     
-    # Plot for cosine distance
+    # Plot for cosine distance (scaled)
     auc_cosine = plot_cdf(
         axes[0], 
-        cosine_distances,
+        cosine_distances_scaled,
         'Cosine Distance CDF',
-        'Cosine Distance',
+        'Cosine Distance / 2',
         'blue',
         is_cosine=True
     )
@@ -823,15 +817,6 @@ def latent_reproducibility(
         'green',
         is_cosine=False
     )
-    
-    # # Plot for dot product
-    # auc_dot = plot_cdf(
-    #     axes[2],
-    #     dot_products,
-    #     'Dot Product CDF',
-    #     'Dot Product',
-    #     'red'
-    # )
     
     plt.tight_layout()
     
@@ -850,13 +835,12 @@ def latent_reproducibility(
     print("\nArea Under Curve (AUC) Values:")
     print(f"Cosine Distance AUC:    {auc_cosine:.4f}")
     print(f"Euclidean Distance AUC: {auc_euclidean:.4f}")
-    # print(f"Dot Product AUC:        {auc_dot:.4f}")
     
     # Save the plot
     plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-    return stats, euclidean_distances, cosine_distances
+    return stats, euclidean_distances, cosine_distances_scaled
 
 
 # class ChromatinStateProbe(nn.Module):
