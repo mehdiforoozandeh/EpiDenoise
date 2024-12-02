@@ -964,13 +964,16 @@ class ChromatinStateProbe(nn.Module):
             avg_loss = total_loss / n_batches
             print(f'Epoch {epoch + 1}/{num_epochs}: Training Loss: {avg_loss:.4f}')
 
+            if epoch % 20 == 0:
+                # Validate every epoch
+                val_loss, val_acc = self.validate(X_val, y_val)
+
             # Save best model
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 # Optionally save model weights here
                 # torch.save(self.state_dict(), 'best_model.pt')
         
-        val_loss, val_acc = self.validate(X_val, y_val)
         return val_loss, val_acc
 
 # class ChromatinStateProbe(nn.Module):
@@ -1246,9 +1249,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:2]
+    splits["train"] = splits["train"][:10]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:1]
+    splits["val"] = splits["val"][:3]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
