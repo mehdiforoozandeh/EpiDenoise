@@ -1249,9 +1249,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:10]
+    splits["train"] = splits["train"]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:3]
+    splits["val"] = splits["val"]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -1368,7 +1368,7 @@ def train_chromatin_state_probe(
 
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
-        num_epochs=500, learning_rate=0.001, batch_size=100)
+        num_epochs=100, learning_rate=0.0001, batch_size=100)
 
     exit()
     # Encode class names to integer labels
