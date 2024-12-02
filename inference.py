@@ -804,7 +804,7 @@ def latent_reproducibility(
     ax2 = plt.subplot(2, 2, 2)
     
     # Plot for cosine distance (scaled)
-    auc_cosine = plot_cdf(
+    stats['cosine']['auc'] = plot_cdf(
         ax1, 
         cosine_distances_scaled,
         'Cosine Distance CDF',
@@ -814,7 +814,7 @@ def latent_reproducibility(
     )
     
     # Plot for euclidean distance
-    auc_euclidean = plot_cdf(
+    stats['euclidean']['auc'] = plot_cdf(
         ax2,
         euclidean_distances,
         'Euclidean Distance CDF',
@@ -1056,7 +1056,7 @@ class ChromatinStateProbe(nn.Module):
         self.train()
         return val_loss.item(), overall_accuracy, per_class_metrics
 
-    def train_loop(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.01, batch_size=200):
+    def train(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.01, batch_size=200):
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         criterion = nn.CrossEntropyLoss()
 
@@ -1355,7 +1355,7 @@ def train_chromatin_state_probe(
             print(f"Class {label}: {count} examples")
 
     # # Use stratified training data for model training
-    # probe.train_loop(Z_train, Y_train, Z_val, Y_val, 
+    # probe.train(Z_train, Y_train, Z_val, Y_val, 
     #     num_epochs=500, learning_rate=0.001, batch_size=100)
 
     # Encode class names to integer labels
