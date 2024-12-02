@@ -598,7 +598,7 @@ class CANDIPredictor:
             n_ups, p_ups, mu_ups, var_ups, _ = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
         
         # Perform leave-one-out predictions
-        for leave_one_out in available_indices:
+        for ii, leave_one_out in enumerate(available_indices):
             if crop_edges:
                 n, p, mu, var, _ = self.pred_cropped(X, mX, mY, avX, imp_target=[leave_one_out], seq=seq)
             else:
@@ -607,7 +607,7 @@ class CANDIPredictor:
             p_imp[:, leave_one_out] = p[:, leave_one_out]
             mu_imp[:, leave_one_out] = mu[:, leave_one_out]
             var_imp[:, leave_one_out] = var[:, leave_one_out]
-            print(f"Completed feature {leave_one_out+1}/{len(available_indices)}")
+            print(f"Completed feature {ii+1}/{len(available_indices)}")
         
         # Create distributions and get means
         Y = Y.view(-1, Y.shape[-1])
@@ -1309,7 +1309,7 @@ if __name__ == "__main__":
 
         imp_count_mean, ups_count_mean, imp_pval_mean, ups_pval_mean = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=True)
 
-        print(f"imp_count_mean: {imp_count_mean.shape}, ups_count_mean: {ups_count_mean.shape}, imp_pval_mean: {imp_pval_mean.shape}, ups_pval_mean: {ups_pval_mean.shape}")
+        print(f"imp_count_mean: {imp_count_mean.shape}, ups_count_mean: {ups_count_mean.shape}, imp_pval_mean: {imp_pval_mean.shape}, ups_pval_mean: {ups_pval_mean.shape}, Y: {Y.shape}, P: {P.shape}")
 
 
         # print(f"n: {n.shape}, p: {p.shape}, mu: {mu.shape}, var: {var.shape}, Z: {Z.shape}")
