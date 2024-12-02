@@ -1100,7 +1100,6 @@ class CANDI_LOADER(object):
                 n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length)
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
-        print(self.hyper_parameters)
 
         model = model.to(self.device)
         return model

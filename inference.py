@@ -1390,7 +1390,7 @@ if __name__ == "__main__":
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
 
     elif sys.argv[1] == "latent_repr":
-        latent_reproducibility(model_path, hyper_parameters_path, "ENCBS794VBE", "ENCBS348ZLD", dataset_path="/project/compbio-lab/encode_data/")
+        latent_reproducibility(model_path, hyper_parameters_path, "ENCBS827CSM", "ENCBS353INV", dataset_path="/project/compbio-lab/encode_data/")
         exit()
 
         ct1_repr1 = "ENCBS674MPN"
