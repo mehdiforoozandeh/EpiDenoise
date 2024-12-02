@@ -22,13 +22,6 @@ from multiprocessing import Pool
 import tracemalloc
 from bs4 import BeautifulSoup
 
-# Example usage
-github_directory_url = "https://github.com/ernstlab/ChromActivity/tree/main/data/labels"
-local_download_path = "./labels"
-
-download_github_directory(github_directory_url, local_download_path)
-
-
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
     """
     Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
