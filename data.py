@@ -20,6 +20,14 @@ import gc
 import concurrent.futures
 from multiprocessing import Pool
 import tracemalloc
+from bs4 import BeautifulSoup
+
+# Example usage
+github_directory_url = "https://github.com/ernstlab/ChromActivity/tree/main/data/labels"
+local_download_path = "./labels"
+
+download_github_directory(github_directory_url, local_download_path)
+
 
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
     """
@@ -468,6 +476,59 @@ def load_region_chromatin_states(parsed_path, chrom):
     return chr_data
         
 def download_activity_data(metadata_file_path="data/"):
+
+    def download_github_directory(
+        directory_url="https://github.com/ernstlab/ChromActivity/tree/main/data/labels", 
+        download_path="/project/compbio-lab/encode_data/activity_data/"):
+        # Create a session
+        session = requests.Session()
+
+        # GitHub Raw URL Base
+        raw_base_url = "https://raw.githubusercontent.com/"
+
+        # Extract repo information
+        repo_info = directory_url.split("github.com/")[1].split("/tree/")
+        repo_base = repo_info[0]
+        branch_path = repo_info[1].split("/")
+        branch_name = branch_path[0]
+        directory_path = "/".join(branch_path[1:])
+
+        # Generate API URL
+        api_url = f"https://api.github.com/repos/{repo_base}/contents/{directory_path}?ref={branch_name}"
+
+        # Request directory contents
+        response = session.get(api_url)
+        if response.status_code != 200:
+            print(f"Failed to fetch directory contents: {response.status_code}")
+            return
+
+        contents = response.json()
+
+        # Ensure the download path exists
+        os.makedirs(download_path, exist_ok=True)
+
+        # Download files
+        for item in contents:
+            if item["type"] == "file":
+                file_url = item["download_url"]
+                file_name = os.path.join(download_path, item["name"])
+                print(f"Downloading {item['name']}...")
+
+                # Download the file
+                file_response = session.get(file_url)
+                if file_response.status_code == 200:
+                    with open(file_name, "wb") as file:
+                        file.write(file_response.content)
+                else:
+                    print(f"Failed to download {item['name']}: {file_response.status_code}")
+
+            elif item["type"] == "dir":
+                # Recursive call for subdirectories
+                sub_dir_path = os.path.join(download_path, item["name"])
+                download_github_directory(item["html_url"], sub_dir_path)
+
+    download_github_directory()
+    
     pass
 
 ################################################################################
@@ -3339,6 +3400,10 @@ if __name__ == "__main__":
         parsed_path = os.path.join(cs_dir, parsed_dir)
         cs = load_region_chromatin_states(parsed_path, "chr1", 1000000//8, (1000000+30000)//8, resolution=200)
         print(cs)
+
+    elif sys.argv[1] == "download_activity_data":
+        download_activity_data(metadata_file_path=solar_data_path)
+        
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
