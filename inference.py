@@ -868,32 +868,6 @@ class ChromatinStateProbe(nn.Module):
         x = F.log_softmax(x, dim=1)  # Apply log_softmax to get log probabilities
         return x
 
-    # def __init__(self, input_dim, hidden_dims=[512, 256, 128, 64, 32], output_dim=18):
-    #     super().__init__()
-    #     self.class_to_index = None  # Placeholder for the class-to-index mapping
-        
-    #     # Define the MLP layers
-    #     layers = []
-    #     previous_dim = input_dim
-    #     for hidden_dim in hidden_dims:
-    #         layers.append(nn.Linear(previous_dim, hidden_dim))
-    #         layers.append(nn.ReLU())  # Activation function
-    #         layers.append(nn.Dropout(p=0.5))
-    #         previous_dim = hidden_dim
-        
-    #     # Output layer
-    #     layers.append(nn.Linear(previous_dim, output_dim))
-        
-    #     # Combine all layers into a Sequential module
-    #     self.mlp = nn.Sequential(*layers)
-        
-    # def forward(self, x, normalize=False):
-    #     if normalize:
-    #         x = F.normalize(x, p=2, dim=1)
-    #     x = self.mlp(x)
-    #     x = F.log_softmax(x, dim=1)  # Apply log_softmax to get log probabilities
-    #     return x
-
     def encode_class_indices(self, class_names):
         """
         Convert a list of class names to class indices.
@@ -956,8 +930,8 @@ class ChromatinStateProbe(nn.Module):
         self.train()  # Set the model back to training mode
         return val_loss.item(), overall_accuracy
 
-    def fit(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.01, batch_size=200):
-        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
+    def fit(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.001, batch_size=200):
+        optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
         criterion = nn.NLLLoss()
 
         # Encode class names to indices

@@ -467,6 +467,8 @@ def load_region_chromatin_states(parsed_path, chrom):
 
     return chr_data
         
+def download_activity_data(metadata_file_path="data/"):
+    pass
 
 ################################################################################
 
