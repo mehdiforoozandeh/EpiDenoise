@@ -783,7 +783,7 @@ def latent_reproducibility(
         cumulative = np.concatenate([[0], cumulative, [1]])
         
         # Plot CDF
-        ax.plot(sorted_data, cumulative, color=color, label=f"AUC: {auc:.4f}" if is_cosine else None)
+        ax.plot(sorted_data, cumulative, color=color)
         ax.set_title(title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel('Fraction of bins')
