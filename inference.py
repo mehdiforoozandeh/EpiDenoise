@@ -1249,9 +1249,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, output_dim=18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:25]
+    splits["train"] = splits["train"][:20]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:10]
+    splits["val"] = splits["val"][:5]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -1375,44 +1375,9 @@ def train_chromatin_state_probe(
 
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
-        num_epochs=800, learning_rate=0.0001, batch_size=100)
+        num_epochs=800, learning_rate=0.001, batch_size=100)
 
-    exit()
-    # Encode class names to integer labels
-    label_encoder = LabelEncoder()
-    y_train_encoded = label_encoder.fit_transform(Y_train)
-    y_val_encoded = label_encoder.transform(Y_val)
-
-    # Shuffle the training data (optional but recommended)
-    Z_train, y_train_encoded = shuffle(Z_train, y_train_encoded, random_state=42)
-
-    # Create the Random Forest classifier
-    rfc = RandomForestClassifier(
-        n_estimators=100,      # Number of trees
-        max_depth=None,        # Expand nodes until all leaves are pure or contain less than min_samples_split samples
-        random_state=42,       # Seed for reproducibility
-        n_jobs=-1              # Use all available cores
-    )
-
-    # Train the classifier
-    rfc.fit(Z_train, y_train_encoded)
-
-    # Make predictions on the validation set
-    y_pred = rfc.predict(Z_val)
-
-    # Calculate overall accuracy
-    accuracy = accuracy_score(y_val_encoded, y_pred)
-    print(f'Validation Accuracy: {accuracy * 100:.2f}%\n')
-
-    # Generate a classification report
-    report = classification_report(
-        y_val_encoded,
-        y_pred,
-        target_names=label_encoder.classes_,
-        digits=4
-    )
-    print('Classification Report:')
-    print(report)
+    
 
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"

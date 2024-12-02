@@ -1131,7 +1131,7 @@ def main():
     parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
     parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
-    parser.add_argument('--loci_gen', type=str, default=["chr19"], help='Loci generation method')
+    parser.add_argument('--loci_gen', type=str, default="ccre", help='Loci generation method')
     
     # python CANDI.py --eic --dna --checkpoint models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth --suffix Nov28 --learning_rate 1e-4
     # Flags for DNA and EIC
