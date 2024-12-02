@@ -11,6 +11,8 @@ from sklearn.utils import shuffle
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import integrate
+from sklearn.decomposition import PCA
+import umap
 
 
 # sequence clustering
@@ -769,9 +771,6 @@ def latent_reproducibility(
             'max': cosine_distances_scaled.max().item()
         }
     }
-
-    # Create cumulative distribution plots
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     
     # Function to plot CDF and calculate AUC
     def plot_cdf(ax, data, title, xlabel, color='blue', is_cosine=False):
@@ -798,9 +797,15 @@ def latent_reproducibility(
         
         return auc
     
+    fig = plt.figure(figsize=(18, 12))
+    
+    # Plot CDFs (top row)
+    ax1 = plt.subplot(2, 3, 1)
+    ax2 = plt.subplot(2, 3, 2)
+    
     # Plot for cosine distance (scaled)
     auc_cosine = plot_cdf(
-        axes[0], 
+        ax1, 
         cosine_distances_scaled,
         'Cosine Distance CDF',
         'Cosine Distance / 2',
@@ -810,7 +815,7 @@ def latent_reproducibility(
     
     # Plot for euclidean distance
     auc_euclidean = plot_cdf(
-        axes[1],
+        ax2,
         euclidean_distances,
         'Euclidean Distance CDF',
         'Euclidean Distance',
@@ -818,23 +823,46 @@ def latent_reproducibility(
         is_cosine=False
     )
     
+    # Compute PCA
+    pca = PCA(n_components=2)
+    pca1 = pca.fit_transform(latent_repr1.cpu().numpy())
+    pca2 = pca.fit_transform(latent_repr2.cpu().numpy())
+    
+    # Compute UMAP
+    reducer = umap.UMAP(random_state=42)
+    umap1 = reducer.fit_transform(latent_repr1.cpu().numpy())
+    umap2 = reducer.fit_transform(latent_repr2.cpu().numpy())
+    
+    # Plot PCA (top right and middle)
+    ax3 = plt.subplot(2, 3, 3)
+    ax4 = plt.subplot(2, 3, 4)
+    
+    # PCA plots
+    ax3.scatter(pca1[:, 0], pca1[:, 1], alpha=0.5, s=1)
+    ax3.set_title(f'PCA of {repr1_bios}')
+    ax3.set_xlabel('PC1')
+    ax3.set_ylabel('PC2')
+    
+    ax4.scatter(pca2[:, 0], pca2[:, 1], alpha=0.5, s=1)
+    ax4.set_title(f'PCA of {repr2_bios}')
+    ax4.set_xlabel('PC1')
+    ax4.set_ylabel('PC2')
+    
+    # UMAP plots (bottom middle and right)
+    ax5 = plt.subplot(2, 3, 5)
+    ax6 = plt.subplot(2, 3, 6)
+    
+    ax5.scatter(umap1[:, 0], umap1[:, 1], alpha=0.5, s=1)
+    ax5.set_title(f'UMAP of {repr1_bios}')
+    ax5.set_xlabel('UMAP1')
+    ax5.set_ylabel('UMAP2')
+    
+    ax6.scatter(umap2[:, 0], umap2[:, 1], alpha=0.5, s=1)
+    ax6.set_title(f'UMAP of {repr2_bios}')
+    ax6.set_xlabel('UMAP1')
+    ax6.set_ylabel('UMAP2')
+    
     plt.tight_layout()
-    
-    # Print statistics and AUC values
-    print(f"\nLatent Space Reproducibility Analysis between {repr1_bios} and {repr2_bios}")
-    print("-" * 80)
-    
-    for metric in ['euclidean', 'cosine']:
-        print(f"\n{metric.capitalize()} Statistics:")
-        print(f"Mean: {stats[metric]['mean']:.4f}")
-        print(f"Std:  {stats[metric]['std']:.4f}")
-        print(f"Med:  {stats[metric]['median']:.4f}")
-        print(f"Min:  {stats[metric]['min']:.4f}")
-        print(f"Max:  {stats[metric]['max']:.4f}")
-    
-    print("\nArea Under Curve (AUC) Values:")
-    print(f"Cosine Distance AUC:    {auc_cosine:.4f}")
-    print(f"Euclidean Distance AUC: {auc_euclidean:.4f}")
     
     # Save the plot
     plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
