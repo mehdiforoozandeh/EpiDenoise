@@ -564,7 +564,7 @@ class CANDIPredictor:
         
         return count_dist.mean(), pval_dist.mean()
 
-    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, crop_edges=True):
+    def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, crop_edges=True, return_preds=False):
         """
         Performs leave-one-out evaluation and returns metrics for both count and p-value predictions.
         
@@ -623,6 +623,9 @@ class CANDIPredictor:
         imp_pval_mean = imp_pval_dist.mean()
         ups_pval_mean = ups_pval_dist.mean()
         
+        if return_preds:
+            return imp_count_mean, ups_count_mean, imp_pval_mean, ups_pval_mean
+        
         # Calculate metrics for each feature
         metrics = {}
         for idx in available_indices:
@@ -637,7 +640,6 @@ class CANDIPredictor:
             imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
             ups_pval = np.sinh(ups_pval_mean[:, idx].numpy())
             pval_true = np.sinh(pval_true)
-            
             
             metrics[idx.item()] = {
                 'count_metrics': {
@@ -1305,7 +1307,12 @@ if __name__ == "__main__":
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
 
-        print(f"n: {n.shape}, p: {p.shape}, mu: {mu.shape}, var: {var.shape}, Z: {Z.shape}")
+        imp_count_mean, ups_count_mean, imp_pval_mean, ups_pval_mean = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=True)
+
+        print(f"imp_count_mean: {imp_count_mean.shape}, ups_count_mean: {ups_count_mean.shape}, imp_pval_mean: {imp_pval_mean.shape}, ups_pval_mean: {ups_pval_mean.shape}")
+
+
+        # print(f"n: {n.shape}, p: {p.shape}, mu: {mu.shape}, var: {var.shape}, Z: {Z.shape}")
 
 
 
