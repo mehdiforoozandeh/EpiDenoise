@@ -850,9 +850,9 @@ def latent_reproducibility(
     plt.close()
 
     print("Latent space comparison statistics:")
-    print(f"Mean cosine distance: {stats['mean_cosine']:.4f}")
-    print(f"Mean euclidean distance: {stats['mean_euclidean']:.4f}")
-    print(f"AUC cosine: {stats['auc_cosine']:.4f}")
+    print(f"Mean cosine distance: {stats['cosine']['mean']:.4f}")
+    print(f"Mean euclidean distance: {stats['euclidean']['mean']:.4f}")
+    print(f"AUC cosine: {stats['cosine']['auc']:.4f}")
     return stats, euclidean_distances, cosine_distances_scaled
 
 
