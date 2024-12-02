@@ -1297,7 +1297,7 @@ if __name__ == "__main__":
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
 
     elif sys.argv[1] == "confidence":
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
         candi.chr = chr
         bios_name = "ENCBS706NOO"
 
