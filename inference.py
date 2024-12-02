@@ -849,6 +849,10 @@ def latent_reproducibility(
     plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
     plt.close()
 
+    print("Latent space comparison statistics:")
+    print(f"Mean cosine distance: {stats['mean_cosine']:.4f}")
+    print(f"Mean euclidean distance: {stats['mean_euclidean']:.4f}")
+    print(f"AUC cosine: {stats['auc_cosine']:.4f}")
     return stats, euclidean_distances, cosine_distances_scaled
 
 
