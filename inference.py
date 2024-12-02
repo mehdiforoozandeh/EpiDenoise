@@ -624,7 +624,7 @@ class CANDIPredictor:
         ups_pval_mean = ups_pval_dist.mean()
         
         if return_preds:
-            return imp_count_mean, ups_count_mean, imp_pval_mean, ups_pval_mean
+            return imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist
         
         # Calculate metrics for each feature
         metrics = {}
@@ -1306,16 +1306,74 @@ if __name__ == "__main__":
         # Load latent representations
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
+        
+        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=True)
 
-        imp_count_mean, ups_count_mean, imp_pval_mean, ups_pval_mean = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=True)
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
 
-        print(f"imp_count_mean: {imp_count_mean.shape}, ups_count_mean: {ups_count_mean.shape}, imp_pval_mean: {imp_pval_mean.shape}, ups_pval_mean: {ups_pval_mean.shape}, Y: {Y.shape}, P: {P.shape}")
+        def viz_error_std_hexbin(dist, true_values, save_path, count=True):
+            """
+            Visualize the relationship between prediction error and standard deviation using hexbin plots.
+            
+            Args:
+                dist: Distribution object (imp_count_dist or imp_pval_dist)
+                true_values: True values (Y or P) to compare against
+                save_path: Path to save the visualization
+                count: Boolean indicating if we're plotting count data (True) or p-value data (False)
+            """
+            # Create save directory if it doesn't exist
+            os.makedirs(save_path, exist_ok=True)
+            
+            # Get mean and std from distribution
+            pred_mean = dist.mean().numpy()
+            pred_std = dist.stddev().numpy()
+            
+            # Calculate absolute error
+            error = np.abs(true_values.numpy() - pred_mean)
+            
+            # Setup plot
+            plt.figure(figsize=(15, 5))
+            
+            # Calculate percentiles for different ranges
+            x_90 = np.percentile(error, 99)
+            x_99 = np.percentile(error, 99.9)
+            ranges = [(0, x_90), (0, x_99), (0, error.max())]
+            
+            # Calculate overall correlation
+            valid_mask = ~np.isnan(error) & ~np.isnan(pred_std)
+            pcc = np.corrcoef(true_values.numpy()[valid_mask].flatten(), 
+                            pred_mean[valid_mask].flatten())[0,1]
+            
+            # Create subplot for each range
+            for i, (x_min, x_max) in enumerate(ranges):
+                # Subset the data for the current range
+                mask = (error >= x_min) & (error <= x_max) & valid_mask
+                subset_error = error[mask]
+                subset_pred_std = pred_std[mask]
+                
+                ax = plt.subplot(1, 3, i + 1)
+                
+                # Hexbin plot for the subset data
+                hb = ax.hexbin(subset_error, subset_pred_std, 
+                            gridsize=50, cmap='viridis', 
+                            mincnt=1, norm=LogNorm())
+                
+                ax.set_xlabel('Absolute Error')
+                ax.set_ylabel('Predicted Std Dev')
+                
+                data_type = "Count" if count else "P-value"
+                ax.set_title(f"{data_type} Prediction Error vs Std Dev\n"
+                            f"PCC: {pcc:.2f} (Range: {x_min:.2f}-{x_max:.2f})")
+                
+                # Add color bar
+                cb = plt.colorbar(hb, ax=ax)
+                cb.set_label('Log10(Counts)')
+            
+            plt.tight_layout()
+            plt.savefig(os.path.join(save_path, f"{'count' if count else 'pval'}_error_std_hexbin.png"), 
+                        dpi=150, bbox_inches='tight')
+            plt.close()
 
-
-        # print(f"n: {n.shape}, p: {p.shape}, mu: {mu.shape}, var: {var.shape}, Z: {Z.shape}")
-
-
-
-
-    
-
+        viz_error_std_hexbin(imp_count_dist, Y, save_path="output/error_analysis", count=True)
+        viz_error_std_hexbin(imp_pval_dist, Y, save_path="output/error_analysis", count=False)
