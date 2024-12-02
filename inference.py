@@ -748,11 +748,11 @@ def latent_reproducibility(
     # Convert cosine similarity to cosine distance
     cosine_distances = 1 -  F.cosine_similarity(latent_repr1, latent_repr2, dim=-1)  # Shape: (L,)
     euclidean_distances = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
-    dot_products = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
+    # dot_products = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
 
     for i in range(len(latent_repr1)):
         euclidean_distances[i] = torch.sqrt(torch.sum((latent_repr1[i, :] - latent_repr2[i, :])**2, dim=-1))
-        dot_products[i] = torch.sum(latent_repr1[i, :] * latent_repr2[i, :], dim=-1)
+        # dot_products[i] = torch.sum(latent_repr1[i, :] * latent_repr2[i, :], dim=-1)
 
     # Calculate summary statistics
     stats = {
@@ -770,20 +770,20 @@ def latent_reproducibility(
             'min': cosine_distances.min().item(),
             'max': cosine_distances.max().item()
         },
-        'dot_product': {
-            'mean': dot_products.mean().item(),
-            'std': dot_products.std().item(),
-            'median': dot_products.median().item(),
-            'min': dot_products.min().item(),
-            'max': dot_products.max().item()
-        }
+        # 'dot_product': {
+        #     'mean': dot_products.mean().item(),
+        #     'std': dot_products.std().item(),
+        #     'median': dot_products.median().item(),
+        #     'min': dot_products.min().item(),
+        #     'max': dot_products.max().item()
+        # }
     }
 
     # Create cumulative distribution plots
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     
     # Function to plot CDF and calculate AUC
-    def plot_cdf(ax, data, title, xlabel, color='blue'):
+    def plot_cdf(ax, data, title, xlabel, color='blue', is_cosine=False):
         sorted_data = np.sort(data.cpu().numpy())
         cumulative = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
         
@@ -793,6 +793,12 @@ def latent_reproducibility(
         ax.set_xlabel(xlabel)
         ax.set_ylabel('Fraction of bins')
         ax.grid(True, alpha=0.3)
+        
+        # Set x-axis limits
+        if is_cosine:
+            ax.set_xlim(0, 2)
+        else:
+            ax.set_xlim(0, sorted_data.max())
         
         # Calculate AUC using trapezoidal rule
         auc = integrate.trapz(cumulative, sorted_data)
@@ -804,7 +810,8 @@ def latent_reproducibility(
         cosine_distances,
         'Cosine Distance CDF',
         'Cosine Distance',
-        'blue'
+        'blue',
+        is_cosine=True
     )
     
     # Plot for euclidean distance
@@ -813,17 +820,18 @@ def latent_reproducibility(
         euclidean_distances,
         'Euclidean Distance CDF',
         'Euclidean Distance',
-        'green'
+        'green',
+        is_cosine=False
     )
     
-    # Plot for dot product
-    auc_dot = plot_cdf(
-        axes[2],
-        dot_products,
-        'Dot Product CDF',
-        'Dot Product',
-        'red'
-    )
+    # # Plot for dot product
+    # auc_dot = plot_cdf(
+    #     axes[2],
+    #     dot_products,
+    #     'Dot Product CDF',
+    #     'Dot Product',
+    #     'red'
+    # )
     
     plt.tight_layout()
     
@@ -831,7 +839,7 @@ def latent_reproducibility(
     print(f"\nLatent Space Reproducibility Analysis between {repr1_bios} and {repr2_bios}")
     print("-" * 80)
     
-    for metric in ['euclidean', 'cosine', 'dot_product']:
+    for metric in ['euclidean', 'cosine']:
         print(f"\n{metric.capitalize()} Statistics:")
         print(f"Mean: {stats[metric]['mean']:.4f}")
         print(f"Std:  {stats[metric]['std']:.4f}")
@@ -842,7 +850,7 @@ def latent_reproducibility(
     print("\nArea Under Curve (AUC) Values:")
     print(f"Cosine Distance AUC:    {auc_cosine:.4f}")
     print(f"Euclidean Distance AUC: {auc_euclidean:.4f}")
-    print(f"Dot Product AUC:        {auc_dot:.4f}")
+    # print(f"Dot Product AUC:        {auc_dot:.4f}")
     
     # Save the plot
     plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
