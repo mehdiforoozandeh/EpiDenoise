@@ -856,7 +856,7 @@ def latent_reproducibility(
     plt.savefig(f'latent_space_comparison_{repr1_bios}_{repr2_bios}.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-    return stats, euclidean_distances, cosine_distances, dot_products
+    return stats, euclidean_distances, cosine_distances
 
 
 # class ChromatinStateProbe(nn.Module):
