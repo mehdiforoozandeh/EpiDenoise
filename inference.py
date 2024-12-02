@@ -1375,7 +1375,7 @@ def train_chromatin_state_probe(
 
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
-        num_epochs=100, learning_rate=0.0001, batch_size=100)
+        num_epochs=400, learning_rate=0.0001, batch_size=100)
 
     exit()
     # Encode class names to integer labels
