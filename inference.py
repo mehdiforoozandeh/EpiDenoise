@@ -1382,15 +1382,15 @@ def train_chromatin_state_probe(
     print(report)
 
 if __name__ == "__main__":
-    model_path = "models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov25_20241126160857_params45093285.pkl"
+    model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
     eic = True
 
     if sys.argv[1] == "cs_probe":
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
 
     elif sys.argv[1] == "latent_repr":
-        latent_reproducibility(model_path, hyper_parameters_path, "ENCBS353INV", "ENCBS827CSM", dataset_path="/project/compbio-lab/encode_data/")
+        latent_reproducibility(model_path, hyper_parameters_path, "ENCBS794VBE", "ENCBS348ZLD", dataset_path="/project/compbio-lab/encode_data/")
         exit()
 
         ct1_repr1 = "ENCBS674MPN"
