@@ -1392,14 +1392,40 @@ if __name__ == "__main__":
     elif sys.argv[1] == "latent_repr":
         ct1_repr1 = "ENCBS674MPN"
         ct1_repr2 = "ENCBS639AAA"
-
         latent_reproducibility(model_path, hyper_parameters_path, ct1_repr1, ct1_repr2, dataset_path="/project/compbio-lab/encode_data/")
 
         ct2_repr1 = "ENCBS967MVZ"
         ct2_repr2 = "ENCBS789UPK"
         latent_reproducibility(model_path, hyper_parameters_path, ct2_repr1, ct2_repr2, dataset_path="/project/compbio-lab/encode_data/") 
 
-        latent_reproducibility(model_path, hyper_parameters_path, ct1_repr1, ct2_repr2, dataset_path="/project/compbio-lab/encode_data/")   
+        ct3_repr1 = "ENCBS715VCP"
+        ct3_repr2 = "ENCBS830CIQ"
+        latent_reproducibility(model_path, hyper_parameters_path, ct3_repr1, ct3_repr2, dataset_path="/project/compbio-lab/encode_data/")  
+        
+        ct4_repr1 = "ENCBS865RXK"
+        ct4_repr2 = "ENCBS188BKX"
+        latent_reproducibility(model_path, hyper_parameters_path, ct4_repr1, ct4_repr2, dataset_path="/project/compbio-lab/encode_data/")   
+
+        ct5_repr1 = "ENCBS655ARO"
+        ct5_repr2 = "ENCBS075PNA"
+        latent_reproducibility(model_path, hyper_parameters_path, ct5_repr1, ct5_repr2, dataset_path="/project/compbio-lab/encode_data/")   
+
+        # Random pairs from different cell types to test cross-cell-type reproducibility
+        print("\nTesting cross-cell-type reproducibility:")
+        # CT1 vs CT2
+        latent_reproducibility(model_path, hyper_parameters_path, ct1_repr1, ct2_repr1, dataset_path="/project/compbio-lab/encode_data/")
+        
+        # CT2 vs CT3 
+        latent_reproducibility(model_path, hyper_parameters_path, ct2_repr2, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
+        
+        # CT3 vs CT4
+        latent_reproducibility(model_path, hyper_parameters_path, ct3_repr2, ct4_repr1, dataset_path="/project/compbio-lab/encode_data/")
+        
+        # CT4 vs CT5
+        latent_reproducibility(model_path, hyper_parameters_path, ct4_repr2, ct5_repr1, dataset_path="/project/compbio-lab/encode_data/")
+        
+        # CT5 vs CT1 
+        latent_reproducibility(model_path, hyper_parameters_path, ct5_repr2, ct1_repr2, dataset_path="/project/compbio-lab/encode_data/")
 
 
 
