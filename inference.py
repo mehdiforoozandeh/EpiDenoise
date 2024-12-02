@@ -1421,7 +1421,6 @@ if __name__ == "__main__":
         ct0_repr1 = "ENCBS706NOO"
         ct0_repr2 = "ENCBS314QQU"
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct0_repr2, dataset_path="/project/compbio-lab/encode_data/")
-        exit()
 
         ct1_repr1 = "ENCBS674MPN"
         ct1_repr2 = "ENCBS639AAA"
@@ -1459,6 +1458,10 @@ if __name__ == "__main__":
         
         # CT5 vs CT1 
         latent_reproducibility(model_path, hyper_parameters_path, ct5_repr2, ct1_repr2, dataset_path="/project/compbio-lab/encode_data/")
+
+        # CT0 vs CT3
+        print("\nTesting CT0 vs CT3 reproducibility:")
+        latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
 
 
 
