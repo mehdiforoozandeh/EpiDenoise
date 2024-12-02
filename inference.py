@@ -797,11 +797,11 @@ def latent_reproducibility(
         
         return auc
     
-    fig = plt.figure(figsize=(18, 12))
+    fig = plt.figure(figsize=(12, 8))
     
     # Plot CDFs (top row)
-    ax1 = plt.subplot(2, 3, 1)
-    ax2 = plt.subplot(2, 3, 2)
+    ax1 = plt.subplot(2, 2, 1)
+    ax2 = plt.subplot(2, 2, 2)
     
     # Plot for cosine distance (scaled)
     auc_cosine = plot_cdf(
@@ -828,14 +828,9 @@ def latent_reproducibility(
     pca1 = pca.fit_transform(latent_repr1.cpu().numpy())
     pca2 = pca.fit_transform(latent_repr2.cpu().numpy())
     
-    # Compute UMAP
-    reducer = umap.UMAP(random_state=42)
-    umap1 = reducer.fit_transform(latent_repr1.cpu().numpy())
-    umap2 = reducer.fit_transform(latent_repr2.cpu().numpy())
-    
-    # Plot PCA (top right and middle)
-    ax3 = plt.subplot(2, 3, 3)
-    ax4 = plt.subplot(2, 3, 4)
+    # Plot PCA (bottom row)
+    ax3 = plt.subplot(2, 2, 3)
+    ax4 = plt.subplot(2, 2, 4)
     
     # PCA plots
     ax3.scatter(pca1[:, 0], pca1[:, 1], alpha=0.5, s=1)
@@ -847,20 +842,6 @@ def latent_reproducibility(
     ax4.set_title(f'PCA of {repr2_bios}')
     ax4.set_xlabel('PC1')
     ax4.set_ylabel('PC2')
-    
-    # UMAP plots (bottom middle and right)
-    ax5 = plt.subplot(2, 3, 5)
-    ax6 = plt.subplot(2, 3, 6)
-    
-    ax5.scatter(umap1[:, 0], umap1[:, 1], alpha=0.5, s=1)
-    ax5.set_title(f'UMAP of {repr1_bios}')
-    ax5.set_xlabel('UMAP1')
-    ax5.set_ylabel('UMAP2')
-    
-    ax6.scatter(umap2[:, 0], umap2[:, 1], alpha=0.5, s=1)
-    ax6.set_title(f'UMAP of {repr2_bios}')
-    ax6.set_xlabel('UMAP1')
-    ax6.set_ylabel('UMAP2')
     
     plt.tight_layout()
     
