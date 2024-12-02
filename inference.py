@@ -976,142 +976,6 @@ class ChromatinStateProbe(nn.Module):
         
         return val_loss, val_acc
 
-# class ChromatinStateProbe(nn.Module):
-#     def __init__(self, input_dim, output_dim=18):
-#         super().__init__()
-#         self.linear = nn.Linear(input_dim, output_dim)
-#         # self.softmax = nn.Softmax(dim=1)
-#         self.class_to_index = None  # Placeholder for the class-to-index mapping
-
-#     def forward(self, x, normalize=False):
-#         if normalize:
-#             x = F.normalize(x, p=2, dim=1)
-#         x = self.linear(x)
-#         return x
-
-#     def encode_class_indices(self, class_names):
-#         """
-#         Convert a list of class names to class indices.
-#         """
-#         if self.class_to_index is None:
-#             unique_classes = sorted(set(class_names))
-#             self.class_to_index = {name: idx for idx, name in enumerate(unique_classes)}
-#             self.index_to_class = {idx: name for name, idx in self.class_to_index.items()}
-#         return [self.class_to_index[name] for name in class_names]
-
-#     def decode_class_indices(self, class_indices):
-#         """
-#         Convert class indices back to class names.
-#         """
-#         if self.class_to_index is None:
-#             raise ValueError("class_to_index mapping is not defined.")
-#         return [self.index_to_class[idx] for idx in class_indices]
-
-#     def train_batch(self, X, y, optimizer, criterion):
-#         optimizer.zero_grad()
-#         output = self(X)
-#         loss = criterion(output, y)
-#         loss.backward()
-#         optimizer.step()
-#         return loss.item()
-
-#     def validate(self, X, y):
-#         self.eval()
-#         with torch.no_grad():
-#             output = self(X)
-#             criterion = nn.CrossEntropyLoss()
-#             val_loss = criterion(output, y)
-            
-#             # Calculate overall accuracy
-#             _, predicted = torch.max(output, 1)
-#             total = y.size(0)
-#             correct = (predicted == y).sum().item()
-#             overall_accuracy = 100 * correct / total
-            
-#             # Calculate per-class metrics
-#             unique_labels = torch.unique(y)
-#             per_class_metrics = {}
-            
-#             for label in unique_labels:
-#                 # Create mask for current class
-#                 mask = (y == label)
-                
-#                 # True positives, false positives, false negatives
-#                 true_pos = ((predicted == label) & (y == label)).sum().item()
-#                 false_pos = ((predicted == label) & (y != label)).sum().item()
-#                 false_neg = ((predicted != label) & (y == label)).sum().item()
-                
-#                 # Calculate metrics
-#                 precision = true_pos / (true_pos + false_pos) if (true_pos + false_pos) > 0 else 0
-#                 recall = true_pos / (true_pos + false_neg) if (true_pos + false_neg) > 0 else 0
-#                 f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-#                 accuracy = true_pos / mask.sum().item() if mask.sum().item() > 0 else 0
-                
-#                 per_class_metrics[self.index_to_class[label.item()]] = {
-#                     'accuracy': 100 * accuracy,
-#                     'precision': precision,
-#                     'recall': recall,
-#                     'f1': f1,
-#                     'support': mask.sum().item()
-#                 }
-            
-#             # Print metrics
-#             print(f'\nOverall Validation Loss: {val_loss:.4f}, Accuracy: {overall_accuracy:.2f}%')
-#             print('\nPer-class metrics:')
-#             print('Label | Accuracy | Precision | Recall |   F1   | Support')
-#             print('-' * 60)
-#             for label in sorted(per_class_metrics.keys()):
-#                 metrics = per_class_metrics[label]
-#                 print(f'{label:10s} | {metrics["accuracy"]:7.2f}% | {metrics["precision"]:8.4f} | {metrics["recall"]:6.4f} | {metrics["f1"]:6.4f} | {metrics["support"]:7d}')
-#             print('-' * 60)
-            
-#         self.train()
-#         return val_loss.item(), overall_accuracy, per_class_metrics
-
-#     def train(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.01, batch_size=200):
-#         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
-#         criterion = nn.CrossEntropyLoss()
-
-#         # Encode class names to indices
-#         y_train = torch.tensor(self.encode_class_indices(y_train), dtype=torch.long)
-#         y_val = torch.tensor(self.encode_class_indices(y_val), dtype=torch.long)
-
-#         # Convert inputs to tensors if they aren't already
-#         X_train = torch.tensor(X_train, dtype=torch.float32)
-#         X_val = torch.tensor(X_val, dtype=torch.float32)
-
-#         n_batches = (len(X_train) + batch_size - 1) // batch_size
-#         best_val_loss = float('inf')
-
-#         for epoch in range(num_epochs):
-#             total_loss = 0
-
-#             # Shuffle training data
-#             indices = torch.randperm(len(X_train))
-#             X_train = X_train[indices]
-#             y_train = y_train[indices]
-
-#             # Train in batches
-#             for i in range(0, len(X_train), batch_size):
-#                 batch_X = X_train[i:i + batch_size]
-#                 batch_y = y_train[i:i + batch_size]
-
-#                 loss = self.train_batch(batch_X, batch_y, optimizer, criterion)
-#                 total_loss += loss
-
-#             avg_loss = total_loss / n_batches
-#             print(f'Epoch {epoch + 1}/{num_epochs}: Training Loss: {avg_loss:.4f}')
-
-#             if epoch % 5 == 0:
-#                 # Validate every epoch
-#                 val_loss, val_acc, per_class_metrics = self.validate(X_val, y_val)
-
-#             # Save best model
-#             if val_loss < best_val_loss:
-#                 best_val_loss = val_loss
-#                 # Optionally save model weights here
-#                 # torch.save(self.state_dict(), 'best_model.pt')
-
 def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
     # print(bios_names)
@@ -1378,7 +1242,6 @@ def train_chromatin_state_probe(
         num_epochs=800, learning_rate=0.001, batch_size=100)
 
     
-
 if __name__ == "__main__":
     model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
     hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
@@ -1433,6 +1296,16 @@ if __name__ == "__main__":
         print("\nTesting CT0 vs CT3 reproducibility:")
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
 
+    elif sys.argv[1] == "confidence":
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=True)
+        candi.chr = chr
+        bios_name = "ENCBS706NOO"
+
+        # Load latent representations
+        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+        n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
+
+        print(f"n: {n.shape}, p: {p.shape}, mu: {mu.shape}, var: {var.shape}, Z: {Z.shape}")
 
 
 

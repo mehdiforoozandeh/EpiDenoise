@@ -1027,7 +1027,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
             pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
 
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
 
     if checkpoint_path is not None:
