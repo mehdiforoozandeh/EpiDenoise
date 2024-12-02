@@ -1327,7 +1327,7 @@ if __name__ == "__main__":
             
             # Get mean and std from distribution
             pred_mean = dist.mean().numpy()
-            pred_std = dist.stddev().numpy()
+            pred_std = dist.std().numpy()
             
             # Calculate absolute error
             error = np.abs(true_values.numpy() - pred_mean)
