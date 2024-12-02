@@ -856,15 +856,41 @@ def latent_reproducibility(
     return stats, euclidean_distances, cosine_distances_scaled
 
 class ChromatinStateProbe(nn.Module):
-    def __init__(self, input_dim, output_dim=18):
-        super().__init__()
-        self.linear = nn.Linear(input_dim, output_dim)
-        self.class_to_index = None  # Placeholder for the class-to-index mapping
+    # def __init__(self, input_dim, output_dim=18):
+    #     super().__init__()
+    #     self.linear = nn.Linear(input_dim, output_dim)
+    #     self.class_to_index = None  # Placeholder for the class-to-index mapping
     
+    # def forward(self, x, normalize=False):
+    #     if normalize:
+    #         x = F.normalize(x, p=2, dim=1)
+    #     x = self.linear(x)
+    #     x = F.log_softmax(x, dim=1)  # Apply log_softmax to get log probabilities
+    #     return x
+
+    def __init__(self, input_dim, hidden_dims=[512, 256, 128, 64, 32], output_dim=18):
+        super().__init__()
+        self.class_to_index = None  # Placeholder for the class-to-index mapping
+        
+        # Define the MLP layers
+        layers = []
+        previous_dim = input_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(previous_dim, hidden_dim))
+            layers.append(nn.ReLU())  # Activation function
+            layers.append(nn.Dropout(p=0.5))
+            previous_dim = hidden_dim
+        
+        # Output layer
+        layers.append(nn.Linear(previous_dim, output_dim))
+        
+        # Combine all layers into a Sequential module
+        self.mlp = nn.Sequential(*layers)
+        
     def forward(self, x, normalize=False):
         if normalize:
             x = F.normalize(x, p=2, dim=1)
-        x = self.linear(x)
+        x = self.mlp(x)
         x = F.log_softmax(x, dim=1)  # Apply log_softmax to get log probabilities
         return x
 
@@ -1249,7 +1275,7 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"][:30]
+    splits["train"] = splits["train"][:20]
     # splits["test"] = splits["test"][:1]
     splits["val"] = splits["val"][:5]
     
