@@ -1249,9 +1249,9 @@ def train_chromatin_state_probe(
     probe = ChromatinStateProbe(candi.model.d_model, 18)
 
     splits = chromatin_state_dataset_eic_train_test_val_split(dataset_path)
-    splits["train"] = splits["train"]
+    splits["train"] = splits["train"][:30]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"]
+    splits["val"] = splits["val"][:5]
     
     def prepare_data(split, chrs, num_regions):
         chromatin_state_data = {}
@@ -1306,6 +1306,8 @@ def train_chromatin_state_probe(
                         Z_train.append(latent_vector)
                         Y_train.append(label)
 
+    del train_chromatin_state_data
+    gc.collect()
     # Convert lists to tensors first since Z contains torch tensors
     Z_train = np.stack(Z_train) 
     Y_train = np.array(Y_train) 
@@ -1327,6 +1329,8 @@ def train_chromatin_state_probe(
                         Z_val.append(latent_vector)
                         Y_val.append(label)
     
+    del val_chromatin_state_data
+    gc.collect()
     # Convert lists to tensors first since Z contains torch tensors
     Z_val = np.stack(Z_val)
     Y_val = np.array(Y_val)
