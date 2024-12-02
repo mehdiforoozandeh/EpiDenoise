@@ -793,7 +793,7 @@ def latent_reproducibility(
         
         # Annotate AUC on the plot
         if is_cosine:
-            ax.text(0.7, 0.2, f"AUC: {auc:.4f}", transform=ax.transAxes, color=color, fontsize=10)
+            ax.text(0.8, 0.8, f"AUC: {auc:.4f}", transform=ax.transAxes, color=color, fontsize=10)
         
         return auc
     
