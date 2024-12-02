@@ -741,12 +741,18 @@ def latent_reproducibility(
     latent_repr2 = candi.get_latent_representations_cropped(X2, mX2, seq=seq2)
 
     del X1, X2, seq1, seq2, mX1, mX2
+    
+    # Assume latent_repr1 and latent_repr2 are tensors of shape (L, d)
+    assert latent_repr1.shape == latent_repr2.shape, "latent_repr1 and latent_repr2 must have the same shape"
 
-    # Calculate distances/similarities
-    euclidean_distances = torch.norm(latent_repr1 - latent_repr2, dim=1)
-    cosine_similarities = F.cosine_similarity(latent_repr1, latent_repr2, dim=1)
-    cosine_distances = 1 - cosine_similarities
-    dot_products = torch.sum(latent_repr1 * latent_repr2, dim=1)
+    # Convert cosine similarity to cosine distance
+    cosine_distances = 1 -  F.cosine_similarity(latent_repr1, latent_repr2, dim=-1)  # Shape: (L,)
+    euclidean_distances = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
+    dot_products = torch.empty(len(latent_repr1), device="cpu", dtype=torch.float32)
+
+    for i in range(len(latent_repr1)):
+        euclidean_distances[i] = torch.sqrt(torch.sum((latent_repr1[i, :] - latent_repr2[i, :])**2, dim=-1))
+        dot_products[i] = torch.sum(latent_repr1[i, :] * latent_repr2[i, :], dim=-1)
 
     # Calculate summary statistics
     stats = {
