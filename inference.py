@@ -1385,6 +1385,10 @@ if __name__ == "__main__":
         print(f"Position PP_count std: {np.std(position_PP_count_reduced):.3f}, Position PP_pval std: {np.std(position_PP_pval_reduced):.3f}")
         print(f"Position PP_count 95% CI: {np.percentile(position_PP_count_reduced, 2.5):.3f} - {np.percentile(position_PP_count_reduced, 97.5):.3f}")
         print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval_reduced, 2.5):.3f} - {np.percentile(position_PP_pval_reduced, 97.5):.3f}")
+        # Print min and max values
+        print("\nMin/Max values:")
+        print(f"Position PP_count min: {np.min(position_PP_count_reduced):.3f}, max: {np.max(position_PP_count_reduced):.3f}")
+        print(f"Position PP_pval min: {np.min(position_PP_pval_reduced):.3f}, max: {np.max(position_PP_pval_reduced):.3f}")
 
         exit()
 
