@@ -1330,6 +1330,15 @@ if __name__ == "__main__":
             if avY[0, i] == 1:
                 print(
                 f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
+        
+        # position_PP_count = []
+        # position_PP_pval = []
+        # for i in range(Y.shape[0]):
+        #     # Get probabilities for available assays at each position
+        #     p_count = count_probabilities[i, avY[0]==1]
+        #     p_pval = pval_probabilities[i, avY[0]==1]
+        #     position_PP_count.append(perplexity(p_count))
+        #     position_PP_pval.append(perplexity(p_pval))
 
         # Create mask for available assays
         available_mask = (avY[0] == 1)
@@ -1355,15 +1364,24 @@ if __name__ == "__main__":
         print(f"Position PP_count 95% CI: {np.percentile(position_PP_count, 2.5):.3f} - {np.percentile(position_PP_count, 97.5):.3f}")
         print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval, 2.5):.3f} - {np.percentile(position_PP_pval, 97.5):.3f}")
         
-        # position_PP_count = []
-        # position_PP_pval = []
-        # for i in range(Y.shape[0]):
-        #     # Get probabilities for available assays at each position
-        #     p_count = count_probabilities[i, avY[0]==1]
-        #     p_pval = pval_probabilities[i, avY[0]==1]
-        #     position_PP_count.append(perplexity(p_count))
-        #     position_PP_pval.append(perplexity(p_pval))
+        # Reduce resolution of perplexity scores by averaging every 8 values
+        def reduce_resolution(arr, factor=8):
+            # Ensure the array length is divisible by factor
+            pad_length = (factor - (len(arr) % factor)) % factor
+            if pad_length > 0:
+                arr = np.pad(arr, (0, pad_length), mode='edge')
+            
+            # Reshape and average
+            arr_reshaped = arr.reshape(-1, factor)
+            return np.mean(arr_reshaped, axis=1)
 
+        # Reduce resolution of perplexity scores
+        position_PP_count_reduced = reduce_resolution(position_PP_count)
+        position_PP_pval_reduced = reduce_resolution(position_PP_pval)
+
+        # Verify lengths match
+        assert len(position_PP_count_reduced) == len(Z), f"Length mismatch: {len(position_PP_count_reduced)} vs {len(Z)}"
+        
         # Create visualization plots
         fig, axes = plt.subplots(2, 2, figsize=(15, 15))
         
@@ -1377,7 +1395,7 @@ if __name__ == "__main__":
         
         # Plot PCA colored by count perplexity
         scatter1 = axes[0,0].scatter(Z_pca[:, 0], Z_pca[:, 1], 
-                                    c=position_PP_count, 
+                                    c=position_PP_count_reduced, 
                                     cmap='viridis', 
                                     alpha=0.5, 
                                     s=1)
@@ -1388,7 +1406,7 @@ if __name__ == "__main__":
         
         # Plot PCA colored by p-value perplexity
         scatter2 = axes[0,1].scatter(Z_pca[:, 0], Z_pca[:, 1], 
-                                    c=position_PP_pval, 
+                                    c=position_PP_pval_reduced, 
                                     cmap='viridis', 
                                     alpha=0.5, 
                                     s=1)
@@ -1399,7 +1417,7 @@ if __name__ == "__main__":
         
         # Plot UMAP colored by count perplexity
         scatter3 = axes[1,0].scatter(Z_umap[:, 0], Z_umap[:, 1], 
-                                    c=position_PP_count, 
+                                    c=position_PP_count_reduced, 
                                     cmap='viridis', 
                                     alpha=0.5, 
                                     s=1)
@@ -1410,7 +1428,7 @@ if __name__ == "__main__":
         
         # Plot UMAP colored by p-value perplexity
         scatter4 = axes[1,1].scatter(Z_umap[:, 0], Z_umap[:, 1], 
-                                    c=position_PP_pval, 
+                                    c=position_PP_pval_reduced, 
                                     cmap='viridis', 
                                     alpha=0.5, 
                                     s=1)
@@ -1420,6 +1438,6 @@ if __name__ == "__main__":
         plt.colorbar(scatter4, ax=axes[1,1])
         
         plt.tight_layout()
-        plt.savefig(f'output/latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
         
