@@ -695,39 +695,45 @@ class CANDIPredictor:
         return metrics
 
 """
-# given a model, i want to train a linear probe on the latent space
-# and evaluate the performance of the linear probe on the linear probe dataset.
-# implemented using pytorch
-# we want one class per probe
-# we want one train function per probe
-# we want one evaluate function per probe
+    # given a model, i want to train a linear probe on the latent space
+    # and evaluate the performance of the linear probe on the linear probe dataset.
+    # implemented using pytorch
+    # we want one class per probe
+    # we want one train function per probe
+    # we want one evaluate function per probe
 
-the following are different probes that i will implement
-1. chromatin_state_classification probe:
-    - input: CANDI latent representation
-    - output: 18 state classification
-    - loss function: cross entropy
+    the following are different probes that i will implement
+    1. chromatin_state_classification probe:
+        - input: CANDI latent representation
+        - output: 18 state classification
+        - loss function: cross entropy
 
-2. peak_calling probe:
-    - input: CANDI latent representation
-    - output: binary peak/no peak
-    - loss function: binary cross entropy
+    2. peak_calling probe:
+        - input: CANDI latent representation
+        - output: binary peak/no peak
+        - loss function: binary cross entropy
 
-3. activity_prediction_probe:
-    - input: CANDI latent representation
-    - output: binary active/inactive
-    - loss function: binary cross entropy
+    3. activity_prediction_probe:
+        - input: CANDI latent representation
+        - output: binary active/inactive
+        - loss function: binary cross entropy
 
-4. conservation_prediction_probe:
-    - input: CANDI latent representation
-    - output: conservation score
-    - loss function: mean squared error
+    4. conservation_prediction_probe:
+        - input: CANDI latent representation
+        - output: conservation score
+        - loss function: mean squared error
 
-5. expression_prediction_probe:
-    - input: CANDI latent representation for a window of sequence
-    - output: expression (TPM) prediction
-    - loss function: mean squared error
+    5. expression_prediction_probe:
+        - input: CANDI latent representation for a window of sequence
+        - output: expression (TPM) prediction
+        - loss function: mean squared error
 """
+
+def perplexity(probabilities):
+    N = len(probabilities)
+    log_prob_sum = torch.sum(torch.log(probabilities))
+    perplexity = torch.exp(-log_prob_sum / N)
+    return perplexity
 
 def latent_reproducibility(
     model_path, hyper_parameters_path, 
@@ -1377,3 +1383,25 @@ if __name__ == "__main__":
 
         viz_error_std_hexbin(imp_count_dist, Y, save_path="output/error_analysis", count=True)
         viz_error_std_hexbin(imp_pval_dist, Y, save_path="output/error_analysis", count=False)
+    
+    elif sys.argv[1] == "perplexity":
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
+        candi.chr = "chr21"
+        bios_name = "ENCBS706NOO"
+
+        # Load latent representations
+        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+        n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
+
+        count_dist = NegativeBinomial(p, n)
+        pval_dist = Gaussian(mu, var)
+
+        count_probabilities = count_dist.pmf(Y)
+        pval_probabilities = pval_dist.pdf(Y)
+
+        for i in range(Y.shape[1]):
+            if avY[i] == 1:
+                print(f"Available assay {i+1}:")
+                print(f"Count Perplexity: {perplexity(count_probabilities[:, i])}")
+                print(f"P-value Perplexity: {perplexity(pval_probabilities[:, i])}")
+
