@@ -1422,8 +1422,12 @@ if __name__ == "__main__":
         # Calculate perplexity using vectorized operations
         # Add small epsilon to prevent log(0)
         epsilon = 1e-10
-        position_PP_count = np.exp(-np.sum(np.log(count_probs_available + epsilon), axis=1) / count_probs_available.shape[1])
-        position_PP_pval = np.exp(-np.sum(np.log(pval_probs_available + epsilon), axis=1) / pval_probs_available.shape[1])
+        position_PP_count = torch.exp(-torch.sum(torch.log(count_probs_available + epsilon), dim=1) / count_probs_available.shape[1])
+        position_PP_pval = torch.exp(-torch.sum(torch.log(pval_probs_available + epsilon), dim=1) / pval_probs_available.shape[1])
+
+        # Convert to numpy for statistics (if needed)
+        position_PP_count = position_PP_count.cpu().numpy()
+        position_PP_pval = position_PP_pval.cpu().numpy()
 
         # Print statistics
         print(f"Position PP_count: {np.mean(position_PP_count):.3f}, Position PP_pval: {np.mean(position_PP_pval):.3f}")
