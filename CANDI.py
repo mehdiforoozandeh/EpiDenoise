@@ -1130,7 +1130,7 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--num_loci', type=int, default=3000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
-    parser.add_argument('--min_avail', type=int, default=5, help='Minimum available')
+    parser.add_argument('--min_avail', type=int, default=7, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
