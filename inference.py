@@ -1398,6 +1398,15 @@ if __name__ == "__main__":
         print(f"Position PP_count min: {np.min(position_PP_count_reduced):.3f}, max: {np.max(position_PP_count_reduced):.3f}")
         print(f"Position PP_pval min: {np.min(position_PP_pval_reduced):.3f}, max: {np.max(position_PP_pval_reduced):.3f}")
 
+        # Calculate and print correlations between count and p-value perplexity scores
+        pearson_corr, pearson_p = scipy.stats.pearsonr(position_PP_count_reduced, position_PP_pval_reduced)
+        spearman_corr, spearman_p = scipy.stats.spearmanr(position_PP_count_reduced, position_PP_pval_reduced)
+
+        print("\nCorrelations between count and p-value perplexity:")
+        print(f"Pearson correlation: {pearson_corr:.3f} (p={pearson_p:.3e})")
+        print(f"Spearman correlation: {spearman_corr:.3f} (p={spearman_p:.3e})")
+        exit()
+
         # Verify lengths match
         assert len(position_PP_count_reduced) == len(Z), f"Length mismatch: {len(position_PP_count_reduced)} vs {len(Z)}"
         
