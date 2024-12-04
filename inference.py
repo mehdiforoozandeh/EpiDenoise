@@ -731,7 +731,8 @@ class CANDIPredictor:
 
 def perplexity(probabilities):
     N = len(probabilities)
-    log_prob_sum = torch.sum(torch.log(probabilities))
+    epsilon = 1e-10  # Small constant to prevent log(0)
+    log_prob_sum = torch.sum(torch.log(probabilities + epsilon))
     perplexity = torch.exp(-log_prob_sum / N)
     return perplexity
 
@@ -1391,7 +1392,11 @@ if __name__ == "__main__":
 
         # Load latent representations
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+
+        print(avY.shape)
+        exit()
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
+        
 
         Y = Y.view(-1, Y.shape[-1])
         P = P.view(-1, P.shape[-1])
