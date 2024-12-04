@@ -1387,7 +1387,7 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "perplexity":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
-        print(list(candi.dataset.aliases["experiment_aliases"].keys()))
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         bios_name = "ENCBS706NOO"
 
@@ -1408,7 +1408,6 @@ if __name__ == "__main__":
         for i in range(Y.shape[1]):
             # print(Y[:, i].mean())
             if avY[0, i] == 1:
-                print(f"Available assay {i+1}:")
-                print(f"Count Perplexity: {perplexity(count_probabilities[:, i])}")
-                print(f"P-value Perplexity: {perplexity(pval_probabilities[:, i])}")
+                print(f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
 
+        
