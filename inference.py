@@ -1395,7 +1395,6 @@ if __name__ == "__main__":
 
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
         
-
         Y = Y.view(-1, Y.shape[-1])
         P = P.view(-1, P.shape[-1])
 
@@ -1406,6 +1405,7 @@ if __name__ == "__main__":
         pval_probabilities = pval_dist.pdf(Y)
 
         for i in range(Y.shape[1]):
+            print(Y[:, i].mean())
             if avY[0, i] == 1:
                 print(f"Available assay {i+1}:")
                 print(f"Count Perplexity: {perplexity(count_probabilities[:, i])}")
