@@ -1389,7 +1389,7 @@ if __name__ == "__main__":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
-        bios_name = "ENCBS706NOO"
+        bios_name = "ENCBS830CIQ"
 
         # Load latent representations
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
@@ -1410,4 +1410,4 @@ if __name__ == "__main__":
             if avY[0, i] == 1:
                 print(f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
 
-        
+
