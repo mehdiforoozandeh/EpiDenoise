@@ -1398,8 +1398,6 @@ if __name__ == "__main__":
         print(f"Position PP_count min: {np.min(position_PP_count_reduced):.3f}, max: {np.max(position_PP_count_reduced):.3f}")
         print(f"Position PP_pval min: {np.min(position_PP_pval_reduced):.3f}, max: {np.max(position_PP_pval_reduced):.3f}")
 
-        exit()
-
         # Verify lengths match
         assert len(position_PP_count_reduced) == len(Z), f"Length mismatch: {len(position_PP_count_reduced)} vs {len(Z)}"
         
