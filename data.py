@@ -2703,7 +2703,7 @@ class ExtendedEncodeDataHandler:
         for exp, count in unique_exp.items():
             print(f"{exp} in present in {count} biosamples")
 
-        self.signal_dim = self.aliases["experiment_aliases"].keys() # sum(1 for value in unique_exp.values() if value > 0)
+        self.signal_dim = len(self.aliases["experiment_aliases"].keys()) # sum(1 for value in unique_exp.values() if value > 0)
         # print(len(self.aliases["experiment_aliases"]))
         for k in list(self.aliases["experiment_aliases"].keys()):
             if unique_exp[k] == 0:
