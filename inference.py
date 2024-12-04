@@ -1403,8 +1403,9 @@ if __name__ == "__main__":
         pval_probabilities = pval_dist.pdf(Y)
 
         for i in range(Y.shape[1]):
-            if avY[i] == 1:
-                print(f"Available assay {i+1}:")
-                print(f"Count Perplexity: {perplexity(count_probabilities[:, i])}")
-                print(f"P-value Perplexity: {perplexity(pval_probabilities[:, i])}")
+            print(avY[i])
+            # if avY[i] == 1:
+                # print(f"Available assay {i+1}:")
+                # print(f"Count Perplexity: {perplexity(count_probabilities[:, i])}")
+                # print(f"P-value Perplexity: {perplexity(pval_probabilities[:, i])}")
 
