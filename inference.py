@@ -1393,6 +1393,13 @@ if __name__ == "__main__":
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
 
+        print(f"n shape: {n.shape}")
+        print(f"p shape: {p.shape}")
+        print(f"mu shape: {mu.shape}")
+        print(f"var shape: {var.shape}")
+        print(f"Y shape: {Y.shape}")
+        print(f"P shape: {P.shape}")
+
         count_dist = NegativeBinomial(p, n)
         pval_dist = Gaussian(mu, var)
 
