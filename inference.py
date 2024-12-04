@@ -1411,8 +1411,16 @@ if __name__ == "__main__":
                 print(
                 f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
 
+        position_PP_count = []
+        position_PP_pval = []
         for i in range(Y.shape[0]):
             # Get probabilities for available assays at each position
             p_count = count_probabilities[i, avY[0]==1]
             p_pval = pval_probabilities[i, avY[0]==1]
-            print(f"Position {i}, probabilities: {p_count}, {p_pval}")
+            position_PP_count.append(perplexity(p_count))
+            position_PP_pval.append(perplexity(p_pval))
+        
+        print(f"Position PP_count: {np.mean(position_PP_count):.3f}, Position PP_pval: {np.mean(position_PP_pval):.3f}")
+        print(f"Position PP_count std: {np.std(position_PP_count):.3f}, Position PP_pval std: {np.std(position_PP_pval):.3f}")
+        print(f"Position PP_count 95% CI: {np.percentile(position_PP_count, 2.5):.3f} - {np.percentile(position_PP_count, 97.5):.3f}")
+        print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval, 2.5):.3f} - {np.percentile(position_PP_pval, 97.5):.3f}")
