@@ -1379,6 +1379,15 @@ if __name__ == "__main__":
         position_PP_count_reduced = reduce_resolution(position_PP_count)
         position_PP_pval_reduced = reduce_resolution(position_PP_pval)
 
+        # Print statistics after reduction
+        print("\nAfter resolution reduction:")
+        print(f"Position PP_count: {np.mean(position_PP_count_reduced):.3f}, Position PP_pval: {np.mean(position_PP_pval_reduced):.3f}")
+        print(f"Position PP_count std: {np.std(position_PP_count_reduced):.3f}, Position PP_pval std: {np.std(position_PP_pval_reduced):.3f}")
+        print(f"Position PP_count 95% CI: {np.percentile(position_PP_count_reduced, 2.5):.3f} - {np.percentile(position_PP_count_reduced, 97.5):.3f}")
+        print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval_reduced, 2.5):.3f} - {np.percentile(position_PP_pval_reduced, 97.5):.3f}")
+
+        exit()
+
         # Verify lengths match
         assert len(position_PP_count_reduced) == len(Z), f"Length mismatch: {len(position_PP_count_reduced)} vs {len(Z)}"
         
