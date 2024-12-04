@@ -1032,6 +1032,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
 
+    print(f"Using optimizer: {optimizer.__class__.__name__}")
+
     if checkpoint_path is not None:
         print("loading pretrained model...")
         model.load_state_dict(torch.load(checkpoint_path))

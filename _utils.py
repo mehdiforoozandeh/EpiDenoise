@@ -553,25 +553,30 @@ class MONITOR_VALIDATION(object): # CANDI
 
         for bios_name in bioses:
             if self.eic:
-                # try:
-                ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
-                    bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-                full_res += self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
+                try:
+                    ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
+                        bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                    full_res += self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
                 
-                # except:
-                    # pass
+                except:
+                    pass
             else:
-                # try:
-                imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
-                    bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                try:
+                    imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
+                        bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
 
-                
-                full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
-                # except:
-                    # pass
+                    
+                    full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
+                except:
+                    pass
 
         del self.model
         del model
+
+        if len(full_res) == 0:
+            print(f"No validationresults found.")
+            return "", {}
+        
         df = pd.DataFrame(full_res)
 
         # Separate the data based on comparison type
