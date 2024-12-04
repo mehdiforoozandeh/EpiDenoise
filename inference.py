@@ -1405,7 +1405,7 @@ if __name__ == "__main__":
         print("\nCorrelations between count and p-value perplexity:")
         print(f"Pearson correlation: {pearson_corr:.3f} (p={pearson_p:.3e})")
         print(f"Spearman correlation: {spearman_corr:.3f} (p={spearman_p:.3e})")
-        exit()
+        # exit()
 
         # Verify lengths match
         assert len(position_PP_count_reduced) == len(Z), f"Length mismatch: {len(position_PP_count_reduced)} vs {len(Z)}"
