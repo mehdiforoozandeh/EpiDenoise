@@ -1387,6 +1387,7 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "perplexity":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
+        print(list(candi.dataset.aliases["experiment_aliases"].keys()))
         candi.chr = "chr21"
         bios_name = "ENCBS706NOO"
 
