@@ -1305,91 +1305,11 @@ if __name__ == "__main__":
         print("\nTesting CT0 vs CT3 reproducibility:")
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
 
-    elif sys.argv[1] == "confidence":
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
-        candi.chr = "chr21"
-        bios_name = "ENCBS706NOO"
-
-        # Load latent representations
-        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-        n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq)
-        
-        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=True)
-
-        Y = Y.view(-1, Y.shape[-1])
-        P = P.view(-1, P.shape[-1])
-
-        def viz_error_std_hexbin(dist, true_values, save_path, count=True):
-            """
-            Visualize the relationship between prediction error and standard deviation using hexbin plots.
-            
-            Args:
-                dist: Distribution object (imp_count_dist or imp_pval_dist)
-                true_values: True values (Y or P) to compare against
-                save_path: Path to save the visualization
-                count: Boolean indicating if we're plotting count data (True) or p-value data (False)
-            """
-            # Create save directory if it doesn't exist
-            os.makedirs(save_path, exist_ok=True)
-            
-            # Get mean and std from distribution
-            pred_mean = dist.mean().numpy()
-            pred_std = dist.std().numpy()
-            
-            # Calculate absolute error
-            error = np.abs(true_values.numpy() - pred_mean)
-            
-            # Setup plot
-            plt.figure(figsize=(15, 5))
-            
-            # Calculate percentiles for different ranges
-            x_90 = np.percentile(error, 99)
-            x_99 = np.percentile(error, 99.9)
-            ranges = [(0, x_90), (0, x_99), (0, error.max())]
-            
-            # Calculate overall correlation
-            valid_mask = ~np.isnan(error) & ~np.isnan(pred_std)
-            pcc = np.corrcoef(true_values.numpy()[valid_mask].flatten(), 
-                            pred_mean[valid_mask].flatten())[0,1]
-            
-            # Create subplot for each range
-            for i, (x_min, x_max) in enumerate(ranges):
-                # Subset the data for the current range
-                mask = (error >= x_min) & (error <= x_max) & valid_mask
-                subset_error = error[mask]
-                subset_pred_std = pred_std[mask]
-                
-                ax = plt.subplot(1, 3, i + 1)
-                
-                # Hexbin plot for the subset data
-                hb = ax.hexbin(subset_error, subset_pred_std, 
-                            gridsize=50, cmap='viridis', 
-                            mincnt=1, norm=LogNorm())
-                
-                ax.set_xlabel('Absolute Error')
-                ax.set_ylabel('Predicted Std Dev')
-                
-                data_type = "Count" if count else "P-value"
-                ax.set_title(f"{data_type} Prediction Error vs Std Dev\n"
-                            f"PCC: {pcc:.2f} (Range: {x_min:.2f}-{x_max:.2f})")
-                
-                # Add color bar
-                cb = plt.colorbar(hb, ax=ax)
-                cb.set_label('Log10(Counts)')
-            
-            plt.tight_layout()
-            plt.savefig(os.path.join(save_path, f"{'count' if count else 'pval'}_error_std_hexbin.png"), 
-                        dpi=150, bbox_inches='tight')
-            plt.close()
-
-        viz_error_std_hexbin(imp_count_dist, Y, save_path="output/error_analysis", count=True)
-        viz_error_std_hexbin(imp_pval_dist, Y, save_path="output/error_analysis", count=False)
-    
     elif sys.argv[1] == "perplexity":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
-        bios_name = "ENCBS830CIQ"
+        bios_name = sys.argv[2]
 
         # Load latent representations
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
@@ -1434,7 +1354,6 @@ if __name__ == "__main__":
         print(f"Position PP_count std: {np.std(position_PP_count):.3f}, Position PP_pval std: {np.std(position_PP_pval):.3f}")
         print(f"Position PP_count 95% CI: {np.percentile(position_PP_count, 2.5):.3f} - {np.percentile(position_PP_count, 97.5):.3f}")
         print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval, 2.5):.3f} - {np.percentile(position_PP_pval, 97.5):.3f}")
-
         
         # position_PP_count = []
         # position_PP_pval = []
@@ -1444,8 +1363,63 @@ if __name__ == "__main__":
         #     p_pval = pval_probabilities[i, avY[0]==1]
         #     position_PP_count.append(perplexity(p_count))
         #     position_PP_pval.append(perplexity(p_pval))
+
+        # Create visualization plots
+        fig, axes = plt.subplots(2, 2, figsize=(15, 15))
         
-        # print(f"Position PP_count: {np.mean(position_PP_count):.3f}, Position PP_pval: {np.mean(position_PP_pval):.3f}")
-        # print(f"Position PP_count std: {np.std(position_PP_count):.3f}, Position PP_pval std: {np.std(position_PP_pval):.3f}")
-        # print(f"Position PP_count 95% CI: {np.percentile(position_PP_count, 2.5):.3f} - {np.percentile(position_PP_count, 97.5):.3f}")
-        # print(f"Position PP_pval 95% CI: {np.percentile(position_PP_pval, 2.5):.3f} - {np.percentile(position_PP_pval, 97.5):.3f}")
+        # Compute PCA
+        pca = PCA(n_components=2)
+        Z_pca = pca.fit_transform(Z.cpu().numpy())
+        
+        # Compute UMAP
+        reducer = umap.UMAP(random_state=42)
+        Z_umap = reducer.fit_transform(Z.cpu().numpy())
+        
+        # Plot PCA colored by count perplexity
+        scatter1 = axes[0,0].scatter(Z_pca[:, 0], Z_pca[:, 1], 
+                                    c=position_PP_count, 
+                                    cmap='viridis', 
+                                    alpha=0.5, 
+                                    s=1)
+        axes[0,0].set_title('PCA - Colored by Count Perplexity')
+        axes[0,0].set_xlabel('PC1')
+        axes[0,0].set_ylabel('PC2')
+        plt.colorbar(scatter1, ax=axes[0,0])
+        
+        # Plot PCA colored by p-value perplexity
+        scatter2 = axes[0,1].scatter(Z_pca[:, 0], Z_pca[:, 1], 
+                                    c=position_PP_pval, 
+                                    cmap='viridis', 
+                                    alpha=0.5, 
+                                    s=1)
+        axes[0,1].set_title('PCA - Colored by P-value Perplexity')
+        axes[0,1].set_xlabel('PC1')
+        axes[0,1].set_ylabel('PC2')
+        plt.colorbar(scatter2, ax=axes[0,1])
+        
+        # Plot UMAP colored by count perplexity
+        scatter3 = axes[1,0].scatter(Z_umap[:, 0], Z_umap[:, 1], 
+                                    c=position_PP_count, 
+                                    cmap='viridis', 
+                                    alpha=0.5, 
+                                    s=1)
+        axes[1,0].set_title('UMAP - Colored by Count Perplexity')
+        axes[1,0].set_xlabel('UMAP1')
+        axes[1,0].set_ylabel('UMAP2')
+        plt.colorbar(scatter3, ax=axes[1,0])
+        
+        # Plot UMAP colored by p-value perplexity
+        scatter4 = axes[1,1].scatter(Z_umap[:, 0], Z_umap[:, 1], 
+                                    c=position_PP_pval, 
+                                    cmap='viridis', 
+                                    alpha=0.5, 
+                                    s=1)
+        axes[1,1].set_title('UMAP - Colored by P-value Perplexity')
+        axes[1,1].set_xlabel('UMAP1')
+        axes[1,1].set_ylabel('UMAP2')
+        plt.colorbar(scatter4, ax=axes[1,1])
+        
+        plt.tight_layout()
+        plt.savefig(f'output/latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
