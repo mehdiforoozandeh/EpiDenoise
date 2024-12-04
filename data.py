@@ -2151,7 +2151,9 @@ class ExtendedEncodeDataHandler:
 
             for exp in list(self.aliases["experiment_aliases"].keys()):
                 if exp not in include:
+                    print(f"removing {exp}")
                     del self.aliases["experiment_aliases"][exp]
+            print(len(self.aliases["experiment_aliases"].keys()))
 
         elif len(include) == 0 and len(exclude) != 0:
             for bios in list(self.navigation.keys()):
