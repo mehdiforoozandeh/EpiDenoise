@@ -2907,7 +2907,7 @@ class ExtendedEncodeDataHandler:
         # includes = [
         #     "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
         #     "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"],
-             eic=False, merge_ct=True): #split in ["test", "val"]
+        eic=False, merge_ct=True): #split in ["test", "val"]
 
         self.set_alias()
         self.merge_ct = merge_ct
@@ -2935,9 +2935,10 @@ class ExtendedEncodeDataHandler:
         if eic:
             self.init_eic(target_split=split)
         else:
+            print("filtering eval navigation")
             self.filter_navigation(exclude=excludes, include=includes)
         
-        self.signal_dim = len(self.aliases["experiment_aliases"])
+        self.signal_dim = len(self.aliases["experiment_aliases"].keys())
         print(f"eval signal_dim: {self.signal_dim}")
 
         # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
