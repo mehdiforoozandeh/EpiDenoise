@@ -2151,9 +2151,8 @@ class ExtendedEncodeDataHandler:
 
             for exp in list(self.aliases["experiment_aliases"].keys()):
                 if exp not in include:
-                    print(f"removing {exp}")
+                    # print(f"removing {exp}")
                     del self.aliases["experiment_aliases"][exp]
-            print(len(self.aliases["experiment_aliases"].keys()))
 
         elif len(include) == 0 and len(exclude) != 0:
             for bios in list(self.navigation.keys()):
@@ -2689,6 +2688,12 @@ class ExtendedEncodeDataHandler:
                 if len(self.is_bios_complete(bios))>0:
                     del self.navigation[bios]
         
+        mean_available_exps = []
+        for bios in list(self.navigation.keys()):
+            mean_available_exps.append(len(self.navigation[bios]))
+
+        print(f"mean available exps: {np.mean(mean_available_exps)}")
+
         if shuffle_bios:
             keys = list(self.navigation.keys())
             random.shuffle(keys)
