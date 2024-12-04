@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import integrate
 from sklearn.decomposition import PCA
-import umap
+import umap, scipy
 
 
 # sequence clustering
