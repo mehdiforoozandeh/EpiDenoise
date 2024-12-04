@@ -1408,6 +1408,11 @@ if __name__ == "__main__":
         for i in range(Y.shape[1]):
             # print(Y[:, i].mean())
             if avY[0, i] == 1:
-                print(f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
+                print(
+                f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
 
-
+        for i in range(Y.shape[0]):
+            # Get probabilities for available assays at each position
+            p_count = count_probabilities[i, avY[0]==1]
+            p_pval = pval_probabilities[i, avY[0]==1]
+            print(f"Position {i}, probabilities: {p_count}, {p_pval}")
