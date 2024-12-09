@@ -1262,6 +1262,7 @@ if __name__ == "__main__":
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+    print(candi.dataset.navigation.keys())
     candi.chr = "chr21"
     bios_name = "ENCBS320VPE"
 
