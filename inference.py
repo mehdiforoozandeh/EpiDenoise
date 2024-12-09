@@ -1269,7 +1269,7 @@ if __name__ == "__main__":
     # Load latent representations
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
-    n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.3)
+    n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
 
     Y = Y.view(-1, Y.shape[-1])
     P = P.view(-1, P.shape[-1])
