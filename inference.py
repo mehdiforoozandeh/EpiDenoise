@@ -1271,6 +1271,9 @@ if __name__ == "__main__":
 
     n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.3)
 
+    Y = Y.view(-1, Y.shape[-1])
+    P = P.view(-1, P.shape[-1])
+
     count_dist = NegativeBinomial(p, n)
     pval_dist = Gaussian(mu, var)
 
