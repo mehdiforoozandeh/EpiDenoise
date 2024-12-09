@@ -1262,9 +1262,9 @@ if __name__ == "__main__":
 
     candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-    print(candi.dataset.navigation.keys())
+    # print(candi.dataset.navigation.keys())
     candi.chr = "chr21"
-    bios_name = "ENCBS320VPE"
+    bios_name = "GM23338_grp1_rep1"
 
     # Load latent representations
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
