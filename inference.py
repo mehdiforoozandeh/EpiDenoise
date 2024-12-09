@@ -1118,13 +1118,18 @@ def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/projec
 
     bios_names = [t for t in navigation.keys()]
 
-    print(bios_names)
-    exit()
+    # Clean biosample names by removing group/rep information
+    bios_names_cleaned = []
+    for name in bios_names:
+        # Remove _grp\d+_rep\d+ pattern
+        name = '_'.join([part for part in name.split('_') if not ('grp' in part or 'rep' in part or 'nonrep' in part)])
+        cleaned_bios_names.append(name)
+    
 
     cs_names = [t for t in os.listdir(os.path.join(solar_data_path, "chromatin_state_annotations"))]
 
-    # Remove 'T_' prefix from biosample names for comparison
-    bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
+    # # Remove 'T_' prefix from biosample names for comparison
+    # bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
     
     def similar(a, b, threshold=0.70):
         return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
