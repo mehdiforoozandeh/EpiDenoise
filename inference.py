@@ -1267,7 +1267,7 @@ if __name__ == "__main__":
     bios_name = "GM23338_grp1_rep1"
 
     if sys.argv[1] == "cs_probe":
-        train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
+        train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", eic=eic)
 
     elif sys.argv[1] == "latent_repr":
         ct0_repr1 = "ENCBS706NOO"
