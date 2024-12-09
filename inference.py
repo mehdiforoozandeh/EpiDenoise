@@ -14,8 +14,7 @@ from scipy import integrate
 from sklearn.decomposition import PCA
 import umap, scipy
 from difflib import SequenceMatcher
-
-
+import json
 
 # sequence clustering
 class CANDIPredictor:
@@ -1114,7 +1113,6 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     merged_navigation = os.path.join(solar_data_path, "merged_navigation.json")
     
-    import json
     with open(merged_navigation, "r") as f:
         navigation = json.load(f)
 
