@@ -1030,7 +1030,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.99)
 
     print(f"Using optimizer: {optimizer.__class__.__name__}")
 
