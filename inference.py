@@ -1274,6 +1274,17 @@ if __name__ == "__main__":
     count_dist = NegativeBinomial(p, n)
     pval_dist = Gaussian(mu, var)
 
+    count_probabilities = count_dist.pmf(Y)
+    pval_probabilities = pval_dist.pdf(P)
+
+    for i in range(Y.shape[1]):
+        # print(Y[:, i].mean())
+        if avY[0, i] == 1:
+            print(
+            f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
+
+
+
     exit()
 
 
