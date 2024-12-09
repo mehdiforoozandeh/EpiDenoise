@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from scipy import integrate
 from sklearn.decomposition import PCA
 import umap, scipy
+from difflib import SequenceMatcher
+
 
 
 # sequence clustering
@@ -36,10 +38,6 @@ class CANDIPredictor:
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic, merge_ct=True)
-
-        print(self.dataset.navigation.keys())
-        print(self.dataset.split_dict)
-        exit()
 
         if isinstance(self.model, str):
             with open(hyper_parameters_path, 'rb') as f:
@@ -998,8 +996,6 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
     # Remove 'T_' prefix from biosample names for comparison
     bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
     
-    from difflib import SequenceMatcher
-
     def similar(a, b, threshold=0.70):
         return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
 
@@ -1114,6 +1110,137 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
     }
     
     return splits
+
+def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
+    merged_navigation = os.path.join(solar_data_path, "merged_navigation.json")
+    with open(merged_navigation, "r") as f:
+        navigation = json.load(f)
+
+    bios_names = [t for t in navigation.keys()]
+
+    print(bios_names)
+    exit()
+
+    cs_names = [t for t in os.listdir(os.path.join(solar_data_path, "chromatin_state_annotations"))]
+
+    # Remove 'T_' prefix from biosample names for comparison
+    bios_names_cleaned = [name.replace("T_", "") for name in bios_names]
+    
+    def similar(a, b, threshold=0.70):
+        return SequenceMatcher(None, a.lower(), b.lower()).ratio() > threshold
+
+    # Find exact and similar matches
+    shared_names = set()
+    similar_matches = {}  # Store similar but not exact matches
+    
+    for bios_name in bios_names_cleaned:
+        if bios_name in cs_names:
+            shared_names.add(bios_name)
+        else:
+            # Look for similar names
+            for cs_name in cs_names:
+                if similar(bios_name, cs_name):
+                    similar_matches[bios_name] = cs_name
+                    shared_names.add(cs_name)  # Add the CS name as it's the reference
+
+    print(f"\nNumber of shared cell types (including similar matches): {len(shared_names)}")
+
+    # Add 'T_' prefix back to shared names for comparison with original bios_names
+    shared_names_with_prefix = [f"T_{name}" for name in shared_names]
+    
+    # Find unshared biosamples
+    unshared_bios = [name for name in bios_names if name not in shared_names_with_prefix]
+    
+    print("\nBiosamples without matching chromatin states:")
+    for name in unshared_bios:
+        print(name)
+    
+    print("\nShared cell types between biosamples and chromatin states:")
+    for name in shared_names:
+        print(name)
+        
+    print("\nSimilar name matches found:")
+    print(f"Biosample: {bios_name} -> Chromatin State: {cs_name}")
+
+
+    print("\nAll paired biosamples and chromatin states:")
+    print("Format: Biosample -> Chromatin State")
+    print("-" * 50)
+    
+    # Print exact matches (where biosample name without T_ prefix matches CS name)
+    for name in shared_names:
+        if name in bios_names_cleaned:  # It's an exact match
+            print(f"T_{name} -> {name}")
+    
+    # Print similar matches
+    for bios_name, cs_name in similar_matches.items():
+        print(f"T_{bios_name} -> {cs_name}")
+
+    # Create a list of all valid pairs
+    paired_data = []
+    
+    # Add exact matches
+    for name in shared_names:
+        if name in bios_names_cleaned:  # It's an exact match
+            paired_data.append({
+                'biosample': f"T_{name}",
+                'chromatin_state': name
+            })
+    
+    # Add similar matches
+    for bios_name, cs_name in similar_matches.items():
+        paired_data.append({
+            'biosample': f"T_{bios_name}",
+            'chromatin_state': cs_name
+        })
+
+    # Shuffle the pairs randomly
+    random.seed(7)  # For reproducibility
+    random.shuffle(paired_data)
+
+    # Calculate split sizes
+    total_samples = len(paired_data)
+    train_size = int(0.7 * total_samples)
+    val_size = int(0.15 * total_samples)
+    # test_size will be the remainder
+
+    # Split the data
+    train_pairs = paired_data[:train_size]
+    val_pairs = paired_data[train_size:train_size + val_size]
+    test_pairs = paired_data[train_size + val_size:]
+
+    # Print the splits
+    print(f"\nTotal number of paired samples: {total_samples}")
+    print(f"Train samples: {len(train_pairs)}")
+    print(f"Validation samples: {len(val_pairs)}")
+    print(f"Test samples: {len(test_pairs)}")
+
+    print("\nTrain Split:")
+    print("-" * 50)
+    for pair in train_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    print("\nValidation Split:")
+    print("-" * 50)
+    for pair in val_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    print("\nTest Split:")
+    print("-" * 50)
+    for pair in test_pairs:
+        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+
+    # Optionally, save the splits to files
+    import json
+    
+    splits = {
+        'train': train_pairs,
+        'val': val_pairs,
+        'test': test_pairs
+    }
+    
+    return splits
+
 
 def train_chromatin_state_probe(
     model_path, hyper_parameters_path, 
@@ -1253,7 +1380,6 @@ def train_chromatin_state_probe(
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
         num_epochs=800, learning_rate=0.001, batch_size=100)
-
     
 if __name__ == "__main__":
     # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
