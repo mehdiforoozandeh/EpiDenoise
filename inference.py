@@ -1252,9 +1252,24 @@ def train_chromatin_state_probe(
 
     
 if __name__ == "__main__":
-    model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
-    eic = True
+    # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+    # eic = True
+
+    model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+    eic = False
+
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
+    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+    candi.chr = "chr21"
+    bios_name = "ENCBS674MPN"
+
+    # Load latent representations
+    X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+
+    n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.3)
+
 
     if sys.argv[1] == "cs_probe":
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
