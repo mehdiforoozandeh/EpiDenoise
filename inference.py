@@ -1267,6 +1267,7 @@ if __name__ == "__main__":
     bios_name = "GM23338_grp1_rep1"
 
     print(candi.dataset.navigation[bios_name])
+    exit()
 
     # Load latent representations
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
