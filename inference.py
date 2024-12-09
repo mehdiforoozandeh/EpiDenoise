@@ -1123,7 +1123,7 @@ def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/projec
     for name in bios_names:
         # Remove _grp\d+_rep\d+ pattern
         name = '_'.join([part for part in name.split('_') if not ('grp' in part or 'rep' in part or 'nonrep' in part)])
-        cleaned_bios_names.append(name)
+        bios_names_cleaned.append(name)
 
     print(bios_names_cleaned)
     exit()
