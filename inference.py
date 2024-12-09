@@ -38,6 +38,7 @@ class CANDIPredictor:
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic, merge_ct=True)
 
         print(self.dataset.navigation.keys())
+        print(self.dataset.split_dict)
         exit()
 
         if isinstance(self.model, str):
