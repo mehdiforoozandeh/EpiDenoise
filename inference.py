@@ -1260,7 +1260,7 @@ if __name__ == "__main__":
     hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
     eic = False
 
-    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
     candi.chr = "chr21"
     bios_name = "ENCBS674MPN"
@@ -1269,6 +1269,11 @@ if __name__ == "__main__":
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
     n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.3)
+
+    count_dist = NegativeBinomial(p, n)
+    pval_dist = Gaussian(mu, var)
+
+    exit()
 
 
     if sys.argv[1] == "cs_probe":
