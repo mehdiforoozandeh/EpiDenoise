@@ -1266,34 +1266,6 @@ if __name__ == "__main__":
     candi.chr = "chr21"
     bios_name = "GM23338_grp1_rep1"
 
-    print(candi.dataset.navigation[bios_name].keys())
-    exit()
-
-    # Load latent representations
-    X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-
-    n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.05)
-
-    Y = Y.view(-1, Y.shape[-1])
-    P = P.view(-1, P.shape[-1])
-
-    count_dist = NegativeBinomial(p, n)
-    pval_dist = Gaussian(mu, var)
-
-    count_probabilities = count_dist.pmf(Y)
-    pval_probabilities = pval_dist.pdf(P)
-
-    for i in range(Y.shape[1]):
-        # print(Y[:, i].mean())
-        if avY[0, i] == 1:
-            print(
-            f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
-
-
-
-    exit()
-
-
     if sys.argv[1] == "cs_probe":
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/")
 
