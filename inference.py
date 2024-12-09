@@ -1265,6 +1265,9 @@ if __name__ == "__main__":
     candi.chr = "chr21"
     bios_name = "ENCBS674MPN"
 
+    print(candi.dataset.aliases["biosample_aliases"])
+    exit()
+
     # Load latent representations
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
