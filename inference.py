@@ -1266,7 +1266,7 @@ if __name__ == "__main__":
     candi.chr = "chr21"
     bios_name = "GM23338_grp1_rep1"
 
-    print(candi.dataset.navigation[bios_name])
+    print(candi.dataset.navigation[bios_name].keys())
     exit()
 
     # Load latent representations
