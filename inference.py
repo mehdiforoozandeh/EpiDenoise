@@ -1,7 +1,7 @@
 import random
 import torch
 import pickle
-import os, time, gc, psutil, json
+import os, time, gc, psutil
 from CANDI import *
 from scipy import stats
 from sklearn.ensemble import RandomForestClassifier
@@ -1113,6 +1113,8 @@ def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/c
 
 def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     merged_navigation = os.path.join(solar_data_path, "merged_navigation.json")
+    
+    import json
     with open(merged_navigation, "r") as f:
         navigation = json.load(f)
 
