@@ -1639,6 +1639,18 @@ if __name__ == "__main__":
         # Load latent representations
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+        print("\nShape Information:")
+        print(f"X shape: {X.shape}")
+        print(f"Y shape: {Y.shape}") 
+        print(f"P shape: {P.shape}")
+        print(f"seq shape: {seq.shape if seq is not None else 'None'}")
+        print(f"mX shape: {mX.shape}")
+        print(f"mY shape: {mY.shape}")
+        print(f"avX shape: {avX.shape}")
+        print(f"avY shape: {avY.shape}")
+
+
+        exit()
         # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
 
         # exit()
