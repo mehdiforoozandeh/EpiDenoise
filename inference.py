@@ -1637,7 +1637,7 @@ if __name__ == "__main__":
     
     elif sys.argv[1] == "loov":
         # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
         print("\nShape Information:")
         print(f"X shape: {X.shape}")
