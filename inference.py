@@ -1193,20 +1193,20 @@ def chromatin_state_dataset_merged_train_test_val_split(solar_data_path="/projec
     print(f"Validation biosamples: {len(splits['val'])}")
     print(f"Test biosamples: {len(splits['test'])}")
 
-    print("\nTrain Split:")
-    print("-" * 50)
-    for pair in splits['train']:
-        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+    # print("\nTrain Split:")
+    # print("-" * 50)
+    # for pair in splits['train']:
+    #     print(f"{pair['biosample']} -> {pair['chromatin_state']}")
 
-    print("\nValidation Split:")
-    print("-" * 50)
-    for pair in splits['val']:
-        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+    # print("\nValidation Split:")
+    # print("-" * 50)
+    # for pair in splits['val']:
+    #     print(f"{pair['biosample']} -> {pair['chromatin_state']}")
 
-    print("\nTest Split:")
-    print("-" * 50)
-    for pair in splits['test']:
-        print(f"{pair['biosample']} -> {pair['chromatin_state']}")
+    # print("\nTest Split:")
+    # print("-" * 50)
+    # for pair in splits['test']:
+    #     print(f"{pair['biosample']} -> {pair['chromatin_state']}")
 
     return splits
 
