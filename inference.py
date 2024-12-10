@@ -1287,7 +1287,7 @@ def train_chromatin_state_probe(
 
     Z_train = []
     Y_train = []
-    batch_size = len(splits["train"])//10
+    batch_size = len(splits["train"])//30
     for i in range(0, len(splits["train"]), batch_size):
         train_chromatin_state_data = prepare_data("train", train_chrs, i, i+batch_size)
         
