@@ -1238,18 +1238,18 @@ def train_chromatin_state_probe(
 
             # Load chromatin state data for each cell type in training split
             for pair in splits[split]:
-                try:
-                    bios_name = pair['biosample']
-                    cs_name = pair['chromatin_state']
-                    cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
-                    parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
+                # try:
+                bios_name = pair['biosample']
+                cs_name = pair['chromatin_state']
+                cs_dir = os.path.join(dataset_path, "chromatin_state_annotations", cs_name)
+                parsed_dirs = [d for d in os.listdir(cs_dir) if d.startswith(f'parsed{resolution}_')]
 
-                    X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
-                    Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
-                    del X, seq, mX
-                    Z = Z.cpu()
-                except:
-                    continue
+                X, seq, mX = candi.load_encoder_input_bios(bios_name, x_dsf=1)
+                Z = candi.get_latent_representations_cropped(X, mX, seq=seq)
+                del X, seq, mX
+                Z = Z.cpu()
+                # except:
+                #     continue
 
                 chromatin_state_data[chr][cs_name] = (Z, [])
                 for idx, parsed_cs in enumerate(parsed_dirs):
