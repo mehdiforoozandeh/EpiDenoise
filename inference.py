@@ -1261,52 +1261,108 @@ def train_chromatin_state_probe(
 
         return chromatin_state_data
     
-    Z_train = [] 
+    def stratify_batch(Z_batch, Y_batch):
+        """Helper function to stratify a single batch of data"""
+        # Convert lists to numpy arrays if needed
+        Z_batch = np.array(Z_batch)
+        Y_batch = np.array(Y_batch)
+        
+        # Get class distribution
+        unique_labels, counts = np.unique(Y_batch, return_counts=True)
+        min_count = min(counts)
+        
+        # Stratify the batch
+        stratified_indices = []
+        for label in unique_labels:
+            label_indices = np.where(Y_batch == label)[0]
+            # If we have fewer samples than min_count, use all of them
+            n_samples = min(min_count, len(label_indices))
+            selected_indices = np.random.choice(label_indices, n_samples, replace=False)
+            stratified_indices.extend(selected_indices)
+        
+        # Shuffle the stratified indices
+        np.random.shuffle(stratified_indices)
+        
+        return Z_batch[stratified_indices], Y_batch[stratified_indices]
+
+    Z_train = []
     Y_train = []
     batch_size = len(splits["train"])//10
     for i in range(0, len(splits["train"]), batch_size):
         train_chromatin_state_data = prepare_data("train", train_chrs, i, i+batch_size)
+        
+        # Collect data for current batch
+        Z_batch = []
+        Y_batch = []
+        
         for chr in train_chromatin_state_data.keys():
             for ct in train_chromatin_state_data[chr].keys():
                 z, annots = train_chromatin_state_data[chr][ct]
                 for annot in annots:
-
                     assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
                     for bin in range(len(annot)):
                         label = annot[bin]
                         latent_vector = z[bin]
-
+                        
                         if label is not None:
-                            Z_train.append(latent_vector)
-                            Y_train.append(label)
-        del train_chromatin_state_data
-        gc.collect()
+                            Z_batch.append(latent_vector)
+                            Y_batch.append(label)
         
         if stratified:
-            # Stratify training data to have equal examples per class
-            min_count = min(counts)
-            stratified_indices = []
-            for label in unique_labels:
-                label_indices = np.where(Y_train == label)[0]
-                selected_indices = np.random.choice(label_indices, min_count, replace=False)
-                stratified_indices.extend(selected_indices)
-
-            # Shuffle the stratified indices
-            np.random.shuffle(stratified_indices)
+            # Print batch distribution before stratification
+            unique_labels, counts = np.unique(Y_batch, return_counts=True)
+            total_samples = len(Y_batch)
             
-            # Update training data to be stratified
-            Z_train = Z_train[stratified_indices]
-            Y_train = Y_train[stratified_indices]
-
-            print("\nAfter stratification:")
-            print(f"Z_train shape: {Z_train.shape}")
-            unique_labels, counts = np.unique(Y_train, return_counts=True)
+            print(f"\nBatch {i//batch_size + 1} Distribution Before Stratification:")
+            print("Label | Count | Percentage")
+            print("-" * 30)
             for label, count in zip(unique_labels, counts):
-                print(f"Class {label}: {count} examples")
+                percentage = (count / total_samples) * 100
+                print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")
+            
+            # Stratify the current batch
+            Z_batch_stratified, Y_batch_stratified = stratify_batch(Z_batch, Y_batch)
+            
+            # Print batch distribution after stratification
+            unique_labels, counts = np.unique(Y_batch_stratified, return_counts=True)
+            total_samples = len(Y_batch_stratified)
+            
+            print(f"\nBatch {i//batch_size + 1} Distribution After Stratification:")
+            print("Label | Count | Percentage")
+            print("-" * 30)
+            for label, count in zip(unique_labels, counts):
+                percentage = (count / total_samples) * 100
+                print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")
+            
+            # Add stratified batch to training data
+            Z_train.extend(Z_batch_stratified)
+            Y_train.extend(Y_batch_stratified)
+        else:
+            # Add unstratified batch to training data
+            Z_train.extend(Z_batch)
+            Y_train.extend(Y_batch)
         
-    # Convert lists to tensors first since Z contains torch tensors
-    Z_train = np.stack(Z_train) 
-    Y_train = np.array(Y_train) 
+        del train_chromatin_state_data, Z_batch, Y_batch
+        gc.collect()
+
+    # Convert lists to numpy arrays
+    Z_train = np.stack(Z_train)
+    Y_train = np.array(Y_train)
+
+    # Print final training set statistics
+    print("\nFinal Training Dataset Analysis:")
+    print(f"Z_train shape: {Z_train.shape}")
+    print(f"Y_train shape: {Y_train.shape}")
+
+    unique_labels, counts = np.unique(Y_train, return_counts=True)
+    total_samples = len(Y_train)
+
+    print("\nFinal Class Distribution:")
+    print("Label | Count | Percentage")
+    print("-" * 30)
+    for label, count in zip(unique_labels, counts):
+        percentage = (count / total_samples) * 100
+        print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")
 
     #  Analysis and stratification of training data
     print("\nTraining Dataset Analysis:")
