@@ -1223,9 +1223,7 @@ def train_chromatin_state_probe(
     else:
         splits = chromatin_state_dataset_merged_train_test_val_split(dataset_path)
 
-    # splits["train"] = splits["train"][:10]
-    # splits["test"] = splits["test"][:1]
-    # splits["val"] = splits["val"][:5]
+    
     
     def prepare_data(split, chrs, start_idx, end_idx):
         chromatin_state_data = {}
@@ -1265,49 +1263,29 @@ def train_chromatin_state_probe(
     
     Z_train = [] 
     Y_train = []
-    train_chromatin_state_data = prepare_data("train", train_chrs, 0, 3)
-    for chr in train_chromatin_state_data.keys():
-        for ct in train_chromatin_state_data[chr].keys():
-            z, annots = train_chromatin_state_data[chr][ct]
-            for annot in annots:
+    batch_size = len(splits["train"])//10
+    for i in range(0, len(splits["train"]), batch_size):
+        train_chromatin_state_data = prepare_data("train", train_chrs, i, i+batch_size)
+        for chr in train_chromatin_state_data.keys():
+            for ct in train_chromatin_state_data[chr].keys():
+                z, annots = train_chromatin_state_data[chr][ct]
+                for annot in annots:
 
-                assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
-                for bin in range(len(annot)):
-                    label = annot[bin]
-                    latent_vector = z[bin]
+                    assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
+                    for bin in range(len(annot)):
+                        label = annot[bin]
+                        latent_vector = z[bin]
 
-                    if label is not None:
-                        Z_train.append(latent_vector)
-                        Y_train.append(label)
+                        if label is not None:
+                            Z_train.append(latent_vector)
+                            Y_train.append(label)
 
-    del train_chromatin_state_data
-    gc.collect()
+        del train_chromatin_state_data
+        gc.collect()
+
     # Convert lists to tensors first since Z contains torch tensors
     Z_train = np.stack(Z_train) 
     Y_train = np.array(Y_train) 
-
-    val_chromatin_state_data = prepare_data("val", val_chrs, 0, 1)
-    Z_val = [] 
-    Y_val = []
-    for chr in val_chromatin_state_data.keys():
-        for ct in val_chromatin_state_data[chr].keys():
-            z, annots = val_chromatin_state_data[chr][ct]
-            for annot in annots:
-
-                assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
-                for bin in range(len(annot)):
-                    label = annot[bin]
-                    latent_vector = z[bin]
-
-                    if label is not None:
-                        Z_val.append(latent_vector)
-                        Y_val.append(label)
-    
-    del val_chromatin_state_data
-    gc.collect()
-    # Convert lists to tensors first since Z contains torch tensors
-    Z_val = np.stack(Z_val)
-    Y_val = np.array(Y_val)
 
     #  Analysis and stratification of training data
     print("\nTraining Dataset Analysis:")
@@ -1346,6 +1324,33 @@ def train_chromatin_state_probe(
         unique_labels, counts = np.unique(Y_train, return_counts=True)
         for label, count in zip(unique_labels, counts):
             print(f"Class {label}: {count} examples")
+
+    Z_val = [] 
+    Y_val = []
+    batch_size = len(splits["val"])//10
+    for i in range(0, len(splits["val"]), batch_size):
+        val_chromatin_state_data = prepare_data("val", val_chrs, i, i+batch_size)
+        
+        for chr in val_chromatin_state_data.keys():
+            for ct in val_chromatin_state_data[chr].keys():
+                z, annots = val_chromatin_state_data[chr][ct]
+                for annot in annots:
+
+                    assert len(annot) == len(z), f"annot and Z are not the same length for {ct} on {chr}"
+                    for bin in range(len(annot)):
+                        label = annot[bin]
+                        latent_vector = z[bin]
+
+                        if label is not None:
+                            Z_val.append(latent_vector)
+                            Y_val.append(label)
+    
+        del val_chromatin_state_data
+        gc.collect()
+
+    # Convert lists to tensors first since Z contains torch tensors
+    Z_val = np.stack(Z_val)
+    Y_val = np.array(Y_val)
 
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
