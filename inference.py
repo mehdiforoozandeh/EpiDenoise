@@ -37,9 +37,6 @@ class CANDIPredictor:
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic, merge_ct=True)
 
-        print(self.dataset.navigation.keys())
-        exit()
-
         if isinstance(self.model, str):
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
