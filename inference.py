@@ -1223,7 +1223,7 @@ def train_chromatin_state_probe(
     else:
         splits = chromatin_state_dataset_merged_train_test_val_split(dataset_path)
 
-    splits["train"] = splits["train"][:15]
+    splits["train"] = splits["train"][:10]
     # splits["test"] = splits["test"][:1]
     splits["val"] = splits["val"][:5]
     
