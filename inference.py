@@ -1266,9 +1266,13 @@ def train_chromatin_state_probe(
     
     def stratify_batch(Z_batch, Y_batch):
         """Helper function to stratify a single batch of data"""
+        # Check for empty batch
+        if len(Z_batch) == 0 or len(Y_batch) == 0:
+            return np.array([]), np.array([])
+            
         # Convert lists to numpy arrays if needed
-        Z_batch = torch.stack(Z_batch).numpy()  # Stack tensors before converting to numpy
-        Y_batch = np.array(Y_batch)
+        Z_batch = torch.stack([z for z in Z_batch if z is not None]).numpy()  # Stack non-None tensors
+        Y_batch = np.array([y for y in Y_batch if y is not None])
         
         # Get class distribution
         unique_labels, counts = np.unique(Y_batch, return_counts=True)
@@ -1647,9 +1651,7 @@ if __name__ == "__main__":
         metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
 
         exit()
-
-
-
+        
         n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.1)
 
         # Load latent representations
