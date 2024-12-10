@@ -1381,8 +1381,6 @@ def train_chromatin_state_probe(
         percentage = (count / total_samples) * 100
         print(f"{label:10s} | {count:5d} | {percentage:6.2f}%")  # Changed :5d to :5s for label
 
-    
-
     Z_val = [] 
     Y_val = []
     batch_size = len(splits["val"])//10
@@ -1636,4 +1634,30 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig(f'latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
-        
+    
+    elif sys.argv[1] == "loov":
+        # Load latent representations
+        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+        # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+
+        # exit()
+
+
+
+        n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.1)
+
+        # Load latent representations
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
+
+        count_dist = NegativeBinomial(p, n)
+        pval_dist = Gaussian(mu, var)
+
+        count_probabilities = count_dist.pmf(Y)
+        pval_probabilities = pval_dist.pdf(P)
+
+        for i in range(Y.shape[1]):
+                # print(Y[:, i].mean())
+                if avY[0, i] == 1:
+                    print(
+                    f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
