@@ -78,9 +78,9 @@ class CANDIPredictor:
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr, 0, self.chr_sizes[chr]], x_dsf)
 
         else:
-            print(bios_name)
-            exit()
             temp_x, temp_mx = self.dataset.load_bios(bios_name, [chr, 0, self.chr_sizes[chr]], x_dsf)
+            print(temp_x.keys(), temp_mx.keys())
+            exit()
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
             
