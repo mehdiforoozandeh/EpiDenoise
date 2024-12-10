@@ -1219,7 +1219,7 @@ def train_chromatin_state_probe(
     train_chrs=["chr19"], val_chrs=["chr21"], test_chrs=["chr21"],
     dataset_path="/project/compbio-lab/encode_data/", resolution=200, eic=True, stratified=True):
 
-    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic)
+    candi = CANDIPredictor(model_path, hyper_parameters_path, data_path=dataset_path, DNA=True, eic=eic, split="all")
 
     probe = ChromatinStateProbe(candi.model.d_model, output_dim=18)
 

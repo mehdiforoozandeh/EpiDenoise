@@ -2969,7 +2969,7 @@ class ExtendedEncodeDataHandler:
             elif eic==False and len(self.navigation[bios]) < bios_min_exp_avail_threshold:
                 del self.navigation[bios]
 
-            elif self.split_dict[bios] != split:
+            elif split != "all" and self.split_dict[bios] != split:
                 del self.navigation[bios]
 
             elif eic==False and check_completeness:
