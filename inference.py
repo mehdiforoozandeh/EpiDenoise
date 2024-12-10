@@ -1638,6 +1638,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == "loov":
         # Load latent representations
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+        candi.chr = "chr21"
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
         # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
