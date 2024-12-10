@@ -72,13 +72,14 @@ class CANDIPredictor:
             chr = self.chr
 
         if self.eic:
-            exit()
             if self.split == "test":
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr, 0, self.chr_sizes[chr]], x_dsf)
             elif self.split == "val":
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr, 0, self.chr_sizes[chr]], x_dsf)
 
         else:
+            print(bios_name)
+            exit()
             temp_x, temp_mx = self.dataset.load_bios(bios_name, [chr, 0, self.chr_sizes[chr]], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
