@@ -1223,11 +1223,11 @@ def train_chromatin_state_probe(
     else:
         splits = chromatin_state_dataset_merged_train_test_val_split(dataset_path)
 
-    splits["train"] = splits["train"][:10]
+    # splits["train"] = splits["train"][:10]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:5]
+    # splits["val"] = splits["val"][:5]
     
-    def prepare_data(split, chrs):
+    def prepare_data(split, chrs, start_idx, end_idx):
         chromatin_state_data = {}
         # Process each chromosome
         for chr in chrs:  
@@ -1235,7 +1235,7 @@ def train_chromatin_state_probe(
             chromatin_state_data[chr] = {}
 
             # Load chromatin state data for each cell type in training split
-            for pair in splits[split]:
+            for pair in splits[split][start_idx:end_idx]:
                 try:
                     bios_name = pair['biosample']
                     cs_name = pair['chromatin_state']
@@ -1265,7 +1265,7 @@ def train_chromatin_state_probe(
     
     Z_train = [] 
     Y_train = []
-    train_chromatin_state_data = prepare_data("train", train_chrs)
+    train_chromatin_state_data = prepare_data("train", train_chrs, 0, 3)
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
             z, annots = train_chromatin_state_data[chr][ct]
@@ -1286,7 +1286,7 @@ def train_chromatin_state_probe(
     Z_train = np.stack(Z_train) 
     Y_train = np.array(Y_train) 
 
-    val_chromatin_state_data = prepare_data("val", val_chrs)
+    val_chromatin_state_data = prepare_data("val", val_chrs, 0, 1)
     Z_val = [] 
     Y_val = []
     for chr in val_chromatin_state_data.keys():
