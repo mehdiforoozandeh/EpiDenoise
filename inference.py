@@ -1264,7 +1264,7 @@ def train_chromatin_state_probe(
     def stratify_batch(Z_batch, Y_batch):
         """Helper function to stratify a single batch of data"""
         # Convert lists to numpy arrays if needed
-        Z_batch = np.array(Z_batch)
+        Z_batch = torch.stack(Z_batch).numpy()  # Stack tensors before converting to numpy
         Y_batch = np.array(Y_batch)
         
         # Get class distribution
