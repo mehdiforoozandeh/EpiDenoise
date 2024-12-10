@@ -1223,11 +1223,11 @@ def train_chromatin_state_probe(
     else:
         splits = chromatin_state_dataset_merged_train_test_val_split(dataset_path)
 
-    splits["train"] = splits["train"][:10]
+    splits["train"] = splits["train"][:5]
     # splits["test"] = splits["test"][:1]
-    splits["val"] = splits["val"][:5]
+    splits["val"] = splits["val"][:3]
     
-    def prepare_data(split, chrs, num_regions):
+    def prepare_data(split, chrs):
         chromatin_state_data = {}
         # Process each chromosome
         for chr in chrs:  
@@ -1263,9 +1263,9 @@ def train_chromatin_state_probe(
 
         return chromatin_state_data
     
-    train_chromatin_state_data = prepare_data("train", train_chrs, num_train_regions)
     Z_train = [] 
     Y_train = []
+    train_chromatin_state_data = prepare_data("train", train_chrs)
     for chr in train_chromatin_state_data.keys():
         for ct in train_chromatin_state_data[chr].keys():
             z, annots = train_chromatin_state_data[chr][ct]
@@ -1286,7 +1286,7 @@ def train_chromatin_state_probe(
     Z_train = np.stack(Z_train) 
     Y_train = np.array(Y_train) 
 
-    val_chromatin_state_data = prepare_data("val", val_chrs, num_val_regions)
+    val_chromatin_state_data = prepare_data("val", val_chrs)
     Z_val = [] 
     Y_val = []
     for chr in val_chromatin_state_data.keys():
