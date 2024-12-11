@@ -675,10 +675,8 @@ class CANDIPredictor:
         print("-" * 55)
         for idx in available_indices:
             m = metrics[idx.item()]['count_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
-            print(f"        | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
+            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | {m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
+            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | {m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
             print("-" * 55)
             
         print("\nP-value Metrics:")
@@ -686,10 +684,8 @@ class CANDIPredictor:
         print("-" * 55)
         for idx in available_indices:
             m = metrics[idx.item()]['pval_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                  f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
-            print(f"        | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                  f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
+            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | {m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
+            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | {m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
             print("-" * 55)
             
         return metrics
@@ -1647,25 +1643,7 @@ if __name__ == "__main__":
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-
-        metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
-
-        exit()
         
-        n, p, mu, var, Z = candi.pred_cropped(X, mX, mY, avX, seq=seq, crop_percent=0.1)
-
-        # Load latent representations
-        Y = Y.view(-1, Y.shape[-1])
-        P = P.view(-1, P.shape[-1])
-
-        count_dist = NegativeBinomial(p, n)
-        pval_dist = Gaussian(mu, var)
-
-        count_probabilities = count_dist.pmf(Y)
-        pval_probabilities = pval_dist.pdf(P)
-
-        for i in range(Y.shape[1]):
-                # print(Y[:, i].mean())
-                if avY[0, i] == 1:
-                    print(
-                    f"Assay: {expnames[i]}, PP_count: {perplexity(count_probabilities[:, i]):.3f}, PP_pval: {perplexity(pval_probabilities[:, i]):.3f}")
+        print(candi.navigation.keys())
+        exit()
+        metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
