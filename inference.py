@@ -931,7 +931,8 @@ class ChromatinStateProbe(nn.Module):
         return val_loss.item(), overall_accuracy
 
     def fit(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.001, batch_size=200):
-        optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
+        # optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
         criterion = nn.NLLLoss()
 
         # Encode class names to indices
@@ -1216,8 +1217,8 @@ def train_chromatin_state_probe(
     else:
         splits = chromatin_state_dataset_merged_train_test_val_split(dataset_path)
 
-    splits["train"] = splits["train"][:30]
-    splits["val"] = splits["val"][:10]
+    splits["train"] = splits["train"][:50]
+    splits["val"] = splits["val"][:15]
 
     def prepare_data(split, chrs, start_idx, end_idx):
         chromatin_state_data = {}
