@@ -685,6 +685,99 @@ class CANDIPredictor:
             
         return metrics
 
+    def evaluate_leave_one_out_eic(self, X, mX, mY, avX, Y, P, avY, seq=None, crop_edges=True, return_preds=False):
+
+        available_X_indices = torch.where(avX[0, :] == 1)[0]
+        available_Y_indices = torch.where(avY[0, :] == 1)[0]
+
+        expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+
+        if crop_edges:
+            # Get upsampling predictions 
+            n, p, mu, var, Z = self.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+        else:
+            # Get upsampling predictions 
+            n, p, mu, var, Z = self.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+
+        # Create distributions and get means
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
+
+        ups_count_dist = NegativeBinomial(p, n)
+        ups_count_mean = ups_count_dist.mean()
+        
+        ups_pval_dist = Gaussian(mu, var)
+        ups_pval_mean = ups_pval_dist.mean()
+
+        metrics = {}
+        for j in range(Y.shape[1]):
+            pred_count = ups_count_mean[:, j].numpy()
+            pred_pval = np.sinh(ups_pval_mean[:, j].numpy())
+            pval_true = np.sinh(P[:, j].numpy())
+
+            if j in list(available_X_indices):
+                comparison = "upsampled"
+                count_true = X[:, j].numpy()
+
+            elif j in list(available_Y_indices):
+                comparison = "imputed"
+                count_true = Y[:, j].numpy()
+
+            else:
+                continue
+            
+            # Calculate metrics for this feature
+            metrics[j] = {
+                'comparison': comparison,
+                'count_metrics': {
+                    'pearson': stats.pearsonr(count_true, pred_count)[0],
+                    'spearman': stats.spearmanr(count_true, pred_count)[0],
+                    'mse': np.mean((count_true - pred_count) ** 2),
+                    'r2': 1 - (np.sum((count_true - pred_count) ** 2) / 
+                              np.sum((count_true - np.mean(count_true)) ** 2))
+                },
+                'pval_metrics': {
+                    'pearson': stats.pearsonr(pval_true, pred_pval)[0],
+                    'spearman': stats.spearmanr(pval_true, pred_pval)[0],
+                    'mse': np.mean((pval_true - pred_pval) ** 2),
+                    'r2': 1 - (np.sum((pval_true - pred_pval) ** 2) / 
+                              np.sum((pval_true - np.mean(pval_true)) ** 2))
+                }
+            }
+
+        # Print summary
+        print("\nEvaluation Results:")
+        print("\nCount Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
+        print("-" * 55)
+        
+        for idx, m in metrics.items():
+            feature_name = expnames[idx]
+            comp_type = m['comparison']
+            count_m = m['count_metrics']
+            print(f"{feature_name:10s} | {comp_type:9s} | {count_m['pearson']:7.4f} | {count_m['spearman']:8.4f} | {count_m['mse']:6.4f} | {count_m['r2']:6.4f}")
+        
+        print("\nP-value Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
+        print("-" * 55)
+        
+        for idx, m in metrics.items():
+            feature_name = expnames[idx]
+            comp_type = m['comparison']
+            pval_m = m['pval_metrics']
+            print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['pearson']:7.4f} | {pval_m['spearman']:8.4f} | {pval_m['mse']:6.4f} | {pval_m['r2']:6.4f}")
+
+        if return_preds:
+            return ups_count_dist, ups_pval_dist
+            
+        return metrics
+
+
+            
+
+
+
+        return ups_count_mean, ups_pval_mean
 """
     # given a model, i want to train a linear probe on the latent space
     # and evaluate the performance of the linear probe on the linear probe dataset.
@@ -1662,7 +1755,7 @@ if __name__ == "__main__":
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
             print(f"avX first row sum: {avX[0].sum():.3f}")
             print(f"avY first row sum: {avY[0].sum():.3f}")
-            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
 
             print("\n\n")
             # # print(metrics)
