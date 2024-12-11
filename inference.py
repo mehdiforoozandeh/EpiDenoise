@@ -709,6 +709,15 @@ class CANDIPredictor:
         ups_pval_dist = Gaussian(mu, var)
         ups_pval_mean = ups_pval_dist.mean()
 
+        # Print shapes of tensors
+        print("\nShape Information:")
+        print(f"Y shape: {Y.shape}")
+        print(f"P shape: {P.shape}")
+        print(f"X shape: {X.shape}")
+        print(f"Count mean shape: {ups_count_mean.shape}")
+        print(f"P-value mean shape: {ups_pval_mean.shape}")
+        exit()
+
         metrics = {}
         for j in range(Y.shape[1]):
             pred_count = ups_count_mean[:, j].numpy()
@@ -726,7 +735,6 @@ class CANDIPredictor:
             else:
                 continue
             
-            print(f"Shapes - count_true: {count_true.shape}, pred_count: {pred_count.shape}, pval_true: {pval_true.shape}, pred_pval: {pred_pval.shape}")
             # Calculate metrics for this feature
             metrics[j] = {
                 'comparison': comparison,
