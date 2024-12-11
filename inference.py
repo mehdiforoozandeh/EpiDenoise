@@ -726,6 +726,7 @@ class CANDIPredictor:
             else:
                 continue
             
+            print(f"Shapes - count_true: {count_true.shape}, pred_count: {pred_count.shape}, pval_true: {pval_true.shape}, pred_pval: {pred_pval.shape}")
             # Calculate metrics for this feature
             metrics[j] = {
                 'comparison': comparison,
