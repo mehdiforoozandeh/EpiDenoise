@@ -1747,14 +1747,12 @@ if __name__ == "__main__":
         eic = True
 
         # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="val")
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
             print(bios_name)
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-            print(f"avX first row sum: {avX[0].sum():.3f}")
-            print(f"avY first row sum: {avY[0].sum():.3f}")
             metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
 
             print("\n\n")
