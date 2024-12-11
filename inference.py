@@ -1662,7 +1662,9 @@ if __name__ == "__main__":
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
             print(f"avX first row sum: {avX[0].sum():.3f}")
             print(f"avY first row sum: {avY[0].sum():.3f}")
-            # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+
+            print("\n\n")
             # # print(metrics)
 
             # # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
