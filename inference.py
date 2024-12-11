@@ -1653,7 +1653,7 @@ if __name__ == "__main__":
         eic = True
 
         # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="val")
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
