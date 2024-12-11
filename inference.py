@@ -702,21 +702,13 @@ class CANDIPredictor:
         # Create distributions and get means
         Y = Y.view(-1, Y.shape[-1])
         P = P.view(-1, P.shape[-1])
+        X = X.view(-1, X.shape[-1])
 
         ups_count_dist = NegativeBinomial(p, n)
         ups_count_mean = ups_count_dist.mean()
         
         ups_pval_dist = Gaussian(mu, var)
         ups_pval_mean = ups_pval_dist.mean()
-
-        # Print shapes of tensors
-        print("\nShape Information:")
-        print(f"Y shape: {Y.shape}")
-        print(f"P shape: {P.shape}")
-        print(f"X shape: {X.shape}")
-        print(f"Count mean shape: {ups_count_mean.shape}")
-        print(f"P-value mean shape: {ups_pval_mean.shape}")
-        exit()
 
         metrics = {}
         for j in range(Y.shape[1]):
@@ -1033,8 +1025,7 @@ class ChromatinStateProbe(nn.Module):
         return val_loss.item(), overall_accuracy
 
     def fit(self, X_train, y_train, X_val, y_val, num_epochs=10, learning_rate=0.001, batch_size=200):
-        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
-        # optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
+        optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
         criterion = nn.NLLLoss()
 
         # Encode class names to indices
