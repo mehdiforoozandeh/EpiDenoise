@@ -108,14 +108,11 @@ class CANDIPredictor:
 
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
-        
-        # print(f"getting bios vals for {bios_name}")
-
         if self.eic:
             if self.split == "test":
                 temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
             elif self.split == "val":
-                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
             
             # print(temp_x.keys(), temp_mx.keys())
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
@@ -651,8 +648,7 @@ class CANDIPredictor:
                     'ups_pearson': stats.pearsonr(count_true, ups_count)[0],
                     'ups_spearman': stats.spearmanr(count_true, ups_count)[0],
                     'ups_mse': np.mean((count_true - ups_count) ** 2),
-                    'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
-                                 np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / np.sum((count_true - np.mean(count_true)) ** 2)),
                 },
                 'pval_metrics': {
                     'imp_pearson': stats.pearsonr(pval_true, imp_pval)[0],
@@ -663,8 +659,7 @@ class CANDIPredictor:
                     'ups_pearson': stats.pearsonr(pval_true, ups_pval)[0],
                     'ups_spearman': stats.spearmanr(pval_true, ups_pval)[0],
                     'ups_mse': np.mean((pval_true - ups_pval) ** 2),
-                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / 
-                                 np.sum((pval_true - np.mean(pval_true)) ** 2))
+                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2))
                 }
             }
         
@@ -680,7 +675,7 @@ class CANDIPredictor:
             print("-" * 55)
             
         print("\nP-value Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
+        print("Feature| Type      | Pearson | Spearman | MSE    | R2")
         print("-" * 55)
         for idx in available_indices:
             m = metrics[idx.item()]['pval_metrics']
@@ -1637,7 +1632,7 @@ if __name__ == "__main__":
         plt.savefig(f'latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
     
-    elif sys.argv[1] == "loov":
+    elif sys.argv[1] == "loov_full":
         # Load latent representations
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
@@ -1651,3 +1646,22 @@ if __name__ == "__main__":
             # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
             # print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
             print("-" * 55)
+
+    elif sys.argv[1] == "loov_eic":
+        model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+        eic = True
+
+        # Load latent representations
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+        candi.chr = "chr21"
+        for bios_name in list(candi.dataset.navigation.keys()):
+            print(bios_name)
+            # X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            # # print(metrics)
+
+            # # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
+            # # print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
+            # print("-" * 55)
