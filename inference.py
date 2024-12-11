@@ -779,6 +779,14 @@ class CANDIPredictor:
 
 
         return ups_count_mean, ups_pval_mean
+
+    def evaluate(self, bios_name):
+        X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
+        if self.eic:
+            metrics = self.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
+        else:
+            metrics = self.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+        return metrics
 """
     # given a model, i want to train a linear probe on the latent space
     # and evaluate the performance of the linear probe on the linear probe dataset.
@@ -1726,7 +1734,7 @@ if __name__ == "__main__":
         plt.savefig(f'latent_space_perplexity_{bios_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
     
-    elif sys.argv[1] == "loov_full":
+    elif sys.argv[1] == "eval_full":
         model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
         eic = False
@@ -1746,7 +1754,7 @@ if __name__ == "__main__":
                 print(f"Error processing {bios_name}: {e}")
                 continue
 
-    elif sys.argv[1] == "loov_eic":
+    elif sys.argv[1] == "eval_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
         eic = True
@@ -1765,3 +1773,50 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error processing {bios_name}: {e}")
                 continue
+    
+    elif sys.argv[1] == "eval_full_bios":
+        
+        model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        eic = False
+
+        # Load latent representations
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+        candi.chr = "chr21"
+
+        if sys.argv[2] == "show_test_bios":
+            print(candi.dataset.navigation.keys())
+            exit()
+        else:
+            bios_names = sys.argv[2]
+
+        try:
+            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            print("\n\n")
+            
+        except Exception as e:
+            print(f"Error processing {bios_name}: {e}")
+            continue
+    
+    elif sys.argv[1] == "eval_eic_bios":
+        model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+        eic = True
+
+        # Load latent representations
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+        candi.chr = "chr21"
+
+        bios_names = sys.argv[2]
+
+        try:
+            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
+            print("\n\n")
+            
+        except Exception as e:
+            print(f"Error processing {bios_name}: {e}")
+            continue
