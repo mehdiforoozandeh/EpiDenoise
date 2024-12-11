@@ -1658,7 +1658,9 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
             print(bios_name)
-            # X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            print(f"avX first row sum: {avX[0].sum():.3f}")
+            print(f"avY first row sum: {avY[0].sum():.3f}")
             # metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
             # # print(metrics)
 
