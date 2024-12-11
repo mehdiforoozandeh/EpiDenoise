@@ -1727,19 +1727,24 @@ if __name__ == "__main__":
         plt.close()
     
     elif sys.argv[1] == "loov_full":
+        model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        eic = False
+
         # Load latent representations
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
-            print(bios_name)
-            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
-            # print(metrics)
+            try:
+                print(bios_name)
+                X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+                metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
 
-            # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
-            # print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
-            print("-" * 55)
+                print("\n\n")
+            except Exception as e:
+                print(f"Error processing {bios_name}: {e}")
+                continue
 
     elif sys.argv[1] == "loov_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
@@ -1751,13 +1756,12 @@ if __name__ == "__main__":
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
-            print(bios_name)
-            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-            metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
+            try:
+                print(bios_name)
+                X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+                metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
 
-            print("\n\n")
-            # # print(metrics)
-
-            # # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
-            # # print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
-            # print("-" * 55)
+                print("\n\n")
+            except Exception as e:
+                print(f"Error processing {bios_name}: {e}")
+                continue
