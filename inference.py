@@ -1644,6 +1644,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
         
-        exit()
+        
         print(candi.dataset.navigation.keys())
+        exit()
         metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
