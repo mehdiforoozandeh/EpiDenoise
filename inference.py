@@ -1642,9 +1642,9 @@ if __name__ == "__main__":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
-        X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-        
-        
-        print(candi.dataset.navigation.keys())
-        exit()
-        metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+        for bios_name in list(candi.dataset.navigation.keys()):
+            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
+            print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
+            print("-" * 55)
