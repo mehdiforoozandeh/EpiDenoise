@@ -1415,14 +1415,14 @@ def train_chromatin_state_probe(
         num_epochs=800, learning_rate=0.001, batch_size=100)
     
 if __name__ == "__main__":
-    # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
-    # eic = True
+    model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+    hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+    eic = True
 
-    model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
-    eic = False
-    bios_name = "GM23338_grp1_rep1"
+    # model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+    # eic = False
+    # bios_name = "GM23338_grp1_rep1"
 
     if sys.argv[1] == "cs_probe":
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", eic=eic)
@@ -1646,7 +1646,7 @@ if __name__ == "__main__":
             print(bios_name)
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
             metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
-            print(metrics)
+            # print(metrics)
 
             # print(f"{bios_name}: {metrics['imp_pearson']:.3f} | {metrics['imp_spearman']:.3f} | {metrics['imp_mse']:.3f} | {metrics['imp_r2']:.3f}")
             # print(f"{' '*len(bios_name)}: {metrics['ups_pearson']:.3f} | {metrics['ups_spearman']:.3f} | {metrics['ups_mse']:.3f} | {metrics['ups_r2']:.3f}")
