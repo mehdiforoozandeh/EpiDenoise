@@ -1543,9 +1543,9 @@ if __name__ == "__main__":
     # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
     # eic = True
 
-    model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
-    hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
-    eic = False
+    # model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+    # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+    # eic = False
     # bios_name = "GM23338_grp1_rep1"
 
     if sys.argv[1] == "cs_probe":
@@ -1762,8 +1762,8 @@ if __name__ == "__main__":
         plt.close()
     
     elif sys.argv[1] == "eval_full":
-        model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
-        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
 
         # Load latent representations
