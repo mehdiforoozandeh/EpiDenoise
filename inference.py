@@ -1798,7 +1798,6 @@ if __name__ == "__main__":
             
         except Exception as e:
             print(f"Error processing {bios_name}: {e}")
-            continue
     
     elif sys.argv[1] == "eval_eic_bios":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
@@ -1819,4 +1818,3 @@ if __name__ == "__main__":
             
         except Exception as e:
             print(f"Error processing {bios_name}: {e}")
-            continue
