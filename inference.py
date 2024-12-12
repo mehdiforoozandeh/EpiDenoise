@@ -826,7 +826,7 @@ class CANDIPredictor:
 
 def perplexity(probabilities):
     N = len(probabilities)
-    epsilon = 1e-10  # Small constant to prevent log(0)
+    epsilon = 1e-6  # Small constant to prevent log(0)
     log_prob_sum = torch.sum(torch.log(probabilities + epsilon))
     perplexity = torch.exp(-log_prob_sum / N)
     return perplexity

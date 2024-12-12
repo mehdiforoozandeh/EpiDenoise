@@ -115,10 +115,13 @@ class NegativeBinomial:
     def cdf(self, k):
         return torch.Tensor(nbinom.cdf(k, self.n, self.p))
 
+    # def pmf(self, k):
+    #     k = torch.tensor(k, dtype=torch.float32)
+    #     comb = torch.lgamma(k + self.n) - torch.lgamma(k + 1) - torch.lgamma(self.n)
+    #     return torch.exp(comb) * (self.p ** self.n) * ((1 - self.p) ** k)
+
     def pmf(self, k):
-        k = torch.tensor(k, dtype=torch.float32)
-        comb = torch.lgamma(k + self.n) - torch.lgamma(k + 1) - torch.lgamma(self.n)
-        return torch.exp(comb) * (self.p ** self.n) * ((1 - self.p) ** k)
+        return torch.Tensor(nbinom.pmf(k, self.n, self.p))
 
     def icdf(self, q):
         return torch.Tensor(nbinom.ppf(q, self.n, self.p))
