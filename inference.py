@@ -660,12 +660,17 @@ class CANDIPredictor:
             ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
             ups_pp_count = perplexity(prob_ups_count[:, idx])
 
-            # fraction within 95% CI pval
-            imp_pval_95ci = fraction_within_95ci(imp_pval_dist, pval_true, c=0.95)
-            ups_pval_95ci = fraction_within_95ci(ups_pval_dist, pval_true, c=0.95)
+            imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
+            ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
+            imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
+            ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
-            imp_count_95ci = fraction_within_95ci(imp_count_dist, count_true, c=0.95)
-            ups_count_95ci = fraction_within_95ci(ups_count_dist, count_true, c=0.95)
+            # fraction within 95% CI pval
+            imp_pval_95ci = fraction_within_95ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = fraction_within_95ci(ups_pval_dist_idx, pval_true, c=0.95)
+
+            imp_count_95ci = fraction_within_95ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = fraction_within_95ci(ups_count_dist_idx, count_true, c=0.95)
 
             # fraction within 95% CI count
 
@@ -785,8 +790,11 @@ class CANDIPredictor:
             pp_pval  = perplexity(prob_ups_pval[:, j])
             pp_count = perplexity(prob_ups_count[:, j])
 
-            pval_95ci = fraction_within_95ci(ups_pval_dist, pval_true, c=0.95)
-            count_95ci = fraction_within_95ci(ups_count_dist, count_true, c=0.95)
+            ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
+            ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
+
+            pval_95ci = fraction_within_95ci(ups_pval_dist_j, pval_true, c=0.95)
+            count_95ci = fraction_within_95ci(ups_count_dist_j, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
