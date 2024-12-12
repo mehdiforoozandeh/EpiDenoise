@@ -767,7 +767,7 @@ class CANDIPredictor:
             pp_count = perplexity(prob_ups_count[:, j])
 
             pval_95ci = Gaussian_fraction_within_95ci(ups_pval_dist.mu[:, j].numpy(), ups_pval_dist.sigma[:, j].numpy(), pval_true)
-            count_95ci = 0 #NB_fraction_within_95ci(ups_count_dist.n[:, j].numpy(), ups_count_dist.p[:, j].numpy(), count_true)
+            count_95ci = NB_fraction_within_95ci(ups_count_dist.n[:, j].numpy(), ups_count_dist.p[:, j].numpy(), count_true)
 
             metrics[j] = {
                 'comparison': comparison,
