@@ -28,6 +28,16 @@ def perplexity(probabilities):
 
 def fraction_within_95ci(dist, x, c=0.95):
     lower, upper = dist.interval(c)
+    # Convert tensors to numpy arrays if needed
+    if torch.is_tensor(lower):
+        lower = lower.numpy()
+    if torch.is_tensor(upper):
+        upper = upper.numpy()
+    if torch.is_tensor(x):
+        x = x.numpy()
+    # Add small epsilon to avoid divide by zero
+    eps = np.finfo(float).eps
+    x = np.asarray(x) + eps
     return np.mean((x >= lower) & (x <= upper))
 
 def confidence_calibration():
