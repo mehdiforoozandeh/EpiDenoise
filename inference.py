@@ -1781,7 +1781,7 @@ if __name__ == "__main__":
         eic = False
 
         # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
 
@@ -1789,7 +1789,7 @@ if __name__ == "__main__":
             print(candi.dataset.navigation.keys())
             exit()
         else:
-            bios_names = sys.argv[2]
+            bios_name = sys.argv[2]
 
         try:
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
@@ -1809,7 +1809,7 @@ if __name__ == "__main__":
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
 
-        bios_names = sys.argv[2]
+        bios_name = sys.argv[2]
 
         try:
             X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
