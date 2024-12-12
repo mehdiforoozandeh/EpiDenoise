@@ -15,7 +15,26 @@ from sklearn.decomposition import PCA
 import umap, scipy
 from difflib import SequenceMatcher
 
-# sequence clustering
+################################################################################
+
+
+
+def perplexity(probabilities):
+    N = len(probabilities)
+    epsilon = 1e-6  # Small constant to prevent log(0)
+    log_prob_sum = torch.sum(torch.log(probabilities + epsilon))
+    perplexity = torch.exp(-log_prob_sum / N)
+    return perplexity
+
+def fraction_within_95ci(dist, x, c=0.95):
+    lower, upper = dist.interval(c)
+    return np.mean((x >= lower) & (x <= upper))
+
+def confidence_calibration():
+    pass
+
+################################################################################
+
 class CANDIPredictor:
     def __init__(self, model, hyper_parameters_path, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
@@ -642,11 +661,11 @@ class CANDIPredictor:
             ups_pp_count = perplexity(prob_ups_count[:, idx])
 
             # fraction within 95% CI pval
-            imp_pval_95ci = Gaussian_fraction_within_95ci(imp_pval_dist.mu[:, idx].numpy(), imp_pval_dist.sigma[:, idx].numpy(), pval_true)
-            ups_pval_95ci = Gaussian_fraction_within_95ci(ups_pval_dist.mu[:, idx].numpy(), ups_pval_dist.sigma[:, idx].numpy(), pval_true)
+            imp_pval_95ci = fraction_within_95ci(imp_pval_dist, pval_true, c=0.95)
+            ups_pval_95ci = fraction_within_95ci(ups_pval_dist, pval_true, c=0.95)
 
-            imp_count_95ci = 0 #NB_fraction_within_95ci(imp_count_dist.n[:, idx].numpy(), imp_count_dist.p[:, idx].numpy(), count_true)
-            ups_count_95ci = 0 #NB_fraction_within_95ci(ups_count_dist.n[:, idx].numpy(), ups_count_dist.p[:, idx].numpy(), count_true)
+            imp_count_95ci = fraction_within_95ci(imp_count_dist, count_true, c=0.95)
+            ups_count_95ci = fraction_within_95ci(ups_count_dist, count_true, c=0.95)
 
             # fraction within 95% CI count
 
@@ -766,8 +785,8 @@ class CANDIPredictor:
             pp_pval  = perplexity(prob_ups_pval[:, j])
             pp_count = perplexity(prob_ups_count[:, j])
 
-            pval_95ci = Gaussian_fraction_within_95ci(ups_pval_dist.mu[:, j].numpy(), ups_pval_dist.sigma[:, j].numpy(), pval_true)
-            count_95ci = NB_fraction_within_95ci(ups_count_dist.n[:, j].numpy(), ups_count_dist.p[:, j].numpy(), count_true)
+            pval_95ci = fraction_within_95ci(ups_pval_dist, pval_true, c=0.95)
+            count_95ci = fraction_within_95ci(ups_count_dist, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
@@ -815,7 +834,6 @@ class CANDIPredictor:
             print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['pearson']:7.4f} | {pval_m['spearman']:8.4f} | "
                   f"{pval_m['mse']:6.4f} | {pval_m['r2']:6.4f} | {pval_m['perplexity']:6.4f} | {pval_m['95ci']:6.4f}")
 
-
     def evaluate(self, bios_name):
         X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
         if self.eic:
@@ -824,49 +842,7 @@ class CANDIPredictor:
             metrics = self.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
         return metrics
 
-def perplexity(probabilities):
-    N = len(probabilities)
-    epsilon = 1e-6  # Small constant to prevent log(0)
-    log_prob_sum = torch.sum(torch.log(probabilities + epsilon))
-    perplexity = torch.exp(-log_prob_sum / N)
-    return perplexity
-
-def Gaussian_fraction_within_95ci(mu, sigma, x):
-    # Compute the z-scores
-    z_scores = (x - mu) / sigma
-    # Check which are within ±1.96
-    within_95ci = np.abs(z_scores) <= 1.96
-    # Return the fraction of dimensions satisfying this
-    return np.mean(within_95ci)
-
-def NB_fraction_within_95ci(n, p, x):
-    """
-    Compute the fraction of observations x[i] that fall within the 95% CI
-    of the corresponding Negative Binomial distribution parameterized by n[i], p[i].
-
-    Parameters
-    ----------
-    n : numpy.ndarray
-        Array of shape (d,) representing the number of successes (r-parameter) for each NB distribution.
-    p : numpy.ndarray
-        Array of shape (d,) representing the success probability for each NB distribution.
-    x : numpy.ndarray
-        Array of shape (d,) representing observed values.
-
-    Returns
-    -------
-    float
-        The fraction of distributions for which x[i] falls within the 95% central CI.
-    """
-    # Compute the 2.5th and 97.5th quantiles for each distribution
-    lower_bounds = nbinom.ppf(0.025, n, p)
-    upper_bounds = nbinom.ppf(0.975, n, p)
-
-    # Check if x[i] is within the interval [lower_bound[i], upper_bound[i]]
-    within_95ci = (x >= lower_bounds) & (x <= upper_bounds)
-
-    # The fraction is just the mean of these boolean indicators
-    return np.mean(within_95ci)
+################################################################################
 
 def latent_reproducibility(
     model_path, hyper_parameters_path, 
@@ -1116,6 +1092,8 @@ class ChromatinStateProbe(nn.Module):
                 # torch.save(self.state_dict(), 'best_model.pt')
         
         return val_loss, val_acc
+
+################################################################################
 
 def chromatin_state_dataset_eic_train_test_val_split(solar_data_path="/project/compbio-lab/encode_data/"):
     bios_names = [t for t in os.listdir(solar_data_path) if t.startswith("T_")]
@@ -1549,7 +1527,9 @@ def train_chromatin_state_probe(
     # # Use stratified training data for model training
     probe.fit(Z_train, Y_train, Z_val, Y_val, 
         num_epochs=800, learning_rate=0.001, batch_size=100)
-    
+
+################################################################################
+
 if __name__ == "__main__":
     # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
     # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
