@@ -619,6 +619,11 @@ class CANDIPredictor:
         ups_pval_dist = Gaussian(mu_ups, var_ups)
         imp_pval_mean = imp_pval_dist.mean()
         ups_pval_mean = ups_pval_dist.mean()
+
+        prob_imp_pval = imp_pval_dist.pdf(P)
+        prob_imp_count = imp_count_dist.pmf(Y)
+        prob_ups_pval = ups_pval_dist.pdf(P)
+        prob_ups_count = ups_count_dist.pmf(Y)
         
         if return_preds:
             return imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist
@@ -628,7 +633,23 @@ class CANDIPredictor:
         for idx in available_indices:
             count_true = Y[:, idx].numpy()
             pval_true = P[:, idx].numpy()
-            
+
+            # perplexity
+            imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
+            imp_pp_count = perplexity(prob_imp_count[:, idx])
+
+            ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
+            ups_pp_count = perplexity(prob_ups_count[:, idx])
+
+            # fraction within 95% CI pval
+            imp_pval_95ci = Gaussian_fraction_within_95ci(imp_pval_dist.mu[:, idx].numpy(), imp_pval_dist.sigma[:, idx].numpy(), pval_true)
+            ups_pval_95ci = Gaussian_fraction_within_95ci(ups_pval_dist.mu[:, idx].numpy(), ups_pval_dist.sigma[:, idx].numpy(), pval_true)
+
+            imp_count_95ci = NB_fraction_within_95ci(imp_count_dist.n[:, idx].numpy(), imp_count_dist.p[:, idx].numpy(), count_true)
+            ups_count_95ci = NB_fraction_within_95ci(ups_count_dist.n[:, idx].numpy(), ups_count_dist.p[:, idx].numpy(), count_true)
+
+            # fraction within 95% CI count
+
             # Count predictions
             imp_count = imp_count_mean[:, idx].numpy()
             ups_count = ups_count_mean[:, idx].numpy()
@@ -644,44 +665,56 @@ class CANDIPredictor:
                     'imp_spearman': stats.spearmanr(count_true, imp_count)[0],
                     'imp_mse': np.mean((count_true - imp_count) ** 2),
                     'imp_r2': 1 - (np.sum((count_true - imp_count) ** 2) / 
-                                 np.sum((count_true - np.mean(count_true)) ** 2)),
+                                np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'imp_perplexity': imp_pp_count.item(),  # Add perplexity
+                    'imp_95ci': imp_count_95ci,  # Add 95% CI
                     'ups_pearson': stats.pearsonr(count_true, ups_count)[0],
                     'ups_spearman': stats.spearmanr(count_true, ups_count)[0],
                     'ups_mse': np.mean((count_true - ups_count) ** 2),
                     'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'ups_perplexity': ups_pp_count.item(),  # Add perplexity
+                    'ups_95ci': ups_count_95ci  # Add 95% CI
                 },
                 'pval_metrics': {
                     'imp_pearson': stats.pearsonr(pval_true, imp_pval)[0],
                     'imp_spearman': stats.spearmanr(pval_true, imp_pval)[0],
                     'imp_mse': np.mean((pval_true - imp_pval) ** 2),
                     'imp_r2': 1 - (np.sum((pval_true - imp_pval) ** 2) / 
-                                 np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                                np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'imp_perplexity': imp_pp_pval.item(),  # Add perplexity
+                    'imp_95ci': imp_pval_95ci,  # Add 95% CI
                     'ups_pearson': stats.pearsonr(pval_true, ups_pval)[0],
                     'ups_spearman': stats.spearmanr(pval_true, ups_pval)[0],
                     'ups_mse': np.mean((pval_true - ups_pval) ** 2),
-                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2))
+                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'ups_perplexity': ups_pp_pval.item(),  # Add perplexity
+                    'ups_95ci': ups_pval_95ci  # Add 95% CI
                 }
             }
-        
-        # Print summary
-        print("\nEvaluation Results:")
-        print("\nCount Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
-        print("-" * 55)
-        for idx in available_indices:
-            m = metrics[idx.item()]['count_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | {m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
-            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | {m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
-            print("-" * 55)
-            
-        print("\nP-value Metrics:")
-        print("Feature| Type      | Pearson | Spearman | MSE    | R2")
-        print("-" * 55)
-        for idx in available_indices:
-            m = metrics[idx.item()]['pval_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | {m['imp_mse']:6.4f} | {m['imp_r2']:6.4f}")
-            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | {m['ups_mse']:6.4f} | {m['ups_r2']:6.4f}")
-            print("-" * 55)
+
+            # Print summary
+            print("\nEvaluation Results:")
+            print("\nCount Metrics:")
+            print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+            print("-" * 75)
+            for idx in available_indices:
+                m = metrics[idx.item()]['count_metrics']
+                print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                    f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
+                print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                    f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
+                print("-" * 75)
+
+            print("\nP-value Metrics:")
+            print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+            print("-" * 75)
+            for idx in available_indices:
+                m = metrics[idx.item()]['pval_metrics']
+                print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                    f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
+                print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                    f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
+                print("-" * 75)
             
         return metrics
 
@@ -710,6 +743,9 @@ class CANDIPredictor:
         ups_pval_dist = Gaussian(mu, var)
         ups_pval_mean = ups_pval_dist.mean()
 
+        prob_ups_pval = ups_pval_dist.pdf(P)
+        prob_ups_count = ups_count_dist.pmf(Y)
+
         metrics = {}
         for j in range(Y.shape[1]):
             pred_count = ups_count_mean[:, j].numpy()
@@ -727,7 +763,12 @@ class CANDIPredictor:
             else:
                 continue
             
-            # Calculate metrics for this feature
+            pp_pval  = perplexity(prob_ups_pval[:, j])
+            pp_count = perplexity(prob_ups_count[:, j])
+
+            pval_95ci = Gaussian_fraction_within_95ci(ups_pval_dist.mu[:, j].numpy(), ups_pval_dist.sigma[:, j].numpy(), pval_true)
+            count_95ci = NB_fraction_within_95ci(ups_count_dist.n[:, j].numpy(), ups_count_dist.p[:, j].numpy(), count_true)
+
             metrics[j] = {
                 'comparison': comparison,
                 'count_metrics': {
@@ -735,50 +776,45 @@ class CANDIPredictor:
                     'spearman': stats.spearmanr(count_true, pred_count)[0],
                     'mse': np.mean((count_true - pred_count) ** 2),
                     'r2': 1 - (np.sum((count_true - pred_count) ** 2) / 
-                              np.sum((count_true - np.mean(count_true)) ** 2))
+                              np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'perplexity': pp_count.item(),  # Add perplexity
+                    '95ci': count_95ci  # Add 95% CI
                 },
                 'pval_metrics': {
                     'pearson': stats.pearsonr(pval_true, pred_pval)[0],
                     'spearman': stats.spearmanr(pval_true, pred_pval)[0],
                     'mse': np.mean((pval_true - pred_pval) ** 2),
                     'r2': 1 - (np.sum((pval_true - pred_pval) ** 2) / 
-                              np.sum((pval_true - np.mean(pval_true)) ** 2))
+                              np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'perplexity': pp_pval.item(),  # Add perplexity
+                    '95ci': pval_95ci  # Add 95% CI
                 }
             }
 
-        # Print summary
+        # Print summary with updated headers and format
         print("\nEvaluation Results:")
         print("\nCount Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
-        print("-" * 55)
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("-" * 75)
         
         for idx, m in metrics.items():
             feature_name = expnames[idx]
             comp_type = m['comparison']
             count_m = m['count_metrics']
-            print(f"{feature_name:10s} | {comp_type:9s} | {count_m['pearson']:7.4f} | {count_m['spearman']:8.4f} | {count_m['mse']:6.4f} | {count_m['r2']:6.4f}")
+            print(f"{feature_name:10s} | {comp_type:9s} | {count_m['pearson']:7.4f} | {count_m['spearman']:8.4f} | "
+                  f"{count_m['mse']:6.4f} | {count_m['r2']:6.4f} | {count_m['perplexity']:6.4f} | {count_m['95ci']:6.4f}")
         
         print("\nP-value Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2")
-        print("-" * 55)
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("-" * 75)
         
         for idx, m in metrics.items():
             feature_name = expnames[idx]
             comp_type = m['comparison']
             pval_m = m['pval_metrics']
-            print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['pearson']:7.4f} | {pval_m['spearman']:8.4f} | {pval_m['mse']:6.4f} | {pval_m['r2']:6.4f}")
+            print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['pearson']:7.4f} | {pval_m['spearman']:8.4f} | "
+                  f"{pval_m['mse']:6.4f} | {pval_m['r2']:6.4f} | {pval_m['perplexity']:6.4f} | {pval_m['95ci']:6.4f}")
 
-        if return_preds:
-            return ups_count_dist, ups_pval_dist
-            
-        return metrics
-
-
-            
-
-
-
-        return ups_count_mean, ups_pval_mean
 
     def evaluate(self, bios_name):
         X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
@@ -787,40 +823,6 @@ class CANDIPredictor:
         else:
             metrics = self.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
         return metrics
-"""
-    # given a model, i want to train a linear probe on the latent space
-    # and evaluate the performance of the linear probe on the linear probe dataset.
-    # implemented using pytorch
-    # we want one class per probe
-    # we want one train function per probe
-    # we want one evaluate function per probe
-
-    the following are different probes that i will implement
-    1. chromatin_state_classification probe:
-        - input: CANDI latent representation
-        - output: 18 state classification
-        - loss function: cross entropy
-
-    2. peak_calling probe:
-        - input: CANDI latent representation
-        - output: binary peak/no peak
-        - loss function: binary cross entropy
-
-    3. activity_prediction_probe:
-        - input: CANDI latent representation
-        - output: binary active/inactive
-        - loss function: binary cross entropy
-
-    4. conservation_prediction_probe:
-        - input: CANDI latent representation
-        - output: conservation score
-        - loss function: mean squared error
-
-    5. expression_prediction_probe:
-        - input: CANDI latent representation for a window of sequence
-        - output: expression (TPM) prediction
-        - loss function: mean squared error
-"""
 
 def perplexity(probabilities):
     N = len(probabilities)
@@ -828,6 +830,43 @@ def perplexity(probabilities):
     log_prob_sum = torch.sum(torch.log(probabilities + epsilon))
     perplexity = torch.exp(-log_prob_sum / N)
     return perplexity
+
+def Gaussian_fraction_within_95ci(mu, sigma, x):
+    # Compute the z-scores
+    z_scores = (x - mu) / sigma
+    # Check which are within ±1.96
+    within_95ci = np.abs(z_scores) <= 1.96
+    # Return the fraction of dimensions satisfying this
+    return np.mean(within_95ci)
+
+def NB_fraction_within_95ci(n, p, x):
+    """
+    Compute the fraction of observations x[i] that fall within the 95% CI
+    of the corresponding Negative Binomial distribution parameterized by n[i], p[i].
+
+    Parameters
+    ----------
+    n : numpy.ndarray
+        Array of shape (d,) representing the number of successes (r-parameter) for each NB distribution.
+    p : numpy.ndarray
+        Array of shape (d,) representing the success probability for each NB distribution.
+    x : numpy.ndarray
+        Array of shape (d,) representing observed values.
+
+    Returns
+    -------
+    float
+        The fraction of distributions for which x[i] falls within the 95% central CI.
+    """
+    # Compute the 2.5th and 97.5th quantiles for each distribution
+    lower_bounds = nbinom.ppf(0.025, n, p)
+    upper_bounds = nbinom.ppf(0.975, n, p)
+
+    # Check if x[i] is within the interval [lower_bound[i], upper_bound[i]]
+    within_95ci = (x >= lower_bounds) & (x <= upper_bounds)
+
+    # The fraction is just the mean of these boolean indicators
+    return np.mean(within_95ci)
 
 def latent_reproducibility(
     model_path, hyper_parameters_path, 
@@ -1746,10 +1785,9 @@ if __name__ == "__main__":
         for bios_name in list(candi.dataset.navigation.keys()):
             try:
                 print(bios_name)
-                X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-                metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
-
+                metrics = candi.evaluate(bios_name)
                 print("\n\n")
+
             except Exception as e:
                 print(f"Error processing {bios_name}: {e}")
                 continue
@@ -1766,10 +1804,9 @@ if __name__ == "__main__":
         for bios_name in list(candi.dataset.navigation.keys()):
             try:
                 print(bios_name)
-                X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-                metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
-
+                metrics = candi.evaluate(bios_name)
                 print("\n\n")
+
             except Exception as e:
                 print(f"Error processing {bios_name}: {e}")
                 continue
@@ -1782,7 +1819,6 @@ if __name__ == "__main__":
 
         # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
         # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
-        # eic = False
 
         # Load latent representations
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
@@ -1796,8 +1832,8 @@ if __name__ == "__main__":
             bios_name = sys.argv[2]
 
         try:
-            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-            metrics = candi.evaluate_leave_one_out(X, mX, mY, avX, Y, P, seq=seq, crop_edges=True, return_preds=False)
+            print(bios_name)
+            metrics = candi.evaluate(bios_name)
             print("\n\n")
             
         except Exception as e:
@@ -1807,7 +1843,6 @@ if __name__ == "__main__":
 
         # model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
         # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
-
 
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
@@ -1825,8 +1860,8 @@ if __name__ == "__main__":
             bios_name = sys.argv[2]
 
         try:
-            X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
-            metrics = candi.evaluate_leave_one_out_eic(X, mX, mY, avX, Y, P, avY, seq=seq, crop_edges=True, return_preds=False)
+            print(bios_name)
+            metrics = candi.evaluate(bios_name)
             print("\n\n")
             
         except Exception as e:
