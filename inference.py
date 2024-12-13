@@ -891,8 +891,8 @@ class CANDIPredictor:
             ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
             ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
 
-            pval_95ci =  0 #fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
-            count_95ci = 0 #fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
+            pval_95ci =  fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
+            count_95ci = fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
