@@ -749,13 +749,13 @@ class CANDIPredictor:
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # calibration curve
-            imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
-            ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
-            imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
-            ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
+            # imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
+            # ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
+            # imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
+            # ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
 
-            print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
-            print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
+            # print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
+            # print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
 
             # fig = plot_calibration_grid(
             #     [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
@@ -765,12 +765,12 @@ class CANDIPredictor:
             
             # fraction within 95% CI pval
             # start_time = time.time()
-            imp_pval_95ci = 0 #fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-            ups_pval_95ci = 0 #fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
+            imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
 
             # fraction within 95% CI count
-            imp_count_95ci = 0 #fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-            ups_count_95ci = 0 #fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
+            imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
             # end_time = time.time()
             # print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
             
