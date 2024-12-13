@@ -2004,3 +2004,5 @@ if __name__ == "__main__":
             exit()
         else:
             bios_name = sys.argv[2]
+
+        assay_importance(candi, bios_name)
