@@ -1646,22 +1646,34 @@ def assay_importance(candi, bios_name):
         - accessibility + top 6 histone mods
     """
 
-    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+    available_indices = torch.where(avX[0, :] == 1)[0]
+    expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+
+    print(list(candi.dataset.navigation[bios_name].keys()))
 
     # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
     results = {}
 
-    # Convert tensors to boolean masks and use them to filter expnames
-    avX_mask = avX[0].bool().numpy()
-    avY_mask = avY[0].bool().numpy()
-    available_inputs = [exp for i, exp in enumerate(expnames) if avX_mask[i]]
-    available_outputs = [exp for i, exp in enumerate(expnames) if avY_mask[i]]
+    # pred based on just one input assay
+    for ii, keep_only in enumerate(available_indices):
+        # Create mask where everything is masked except the current assay
+        imp_target = [idx for idx in available_indices if idx != keep_only]
+        print(expnames[keep_only], [expnames[i] for i in imp_target])
+        
+        # if crop_edges:
+        #     n, p, mu, var, _ = self.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+        # else:
+        #     n, p, mu, var, _ = self.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+        
+        # n_imp[:, keep_only] = n[:, keep_only]
+        # p_imp[:, keep_only] = p[:, keep_only]
+        # mu_imp[:, keep_only] = mu[:, keep_only]
+        # var_imp[:, keep_only] = var[:, keep_only]
+        # print(f"Completed feature {ii+1}/{len(available_indices)}")
 
-    print(available_inputs)
-    print(available_outputs)
+        
 
-    print(candi.dataset.navigation[bios_name].keys())
     return
 
 
