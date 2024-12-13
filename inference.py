@@ -743,10 +743,10 @@ class CANDIPredictor:
             # print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
 
             # assay distributions
-            # imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
-            # ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
-            # imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
-            # ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
+            imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
+            ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
+            imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
+            ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # calibration curve
             # imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
