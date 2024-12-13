@@ -1901,8 +1901,8 @@ if __name__ == "__main__":
                 continue
     
     elif sys.argv[1] == "eval_full_bios":
-        
-         model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
+    
+        model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
 
