@@ -695,12 +695,12 @@ class CANDIPredictor:
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # fraction within 95% CI pval
-            imp_pval_95ci = None#fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-            ups_pval_95ci = None#fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
+            imp_pval_95ci = 0#fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = 0#fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
 
             # fraction within 95% CI count
-            imp_count_95ci = None#fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-            ups_count_95ci = None#fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
+            imp_count_95ci = 0#fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = 0#fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
             
             # P-value (apply sinh transformation)
             imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
@@ -817,8 +817,8 @@ class CANDIPredictor:
             ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
             ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
 
-            pval_95ci =  None #fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
-            count_95ci = None #fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
+            pval_95ci =  0 #fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
+            count_95ci = 0 #fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
@@ -1797,7 +1797,10 @@ if __name__ == "__main__":
         for bios_name in list(candi.dataset.navigation.keys()):
             # try:
             print(bios_name)
+            start_time = time.time()
             metrics = candi.evaluate(bios_name)
+            end_time = time.time()
+            print(f"Evaluation took {end_time - start_time:.2f} seconds")
             print("\n\n")
 
             # except Exception as e:
