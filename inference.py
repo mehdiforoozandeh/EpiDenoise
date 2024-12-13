@@ -695,12 +695,12 @@ class CANDIPredictor:
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # fraction within 95% CI pval
-            imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-            ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
+            imp_pval_95ci = None#fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = None#fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
 
             # fraction within 95% CI count
-            imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-            ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
+            imp_count_95ci = None#fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = None#fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
             
             # P-value (apply sinh transformation)
             imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
@@ -817,8 +817,8 @@ class CANDIPredictor:
             ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
             ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
 
-            pval_95ci = fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
-            count_95ci = fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
+            pval_95ci =  None #fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
+            count_95ci = None #fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
