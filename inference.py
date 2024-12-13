@@ -26,7 +26,7 @@ def perplexity(probabilities):
     perplexity = torch.exp(-log_prob_sum / N)
     return perplexity
 
-def fraction_within_95ci(dist, x, c=0.95):
+def fraction_within_ci(dist, x, c=0.95):
     lower, upper = dist.interval(c)
     # Convert tensors to numpy arrays if needed
     if torch.is_tensor(lower):
@@ -40,8 +40,18 @@ def fraction_within_95ci(dist, x, c=0.95):
     x = np.asarray(x) + eps
     return np.mean((x >= lower) & (x <= upper))
 
-def confidence_calibration():
-    pass
+def confidence_calibration(dist, true, n_bins=20):
+    # Generate confidence levels from 0 to 1
+    confidence_levels = np.linspace(0, 1, n_bins)
+    
+    # Calculate empirical coverage for each confidence level
+    calibration = []
+    for c in confidence_levels:
+        empirical = fraction_within_ci(dist, true, c)
+        calibration.append([c, empirical])
+    
+    return calibration
+
 
 ################################################################################
 
@@ -660,35 +670,35 @@ class CANDIPredictor:
         # Calculate metrics for each feature
         metrics = {}
         for idx in available_indices:
+            # true 
             count_true = Y[:, idx].numpy()
             pval_true = P[:, idx].numpy()
+
+            # pred
+            imp_count = imp_count_mean[:, idx].numpy()
+            ups_count = ups_count_mean[:, idx].numpy()
 
             # perplexity
             imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
             imp_pp_count = perplexity(prob_imp_count[:, idx])
-
             ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
             ups_pp_count = perplexity(prob_ups_count[:, idx])
 
+            # assay distributions
             imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
             ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
             imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # fraction within 95% CI pval
-            imp_pval_95ci = fraction_within_95ci(imp_pval_dist_idx, pval_true, c=0.95)
-            ups_pval_95ci = fraction_within_95ci(ups_pval_dist_idx, pval_true, c=0.95)
-
-            imp_count_95ci = fraction_within_95ci(imp_count_dist_idx, count_true, c=0.95)
-            ups_count_95ci = fraction_within_95ci(ups_count_dist_idx, count_true, c=0.95)
+            imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
 
             # fraction within 95% CI count
-
-            # Count predictions
-            imp_count = imp_count_mean[:, idx].numpy()
-            ups_count = ups_count_mean[:, idx].numpy()
+            imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
             
-            # P-value predictions (apply arcsinh transformation)
+            # P-value (apply sinh transformation)
             imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
             ups_pval = np.sinh(ups_pval_mean[:, idx].numpy())
             pval_true = np.sinh(pval_true)
@@ -803,8 +813,8 @@ class CANDIPredictor:
             ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
             ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
 
-            pval_95ci = fraction_within_95ci(ups_pval_dist_j, pval_true, c=0.95)
-            count_95ci = fraction_within_95ci(ups_count_dist_j, count_true, c=0.95)
+            pval_95ci = fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
+            count_95ci = fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
 
             metrics[j] = {
                 'comparison': comparison,
