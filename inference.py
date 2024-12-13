@@ -28,7 +28,7 @@ def perplexity(probabilities):
 
 def fraction_within_ci(dist, x, c=0.95):
     lower, upper = dist.interval(c)
-    
+
     # Convert tensors to numpy arrays if needed
     if torch.is_tensor(lower):
         lower = lower.numpy()
@@ -1795,14 +1795,14 @@ if __name__ == "__main__":
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
         for bios_name in list(candi.dataset.navigation.keys()):
-            try:
-                print(bios_name)
-                metrics = candi.evaluate(bios_name)
-                print("\n\n")
+            # try:
+            print(bios_name)
+            metrics = candi.evaluate(bios_name)
+            print("\n\n")
 
-            except Exception as e:
-                print(f"Error processing {bios_name}: {e}")
-                continue
+            # except Exception as e:
+            #     print(f"Error processing {bios_name}: {e}")
+            #     continue
 
     elif sys.argv[1] == "eval_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
