@@ -1845,7 +1845,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
                 "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
                 "Pearson_count": pearson_count, "Spearman_count": spearman_count
             }
-        
+
+    print(results)
     return results  
 
 
