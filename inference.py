@@ -1650,7 +1650,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
     available_indices = torch.where(avX[0, :] == 1)[0]
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
 
-    print("available assays: ", list(candi.dataset.navigation[bios_name].keys()))
+    available_assays = list(candi.dataset.navigation[bios_name].keys())
+    print("available assays: ", available_assays)
 
     # Create distributions and get means
     Y = Y.view(-1, Y.shape[-1])
@@ -1701,13 +1702,17 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pearson_count = pearsonr(count_true, count_pred)[0]
             spearman_count = spearmanr(count_true, count_pred)[0]   
 
-            results[tuple(results[[expnames[keep_only]]])][expnames[jj]] = {
+            results[tuple([expnames[keep_only]])][expnames[jj]] = {
                 "PP_pval": pp_pval, "PP_count": pp_count,
                 "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
                 "Pearson_count": pearson_count, "Spearman_count": spearman_count
             }
 
-    print(results)
+    if "ATAC-seq" in available_assays and "DNase-seq" in available_assays:
+        print(results)
+
+    # if 
+
     return results
 
 
