@@ -1708,12 +1708,19 @@ def assay_importance(candi, bios_name, crop_edges=True):
                 "Pearson_count": pearson_count, "Spearman_count": spearman_count
             }
 
-    if "ATAC-seq" in available_assays and "DNase-seq" in available_assays:
-        print(results)
+    accessibility_assays = ["ATAC-seq", "DNase-seq"]
+    if all(assay in available_assays for assay in accessibility_assays):
+        print(available_assays)
 
-    # if 
+    # List of histone modifications we want to check
+    histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
 
-    return results
+    # Check if all required assays are in the available list
+    if all(assay in available_assays for assay in histone_mods):
+        print(available_assays)
+        
+
+    return results  
 
 
 
