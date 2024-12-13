@@ -1660,6 +1660,8 @@ def assay_importance(candi, bios_name):
 
     print(available_inputs)
     print(available_outputs)
+
+    print(candi.dataset.navigation[bios_name].keys())
     return
 
 
