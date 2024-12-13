@@ -1650,13 +1650,13 @@ def assay_importance(candi, bios_name):
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
     # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
-    results = {} 
-    print(avX.shape)
-    print(avY.shape)
+    results = {}
 
-    exit()
-    available_inputs = expnames[avX[0]==1]
-    available_outputs = expnames[avY[0]==1]
+    # Convert tensors to boolean masks and use them to filter expnames
+    avX_mask = avX[0].bool().numpy()
+    avY_mask = avY[0].bool().numpy()
+    available_inputs = [exp for i, exp in enumerate(expnames) if avX_mask[i]]
+    available_outputs = [exp for i, exp in enumerate(expnames) if avY_mask[i]]
 
     print(available_inputs)
     print(available_outputs)
