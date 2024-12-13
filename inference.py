@@ -1651,7 +1651,10 @@ def assay_importance(candi, bios_name):
 
     # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
     results = {} 
+    print(avX.shape)
+    print(avY.shape)
 
+    exit()
     available_inputs = expnames[avX[0]==1]
     available_outputs = expnames[avY[0]==1]
 
