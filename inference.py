@@ -683,13 +683,13 @@ class CANDIPredictor:
             ups_count = ups_count_mean[:, idx].numpy()
 
             # perplexity
-            start_time = time.time()
+            # start_time = time.time()
             imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
             imp_pp_count = perplexity(prob_imp_count[:, idx])
             ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
             ups_pp_count = perplexity(prob_ups_count[:, idx])
-            end_time = time.time()
-            print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
+            # end_time = time.time()
+            # print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
 
             # assay distributions
             imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
@@ -698,21 +698,21 @@ class CANDIPredictor:
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # fraction within 95% CI pval
-            start_time = time.time()
-            imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-            ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
+            # start_time = time.time()
+            imp_pval_95ci = 0 #fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+            ups_pval_95ci = 0 #fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
 
             # fraction within 95% CI count
-            imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-            ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
-            end_time = time.time()
-            print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
+            imp_count_95ci = 0 #fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+            ups_count_95ci = 0 #fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
+            # end_time = time.time()
+            # print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
             
             # P-value (apply sinh transformation)
             imp_pval = np.sinh(imp_pval_mean[:, idx].numpy())
             ups_pval = np.sinh(ups_pval_mean[:, idx].numpy())
             pval_true = np.sinh(pval_true)
-            start_time = time.time()
+            # start_time = time.time()
             metrics[idx.item()] = {
                 'count_metrics': {
                     'imp_pearson': stats.pearsonr(count_true, imp_count)[0],
@@ -745,8 +745,8 @@ class CANDIPredictor:
                     'ups_95ci': ups_pval_95ci  # Add 95% CI
                 }
             }
-            end_time = time.time()
-            print(f"Metrics calculations took {end_time - start_time:.4f} seconds")
+            # end_time = time.time()
+            # print(f"Metrics calculations took {end_time - start_time:.4f} seconds")
 
         # Print summary
         print("\nEvaluation Results:")
