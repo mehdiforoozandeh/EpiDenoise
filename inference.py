@@ -749,8 +749,8 @@ class CANDIPredictor:
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # calibration curve
-            # imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
-            # ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
+            imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
+            ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
             imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
             ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
 
