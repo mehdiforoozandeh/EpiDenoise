@@ -1634,7 +1634,7 @@ def train_chromatin_state_probe(
 
 ################################################################################
 
-def assay_importance(candi, bios_name):
+def assay_importance(candi, bios_name, crop_edges=True):
     """
     we want to evaluate predictability of different assays as a function of input assays
     we want to see which input assays are most important for predicting the which output assay
@@ -1650,7 +1650,11 @@ def assay_importance(candi, bios_name):
     available_indices = torch.where(avX[0, :] == 1)[0]
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
 
-    print(list(candi.dataset.navigation[bios_name].keys()))
+    print("available assays: ", list(candi.dataset.navigation[bios_name].keys()))
+
+    # Create distributions and get means
+    Y = Y.view(-1, Y.shape[-1])
+    P = P.view(-1, P.shape[-1])
 
     # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
     results = {}
@@ -1659,18 +1663,44 @@ def assay_importance(candi, bios_name):
     for ii, keep_only in enumerate(available_indices):
         # Create mask where everything is masked except the current assay
         imp_target = [idx for idx in available_indices if idx != keep_only]
-        print(expnames[keep_only], [expnames[i] for i in imp_target])
+        print(f"single input: {expnames[keep_only]}")
         
-        # if crop_edges:
-        #     n, p, mu, var, _ = self.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
-        # else:
-        #     n, p, mu, var, _ = self.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
-        
-        # n_imp[:, keep_only] = n[:, keep_only]
-        # p_imp[:, keep_only] = p[:, keep_only]
-        # mu_imp[:, keep_only] = mu[:, keep_only]
-        # var_imp[:, keep_only] = var[:, keep_only]
-        # print(f"Completed feature {ii+1}/{len(available_indices)}")
+        if crop_edges:
+            n, p, mu, var, _ = self.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+        else:
+            n, p, mu, var, _ = self.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+
+        pval_dist = Gaussian(mu, var)
+        count_dist = NegativeBinomial(p, n)
+
+        pval_mean = pval_dist.mean()
+        count_mean = count_dist.mean()
+
+        prob_pval = pval_dist.pdf(P)
+        prob_count = count_dist.pmf(Y)
+
+        for jj in imp_target:
+            print(f"assay: {expnames[jj]}")
+            # Calculate metrics for assay jj
+            count_true = Y[:, jj].numpy()
+            pval_true = P[:, jj].numpy()
+            
+            # Get predictions
+            count_pred = count_mean[:, jj].numpy()
+            pval_pred = pval_mean[:, jj].numpy()
+            
+            # Calculate perplexity
+            pp_pval = perplexity(prob_pval[:, jj])
+            pp_count = perplexity(prob_count[:, jj])
+            print(f"Perplexity for p-value: {pp_pval}, Perplexity for count: {pp_count}")
+            
+            # Calculate correlations
+            pearson_pval = pearsonr(pval_true, pval_pred)[0]
+            spearman_pval = spearmanr(pval_true, pval_pred)[0]
+            pearson_count = pearsonr(count_true, count_pred)[0]
+            spearman_count = spearmanr(count_true, count_pred)[0]
+            print(f"Pearson correlation for p-value: {pearson_pval}, Spearman correlation for p-value: {spearman_pval}")
+            print(f"Pearson correlation for count: {pearson_count}, Spearman correlation for count: {spearman_count}")
 
         
 
