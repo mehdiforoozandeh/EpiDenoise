@@ -1660,13 +1660,60 @@ def assay_importance(candi, bios_name, crop_edges=True):
     # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
     results = {}
 
-    # pred based on just one input assay
-    for ii, keep_only in enumerate(available_indices):
-        # Create mask where everything is masked except the current assay
-        imp_target = [idx for idx in available_indices if idx != keep_only]
-        print(f"single input: {expnames[keep_only]}")
+    # # pred based on just one input assay
+    # for ii, keep_only in enumerate(available_indices):
+    #     # Create mask where everything is masked except the current assay
+    #     imp_target = [idx for idx in available_indices if idx != keep_only]
+    #     print(f"single input: {expnames[keep_only]}")
 
-        results[tuple([expnames[keep_only]])] = {}
+    #     results[tuple([expnames[keep_only]])] = {}
+        
+    #     if crop_edges:
+    #         n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+    #     else:
+    #         n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+
+    #     pval_dist = Gaussian(mu, var)
+    #     count_dist = NegativeBinomial(p, n)
+
+    #     pval_mean = pval_dist.mean()
+    #     count_mean = count_dist.mean()
+
+    #     prob_pval = pval_dist.pdf(P)
+    #     prob_count = count_dist.pmf(Y)
+
+    #     for jj in imp_target:
+    #         # Calculate metrics for assay jj
+    #         count_true = Y[:, jj].numpy()
+    #         pval_true = P[:, jj].numpy()
+            
+    #         # Get predictions
+    #         count_pred = count_mean[:, jj].numpy()
+    #         pval_pred = pval_mean[:, jj].numpy()
+            
+    #         # Calculate perplexity
+    #         pp_pval = perplexity(prob_pval[:, jj]).item()
+    #         pp_count = perplexity(prob_count[:, jj]).item()
+
+    #         # Calculate correlations
+    #         pearson_pval = pearsonr(pval_true, pval_pred)[0]
+    #         spearman_pval = spearmanr(pval_true, pval_pred)[0]
+    #         pearson_count = pearsonr(count_true, count_pred)[0]
+    #         spearman_count = spearmanr(count_true, count_pred)[0]   
+
+    #         results[tuple([expnames[keep_only]])][expnames[jj]] = {
+    #             "PP_pval": pp_pval, "PP_count": pp_count,
+    #             "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
+    #             "Pearson_count": pearson_count, "Spearman_count": spearman_count
+    #         }
+
+    accessibility_assays = ["ATAC-seq", "DNase-seq"]
+    has_accessibility = all(assay in available_assays for assay in accessibility_assays)
+    if has_accessibility:
+        print(f"accessibility inputs: {accessibility_assays}")
+        # Create mask where everything is masked except the current assay
+        imp_target = [idx for idx in available_indices if expnames[idx] not in accessibility_assays]
+        results["accessibility"] = {}
         
         if crop_edges:
             n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
@@ -1692,38 +1739,72 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = pval_mean[:, jj].numpy()
             
             # Calculate perplexity
-            pp_pval = perplexity(prob_pval[:, jj])
-            pp_count = perplexity(prob_count[:, jj])
+            pp_pval = perplexity(prob_pval[:, jj]).item()
+            pp_count = perplexity(prob_count[:, jj]).item()
 
-            
             # Calculate correlations
             pearson_pval = pearsonr(pval_true, pval_pred)[0]
             spearman_pval = spearmanr(pval_true, pval_pred)[0]
             pearson_count = pearsonr(count_true, count_pred)[0]
             spearman_count = spearmanr(count_true, count_pred)[0]   
 
-            results[tuple([expnames[keep_only]])][expnames[jj]] = {
+            results["accessibility"][expnames[jj]] = {
                 "PP_pval": pp_pval, "PP_count": pp_count,
                 "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
                 "Pearson_count": pearson_count, "Spearman_count": spearman_count
             }
 
-    accessibility_assays = ["ATAC-seq", "DNase-seq"]
-    has_accessibility = all(assay in available_assays for assay in accessibility_assays)
-    if has_accessibility:
-        print(available_assays)
-
-    # List of histone modifications we want to check
     histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
-
     has_histone_mods = all(assay in available_assays for assay in histone_mods)
     if has_histone_mods:
-        print(available_assays)
+        print(f"6 histone mods inputs: {histone_mods}")
+        # Create mask where everything is masked except the current assay
+        imp_target = [idx for idx in available_indices if expnames[idx] not in histone_mods]
+        results["histone_mods"] = {}
+        
+        if crop_edges:
+            n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+        else:
+            n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+
+        pval_dist = Gaussian(mu, var)
+        count_dist = NegativeBinomial(p, n)
+
+        pval_mean = pval_dist.mean()
+        count_mean = count_dist.mean()
+
+        prob_pval = pval_dist.pdf(P)
+        prob_count = count_dist.pmf(Y)
+
+        for jj in imp_target:
+            # Calculate metrics for assay jj
+            count_true = Y[:, jj].numpy()
+            pval_true = P[:, jj].numpy()
+            
+            # Get predictions
+            count_pred = count_mean[:, jj].numpy()
+            pval_pred = pval_mean[:, jj].numpy()
+            
+            # Calculate perplexity
+            pp_pval = perplexity(prob_pval[:, jj]).item()
+            pp_count = perplexity(prob_count[:, jj]).item()
+
+            # Calculate correlations
+            pearson_pval = pearsonr(pval_true, pval_pred)[0]
+            spearman_pval = spearmanr(pval_true, pval_pred)[0]
+            pearson_count = pearsonr(count_true, count_pred)[0]
+            spearman_count = spearmanr(count_true, count_pred)[0]   
+
+            results["histone_mods"][expnames[jj]] = {
+                "PP_pval": pp_pval, "PP_count": pp_count,
+                "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
+                "Pearson_count": pearson_count, "Spearman_count": spearman_count
+            }
         
     print(results)
 
-    if has_accessibility and has_histone_mods:
-        print(results)
+    # if has_accessibility and has_histone_mods:
+    #     print(results)
         
     return results  
 
