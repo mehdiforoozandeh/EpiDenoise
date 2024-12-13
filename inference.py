@@ -1648,7 +1648,7 @@ def assay_importance(candi, bios_name):
 
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
     available_indices = torch.where(avX[0, :] == 1)[0]
-    expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
 
     print(list(candi.dataset.navigation[bios_name].keys()))
 
