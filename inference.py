@@ -17,8 +17,6 @@ from difflib import SequenceMatcher
 
 ################################################################################
 
-
-
 def perplexity(probabilities):
     N = len(probabilities)
     epsilon = 1e-6  # Small constant to prevent log(0)
@@ -1636,20 +1634,50 @@ def train_chromatin_state_probe(
 
 ################################################################################
 
+def assay_importance(candi, bios_name):
+    """
+    we want to evaluate predictability of different assays as a function of input assays
+    we want to see which input assays are most important for predicting the which output assay
+
+    different tested settings:
+        - just one input assay
+        - top 6 histone mods
+        - accessibility
+        - accessibility + top 6 histone mods
+    """
+
+    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+    X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+
+    # keys: list of inputs, values: metrics per output assay | metrics: PP, Pearson, Spearman
+    results = {} 
+
+    available_inputs = expnames[avX[0]==1]
+    available_outputs = expnames[avY[0]==1]
+
+    print(available_inputs)
+    print(available_outputs)
+    return
+
+
+
+def perplexity_v_pred_error():
+    pass
+
+################################################################################
+
 if __name__ == "__main__":
-    # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
-    # eic = True
-
-    # model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
-    # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
-    # eic = False
-    # bios_name = "GM23338_grp1_rep1"
-
     if sys.argv[1] == "cs_probe":
+        model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        eic = False
         train_chromatin_state_probe(model_path, hyper_parameters_path, dataset_path="/project/compbio-lab/encode_data/", eic=eic)
 
     elif sys.argv[1] == "latent_repr":
+        # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+        eic = True
+
         ct0_repr1 = "ENCBS706NOO"
         ct0_repr2 = "ENCBS314QQU"
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct0_repr2, dataset_path="/project/compbio-lab/encode_data/")
@@ -1696,6 +1724,10 @@ if __name__ == "__main__":
         latent_reproducibility(model_path, hyper_parameters_path, ct0_repr1, ct3_repr1, dataset_path="/project/compbio-lab/encode_data/")
 
     elif sys.argv[1] == "perplexity":
+        model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        eic = False
+
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=True)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
@@ -1956,3 +1988,19 @@ if __name__ == "__main__":
             
         except Exception as e:
             print(f"Error processing {bios_name}: {e}")
+
+    elif sys.argv[1] == "assay_importance":
+        model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
+        eic = False
+
+        # Load latent representations
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
+        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+        candi.chr = "chr21"
+
+        if sys.argv[2] == "show_test_bios":
+            print(candi.dataset.navigation.keys())
+            exit()
+        else:
+            bios_name = sys.argv[2]
