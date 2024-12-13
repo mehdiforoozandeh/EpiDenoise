@@ -56,6 +56,57 @@ def confidence_calibration(dist, true, n_bins=20):
     
     return calibration
 
+def plot_calibration_grid(calibrations, titles, figsize=(12, 12)):
+    """
+    Visualize 4 calibration curves in a 2x2 grid.
+    
+    Parameters:
+    - calibrations: list of 4 calibration outputs, where each calibration output
+                   is a list of [c, empirical] pairs
+    - titles: list of 4 strings for subplot titles
+    - figsize: tuple specifying figure size (width, height)
+    
+    Returns:
+    - fig: matplotlib figure object
+    """
+    
+    # Create figure and subplots
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    axes = axes.flatten()
+    
+    # Reference line points (perfect calibration)
+    ref_line = np.linspace(0, 1, 100)
+    
+    # Plot each calibration curve
+    for idx, (cal, title, ax) in enumerate(zip(calibrations, titles, axes)):
+        # Convert calibration data to numpy arrays for easier plotting
+        cal_array = np.array(cal)
+        c_values = cal_array[:, 0]
+        empirical_values = cal_array[:, 1]
+        
+        # Plot reference line (perfect calibration)
+        ax.plot(ref_line, ref_line, '--', color='orange', alpha=0.8, label='Perfect calibration')
+        
+        # Plot empirical calibration
+        ax.plot(c_values, empirical_values, '-', color='grey', linewidth=2, label='Empirical calibration')
+        
+        # Customize plot
+        ax.set_xlabel('Expected Confidence Level')
+        ax.set_ylabel('Empirical Coverage')
+        ax.set_title(title)
+        ax.grid(True, alpha=0.3)
+        ax.set_aspect('equal')
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        
+        # Add legend
+        if idx == 0:  # Only add legend to first subplot
+            ax.legend()
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    return fig
 
 ################################################################################
 
@@ -697,6 +748,17 @@ class CANDIPredictor:
             imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
             ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
+            # calibration curve
+            imp_pval_calibration = calibration_curve(pval_true, imp_pval)
+            ups_pval_calibration = calibration_curve(pval_true, ups_pval)
+            imp_count_calibration = calibration_curve(count_true, imp_count)
+            ups_count_calibration = calibration_curve(count_true, ups_count)
+
+            fig = plot_calibration_curve(
+                [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
+                ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
+            fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
+            plt.close(fig)
             # fraction within 95% CI pval
             # start_time = time.time()
             imp_pval_95ci = 0 #fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
