@@ -1868,18 +1868,18 @@ if __name__ == "__main__":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic)
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
-        for bios_name in list(candi.dataset.navigation.keys()):
-            # try:
-            print(bios_name)
-            start_time = time.time()
-            metrics = candi.evaluate(bios_name)
-            end_time = time.time()
-            print(f"Evaluation took {end_time - start_time:.2f} seconds")
-            print("\n\n")
+        for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
+            try:
+                print(bios_name)
+                start_time = time.time()
+                metrics = candi.evaluate(bios_name)
+                end_time = time.time()
+                print(f"Evaluation took {end_time - start_time:.2f} seconds")
+                print("\n\n")
 
-            # except Exception as e:
-            #     print(f"Error processing {bios_name}: {e}")
-            #     continue
+            except Exception as e:
+                print(f"Error processing {bios_name}: {e}")
+                continue
 
     elif sys.argv[1] == "eval_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
