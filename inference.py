@@ -91,8 +91,8 @@ def plot_calibration_grid(calibrations, titles, figsize=(12, 12)):
         ax.plot(c_values, empirical_values, '-', color='grey', linewidth=2, label='Empirical calibration')
         
         # Customize plot
-        ax.set_xlabel('Expected Confidence Level')
-        ax.set_ylabel('Empirical Coverage')
+        ax.set_xlabel('c')
+        ax.set_ylabel('Fraction within c% confidence interval')
         ax.set_title(title)
         ax.grid(True, alpha=0.3)
         ax.set_aspect('equal')
@@ -743,22 +743,26 @@ class CANDIPredictor:
             # print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
 
             # assay distributions
-            imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
-            ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
-            imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
-            ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
+            # imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
+            # ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
+            # imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
+            # ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
 
             # calibration curve
-            imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
-            ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
+            # imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
+            # ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
             imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
             ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
 
-            fig = plot_calibration_grid(
-                [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
-                ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
-            fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
-            plt.close(fig)
+            print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
+            print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
+
+            # fig = plot_calibration_grid(
+            #     [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
+            #     ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
+            # fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
+            # plt.close(fig)
+            
             # fraction within 95% CI pval
             # start_time = time.time()
             imp_pval_95ci = 0 #fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
