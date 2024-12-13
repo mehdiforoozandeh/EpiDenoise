@@ -754,7 +754,7 @@ class CANDIPredictor:
             imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
             ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
 
-            fig = plot_calibration_curve(
+            fig = plot_calibration_grid(
                 [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
                 ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
             fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
