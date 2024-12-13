@@ -1666,7 +1666,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
         imp_target = [idx for idx in available_indices if idx != keep_only]
         print(f"single input: {expnames[keep_only]}")
 
-        results[tuple(results[[expnames[keep_only]]])] = {}
+        results[tuple([expnames[keep_only]])] = {}
         
         if crop_edges:
             n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
