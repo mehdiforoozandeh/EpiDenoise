@@ -1664,6 +1664,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
         # Create mask where everything is masked except the current assay
         imp_target = [idx for idx in available_indices if idx != keep_only]
         print(f"single input: {expnames[keep_only]}")
+
+        results[tuple(results[[expnames[keep_only]]])] = {}
         
         if crop_edges:
             n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
@@ -1680,7 +1682,6 @@ def assay_importance(candi, bios_name, crop_edges=True):
         prob_count = count_dist.pmf(Y)
 
         for jj in imp_target:
-            print(f"assay: {expnames[jj]}")
             # Calculate metrics for assay jj
             count_true = Y[:, jj].numpy()
             pval_true = P[:, jj].numpy()
@@ -1692,19 +1693,22 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Calculate perplexity
             pp_pval = perplexity(prob_pval[:, jj])
             pp_count = perplexity(prob_count[:, jj])
-            print(f"Perplexity for p-value: {pp_pval}, Perplexity for count: {pp_count}")
+
             
             # Calculate correlations
             pearson_pval = pearsonr(pval_true, pval_pred)[0]
             spearman_pval = spearmanr(pval_true, pval_pred)[0]
             pearson_count = pearsonr(count_true, count_pred)[0]
-            spearman_count = spearmanr(count_true, count_pred)[0]
-            print(f"Pearson correlation for p-value: {pearson_pval}, Spearman correlation for p-value: {spearman_pval}")
-            print(f"Pearson correlation for count: {pearson_count}, Spearman correlation for count: {spearman_count}")
+            spearman_count = spearmanr(count_true, count_pred)[0]   
 
-        
+            results[tuple(results[[expnames[keep_only]]])][expnames[jj]] = {
+                "PP_pval": pp_pval, "PP_count": pp_count,
+                "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
+                "Pearson_count": pearson_count, "Spearman_count": spearman_count
+            }
 
-    return
+    print(results)
+    return results
 
 
 
