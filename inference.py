@@ -740,30 +740,30 @@ class CANDIPredictor:
                 }
             }
 
-            # Print summary
-            print("\nEvaluation Results:")
-            print("\nCount Metrics:")
-            print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        # Print summary
+        print("\nEvaluation Results:")
+        print("\nCount Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("-" * 75)
+        for idx in available_indices:
+            m = metrics[idx.item()]['count_metrics']
+            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
+            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
             print("-" * 75)
-            for idx in available_indices:
-                m = metrics[idx.item()]['count_metrics']
-                print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                    f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
-                print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                    f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
-                print("-" * 75)
 
-            print("\nP-value Metrics:")
-            print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("\nP-value Metrics:")
+        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("-" * 75)
+        for idx in available_indices:
+            m = metrics[idx.item()]['pval_metrics']
+            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
+                f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
+            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
+                f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
             print("-" * 75)
-            for idx in available_indices:
-                m = metrics[idx.item()]['pval_metrics']
-                print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                    f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
-                print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                    f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
-                print("-" * 75)
-            
+        
         return metrics
 
     def evaluate_leave_one_out_eic(self, X, mX, mY, avX, Y, P, avY, seq=None, crop_edges=True, return_preds=False):
