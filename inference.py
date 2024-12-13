@@ -1666,9 +1666,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
         print(f"single input: {expnames[keep_only]}")
         
         if crop_edges:
-            n, p, mu, var, _ = self.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+            n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=imp_target, seq=seq)
         else:
-            n, p, mu, var, _ = self.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
+            n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=imp_target, seq=seq)
 
         pval_dist = Gaussian(mu, var)
         count_dist = NegativeBinomial(p, n)
