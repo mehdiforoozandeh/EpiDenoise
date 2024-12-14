@@ -1846,7 +1846,6 @@ def assay_importance(candi, bios_name, crop_edges=True):
                 "Pearson_count": pearson_count, "Spearman_count": spearman_count
             }
 
-    print(results)
     return results  
 
 
@@ -2194,5 +2193,12 @@ if __name__ == "__main__":
             exit()
         else:
             bios_name = sys.argv[2]
+        
+        metrics = []
+        bios_names = list(candi.dataset.navigation.keys())[:5]
+        for bios_name in bios_names:
+            print(bios_name)
+            res = assay_importance(candi, bios_name)
+            metrics.append(res)
 
-        assay_importance(candi, bios_name)
+        print(pd.DataFrame(metrics))
