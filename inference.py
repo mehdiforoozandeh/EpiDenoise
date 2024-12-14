@@ -2188,9 +2188,11 @@ if __name__ == "__main__":
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
 
-        if sys.argv[2] == "show_test_bios":
-            print(candi.dataset.navigation.keys())
-            exit()
+        # if sys.argv[2] == "show_test_bios":
+        #     print(candi.dataset.navigation.keys())
+        #     exit()
+        # else:
+            # bios_name = sys.argv[2]
         
         metrics = []
         bios_names = list(candi.dataset.navigation.keys())[:5]
