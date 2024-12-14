@@ -2191,8 +2191,6 @@ if __name__ == "__main__":
         if sys.argv[2] == "show_test_bios":
             print(candi.dataset.navigation.keys())
             exit()
-        else:
-            bios_name = sys.argv[2]
         
         metrics = []
         bios_names = list(candi.dataset.navigation.keys())[:5]
