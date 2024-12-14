@@ -2194,11 +2194,28 @@ if __name__ == "__main__":
         # else:
             # bios_name = sys.argv[2]
         
-        metrics = []
+        metrics = {}
         bios_names = list(candi.dataset.navigation.keys())[:5]
         for bios_name in bios_names:
             print(bios_name)
-            res = assay_importance(candi, bios_name)
-            metrics.append(res)
+            metrics[bios_name] = assay_importance(candi, bios_name)
 
-        print(pd.DataFrame(metrics))
+
+        results = []
+        for bios_name in bios_names:
+            for input in metrics[bios_name]:
+                for output in metrics[bios_name][input]:
+                    results.append({
+                        "bios_name": bios_name,
+                        "input": input,
+                        "output": output,
+                        "PP_pval": metrics[bios_name][input][output]["PP_pval"],
+                        "PP_count": metrics[bios_name][input][output]["PP_count"],
+                        "Pearson_pval": metrics[bios_name][input][output]["Pearson_pval"],
+                        "Spearman_pval": metrics[bios_name][input][output]["Spearman_pval"],
+                        "Pearson_count": metrics[bios_name][input][output]["Pearson_count"],
+                        "Spearman_count": metrics[bios_name][input][output]["Spearman_count"]
+                    })
+
+        df = pd.DataFrame(results)
+        print(df)
