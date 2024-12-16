@@ -28,8 +28,16 @@ def viz_feature_importance(df, savedir="models/output/"):
         
         plt.figure(figsize=(12, 8))
         
+        # Determine the colorbar limits based on the metric
+        if "Pearson" in metric or "Spearman" in metric: 
+            vmin, vmax = -1, 1
+        elif "PP" in metric:
+            vmin, vmax = 0, np.ceil(mean_pivot.max().max())
+        else:
+            vmin, vmax = None, None
+        
         # Create heatmap using means for colors
-        sns.heatmap(mean_pivot, annot=False, cmap='bwr')
+        sns.heatmap(mean_pivot, annot=False, cmap='YIGnBu', vmin=vmin, vmax=vmax)
         
         # Add annotations with both mean and std
         for i in range(mean_pivot.shape[0]):
