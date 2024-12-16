@@ -2235,6 +2235,12 @@ if __name__ == "__main__":
             print(f"Error processing {bios_name}: {e}")
 
     elif sys.argv[1] == "assay_importance":
+        if os.path.exists("models/output/assay_importance.csv"):
+            print("Assay importance already computed")
+            df = pd.read_csv("models/output/assay_importance.csv")
+            print(df)
+            exit()
+            
         model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
