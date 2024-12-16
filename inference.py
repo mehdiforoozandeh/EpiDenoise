@@ -44,7 +44,10 @@ def viz_feature_importance(df, savedir="models/output/"):
         for i, row in enumerate(mean_pivot.index):
             for j, col in enumerate(mean_pivot.columns):
                 mean_val = mean_pivot.loc[row, col]
-                std_val = std_pivot.loc[row, col]
+                try:
+                    std_val = std_pivot.loc[row, col]
+                except:
+                    std_val = 0
                 if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
                     plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
                             ha='center', va='center',
@@ -2436,18 +2439,15 @@ if __name__ == "__main__":
         eic = False
 
         # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
+        candi = CANDIPredictor(
+            model_path, hyper_parameters_path, 
+            data_path="/project/compbio-lab/encode_data/", 
+            DNA=True, eic=eic, split="test")
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
-
-        # if sys.argv[2] == "show_test_bios":
-        #     print(candi.dataset.navigation.keys())
-        #     exit()
-        # else:
-            # bios_name = sys.argv[2]
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[-3:]
+        bios_names = list(candi.dataset.navigation.keys())#[-3:]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
