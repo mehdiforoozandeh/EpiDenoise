@@ -35,14 +35,14 @@ def viz_feature_importance(df, savedir="models/output/"):
         sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', norm=norm)
         
         # Add annotations with both mean and std
-        for i, row in enumerate(mean_pivot.index):
-            for j, col in enumerate(mean_pivot.columns):
-                mean_val = mean_pivot.loc[row, col]
-                std_val = std_pivot.loc[row, col]
-                if not np.isnan(mean_val):  # Check if the value exists
-                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-                            ha='center', va='center',
-                            color='white' if mean_val > mean_pivot.mean().mean() else 'black')
+        # for i, row in enumerate(mean_pivot.index):
+        #     for j, col in enumerate(mean_pivot.columns):
+        #         mean_val = mean_pivot.loc[row, col]
+        #         std_val = std_pivot.loc[row, col]
+        #         if not np.isnan(mean_val):  # Check if the value exists
+        #             plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+        #                     ha='center', va='center',
+        #                     color='white' if mean_val > mean_pivot.mean().mean() else 'black')
         
         plt.title(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
