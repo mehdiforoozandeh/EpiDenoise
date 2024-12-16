@@ -2256,8 +2256,8 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(results)
 
-        print(df)
-        exit()
+        # print(df)
+        # exit()
 
         # 1. Heatmap
         def plot_metric_heatmap(df, metric, title):
