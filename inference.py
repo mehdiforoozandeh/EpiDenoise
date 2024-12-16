@@ -2447,7 +2447,7 @@ if __name__ == "__main__":
             # bios_name = sys.argv[2]
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[2:4]
+        bios_names = list(candi.dataset.navigation.keys())[-3:]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
