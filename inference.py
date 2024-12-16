@@ -39,15 +39,15 @@ def viz_feature_importance(df, savedir="models/output/"):
         # Create heatmap using means for colors
         sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
         
-        # Add annotations with both mean and std
-        for i in range(mean_pivot.shape[0]):
-            for j in range(mean_pivot.shape[1]):
-                mean_val = mean_pivot.iloc[i, j]
-                std_val = std_pivot.iloc[i, j]
-                if not np.isnan(mean_val):  # Check if the value exists
-                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-                            ha='center', va='center',
-                            color='white' if mean_val > mean_pivot.mean().mean() else 'black')
+        # # Add annotations with both mean and std
+        # for i in range(mean_pivot.shape[0]):
+        #     for j in range(mean_pivot.shape[1]):
+        #         mean_val = mean_pivot.iloc[i, j]
+        #         std_val = std_pivot.iloc[i, j]
+        #         if not np.isnan(mean_val):  # Check if the value exists
+        #             plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+        #                     ha='center', va='center',
+        #                     color='white' if mean_val > mean_pivot.mean().mean() else 'black')
         
         plt.title(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
@@ -2239,8 +2239,9 @@ if __name__ == "__main__":
             print("Assay importance already computed")
             df = pd.read_csv("models/output/assay_importance.csv")
             print(df)
+            viz_feature_importance(df, savedir="models/output/")
             exit()
-            
+
         model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
@@ -2283,4 +2284,4 @@ if __name__ == "__main__":
 
         df.to_csv("models/output/assay_importance.csv", index=False)
 
-        viz_feature_importance(df, savedir="models/output/")
+        
