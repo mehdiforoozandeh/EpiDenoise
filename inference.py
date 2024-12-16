@@ -30,7 +30,7 @@ def viz_feature_importance(df, savedir="models/output/"):
         if "Pearson" in metric or "Spearman" in metric: 
             vmin, vmax = -1, 1
         elif "PP" in metric:
-            vmin, vmax = 0, np.ceil(mean_pivot.max().max())
+            vmin, vmax = 0, 5
         else:
             vmin, vmax = None, None
         
