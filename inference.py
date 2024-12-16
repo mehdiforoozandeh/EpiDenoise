@@ -20,7 +20,7 @@ from difflib import SequenceMatcher
 def viz_feature_importance(df, savedir="models/output/"):
     if not os.path.exists(savedir):
         os.makedirs(savedir)
-    
+
     def plot_metric_heatmap(df, metric, title):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
@@ -46,7 +46,7 @@ def viz_feature_importance(df, savedir="models/output/"):
         plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
         plt.close()
 
-    def plot_metric_correlations(df, savedir="models/output/"):
+    def plot_metric_correlations(df):
         metrics = [
             'PP_pval', 'PP_count', 'Pearson_pval', 
             'Pearson_count', 'Spearman_pval', 'Spearman_count']
@@ -61,9 +61,9 @@ def viz_feature_importance(df, savedir="models/output/"):
         ]
         
     for metric in metrics_to_plot:
-        plot_metric_heatmap(df, metric, 'Assay Prediction Performance', savedir)
+        plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
     
-    plot_metric_correlations(df, savedir)
+    plot_metric_correlations(df)
 
 ################################################################################
 
