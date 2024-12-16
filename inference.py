@@ -17,6 +17,8 @@ from difflib import SequenceMatcher
 
 ################################################################################
 
+################################################################################
+
 def perplexity(probabilities):
     N = len(probabilities)
     epsilon = 1e-6  # Small constant to prevent log(0)
@@ -1848,8 +1850,6 @@ def assay_importance(candi, bios_name, crop_edges=True):
 
     return results  
 
-
-
 def perplexity_v_pred_error():
     pass
 
@@ -2219,3 +2219,150 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(results)
         print(df)
+    
+    elif sys.argv[1] == "test":
+        import numpy as np
+        import pandas as pd
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        import plotly.express as px
+        import plotly.graph_objects as go
+
+        # Create dummy data
+        np.random.seed(42)
+
+        # Define parameters for dummy data
+        input_assays = ['H3K4me3', 'H3K27ac', 'ATAC-seq', 'DNase-seq', 'histone_mods', 'accessibility']
+        output_assays = ['H3K4me3', 'H3K27ac', 'H3K27me3', 'ATAC-seq', 'DNase-seq']
+        biosamples = ['ENCBS001', 'ENCBS002', 'ENCBS003', 'ENCBS004', 'ENCBS005']
+
+        # Generate dummy results
+        results = []
+        for bios in biosamples:
+            for inp in input_assays:
+                for out in output_assays:
+                    if inp != out:  # Avoid self-prediction
+                        results.append({
+                            'bios_name': bios,
+                            'input': inp,
+                            'output': out,
+                            'PP_pval': np.random.normal(10, 2),
+                            'PP_count': np.random.normal(8, 1.5),
+                            'Pearson_pval': np.random.uniform(0.6, 0.9),
+                            'Spearman_pval': np.random.uniform(0.6, 0.9),
+                            'Pearson_count': np.random.uniform(0.7, 0.95),
+                            'Spearman_count': np.random.uniform(0.7, 0.95)
+                        })
+
+        df = pd.DataFrame(results)
+
+        print(df)
+        exit()
+
+        # 1. Heatmap
+        def plot_metric_heatmap(df, metric, title):
+            pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
+            plt.figure(figsize=(12, 8))
+            sns.heatmap(pivot, annot=True, cmap='viridis', fmt='.2f')
+            plt.title(f'{title} - {metric}')
+            plt.tight_layout()
+            plt.savefig(f'heatmap_{metric}.png')
+            plt.close()
+
+        # 2. Grouped Bar Plot
+        def plot_input_comparison(df, metrics=['Pearson_count', 'Spearman_count']):
+            plt.figure(figsize=(15, 6))
+            
+            mean_perf = df.groupby('input')[metrics].mean()
+            x = np.arange(len(mean_perf.index))
+            width = 0.35
+            
+            for i, metric in enumerate(metrics):
+                plt.bar(x + i*width, mean_perf[metric], width, label=metric)
+            
+            plt.xlabel('Input Assay')
+            plt.ylabel('Correlation')
+            plt.title('Average Prediction Performance by Input Assay')
+            plt.xticks(x + width/2, mean_perf.index, rotation=45, ha='right')
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('input_comparison.png')
+            plt.close()
+
+        # 3. Box Plots
+        def plot_performance_distributions(df):
+            plt.figure(figsize=(15, 6))
+            
+            plt.subplot(1, 2, 1)
+            sns.boxplot(data=df, x='input', y='PP_pval')
+            plt.xticks(rotation=45, ha='right')
+            plt.title('P-value Perplexity Distribution')
+            
+            plt.subplot(1, 2, 2)
+            sns.boxplot(data=df, x='input', y='PP_count')
+            plt.xticks(rotation=45, ha='right')
+            plt.title('Count Perplexity Distribution')
+            
+            plt.tight_layout()
+            plt.savefig('performance_distributions.png')
+            plt.close()
+
+        # 4. Scatter Plot Matrix
+        def plot_metric_correlations(df):
+            metrics = ['PP_pval', 'PP_count', 'Pearson_pval', 'Pearson_count']
+            sns.pairplot(df[metrics], diag_kind='kde')
+            plt.savefig('metric_correlations.png')
+            plt.close()
+
+        # 5. Radar Chart
+        def plot_radar_chart(df):
+            metrics = ['PP_pval', 'PP_count', 'Pearson_count', 'Spearman_count']
+            mean_values = df.groupby('input')[metrics].mean()
+            
+            angles = np.linspace(0, 2*np.pi, len(metrics), endpoint=False)
+            
+            fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
+            
+            for input_type in mean_values.index:
+                values = mean_values.loc[input_type]
+                values = np.concatenate((values, [values[0]]))
+                angles_plot = np.concatenate((angles, [angles[0]]))
+                ax.plot(angles_plot, values, '-', label=input_type)
+                ax.fill(angles_plot, values, alpha=0.25)
+            
+            ax.set_xticks(angles)
+            ax.set_xticklabels(metrics)
+            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+            plt.title('Multi-metric Performance Comparison')
+            plt.tight_layout()
+            plt.savefig('radar_chart.png')
+            plt.close()
+
+        # 6. Interactive Dashboard
+        def create_interactive_dashboard(df):
+            # Create interactive heatmap
+            fig1 = px.imshow(
+                df.pivot_table(values='Pearson_count', index='input', columns='output'),
+                title='Prediction Performance Heatmap'
+            )
+            
+            # Create scatter plot
+            fig2 = px.scatter(
+                df, x='PP_count', y='Pearson_count',
+                color='input', hover_data=['output'],
+                title='Perplexity vs Correlation'
+            )
+            
+            # Save as HTML
+            fig1.write_html("interactive_heatmap.html")
+            fig2.write_html("interactive_scatter.html")
+
+        # Generate all visualizations
+        plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
+        plot_input_comparison(df)
+        plot_performance_distributions(df)
+        plot_metric_correlations(df)
+        plot_radar_chart(df)
+        create_interactive_dashboard(df)
+
+        print("All visualizations have been generated!")
