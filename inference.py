@@ -2268,4 +2268,6 @@ if __name__ == "__main__":
         df = pd.DataFrame(results)
         print(df)
 
+        df.to_csv("models/output/assay_importance.csv", index=False)
+
         viz_feature_importance(df, savedir="models/output/")
