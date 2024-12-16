@@ -25,9 +25,18 @@ def viz_feature_importance(df, savedir="models/output/"):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+
+        # Determine the colorbar limits based on the metric
+        if "Pearson" in metric or "Spearman" in metric: 
+            vmin, vmax = -1, 1
+        elif "PP" in metric:
+            vmin, vmax = 0, np.ceil(mean_pivot.max().max())
+        else:
+            vmin, vmax = None, None
         
         plt.figure(figsize=(12, 8))
-        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm')
+        # Create heatmap using means for colors
+        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
         
         # Add annotations with both mean and std
         for i, row in enumerate(mean_pivot.index):
