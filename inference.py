@@ -2271,55 +2271,22 @@ if __name__ == "__main__":
             plt.savefig('metric_correlations.png')
             plt.close()
         
-        def plot_input_output_correlations(df, metrics):
-            """
-            Create a grid of plots showing input-output relationships for different metrics.
-            
-            Args:
-                df: DataFrame containing the results
-                metrics: List of metrics to plot
-            """
-            n_metrics = len(metrics)
-            fig, axes = plt.subplots(n_metrics, 1, figsize=(15, 6*n_metrics))
-            if n_metrics == 1:
-                axes = [axes]
-            
-            for ax, metric in zip(axes, metrics):
-                # Create pivot table for this metric
-                pivot = df.pivot_table(
-                    values=metric, 
-                    index='input', 
-                    columns='output', 
-                    aggfunc='mean'
-                )
-                
-                # Create heatmap
-                sns.heatmap(
-                    pivot,
-                    annot=True,
-                    fmt='.2f',
-                    cmap='viridis',
-                    ax=ax,
-                    cbar_kws={'label': metric}
-                )
-                
-                ax.set_title(f'Input-Output Correlation - {metric}')
-                ax.set_xlabel('Output Assay')
-                ax.set_ylabel('Input Assay')
-
-            plt.tight_layout()
-            plt.savefig('input_output_correlations.png', dpi=300, bbox_inches='tight')
-            plt.close()
-
-
         # Generate all visualizations
         # Plot correlations for different metrics
         metrics_to_plot = ['Pearson_count', 'Pearson_pval', 'PP_count', 'PP_pval']
-        plot_input_output_correlations(df, metrics_to_plot)
+        for metric in metrics_to_plot:
+            plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
 
-        plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
+        # plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
+        # plot_metric_heatmap(df, 'Pearson_pval', 'Assay Prediction Performance')
+
+        # plot_metric_heatmap(df, 'Spearman_count', 'Assay Prediction Performance')
+        # plot_metric_heatmap(df, 'Spearman_pval', 'Assay Prediction Performance')
+
+
+
         # plot_input_comparison(df)
         # plot_performance_distributions(df)
-        plot_metric_correlations(df)
+        # plot_metric_correlations(df)
         # plot_radar_chart(df)
         # create_interactive_dashboard(df)
