@@ -18,6 +18,9 @@ from difflib import SequenceMatcher
 ################################################################################
 
 def viz_feature_importance(df, savedir="models/output/"):
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+    
     def plot_metric_heatmap(df, metric, title):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
@@ -2265,4 +2268,4 @@ if __name__ == "__main__":
         df = pd.DataFrame(results)
         print(df)
 
-        viz_feature_importance(df)
+        viz_feature_importance(df, savedir="models/output/")
