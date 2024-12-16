@@ -2259,10 +2259,10 @@ if __name__ == "__main__":
             mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
             std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
             
-            plt.figure(figsize=(15, 10))
+            plt.figure(figsize=(12, 8))
             
             # Create heatmap using means for colors
-            sns.heatmap(mean_pivot, annot=False, cmap='viridis')
+            sns.heatmap(mean_pivot, annot=False, cmap='YlOrRd')
             
             # Add annotations with both mean and std
             for i in range(mean_pivot.shape[0]):
@@ -2286,23 +2286,9 @@ if __name__ == "__main__":
             plt.show()
             # plt.savefig('metric_correlations.png')
             # plt.close()
-        
-        # Generate all visualizations
-        # Plot correlations for different metrics
+
         metrics_to_plot = ['Pearson_count', 'Pearson_pval', 'PP_count', 'PP_pval']
         for metric in metrics_to_plot:
             plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
-
-        # plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
-        # plot_metric_heatmap(df, 'Pearson_pval', 'Assay Prediction Performance')
-
-        # plot_metric_heatmap(df, 'Spearman_count', 'Assay Prediction Performance')
-        # plot_metric_heatmap(df, 'Spearman_pval', 'Assay Prediction Performance')
-
-
-
-        # plot_input_comparison(df)
-        # plot_performance_distributions(df)
-        # plot_metric_correlations(df)
-        # plot_radar_chart(df)
-        # create_interactive_dashboard(df)
+        
+        plot_metric_correlations(df)
