@@ -1776,18 +1776,18 @@ def assay_importance(candi, bios_name, crop_edges=True):
             prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
 
             ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson_1obs(pval_true, pval_pred)
-            one_obs_spearman_pval = metrics_class.spearman_1obs(pval_true, pval_pred)
+            one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
+            one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
 
-            one_obs_pearson_count = metrics_class.pearson_1obs(count_true, count_pred)
-            one_obs_spearman_count = metrics_class.spearman_1obs(count_true, count_pred)
+            one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
+            one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
 
             ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson_1imp(pval_true, pval_pred)
-            one_imp_spearman_pval = metrics_class.spearman_1imp(pval_true, pval_pred)
+            one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
+            one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
 
-            one_imp_pearson_count = metrics_class.pearson_1imp(count_true, count_pred)
-            one_imp_spearman_count = metrics_class.spearman_1imp(count_true, count_pred)
+            one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
+            one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
 
             ### peak overlap metrics
             peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
