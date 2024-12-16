@@ -2259,7 +2259,7 @@ if __name__ == "__main__":
         def plot_metric_heatmap(df, metric, title):
             pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
             print(pivot)
-            exit()
+            return
             plt.figure(figsize=(12, 8))
             sns.heatmap(pivot, annot=True, cmap='viridis', fmt='.2f')
             plt.title(f'{title} - {metric}')
