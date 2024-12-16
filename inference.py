@@ -27,9 +27,8 @@ def viz_feature_importance(df, savedir="models/output/"):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
-        
-        print(mean_pivot)
-        print(std_pivot)
+
+        print(df.columns)
         exit()
 
         # Determine the colorbar limits based on the metric
