@@ -17,6 +17,51 @@ from difflib import SequenceMatcher
 
 ################################################################################
 
+def viz_feature_importance(df, savedir="models/output/"):
+    def plot_metric_heatmap(df, metric, title):
+        # Calculate mean and standard deviation
+        mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
+        std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+        
+        plt.figure(figsize=(12, 8))
+        
+        # Create heatmap using means for colors
+        sns.heatmap(mean_pivot, annot=False, cmap='bwr')
+        
+        # Add annotations with both mean and std
+        for i in range(mean_pivot.shape[0]):
+            for j in range(mean_pivot.shape[1]):
+                mean_val = mean_pivot.iloc[i, j]
+                std_val = std_pivot.iloc[i, j]
+                if not np.isnan(mean_val):  # Check if the value exists
+                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                            ha='center', va='center',
+                            color='white' if mean_val > mean_pivot.mean().mean() else 'black')
+        
+        plt.title(f'{title} - {metric}\n(mean ± std)')
+        plt.tight_layout()
+        plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+    def plot_metric_correlations(df, savedir="models/output/"):
+        metrics = [
+            'PP_pval', 'PP_count', 'Pearson_pval', 
+            'Pearson_count', 'Spearman_pval', 'Spearman_count']
+        sns.pairplot(df[metrics], diag_kind='kde')
+        plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+    metrics_to_plot = [
+        'Pearson_count', 'Pearson_pval', 
+        'PP_count', 'PP_pval', 
+        'Spearman_count', 'Spearman_pval'
+        ]
+        
+    for metric in metrics_to_plot:
+        plot_metric_heatmap(df, metric, 'Assay Prediction Performance', savedir)
+    
+    plot_metric_correlations(df, savedir)
+
 ################################################################################
 
 def perplexity(probabilities):
@@ -2195,7 +2240,7 @@ if __name__ == "__main__":
             # bios_name = sys.argv[2]
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[:5]
+        bios_names = list(candi.dataset.navigation.keys())[:3]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
@@ -2219,76 +2264,5 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(results)
         print(df)
-    
-    elif sys.argv[1] == "test":
-        import numpy as np
-        import pandas as pd
-        import seaborn as sns
-        import matplotlib.pyplot as plt
 
-        # Create dummy data
-        np.random.seed(42)
-
-        # Define parameters for dummy data
-        input_assays = ['H3K4me3', 'H3K27ac', 'ATAC-seq', 'DNase-seq', 'histone_mods', 'accessibility']
-        output_assays = ['H3K4me3', 'H3K27ac', 'H3K27me3', 'ATAC-seq', 'DNase-seq']
-        biosamples = ['ENCBS001', 'ENCBS002', 'ENCBS003', 'ENCBS004', 'ENCBS005']
-
-        # Generate dummy results
-        results = []
-        for bios in biosamples:
-            for inp in input_assays:
-                for out in output_assays:
-                    if inp != out:  # Avoid self-prediction
-                        results.append({
-                            'bios_name': bios,
-                            'input': inp,
-                            'output': out,
-                            'PP_pval': np.random.normal(10, 2),
-                            'PP_count': np.random.normal(8, 1.5),
-                            'Pearson_pval': np.random.uniform(0.6, 0.9),
-                            'Spearman_pval': np.random.uniform(0.6, 0.9),
-                            'Pearson_count': np.random.uniform(0.7, 0.95),
-                            'Spearman_count': np.random.uniform(0.7, 0.95)
-                        })
-
-        df = pd.DataFrame(results)
-
-        def plot_metric_heatmap(df, metric, title):
-            # Calculate mean and standard deviation
-            mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
-            std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
-            
-            plt.figure(figsize=(12, 8))
-            
-            # Create heatmap using means for colors
-            sns.heatmap(mean_pivot, annot=False, cmap='bwr')
-            
-            # Add annotations with both mean and std
-            for i in range(mean_pivot.shape[0]):
-                for j in range(mean_pivot.shape[1]):
-                    mean_val = mean_pivot.iloc[i, j]
-                    std_val = std_pivot.iloc[i, j]
-                    if not np.isnan(mean_val):  # Check if the value exists
-                        plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-                                ha='center', va='center',
-                                color='white' if mean_val > mean_pivot.mean().mean() else 'black')
-            
-            plt.title(f'{title} - {metric}\n(mean ± std)')
-            plt.tight_layout()
-            plt.show()
-            # plt.savefig(f'heatmap_{metric}.png')
-            # plt.close()
-
-        def plot_metric_correlations(df):
-            metrics = ['PP_pval', 'PP_count', 'Pearson_pval', 'Pearson_count']
-            sns.pairplot(df[metrics], diag_kind='kde')
-            plt.show()
-            # plt.savefig('metric_correlations.png')
-            # plt.close()
-
-        metrics_to_plot = ['Pearson_count', 'Pearson_pval', 'PP_count', 'PP_pval']
-        for metric in metrics_to_plot:
-            plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
-        
-        plot_metric_correlations(df)
+        viz_feature_importance(df)
