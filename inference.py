@@ -2262,7 +2262,7 @@ if __name__ == "__main__":
             plt.figure(figsize=(12, 8))
             
             # Create heatmap using means for colors
-            sns.heatmap(mean_pivot, annot=False, cmap='PRGn')
+            sns.heatmap(mean_pivot, annot=False, cmap='bwr')
             
             # Add annotations with both mean and std
             for i in range(mean_pivot.shape[0]):
