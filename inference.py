@@ -2256,7 +2256,6 @@ if __name__ == "__main__":
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
 
-
         results = []
         for bios_name in bios_names:
             for input in metrics[bios_name]:
