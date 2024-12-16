@@ -2257,12 +2257,26 @@ if __name__ == "__main__":
         df = pd.DataFrame(results)
 
         def plot_metric_heatmap(df, metric, title):
-            pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
-            print(pivot)
-            return
-            plt.figure(figsize=(12, 8))
-            sns.heatmap(pivot, annot=True, cmap='viridis', fmt='.2f')
-            plt.title(f'{title} - {metric}')
+            # Calculate mean and standard deviation
+            mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
+            std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+            
+            plt.figure(figsize=(15, 10))
+            
+            # Create heatmap using means for colors
+            sns.heatmap(mean_pivot, annot=False, cmap='viridis')
+            
+            # Add annotations with both mean and std
+            for i in range(mean_pivot.shape[0]):
+                for j in range(mean_pivot.shape[1]):
+                    mean_val = mean_pivot.iloc[i, j]
+                    std_val = std_pivot.iloc[i, j]
+                    if not np.isnan(mean_val):  # Check if the value exists
+                        plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                                ha='center', va='center',
+                                color='white' if mean_val > mean_pivot.mean().mean() else 'black')
+            
+            plt.title(f'{title} - {metric}\n(mean ± std)')
             plt.tight_layout()
             plt.savefig(f'heatmap_{metric}.png')
             plt.close()
