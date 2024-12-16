@@ -1755,43 +1755,43 @@ def assay_importance(candi, bios_name, crop_edges=True):
             gw_pp_count = perplexity(prob_count[:, jj]).item()
 
             ### global metrics
-            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)[0]
-            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)[0]
+            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
+            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
 
-            gw_pearson_count = metrics_class.pearson(count_true, count_pred)[0]
-            gw_spearman_count = metrics_class.spearman(count_true, count_pred)[0]   
+            gw_pearson_count = metrics_class.pearson(count_true, count_pred)
+            gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
 
             ### gene metrics
-            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)[0]
-            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)[0]
+            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
+            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
 
-            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)[0]
-            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)[0]
+            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
+            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
 
             ### promoter metrics
-            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)[0]
-            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)[0]
+            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
+            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
 
-            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)[0]
-            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)[0]
+            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
+            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
 
             ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson_1obs(pval_true, pval_pred)[0]
-            one_obs_spearman_pval = metrics_class.spearman_1obs(pval_true, pval_pred)[0]
+            one_obs_pearson_pval = metrics_class.pearson_1obs(pval_true, pval_pred)
+            one_obs_spearman_pval = metrics_class.spearman_1obs(pval_true, pval_pred)
 
-            one_obs_pearson_count = metrics_class.pearson_1obs(count_true, count_pred)[0]
-            one_obs_spearman_count = metrics_class.spearman_1obs(count_true, count_pred)[0]
+            one_obs_pearson_count = metrics_class.pearson_1obs(count_true, count_pred)
+            one_obs_spearman_count = metrics_class.spearman_1obs(count_true, count_pred)
 
             ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson_1imp(pval_true, pval_pred)[0]
-            one_imp_spearman_pval = metrics_class.spearman_1imp(pval_true, pval_pred)[0]
+            one_imp_pearson_pval = metrics_class.pearson_1imp(pval_true, pval_pred)
+            one_imp_spearman_pval = metrics_class.spearman_1imp(pval_true, pval_pred)
 
-            one_imp_pearson_count = metrics_class.pearson_1imp(count_true, count_pred)[0]
-            one_imp_spearman_count = metrics_class.spearman_1imp(count_true, count_pred)[0]
+            one_imp_pearson_count = metrics_class.pearson_1imp(count_true, count_pred)
+            one_imp_spearman_count = metrics_class.spearman_1imp(count_true, count_pred)
 
             ### peak overlap metrics
-            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)[0]
-            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)[0]
+            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
+            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
 
             results[expnames[keep_only]][expnames[jj]] = {
                 "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
