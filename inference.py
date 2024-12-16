@@ -27,15 +27,7 @@ def viz_feature_importance(df, savedir="models/output/"):
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
         
         plt.figure(figsize=(12, 8))
-        
-        # Normalize colorbar for each column
-        norm = plt.Normalize(vmin=mean_pivot.min().min(), vmax=mean_pivot.max().max())
-        
-        # Create heatmap using means for colors with normalized colorbar
-        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', norm=norm)
-        print(mean_pivot)
-        print(std_pivot)
-        exit()
+        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm')
         
         # Add annotations with both mean and std
         for i, row in enumerate(mean_pivot.index):
@@ -2256,7 +2248,7 @@ if __name__ == "__main__":
             # bios_name = sys.argv[2]
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[4:5]
+        bios_names = list(candi.dataset.navigation.keys())[3:6]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
