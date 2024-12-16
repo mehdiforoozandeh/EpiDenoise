@@ -28,26 +28,21 @@ def viz_feature_importance(df, savedir="models/output/"):
         
         plt.figure(figsize=(12, 8))
         
-        # Determine the colorbar limits based on the metric
-        if "Pearson" in metric or "Spearman" in metric: 
-            vmin, vmax = -1, 1
-        elif "PP" in metric:
-            vmin, vmax = 0, np.ceil(mean_pivot.max().max())
-        else:
-            vmin, vmax = None, None
+        # Normalize colorbar for each column
+        norm = plt.Normalize(vmin=mean_pivot.min().min(), vmax=mean_pivot.max().max())
         
-        # Create heatmap using means for colors
-        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
+        # Create heatmap using means for colors with normalized colorbar
+        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', norm=norm)
         
-        # # Add annotations with both mean and std
-        # for i in range(mean_pivot.shape[0]):
-        #     for j in range(mean_pivot.shape[1]):
-        #         mean_val = mean_pivot.iloc[i, j]
-        #         std_val = std_pivot.iloc[i, j]
-        #         if not np.isnan(mean_val):  # Check if the value exists
-        #             plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-        #                     ha='center', va='center',
-        #                     color='white' if mean_val > mean_pivot.mean().mean() else 'black')
+        # Add annotations with both mean and std
+        for i, row in enumerate(mean_pivot.index):
+            for j, col in enumerate(mean_pivot.columns):
+                mean_val = mean_pivot.loc[row, col]
+                std_val = std_pivot.loc[row, col]
+                if not np.isnan(mean_val):  # Check if the value exists
+                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                            ha='center', va='center',
+                            color='white' if mean_val > mean_pivot.mean().mean() else 'black')
         
         plt.title(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
