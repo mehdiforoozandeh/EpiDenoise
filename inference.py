@@ -32,8 +32,8 @@ def viz_feature_importance(df, savedir="models/output/"):
         # Add annotations with both mean and std
         for i, row in enumerate(mean_pivot.index):
             for j, col in enumerate(mean_pivot.columns):
-                mean_val = mean_pivot.loc[i, j]
-                std_val = std_pivot.loc[i, j]
+                mean_val = mean_pivot.loc[row, col]
+                std_val = std_pivot.loc[row, col]
                 if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
                     plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
                             ha='center', va='center',
