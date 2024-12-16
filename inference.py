@@ -29,9 +29,9 @@ def viz_feature_importance(df, savedir="models/output/"):
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
 
         # Determine the colorbar limits based on the metric
-        if "Pearson" in metric or "Spearman" in metric: 
+        if "pearson" in metric.lower() or "spearman" in metric.lower(): 
             vmin, vmax = -1, 1
-        elif "PP" in metric:
+        elif "pp" in metric.lower():
             vmin, vmax = 0, 5
         else:
             vmin, vmax = None, None
