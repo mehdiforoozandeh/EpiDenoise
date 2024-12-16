@@ -34,6 +34,7 @@ def viz_feature_importance(df, savedir="models/output/"):
         # Create heatmap using means for colors with normalized colorbar
         sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', norm=norm)
         print(mean_pivot)
+        print(std_pivot)
         exit()
         
         # Add annotations with both mean and std
