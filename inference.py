@@ -2225,8 +2225,6 @@ if __name__ == "__main__":
         import pandas as pd
         import seaborn as sns
         import matplotlib.pyplot as plt
-        import plotly.express as px
-        import plotly.graph_objects as go
 
         # Create dummy data
         np.random.seed(42)
@@ -2278,14 +2276,16 @@ if __name__ == "__main__":
             
             plt.title(f'{title} - {metric}\n(mean ± std)')
             plt.tight_layout()
-            plt.savefig(f'heatmap_{metric}.png')
-            plt.close()
+            plt.show()
+            # plt.savefig(f'heatmap_{metric}.png')
+            # plt.close()
 
         def plot_metric_correlations(df):
             metrics = ['PP_pval', 'PP_count', 'Pearson_pval', 'Pearson_count']
             sns.pairplot(df[metrics], diag_kind='kde')
-            plt.savefig('metric_correlations.png')
-            plt.close()
+            plt.show()
+            # plt.savefig('metric_correlations.png')
+            # plt.close()
         
         # Generate all visualizations
         # Plot correlations for different metrics
