@@ -2256,10 +2256,6 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(results)
 
-        # print(df)
-        # exit()
-
-        # 1. Heatmap
         def plot_metric_heatmap(df, metric, title):
             pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
             plt.figure(figsize=(12, 8))
@@ -2269,100 +2265,61 @@ if __name__ == "__main__":
             plt.savefig(f'heatmap_{metric}.png')
             plt.close()
 
-        # 2. Grouped Bar Plot
-        def plot_input_comparison(df, metrics=['Pearson_count', 'Spearman_count']):
-            plt.figure(figsize=(15, 6))
-            
-            mean_perf = df.groupby('input')[metrics].mean()
-            x = np.arange(len(mean_perf.index))
-            width = 0.35
-            
-            for i, metric in enumerate(metrics):
-                plt.bar(x + i*width, mean_perf[metric], width, label=metric)
-            
-            plt.xlabel('Input Assay')
-            plt.ylabel('Correlation')
-            plt.title('Average Prediction Performance by Input Assay')
-            plt.xticks(x + width/2, mean_perf.index, rotation=45, ha='right')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('input_comparison.png')
-            plt.close()
-
-        # 3. Box Plots
-        def plot_performance_distributions(df):
-            plt.figure(figsize=(15, 6))
-            
-            plt.subplot(1, 2, 1)
-            sns.boxplot(data=df, x='input', y='PP_pval')
-            plt.xticks(rotation=45, ha='right')
-            plt.title('P-value Perplexity Distribution')
-            
-            plt.subplot(1, 2, 2)
-            sns.boxplot(data=df, x='input', y='PP_count')
-            plt.xticks(rotation=45, ha='right')
-            plt.title('Count Perplexity Distribution')
-            
-            plt.tight_layout()
-            plt.savefig('performance_distributions.png')
-            plt.close()
-
-        # 4. Scatter Plot Matrix
         def plot_metric_correlations(df):
             metrics = ['PP_pval', 'PP_count', 'Pearson_pval', 'Pearson_count']
             sns.pairplot(df[metrics], diag_kind='kde')
             plt.savefig('metric_correlations.png')
             plt.close()
+        
+        def plot_input_output_correlations(df, metrics):
+            """
+            Create a grid of plots showing input-output relationships for different metrics.
+            
+            Args:
+                df: DataFrame containing the results
+                metrics: List of metrics to plot
+            """
+            n_metrics = len(metrics)
+            fig, axes = plt.subplots(n_metrics, 1, figsize=(15, 6*n_metrics))
+            if n_metrics == 1:
+                axes = [axes]
+            
+            for ax, metric in zip(axes, metrics):
+                # Create pivot table for this metric
+                pivot = df.pivot_table(
+                    values=metric, 
+                    index='input', 
+                    columns='output', 
+                    aggfunc='mean'
+                )
+                
+                # Create heatmap
+                sns.heatmap(
+                    pivot,
+                    annot=True,
+                    fmt='.2f',
+                    cmap='viridis',
+                    ax=ax,
+                    cbar_kws={'label': metric}
+                )
+                
+                ax.set_title(f'Input-Output Correlation - {metric}')
+                ax.set_xlabel('Output Assay')
+                ax.set_ylabel('Input Assay')
 
-        # 5. Radar Chart
-        def plot_radar_chart(df):
-            metrics = ['PP_pval', 'PP_count', 'Pearson_count', 'Spearman_count']
-            mean_values = df.groupby('input')[metrics].mean()
-            
-            angles = np.linspace(0, 2*np.pi, len(metrics), endpoint=False)
-            
-            fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
-            
-            for input_type in mean_values.index:
-                values = mean_values.loc[input_type]
-                values = np.concatenate((values, [values[0]]))
-                angles_plot = np.concatenate((angles, [angles[0]]))
-                ax.plot(angles_plot, values, '-', label=input_type)
-                ax.fill(angles_plot, values, alpha=0.25)
-            
-            ax.set_xticks(angles)
-            ax.set_xticklabels(metrics)
-            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
-            plt.title('Multi-metric Performance Comparison')
             plt.tight_layout()
-            plt.savefig('radar_chart.png')
+            plt.savefig('input_output_correlations.png', dpi=300, bbox_inches='tight')
             plt.close()
 
-        # 6. Interactive Dashboard
-        def create_interactive_dashboard(df):
-            # Create interactive heatmap
-            fig1 = px.imshow(
-                df.pivot_table(values='Pearson_count', index='input', columns='output'),
-                title='Prediction Performance Heatmap'
-            )
-            
-            # Create scatter plot
-            fig2 = px.scatter(
-                df, x='PP_count', y='Pearson_count',
-                color='input', hover_data=['output'],
-                title='Perplexity vs Correlation'
-            )
-            
-            # Save as HTML
-            fig1.write_html("interactive_heatmap.html")
-            fig2.write_html("interactive_scatter.html")
 
         # Generate all visualizations
-        plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
-        plot_input_comparison(df)
-        plot_performance_distributions(df)
-        plot_metric_correlations(df)
-        plot_radar_chart(df)
-        create_interactive_dashboard(df)
+        # Plot correlations for different metrics
+        metrics_to_plot = ['Pearson_count', 'Pearson_pval', 'PP_count', 'PP_pval']
+        plot_input_output_correlations(df, metrics_to_plot)
 
-        print("All visualizations have been generated!")
+        plot_metric_heatmap(df, 'Pearson_count', 'Assay Prediction Performance')
+        # plot_input_comparison(df)
+        # plot_performance_distributions(df)
+        plot_metric_correlations(df)
+        # plot_radar_chart(df)
+        # create_interactive_dashboard(df)
