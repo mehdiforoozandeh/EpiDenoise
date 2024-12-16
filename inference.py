@@ -16,6 +16,8 @@ import umap, scipy
 from difflib import SequenceMatcher
 
 ################################################################################
+metrics = METRICS()
+################################################################################
 
 def viz_feature_importance(df, savedir="models/output/"):
     if not os.path.exists(savedir):
@@ -1749,19 +1751,61 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = pval_mean[:, jj].numpy()
             
             # Calculate perplexity
-            pp_pval = perplexity(prob_pval[:, jj]).item()
-            pp_count = perplexity(prob_count[:, jj]).item()
+            gw_pp_pval = perplexity(prob_pval[:, jj]).item()
+            gw_pp_count = perplexity(prob_count[:, jj]).item()
 
-            # Calculate correlations
-            pearson_pval = pearsonr(pval_true, pval_pred)[0]
-            spearman_pval = spearmanr(pval_true, pval_pred)[0]
-            pearson_count = pearsonr(count_true, count_pred)[0]
-            spearman_count = spearmanr(count_true, count_pred)[0]   
+            ### global metrics
+            gw_pearson_pval = metrics.pearson(pval_true, pval_pred)[0]
+            gw_spearman_pval = metrics.spearman(pval_true, pval_pred)[0]
+
+            gw_pearson_count = metrics.pearson(count_true, count_pred)[0]
+            gw_spearman_count = metrics.spearman(count_true, count_pred)[0]   
+
+            ### gene metrics
+            gene_pearson_pval = metrics.pearson_gene(pval_true, pval_pred)[0]
+            gene_spearman_pval = metrics.spearman_gene(pval_true, pval_pred)[0]
+
+            gene_pearson_count = metrics.pearson_gene(count_true, count_pred)[0]
+            gene_spearman_count = metrics.spearman_gene(count_true, count_pred)[0]
+
+            ### promoter metrics
+            prom_pearson_pval = metrics.pearson_prom(pval_true, pval_pred)[0]
+            prom_spearman_pval = metrics.spearman_prom(pval_true, pval_pred)[0]
+
+            prom_pearson_count = metrics.pearson_prom(count_true, count_pred)[0]
+            prom_spearman_count = metrics.spearman_prom(count_true, count_pred)[0]
+
+            ### one observation metrics
+            one_obs_pearson_pval = metrics.pearson_1obs(pval_true, pval_pred)[0]
+            one_obs_spearman_pval = metrics.spearman_1obs(pval_true, pval_pred)[0]
+
+            one_obs_pearson_count = metrics.pearson_1obs(count_true, count_pred)[0]
+            one_obs_spearman_count = metrics.spearman_1obs(count_true, count_pred)[0]
+
+            ### one imputation metrics
+            one_imp_pearson_pval = metrics.pearson_1imp(pval_true, pval_pred)[0]
+            one_imp_spearman_pval = metrics.spearman_1imp(pval_true, pval_pred)[0]
+
+            one_imp_pearson_count = metrics.pearson_1imp(count_true, count_pred)[0]
+            one_imp_spearman_count = metrics.spearman_1imp(count_true, count_pred)[0]
+
+            ### peak overlap metrics
+            peak_overlap_pval = metrics.peak_overlap(pval_true, pval_pred)[0]
+            peak_overlap_count = metrics.peak_overlap(count_true, count_pred)[0]
 
             results[expnames[keep_only]][expnames[jj]] = {
-                "PP_pval": pp_pval, "PP_count": pp_count,
-                "Pearson_pval": pearson_pval, "Spearman_pval": spearman_pval,
-                "Pearson_count": pearson_count, "Spearman_count": spearman_count
+                "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
+                "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
+                "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
+                "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
+                "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
+                "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
+                "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
+                "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
+                "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
+                "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
+                "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
+                "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count
             }
 
     accessibility_assays = ["ATAC-seq", "DNase-seq"]
