@@ -57,8 +57,19 @@ def viz_feature_importance(df, savedir="models/output/"):
 
     def plot_metric_correlations(df):
         metrics = [
-            'PP_pval', 'PP_count', 'Pearson_pval', 
-            'Pearson_count', 'Spearman_pval', 'Spearman_count']
+            'gw_pearson_count', 'gw_pearson_pval', 
+            'gw_pp_count', 'gw_pp_pval', 
+            'gw_spearman_count', 'gw_spearman_pval',
+            'gene_pearson_count', 'gene_pearson_pval', 
+            'gene_spearman_count', 'gene_spearman_pval',
+            'prom_pearson_count', 'prom_pearson_pval', 
+            'prom_spearman_count', 'prom_spearman_pval',
+            'one_obs_pearson_count', 'one_obs_pearson_pval',  
+            'one_obs_spearman_count', 'one_obs_spearman_pval',
+            'one_imp_pearson_count', 'one_imp_pearson_pval', 
+            'one_imp_spearman_count', 'one_imp_spearman_pval',
+            'peak_overlap_count', 'peak_overlap_pval'
+            ]
         sns.pairplot(df[metrics], diag_kind='kde')
         plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
         plt.close()
