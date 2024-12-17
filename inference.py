@@ -195,11 +195,11 @@ def get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_p
     gw_pp_pval = perplexity(prob_pval).item()
     gw_pp_count = perplexity(prob_count).item()
 
-    prom_pp_pval =  perplexity(metrics_class.get_prom_signals(prob_pval)).item()
-    prom_pp_count = perplexity(metrics_class.get_prom_signals(prob_count)).item()
+    prom_pp_pval =  perplexity(metrics_class.get_signals(prob_pval, df=metrics_class.prom_df)).item()
+    prom_pp_count = perplexity(metrics_class.get_signals(prob_count, df=metrics_class.prom_df)).item()
 
-    gene_pp_pval =  perplexity(metrics_class.get_gene_signals(prob_pval)).item()
-    gene_pp_count = perplexity(metrics_class.get_gene_signals(prob_count)).item()
+    gene_pp_pval =  perplexity(metrics_class.get_signals(prob_pval, df=metrics_class.gene_df)).item()
+    gene_pp_count = perplexity(metrics_class.get_signals(prob_count, df=metrics_class.gene_df)).item()
 
     ### global metrics
     gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
