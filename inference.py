@@ -192,14 +192,14 @@ def plot_calibration_grid(calibrations, titles, figsize=(12, 12)):
 
 def get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred):
     # Calculate perplexity
-    gw_pp_pval = perplexity(prob_pval[:, jj]).item()
-    gw_pp_count = perplexity(prob_count[:, jj]).item()
+    gw_pp_pval = perplexity(prob_pval).item()
+    gw_pp_count = perplexity(prob_count).item()
 
-    prom_pp_pval =  perplexity(metrics_class.get_prom_signals(prob_pval[:, jj])).item()
-    prom_pp_count = perplexity(metrics_class.get_prom_signals(prob_count[:, jj])).item()
+    prom_pp_pval =  perplexity(metrics_class.get_prom_signals(prob_pval)).item()
+    prom_pp_count = perplexity(metrics_class.get_prom_signals(prob_count)).item()
 
-    gene_pp_pval =  perplexity(metrics_class.get_gene_signals(prob_pval[:, jj])).item()
-    gene_pp_count = perplexity(metrics_class.get_gene_signals(prob_count[:, jj])).item()
+    gene_pp_pval =  perplexity(metrics_class.get_gene_signals(prob_pval)).item()
+    gene_pp_count = perplexity(metrics_class.get_gene_signals(prob_count)).item()
 
     ### global metrics
     gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
@@ -1833,6 +1833,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Calculate metrics for assay jj
             count_true = Y[:, jj].numpy()
             pval_true = P[:, jj].numpy()
+
+            prob_pval_jj = prob_pval[:, jj]
+            prob_count_jj = prob_count[:, jj]
             
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
@@ -1841,7 +1844,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
             
-            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            metr = get_metrics(prob_pval_jj, prob_count_jj, pval_true, pval_pred, count_true, count_pred)
             results[expnames[keep_only]][expnames[jj]] = metr
 
     accessibility_assays = ["ATAC-seq", "DNase-seq"]
@@ -1870,6 +1873,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Calculate metrics for assay jj
             count_true = Y[:, jj].numpy()
             pval_true = P[:, jj].numpy()
+
+            prob_pval_jj = prob_pval[:, jj]
+            prob_count_jj = prob_count[:, jj]
             
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
@@ -1878,7 +1884,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
             
-            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            metr = get_metrics(prob_pval_jj, prob_count_jj, pval_true, pval_pred, count_true, count_pred)
             results["accessibility"][expnames[jj]] = metr
 
     histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
@@ -1907,6 +1913,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Calculate metrics for assay jj
             count_true = Y[:, jj].numpy()
             pval_true = P[:, jj].numpy()
+
+            prob_pval_jj = prob_pval[:, jj]
+            prob_count_jj = prob_count[:, jj]
             
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
@@ -1915,7 +1924,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
 
-            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            metr = get_metrics(prob_pval_jj, prob_count_jj, pval_true, pval_pred, count_true, count_pred)
             results["histone_mods"][expnames[jj]] = metr
 
     if has_accessibility and has_histone_mods and len(available_assays) > len(accessibility_assays) + len(histone_mods):
