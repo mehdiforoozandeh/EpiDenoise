@@ -2446,7 +2446,7 @@ if __name__ == "__main__":
             viz_feature_importance(df, savedir="models/output/")
             exit()
 
-        model_path = "models/CANDIfull_DNA_random_mask_Dec9_20241209114510_params45093285.pt"
+        model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
 
@@ -2459,7 +2459,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())
+        bios_names = list(candi.dataset.navigation.keys())[2:4]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
