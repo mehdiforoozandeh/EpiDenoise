@@ -2469,7 +2469,7 @@ if __name__ == "__main__":
                 continue
 
         results = []
-        for bios_name in bios_names:
+        for bios_name in metrics.keys():
             for input in metrics[bios_name]:
                 for output in metrics[bios_name][input]:
                     results.append({
