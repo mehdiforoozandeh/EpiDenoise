@@ -73,7 +73,7 @@ def viz_feature_importance(df, savedir="models/output/"):
             'one_imp_spearman_count', 'one_imp_spearman_pval',
             'peak_overlap_count', 'peak_overlap_pval'
             ]
-        sns.pairplot(df[metrics], diag_kind='kde')
+        sns.pairplot(df[metrics], diag_kind='kde', size=1.5)
         plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
         plt.close()
 
