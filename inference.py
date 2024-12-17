@@ -2459,7 +2459,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[0]
+        bios_names = list(candi.dataset.navigation.keys())
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
