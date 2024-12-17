@@ -245,7 +245,7 @@ class METRICS(object):
         pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
 
         return self.r2(y_true=gt_vals, y_pred=pred_vals)
-
+    
     def r2_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
         # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
 

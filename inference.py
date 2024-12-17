@@ -190,6 +190,71 @@ def plot_calibration_grid(calibrations, titles, figsize=(12, 12)):
 
 ################################################################################
 
+def get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred):
+    # Calculate perplexity
+    gw_pp_pval = perplexity(prob_pval[:, jj]).item()
+    gw_pp_count = perplexity(prob_count[:, jj]).item()
+
+    prom_pp_pval =  perplexity(metrics_class.get_prom_signals(prob_pval[:, jj])).item()
+    prom_pp_count = perplexity(metrics_class.get_prom_signals(prob_count[:, jj])).item()
+
+    gene_pp_pval =  perplexity(metrics_class.get_gene_signals(prob_pval[:, jj])).item()
+    gene_pp_count = perplexity(metrics_class.get_gene_signals(prob_count[:, jj])).item()
+
+    ### global metrics
+    gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
+    gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
+
+    gw_pearson_count = metrics_class.pearson(count_true, count_pred)
+    gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
+
+    ### gene metrics
+    gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
+    gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
+
+    gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
+    gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
+
+    ### promoter metrics
+    prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
+    prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
+
+    prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
+    prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
+
+    ### one observation metrics
+    one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
+    one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
+
+    one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
+    one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
+
+    ### one imputation metrics
+    one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
+    one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
+
+    one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
+    one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
+
+    ### peak overlap metrics
+    peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
+    peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
+
+    metr = {"gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
+            "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
+            "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
+            "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
+            "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
+            "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
+            "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
+            "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
+            "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
+            "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
+            "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
+            "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count}
+
+    return metr
+
 class CANDIPredictor:
     def __init__(self, model, hyper_parameters_path, 
         split="test", DNA=False, eic=True, chr="chr21", resolution=25, context_length=1600,
@@ -1776,63 +1841,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
             
-            # Calculate perplexity
-            gw_pp_pval = perplexity(prob_pval[:, jj]).item()
-            gw_pp_count = perplexity(prob_count[:, jj]).item()
-
-            ### global metrics
-            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
-            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
-
-            gw_pearson_count = metrics_class.pearson(count_true, count_pred)
-            gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
-
-            ### gene metrics
-            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
-            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
-
-            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
-            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
-
-            ### promoter metrics
-            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
-            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
-
-            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
-            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
-
-            ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
-            one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
-
-            one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
-            one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
-
-            ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
-            one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
-
-            one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
-            one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
-
-            ### peak overlap metrics
-            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
-            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
-
-            results[expnames[keep_only]][expnames[jj]] = {
-                "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
-                "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
-                "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
-                "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
-                "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
-                "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
-                "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
-                "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
-                "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
-                "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
-                "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
-                "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count
-            }
+            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            results[expnames[keep_only]][expnames[jj]] = metr
 
     accessibility_assays = ["ATAC-seq", "DNase-seq"]
     has_accessibility = all(assay in available_assays for assay in accessibility_assays)
@@ -1868,63 +1878,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
             
-            # Calculate perplexity
-            gw_pp_pval = perplexity(prob_pval[:, jj]).item()
-            gw_pp_count = perplexity(prob_count[:, jj]).item()
-
-            ### global metrics
-            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
-            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
-
-            gw_pearson_count = metrics_class.pearson(count_true, count_pred)
-            gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
-
-            ### gene metrics
-            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
-            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
-
-            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
-            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
-
-            ### promoter metrics
-            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
-            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
-
-            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
-            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
-
-            ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
-            one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
-
-            one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
-            one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
-
-            ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
-            one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
-
-            one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
-            one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
-
-            ### peak overlap metrics
-            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
-            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
-
-            results["accessibility"][expnames[jj]] = {
-                "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
-                "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
-                "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
-                "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
-                "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
-                "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
-                "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
-                "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
-                "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
-                "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
-                "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
-                "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count
-            }
+            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            results["accessibility"][expnames[jj]] = metr
 
     histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
     has_histone_mods = all(assay in available_assays for assay in histone_mods)
@@ -1960,63 +1915,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
 
-            # Calculate perplexity
-            gw_pp_pval = perplexity(prob_pval[:, jj]).item()
-            gw_pp_count = perplexity(prob_count[:, jj]).item()
-
-            ### global metrics
-            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
-            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
-
-            gw_pearson_count = metrics_class.pearson(count_true, count_pred)
-            gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
-
-            ### gene metrics
-            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
-            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
-
-            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
-            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
-
-            ### promoter metrics
-            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
-            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
-
-            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
-            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
-
-            ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
-            one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
-
-            one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
-            one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
-
-            ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
-            one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
-
-            one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
-            one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
-
-            ### peak overlap metrics
-            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
-            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
-
-            results["histone_mods"][expnames[jj]] = {
-                "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
-                "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
-                "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
-                "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
-                "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
-                "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
-                "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
-                "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
-                "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
-                "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
-                "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
-                "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count
-            }
+            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            results["histone_mods"][expnames[jj]] = metr
 
     if has_accessibility and has_histone_mods and len(available_assays) > len(accessibility_assays) + len(histone_mods):
         print(f"6 histone mods + accessibility inputs: {histone_mods + accessibility_assays}")
@@ -2050,63 +1950,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
             pval_pred = np.sinh(pval_pred)
             pval_true = np.sinh(pval_true)
             
-            # Calculate perplexity
-            gw_pp_pval = perplexity(prob_pval[:, jj]).item()
-            gw_pp_count = perplexity(prob_count[:, jj]).item()
-
-            ### global metrics
-            gw_pearson_pval = metrics_class.pearson(pval_true, pval_pred)
-            gw_spearman_pval = metrics_class.spearman(pval_true, pval_pred)
-
-            gw_pearson_count = metrics_class.pearson(count_true, count_pred)
-            gw_spearman_count = metrics_class.spearman(count_true, count_pred)   
-
-            ### gene metrics
-            gene_pearson_pval = metrics_class.pearson_gene(pval_true, pval_pred)
-            gene_spearman_pval = metrics_class.spearman_gene(pval_true, pval_pred)
-
-            gene_pearson_count = metrics_class.pearson_gene(count_true, count_pred)
-            gene_spearman_count = metrics_class.spearman_gene(count_true, count_pred)
-
-            ### promoter metrics
-            prom_pearson_pval = metrics_class.pearson_prom(pval_true, pval_pred)
-            prom_spearman_pval = metrics_class.spearman_prom(pval_true, pval_pred)
-
-            prom_pearson_count = metrics_class.pearson_prom(count_true, count_pred)
-            prom_spearman_count = metrics_class.spearman_prom(count_true, count_pred)
-
-            ### one observation metrics
-            one_obs_pearson_pval = metrics_class.pearson1_obs(pval_true, pval_pred)
-            one_obs_spearman_pval = metrics_class.spearman1_obs(pval_true, pval_pred)
-
-            one_obs_pearson_count = metrics_class.pearson1_obs(count_true, count_pred)
-            one_obs_spearman_count = metrics_class.spearman1_obs(count_true, count_pred)
-
-            ### one imputation metrics
-            one_imp_pearson_pval = metrics_class.pearson1_imp(pval_true, pval_pred)
-            one_imp_spearman_pval = metrics_class.spearman1_imp(pval_true, pval_pred)
-
-            one_imp_pearson_count = metrics_class.pearson1_imp(count_true, count_pred)
-            one_imp_spearman_count = metrics_class.spearman1_imp(count_true, count_pred)
-
-            ### peak overlap metrics
-            peak_overlap_pval = metrics_class.peak_overlap(pval_true, pval_pred)
-            peak_overlap_count = metrics_class.peak_overlap(count_true, count_pred)
-
-            results["histone_mods_accessibility"][expnames[jj]] = {
-                "gw_pp_pval": gw_pp_pval, "gw_pp_count": gw_pp_count,
-                "gw_pearson_pval": gw_pearson_pval, "gw_spearman_pval": gw_spearman_pval,
-                "gw_pearson_count": gw_pearson_count, "gw_spearman_count": gw_spearman_count,
-                "gene_pearson_pval": gene_pearson_pval, "gene_spearman_pval": gene_spearman_pval,
-                "gene_pearson_count": gene_pearson_count, "gene_spearman_count": gene_spearman_count,
-                "prom_pearson_pval": prom_pearson_pval, "prom_spearman_pval": prom_spearman_pval,
-                "prom_pearson_count": prom_pearson_count, "prom_spearman_count": prom_spearman_count,
-                "one_obs_pearson_pval": one_obs_pearson_pval, "one_obs_spearman_pval": one_obs_spearman_pval,
-                "one_obs_pearson_count": one_obs_pearson_count, "one_obs_spearman_count": one_obs_spearman_count,
-                "one_imp_pearson_pval": one_imp_pearson_pval, "one_imp_spearman_pval": one_imp_spearman_pval,
-                "one_imp_pearson_count": one_imp_pearson_count, "one_imp_spearman_count": one_imp_spearman_count,
-                "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count
-            }
+            metr = get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_pred)
+            results["histone_mods_accessibility"][expnames[jj]] = metr
 
     return results  
 
@@ -2459,7 +2304,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())
+        bios_names = list(candi.dataset.navigation.keys())[:3]
         for bios_name in bios_names:
             try:
                 print(bios_name)
