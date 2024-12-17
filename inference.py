@@ -2316,7 +2316,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())[:2]
+        bios_names = list(candi.dataset.navigation.keys())
         for bios_name in bios_names:
             try:
                 print(bios_name)
