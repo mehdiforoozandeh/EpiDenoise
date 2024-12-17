@@ -938,40 +938,55 @@ class CANDIPredictor:
         # Print summary
         print("\nEvaluation Results:")
         
-        # Helper function to print metric tables
         def print_metric_table(metrics_type, available_indices, metrics, expnames):
+            # Define column headers
+            headers = [
+                "MSE", 
+                "GW_Pearson", "1obs_Pearson", "1imp_Pearson",
+                "GW_Spearman", "1obs_Spearman", "1imp_Spearman",
+                "GW_PP", "Prom_PP", "Gene_PP",
+                "Peak_Overlap"
+            ]
+            
+            # Print header
             print(f"\n{metrics_type} Metrics:")
-            print("Feature | Type      | Metric   | Global  | One-Obs | One-Imp | Peak")
-            print("-" * 75)
+            print("Feature | Type      |", end=" ")
+            for header in headers:
+                print(f"{header:12s}", end=" ")
+            print("\n" + "-" * (20 + 13 * len(headers)))
             
             for idx in available_indices:
                 m = metrics[idx.item()][f'{metrics_type.lower()}_metrics']
                 
-                # Print Pearson correlations
-                print(f"{expnames[idx]:10s} | Imputed   | Pearson  | {m['imp_gw_pearson']:7.4f} | "
-                      f"{m['imp_one_obs_pearson']:7.4f} | {m['imp_one_imp_pearson']:7.4f} | "
-                      f"{m['imp_peak_overlap']:7.4f}")
-                print(f"{' '*10} | Upsampled | Pearson  | {m['ups_gw_pearson']:7.4f} | "
-                      f"{m['ups_one_obs_pearson']:7.4f} | {m['ups_one_imp_pearson']:7.4f} | "
-                      f"{m['ups_peak_overlap']:7.4f}")
+                # Print imputed metrics
+                print(f"{expnames[idx]:10s} | Imputed   |", end=" ")
+                print(f"{m['imp_gw_mse']:12.4f}", end=" ")  # MSE
+                print(f"{m['imp_gw_pearson']:12.4f}", end=" ")  # GW_Pearson
+                print(f"{m['imp_one_obs_pearson']:12.4f}", end=" ")  # 1obs_Pearson
+                print(f"{m['imp_one_imp_pearson']:12.4f}", end=" ")  # 1imp_Pearson
+                print(f"{m['imp_gw_spearman']:12.4f}", end=" ")  # GW_Spearman
+                print(f"{m['imp_one_obs_spearman']:12.4f}", end=" ")  # 1obs_Spearman
+                print(f"{m['imp_one_imp_spearman']:12.4f}", end=" ")  # 1imp_Spearman
+                print(f"{m['imp_gw_pp']:12.4f}", end=" ")  # GW_PP
+                print(f"{m['imp_prom_pp']:12.4f}", end=" ")  # Prom_PP
+                print(f"{m['imp_gene_pp']:12.4f}", end=" ")  # Gene_PP
+                print(f"{m['imp_peak_overlap']:12.4f}")  # Peak_Overlap
                 
-                # Print Spearman correlations
-                print(f"{' '*10} | Imputed   | Spearman | {m['imp_gw_spearman']:7.4f} | "
-                      f"{m['imp_one_obs_spearman']:7.4f} | {m['imp_one_imp_spearman']:7.4f} | {'':7s}")
-                print(f"{' '*10} | Upsampled | Spearman | {m['ups_gw_spearman']:7.4f} | "
-                      f"{m['ups_one_obs_spearman']:7.4f} | {m['ups_one_imp_spearman']:7.4f} | {'':7s}")
+                # Print upsampled metrics
+                print(f"{' '*10} | Upsampled |", end=" ")
+                print(f"{m['ups_gw_mse']:12.4f}", end=" ")  # MSE
+                print(f"{m['ups_gw_pearson']:12.4f}", end=" ")  # GW_Pearson
+                print(f"{m['ups_one_obs_pearson']:12.4f}", end=" ")  # 1obs_Pearson
+                print(f"{m['ups_one_imp_pearson']:12.4f}", end=" ")  # 1imp_Pearson
+                print(f"{m['ups_gw_spearman']:12.4f}", end=" ")  # GW_Spearman
+                print(f"{m['ups_one_obs_spearman']:12.4f}", end=" ")  # 1obs_Spearman
+                print(f"{m['ups_one_imp_spearman']:12.4f}", end=" ")  # 1imp_Spearman
+                print(f"{m['ups_gw_pp']:12.4f}", end=" ")  # GW_PP
+                print(f"{m['ups_prom_pp']:12.4f}", end=" ")  # Prom_PP
+                print(f"{m['ups_gene_pp']:12.4f}", end=" ")  # Gene_PP
+                print(f"{m['ups_peak_overlap']:12.4f}")  # Peak_Overlap
                 
-                # Print MSE and R2
-                print(f"{' '*10} | Imputed   | MSE     | {m['imp_gw_mse']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                print(f"{' '*10} | Upsampled | MSE     | {m['ups_gw_mse']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                print(f"{' '*10} | Imputed   | R2      | {m['imp_gw_r2']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                print(f"{' '*10} | Upsampled | R2      | {m['ups_gw_r2']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                
-                # Print Perplexity
-                print(f"{' '*10} | Imputed   | PP      | {m['imp_gw_pp']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                print(f"{' '*10} | Upsampled | PP      | {m['ups_gw_pp']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
-                
-                print("-" * 75)
+                print("-" * (20 + 13 * len(headers)))
 
         # Print tables for both count and p-value metrics
         print_metric_table("Count", available_indices, metrics, expnames)
