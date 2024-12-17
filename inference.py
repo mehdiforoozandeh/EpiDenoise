@@ -2461,8 +2461,12 @@ if __name__ == "__main__":
         metrics = {}
         bios_names = list(candi.dataset.navigation.keys())
         for bios_name in bios_names:
-            print(bios_name)
-            metrics[bios_name] = assay_importance(candi, bios_name)
+            try:
+                print(bios_name)
+                metrics[bios_name] = assay_importance(candi, bios_name)
+            except Exception as e:
+                print(f"Error processing {bios_name}: {e}")
+                continue
 
         results = []
         for bios_name in bios_names:
