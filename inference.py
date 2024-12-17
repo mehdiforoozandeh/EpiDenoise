@@ -887,67 +887,95 @@ class CANDIPredictor:
 
             imp_metr = get_metrics(prob_imp_pval[:, idx], prob_imp_count[:, idx], pval_true, imp_pval, count_true, imp_count)
             ups_metr = get_metrics(prob_ups_pval[:, idx], prob_ups_count[:, idx], pval_true, ups_pval, count_true, ups_count)
-
-            # start_time = time.time()
+            
             metrics[idx.item()] = {
                 'count_metrics': {
-                    'imp_pearson': stats.pearsonr(count_true, imp_count)[0],
-                    'imp_spearman': stats.spearmanr(count_true, imp_count)[0],
-                    'imp_mse': np.mean((count_true - imp_count) ** 2),
-                    'imp_r2': 1 - (np.sum((count_true - imp_count) ** 2) / 
+                    'imp_gw_mse': np.mean((count_true - imp_count) ** 2),
+                    'imp_gw_r2': 1 - (np.sum((count_true - imp_count) ** 2) / 
                                 np.sum((count_true - np.mean(count_true)) ** 2)),
-                    'imp_perplexity': imp_pp_count.item(),  # Add perplexity
-                    'imp_95ci': imp_count_95ci,  # Add 95% CI
-                    'ups_pearson': stats.pearsonr(count_true, ups_count)[0],
-                    'ups_spearman': stats.spearmanr(count_true, ups_count)[0],
-                    'ups_mse': np.mean((count_true - ups_count) ** 2),
-                    'ups_r2': 1 - (np.sum((count_true - ups_count) ** 2) / np.sum((count_true - np.mean(count_true)) ** 2)),
-                    'ups_perplexity': ups_pp_count.item(),  # Add perplexity
-                    'ups_95ci': ups_count_95ci  # Add 95% CI
+                    'ups_gw_mse': np.mean((count_true - ups_count) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
+                                np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'imp_gw_pp': imp_metr['gw_pp_count'], 'ups_gw_pp': ups_metr['gw_pp_count'],
+                    'imp_prom_pp': imp_metr['prom_pp_count'], 'ups_prom_pp': ups_metr['prom_pp_count'],
+                    'imp_gene_pp': imp_metr['gene_pp_count'], 'ups_gene_pp': ups_metr['gene_pp_count'], 
+                    'imp_gw_pearson': imp_metr['gw_pearson_count'], 'ups_gw_pearson': ups_metr['gw_pearson_count'],
+                    'imp_gw_spearman': imp_metr['gw_spearman_count'], 'ups_gw_spearman': ups_metr['gw_spearman_count'],
+                    'imp_gene_pearson': imp_metr['gene_pearson_count'], 'ups_gene_pearson': ups_metr['gene_pearson_count'],
+                    'imp_gene_spearman': imp_metr['gene_spearman_count'], 'ups_gene_spearman': ups_metr['gene_spearman_count'],
+                    'imp_prom_pearson': imp_metr['prom_pearson_count'], 'ups_prom_pearson': ups_metr['prom_pearson_count'],
+                    'imp_prom_spearman': imp_metr['prom_spearman_count'], 'ups_prom_spearman': ups_metr['prom_spearman_count'],
+                    'imp_one_obs_pearson': imp_metr['one_obs_pearson_count'], 'ups_one_obs_pearson': ups_metr['one_obs_pearson_count'],
+                    'imp_one_obs_spearman': imp_metr['one_obs_spearman_count'], 'ups_one_obs_spearman': ups_metr['one_obs_spearman_count'],
+                    'imp_one_imp_pearson': imp_metr['one_imp_pearson_count'], 'ups_one_imp_pearson': ups_metr['one_imp_pearson_count'],
+                    'imp_one_imp_spearman': imp_metr['one_imp_spearman_count'], 'ups_one_imp_spearman': ups_metr['one_imp_spearman_count'],
+                    'imp_peak_overlap': imp_metr['peak_overlap_count'], 'ups_peak_overlap': ups_metr['peak_overlap_count'],
                 },
                 'pval_metrics': {
-                    'imp_pearson': stats.pearsonr(pval_true, imp_pval)[0],
-                    'imp_spearman': stats.spearmanr(pval_true, imp_pval)[0],
-                    'imp_mse': np.mean((pval_true - imp_pval) ** 2),
-                    'imp_r2': 1 - (np.sum((pval_true - imp_pval) ** 2) / 
+                    'imp_gw_mse': np.mean((pval_true - imp_pval) ** 2),
+                    'imp_gw_r2': 1 - (np.sum((pval_true - imp_pval) ** 2) / 
                                 np.sum((pval_true - np.mean(pval_true)) ** 2)),
-                    'imp_perplexity': imp_pp_pval.item(),  # Add perplexity
-                    'imp_95ci': imp_pval_95ci,  # Add 95% CI
-                    'ups_pearson': stats.pearsonr(pval_true, ups_pval)[0],
-                    'ups_spearman': stats.spearmanr(pval_true, ups_pval)[0],
-                    'ups_mse': np.mean((pval_true - ups_pval) ** 2),
-                    'ups_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
-                    'ups_perplexity': ups_pp_pval.item(),  # Add perplexity
-                    'ups_95ci': ups_pval_95ci  # Add 95% CI
+                    'ups_gw_mse': np.mean((pval_true - ups_pval) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'imp_gw_pp': imp_metr['gw_pp_pval'], 'ups_gw_pp': ups_metr['gw_pp_pval'],
+                    'imp_prom_pp': imp_metr['prom_pp_pval'], 'ups_prom_pp': ups_metr['prom_pp_pval'],
+                    'imp_gene_pp': imp_metr['gene_pp_pval'], 'ups_gene_pp': ups_metr['gene_pp_pval'], 
+                    'imp_gw_pearson': imp_metr['gw_pearson_pval'], 'ups_gw_pearson': ups_metr['gw_pearson_pval'],
+                    'imp_gw_spearman': imp_metr['gw_spearman_pval'], 'ups_gw_spearman': ups_metr['gw_spearman_pval'],
+                    'imp_gene_pearson': imp_metr['gene_pearson_pval'], 'ups_gene_pearson': ups_metr['gene_pearson_pval'],
+                    'imp_gene_spearman': imp_metr['gene_spearman_pval'], 'ups_gene_spearman': ups_metr['gene_spearman_pval'],
+                    'imp_prom_pearson': imp_metr['prom_pearson_pval'], 'ups_prom_pearson': ups_metr['prom_pearson_pval'],
+                    'imp_prom_spearman': imp_metr['prom_spearman_pval'], 'ups_prom_spearman': ups_metr['prom_spearman_pval'],
+                    'imp_one_obs_pearson': imp_metr['one_obs_pearson_pval'], 'ups_one_obs_pearson': ups_metr['one_obs_pearson_pval'],
+                    'imp_one_obs_spearman': imp_metr['one_obs_spearman_pval'], 'ups_one_obs_spearman': ups_metr['one_obs_spearman_pval'],
+                    'imp_one_imp_pearson': imp_metr['one_imp_pearson_pval'], 'ups_one_imp_pearson': ups_metr['one_imp_pearson_pval'],
+                    'imp_one_imp_spearman': imp_metr['one_imp_spearman_pval'], 'ups_one_imp_spearman': ups_metr['one_imp_spearman_pval'],
+                    'imp_peak_overlap': imp_metr['peak_overlap_pval'], 'ups_peak_overlap': ups_metr['peak_overlap_pval'],
+
                 }
             }
-            # end_time = time.time()
-            # print(f"Metrics calculations took {end_time - start_time:.4f} seconds")
 
         # Print summary
         print("\nEvaluation Results:")
-        print("\nCount Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
-        print("-" * 75)
-        for idx in available_indices:
-            m = metrics[idx.item()]['count_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
-            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
-            print("-" * 75)
-
-        print("\nP-value Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
-        print("-" * 75)
-        for idx in available_indices:
-            m = metrics[idx.item()]['pval_metrics']
-            print(f"{expnames[idx]:10s} | Imputed   | {m['imp_pearson']:7.4f} | {m['imp_spearman']:8.4f} | "
-                f"{m['imp_mse']:6.4f} | {m['imp_r2']:6.4f} | {m['imp_perplexity']:6.4f} | {m['imp_95ci']:6.4f}")
-            print(f"{' '*10} | Upsampled | {m['ups_pearson']:7.4f} | {m['ups_spearman']:8.4f} | "
-                f"{m['ups_mse']:6.4f} | {m['ups_r2']:6.4f} | {m['ups_perplexity']:6.4f} | {m['ups_95ci']:6.4f}")
-            print("-" * 75)
         
+        # Helper function to print metric tables
+        def print_metric_table(metrics_type, available_indices, metrics, expnames):
+            print(f"\n{metrics_type} Metrics:")
+            print("Feature | Type      | Metric   | Global  | One-Obs | One-Imp | Peak")
+            print("-" * 75)
+            
+            for idx in available_indices:
+                m = metrics[idx.item()][f'{metrics_type.lower()}_metrics']
+                
+                # Print Pearson correlations
+                print(f"{expnames[idx]:10s} | Imputed   | Pearson  | {m['imp_gw_pearson']:7.4f} | "
+                      f"{m['imp_one_obs_pearson']:7.4f} | {m['imp_one_imp_pearson']:7.4f} | "
+                      f"{m['imp_peak_overlap']:7.4f}")
+                print(f"{' '*10} | Upsampled | Pearson  | {m['ups_gw_pearson']:7.4f} | "
+                      f"{m['ups_one_obs_pearson']:7.4f} | {m['ups_one_imp_pearson']:7.4f} | "
+                      f"{m['ups_peak_overlap']:7.4f}")
+                
+                # Print Spearman correlations
+                print(f"{' '*10} | Imputed   | Spearman | {m['imp_gw_spearman']:7.4f} | "
+                      f"{m['imp_one_obs_spearman']:7.4f} | {m['imp_one_imp_spearman']:7.4f} | {'':7s}")
+                print(f"{' '*10} | Upsampled | Spearman | {m['ups_gw_spearman']:7.4f} | "
+                      f"{m['ups_one_obs_spearman']:7.4f} | {m['ups_one_imp_spearman']:7.4f} | {'':7s}")
+                
+                # Print MSE and R2
+                print(f"{' '*10} | Imputed   | MSE     | {m['imp_gw_mse']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                print(f"{' '*10} | Upsampled | MSE     | {m['ups_gw_mse']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                print(f"{' '*10} | Imputed   | R2      | {m['imp_gw_r2']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                print(f"{' '*10} | Upsampled | R2      | {m['ups_gw_r2']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                
+                # Print Perplexity
+                print(f"{' '*10} | Imputed   | PP      | {m['imp_gw_pp']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                print(f"{' '*10} | Upsampled | PP      | {m['ups_gw_pp']:7.4f} | {'':7s} | {'':7s} | {'':7s}")
+                
+                print("-" * 75)
+
+        # Print tables for both count and p-value metrics
+        print_metric_table("Count", available_indices, metrics, expnames)
+        print_metric_table("Pval", available_indices, metrics, expnames)
         return metrics
 
     def evaluate_leave_one_out_eic(self, X, mX, mY, avX, Y, P, avY, seq=None, crop_edges=True, return_preds=False):
