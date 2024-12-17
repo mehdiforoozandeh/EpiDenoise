@@ -1772,6 +1772,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
             pval_pred = pval_mean[:, jj].numpy()
+
+            pval_pred = np.sinh(pval_pred)
+            pval_true = np.sinh(pval_true)
             
             # Calculate perplexity
             gw_pp_pval = perplexity(prob_pval[:, jj]).item()
@@ -1861,6 +1864,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
             pval_pred = pval_mean[:, jj].numpy()
+
+            pval_pred = np.sinh(pval_pred)
+            pval_true = np.sinh(pval_true)
             
             # Calculate perplexity
             gw_pp_pval = perplexity(prob_pval[:, jj]).item()
@@ -1951,6 +1957,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             count_pred = count_mean[:, jj].numpy()
             pval_pred = pval_mean[:, jj].numpy()
             
+            pval_pred = np.sinh(pval_pred)
+            pval_true = np.sinh(pval_true)
+
             # Calculate perplexity
             gw_pp_pval = perplexity(prob_pval[:, jj]).item()
             gw_pp_count = perplexity(prob_count[:, jj]).item()
@@ -2037,6 +2046,9 @@ def assay_importance(candi, bios_name, crop_edges=True):
             # Get predictions
             count_pred = count_mean[:, jj].numpy()
             pval_pred = pval_mean[:, jj].numpy()
+
+            pval_pred = np.sinh(pval_pred)
+            pval_true = np.sinh(pval_true)
             
             # Calculate perplexity
             gw_pp_pval = perplexity(prob_pval[:, jj]).item()
@@ -2447,7 +2459,7 @@ if __name__ == "__main__":
         candi.chr = "chr21"
         
         metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())#[-3:]
+        bios_names = list(candi.dataset.navigation.keys())[-1]
         for bios_name in bios_names:
             print(bios_name)
             metrics[bios_name] = assay_importance(candi, bios_name)
