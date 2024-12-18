@@ -16,6 +16,49 @@ import umap, scipy
 from difflib import SequenceMatcher
 
 ################################################################################
+
+# perplexity
+# start_time = time.time()
+# imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
+# imp_pp_count = perplexity(prob_imp_count[:, idx])
+# ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
+# ups_pp_count = perplexity(prob_ups_count[:, idx])
+# end_time = time.time()
+# print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
+
+# assay distributions
+# imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
+# ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
+# imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
+# ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
+
+# calibration curve
+# imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
+# ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
+# imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
+# ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
+
+# print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
+# print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
+
+# fig = plot_calibration_grid(
+#     [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
+#     ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
+# fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
+# plt.close(fig)
+
+# fraction within 95% CI pval
+# start_time = time.time()
+# imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
+# ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
+
+# fraction within 95% CI count
+# imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
+# ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
+# end_time = time.time()
+# print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
+
+################################################################################
 metrics_class = METRICS()
 ################################################################################
 
@@ -1037,61 +1080,76 @@ class CANDIPredictor:
 
             else:
                 continue
-            
-            pp_pval  = perplexity(prob_ups_pval[:, j])
-            pp_count = perplexity(prob_ups_count[:, j])
-
-            ups_pval_dist_j = Gaussian(mu[:, j], var[:, j])
-            ups_count_dist_j = NegativeBinomial(p[:, j], n[:, j])
-
-            pval_95ci =  fraction_within_ci(ups_pval_dist_j, pval_true, c=0.95)
-            count_95ci = fraction_within_ci(ups_count_dist_j, count_true, c=0.95)
+        
+            ups_metr = get_metrics(prob_ups_pval[:, j], prob_ups_count[:, j], pval_true, pred_pval, count_true, pred_count)
 
             metrics[j] = {
                 'comparison': comparison,
                 'count_metrics': {
-                    'pearson': stats.pearsonr(count_true, pred_count)[0],
-                    'spearman': stats.spearmanr(count_true, pred_count)[0],
-                    'mse': np.mean((count_true - pred_count) ** 2),
-                    'r2': 1 - (np.sum((count_true - pred_count) ** 2) / 
-                              np.sum((count_true - np.mean(count_true)) ** 2)),
-                    'perplexity': pp_count.item(),  # Add perplexity
-                    '95ci': count_95ci  # Add 95% CI
+                    'ups_gw_mse': np.mean((count_true - ups_count) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
+                                np.sum((count_true - np.mean(count_true)) ** 2)),
+                    'gw_pp': ups_metr['gw_pp_count'],
+                    'prom_pp': ups_metr['prom_pp_count'],
+                    'gene_pp': ups_metr['gene_pp_count'], 
+                    'gw_pearson': ups_metr['gw_pearson_count'],
+                    'gw_spearman': ups_metr['gw_spearman_count'],
+                    'gene_pearson': ups_metr['gene_pearson_count'],
+                    'gene_spearman': ups_metr['gene_spearman_count'],
+                    'prom_pearson': ups_metr['prom_pearson_count'],
+                    'prom_spearman': ups_metr['prom_spearman_count'],
+                    'one_obs_pearson': ups_metr['one_obs_pearson_count'],
+                    'one_obs_spearman': ups_metr['one_obs_spearman_count'],
+                    'one_imp_pearson': ups_metr['one_imp_pearson_count'],
+                    'one_imp_spearman': ups_metr['one_imp_spearman_count'],
+                    'peak_overlap': ups_metr['peak_overlap_count'],
                 },
                 'pval_metrics': {
-                    'pearson': stats.pearsonr(pval_true, pred_pval)[0],
-                    'spearman': stats.spearmanr(pval_true, pred_pval)[0],
-                    'mse': np.mean((pval_true - pred_pval) ** 2),
-                    'r2': 1 - (np.sum((pval_true - pred_pval) ** 2) / 
-                              np.sum((pval_true - np.mean(pval_true)) ** 2)),
-                    'perplexity': pp_pval.item(),  # Add perplexity
-                    '95ci': pval_95ci  # Add 95% CI
+                    'ups_gw_mse': np.mean((pval_true - ups_pval) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'ups_gw_pp': ups_metr['gw_pp_pval'],
+                    'ups_prom_pp': ups_metr['prom_pp_pval'],
+                    'ups_gene_pp': ups_metr['gene_pp_pval'], 
+                    'ups_gw_pearson': ups_metr['gw_pearson_pval'],
+                    'ups_gw_spearman': ups_metr['gw_spearman_pval'],
+                    'ups_gene_pearson': ups_metr['gene_pearson_pval'],
+                    'ups_gene_spearman': ups_metr['gene_spearman_pval'],
+                    'ups_prom_pearson': ups_metr['prom_pearson_pval'],
+                    'ups_prom_spearman': ups_metr['prom_spearman_pval'],
+                    'ups_one_obs_pearson': ups_metr['one_obs_pearson_pval'],
+                    'ups_one_obs_spearman': ups_metr['one_obs_spearman_pval'],
+                    'ups_one_imp_pearson': ups_metr['one_imp_pearson_pval'],
+                    'ups_one_imp_spearman': ups_metr['one_imp_spearman_pval'],
+                    'ups_peak_overlap': ups_metr['peak_overlap_pval'],
+
                 }
             }
 
         # Print summary with updated headers and format
         print("\nEvaluation Results:")
         print("\nCount Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("Feature | Type      | GW_Pearson | GW_Spearman | MSE    | R2     | GW_PP")
         print("-" * 75)
         
         for idx, m in metrics.items():
             feature_name = expnames[idx]
             comp_type = m['comparison']
             count_m = m['count_metrics']
-            print(f"{feature_name:10s} | {comp_type:9s} | {count_m['pearson']:7.4f} | {count_m['spearman']:8.4f} | "
-                  f"{count_m['mse']:6.4f} | {count_m['r2']:6.4f} | {count_m['perplexity']:6.4f} | {count_m['95ci']:6.4f}")
+            print(f"{feature_name:10s} | {comp_type:9s} | {count_m['gw_pearson']:10.4f} | {count_m['gw_spearman']:11.4f} | "
+                  f"{count_m['ups_gw_mse']:6.4f} | {count_m['ups_gw_r2']:6.4f} | {count_m['gw_pp']:6.4f}")
         
         print("\nP-value Metrics:")
-        print("Feature | Type      | Pearson | Spearman | MSE    | R2     | PP     | 95% CI")
+        print("Feature | Type      | GW_Pearson | GW_Spearman | MSE    | R2     | GW_PP")
         print("-" * 75)
         
         for idx, m in metrics.items():
             feature_name = expnames[idx]
             comp_type = m['comparison']
             pval_m = m['pval_metrics']
-            print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['pearson']:7.4f} | {pval_m['spearman']:8.4f} | "
-                  f"{pval_m['mse']:6.4f} | {pval_m['r2']:6.4f} | {pval_m['perplexity']:6.4f} | {pval_m['95ci']:6.4f}")
+            print(f"{feature_name:10s} | {comp_type:9s} | {pval_m['ups_gw_pearson']:10.4f} | {pval_m['ups_gw_spearman']:11.4f} | "
+                  f"{pval_m['ups_gw_mse']:6.4f} | {pval_m['ups_gw_r2']:6.4f} | {pval_m['ups_gw_pp']:6.4f}")
+
+        return metrics
 
     def evaluate(self, bios_name):
         X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf=1)
@@ -1972,49 +2030,6 @@ def assay_importance(candi, bios_name, crop_edges=True):
 
     return results  
 
-# perplexity
-# start_time = time.time()
-# imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
-# imp_pp_count = perplexity(prob_imp_count[:, idx])
-# ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
-# ups_pp_count = perplexity(prob_ups_count[:, idx])
-# end_time = time.time()
-# print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
-
-# assay distributions
-# imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
-# ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
-# imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
-# ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
-
-# calibration curve
-# imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
-# ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
-# imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
-# ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
-
-# print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
-# print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
-
-# fig = plot_calibration_grid(
-#     [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
-#     ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
-# fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
-# plt.close(fig)
-
-# fraction within 95% CI pval
-# start_time = time.time()
-# imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-# ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
-
-# fraction within 95% CI count
-# imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-# ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
-# end_time = time.time()
-# print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
-
-################################################################################
-
 if __name__ == "__main__":
     if sys.argv[1] == "cs_probe":
         model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
@@ -2287,19 +2302,42 @@ if __name__ == "__main__":
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
         eic = True
 
-        # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
-        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-        candi.chr = "chr21"
-        for bios_name in list(candi.dataset.navigation.keys()):
-            try:
-                print(bios_name)
-                metrics = candi.evaluate(bios_name)
-                print("\n\n")
+        splits = ["test", "val"]  
 
-            except Exception as e:
-                print(f"Error processing {bios_name}: {e}")
-                continue
+        for split in splits:
+            # Load latent representations
+            candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split=split)
+            expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+            candi.chr = "chr21"
+            metrics = {}
+
+            for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
+                try:
+                    print(bios_name)
+                    start_time = time.time()
+                    metrics[bios_name] = candi.evaluate(bios_name)
+                    end_time = time.time()
+                    print(f"Evaluation took {end_time - start_time:.2f} seconds")
+                    print("\n\n")
+
+                except Exception as e:
+                    print(f"Error processing {bios_name}: {e}")
+                    continue
+            
+            results = []
+            for bios_name in metrics.keys():
+                for exp in metrics[bios_name].keys():
+                    results.append({
+                        "bios_name": bios_name,
+                        "experiment": expnames[exp],
+                        "comparison": metrics[bios_name][exp]["comparison"],
+                        **{"count_" + k: v for k, v in metrics[bios_name][exp]["count_metrics"].items()},
+                        **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
+                    })
+
+            df = pd.DataFrame(results)
+            df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
+            print(df)
     
     elif sys.argv[1] == "eval_full_bios":
     
