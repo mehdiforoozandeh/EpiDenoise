@@ -2311,8 +2311,7 @@ if __name__ == "__main__":
             candi.chr = "chr21"
             metrics = {}
 
-            # for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
-            for bios_name in random.sample(list(candi.dataset.navigation.keys()), 3):
+            for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
                 try:
                     print(bios_name)
                     start_time = time.time()
