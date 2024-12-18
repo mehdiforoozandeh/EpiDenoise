@@ -2269,13 +2269,15 @@ if __name__ == "__main__":
             for exp in metrics[bios_name].keys():
                 results.append({
                     "bios_name": bios_name,
-                    "experiment": exp,
-                    **metrics[bios_name][exp]["count_metrics"],
-                    **metrics[bios_name][exp]["pval_metrics"]
+                    "experiment": expnames[exp],
+                    **{"count_" + k: v for k, v in metrics[bios_name][exp]["count_metrics"].items()},
+                    **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
                 })
 
         df = pd.DataFrame(results)
         print(df)
+        print(df.columns)
+        exit()
 
     elif sys.argv[1] == "eval_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
