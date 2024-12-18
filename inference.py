@@ -2245,39 +2245,42 @@ if __name__ == "__main__":
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
 
-        # Load latent representations
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
-        expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-        candi.chr = "chr21"
-        metrics = {}
-        for bios_name in random.sample(list(candi.dataset.navigation.keys()), 2):
-        # for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
-            try:
-                print(bios_name)
-                start_time = time.time()
-                metrics[bios_name] = candi.evaluate(bios_name)
-                end_time = time.time()
-                print(f"Evaluation took {end_time - start_time:.2f} seconds")
-                print("\n\n")
+        splits = ["test", "val"]  
 
-            except Exception as e:
-                print(f"Error processing {bios_name}: {e}")
-                continue
-        
-        results = []
-        for bios_name in metrics.keys():
-            for exp in metrics[bios_name].keys():
-                results.append({
-                    "bios_name": bios_name,
-                    "experiment": expnames[exp],
-                    **{"count_" + k: v for k, v in metrics[bios_name][exp]["count_metrics"].items()},
-                    **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
-                })
+        for split in splits:
+            # Load latent representations
+            candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split=split)
+            expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+            candi.chr = "chr21"
+            metrics = {}
 
-        df = pd.DataFrame(results)
-        print(df)
-        print(df.columns)
-        exit()
+            for bios_name in random.sample(list(candi.dataset.navigation.keys()), 3):
+            # for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
+                try:
+                    print(bios_name)
+                    start_time = time.time()
+                    metrics[bios_name] = candi.evaluate(bios_name)
+                    end_time = time.time()
+                    print(f"Evaluation took {end_time - start_time:.2f} seconds")
+                    print("\n\n")
+
+                except Exception as e:
+                    print(f"Error processing {bios_name}: {e}")
+                    continue
+            
+            results = []
+            for bios_name in metrics.keys():
+                for exp in metrics[bios_name].keys():
+                    results.append({
+                        "bios_name": bios_name,
+                        "experiment": expnames[exp],
+                        **{"count_" + k: v for k, v in metrics[bios_name][exp]["count_metrics"].items()},
+                        **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
+                    })
+
+            df = pd.DataFrame(results)
+            df.to_csv(f"models/output/full_{split}_metrics.csv", index=False)
+            print(df)
 
     elif sys.argv[1] == "eval_eic":
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
