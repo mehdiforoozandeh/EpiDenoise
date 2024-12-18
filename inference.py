@@ -1105,8 +1105,8 @@ class CANDIPredictor:
                     'peak_overlap': ups_metr['peak_overlap_count'],
                 },
                 'pval_metrics': {
-                    'ups_gw_mse': np.mean((pval_true - ups_pval) ** 2),
-                    'ups_gw_r2': 1 - (np.sum((pval_true - ups_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
+                    'ups_gw_mse': np.mean((pval_true - pred_pval) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((pval_true - pred_pval) ** 2) / np.sum((pval_true - np.mean(pval_true)) ** 2)),
                     'ups_gw_pp': ups_metr['gw_pp_pval'],
                     'ups_prom_pp': ups_metr['prom_pp_pval'],
                     'ups_gene_pp': ups_metr['gene_pp_pval'], 
