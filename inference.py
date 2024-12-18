@@ -2339,6 +2339,7 @@ if __name__ == "__main__":
             df = pd.DataFrame(results)
             df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
             print(df)
+            print(df.columns)
     
     elif sys.argv[1] == "eval_full_bios":
     
