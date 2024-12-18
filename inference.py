@@ -1086,8 +1086,8 @@ class CANDIPredictor:
             metrics[j] = {
                 'comparison': comparison,
                 'count_metrics': {
-                    'ups_gw_mse': np.mean((count_true - ups_count) ** 2),
-                    'ups_gw_r2': 1 - (np.sum((count_true - ups_count) ** 2) / 
+                    'ups_gw_mse': np.mean((count_true - pred_count) ** 2),
+                    'ups_gw_r2': 1 - (np.sum((count_true - pred_count) ** 2) / 
                                 np.sum((count_true - np.mean(count_true)) ** 2)),
                     'gw_pp': ups_metr['gw_pp_count'],
                     'prom_pp': ups_metr['prom_pp_count'],
