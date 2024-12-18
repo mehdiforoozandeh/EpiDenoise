@@ -2266,11 +2266,13 @@ if __name__ == "__main__":
         
         results = []
         for bios_name in metrics.keys():
-            results.append({
-                "bios_name": bios_name,
-                **metrics[bios_name]["count_metrics"],
-                **metrics[bios_name]["pval_metrics"]
-            })
+            for exp in metrics[bios_name].keys():
+                results.append({
+                    "bios_name": bios_name,
+                    "experiment": exp,
+                    **metrics[bios_name][exp]["count_metrics"],
+                    **metrics[bios_name][exp]["pval_metrics"]
+                })
 
         df = pd.DataFrame(results)
         print(df)
