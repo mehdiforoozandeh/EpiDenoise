@@ -182,7 +182,7 @@ def viz_full_metrics(data, savedir="models/output/"):
 
 def viz_calibration(
     imp_pval_dist, ups_pval_dist, imp_count_dist, ups_count_dist,
-    pval_true, count_true, savedir="models/output/"):
+    pval_true, count_true, title, savedir="models/output/"):
 
     # calibration curve
     imp_pval_calibration = confidence_calibration(imp_pval_dist, pval_true)
@@ -193,7 +193,8 @@ def viz_calibration(
     fig = plot_calibration_grid(
         [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
         ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
-    fig.savefig(f"{savedir}/calibration_curve.png")
+    fig.savefig(f"{savedir}/calibration_curve_{title}.png")
+    print(f"saved calibration curve to {savedir}/calibration_curve_{title}.png")
     plt.close(fig)
 
 def viz_signal_tracks(data, savedir="models/output/"):
@@ -2087,61 +2088,98 @@ def assay_importance(candi, bios_name, crop_edges=True):
     return results  
 
 def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
-
+    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
     if not eic:
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
             X, mX, mY, avX, Y, P, seq=seq, return_preds=True, crop_edges=crop_edges)
+        
+        # Create distributions and get means
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+        for jj in available_indices:
+            pval_true = P[:, jj].numpy()
+            count_true = Y[:, jj].numpy()
+
+            imp_pval_dist_idx = Gaussian(imp_pval_dist.mu[:, jj], imp_pval_dist.var[:, jj])
+            imp_count_dist_idx = NegativeBinomial(imp_count_dist.p[:, jj], imp_count_dist.n[:, jj])
+
+            ups_pval_dist_idx = Gaussian(ups_pval_dist.mu[:, jj], ups_pval_dist.var[:, jj])
+            ups_count_dist_idx = NegativeBinomial(ups_count_dist.p[:, jj], ups_count_dist.n[:, jj])
+
+            viz_calibration(
+                imp_pval_dist_idx, ups_pval_dist_idx, imp_count_dist_idx, ups_count_dist_idx,
+                pval_true, count_true, f"{expnames[jj]}", savedir="models/output/")
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
             X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True, crop_edges=crop_edges)
 
-    print(bios_name)
-    return None
+    # exit()
+    # print(bios_name)
 
-    available_indices = torch.where(avX[0, :] == 1)[0]
-    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+    # available_indices = torch.where(avX[0, :] == 1)[0]
+    
 
-    available_assays = list(candi.dataset.navigation[bios_name].keys())
-    print("available assays: ", available_assays)
+    # available_assays = list(candi.dataset.navigation[bios_name].keys())
+    # print("available assays: ", available_assays)
 
-    # Create distributions and get means
-    Y = Y.view(-1, Y.shape[-1])
-    P = P.view(-1, P.shape[-1])
+    # # Create distributions and get means
+    # Y = Y.view(-1, Y.shape[-1])
+    # P = P.view(-1, P.shape[-1])
 
-    if crop_edges:
-        n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
-    else:
-        n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+    # pval_mean = Gaussian(mu, var).mean()
+    # count_mean = NegativeBinomial(p, n).mean()
 
-    pval_mean = Gaussian(mu, var).mean()
-    count_mean = NegativeBinomial(p, n).mean()
+    # prob_pval = Gaussian(mu, var).pdf(P)
+    # prob_count = NegativeBinomial(p, n).pmf(Y)
+    
+    # return None
 
-    prob_pval = Gaussian(mu, var).pdf(P)
-    prob_count = NegativeBinomial(p, n).pmf(Y)
+    # available_indices = torch.where(avX[0, :] == 1)[0]
+    # expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
 
-    for jj in imp_target:
-        # Calculate metrics for assay jj
-        count_true = Y[:, jj].numpy()
-        pval_true = P[:, jj].numpy()
+    # available_assays = list(candi.dataset.navigation[bios_name].keys())
+    # print("available assays: ", available_assays)
 
-        prob_pval_jj = prob_pval[:, jj]
-        prob_count_jj = prob_count[:, jj]
+    # # Create distributions and get means
+    # Y = Y.view(-1, Y.shape[-1])
+    # P = P.view(-1, P.shape[-1])
+
+    # if crop_edges:
+    #     n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+    # else:
+    #     n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+
+    # pval_mean = Gaussian(mu, var).mean()
+    # count_mean = NegativeBinomial(p, n).mean()
+
+    # prob_pval = Gaussian(mu, var).pdf(P)
+    # prob_count = NegativeBinomial(p, n).pmf(Y)
+
+    # for jj in imp_target:
+    #     # Calculate metrics for assay jj
+    #     count_true = Y[:, jj].numpy()
+    #     pval_true = P[:, jj].numpy()
+
+    #     prob_pval_jj = prob_pval[:, jj]
+    #     prob_count_jj = prob_count[:, jj]
         
-        # Get predictions
-        count_pred = count_mean[:, jj].numpy()
-        pval_pred = pval_mean[:, jj].numpy()
+    #     # Get predictions
+    #     count_pred = count_mean[:, jj].numpy()
+    #     pval_pred = pval_mean[:, jj].numpy()
 
-        pval_pred = np.sinh(pval_pred)
-        pval_true = np.sinh(pval_true)
+    #     pval_pred = np.sinh(pval_pred)
+    #     pval_true = np.sinh(pval_true)
 
-        imp_pval_dist_idx = Gaussian(mu_imp[:, jj], var_imp[:, jj])
-        imp_count_dist_idx = NegativeBinomial(p_imp[:, jj], n_imp[:, jj])
+    #     imp_pval_dist_idx = Gaussian(mu_imp[:, jj], var_imp[:, jj])
+    #     imp_count_dist_idx = NegativeBinomial(p_imp[:, jj], n_imp[:, jj])
 
-        ups_pval_dist_idx = Gaussian(mu_ups[:, jj], var_ups[:, jj])
-        ups_count_dist_idx = NegativeBinomial(p_ups[:, jj], n_ups[:, jj])
+    #     ups_pval_dist_idx = Gaussian(mu_ups[:, jj], var_ups[:, jj])
+    #     ups_count_dist_idx = NegativeBinomial(p_ups[:, jj], n_ups[:, jj])
 
 ################################################################################
 if __name__ == "__main__":
