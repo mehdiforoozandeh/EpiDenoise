@@ -2156,6 +2156,8 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
             print(f"assay: {expnames[available_X_indices[jj]]}")
             pval_dist = Gaussian(ups_pval_dist.mu[:, jj], ups_pval_dist.var[:, jj])
             count_dist = NegativeBinomial(ups_count_dist.p[:, jj], ups_count_dist.n[:, jj])
+            pval_true = P[:, jj].numpy()
+            count_true = Y[:, jj].numpy()
 
             if jj in available_Y_indices:
                 viz_calibration_eic(
