@@ -93,12 +93,13 @@ def viz_feature_importance(df, savedir="models/output/"):
                     std_val = 0
                 if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
                     plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-                            ha='center', va='center',
+                            ha='center', va='center', fontsize=6,
                             color='white' if mean_val > (mean_pivot.max().max() - mean_pivot.min().min()) / 2 else 'black')
         
         plt.title(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
         plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
     def plot_metric_correlations(df):
@@ -118,6 +119,7 @@ def viz_feature_importance(df, savedir="models/output/"):
             ]
         sns.pairplot(df[metrics], diag_kind='kde', size=1.5)
         plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{savedir}/metric_correlations.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
     metrics_to_plot = [
@@ -139,6 +141,86 @@ def viz_feature_importance(df, savedir="models/output/"):
         plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
     
     plot_metric_correlations(df)
+
+def viz_eic_metrics(data, savedir="models/output/"):
+    # Split the data into IMP and UPS DataFrames based on the `comparison` column
+    imp_data = data[data['comparison'] == 'imputed']
+    ups_data = data[data['comparison'] == 'upsampled']
+    metrics = [col for col in imp_data.columns if col not in ['comparison', 'experiment', 'bios_name']]
+    
+    def create_individual_boxplot(data, metrics, category):
+        for metric in metrics:
+            # Skip specific metrics
+            if "pp" in metric.lower() or "r2" in metric.lower():
+                continue
+            plt.figure(figsize=(8, 6))
+            sns.boxplot(
+                data=data,
+                x='experiment',
+                y=metric,
+                palette='viridis'  # Customize color palette if needed
+            )
+            plt.title(f'{category} Metric: {metric}', fontsize=14)
+            plt.ylabel(metric, fontsize=12)
+            plt.xlabel('Experiment', fontsize=12)
+            plt.xticks(rotation=90)  # Rotate x-axis labels for readability
+            plt.tight_layout()
+            # Use log scale for y-axis if metric is MSE
+            if "mse" in metric.lower():
+                plt.yscale('log')
+            # Save the plot to the specified directory
+            save_path = f"{savedir}/{category}_{metric}.png"
+            plt.savefig(save_path)
+            plt.show()
+            plt.close()
+
+    # Generate boxplots for IMP metrics
+    if not imp_data.empty:
+        create_individual_boxplot(imp_data, metrics, category="IMP")
+    
+    # Generate boxplots for UPS metrics
+    if not ups_data.empty:
+        create_individual_boxplot(ups_data, metrics, category="UPS")
+
+def viz_full_metrics(data, savedir="models/output/"):
+    # Separate metrics into two categories: imp_metrics and ups_metrics
+    imp_metrics = [col for col in data.columns if 'imp' in col.lower()]
+    ups_metrics = [col for col in data.columns if 'ups' in col.lower()]
+    
+    def create_individual_boxplot(data, metrics, category):
+        for metric in metrics:
+            if "pp" in metric.lower() or "r2" in metric.lower():
+                continue
+            plt.figure(figsize=(8, 6))
+            sns.boxplot(
+                data=data,
+                x='experiment',
+                y=metric,
+                # hue='bios_name',  # Color points based on celltype
+                # alpha=0.7,
+                # palette='viridis'
+            )
+            plt.title(f'{category} Metric: {metric}', fontsize=14)
+            plt.ylabel(metric, fontsize=12)
+            plt.xlabel('Experiment', fontsize=12)
+            plt.xticks(rotation=90)  # Rotate x-axis labels 90 degrees
+            # plt.legend(title='Cell Type', loc='upper right', fontsize=10)
+            plt.tight_layout()
+            if "mse" in metric.lower():
+                plt.yscale('log')
+            # Save the plot to the specified directory
+            save_path = f"{savedir}/{category}_{metric}.png"
+            plt.savefig(save_path)
+            plt.show()
+            plt.close()
+
+    # Create individual plots for imp_metrics
+    if imp_metrics:
+        create_individual_boxplot(data, imp_metrics, category="IMP")
+    
+    # Create individual plots for ups_metrics
+    if ups_metrics:
+        create_individual_boxplot(data, ups_metrics, category="UPS")
 
 ################################################################################
 
@@ -2338,7 +2420,6 @@ if __name__ == "__main__":
             df = pd.DataFrame(results)
             df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
             print(df)
-            print(df.columns)
     
     elif sys.argv[1] == "eval_full_bios":
     
@@ -2398,12 +2479,6 @@ if __name__ == "__main__":
             print(f"Error processing {bios_name}: {e}")
 
     elif sys.argv[1] == "assay_importance":
-        if os.path.exists("models/output/assay_importance.csv"):
-            print("Assay importance already computed")
-            df = pd.read_csv("models/output/assay_importance.csv")
-            print(df)
-            viz_feature_importance(df, savedir="models/output/")
-            exit()
 
         model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
@@ -2469,5 +2544,44 @@ if __name__ == "__main__":
         print(df)
 
         df.to_csv("models/output/assay_importance.csv", index=False)
+
+    elif sys.argv[1] == "viz":
+        # if os.path.exists("models/output/assay_importance.csv"):
+        #     df = pd.read_csv("models/output/assay_importance.csv")
+        #     viz_feature_importance(df, savedir="models/output/")
+        # else:
+        #     print("Assay importance not computed")
+
+        ###################################################### 
+        
+        # if os.path.exists("models/output/eic_test_metrics.csv"):
+        #     df = pd.read_csv("models/output/eic_test_metrics.csv")
+        #     viz_eic_metrics(df, savedir="models/output/")
+        # else:
+        #     print("EIC test metrics not computed")
+        
+        ######################################################
+
+        if os.path.exists("models/output/full_test_metrics.csv"):
+            df = pd.read_csv("models/output/full_test_metrics.csv")
+            viz_full_metrics(df, savedir="models/output/")
+        else:
+            print("Full test metrics not computed")  
+
+        ######################################################
+
+        # if os.path.exists("models/output/eic_val_metrics.csv"):
+        #     df = pd.read_csv("models/output/eic_val_metrics.csv")
+        #     viz_eic_metrics(df, savedir="models/output/")
+        # else:
+        #     print("EIC val metrics not computed")   
+
+        ######################################################
+
+        # if os.path.exists("models/output/full_val_metrics.csv"):
+        #     df = pd.read_csv("models/output/full_val_metrics.csv")
+        #     viz_full_metrics(df, savedir="models/output/")
+        # else:
+        #     print("Full val metrics not computed")  
 
         

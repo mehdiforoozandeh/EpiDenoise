@@ -4368,7 +4368,7 @@ def main():
         ec.viz_all(dsf=1)
     else:
         res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
-        ec.viz_bios(eval_res=res)
+        # ec.viz_bios(eval_res=res)
         res = ec.filter_res(res)
         print(pd.DataFrame(res))
 
