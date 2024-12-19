@@ -184,6 +184,9 @@ def viz_calibration(
     imp_pval_dist, ups_pval_dist, imp_count_dist, ups_count_dist,
     pval_true, count_true, title, savedir="models/output/"):
 
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+
     # calibration curve
     imp_pval_calibration = confidence_calibration(imp_pval_dist, pval_true)
     ups_pval_calibration = confidence_calibration(ups_pval_dist, pval_true)
@@ -2112,7 +2115,7 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
 
             viz_calibration(
                 imp_pval_dist_idx, ups_pval_dist_idx, imp_count_dist_idx, ups_count_dist_idx,
-                pval_true, count_true, f"{expnames[jj]}", savedir="models/output/")
+                pval_true, count_true, f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
@@ -2627,10 +2630,13 @@ if __name__ == "__main__":
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
         candi.chr = "chr21"
 
-        metrics = {}
-        bios_names = list(candi.dataset.navigation.keys())
-        for bios_name in bios_names:
-            metrics[bios_name] = calibration_curve(candi, bios_name)
+        if sys.argv[2] == "all":
+            bios_names = list(candi.dataset.navigation.keys())
+            for bios_name in bios_names:
+                calibration_curve(candi, bios_name)
+        else:
+            bios_name = sys.argv[2]
+            calibration_curve(candi, bios_name)
 
     elif sys.argv[1] == "viz":
         # if os.path.exists("models/output/assay_importance.csv"):
