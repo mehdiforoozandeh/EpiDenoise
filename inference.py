@@ -2108,6 +2108,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
 def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
 
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+    print(X.shape)
 
     if not eic:
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
