@@ -196,9 +196,29 @@ def viz_calibration(
     fig = plot_calibration_grid(
         [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
         ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
-    fig.savefig(f"{savedir}/calibration_curve_{title}.png")
-    print(f"saved calibration curve to {savedir}/calibration_curve_{title}.png")
+    fig.savefig(f"{savedir}/calibration_curve_{title}.png", dpi=300, bbox_inches='tight')
+    fig.savefig(f"{savedir}/calibration_curve_{title}.svg", format="svg", bbox_inches='tight')
+
     plt.close(fig)
+
+def viz_calibration_eic(pval_dist, count_dist, pval_true, count_true, comparison, title, savedir="models/output/"):
+
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+
+    # calibration curve
+    pval_calibration = confidence_calibration(pval_dist, pval_true)
+    count_calibration = confidence_calibration(count_dist, count_true)
+
+    fig = plot_calibration_grid(
+        [pval_calibration, count_calibration],
+        [f"{comparison} signal", f"{comparison} count"])
+    fig.savefig(f"{savedir}/calibration_curve_{title}.png", dpi=300, bbox_inches='tight')
+    fig.savefig(f"{savedir}/calibration_curve_{title}.svg", format="svg", bbox_inches='tight')
+
+    plt.close(fig)
+
+
 
 def viz_signal_tracks(data, savedir="models/output/"):
     pass
@@ -255,23 +275,31 @@ def confidence_calibration(dist, true, n_bins=20):
     
     return calibration
 
-def plot_calibration_grid(calibrations, titles, figsize=(12, 12)):
+def plot_calibration_grid(calibrations, titles):
     """
-    Visualize 4 calibration curves in a 2x2 grid.
+    Visualize calibration curves in a grid layout based on the number of calibrations.
     
     Parameters:
-    - calibrations: list of 4 calibration outputs, where each calibration output
+    - calibrations: list of calibration outputs, where each calibration output
                    is a list of [c, empirical] pairs
-    - titles: list of 4 strings for subplot titles
+    - titles: list of strings for subplot titles
     - figsize: tuple specifying figure size (width, height)
     
     Returns:
     - fig: matplotlib figure object
     """
     
-    # Create figure and subplots
-    fig, axes = plt.subplots(2, 2, figsize=figsize)
-    axes = axes.flatten()
+    # Determine the number of subplots needed
+    num_calibrations = len(calibrations)
+    
+    # Create figure and subplots based on the number of calibrations
+    if num_calibrations == 4:
+        fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+        axes = axes.flatten()
+    elif num_calibrations == 2:
+        fig, axes = plt.subplots(2, 1, figsize=(12, 6))
+    else:
+        raise ValueError("Number of calibrations must be 2 or 4.")
     
     # Reference line points (perfect calibration)
     ref_line = np.linspace(0, 1, 100)
@@ -917,7 +945,7 @@ class CANDIPredictor:
         count_dist = NegativeBinomial(p, n)
         pval_dist = Gaussian(mu, var)
         
-        return count_dist.mean(), pval_dist.mean()
+        return count_dist.expect(), pval_dist.expect()
 
     def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, crop_edges=True, return_preds=False):
         available_indices = torch.where(avX[0, :] == 1)[0]
@@ -954,13 +982,13 @@ class CANDIPredictor:
         
         imp_count_dist = NegativeBinomial(p_imp, n_imp)
         ups_count_dist = NegativeBinomial(p_ups, n_ups)
-        imp_count_mean = imp_count_dist.mean()
-        ups_count_mean = ups_count_dist.mean()
+        imp_count_mean = imp_count_dist.expect()
+        ups_count_mean = ups_count_dist.expect()
         
         imp_pval_dist = Gaussian(mu_imp, var_imp)
         ups_pval_dist = Gaussian(mu_ups, var_ups)
-        imp_pval_mean = imp_pval_dist.mean()
-        ups_pval_mean = ups_pval_dist.mean()
+        imp_pval_mean = imp_pval_dist.expect()
+        ups_pval_mean = ups_pval_dist.expect()
 
         prob_imp_pval = imp_pval_dist.pdf(P)
         prob_imp_count = imp_count_dist.pmf(Y)
@@ -1113,10 +1141,10 @@ class CANDIPredictor:
         X = X.view(-1, X.shape[-1])
 
         ups_count_dist = NegativeBinomial(p, n)
-        ups_count_mean = ups_count_dist.mean()
+        ups_count_mean = ups_count_dist.expect()
         
         ups_pval_dist = Gaussian(mu, var)
-        ups_pval_mean = ups_pval_dist.mean()
+        ups_pval_mean = ups_pval_dist.expect()
 
         prob_ups_pval = ups_pval_dist.pdf(P)
         prob_ups_count = ups_count_dist.pmf(Y)
@@ -1949,8 +1977,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
         pval_dist = Gaussian(mu, var)
         count_dist = NegativeBinomial(p, n)
 
-        pval_mean = pval_dist.mean()
-        count_mean = count_dist.mean()
+        pval_mean = pval_dist.expect()
+        count_mean = count_dist.expect()
 
         prob_pval = pval_dist.pdf(P)
         prob_count = count_dist.pmf(Y)
@@ -1989,8 +2017,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
         pval_dist = Gaussian(mu, var)
         count_dist = NegativeBinomial(p, n)
 
-        pval_mean = pval_dist.mean()
-        count_mean = count_dist.mean()
+        pval_mean = pval_dist.expect()
+        count_mean = count_dist.expect()
 
         prob_pval = pval_dist.pdf(P)
         prob_count = count_dist.pmf(Y)
@@ -2029,8 +2057,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
         pval_dist = Gaussian(mu, var)
         count_dist = NegativeBinomial(p, n)
 
-        pval_mean = pval_dist.mean()
-        count_mean = count_dist.mean()
+        pval_mean = pval_dist.expect()
+        count_mean = count_dist.expect()
 
         prob_pval = pval_dist.pdf(P)
         prob_count = count_dist.pmf(Y)
@@ -2067,8 +2095,8 @@ def assay_importance(candi, bios_name, crop_edges=True):
         pval_dist = Gaussian(mu, var)
         count_dist = NegativeBinomial(p, n)
 
-        pval_mean = pval_dist.mean()
-        count_mean = count_dist.mean()
+        pval_mean = pval_dist.expect()
+        count_mean = count_dist.expect()
 
         prob_pval = pval_dist.pdf(P)
         prob_count = count_dist.pmf(Y)
@@ -2121,68 +2149,28 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
             X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True, crop_edges=crop_edges)
 
+        available_X_indices = torch.where(avX[0, :] == 1)[0]
+        available_Y_indices = torch.where(avY[0, :] == 1)[0]
+
+        for jj in range(len(available_X_indices)):
+            print(f"assay: {expnames[available_X_indices[jj]]}")
+            pval_dist = Gaussian(ups_pval_dist.mu[:, jj], ups_pval_dist.var[:, jj])
+            count_dist = NegativeBinomial(ups_count_dist.p[:, jj], ups_count_dist.n[:, jj])
+
+            if jj in available_Y_indices:
+                viz_calibration_eic(
+                    pval_dist, count_dist, pval_true, count_true, "imputed", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
+
+            elif jj in available_X_indices:
+                viz_calibration_eic(
+                    pval_dist, count_dist, pval_true, count_true, "upsampled", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
+                
+            else:
+                continue
+
     # exit()
     # print(bios_name)
 
-    # available_indices = torch.where(avX[0, :] == 1)[0]
-    
-
-    # available_assays = list(candi.dataset.navigation[bios_name].keys())
-    # print("available assays: ", available_assays)
-
-    # # Create distributions and get means
-    # Y = Y.view(-1, Y.shape[-1])
-    # P = P.view(-1, P.shape[-1])
-
-    # pval_mean = Gaussian(mu, var).mean()
-    # count_mean = NegativeBinomial(p, n).mean()
-
-    # prob_pval = Gaussian(mu, var).pdf(P)
-    # prob_count = NegativeBinomial(p, n).pmf(Y)
-    
-    # return None
-
-    # available_indices = torch.where(avX[0, :] == 1)[0]
-    # expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-
-    # available_assays = list(candi.dataset.navigation[bios_name].keys())
-    # print("available assays: ", available_assays)
-
-    # # Create distributions and get means
-    # Y = Y.view(-1, Y.shape[-1])
-    # P = P.view(-1, P.shape[-1])
-
-    # if crop_edges:
-    #     n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
-    # else:
-    #     n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=[], seq=seq)
-
-    # pval_mean = Gaussian(mu, var).mean()
-    # count_mean = NegativeBinomial(p, n).mean()
-
-    # prob_pval = Gaussian(mu, var).pdf(P)
-    # prob_count = NegativeBinomial(p, n).pmf(Y)
-
-    # for jj in imp_target:
-    #     # Calculate metrics for assay jj
-    #     count_true = Y[:, jj].numpy()
-    #     pval_true = P[:, jj].numpy()
-
-    #     prob_pval_jj = prob_pval[:, jj]
-    #     prob_count_jj = prob_count[:, jj]
-        
-    #     # Get predictions
-    #     count_pred = count_mean[:, jj].numpy()
-    #     pval_pred = pval_mean[:, jj].numpy()
-
-    #     pval_pred = np.sinh(pval_pred)
-    #     pval_true = np.sinh(pval_true)
-
-    #     imp_pval_dist_idx = Gaussian(mu_imp[:, jj], var_imp[:, jj])
-    #     imp_count_dist_idx = NegativeBinomial(p_imp[:, jj], n_imp[:, jj])
-
-    #     ups_pval_dist_idx = Gaussian(mu_ups[:, jj], var_ups[:, jj])
-    #     ups_count_dist_idx = NegativeBinomial(p_ups[:, jj], n_ups[:, jj])
 
 ################################################################################
 if __name__ == "__main__":
@@ -2619,13 +2607,13 @@ if __name__ == "__main__":
         df.to_csv("models/output/assay_importance.csv", index=False)
 
     elif sys.argv[1] == "viz_calibration":
-        model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
-        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
-        eic = False
+        # model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
+        # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
+        # eic = False
 
-        # model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
-        # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
-        # eic = True
+        model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
+        hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
+        eic = True
 
         candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
         candi.chr = "chr21"
