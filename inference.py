@@ -2111,11 +2111,11 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
 
     if not eic:
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
-            X, mX, mY, avX, Y, P, return_preds=True)
+            X, mX, mY, avX, Y, P, seq=seq, return_preds=True)
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
-            X, mX, mY, avX, Y, P, avY, return_preds=True)
+            X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True)
 
     return None
 
