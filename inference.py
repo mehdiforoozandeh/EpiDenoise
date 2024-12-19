@@ -2129,6 +2129,7 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
         # Create distributions and get means
         Y = Y.view(-1, Y.shape[-1])
         P = P.view(-1, P.shape[-1])
+        X = X.view(-1, X.shape[-1])
 
         available_indices = torch.where(avX[0, :] == 1)[0]
         for jj in available_indices:
