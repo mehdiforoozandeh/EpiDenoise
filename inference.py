@@ -2126,10 +2126,8 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
             X, mX, mY, avX, Y, P, seq=seq, return_preds=True, crop_edges=crop_edges)
         
-        # Create distributions and get means
         Y = Y.view(-1, Y.shape[-1])
         P = P.view(-1, P.shape[-1])
-        X = X.view(-1, X.shape[-1])
 
         available_indices = torch.where(avX[0, :] == 1)[0]
         for jj in available_indices:
@@ -2149,6 +2147,10 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
             X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True, crop_edges=crop_edges)
+
+        Y = Y.view(-1, Y.shape[-1])
+        P = P.view(-1, P.shape[-1])
+        X = X.view(-1, X.shape[-1])
 
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
