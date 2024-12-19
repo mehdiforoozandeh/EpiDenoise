@@ -4232,6 +4232,8 @@ class EVAL_CANDI(object):
         else:
             X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf) 
 
+        print(X.shape, Y.shape, P.shape)
+
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
@@ -4245,6 +4247,8 @@ class EVAL_CANDI(object):
 
         mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
         var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+        
+        print(p_ups.shape, n_ups.shape, mu_ups.shape, var_ups.shape)
 
         ups_count_dist = NegativeBinomial(p_ups, n_ups)
         ups_pval_dist = Gaussian(mu_ups, var_ups)
@@ -4252,6 +4256,8 @@ class EVAL_CANDI(object):
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1])
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+
+        print("getting metrics")
 
         eval_res = self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
         return eval_res
