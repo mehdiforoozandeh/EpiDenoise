@@ -2621,10 +2621,10 @@ if __name__ == "__main__":
         if sys.argv[2] == "all":
             bios_names = list(candi.dataset.navigation.keys())
             for bios_name in bios_names:
-                calibration_curve(candi, bios_name)
+                calibration_curve(candi, bios_name, eic=eic)
         else:
             bios_name = sys.argv[2]
-            calibration_curve(candi, bios_name)
+            calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
         # if os.path.exists("models/output/assay_importance.csv"):
