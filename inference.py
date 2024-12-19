@@ -15,48 +15,6 @@ from sklearn.decomposition import PCA
 import umap, scipy
 from difflib import SequenceMatcher
 
-################################################################################
-
-# perplexity
-# start_time = time.time()
-# imp_pp_pval =  perplexity(prob_imp_pval[:, idx])
-# imp_pp_count = perplexity(prob_imp_count[:, idx])
-# ups_pp_pval =  perplexity(prob_ups_pval[:, idx])
-# ups_pp_count = perplexity(prob_ups_count[:, idx])
-# end_time = time.time()
-# print(f"Perplexity calculations took {end_time - start_time:.4f} seconds")
-
-# assay distributions
-# imp_pval_dist_idx = Gaussian(mu_imp[:, idx], var_imp[:, idx])
-# ups_pval_dist_idx = Gaussian(mu_ups[:, idx], var_ups[:, idx])
-# imp_count_dist_idx = NegativeBinomial(p_imp[:, idx], n_imp[:, idx])
-# ups_count_dist_idx = NegativeBinomial(p_ups[:, idx], n_ups[:, idx])
-
-# calibration curve
-# imp_pval_calibration = confidence_calibration(imp_pval_dist_idx, pval_true)
-# ups_pval_calibration = confidence_calibration(ups_pval_dist_idx, pval_true)
-# imp_count_calibration = confidence_calibration(imp_count_dist_idx, count_true)
-# ups_count_calibration = confidence_calibration(ups_count_dist_idx, count_true)
-
-# print(imp_pval_calibration[0], ups_pval_calibration[0], imp_count_calibration[0], ups_count_calibration[0])
-# print(imp_pval_calibration[-1], ups_pval_calibration[-1], imp_count_calibration[-1], ups_count_calibration[-1])
-
-# fig = plot_calibration_grid(
-#     [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
-#     ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
-# fig.savefig(f"output/calibration_curve_{expnames[idx]}.png")
-# plt.close(fig)
-
-# fraction within 95% CI pval
-# start_time = time.time()
-# imp_pval_95ci = fraction_within_ci(imp_pval_dist_idx, pval_true, c=0.95)
-# ups_pval_95ci = fraction_within_ci(ups_pval_dist_idx, pval_true, c=0.95)
-
-# fraction within 95% CI count
-# imp_count_95ci = fraction_within_ci(imp_count_dist_idx, count_true, c=0.95)
-# ups_count_95ci = fraction_within_ci(ups_count_dist_idx, count_true, c=0.95)
-# end_time = time.time()
-# print(f"95% CI calculations took {end_time - start_time:.4f} seconds")
 
 ################################################################################
 metrics_class = METRICS()
@@ -221,6 +179,38 @@ def viz_full_metrics(data, savedir="models/output/"):
     # Create individual plots for ups_metrics
     if ups_metrics:
         create_individual_boxplot(data, ups_metrics, category="UPS")
+
+def viz_calibration(
+    imp_pval_dist, ups_pval_dist, imp_count_dist, ups_count_dist,
+    pval_true, count_true, savedir="models/output/"):
+
+    # calibration curve
+    imp_pval_calibration = confidence_calibration(imp_pval_dist, pval_true)
+    ups_pval_calibration = confidence_calibration(ups_pval_dist, pval_true)
+    imp_count_calibration = confidence_calibration(imp_count_dist, count_true)
+    ups_count_calibration = confidence_calibration(ups_count_dist, count_true)
+
+    fig = plot_calibration_grid(
+        [imp_pval_calibration, ups_pval_calibration, imp_count_calibration, ups_count_calibration],
+        ["Imputed signal", "Upsampled signal", "Imputed count", "Upsampled count"])
+    fig.savefig(f"{savedir}/calibration_curve.png")
+    plt.close(fig)
+
+def viz_signal_tracks(data, savedir="models/output/"):
+    pass
+
+def viz_signal_tracks_confidence(data, savedir="models/output/"):
+    pass
+
+def viz_signal_scatter_with_marginals(data, savedir="models/output/"):
+    pass
+
+def viz_signal_scatter_rank(data, savedir="models/output/"):
+    pass
+
+def viz_signal_scatter_rank_heatmap(data, savedir="models/output/"):
+    pass
+
 
 ################################################################################
 
@@ -1145,6 +1135,9 @@ class CANDIPredictor:
 
         prob_ups_pval = ups_pval_dist.pdf(P)
         prob_ups_count = ups_count_dist.pmf(Y)
+
+        if return_preds:
+            return ups_count_dist, ups_pval_dist
 
         metrics = {}
         for j in range(Y.shape[1]):
@@ -2112,6 +2105,65 @@ def assay_importance(candi, bios_name, crop_edges=True):
 
     return results  
 
+def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
+
+    X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
+
+    if eic:
+        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
+            X, Y, P, seq, mX, mY, avX, avY, return_preds=True)
+
+    else:
+        ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
+            X, Y, P, seq, mX, mY, avX, avY, return_preds=True)
+
+    return None
+
+    # exit()
+
+    available_indices = torch.where(avX[0, :] == 1)[0]
+    expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
+
+    available_assays = list(candi.dataset.navigation[bios_name].keys())
+    print("available assays: ", available_assays)
+
+    # Create distributions and get means
+    Y = Y.view(-1, Y.shape[-1])
+    P = P.view(-1, P.shape[-1])
+
+    if crop_edges:
+        n, p, mu, var, _ = candi.pred_cropped(X, mX, mY, avX, imp_target=[], seq=seq)
+    else:
+        n, p, mu, var, _ = candi.pred(X, mX, mY, avX, imp_target=[], seq=seq)
+
+    pval_mean = Gaussian(mu, var).mean()
+    count_mean = NegativeBinomial(p, n).mean()
+
+    prob_pval = Gaussian(mu, var).pdf(P)
+    prob_count = NegativeBinomial(p, n).pmf(Y)
+
+    for jj in imp_target:
+        # Calculate metrics for assay jj
+        count_true = Y[:, jj].numpy()
+        pval_true = P[:, jj].numpy()
+
+        prob_pval_jj = prob_pval[:, jj]
+        prob_count_jj = prob_count[:, jj]
+        
+        # Get predictions
+        count_pred = count_mean[:, jj].numpy()
+        pval_pred = pval_mean[:, jj].numpy()
+
+        pval_pred = np.sinh(pval_pred)
+        pval_true = np.sinh(pval_true)
+
+        imp_pval_dist_idx = Gaussian(mu_imp[:, jj], var_imp[:, jj])
+        imp_count_dist_idx = NegativeBinomial(p_imp[:, jj], n_imp[:, jj])
+
+        ups_pval_dist_idx = Gaussian(mu_ups[:, jj], var_ups[:, jj])
+        ups_count_dist_idx = NegativeBinomial(p_ups[:, jj], n_ups[:, jj])
+
+################################################################################
 if __name__ == "__main__":
     if sys.argv[1] == "cs_probe":
         model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
@@ -2544,6 +2596,19 @@ if __name__ == "__main__":
         print(df)
 
         df.to_csv("models/output/assay_importance.csv", index=False)
+
+    elif sys.argv[1] == "viz_calibration":
+        model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
+        eic = False
+
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
+        candi.chr = "chr21"
+
+        metrics = {}
+        bios_names = list(candi.dataset.navigation.keys())
+        for bios_name in bios_names:
+            metrics[bios_name] = calibration_curve(candi, bios_name)
 
     elif sys.argv[1] == "viz":
         # if os.path.exists("models/output/assay_importance.csv"):
