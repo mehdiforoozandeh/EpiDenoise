@@ -916,25 +916,7 @@ class CANDIPredictor:
         return count_dist.mean(), pval_dist.mean()
 
     def evaluate_leave_one_out(self, X, mX, mY, avX, Y, P, seq=None, crop_edges=True, return_preds=False):
-        """
-        Performs leave-one-out evaluation and returns metrics for both count and p-value predictions.
-        
-        Returns:
-            Dictionary containing metrics for each feature:
-            {feature_idx: {
-                'count_metrics': {
-                    'imp_pearson': float, 'imp_spearman': float, 'imp_mse': float, 'imp_r2': float,
-                    'ups_pearson': float, 'ups_spearman': float, 'ups_mse': float, 'ups_r2': float,
-                    'p0_bg': float, 'p0_fg': float  # probability of zero in background/foreground
-                },
-                'pval_metrics': {
-                    'imp_pearson': float, 'imp_spearman': float, 'imp_mse': float, 'imp_r2': float,
-                    'ups_pearson': float, 'ups_spearman': float, 'ups_mse': float, 'ups_r2': float
-                }
-            }}
-        """
         available_indices = torch.where(avX[0, :] == 1)[0]
-
         expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         
         # Initialize tensors for imputation predictions
@@ -1046,7 +1028,6 @@ class CANDIPredictor:
                     'imp_one_imp_pearson': imp_metr['one_imp_pearson_pval'], 'ups_one_imp_pearson': ups_metr['one_imp_pearson_pval'],
                     'imp_one_imp_spearman': imp_metr['one_imp_spearman_pval'], 'ups_one_imp_spearman': ups_metr['one_imp_spearman_pval'],
                     'imp_peak_overlap': imp_metr['peak_overlap_pval'], 'ups_peak_overlap': ups_metr['peak_overlap_pval'],
-
                 }
             }
 
@@ -2105,18 +2086,18 @@ def assay_importance(candi, bios_name, crop_edges=True):
 
     return results  
 
-def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
+def calibration_curve(candi, bios_name, crop_edges=False, eic=False):
 
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
     print(X.shape)
 
     if not eic:
         imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
-            X, mX, mY, avX, Y, P, seq=seq, return_preds=True)
+            X, mX, mY, avX, Y, P, seq=seq, return_preds=True, crop_edges=crop_edges)
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
-            X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True)
+            X, mX, mY, avX, Y, P, avY, seq=seq, return_preds=True, crop_edges=crop_edges)
 
     print(bios_name)
     return None
@@ -2601,7 +2582,7 @@ if __name__ == "__main__":
         # model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
         # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         # eic = False
-        
+
         model_path = "models/CANDIeic_DNA_random_mask_Nov28_model_checkpoint_epoch3.pth"
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
         eic = True
