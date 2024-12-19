@@ -297,7 +297,7 @@ def plot_calibration_grid(calibrations, titles):
         fig, axes = plt.subplots(2, 2, figsize=(12, 12))
         axes = axes.flatten()
     elif num_calibrations == 2:
-        fig, axes = plt.subplots(2, 1, figsize=(12, 6))
+        fig, axes = plt.subplots(2, 1, figsize=(6, 12))
     else:
         raise ValueError("Number of calibrations must be 2 or 4.")
     
@@ -2620,13 +2620,17 @@ if __name__ == "__main__":
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
         eic = True
 
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="val")
         candi.chr = "chr21"
 
         if sys.argv[2] == "all":
             bios_names = list(candi.dataset.navigation.keys())
             for bios_name in bios_names:
-                calibration_curve(candi, bios_name, eic=eic)
+                try:
+                    calibration_curve(candi, bios_name, eic=eic)
+                except Exception as e:
+                    print(f"Error processing {bios_name}: {e}")
+                    continue
         else:
             bios_name = sys.argv[2]
             calibration_curve(candi, bios_name, eic=eic)

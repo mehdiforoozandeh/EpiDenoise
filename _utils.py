@@ -135,10 +135,9 @@ class NegativeBinomial:
             return self.median()
 
     def interval(self, confidence=0.95):
-        return nbinom.interval(confidence, self.n, self.p)
-        # lower = self.icdf(q=(1-confidence)/2)
-        # upper = self.icdf(q=(1+confidence)/2)
-        # return lower, upper
+        lower = self.icdf(q=(1-confidence)/2)
+        upper = self.icdf(q=(1+confidence)/2)
+        return lower, upper
 
 
 class MONITOR_VALIDATION(object): # CANDI
