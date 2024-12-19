@@ -2109,17 +2109,15 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
 
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
-    if eic:
-        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
-            X, Y, P, seq, mX, mY, avX, avY, return_preds=True)
+    if not eic:
+        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist = candi.evaluate_leave_one_out(
+            X, mX, mY, avX, Y, P, return_preds=True)
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
-            X, Y, P, seq, mX, mY, avX, avY, return_preds=True)
+            X, mX, mY, avX, Y, P, avY, return_preds=True)
 
     return None
-
-    # exit()
 
     available_indices = torch.where(avX[0, :] == 1)[0]
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
