@@ -3504,11 +3504,9 @@ class EVAL_CANDI(object):
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=3, eic=eic)
 
-        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
-
+        expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+        self.mark_dict = {i: expnames[i] for i in range(len(expnames))}
         print(self.mark_dict)
-        exit()
-
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
