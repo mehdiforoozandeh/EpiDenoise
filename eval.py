@@ -3780,9 +3780,9 @@ class EVAL_CANDI(object):
                         pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
                         count_quantile = self.metrics.confidence_quantile(
-                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], target)
+                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
                         count_p0bgdf = self.metrics.foreground_vs_background(
-                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], target)
+                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
                         
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
