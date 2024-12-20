@@ -2155,7 +2155,7 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
-        for jj in range(len(available_X_indices)):
+        for jj in range(Y.shape[1]):
             print(f"assay: {expnames[available_X_indices[jj]]}")
             pval_dist = Gaussian(ups_pval_dist.mu[:, jj], ups_pval_dist.var[:, jj])
             count_dist = NegativeBinomial(ups_count_dist.p[:, jj], ups_count_dist.n[:, jj])
