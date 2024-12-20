@@ -3798,9 +3798,9 @@ class EVAL_CANDI(object):
                         pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                         count_quantile = self.metrics.confidence_quantile(
-                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
                         count_p0bgdf = self.metrics.foreground_vs_background(
-                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
+                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
 
                     if arcsinh:
                         P_target = np.sinh(P_target)
