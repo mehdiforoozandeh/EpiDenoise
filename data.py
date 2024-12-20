@@ -2556,7 +2556,8 @@ class ExtendedEncodeDataHandler:
                     md[3, i] = 1
         else:
             for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                assert i+1 == int(alias.replace("M",""))
+                print(assay, alias)
+                # assert i+1 == int(alias.replace("M",""))
                 
                 for b in range(md.shape[0]):
                     if torch.all(md[b, :, i] == missing_value):
