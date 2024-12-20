@@ -3504,9 +3504,8 @@ class EVAL_CANDI(object):
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=3, eic=eic)
 
-        expnames = list(self.dataset.aliases["experiment_aliases"].keys())
-        self.mark_dict = {i: expnames[i] for i in range(len(expnames))}
-        print(self.mark_dict)
+        self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+        self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -3555,12 +3554,12 @@ class EVAL_CANDI(object):
         
         pred_features = []
         true_features = []
-        available_assays = [self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"] for a in range(y_pred.shape[1]) if a in list(availability)]
+        available_assays = [self.expnames[a] for a in range(y_pred.shape[1]) if a in list(availability)]
         print(available_assays)
         
         for i in range(len(rna_seq_data)):
             for a in range(y_pred.shape[1]):
-                assay_name = self.mark_dict[f"M{str(a+1).zfill(len(str(len(self.mark_dict))))}"]
+                assay_name = self.expnames[a]
 
                 if a in list(availability):
                     true_signal_a = y_true[:, a].numpy()
@@ -3814,7 +3813,7 @@ class EVAL_CANDI(object):
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
-                        'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                        'feature': self.expnames[j],
                         'comparison': comparison,
                         'available assays': len(availability),
 
@@ -3933,7 +3932,7 @@ class EVAL_CANDI(object):
 
                 metrics = {
                     'bios':bios_name,
-                    'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                    'feature': self.expnames[j],
                     'comparison': "None",
                     'available assays': len(availability),
 
@@ -4010,7 +4009,7 @@ class EVAL_CANDI(object):
 
             metrics = {
                 'bios':bios_name,
-                'feature': self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"],
+                'feature': self.expnames[j],
                 'comparison': comparison,
                 'available assays': len(available_X_indices),
 
