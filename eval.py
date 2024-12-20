@@ -4113,7 +4113,7 @@ class EVAL_CANDI(object):
 
         return results
 
-    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False):
+    def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=True):
         print(f"getting bios vals for {bios_name}")
 
         if self.eic:
