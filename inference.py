@@ -2163,7 +2163,7 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
             count_true = Y[:, jj].numpy()
 
             if jj in available_Y_indices:
-                print(f"imputedassay: {expnames[jj]}")
+                print(f"imputed assay: {expnames[jj]}")
                 viz_calibration_eic(
                     pval_dist, count_dist, pval_true, count_true, "imputed", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
 
@@ -2622,7 +2622,7 @@ if __name__ == "__main__":
         hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Nov28_20241128164234_params45093285.pkl"
         eic = True
 
-        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="val")
+        candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split="test")
         candi.chr = "chr21"
 
         if sys.argv[2] == "all":
