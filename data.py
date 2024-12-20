@@ -2548,24 +2548,29 @@ class ExtendedEncodeDataHandler:
         if len(md.shape) == 2:
             for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                 # assert i+1 == int(alias.replace("M",""))
-                print(assay, alias)
                 
                 if torch.all(md[:, i] == missing_value):
+                    print("missing", assay, alias)
                     md[0, i] = median_lookup[assay]["depth"]
                     md[1, i] = median_lookup[assay]["coverage"] 
                     md[2, i] = median_lookup[assay]["read_length"]
                     md[3, i] = 1
+                else:
+                    print("not missing", assay, alias)
+
         else:
             for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                print(assay, alias)
                 # assert i+1 == int(alias.replace("M",""))
                 
                 for b in range(md.shape[0]):
                     if torch.all(md[b, :, i] == missing_value):
+                        print("missing", assay, alias)
                         md[b, 0, i] = median_lookup[assay]["depth"]
                         md[b, 1, i] = median_lookup[assay]["coverage"]
                         md[b, 2, i] = median_lookup[assay]["read_length"]
                         md[b, 3, i] = 1
+                    else:
+                        print("not missing", assay, alias)
 
         return md
          
