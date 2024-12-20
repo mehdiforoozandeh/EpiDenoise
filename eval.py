@@ -548,6 +548,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.png", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_tracks.svg", format="svg")
 
     def BIOS_signal_confidence(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -621,6 +622,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.pdf", dpi=300)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/confidence_intervals.svg", format="svg")
 
     def BIOS_quantile_scatter(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -670,6 +672,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_scatter.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_scatter.svg", format="svg")
 
     def BIOS_quantile_density(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -720,7 +723,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_density_scatter.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_density_scatter.svg", format="svg")
     def BIOS_quantile_hist(self, eval_res, b=20):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -764,6 +767,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_hist.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_hist.svg", format="svg")
 
     def BIOS_quantile_heatmap(self, eval_res, b=20):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -822,6 +826,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_heatmap.svg", format="svg")
 
     def BIOS_mean_std_scatter(self, eval_res):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -850,7 +855,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.svg", format="svg")
     def BIOS_error_std_hexbin(self, eval_res):
         save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         if not os.path.exists(save_path):
@@ -896,7 +901,7 @@ class VISUALS(object):
         
         plt.tight_layout()
         plt.savefig(f"{save_path}/error_std_hexbin.png", dpi=150)
-        
+        plt.savefig(f"{save_path}/error_std_hexbin.svg", format="svg")
     def BIOS_mean_std_hexbin(self, eval_res):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -924,7 +929,8 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_hexbin.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_hexbin.svg", format="svg")
+        
     def BIOS_signal_scatter(self, eval_res, share_axes=True):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -981,6 +987,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters.svg", format="svg")
 
     def BIOS_signal_scatter_with_marginals(self, eval_res, share_axes=True):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1044,6 +1051,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.svg", format="svg")
 
     def BIOS_signal_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1097,6 +1105,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_heatmaps.svg", format="svg")
         
     def BIOS_signal_scatter_rank(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -1160,6 +1169,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_scatters.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_scatters.svg", format="svg")
     
     def BIOS_signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1217,6 +1227,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.svg", format="svg")
         
     def BIOS_corresp_curve(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -1256,7 +1267,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve.svg", format="svg")
     def BIOS_corresp_curve_deriv(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1295,6 +1306,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve_deriv.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve_deriv.svg", format="svg")
     
     def BIOS_context_length_specific_performance(self, eval_res, context_length, bins=10):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
@@ -1349,7 +1361,7 @@ class VISUALS(object):
         
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/context.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/context.svg", format="svg")
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
         # Sort the dataframe by 'feature'
@@ -1380,7 +1392,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_boxplot.png", dpi=150)
-
+        plt.savefig(f"{self.savedir}/{metric}_boxplot.svg", format="svg")
     def MODEL_regplot_overall(self, df, metric):
         fig, ax = plt.subplots(figsize=(10, 6))
         fig.suptitle('Scatter plots for Imputed and Denoised')
@@ -1407,7 +1419,7 @@ class VISUALS(object):
         ax.legend()
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_overall_regplot.png", dpi=200)
-
+        plt.savefig(f"{self.savedir}/{metric}_overall_regplot.svg", format="svg")
     def MODEL_regplot_perassay(self, df, metric):
         # Get the unique features (assays)
         features = df['feature'].unique()
@@ -1460,6 +1472,7 @@ class VISUALS(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.png", dpi=200)
+        plt.savefig(f"{self.savedir}/{metric}_per_assay_metric.svg", format="svg")
 
 class EVAL_EIC(object): # on chr21
     def __init__(
@@ -4371,7 +4384,7 @@ def main():
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
-        mode="eval", split="val", eic=args.eic, DNA=args.dna)
+        mode="eval", split="test", eic=args.eic, DNA=args.dna)
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
@@ -4386,4 +4399,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # python eval.py -m models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt -hp models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl -d /project/compbio-lab/encode_data/ -s models/output/ --dna A673_grp1_rep2    
