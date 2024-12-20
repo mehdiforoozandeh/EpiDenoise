@@ -3802,7 +3802,6 @@ class EVAL_CANDI(object):
                         count_p0bgdf = self.metrics.foreground_vs_background(
                             ups_count_dist.p[:, j], ups_count_dist.n[:, j], target)
 
-
                     if arcsinh:
                         P_target = np.sinh(P_target)
                         pred_pval = np.sinh(pred_pval)
@@ -3911,6 +3910,9 @@ class EVAL_CANDI(object):
                         metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
 
                     results.append(metrics)
+
+                    if comparison == "imputed":
+                        print(metrics["C_MSE-GW"])
 
             else:
                 pred_count = ups_count_mean[:, j].numpy()
