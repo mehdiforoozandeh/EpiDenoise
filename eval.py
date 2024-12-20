@@ -4370,6 +4370,8 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split="val", eic=args.eic, DNA=args.dna)
 
+    print(ec.dataset.navigation.keys())
+    exit()
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
     else:
@@ -4380,4 +4382,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # python eval.py -m models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt -hp models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl -d /project/compbio-lab/encode_data/ -s models/output/ --dna
     
