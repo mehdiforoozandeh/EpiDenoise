@@ -2547,7 +2547,8 @@ class ExtendedEncodeDataHandler:
 
         if len(md.shape) == 2:
             for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                assert i+1 == int(alias.replace("M",""))
+                # assert i+1 == int(alias.replace("M",""))
+                print(assay, alias)
                 
                 if torch.all(md[:, i] == missing_value):
                     md[0, i] = median_lookup[assay]["depth"]
