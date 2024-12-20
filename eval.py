@@ -3502,9 +3502,13 @@ class EVAL_CANDI(object):
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
         self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=5, eic=eic)
+            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=3, eic=eic)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+
+        print(self.mark_dict)
+        exit()
+
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -3779,10 +3783,10 @@ class EVAL_CANDI(object):
                         pval_lower_95 = imp_pval_lower_95[:, j].numpy()
                         pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
-                        count_quantile = self.metrics.confidence_quantile(
-                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
-                        count_p0bgdf = self.metrics.foreground_vs_background(
-                            imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
+                        # count_quantile = self.metrics.confidence_quantile(
+                        #     imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
+                        # count_p0bgdf = self.metrics.foreground_vs_background(
+                        #     imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
                         
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
@@ -3797,10 +3801,10 @@ class EVAL_CANDI(object):
                         pval_lower_95 = ups_pval_lower_95[:, j].numpy()
                         pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
-                        count_quantile = self.metrics.confidence_quantile(
-                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
-                        count_p0bgdf = self.metrics.foreground_vs_background(
-                            ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
+                        # count_quantile = self.metrics.confidence_quantile(
+                        #     ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
+                        # count_p0bgdf = self.metrics.foreground_vs_background(
+                        #     ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
 
                     if arcsinh:
                         P_target = np.sinh(P_target)
@@ -3831,9 +3835,9 @@ class EVAL_CANDI(object):
                         "pval_lower_95" : pval_lower_95,
                         "pval_upper_95": pval_upper_95,
 
-                        "p0_bg":count_p0bgdf["p0_bg"],
-                        "p0_fg":count_p0bgdf["p0_fg"],
-                        "pred_quantile":count_quantile,
+                        # "p0_bg":count_p0bgdf["p0_bg"],
+                        # "p0_fg":count_p0bgdf["p0_fg"],
+                        # "pred_quantile":count_quantile,
 
                         'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
