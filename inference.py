@@ -2559,6 +2559,8 @@ if __name__ == "__main__":
             DNA=True, eic=eic, split="test")
         expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
         candi.chr = "chr21"
+        print(expnames)
+        exit()
         
         metrics = {}
         bios_names = list(candi.dataset.navigation.keys())
