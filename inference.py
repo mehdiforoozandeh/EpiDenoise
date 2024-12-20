@@ -2156,17 +2156,19 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
         for jj in range(Y.shape[1]):
-            print(f"assay: {expnames[available_X_indices[jj]]}")
+            
             pval_dist = Gaussian(ups_pval_dist.mu[:, jj], ups_pval_dist.var[:, jj])
             count_dist = NegativeBinomial(ups_count_dist.p[:, jj], ups_count_dist.n[:, jj])
             pval_true = P[:, jj].numpy()
             count_true = Y[:, jj].numpy()
 
             if jj in available_Y_indices:
+                print(f"imputedassay: {expnames[jj]}")
                 viz_calibration_eic(
                     pval_dist, count_dist, pval_true, count_true, "imputed", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
 
             elif jj in available_X_indices:
+                print(f"upsampled assay: {expnames[jj]}")
                 viz_calibration_eic(
                     pval_dist, count_dist, pval_true, count_true, "upsampled", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
                 
