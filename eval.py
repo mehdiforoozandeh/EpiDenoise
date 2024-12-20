@@ -3733,6 +3733,8 @@ class EVAL_CANDI(object):
         return n, p, mu, var
 
     def get_metrics(self, imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability, arcsinh=True):
+        print("bingo")
+        exit()
         imp_count_mean = imp_count_dist.expect()
         ups_count_mean = ups_count_dist.expect()
 
@@ -3910,9 +3912,6 @@ class EVAL_CANDI(object):
                         metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
 
                     results.append(metrics)
-
-                    if comparison == "imputed":
-                        print(metrics["C_MSE-GW"])
 
             else:
                 pred_count = ups_count_mean[:, j].numpy()
