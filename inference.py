@@ -24,22 +24,66 @@ def viz_feature_importance(df, savedir="models/output/"):
     if not os.path.exists(savedir):
         os.makedirs(savedir)
 
+    # def plot_metric_heatmap(df, metric, title):
+    #     # Calculate mean and standard deviation
+    #     mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
+    #     std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+
+    #     # Determine the colorbar limits based on the metric
+    #     if "pearson" in metric.lower() or "spearman" in metric.lower(): 
+    #         vmin, vmax = -1, 1
+    #     elif "pp" in metric.lower():
+    #         vmin, vmax = 0, 5
+    #     else:
+    #         vmin, vmax = None, None
+        
+    #     plt.figure(figsize=(12, 8))
+    #     # Create heatmap using means for colors
+    #     sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
+        
+    #     # Add annotations with both mean and std
+    #     for i, row in enumerate(mean_pivot.index):
+    #         for j, col in enumerate(mean_pivot.columns):
+    #             mean_val = mean_pivot.loc[row, col]
+    #             try:
+    #                 std_val = std_pivot.loc[row, col]
+    #             except:
+    #                 std_val = 0
+    #             if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
+    #                 plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+    #                         ha='center', va='center', fontsize=6,
+    #                         color='white' if mean_val > (mean_pivot.max().max() - mean_pivot.min().min()) / 2 else 'black')
+        
+    #     plt.title(f'{title} - {metric}\n(mean ± std)')
+    #     plt.tight_layout()
+    #     plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
+    #     plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
+    #     plt.close()
+
     def plot_metric_heatmap(df, metric, title):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
 
-        # Determine the colorbar limits based on the metric
-        if "pearson" in metric.lower() or "spearman" in metric.lower(): 
-            vmin, vmax = -1, 1
-        elif "pp" in metric.lower():
-            vmin, vmax = 0, 5
-        else:
-            vmin, vmax = None, None
-        
+        # Create figure and axis
         plt.figure(figsize=(12, 8))
-        # Create heatmap using means for colors
-        sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
+        
+        # Create a normalized colormap for each column
+        normalized_data = mean_pivot.copy()
+        for col in mean_pivot.columns:
+            col_data = mean_pivot[col]
+            # if "pearson" in metric.lower() or "spearman" in metric.lower():
+            #     vmin, vmax = -1, 1
+            # elif "pp" in metric.lower():
+            #     vmin, vmax = 0, 5
+            # else:
+            vmin, vmax = col_data.min(), col_data.max()
+            
+            # Normalize the column
+            normalized_data[col] = (col_data - vmin) / (vmax - vmin)
+        
+        # Create heatmap using normalized data
+        sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1)
         
         # Add annotations with both mean and std
         for i, row in enumerate(mean_pivot.index):
@@ -52,7 +96,7 @@ def viz_feature_importance(df, savedir="models/output/"):
                 if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
                     plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
                             ha='center', va='center', fontsize=6,
-                            color='white' if mean_val > (mean_pivot.max().max() - mean_pivot.min().min()) / 2 else 'black')
+                            color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
         
         plt.title(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
@@ -60,21 +104,8 @@ def viz_feature_importance(df, savedir="models/output/"):
         plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
-    def plot_metric_correlations(df):
-        metrics = [
-            'gw_pearson_count', 'gw_pearson_pval', 
-            'gw_pp_count', 'gw_pp_pval', 
-            'gw_spearman_count', 'gw_spearman_pval',
-            'gene_pearson_count', 'gene_pearson_pval', 
-            'gene_spearman_count', 'gene_spearman_pval',
-            'prom_pearson_count', 'prom_pearson_pval', 
-            'prom_spearman_count', 'prom_spearman_pval',
-            'one_obs_pearson_count', 'one_obs_pearson_pval',  
-            'one_obs_spearman_count', 'one_obs_spearman_pval',
-            'one_imp_pearson_count', 'one_imp_pearson_pval', 
-            'one_imp_spearman_count', 'one_imp_spearman_pval',
-            'peak_overlap_count', 'peak_overlap_pval'
-            ]
+    def plot_metric_correlations(df, metrics):
+
         sns.pairplot(df[metrics], diag_kind='kde', size=1.5)
         plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
         plt.savefig(f'{savedir}/metric_correlations.svg', dpi=300, bbox_inches='tight', format='svg')
@@ -98,7 +129,7 @@ def viz_feature_importance(df, savedir="models/output/"):
     for metric in metrics_to_plot:
         plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
     
-    plot_metric_correlations(df)
+    # plot_metric_correlations(df, metrics_to_plot)
 
 def viz_eic_metrics(data, savedir="models/output/"):
     # Split the data into IMP and UPS DataFrames based on the `comparison` column
@@ -217,7 +248,6 @@ def viz_calibration_eic(pval_dist, count_dist, pval_true, count_true, comparison
     fig.savefig(f"{savedir}/calibration_curve_{title}.svg", format="svg", bbox_inches='tight')
 
     plt.close(fig)
-
 
 
 def viz_signal_tracks(data, savedir="models/output/"):
@@ -2638,11 +2668,11 @@ if __name__ == "__main__":
             calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
-        # if os.path.exists("models/output/assay_importance.csv"):
-        #     df = pd.read_csv("models/output/assay_importance.csv")
-        #     viz_feature_importance(df, savedir="models/output/")
-        # else:
-        #     print("Assay importance not computed")
+        if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
+            df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
+            viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        else:
+            print("Assay importance not computed")
 
         ###################################################### 
         
@@ -2654,11 +2684,11 @@ if __name__ == "__main__":
         
         ######################################################
 
-        if os.path.exists("models/output/full_test_metrics.csv"):
-            df = pd.read_csv("models/output/full_test_metrics.csv")
-            viz_full_metrics(df, savedir="models/output/")
-        else:
-            print("Full test metrics not computed")  
+        # if os.path.exists("models/output/full_test_metrics.csv"):
+        #     df = pd.read_csv("models/output/full_test_metrics.csv")
+        #     viz_full_metrics(df, savedir="models/output/")
+        # else:
+        #     print("Full test metrics not computed")  
 
         ######################################################
 
@@ -2675,5 +2705,3 @@ if __name__ == "__main__":
         #     viz_full_metrics(df, savedir="models/output/")
         # else:
         #     print("Full val metrics not computed")  
-
-        

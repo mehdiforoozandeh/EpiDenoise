@@ -4376,6 +4376,7 @@ def main():
     parser.add_argument("--dna", action="store_true", help="Flag to include DNA in the evaluation.")
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
+    parser.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Split to evaluate on. Options: test, val.")
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
     args = parser.parse_args()
@@ -4384,7 +4385,7 @@ def main():
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
-        mode="eval", split="val", eic=args.eic, DNA=args.dna)
+        mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
