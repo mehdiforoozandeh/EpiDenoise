@@ -93,7 +93,13 @@ def viz_feature_importance(df, savedir="models/output/"):
                     std_val = std_pivot.loc[row, col]
                 except:
                     std_val = 0
-                if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
+
+                if not np.isnan(mean_val) and np.isnan(std_val):  # Check if the value exists
+                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
+                            ha='center', va='center', fontsize=6,
+                            color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
+
+                elif not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
                     plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
                             ha='center', va='center', fontsize=6,
                             color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
@@ -249,21 +255,61 @@ def viz_calibration_eic(pval_dist, count_dist, pval_true, count_true, comparison
 
     plt.close(fig)
 
+def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
+    team_id = {
+        'Blind': -1,
+        'Hongyang Li and Yuanfang Guan v1': 3393417,
+        'Average': 100,
+        'Hongyang Li and Yuanfang Guan': 3330254,
+        'Hongyang Li and Yuanfang Guan v2': 3393418,
+        'Song Lab 3': 3393580,
+        'CostaLab': 3379312,
+        'BrokenNodes_v3': 3393817,
+        'imp1': 3393756,
+        'Lavawizard': 3393574,
+        'Guacamole': 3393847,
+        'CUWA': 3393458,
+        'CUImpute1': 3393860,
+        'ICU': 3393861,
+        'imp': 3393457,
+        'LiPingChun': 3388185,
+        'BrokenNodes': 3379072,
+        'Aug2019Imputation': 3393128,
+        'Avocado': 0,
+        'BrokenNodes_v2': 3393606,
+        'UIOWA Michaelson Lab': 3391272,
+        'NittanyLions': 3344979,
+        'KKT-ENCODE-Impute': 3386902,
+        'Song Lab 2': 3393579,
+        'Song Lab': 3389318,
+        'NittanyLions2': 3393851
+    }
+    # Reverse the team_id dictionary to map team names to their IDs
+    reversed_team_id = {v: k for k, v in team_id.items()}
 
-def viz_signal_tracks(data, savedir="models/output/"):
-    pass
+    blind_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM2_ESM.csv")
+    blind_res_after_qnorm = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM3_ESM.csv")
+    blind_res_after_qnorm_reprocessed = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM4_ESM.csv")
 
-def viz_signal_tracks_confidence(data, savedir="models/output/"):
-    pass
+    val_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM6_ESM.csv")
 
-def viz_signal_scatter_with_marginals(data, savedir="models/output/"):
-    pass
+    candieic_val_res = pd.read_csv(f"{res_dir}/eic_val_metrics.csv")
+    candieic_blind_res = pd.read_csv(f"{res_dir}/eic_test_metrics.csv")
 
-def viz_signal_scatter_rank(data, savedir="models/output/"):
-    pass
+    print("Blind Res Raw Head:")
+    print(blind_res_raw.head())
+    print("Blind Res After Qnorm Head:")
+    print(blind_res_after_qnorm.head())
+    print("Blind Res After Qnorm Reprocessed Head:")
+    print(blind_res_after_qnorm_reprocessed.head())
+    print("Val Res Raw Head:")
+    print(val_res_raw.head())
+    print("Candieic Val Res Head:")
+    print(candieic_val_res.head())
+    print("Candieic Blind Res Head:")
+    print(candieic_blind_res.head())
 
-def viz_signal_scatter_rank_heatmap(data, savedir="models/output/"):
-    pass
+
 
 
 ################################################################################
@@ -2668,11 +2714,16 @@ if __name__ == "__main__":
             calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
-        if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
-            df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
-            viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        if os.path.exists("models/DEC18_RESULTS/"):
+            viz_eic_paper_comparison(savedir="models/DEC18_RESULTS/")
         else:
-            print("Assay importance not computed")
+            print("EIC test metrics not computed")
+
+        # if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
+        #     df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
+        #     viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        # else:
+        #     print("Assay importance not computed")
 
         ###################################################### 
         
