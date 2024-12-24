@@ -4387,7 +4387,7 @@ def main():
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
     for k in ec.dataset.navigation.keys():
-        print(ec.dataset.navigation[k].keys())
+        print(k, ec.dataset.navigation[k].keys())
     
     exit()
     if args.bios_name == "all":
