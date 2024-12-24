@@ -15,7 +15,6 @@ from sklearn.decomposition import PCA
 import umap, scipy
 from difflib import SequenceMatcher
 
-
 ################################################################################
 metrics_class = METRICS()
 ################################################################################
@@ -2579,7 +2578,7 @@ def assay_importance(candi, bios_name, crop_edges=True):
 
     return results  
 
-def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
+def calibration_curve(candi, bios_name, crop_edges=True, eic=False, savedir=f"models/output/"):
     expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
     X, Y, P, seq, mX, mY, avX, avY = candi.load_bios(bios_name, x_dsf=1)
 
@@ -2603,7 +2602,7 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
 
             viz_calibration(
                 imp_pval_dist_idx, ups_pval_dist_idx, imp_count_dist_idx, ups_count_dist_idx,
-                pval_true, count_true, f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
+                pval_true, count_true, f"{expnames[jj]}", savedir=f"{savedir}/calibration_{bios_name}/")
 
     else:
         ups_count_dist, ups_pval_dist = candi.evaluate_leave_one_out_eic(
@@ -2626,19 +2625,18 @@ def calibration_curve(candi, bios_name, crop_edges=True, eic=False):
             if jj in available_Y_indices:
                 print(f"imputed assay: {expnames[jj]}")
                 viz_calibration_eic(
-                    pval_dist, count_dist, pval_true, count_true, "imputed", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
+                    pval_dist, count_dist, pval_true, count_true, "imputed", f"{expnames[jj]}", savedir=f"{savedir}/calibration_{bios_name}/")
 
             elif jj in available_X_indices:
                 print(f"upsampled assay: {expnames[jj]}")
                 viz_calibration_eic(
-                    pval_dist, count_dist, pval_true, count_true, "upsampled", f"{expnames[jj]}", savedir=f"models/output/{bios_name}/")
+                    pval_dist, count_dist, pval_true, count_true, "upsampled", f"{expnames[jj]}", savedir=f"{savedir}/calibration_{bios_name}/")
                 
             else:
                 continue
 
     # exit()
     # print(bios_name)
-
 
 ################################################################################
 if __name__ == "__main__":
