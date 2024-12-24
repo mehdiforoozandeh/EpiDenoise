@@ -204,10 +204,10 @@ def viz_full_metrics(data, savedir="models/output/"):
             if "mse" in metric.lower():
                 plt.yscale('log')
             # Save the plot to the specified directory
-            save_path = f"{savedir}/{category}_{metric}.png"
-            plt.savefig(save_path)
-            plt.show()
-            plt.close()
+            plt.savefig(f"{savedir}/{category}_{metric}.png", dpi=300)
+            plt.savefig(f"{savedir}/{category}_{metric}.svg", format="svg")
+            # plt.show()
+            # plt.close()
 
     # Create individual plots for imp_metrics
     if imp_metrics:
@@ -3099,10 +3099,10 @@ if __name__ == "__main__":
             calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
-        if os.path.exists("models/DEC18_RESULTS/"):
-            viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
-        else:
-            print("EIC test metrics not computed")
+        # if os.path.exists("models/DEC18_RESULTS/"):
+        #     viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
+        # else:
+        #     print("EIC test metrics not computed")
 
         # if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
         #     df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
@@ -3120,11 +3120,11 @@ if __name__ == "__main__":
         
         ######################################################
 
-        # if os.path.exists("models/output/full_test_metrics.csv"):
-        #     df = pd.read_csv("models/output/full_test_metrics.csv")
-        #     viz_full_metrics(df, savedir="models/output/")
-        # else:
-        #     print("Full test metrics not computed")  
+        if os.path.exists("models/DEC18_RESULTS/full_test_metrics.csv"):
+            df = pd.read_csv("models/DEC18_RESULTS/full_test_metrics.csv")
+            viz_full_metrics(df, savedir="models/DEC18_RESULTS/")
+        else:
+            print("Full test metrics not computed")  
 
         ######################################################
 

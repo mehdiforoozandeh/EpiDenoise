@@ -724,6 +724,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_density_scatter.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/quantile_density_scatter.svg", format="svg")
+    
     def BIOS_quantile_hist(self, eval_res, b=20):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -856,6 +857,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/mean_std_scatter.svg", format="svg")
+    
     def BIOS_error_std_hexbin(self, eval_res):
         save_path = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         if not os.path.exists(save_path):
@@ -878,7 +880,7 @@ class VISUALS(object):
             x_99 = np.percentile(error, 99.9)
 
             # Define the ranges for subsetting
-            ranges = [(0, x_90), (0, x_99), (0, error.max())]
+            ranges = [(0, x_90), (x_90, x_99), (x_99, error.max())]
 
             for i, (x_min, x_max) in enumerate(ranges):
                 # Subset the data for the current range
@@ -902,6 +904,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{save_path}/error_std_hexbin.png", dpi=150)
         plt.savefig(f"{save_path}/error_std_hexbin.svg", format="svg")
+    
     def BIOS_mean_std_hexbin(self, eval_res):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1268,6 +1271,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/corresp_curve.svg", format="svg")
+    
     def BIOS_corresp_curve_deriv(self, eval_res):
         if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
@@ -1362,6 +1366,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/context.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/context.svg", format="svg")
+    
     def MODEL_boxplot(self, df, metric):
         df = df.copy()
         # Sort the dataframe by 'feature'
@@ -1393,6 +1398,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_boxplot.png", dpi=150)
         plt.savefig(f"{self.savedir}/{metric}_boxplot.svg", format="svg")
+    
     def MODEL_regplot_overall(self, df, metric):
         fig, ax = plt.subplots(figsize=(10, 6))
         fig.suptitle('Scatter plots for Imputed and Denoised')
@@ -1420,6 +1426,7 @@ class VISUALS(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{metric}_overall_regplot.png", dpi=200)
         plt.savefig(f"{self.savedir}/{metric}_overall_regplot.svg", format="svg")
+    
     def MODEL_regplot_perassay(self, df, metric):
         # Get the unique features (assays)
         features = df['feature'].unique()
@@ -4397,6 +4404,7 @@ def main():
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
         else:
             res = ec.bios_pipeline(args.bios_name, args.dsf)
+
         ec.viz_bios(eval_res=res)
         res = ec.filter_res(res)
         print(pd.DataFrame(res))
