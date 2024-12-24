@@ -284,31 +284,246 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
         'Song Lab': 3389318,
         'NittanyLions2': 3393851
     }
+
+    assay_id = {
+        'M01': 'ATAC-seq',
+        'M02': 'DNase-seq',
+        'M03': 'H2AFZ',
+        'M04': 'H2AK5ac',
+        'M05': 'H2AK9ac',
+        'M06': 'H2BK120ac',
+        'M07': 'H2BK12ac',
+        'M08': 'H2BK15ac',
+        'M09': 'H2BK20ac',
+        'M10': 'H2BK5ac',
+        'M11': 'H3F3A',
+        'M12': 'H3K14ac',
+        'M13': 'H3K18ac',
+        'M14': 'H3K23ac',
+        'M15': 'H3K23me2',
+        'M16': 'H3K27ac',
+        'M17': 'H3K27me3',
+        'M18': 'H3K36me3',
+        'M19': 'H3K4ac',
+        'M20': 'H3K4me1',
+        'M21': 'H3K4me2',
+        'M22': 'H3K4me3',
+        'M23': 'H3K56ac',
+        'M24': 'H3K79me1',
+        'M25': 'H3K79me2',
+        'M26': 'H3K9ac',
+        'M27': 'H3K9me1',
+        'M28': 'H3K9me2',
+        'M29': 'H3K9me3',
+        'M30': 'H3T11ph',
+        'M31': 'H4K12ac',
+        'M32': 'H4K20me1',
+        'M33': 'H4K5ac',
+        'M34': 'H4K8ac',
+        'M35': 'H4K91ac'
+    }
+
+    cell_type_id = {
+        'C01': 'adipose_tissue',
+        'C02': 'adrenal_gland',
+        'C03': 'adrenalglandembryonic',
+        'C04': 'amnion',
+        'C05': 'BE2C',
+        'C06': 'brainmicrovascularendothelial_cell',
+        'C07': 'Caco-2',
+        'C08': 'cardiac_fibroblast',
+        'C09': 'CD4-positivealpha-betamemoryTcell',
+        'C10': 'chorion',
+        'C11': 'dermismicrovascularlymphaticvesselendothelial_cell',
+        'C12': 'DND-41',
+        'C13': 'endocrine_pancreas',
+        'C14': 'ES-I3',
+        'C15': 'G401',
+        'C16': 'GM06990',
+        'C17': 'H1-hESC',
+        'C18': 'H9',
+        'C19': 'HAP-1',
+        'C20': 'heartleftventricle',
+        'C21': 'hematopoieticmultipotentprogenitor_cell',
+        'C22': 'HL-60',
+        'C23': 'IMR-90',
+        'C24': 'K562',
+        'C25': 'KMS-11',
+        'C26': 'lowerlegskin',
+        'C27': 'mesenchymalstemcell',
+        'C28': 'MG63',
+        'C29': 'myoepithelialcellofmammarygland',
+        'C30': 'NCI-H460',
+        'C31': 'NCI-H929',
+        'C32': 'neuralstemprogenitor_cell',
+        'C33': 'occipital_lobe',
+        'C34': 'OCI-LY7',
+        'C35': 'omentalfatpad',
+        'C36': 'peripheralbloodmononuclear_cell',
+        'C37': 'prostate',
+        'C38': 'RWPE2',
+        'C39': 'SJCRH30',
+        'C40': 'SJSA1',
+        'C41': 'SK-MEL-5',
+        'C42': 'skin_fibroblast',
+        'C43': 'skinofbody',
+        'C44': 'T47D',
+        'C45': 'testis',
+        'C46': 'trophoblast_cell',
+        'C47': 'upperlobeofleftlung',
+        'C48': 'urinary_bladder',
+        'C49': 'uterus',
+        'C50': 'vagina',
+        'C51': 'WERI-Rb-1'
+    }
+
+    def comparison_stripplot(merged_df, name="val"):
+        """
+        Create separate stripplots for each metric comparing teams across assays,
+        with jittered x positions to prevent overlapping points.
+        """
+        # Get unique teams automatically
+        teams_to_visualize = merged_df['team'].unique()
+        num_teams = len(teams_to_visualize)
+        
+        # Generate color map automatically using a colorblind-friendly palette
+        # Using 'Dark2' colormap which is colorblind-friendly and supports up to 8 colors
+        # For more teams, fall back to 'tab20' which supports up to 20 colors
+        if num_teams <= 8:
+            color_palette = plt.get_cmap('Dark2')
+            colors = [color_palette(i) for i in np.linspace(0, 1, 8)]
+        else:
+            color_palette = plt.get_cmap('tab20')
+            colors = [color_palette(i) for i in np.linspace(0, 1, 20)]
+        
+        # Create dictionaries mapping teams to colors and markers
+        custom_colors = {team: colors[i % len(colors)] for i, team in enumerate(teams_to_visualize)}
+        
+        # List of distinct markers available in matplotlib
+        marker_list = ['*', 's', '^', 'D', 'v', 'o', 'p', 'h', '8', '+', 'x', 'P']
+        custom_markers = {team: marker_list[i % len(marker_list)] for i, team in enumerate(teams_to_visualize)}
+        
+        # Define marker sizes - use larger size for first team (assumed to be the main model)
+        marker_sizes = {team: 160 if team == "CANDI" else 40 for i, team in enumerate(teams_to_visualize)}
+        
+        # Setup for plotting
+        unique_assays = merged_df['assay'].unique()
+        assay_positions = {assay: i for i, assay in enumerate(unique_assays)}
+        jitter_range = 0.3
+        
+        metrics = [
+            ('gwcorr', 'Genome-wide Correlation'),
+            ('gwspear', 'Genome-wide Spearman'),
+            ('mse', 'MSE')
+        ]
+        
+        for metric, title in metrics:
+            plt.figure(figsize=(14, 7))
+            
+            for team in teams_to_visualize:
+                team_data = merged_df[merged_df['team'] == team]
+                
+                x_positions = [assay_positions[assay] + np.random.uniform(-jitter_range, jitter_range) 
+                            for assay in team_data['assay']]
+                
+                # Plot scatter points with team-specific marker size
+                plt.scatter(
+                    x_positions, 
+                    team_data[metric],
+                    label=team,
+                    alpha=0.8,
+                    color=custom_colors[team],
+                    marker=custom_markers[team],
+                    s=marker_sizes[team],
+                    edgecolor='none'
+                )
+            
+            # Customize plot
+            plt.xlabel('Assay')
+            plt.ylabel(title)
+            plt.xticks(list(assay_positions.values()), list(assay_positions.keys()), rotation=90)
+            for i in range(len(unique_assays) - 1):
+                plt.axvline(x=i + 0.5, color='k', linestyle='--', linewidth=0.5)
+            
+            if metric == 'mse':
+                plt.yscale('log')
+                plt.ylabel('MSE')
+            
+            # Custom legend with different marker sizes
+            handles = [
+                plt.Line2D(
+                    [0], [0],
+                    marker=custom_markers[team],
+                    color='w',
+                    label=team,
+                    markerfacecolor=custom_colors[team],
+                    markersize=8 if i == 0 else 6  # Larger marker size for first team in legend
+                ) for i, team in enumerate(teams_to_visualize)
+            ]
+            
+            # Adjust legend position and columns based on number of teams
+            ncols = min(4, num_teams)  # Maximum 4 columns
+            plt.legend(
+                handles=handles,
+                loc='upper center',
+                ncol=ncols,
+                bbox_to_anchor=(0.5, 1.08),
+                frameon=False
+            )
+            
+            plt.tight_layout()
+            plt.show()
+
     # Reverse the team_id dictionary to map team names to their IDs
     reversed_team_id = {v: k for k, v in team_id.items()}
+    reversed_assay_id = {v: k for k, v in assay_id.items()}
+    reversed_cell_type_id = {v: k for k, v in cell_type_id.items()}
 
     blind_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM2_ESM.csv")
     blind_res_after_qnorm = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM3_ESM.csv")
     blind_res_after_qnorm_reprocessed = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM4_ESM.csv")
 
     val_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM6_ESM.csv")
+    val_res_raw = val_res_raw[val_res_raw["bootstraip_id"] == 1].reset_index(drop=True)
+    # select top teams + avocado + average
+    val_res_raw = val_res_raw[val_res_raw["team"].isin([
+        "Avocado_p0", "Average", "BrokenNodes", "LiPingChun",
+        "HongyangLiandYuanfangGuan", "KKT-ENCODE-Impute-model_1"])].reset_index(drop=True)
+
 
     candieic_val_res = pd.read_csv(f"{res_dir}/eic_val_metrics.csv")
+    candieic_val_res = candieic_val_res[candieic_val_res["comparison"] == "imputed"].reset_index(drop=True)
+
     candieic_blind_res = pd.read_csv(f"{res_dir}/eic_test_metrics.csv")
+    candieic_blind_res = candieic_blind_res[candieic_blind_res["comparison"] == "imputed"].reset_index(drop=True)
 
-    print("Blind Res Raw Head:")
-    print(blind_res_raw.head())
-    print("Blind Res After Qnorm Head:")
-    print(blind_res_after_qnorm.head())
-    print("Blind Res After Qnorm Reprocessed Head:")
-    print(blind_res_after_qnorm_reprocessed.head())
-    print("Val Res Raw Head:")
-    print(val_res_raw.head())
-    print("Candieic Val Res Head:")
-    print(candieic_val_res.head())
-    print("Candieic Blind Res Head:")
-    print(candieic_blind_res.head())
+    # compare eic paper val res with candieic val res
+    df1 = val_res_raw[['team', 'assay', 'cell', "mse", "gwcorr", "gwspear"]]
+    df2 = candieic_val_res[["bios_name", "experiment", "pval_ups_gw_mse", "pval_ups_gw_pearson", "pval_ups_gw_spearman"]]
 
+    df1['cell'] = df1['cell'].apply(lambda x: x.replace(" ", "_"))
+    df1['cell'] = df1['cell'].str.replace('H1-hESC', 'H1')
+    df2['cell'] = df2['bios_name'].apply(lambda x: x.replace("V_", ""))
+    df2.drop(columns=['bios_name'], inplace=True)
+
+
+    df2.rename(columns={
+            'experiment': "assay",
+            'pval_ups_gw_mse': 'mse',
+            'pval_ups_gw_pearson': 'gwcorr',
+            'pval_ups_gw_spearman': 'gwspear'}, inplace=True)
+
+    df2['team'] = 'CANDI'
+    merged_df = pd.concat([df1, df2], ignore_index=True)
+    print(merged_df)
+
+        comparison_stripplot(merged_df)
+
+    # compare eic paper blind res with candieic blind res raw
+
+    # compare eic paper blind res with candieic blind res after qnorm
+
+    # compare eic paper blind res with candieic blind res after qnorm reprocessed
 
 
 
@@ -2715,7 +2930,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "viz":
         if os.path.exists("models/DEC18_RESULTS/"):
-            viz_eic_paper_comparison(savedir="models/DEC18_RESULTS/")
+            viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
         else:
             print("EIC test metrics not computed")
 
