@@ -4373,7 +4373,7 @@ def main():
     parser.add_argument("-cl", "--context_length", type=int, default=1200, help="Context length for evaluation.")
     parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
     parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
-    parser.add_argument("--dna", action="store_true", help="Flag to include DNA in the evaluation.")
+    parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
     parser.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Split to evaluate on. Options: test, val.")
@@ -4386,8 +4386,10 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
-    print(ec.dataset.navigation.keys())
-
+    for k in ec.dataset.navigation.keys():
+        print(ec.dataset.navigation[k].keys())
+    
+    exit()
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
     else:
