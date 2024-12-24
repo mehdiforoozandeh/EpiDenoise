@@ -4380,12 +4380,13 @@ def main():
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
     args = parser.parse_args()
-    print(args)
 
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
+
+    print(ec.dataset.navigation.keys())
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)

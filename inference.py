@@ -340,7 +340,7 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
         'C14': 'ES-I3',
         'C15': 'G401',
         'C16': 'GM06990',
-        'C17': 'H1-hESC',
+        'C17': 'H1',
         'C18': 'H9',
         'C19': 'HAP-1',
         'C20': 'heartleftventricle',
@@ -376,14 +376,13 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
         'C50': 'vagina',
         'C51': 'WERI-Rb-1'
     }
-
-    def comparison_stripplot(merged_df, name="val"):
+    def comparison_stripplot(merged_df, name="val", savedir=res_dir):
         """
         Create separate stripplots for each metric comparing teams across assays,
         with jittered x positions to prevent overlapping points.
         """
         # Get unique teams automatically
-        teams_to_visualize = merged_df['team'].unique()
+        teams_to_visualize = ['CANDI'] + [team for team in merged_df['team'].unique() if team != 'CANDI']
         num_teams = len(teams_to_visualize)
         
         # Generate color map automatically using a colorblind-friendly palette
@@ -404,7 +403,7 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
         custom_markers = {team: marker_list[i % len(marker_list)] for i, team in enumerate(teams_to_visualize)}
         
         # Define marker sizes - use larger size for first team (assumed to be the main model)
-        marker_sizes = {team: 160 if team == "CANDI" else 40 for i, team in enumerate(teams_to_visualize)}
+        marker_sizes = {team: 150 if team == "CANDI" else 30 for i, team in enumerate(teams_to_visualize)}
         
         # Setup for plotting
         unique_assays = merged_df['assay'].unique()
@@ -439,15 +438,17 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
                 )
             
             # Customize plot
-            plt.xlabel('Assay')
-            plt.ylabel(title)
-            plt.xticks(list(assay_positions.values()), list(assay_positions.keys()), rotation=90)
+            plt.xlabel('Assay', fontsize=14)  # Increased fontsize by 50%
+            plt.ylabel(title, fontsize=14)  # Increased fontsize by 50%
+            plt.xticks(list(assay_positions.values()), list(assay_positions.keys()), rotation=90, fontsize=12)  # Increased fontsize by 50%
             for i in range(len(unique_assays) - 1):
                 plt.axvline(x=i + 0.5, color='k', linestyle='--', linewidth=0.5)
+
+            # plt.title(name)
             
             if metric == 'mse':
                 plt.yscale('log')
-                plt.ylabel('MSE')
+                plt.ylabel('MSE', fontsize=14)  # Increased fontsize by 50%
             
             # Custom legend with different marker sizes
             handles = [
@@ -457,47 +458,142 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
                     color='w',
                     label=team,
                     markerfacecolor=custom_colors[team],
-                    markersize=8 if i == 0 else 6  # Larger marker size for first team in legend
+                    markersize=15 if team == "CANDI" else 10 
                 ) for i, team in enumerate(teams_to_visualize)
             ]
             
             # Adjust legend position and columns based on number of teams
-            ncols = min(4, num_teams)  # Maximum 4 columns
+            ncols = min(8, num_teams)  # Maximum 4 columns
+            plt.legend(
+                handles=handles,
+                loc='upper center',
+                ncol= ncols,
+                bbox_to_anchor=(0.5, 1.08),
+                frameon=False,
+                # handlelength=2.5  # Increase the length of the legend handle
+            )
+            
+            plt.tight_layout()
+            plt.savefig(f"{savedir}/eic_paper_comparison_{name}_{metric}.png", dpi=300)
+            plt.savefig(f"{savedir}/eic_paper_comparison_{name}_{metric}.svg", format="svg")
+            plt.clf()
+            plt.close()
+            plt.cla()
+            # plt.show()
+
+    def comparison_boxplot(merged_df, name="val", savedir=res_dir):
+        """
+        Create separate boxplots for each metric comparing teams across assays.
+        """
+        # Get unique teams automatically
+        teams_to_visualize = ['CANDI'] + [team for team in merged_df['team'].unique() if team != 'CANDI']
+        num_teams = len(teams_to_visualize)
+        
+        # Generate color map automatically using a colorblind-friendly palette
+        if num_teams <= 8:
+            color_palette = plt.get_cmap('Dark2')
+            colors = [color_palette(i) for i in np.linspace(0, 1, 8)]
+        else:
+            color_palette = plt.get_cmap('tab20')
+            colors = [color_palette(i) for i in np.linspace(0, 1, 20)]
+        
+        # Create dictionary mapping teams to colors
+        custom_colors = {team: colors[i % len(colors)] for i, team in enumerate(teams_to_visualize)}
+        
+        # Setup for plotting
+        unique_assays = merged_df['assay'].unique()
+        assay_positions = {assay: i for i, assay in enumerate(unique_assays)}
+        
+        metrics = [
+            ('gwcorr', 'Genome-wide Correlation'),
+            ('gwspear', 'Genome-wide Spearman'),
+            ('mse', 'MSE')
+        ]
+        
+        for metric, title in metrics:
+            plt.figure(figsize=(14, 7))
+            
+            for i, assay in enumerate(unique_assays):
+                assay_data = merged_df[merged_df['assay'] == assay]
+                
+                # Create boxplot data for each team in the current assay
+                boxplot_data = [
+                    assay_data[assay_data['team'] == team][metric].dropna()
+                    for team in teams_to_visualize
+                ]
+                
+                # Boxplot for the current assay
+                box = plt.boxplot(
+                    boxplot_data,
+                    positions=np.arange(len(teams_to_visualize)) + i * (len(teams_to_visualize) + 1),
+                    patch_artist=True,
+                    widths=0.6,
+                    showcaps=False,
+                    boxprops=dict(linewidth=1.2),
+                    medianprops=dict(color='black'),
+                    whiskerprops=dict(linewidth=1.2)
+                )
+                
+                # Set boxplot colors
+                for patch, team in zip(box['boxes'], teams_to_visualize):
+                    patch.set_facecolor(custom_colors[team])
+            
+            # Customize plot
+            plt.xlabel('Assay', fontsize=14)  # Increased fontsize by 50%
+            plt.ylabel(title, fontsize=14)  # Increased fontsize by 50%
+            xticks_positions = [
+                i * (len(teams_to_visualize) + 1) + len(teams_to_visualize) / 2 - 0.5
+                for i in range(len(unique_assays))
+            ]
+            plt.xticks(xticks_positions, unique_assays, rotation=90, fontsize=12)  # Increased fontsize by 50%
+            
+            for i in range(len(unique_assays) - 1):
+                plt.axvline(x=(i + 1) * (len(teams_to_visualize) + 1) - 1, color='k', linestyle='--', linewidth=0.5)
+            
+            if metric == 'mse':
+                plt.yscale('log')
+                plt.ylabel('MSE', fontsize=14)  # Increased fontsize by 50%
+            
+            # Custom legend
+            handles = [
+                plt.Line2D([0], [0], color=custom_colors[team], lw=4, label=team)
+                for team in teams_to_visualize
+            ]
+            ncols = min(8, num_teams)
             plt.legend(
                 handles=handles,
                 loc='upper center',
                 ncol=ncols,
                 bbox_to_anchor=(0.5, 1.08),
-                frameon=False
+                frameon=False,
+                fontsize=12  # Increased fontsize by 50%
             )
             
             plt.tight_layout()
-            plt.show()
+            plt.savefig(f"{savedir}/eic_paper_comparison_{name}_{metric}_boxplot.png", dpi=300)
+            plt.savefig(f"{savedir}/eic_paper_comparison_{name}_{metric}_boxplot.svg", format="svg")
+            plt.clf()
+            plt.close()
+            plt.cla()
 
     # Reverse the team_id dictionary to map team names to their IDs
     reversed_team_id = {v: k for k, v in team_id.items()}
     reversed_assay_id = {v: k for k, v in assay_id.items()}
     reversed_cell_type_id = {v: k for k, v in cell_type_id.items()}
 
-    blind_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM2_ESM.csv")
-    blind_res_after_qnorm = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM3_ESM.csv")
-    blind_res_after_qnorm_reprocessed = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM4_ESM.csv")
+    ####################################################################################
+    # compare eic paper val res with candieic val res
+    ####################################################################################
 
     val_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM6_ESM.csv")
     val_res_raw = val_res_raw[val_res_raw["bootstraip_id"] == 1].reset_index(drop=True)
-    # select top teams + avocado + average
+
     val_res_raw = val_res_raw[val_res_raw["team"].isin([
         "Avocado_p0", "Average", "BrokenNodes", "LiPingChun",
         "HongyangLiandYuanfangGuan", "KKT-ENCODE-Impute-model_1"])].reset_index(drop=True)
-
-
     candieic_val_res = pd.read_csv(f"{res_dir}/eic_val_metrics.csv")
     candieic_val_res = candieic_val_res[candieic_val_res["comparison"] == "imputed"].reset_index(drop=True)
 
-    candieic_blind_res = pd.read_csv(f"{res_dir}/eic_test_metrics.csv")
-    candieic_blind_res = candieic_blind_res[candieic_blind_res["comparison"] == "imputed"].reset_index(drop=True)
-
-    # compare eic paper val res with candieic val res
     df1 = val_res_raw[['team', 'assay', 'cell', "mse", "gwcorr", "gwspear"]]
     df2 = candieic_val_res[["bios_name", "experiment", "pval_ups_gw_mse", "pval_ups_gw_pearson", "pval_ups_gw_spearman"]]
 
@@ -505,7 +601,6 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
     df1['cell'] = df1['cell'].str.replace('H1-hESC', 'H1')
     df2['cell'] = df2['bios_name'].apply(lambda x: x.replace("V_", ""))
     df2.drop(columns=['bios_name'], inplace=True)
-
 
     df2.rename(columns={
             'experiment': "assay",
@@ -515,17 +610,92 @@ def viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/"):
 
     df2['team'] = 'CANDI'
     merged_df = pd.concat([df1, df2], ignore_index=True)
+
     print(merged_df)
+    comparison_stripplot(merged_df)
+    comparison_boxplot(merged_df)
 
-        comparison_stripplot(merged_df)
+    ####################################################################################
+    ####################################################################################
 
+    candieic_blind_res = pd.read_csv(f"{res_dir}/eic_test_metrics.csv")
+    candieic_blind_res = candieic_blind_res[candieic_blind_res["comparison"] == "imputed"].reset_index(drop=True)
+
+    df1 = candieic_blind_res[["bios_name", "experiment", "pval_ups_gw_mse", "pval_ups_gw_pearson", "pval_ups_gw_spearman"]]
+    df1['cell'] = df1['bios_name'].apply(lambda x: x.replace("B_", ""))
+    df1.drop(columns=['bios_name'], inplace=True)
+    df1.rename(columns={
+            'experiment': "assay",
+            'pval_ups_gw_mse': 'mse',
+            'pval_ups_gw_pearson': 'gwcorr',
+            'pval_ups_gw_spearman': 'gwspear'}, inplace=True)
+    df1['team'] = 'CANDI'
+
+    ####################################################################################
     # compare eic paper blind res with candieic blind res raw
+    ####################################################################################
+    blind_res_raw = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM2_ESM.csv")
+    blind_res_raw = blind_res_raw[blind_res_raw["bootstrap_id"] == 1].reset_index(drop=True)
 
+    df2 = blind_res_raw[['team_id', 'assay', 'cell', "mse", "gwcorr", "gwspear"]]
+    df2['team'] = df2['team_id'].apply(lambda x: reversed_team_id[x])
+    df2 = df2[df2["team"].isin([
+        "Avocado", "Average", "Hongyang Li and Yuanfang Guan v1", "Lavawizard",
+        "Guacamole", "imp"])].reset_index(drop=True)
+
+    df2.drop(columns=['team_id'], inplace=True)
+    df2['cell'] = df2['cell'].apply(lambda x: cell_type_id[x])
+    df2['assay'] = df2['assay'].apply(lambda x: assay_id[x])
+
+    merged_df = pd.concat([df1, df2], ignore_index=True)
+
+    # print(merged_df)
+    comparison_stripplot(merged_df, "raw_blind")
+    comparison_boxplot(merged_df, "raw_blind")
+    
+    ####################################################################################
     # compare eic paper blind res with candieic blind res after qnorm
+    ####################################################################################
+    blind_res_after_qnorm = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM3_ESM.csv")
+    blind_res_after_qnorm = blind_res_after_qnorm[blind_res_after_qnorm["bootstrap_id"] == 1].reset_index(drop=True)
 
-    # compare eic paper blind res with candieic blind res after qnorm reprocessed
+    df2 = blind_res_after_qnorm[['team_id', 'assay', 'cell', "mse", "gwcorr", "gwspear"]]
+    df2['team'] = df2['team_id'].apply(lambda x: reversed_team_id[x])
+    df2 = df2[df2["team"].isin([
+        "Avocado", "Average", "Hongyang Li and Yuanfang Guan v1", "Lavawizard",
+        "Guacamole", "imp"])].reset_index(drop=True)
 
+    df2.drop(columns=['team_id'], inplace=True)
+    df2['cell'] = df2['cell'].apply(lambda x: cell_type_id[x])
+    df2['assay'] = df2['assay'].apply(lambda x: assay_id[x])
 
+    merged_df = pd.concat([df1, df2], ignore_index=True)
+
+    # print(merged_df)
+    comparison_stripplot(merged_df, "qnorm_blind")
+    comparison_boxplot(merged_df, "qnorm_blind")
+
+    ####################################################################################
+    # compare eic paper blind res with candieic blind res after qnorm reprocessed  
+    ####################################################################################
+    blind_res_after_qnorm_reprocessed = pd.read_csv(f"{res_dir}/eic_paper/13059_2023_2915_MOESM4_ESM.csv")
+    blind_res_after_qnorm_reprocessed = blind_res_after_qnorm_reprocessed[blind_res_after_qnorm_reprocessed["bootstrap_id"] == 1].reset_index(drop=True)
+
+    df2 = blind_res_after_qnorm_reprocessed[['team_id', 'assay', 'cell', "mse", "gwcorr", "gwspear"]]
+    df2['team'] = df2['team_id'].apply(lambda x: reversed_team_id[x])
+    df2 = df2[df2["team"].isin([
+        "Avocado", "Average", "Hongyang Li and Yuanfang Guan v1", "Lavawizard",
+        "Guacamole", "imp"])].reset_index(drop=True)
+
+    df2.drop(columns=['team_id'], inplace=True)
+    df2['cell'] = df2['cell'].apply(lambda x: cell_type_id[x])
+    df2['assay'] = df2['assay'].apply(lambda x: assay_id[x])
+
+    merged_df = pd.concat([df1, df2], ignore_index=True)
+
+    # print(merged_df)
+    comparison_stripplot(merged_df, "qnorm_reprocessed_blind")
+    comparison_boxplot(merged_df, "qnorm_reprocessed_blind")
 
 ################################################################################
 
