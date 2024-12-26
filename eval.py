@@ -1794,11 +1794,11 @@ class EVAL_CANDI(object):
 
         print("getting 0.95 interval conf")
 
-        imp_count_lower_95, imp_count_upper_95 = 0,0#imp_count_dist.interval(confidence=0.95)
-        ups_count_lower_95, ups_count_upper_95 = 0,0#ups_count_dist.interval(confidence=0.95)
+        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        imp_pval_lower_95, imp_pval_upper_95 = 0,0#imp_pval_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = 0,0#ups_pval_dist.interval(confidence=0.95)
+        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
