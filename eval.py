@@ -1257,7 +1257,7 @@ class VISUALS_CANDI(object):
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
                 if c == "GW":
-                    xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
+                    xs_orig, ys_orig = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
                     scc = f"SRCC_GW: {eval_res[j]['C_Spearman-GW']:.2f}"
 
                 elif c == "gene":
