@@ -7,6 +7,8 @@ from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
+from matplotlib.colors import LinearSegmentedColormap
+
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from sklearn.svm import SVR
