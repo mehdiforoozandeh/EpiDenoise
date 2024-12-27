@@ -1286,11 +1286,11 @@ class VISUALS_CANDI(object):
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
                 h = h.T  # Transpose to correct the orientation
 
-                # Handle ties by extending values to the left
-                for row in range(h.shape[0]):
-                    for col in range(h.shape[1]-1, 0, -1):
-                        if h[row, col] > 0:
-                            h[row, :col] = np.maximum(h[row, :col], h[row, col] * 0.5)
+                # # Handle ties by extending values to the left
+                # for row in range(h.shape[0]):
+                #     for col in range(h.shape[1]-1, 0, -1):
+                #         if h[row, col] > 0:
+                #             h[row, :col] = np.maximum(h[row, :col], h[row, col] * 0.5)
 
                 # Fill empty spaces with small non-zero value
                 h[h == 0] = h[h > 0].min() * 0.1
@@ -1309,28 +1309,28 @@ class VISUALS_CANDI(object):
                     ax.set_xlim(common_min, common_max)
                     ax.set_ylim(common_min, common_max)
 
-                # Add value ticks in addition to ranks
-                rank_ticks = np.linspace(common_min, common_max, 5)
-                value_ticks_x = np.percentile(xs_orig, np.linspace(0, 100, 5))
-                value_ticks_y = np.percentile(ys_orig, np.linspace(0, 100, 5))
+                # # Add value ticks in addition to ranks
+                # rank_ticks = np.linspace(common_min, common_max, 5)
+                # value_ticks_x = np.percentile(xs_orig, np.linspace(0, 100, 5))
+                # value_ticks_y = np.percentile(ys_orig, np.linspace(0, 100, 5))
 
-                ax2 = ax.twiny()
-                ax3 = ax.twinx()
+                # ax2 = ax.twiny()
+                # ax3 = ax.twinx()
                 
-                ax2.set_xlim(ax.get_xlim())
-                ax3.set_ylim(ax.get_ylim())
+                # ax2.set_xlim(ax.get_xlim())
+                # ax3.set_ylim(ax.get_ylim())
                 
-                ax2.set_xticks(rank_ticks)
-                ax3.set_yticks(rank_ticks)
+                # ax2.set_xticks(rank_ticks)
+                # ax3.set_yticks(rank_ticks)
                 
-                ax2.set_xticklabels([f'{v:.1e}' for v in value_ticks_x], rotation=45)
-                ax3.set_yticklabels([f'{v:.1e}' for v in value_ticks_y])
+                # ax2.set_xticklabels([f'{v:.1e}' for v in value_ticks_x], rotation=45)
+                # ax3.set_yticklabels([f'{v:.1e}' for v in value_ticks_y])
 
-                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
-                ax.set_xlabel("Observed | rank")
-                ax.set_ylabel("Predicted | rank")
+                # ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
+                # ax.set_xlabel("Observed | rank")
+                # ax.set_ylabel("Predicted | rank")
 
-                plt.colorbar(im, ax=ax)
+                # plt.colorbar(im, ax=ax)
 
                 # # Convert values to ranks
                 # xs = rankdata(xs)
