@@ -1301,8 +1301,8 @@ class VISUALS_CANDI(object):
                 ax.set_ylabel("Predicted | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.svg", format="svg")
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.svg", format="svg")
 
     def signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1743,13 +1743,12 @@ class EVAL_CANDI(object):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        print("getting 0.95 interval conf")
+        # print("getting 0.95 interval conf")
+        # imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+        # ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
-        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
-
-        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        # imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+        # ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
@@ -1773,8 +1772,8 @@ class EVAL_CANDI(object):
                         # count_lower_95 = imp_count_lower_95[:, j].numpy()
                         # count_upper_95 = imp_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = imp_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = imp_pval_upper_95[:, j].numpy()
+                        # pval_lower_95 = imp_pval_lower_95[:, j].numpy()
+                        # pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
@@ -1786,13 +1785,13 @@ class EVAL_CANDI(object):
                         # count_lower_95 = ups_count_lower_95[:, j].numpy()
                         # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                        # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                        # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
-                        pval_lower_95 = np.sinh(pval_lower_95)
-                        pval_upper_95 = np.sinh(pval_upper_95)
+                        # pval_lower_95 = np.sinh(pval_lower_95)
+                        # pval_upper_95 = np.sinh(pval_upper_95)
 
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
@@ -1906,10 +1905,10 @@ class EVAL_CANDI(object):
                 # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
                 # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
-                # if arcsinh:
-                #     pred_pval = np.sinh(pred_pval)
-                #     pval_lower_95 = np.sinh(pval_lower_95)
-                #     pval_upper_95 = np.sinh(pval_upper_95)
+                if arcsinh:
+                    pred_pval = np.sinh(pred_pval)
+                    # pval_lower_95 = np.sinh(pval_lower_95)
+                    # pval_upper_95 = np.sinh(pval_upper_95)
 
                 metrics = {
                     'bios':bios_name,
