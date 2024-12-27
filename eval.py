@@ -1273,24 +1273,28 @@ class VISUALS_CANDI(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
                     scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
 
-                xs = rankdata(xs)
-                ys = rankdata(ys)
+                # Rank the values and handle ties
+                xs = rankdata(xs, method="average")  # Use average ranks for ties
+                ys = rankdata(ys, method="average")
 
-                # Calculate 2D histogram
+                # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = np.nan_to_num(h)  # Replace NaN values with 0
-                h = h.T  # Transpose to correct the orientation
-                
-                # Ensure vmin and vmax are valid
-                h_max = np.max(h)
-                h_min = np.min(h[h > 0]) if np.any(h > 0) else 1e-4  # Smallest positive value or a fallback
-                
-                norm = LogNorm(vmin=h_min, vmax=h_max if h_max > h_min else h_min + 1e-4)  # Adjust vmax if needed
-                
+                h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
+                h = h.T
+
+                print(h)
+
+                # Fill gaps caused by ties by extending columns
+                for row in range(h.shape[0]):
+                    for col in range(1, h.shape[1]):
+                        if h[row, col] == 0:
+                            h[row, col] = h[row, col - 1]
+
+                norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust color scaling
                 ax.imshow(
                     h, interpolation='nearest', origin='lower',
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    aspect='auto', cmap=cmocean.cm.deep, norm=norm  # Dark blue/black color map
+                    aspect='auto', cmap=cmocean.cm.deep, norm=norm
                 )
 
                 if share_axes:
@@ -1302,8 +1306,6 @@ class VISUALS_CANDI(object):
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
                 ax.set_xlabel("Observed | rank")
                 ax.set_ylabel("Predicted | rank")
-                ax.set_xticks(np.linspace(xedges[0], xedges[-1], 5))  # Add numerical values
-                ax.set_yticks(np.linspace(yedges[0], yedges[-1], 5))  # Add numerical values
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
