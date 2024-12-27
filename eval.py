@@ -1253,55 +1253,42 @@ class VISUALS_CANDI(object):
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
 
         for j in range(len(eval_res)):
-            if "obs_count" not in eval_res[j]:
+            if "obs" not in eval_res[j]:
                 continue
             for i, c in enumerate(cols):
                 ax = plt.subplot(len(eval_res), len(cols), j * len(cols) + i + 1)
 
                 if c == "GW":
-                    xs_orig, ys_orig = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
-                    scc = f"SRCC_GW: {eval_res[j]['C_Spearman-GW']:.2f}"
+                    xs, ys = eval_res[j]["obs"], eval_res[j]["imp"]
+                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
 
                 elif c == "gene":
-                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_Gene: {eval_res[j]['C_Spearman_gene']:.2f}"
+                    xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
                     
                 elif c == "TSS":
-                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_TSS: {eval_res[j]['C_Spearman_prom']:.2f}"
+                    xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs"], eval_res[j]["imp"], bin_size=self.resolution)
+                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
 
                 elif c == "1obs":
-                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1obs: {eval_res[j]['C_Spearman_1obs']:.2f}"
+                    xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
 
                 elif c == "1imp":
-                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
+                    xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs"], eval_res[j]["imp"])
+                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
 
-                # Convert values to ranks while handling ties
-                xs = rankdata(xs_orig, method='average')
-                ys = rankdata(ys_orig, method='average')
+                # Convert values to ranks
+                xs = rankdata(xs)
+                ys = rankdata(ys)
 
                 # Create the heatmap for ranked values
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h = np.nan_to_num(h)  # Replace NaN values with 0
                 h = h.T  # Transpose to correct the orientation
-
-                # # Handle ties by extending values to the left
-                # for row in range(h.shape[0]):
-                #     for col in range(h.shape[1]-1, 0, -1):
-                #         if h[row, col] > 0:
-                #             h[row, :col] = np.maximum(h[row, :col], h[row, col] * 0.5)
-
-                # Fill empty spaces with small non-zero value
-                h[h == 0] = h[h > 0].min() * 0.1
-
-                # Use a custom colormap that starts with dark blue for low values
-                colors = [(0, 0, 0.3), (0, 0, 0.8)] + [(x/5.0, x/5.0, 1) for x in range(4, 0, -1)]
-                custom_cmap = LinearSegmentedColormap.from_list('custom', colors)
-
-                im = ax.imshow(h, interpolation='nearest', origin='lower',
-                            extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                            aspect='auto', cmap=custom_cmap, norm=LogNorm(vmin=h.min(), vmax=h.max()))
+                ax.imshow(
+                    h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], 
+                    yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -1309,51 +1296,13 @@ class VISUALS_CANDI(object):
                     ax.set_xlim(common_min, common_max)
                     ax.set_ylim(common_min, common_max)
 
-                # # Add value ticks in addition to ranks
-                # rank_ticks = np.linspace(common_min, common_max, 5)
-                # value_ticks_x = np.percentile(xs_orig, np.linspace(0, 100, 5))
-                # value_ticks_y = np.percentile(ys_orig, np.linspace(0, 100, 5))
-
-                # ax2 = ax.twiny()
-                # ax3 = ax.twinx()
-                
-                # ax2.set_xlim(ax.get_xlim())
-                # ax3.set_ylim(ax.get_ylim())
-                
-                # ax2.set_xticks(rank_ticks)
-                # ax3.set_yticks(rank_ticks)
-                
-                # ax2.set_xticklabels([f'{v:.1e}' for v in value_ticks_x], rotation=45)
-                # ax3.set_yticklabels([f'{v:.1e}' for v in value_ticks_y])
-
-                # ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
-                # ax.set_xlabel("Observed | rank")
-                # ax.set_ylabel("Predicted | rank")
-
-                # plt.colorbar(im, ax=ax)
-
-                # # Convert values to ranks
-                # xs = rankdata(xs)
-                # ys = rankdata(ys)
-
-                # # Create the heatmap for ranked values
-                # h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                # h = h.T  # Transpose to correct the orientation
-                # ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
-
-                # if share_axes:
-                #     common_min = min(xedges[0], yedges[0])
-                #     common_max = max(xedges[-1], yedges[-1])
-                #     ax.set_xlim(common_min, common_max)
-                #     ax.set_ylim(common_min, common_max)
-
-                # ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
-                # ax.set_xlabel("Observed | rank")
-                # ax.set_ylabel("Predicted | rank")
+                ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
+                ax.set_xlabel("Observed | rank")
+                ax.set_ylabel("Predicted | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.svg", format="svg")
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_rank_heatmaps.svg", format="svg")
 
     def signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
