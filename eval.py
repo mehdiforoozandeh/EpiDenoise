@@ -1260,23 +1260,23 @@ class VISUALS_CANDI(object):
 
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
-                    scc = f"SRCC_GW: {eval_res[j]['Spearman-GW']:.2f}"
+                    scc = f"SRCC_GW: {eval_res[j]['C_Spearman-GW']:.2f}"
 
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_Gene: {eval_res[j]['Spearman_gene']:.2f}"
+                    scc = f"SRCC_Gene: {eval_res[j]['C_Spearman_gene']:.2f}"
                     
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
-                    scc = f"SRCC_TSS: {eval_res[j]['Spearman_prom']:.2f}"
+                    scc = f"SRCC_TSS: {eval_res[j]['C_Spearman_prom']:.2f}"
 
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1obs: {eval_res[j]['Spearman_1obs']:.2f}"
+                    scc = f"SRCC_1obs: {eval_res[j]['C_Spearman_1obs']:.2f}"
 
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
-                    scc = f"SRCC_1imp: {eval_res[j]['Spearman_1imp']:.2f}"
+                    scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
 
                 # Convert values to ranks
                 xs = rankdata(xs)
