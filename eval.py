@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from matplotlib.colors import LinearSegmentedColormap
+import cmocean 
 
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -1248,8 +1249,6 @@ class VISUALS_CANDI(object):
             os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         cols = ["GW", "gene", "TSS", "1obs", "1imp"]
-
-        # Define the size of the figure
         plt.figure(figsize=(5 * len(cols), len(eval_res) * 5))
 
         for j in range(len(eval_res)):
@@ -1261,34 +1260,32 @@ class VISUALS_CANDI(object):
                 if c == "GW":
                     xs, ys = eval_res[j]["obs_count"], eval_res[j]["pred_count"]
                     scc = f"SRCC_GW: {eval_res[j]['C_Spearman-GW']:.2f}"
-
                 elif c == "gene":
                     xs, ys = self.metrics.get_gene_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
                     scc = f"SRCC_Gene: {eval_res[j]['C_Spearman_gene']:.2f}"
-                    
                 elif c == "TSS":
                     xs, ys = self.metrics.get_prom_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"], bin_size=self.resolution)
                     scc = f"SRCC_TSS: {eval_res[j]['C_Spearman_prom']:.2f}"
-
                 elif c == "1obs":
                     xs, ys = self.metrics.get_1obs_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
                     scc = f"SRCC_1obs: {eval_res[j]['C_Spearman_1obs']:.2f}"
-
                 elif c == "1imp":
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_count"], eval_res[j]["pred_count"])
                     scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
 
-                # Convert values to ranks
                 xs = rankdata(xs)
                 ys = rankdata(ys)
 
-                # Create the heatmap for ranked values
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = np.nan_to_num(h)  # Replace NaN values with 0
-                h = h.T  # Transpose to correct the orientation
+                h = np.nan_to_num(h)
+                h = h.T
+
+                norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust dynamic range for better visualization
                 ax.imshow(
-                    h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], 
-                    yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
+                    h, interpolation='nearest', origin='lower',
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                    aspect='auto', cmap=cmocean.cm.deep, norm=norm  # Dark blue/black color map
+                )
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -1299,6 +1296,8 @@ class VISUALS_CANDI(object):
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
                 ax.set_xlabel("Observed | rank")
                 ax.set_ylabel("Predicted | rank")
+                ax.set_xticks(np.linspace(xedges[0], xedges[-1], 5))  # Add numerical values
+                ax.set_yticks(np.linspace(yedges[0], yedges[-1], 5))  # Add numerical values
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
