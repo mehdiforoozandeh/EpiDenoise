@@ -1923,11 +1923,11 @@ class EVAL_CANDI(object):
                     "pred_pval":pred_pval,
                     "pred_pval_std":pred_pval_std,
 
-                    "count_lower_95" : count_lower_95,
-                    "count_upper_95": count_upper_95,
+                    # "count_lower_95" : count_lower_95,
+                    # "count_upper_95": count_upper_95,
 
-                    "pval_lower_95" : pval_lower_95,
-                    "pval_upper_95": pval_upper_95
+                    # "pval_lower_95" : pval_lower_95,
+                    # "pval_upper_95": pval_upper_95
                     }
 
                 results.append(metrics)
