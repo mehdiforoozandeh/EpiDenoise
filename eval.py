@@ -1276,11 +1276,17 @@ class VISUALS_CANDI(object):
                 xs = rankdata(xs)
                 ys = rankdata(ys)
 
+                # Calculate 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = np.nan_to_num(h)
-                h = h.T
-
-                norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust dynamic range for better visualization
+                h = np.nan_to_num(h)  # Replace NaN values with 0
+                h = h.T  # Transpose to correct the orientation
+                
+                # Ensure vmin and vmax are valid
+                h_max = np.max(h)
+                h_min = np.min(h[h > 0]) if np.any(h > 0) else 1e-4  # Smallest positive value or a fallback
+                
+                norm = LogNorm(vmin=h_min, vmax=h_max if h_max > h_min else h_min + 1e-4)  # Adjust vmax if needed
+                
                 ax.imshow(
                     h, interpolation='nearest', origin='lower',
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
