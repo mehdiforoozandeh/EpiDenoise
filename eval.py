@@ -1770,17 +1770,12 @@ class EVAL_CANDI(object):
                         pred_pval = imp_pval_mean[:, j].numpy()
                         pred_pval_std = imp_pval_std[:, j].numpy()
 
-                        count_lower_95 = imp_count_lower_95[:, j].numpy()
-                        count_upper_95 = imp_count_upper_95[:, j].numpy()
+                        # count_lower_95 = imp_count_lower_95[:, j].numpy()
+                        # count_upper_95 = imp_count_upper_95[:, j].numpy()
 
                         pval_lower_95 = imp_pval_lower_95[:, j].numpy()
                         pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
-                        # count_quantile = self.metrics.confidence_quantile(
-                        #     imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
-                        # count_p0bgdf = self.metrics.foreground_vs_background(
-                        #     imp_count_dist.p[:, j], imp_count_dist.n[:, j], C_target)
-                        
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
                         pred_count_std = ups_count_std[:, j].numpy()
@@ -1788,16 +1783,11 @@ class EVAL_CANDI(object):
                         pred_pval = ups_pval_mean[:, j].numpy()
                         pred_pval_std = ups_pval_std[:, j].numpy()
 
-                        count_lower_95 = ups_count_lower_95[:, j].numpy()
-                        count_upper_95 = ups_count_upper_95[:, j].numpy()
+                        # count_lower_95 = ups_count_lower_95[:, j].numpy()
+                        # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
                         pval_lower_95 = ups_pval_lower_95[:, j].numpy()
                         pval_upper_95 = ups_pval_upper_95[:, j].numpy()
-
-                        # count_quantile = self.metrics.confidence_quantile(
-                        #     ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
-                        # count_p0bgdf = self.metrics.foreground_vs_background(
-                        #     ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
@@ -1821,15 +1811,11 @@ class EVAL_CANDI(object):
                         "pred_pval":pred_pval,
                         "pred_pval_std":pred_pval_std,
 
-                        "count_lower_95" : count_lower_95,
-                        "count_upper_95": count_upper_95,
+                        # "count_lower_95" : count_lower_95,
+                        # "count_upper_95": count_upper_95,
 
-                        "pval_lower_95" : pval_lower_95,
-                        "pval_upper_95": pval_upper_95,
-
-                        # "p0_bg":count_p0bgdf["p0_bg"],
-                        # "p0_fg":count_p0bgdf["p0_fg"],
-                        # "pred_quantile":count_quantile,
+                        # "pval_lower_95" : pval_lower_95,
+                        # "pval_upper_95": pval_upper_95,
 
                         'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
@@ -1914,16 +1900,16 @@ class EVAL_CANDI(object):
                 pred_pval = ups_pval_mean[:, j].numpy()
                 pred_pval_std = ups_pval_std[:, j].numpy()
 
-                count_lower_95 = ups_count_lower_95[:, j].numpy()
-                count_upper_95 = ups_count_upper_95[:, j].numpy()
+                # count_lower_95 = ups_count_lower_95[:, j].numpy()
+                # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
-                if arcsinh:
-                    pred_pval = np.sinh(pred_pval)
-                    pval_lower_95 = np.sinh(pval_lower_95)
-                    pval_upper_95 = np.sinh(pval_upper_95)
+                # if arcsinh:
+                #     pred_pval = np.sinh(pred_pval)
+                #     pval_lower_95 = np.sinh(pval_lower_95)
+                #     pval_upper_95 = np.sinh(pval_upper_95)
 
                 metrics = {
                     'bios':bios_name,
@@ -2276,7 +2262,7 @@ class EVAL_CANDI(object):
             # "signal_heatmap": self.viz.signal_heatmap,
             
             "count_rank_heatmap": self.viz.count_rank_heatmap,
-            "signal_rank_heatmap": self.viz.signal_rank_heatmap,
+            # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
             # "quantile_hist": self.viz.quantile_hist,
             # "quantile_heatmap": self.viz.quantile_heatmap,
