@@ -1298,18 +1298,18 @@ class VISUALS_CANDI(object):
                 except:
                     print(f"failed to plot: vmin {1e-6}, vmax {np.max(h)}")
 
-                # if share_axes:
-                #     common_min = min(xedges[0], yedges[0])
-                #     common_max = max(xedges[-1], yedges[-1])
-                #     ax.set_xlim(common_min, common_max)
-                #     ax.set_ylim(common_min, common_max)
+                if share_axes:
+                    common_min = min(xedges[0], yedges[0])
+                    common_max = max(xedges[-1], yedges[-1])
+                    ax.set_xlim(common_min, common_max)
+                    ax.set_ylim(common_min, common_max)
 
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
                 ax.set_xlabel("Observed | rank")
                 ax.set_ylabel("Predicted | rank")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
+        # plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_rank_heatmaps.svg", format="svg")
 
     def signal_rank_heatmap(self, eval_res, share_axes=True, bins=50):
