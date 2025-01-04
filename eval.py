@@ -1289,20 +1289,20 @@ class VISUALS_CANDI(object):
                             h[row, col] = h[row, col - 1]
 
                 try:
-                    norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust color scaling
+                    norm = LogNorm(vmin=1e-6, vmax=np.max(h))  # Adjust color scaling
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
                         aspect='auto', cmap=cmocean.cm.deep, norm=norm
                     )
                 except:
-                    print(f"failed to plot: vmin {vmin}, vmax {vmax}")
+                    print(f"failed to plot: vmin {1e-6}, vmax {np.max(h)}")
 
-                if share_axes:
-                    common_min = min(xedges[0], yedges[0])
-                    common_max = max(xedges[-1], yedges[-1])
-                    ax.set_xlim(common_min, common_max)
-                    ax.set_ylim(common_min, common_max)
+                # if share_axes:
+                #     common_min = min(xedges[0], yedges[0])
+                #     common_max = max(xedges[-1], yedges[-1])
+                #     ax.set_xlim(common_min, common_max)
+                #     ax.set_ylim(common_min, common_max)
 
                 ax.set_title(f"{eval_res[j]['feature']}_{c}_{eval_res[j]['comparison']}_{scc}")
                 ax.set_xlabel("Observed | rank")
