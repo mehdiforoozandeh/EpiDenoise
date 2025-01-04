@@ -1282,20 +1282,21 @@ class VISUALS_CANDI(object):
                 h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
                 h = h.T
 
-                print(h)
-
                 # Fill gaps caused by ties by extending columns
                 for row in range(h.shape[0]):
                     for col in range(1, h.shape[1]):
                         if h[row, col] == 0:
                             h[row, col] = h[row, col - 1]
 
-                norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust color scaling
-                ax.imshow(
-                    h, interpolation='nearest', origin='lower',
-                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    aspect='auto', cmap=cmocean.cm.deep, norm=norm
-                )
+                try:
+                    norm = LogNorm(vmin=1e-4, vmax=np.max(h))  # Adjust color scaling
+                    ax.imshow(
+                        h, interpolation='nearest', origin='lower',
+                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                        aspect='auto', cmap=cmocean.cm.deep, norm=norm
+                    )
+                except:
+                    print(f"failed to plot: vmin {vmin}, vmax {vmax}")
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -2363,8 +2364,8 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
-    for k in ec.dataset.navigation.keys():
-        print(k, ec.dataset.navigation[k].keys())
+    # for k in ec.dataset.navigation.keys():
+    #     print(k, ec.dataset.navigation[k].keys())
     
     # exit()
     if args.bios_name == "all":
