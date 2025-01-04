@@ -2363,8 +2363,8 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
-    # for k in ec.dataset.navigation.keys():
-    #     print(k, ec.dataset.navigation[k].keys())
+    for k in ec.dataset.navigation.keys():
+        print(k, ec.dataset.navigation[k].keys())
     
     # exit()
     if args.bios_name == "all":
