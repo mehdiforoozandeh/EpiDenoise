@@ -1361,14 +1361,44 @@ class VISUALS_CANDI(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
                     scc = f"SRCC_1imp: {eval_res[j]['P_Spearman_1imp']:.2f}"
 
-                # Convert values to ranks
-                xs = rankdata(xs)
-                ys = rankdata(ys)
+                # Rank the values and handle ties
+                xs = rankdata(xs, method="average")  # Use average ranks for ties
+                ys = rankdata(ys, method="average")
 
-                # Create the heatmap for ranked values
+                # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = h.T  # Transpose to correct the orientation
-                ax.imshow(h, interpolation='nearest', origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect='auto', cmap='viridis', norm=LogNorm())
+                h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
+                h = h.T
+
+                # Fill gaps caused by ties by extending columns
+                for row in range(h.shape[0]):
+                    for col in range(1, h.shape[1]):
+                        if h[row, col] == 0:
+                            h[row, col] = h[row, col - 1]
+
+                try:
+                    max_val = np.max(h)
+                    if max_val <= 1e-6:
+                        # If maximum value is too small, adjust vmin
+                        vmin = max_val / 10
+                    else:
+                        vmin = 1e-6
+                        
+                    norm = LogNorm(vmin=vmin, vmax=max_val)  # Adjust color scaling
+                    ax.imshow(
+                        h, interpolation='nearest', origin='lower',
+                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                        aspect='auto', cmap=cmocean.cm.deep, norm=norm
+                    )
+                except Exception as e:
+                    print(f"Failed to plot: {str(e)}")
+                    print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
+                    # Fallback to linear normalization if log fails
+                    ax.imshow(
+                        h, interpolation='nearest', origin='lower',
+                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                        aspect='auto', cmap=cmocean.cm.deep
+                    )
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -2282,8 +2312,8 @@ class EVAL_CANDI(object):
             # "count_heatmap": self.viz.count_heatmap,
             # "signal_heatmap": self.viz.signal_heatmap,
             
-            "count_rank_heatmap": self.viz.count_rank_heatmap,
-            # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
+            # "count_rank_heatmap": self.viz.count_rank_heatmap,
+            "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
             # "quantile_hist": self.viz.quantile_hist,
             # "quantile_heatmap": self.viz.quantile_heatmap,
