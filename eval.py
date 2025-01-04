@@ -979,7 +979,7 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_mean_std_hexbin.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_mean_std_hexbin.svg", format="svg")
 
-    def count_scatter_with_marginals(self, eval_res, share_axes=True):
+    def count_scatter_with_marginals(self, eval_res, share_axes=True, percentile_cutoff=99):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
             os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
@@ -1057,7 +1057,7 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.svg", format="svg")
 
-    def signal_scatter_with_marginals(self, eval_res, share_axes=True):
+    def signal_scatter_with_marginals(self, eval_res, share_axes=True, percentile_cutoff=99):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
             os.makedirs(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
