@@ -1273,16 +1273,16 @@ class VISUALS_CANDI(object):
                     scc = f"SRCC_1imp: {eval_res[j]['C_Spearman_1imp']:.2f}"
 
                 # Rank the values and handle ties
-                xs = rankdata(xs, method="average")  # Use average ranks for ties
-                ys = rankdata(ys, method="average")
+                xs = rankdata(xs, method="ordinal")  # Use average ranks for ties
+                ys = rankdata(ys, method="ordinal")
 
                 # Create a 2D histogram
-                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
                 h = np.nan_to_num(h)  # Replace NaN values with 0
                 h = h.T
 
                 print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-                exit()
+                # exit()
 
                 # Fill gaps caused by ties by extending columns
                 for row in range(h.shape[0]):
@@ -2311,8 +2311,8 @@ class EVAL_CANDI(object):
             # "count_error_std_hexbin": self.viz.count_error_std_hexbin,
             # "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
+            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
             # "count_heatmap": self.viz.count_heatmap,
             # "signal_heatmap": self.viz.signal_heatmap,
