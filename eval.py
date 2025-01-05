@@ -1278,27 +1278,28 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
-                h = np.nan_to_num(h)  # Replace NaN values with 0
+                # h = np.nan_to_num(h)  # Replace NaN values with 0
                 h = h.T
 
-                print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
+                # print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
                 # exit()
 
                 # Fill gaps caused by ties by extending columns
-                for row in range(h.shape[0]):
-                    for col in range(1, h.shape[1]):
-                        if h[row, col] == 0:
-                            h[row, col] = h[row, col - 1]
+                # for row in range(h.shape[0]):
+                #     for col in range(1, h.shape[1]):
+                #         if h[row, col] == 0:
+                #             h[row, col] = h[row, col - 1]
 
                 try:
                     max_val = np.max(h)
-                    if max_val <= 1e-6:
-                        # If maximum value is too small, adjust vmin
-                        vmin = max_val / 10
-                    else:
-                        vmin = 1e-6
+                    min_val = np.min(h)
+                    # if max_val <= 1e-6:
+                    #     # If maximum value is too small, adjust vmin
+                    #     vmin = max_val / 10
+                    # else:
+                    #     vmin = 1e-6
                         
-                    norm = LogNorm(vmin=vmin, vmax=max_val)  # Adjust color scaling
+                    norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
@@ -1364,31 +1365,32 @@ class VISUALS_CANDI(object):
                     scc = f"SRCC_1imp: {eval_res[j]['P_Spearman_1imp']:.2f}"
 
                 # Rank the values and handle ties
-                xs = rankdata(xs, method="average")  # Use average ranks for ties
-                ys = rankdata(ys, method="average")
+                xs = rankdata(xs, method="ordinal")  # Use average ranks for ties
+                ys = rankdata(ys, method="ordinal")
 
                 # Create a 2D histogram
-                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
+                h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
+                # h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
                 h = h.T
 
-                print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
+                # print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
 
                 # Fill gaps caused by ties by extending columns
-                for row in range(h.shape[0]):
-                    for col in range(1, h.shape[1]):
-                        if h[row, col] == 0:
-                            h[row, col] = h[row, col - 1]
+                # for row in range(h.shape[0]):
+                #     for col in range(1, h.shape[1]):
+                #         if h[row, col] == 0:
+                #             h[row, col] = h[row, col - 1]
 
                 try:
                     max_val = np.max(h)
-                    if max_val <= 1e-6:
-                        # If maximum value is too small, adjust vmin
-                        vmin = max_val / 10
-                    else:
-                        vmin = 1e-6
+                    min_val = np.min(h)
+                    # if max_val <= 1e-6:
+                    #     # If maximum value is too small, adjust vmin
+                    #     vmin = max_val / 10
+                    # else:
+                    #     vmin = 1e-6
                         
-                    norm = LogNorm(vmin=vmin, vmax=max_val)  # Adjust color scaling
+                    norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
