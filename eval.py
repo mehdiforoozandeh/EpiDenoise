@@ -1055,7 +1055,7 @@ class VISUALS_CANDI(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.svg", format="svg")
+        # plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_scatters_with_marginals.svg", format="svg")
 
     def signal_scatter_with_marginals(self, eval_res, share_axes=True, percentile_cutoff=99):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1093,7 +1093,6 @@ class VISUALS_CANDI(object):
                     xs, ys = self.metrics.get_1imp_signals(eval_res[j]["obs_pval"], eval_res[j]["pred_pval"])
                     pcc = f"PCC_1imp: {eval_res[j]['P_Pearson_1imp']:.2f}"
                     
-
                 sns.scatterplot(x=xs, y=ys, ax=ax, color="#4CB391", s=3, alpha=0.9)
 
                 # Calculate percentile cutoffs for both axes
@@ -1134,7 +1133,7 @@ class VISUALS_CANDI(object):
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.svg", format="svg")
+        # plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_scatters_with_marginals.svg", format="svg")
 
     def count_heatmap(self, eval_res, share_axes=True, bins=50):
         if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
@@ -1279,8 +1278,11 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
-                h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
+                h = np.nan_to_num(h)  # Replace NaN values with 0
                 h = h.T
+
+                print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
+                exit()
 
                 # Fill gaps caused by ties by extending columns
                 for row in range(h.shape[0]):
@@ -1369,6 +1371,9 @@ class VISUALS_CANDI(object):
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins, density=True)
                 h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
                 h = h.T
+
+                print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
+                exit()
 
                 # Fill gaps caused by ties by extending columns
                 for row in range(h.shape[0]):
