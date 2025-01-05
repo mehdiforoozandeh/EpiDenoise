@@ -1281,15 +1281,6 @@ class VISUALS_CANDI(object):
                 h = np.where(np.isnan(h), np.min(h), h)  # Replace NaN values with the minimum value of h
                 h = h.T
 
-                # print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-                # exit()
-
-                # Fill gaps caused by ties by extending columns
-                # for row in range(h.shape[0]):
-                #     for col in range(1, h.shape[1]):
-                #         if h[row, col] == 0:
-                #             h[row, col] = h[row, col - 1]
-
                 try:
                     max_val = np.max(h)
                     min_val = np.min(h)
@@ -1370,25 +1361,12 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
-                # h = np.nan_to_num(h, nan=0)  # Replace NaN values with 0
+                h = np.where(np.isnan(h), np.min(h), h) 
                 h = h.T
-
-                # print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-
-                # Fill gaps caused by ties by extending columns
-                # for row in range(h.shape[0]):
-                #     for col in range(1, h.shape[1]):
-                #         if h[row, col] == 0:
-                #             h[row, col] = h[row, col - 1]
 
                 try:
                     max_val = np.max(h)
                     min_val = np.min(h)
-                    # if max_val <= 1e-6:
-                    #     # If maximum value is too small, adjust vmin
-                    #     vmin = max_val / 10
-                    # else:
-                    #     vmin = 1e-6
                         
                     norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
                     ax.imshow(
