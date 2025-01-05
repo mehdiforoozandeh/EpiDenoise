@@ -1278,7 +1278,7 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
-                h = np.where(np.isnan(h), np.min(h), h)  # Replace NaN values with the minimum value of h
+                h = np.where(np.isnan(h), 1e-6, h)  # Replace NaN values with the minimum value of h
                 h = h.T
 
                 try:
@@ -1291,16 +1291,16 @@ class VISUALS_CANDI(object):
                     #     vmin = 1e-6
                         
                     norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
-                    # ax.imshow(
-                    #     h, interpolation='nearest', origin='lower',
-                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    #     aspect='auto', cmap=cmocean.cm.deep, norm=norm
-                    # )
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap=cmocean.cm.deep
+                        aspect='auto', cmap=cmocean.cm.deep, norm=norm
                     )
+                    # ax.imshow(
+                    #     h, interpolation='nearest', origin='lower',
+                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                    #     aspect='auto', cmap=cmocean.cm.deep
+                    # )
                 except Exception as e:
                     print(f"Failed to plot: {str(e)}")
                     print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
@@ -1366,24 +1366,24 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
-                h = np.where(np.isnan(h), np.min(h), h) 
+                h = np.where(np.isnan(h), 1e-6, h) 
                 h = h.T
 
                 try:
                     max_val = np.max(h)
                     min_val = np.min(h)
                         
-                    # norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
-                    # ax.imshow(
-                    #     h, interpolation='nearest', origin='lower',
-                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    #     aspect='auto', cmap=cmocean.cm.deep, norm=norm
-                    # )
+                    norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap=cmocean.cm.deep
+                        aspect='auto', cmap=cmocean.cm.deep, norm=norm
                     )
+                    # ax.imshow(
+                    #     h, interpolation='nearest', origin='lower',
+                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                    #     aspect='auto', cmap=cmocean.cm.deep
+                    # )
                 except Exception as e:
                     print(f"Failed to plot: {str(e)}")
                     print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
