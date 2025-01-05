@@ -1278,7 +1278,7 @@ class VISUALS_CANDI(object):
 
                 # Create a 2D histogram
                 h, xedges, yedges = np.histogram2d(xs, ys, bins=bins)#, density=True)
-                # h = np.nan_to_num(h)  # Replace NaN values with 0
+                h = np.nan_to_num(h)  # Replace NaN values with 0
                 h = h.T
 
                 # print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
