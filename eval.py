@@ -1308,7 +1308,7 @@ class VISUALS_CANDI(object):
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap="viridis"
+                        aspect='auto', cmap="Purples"
                     )
 
                 if share_axes:
@@ -1382,7 +1382,7 @@ class VISUALS_CANDI(object):
                     ax.imshow(
                         h, interpolation='nearest', origin='lower',
                         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap='viridis'
+                        aspect='auto', cmap='Purples'
                     )
                 except Exception as e:
                     print(f"Failed to plot: {str(e)}")
