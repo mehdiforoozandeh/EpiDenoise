@@ -1373,7 +1373,6 @@ class VISUALS_CANDI(object):
                 h = h.T
 
                 print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-                exit()
 
                 # Fill gaps caused by ties by extending columns
                 for row in range(h.shape[0]):
