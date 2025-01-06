@@ -8,7 +8,6 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from matplotlib.colors import LinearSegmentedColormap
-import cmocean 
 
 
 from statsmodels.nonparametric.smoothers_lowess import lowess

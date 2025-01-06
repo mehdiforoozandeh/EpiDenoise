@@ -28,17 +28,25 @@ def viz_feature_importance(df, savedir="models/output/"):
     #     mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
     #     std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
 
-    #     # Determine the colorbar limits based on the metric
-    #     if "pearson" in metric.lower() or "spearman" in metric.lower(): 
-    #         vmin, vmax = -1, 1
-    #     elif "pp" in metric.lower():
-    #         vmin, vmax = 0, 5
-    #     else:
-    #         vmin, vmax = None, None
-        
+    #     # Create figure and axis
     #     plt.figure(figsize=(12, 8))
-    #     # Create heatmap using means for colors
-    #     sns.heatmap(mean_pivot, annot=False, cmap='coolwarm', vmin=vmin, vmax=vmax)
+        
+    #     # Create a normalized colormap for each column
+    #     normalized_data = mean_pivot.copy()
+    #     for col in mean_pivot.columns:
+    #         col_data = mean_pivot[col]
+    #         # if "pearson" in metric.lower() or "spearman" in metric.lower():
+    #         #     vmin, vmax = -1, 1
+    #         # elif "pp" in metric.lower():
+    #         #     vmin, vmax = 0, 5
+    #         # else:
+    #         vmin, vmax = col_data.min(), col_data.max()
+            
+    #         # Normalize the column
+    #         normalized_data[col] = (col_data - vmin) / (vmax - vmin)
+        
+    #     # Create heatmap using normalized data
+    #     sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1)
         
     #     # Add annotations with both mean and std
     #     for i, row in enumerate(mean_pivot.index):
@@ -48,10 +56,16 @@ def viz_feature_importance(df, savedir="models/output/"):
     #                 std_val = std_pivot.loc[row, col]
     #             except:
     #                 std_val = 0
-    #             if not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
+
+    #             if not np.isnan(mean_val) and np.isnan(std_val):  # Check if the value exists
+    #                 plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
+    #                         ha='center', va='center', fontsize=6,
+    #                         color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
+
+    #             elif not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
     #                 plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
     #                         ha='center', va='center', fontsize=6,
-    #                         color='white' if mean_val > (mean_pivot.max().max() - mean_pivot.min().min()) / 2 else 'black')
+    #                         color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
         
     #     plt.title(f'{title} - {metric}\n(mean ± std)')
     #     plt.tight_layout()
@@ -59,30 +73,61 @@ def viz_feature_importance(df, savedir="models/output/"):
     #     plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
     #     plt.close()
 
+    def plot_metric_correlations(df, metrics):
+
+        sns.pairplot(df[metrics], diag_kind='kde', size=1.5)
+        plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{savedir}/metric_correlations.svg', dpi=300, bbox_inches='tight', format='svg')
+        plt.close()
+
+
     def plot_metric_heatmap(df, metric, title):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
 
-        # Create figure and axis
-        plt.figure(figsize=(12, 8))
+        # Perform hierarchical clustering
+        row_linkage = scipy.cluster.hierarchy.linkage(mean_pivot, method='average')
+        col_linkage = scipy.cluster.hierarchy.linkage(mean_pivot.T, method='average')
+
+        # Get the row and column orderings from the clustering
+        row_order = scipy.cluster.hierarchy.leaves_list(row_linkage)
+        col_order = scipy.cluster.hierarchy.leaves_list(col_linkage)
+
+        # Reorder the data according to the clustering
+        mean_pivot = mean_pivot.iloc[row_order, col_order]
+        std_pivot = std_pivot.iloc[row_order, col_order]
+
+        # Create figure with enough space for dendrograms
+        fig = plt.figure(figsize=(14, 10))
         
+        # Create a gridspec for the layout
+        gs = plt.GridSpec(2, 2, width_ratios=[0.2, 0.8], height_ratios=[0.2, 0.8])
+        
+        # Create axes for the heatmap and dendrograms
+        ax_heatmap = fig.add_subplot(gs[1, 1])
+        ax_row_dendrogram = fig.add_subplot(gs[1, 0])
+        ax_col_dendrogram = fig.add_subplot(gs[0, 1])
+        
+        # Plot dendrograms
+        scipy.cluster.hierarchy.dendrogram(row_linkage, orientation='left', ax=ax_row_dendrogram)
+        scipy.cluster.hierarchy.dendrogram(col_linkage, ax=ax_col_dendrogram)
+        
+        # Remove dendrogram axes ticks
+        ax_row_dendrogram.set_xticks([])
+        ax_row_dendrogram.set_yticks([])
+        ax_col_dendrogram.set_xticks([])
+        ax_col_dendrogram.set_yticks([])
+
         # Create a normalized colormap for each column
         normalized_data = mean_pivot.copy()
         for col in mean_pivot.columns:
             col_data = mean_pivot[col]
-            # if "pearson" in metric.lower() or "spearman" in metric.lower():
-            #     vmin, vmax = -1, 1
-            # elif "pp" in metric.lower():
-            #     vmin, vmax = 0, 5
-            # else:
             vmin, vmax = col_data.min(), col_data.max()
-            
-            # Normalize the column
             normalized_data[col] = (col_data - vmin) / (vmax - vmin)
         
         # Create heatmap using normalized data
-        sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1)
+        sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1, ax=ax_heatmap)
         
         # Add annotations with both mean and std
         for i, row in enumerate(mean_pivot.index):
@@ -93,27 +138,23 @@ def viz_feature_importance(df, savedir="models/output/"):
                 except:
                     std_val = 0
 
-                if not np.isnan(mean_val) and np.isnan(std_val):  # Check if the value exists
-                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
+                if not np.isnan(mean_val) and np.isnan(std_val):
+                    ax_heatmap.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
                             ha='center', va='center', fontsize=6,
                             color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
-
-                elif not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
-                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                elif not np.isnan(mean_val) and not np.isnan(std_val):
+                    ax_heatmap.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
                             ha='center', va='center', fontsize=6,
                             color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
         
-        plt.title(f'{title} - {metric}\n(mean ± std)')
+        # Adjust layout and labels
+        ax_heatmap.set_xticklabels(ax_heatmap.get_xticklabels(), rotation=45, ha='right')
+        plt.suptitle(f'{title} - {metric}\n(mean ± std)')
         plt.tight_layout()
+        
+        # Save figures
         plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
         plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
-        plt.close()
-
-    def plot_metric_correlations(df, metrics):
-
-        sns.pairplot(df[metrics], diag_kind='kde', size=1.5)
-        plt.savefig(f'{savedir}/metric_correlations.png', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{savedir}/metric_correlations.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
     metrics_to_plot = [
@@ -3006,7 +3047,6 @@ if __name__ == "__main__":
             print(f"Error processing {bios_name}: {e}")
 
     elif sys.argv[1] == "assay_importance":
-
         model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
         hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = False
@@ -3102,11 +3142,13 @@ if __name__ == "__main__":
         # else:
         #     print("EIC test metrics not computed")
 
-        # if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
-        #     df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
-        #     viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
-        # else:
-        #     print("Assay importance not computed")
+        if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
+            df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
+            viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        else:
+            print("Assay importance not computed")
+            
+        exit()
 
         ###################################################### 
         
