@@ -843,8 +843,8 @@ class VISUALS_CANDI(object):
             error = np.abs(observed - pred_mean)
 
             # Calculate the percentiles for x-axis limits
-            x_90 = np.percentile(error, 99)
-            x_99 = np.percentile(error, 99.9)
+            x_90 = np.percentile(error, 90)
+            x_99 = np.percentile(error, 99)
 
             # Define the ranges for subsetting
             # ranges = [(0, x_90), (0, x_99), (0, error.max())]
@@ -859,7 +859,8 @@ class VISUALS_CANDI(object):
                 ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
 
                 # Hexbin plot for the subset data
-                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+                # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1) 
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
@@ -891,8 +892,8 @@ class VISUALS_CANDI(object):
             error = np.abs(observed - pred_mean)
 
             # Calculate the percentiles for x-axis limits
-            x_90 = np.percentile(error, 99)
-            x_99 = np.percentile(error, 99.9)
+            x_90 = np.percentile(error, 90)
+            x_99 = np.percentile(error, 99)
 
             # Define the ranges for subsetting
             # ranges = [(0, x_90), (0, x_99), (0, error.max())]
@@ -907,7 +908,8 @@ class VISUALS_CANDI(object):
                 ax = plt.subplot(len(eval_res), 3, j * 3 + i + 1)
 
                 # Hexbin plot for the subset data
-                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+                # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1) 
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
@@ -1284,7 +1286,7 @@ class VISUALS_CANDI(object):
                 ax.imshow(
                     h, interpolation='nearest', origin='lower',
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    aspect='auto', cmap="YlOrBr")
+                    aspect='auto', cmap="Purples")
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -1347,7 +1349,7 @@ class VISUALS_CANDI(object):
                 ax.imshow(
                     h, interpolation='nearest', origin='lower',
                     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    aspect='auto', cmap='YlOrBr')
+                    aspect='auto', cmap='Purples')
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -1745,11 +1747,11 @@ class EVAL_CANDI(object):
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
         # print("getting 0.95 interval conf")
-        # imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
-        # ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        # imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
-        # ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
@@ -1770,11 +1772,11 @@ class EVAL_CANDI(object):
                         pred_pval = imp_pval_mean[:, j].numpy()
                         pred_pval_std = imp_pval_std[:, j].numpy()
 
-                        # count_lower_95 = imp_count_lower_95[:, j].numpy()
-                        # count_upper_95 = imp_count_upper_95[:, j].numpy()
+                        count_lower_95 = imp_count_lower_95[:, j].numpy()
+                        count_upper_95 = imp_count_upper_95[:, j].numpy()
 
-                        # pval_lower_95 = imp_pval_lower_95[:, j].numpy()
-                        # pval_upper_95 = imp_pval_upper_95[:, j].numpy()
+                        pval_lower_95 = imp_pval_lower_95[:, j].numpy()
+                        pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
@@ -1783,16 +1785,16 @@ class EVAL_CANDI(object):
                         pred_pval = ups_pval_mean[:, j].numpy()
                         pred_pval_std = ups_pval_std[:, j].numpy()
 
-                        # count_lower_95 = ups_count_lower_95[:, j].numpy()
-                        # count_upper_95 = ups_count_upper_95[:, j].numpy()
+                        count_lower_95 = ups_count_lower_95[:, j].numpy()
+                        count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                        # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                        # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                        pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                        pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
-                        # pval_lower_95 = np.sinh(pval_lower_95)
-                        # pval_upper_95 = np.sinh(pval_upper_95)
+                        pval_lower_95 = np.sinh(pval_lower_95)
+                        pval_upper_95 = np.sinh(pval_upper_95)
 
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
@@ -1811,11 +1813,11 @@ class EVAL_CANDI(object):
                         "pred_pval":pred_pval,
                         "pred_pval_std":pred_pval_std,
 
-                        # "count_lower_95" : count_lower_95,
-                        # "count_upper_95": count_upper_95,
+                        "count_lower_95" : count_lower_95,
+                        "count_upper_95": count_upper_95,
 
-                        # "pval_lower_95" : pval_lower_95,
-                        # "pval_upper_95": pval_upper_95,
+                        "pval_lower_95" : pval_lower_95,
+                        "pval_upper_95": pval_upper_95,
 
                         'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
@@ -1900,16 +1902,16 @@ class EVAL_CANDI(object):
                 pred_pval = ups_pval_mean[:, j].numpy()
                 pred_pval_std = ups_pval_std[:, j].numpy()
 
-                # count_lower_95 = ups_count_lower_95[:, j].numpy()
-                # count_upper_95 = ups_count_upper_95[:, j].numpy()
+                count_lower_95 = ups_count_lower_95[:, j].numpy()
+                count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                 if arcsinh:
                     pred_pval = np.sinh(pred_pval)
-                    # pval_lower_95 = np.sinh(pval_lower_95)
-                    # pval_upper_95 = np.sinh(pval_upper_95)
+                    pval_lower_95 = np.sinh(pval_lower_95)
+                    pval_upper_95 = np.sinh(pval_upper_95)
 
                 metrics = {
                     'bios':bios_name,
@@ -1923,11 +1925,11 @@ class EVAL_CANDI(object):
                     "pred_pval":pred_pval,
                     "pred_pval_std":pred_pval_std,
 
-                    # "count_lower_95" : count_lower_95,
-                    # "count_upper_95": count_upper_95,
+                    "count_lower_95" : count_lower_95,
+                    "count_upper_95": count_upper_95,
 
-                    # "pval_lower_95" : pval_lower_95,
-                    # "pval_upper_95": pval_upper_95
+                    "pval_lower_95" : pval_lower_95,
+                    "pval_upper_95": pval_upper_95
                     }
 
                 results.append(metrics)
@@ -2247,19 +2249,19 @@ class EVAL_CANDI(object):
     def viz_bios(self, eval_res):
         # Define a dictionary mapping function names to corresponding methods
         plot_functions = {
-            # "count_track": self.viz.count_track,
-            # "signal_track": self.viz.signal_track,
-            # "count_confidence": self.viz.count_confidence,
-            # "signal_confidence": self.viz.signal_confidence,
+            "count_track": self.viz.count_track,
+            "signal_track": self.viz.signal_track,
+            "count_confidence": self.viz.count_confidence,
+            "signal_confidence": self.viz.signal_confidence,
             
-            # "count_error_std_hexbin": self.viz.count_error_std_hexbin,
-            # "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
+            "count_error_std_hexbin": self.viz.count_error_std_hexbin,
+            "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
+            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
-            # "count_heatmap": self.viz.count_heatmap,
-            # "signal_heatmap": self.viz.signal_heatmap,
+            "count_heatmap": self.viz.count_heatmap,
+            "signal_heatmap": self.viz.signal_heatmap,
             
             "count_rank_heatmap": self.viz.count_rank_heatmap,
             "signal_rank_heatmap": self.viz.signal_rank_heatmap,
