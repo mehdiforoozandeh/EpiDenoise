@@ -859,7 +859,7 @@ class VISUALS_CANDI(object):
 
                 # Hexbin plot for the subset data
                 # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
-                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1) 
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
@@ -908,7 +908,7 @@ class VISUALS_CANDI(object):
 
                 # Hexbin plot for the subset data
                 # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
-                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1) 
+                hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')

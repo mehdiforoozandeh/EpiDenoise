@@ -23,55 +23,76 @@ def viz_feature_importance(df, savedir="models/output/"):
     if not os.path.exists(savedir):
         os.makedirs(savedir)
 
-    # def plot_metric_heatmap(df, metric, title):
-    #     # Calculate mean and standard deviation
-    #     mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
-    #     std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+    def plot_metric_heatmap(df, metric, title, min_avail=6):
+        accessibility_assays = ["ATAC-seq", "DNase-seq"]
+        histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
 
-    #     # Create figure and axis
-    #     plt.figure(figsize=(12, 8))
+        # Calculate mean and standard deviation
+        mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
+        std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
+
+        # Count number of available entries for each row and column
+        available_counts_rows = mean_pivot.notna().sum(axis=1)
+        available_counts_cols = mean_pivot.notna().sum(axis=0)
         
-    #     # Create a normalized colormap for each column
-    #     normalized_data = mean_pivot.copy()
-    #     for col in mean_pivot.columns:
-    #         col_data = mean_pivot[col]
-    #         # if "pearson" in metric.lower() or "spearman" in metric.lower():
-    #         #     vmin, vmax = -1, 1
-    #         # elif "pp" in metric.lower():
-    #         #     vmin, vmax = 0, 5
-    #         # else:
-    #         vmin, vmax = col_data.min(), col_data.max()
+        # Filter rows and columns based on minimum availability
+        mean_pivot = mean_pivot.loc[available_counts_rows >= min_avail, 
+                                available_counts_cols >= min_avail]
+        std_pivot = std_pivot.loc[available_counts_rows >= min_avail, 
+                                available_counts_cols >= min_avail]
+
+        # Create figure and axis
+        plt.figure(figsize=(12, 8))
+        
+        # Create a normalized colormap for each column
+        normalized_data = mean_pivot.copy()
+        for col in mean_pivot.columns:
+            col_data = mean_pivot[col]
+            vmin, vmax = col_data.min(), col_data.max()
             
-    #         # Normalize the column
-    #         normalized_data[col] = (col_data - vmin) / (vmax - vmin)
+            # Normalize the column
+            normalized_data[col] = (col_data - vmin) / (vmax - vmin)
         
-    #     # Create heatmap using normalized data
-    #     sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1)
+        mask = normalized_data.isna()
         
-    #     # Add annotations with both mean and std
-    #     for i, row in enumerate(mean_pivot.index):
-    #         for j, col in enumerate(mean_pivot.columns):
-    #             mean_val = mean_pivot.loc[row, col]
-    #             try:
-    #                 std_val = std_pivot.loc[row, col]
-    #             except:
-    #                 std_val = 0
+        # Create heatmap using normalized data
+        ax = sns.heatmap(normalized_data, annot=False, cmap='viridis', vmin=0, vmax=1)
+        
+        # Add annotations with both mean and std
+        for i, row in enumerate(mean_pivot.index):
+            for j, col in enumerate(mean_pivot.columns):
+                if bool(
+                    row == "accessibility" and col in accessibility_assays) or bool(
+                        row == "histone_mods" and col in histone_mods) or row == col:
+                    # Add X mark for matching input/output
+                    ax.plot([j, j+1], [i, i+1], 'k-', linewidth=1.5)  # First line of X
+                    ax.plot([j, j+1], [i+1, i], 'k-', linewidth=1.5)  # Second line of X
 
-    #             if not np.isnan(mean_val) and np.isnan(std_val):  # Check if the value exists
-    #                 plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
-    #                         ha='center', va='center', fontsize=6,
-    #                         color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
+                elif mask.loc[row, col]:
+                    # Add grey rectangle for NaN values
+                    ax.add_patch(plt.Rectangle((j, i), 1, 1, fill=True, color='#F5DEB3'))
 
-    #             elif not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
-    #                 plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-    #                         ha='center', va='center', fontsize=6,
-    #                         color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
+                mean_val = mean_pivot.loc[row, col]
+                try:
+                    std_val = std_pivot.loc[row, col]
+                except:
+                    std_val = 0
+
+                if not np.isnan(mean_val) and np.isnan(std_val):  # Check if the value exists
+                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
+                            ha='center', va='center', fontsize=6,
+                            color='white' if normalized_data.iloc[i, j] < 0.5 else 'black')
+
+                elif not np.isnan(mean_val) and not np.isnan(std_val):  # Check if the value exists
+                    plt.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                            ha='center', va='center', fontsize=6,
+                            color='white' if normalized_data.iloc[i, j] < 0.5 else 'black')
         
-    #     plt.title(f'{title} - {metric}\n(mean ± std)')
-    #     plt.tight_layout()
-    #     plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
-    #     plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
-    #     plt.close()
+        plt.title(f'{title} - {metric}\n(mean ± std)')
+        plt.tight_layout()
+        plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
+        plt.close()
 
     def plot_metric_correlations(df, metrics):
 
@@ -80,81 +101,106 @@ def viz_feature_importance(df, savedir="models/output/"):
         plt.savefig(f'{savedir}/metric_correlations.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
+    def plot_metric_clustermap(df, metric, title, min_avail=6):
+        accessibility_assays = ["ATAC-seq", "DNase-seq"]
+        histone_mods = ["H3K4me3", "H3K4me1", "H3K27ac", "H3K27me3", "H3K9me3", "H3K36me3"]
 
-    def plot_metric_heatmap(df, metric, title):
         # Calculate mean and standard deviation
         mean_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='mean')
         std_pivot = df.pivot_table(values=metric, index='input', columns='output', aggfunc='std')
 
-        # Perform hierarchical clustering
-        row_linkage = scipy.cluster.hierarchy.linkage(mean_pivot, method='average')
-        col_linkage = scipy.cluster.hierarchy.linkage(mean_pivot.T, method='average')
-
-        # Get the row and column orderings from the clustering
-        row_order = scipy.cluster.hierarchy.leaves_list(row_linkage)
-        col_order = scipy.cluster.hierarchy.leaves_list(col_linkage)
-
-        # Reorder the data according to the clustering
-        mean_pivot = mean_pivot.iloc[row_order, col_order]
-        std_pivot = std_pivot.iloc[row_order, col_order]
-
-        # Create figure with enough space for dendrograms
-        fig = plt.figure(figsize=(14, 10))
+        # Count number of available entries for each row and column
+        available_counts_rows = mean_pivot.notna().sum(axis=1)
+        available_counts_cols = mean_pivot.notna().sum(axis=0)
         
-        # Create a gridspec for the layout
-        gs = plt.GridSpec(2, 2, width_ratios=[0.2, 0.8], height_ratios=[0.2, 0.8])
-        
-        # Create axes for the heatmap and dendrograms
-        ax_heatmap = fig.add_subplot(gs[1, 1])
-        ax_row_dendrogram = fig.add_subplot(gs[1, 0])
-        ax_col_dendrogram = fig.add_subplot(gs[0, 1])
-        
-        # Plot dendrograms
-        scipy.cluster.hierarchy.dendrogram(row_linkage, orientation='left', ax=ax_row_dendrogram)
-        scipy.cluster.hierarchy.dendrogram(col_linkage, ax=ax_col_dendrogram)
-        
-        # Remove dendrogram axes ticks
-        ax_row_dendrogram.set_xticks([])
-        ax_row_dendrogram.set_yticks([])
-        ax_col_dendrogram.set_xticks([])
-        ax_col_dendrogram.set_yticks([])
+        # Filter rows and columns based on minimum availability
+        mean_pivot = mean_pivot.loc[available_counts_rows >= min_avail, 
+                            available_counts_cols >= min_avail]
+        std_pivot = std_pivot.loc[available_counts_rows >= min_avail, 
+                            available_counts_cols >= min_avail]
 
-        # Create a normalized colormap for each column
+        # Create a normalized colormap for each column (for display only)
         normalized_data = mean_pivot.copy()
         for col in mean_pivot.columns:
             col_data = mean_pivot[col]
             vmin, vmax = col_data.min(), col_data.max()
-            normalized_data[col] = (col_data - vmin) / (vmax - vmin)
+            if pd.isna(vmin) or pd.isna(vmax):  # Handle columns with all NaN
+                normalized_data[col] = pd.NA
+            else:
+                normalized_data[col] = (col_data - vmin) / (vmax - vmin)
         
-        # Create heatmap using normalized data
-        sns.heatmap(normalized_data, annot=False, cmap='coolwarm', vmin=0, vmax=1, ax=ax_heatmap)
+        # Create mask for NaN values
+        mask = normalized_data.isna()
         
-        # Add annotations with both mean and std
-        for i, row in enumerate(mean_pivot.index):
-            for j, col in enumerate(mean_pivot.columns):
-                mean_val = mean_pivot.loc[row, col]
-                try:
-                    std_val = std_pivot.loc[row, col]
-                except:
-                    std_val = 0
+        # Fill NaN values with the mean for clustering purposes
+        # Use raw data for clustering instead of normalized data
+        clustering_data = mean_pivot.fillna(mean_pivot.mean().mean())
+        
+        # Create clustered heatmap using raw data for clustering but normalized data for display
+        g = sns.clustermap(
+            data=clustering_data,  # Use raw data for clustering
+            row_colors=None,
+            col_colors=None,
+            cmap='viridis',
+            vmin=0,
+            vmax=1,
+            mask=mask,
+            figsize=(14, 10),
+            dendrogram_ratio=(.1, .2),
+            xticklabels=True,
+            yticklabels=True,
+        )
+        
+        # After clustering, update the heatmap data with normalized values
+        g.ax_heatmap.collections[0].set_array(normalized_data.values[np.array(g.dendrogram_row.reordered_ind)][:, np.array(g.dendrogram_col.reordered_ind)].ravel())
+        
+        ax = g.ax_heatmap
+        
+        # Get the reordered index and columns after clustering
+        row_order = g.dendrogram_row.reordered_ind
+        col_order = g.dendrogram_col.reordered_ind
+        reordered_rows = [mean_pivot.index[i] for i in row_order]
+        reordered_cols = [mean_pivot.columns[i] for i in col_order]
+        
+        # Add X marks and grey cells
+        for i, row in enumerate(reordered_rows):
+            for j, col in enumerate(reordered_cols):
+                if bool(
+                    row == "accessibility" and col in accessibility_assays) or bool(
+                        row == "histone_mods" and col in histone_mods) or row == col:
+                    # Add X mark for matching input/output
+                    ax.plot([j, j+1], [i, i+1], 'k-', linewidth=1.5)
+                    ax.plot([j, j+1], [i+1, i], 'k-', linewidth=1.5)
+                elif mask.loc[row, col]:
+                    # Add grey rectangle for NaN values
+                    ax.add_patch(plt.Rectangle((j, i), 1, 1, fill=True, color='#F5DEB3'))
+        
+        # Add annotations
+        for i, row in enumerate(reordered_rows):
+            for j, col in enumerate(reordered_cols):
+                if row != col:  # Skip annotations for matching input/output
+                    mean_val = mean_pivot.loc[row, col]
+                    try:
+                        std_val = std_pivot.loc[row, col]
+                    except:
+                        std_val = 0
 
-                if not np.isnan(mean_val) and np.isnan(std_val):
-                    ax_heatmap.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
-                            ha='center', va='center', fontsize=6,
-                            color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
-                elif not np.isnan(mean_val) and not np.isnan(std_val):
-                    ax_heatmap.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
-                            ha='center', va='center', fontsize=6,
-                            color='white' if normalized_data.iloc[i, j] > 0.5 else 'black')
+                    if not pd.isna(mean_val):  # Only add text for non-NaN values
+                        if pd.isna(std_val):
+                            ax.text(j + 0.5, i + 0.5, f'{mean_val:.2f}',
+                                    ha='center', va='center', fontsize=7,
+                                    color='white' if normalized_data.loc[row, col] < 0.5 else 'black')
+                        else:
+                            ax.text(j + 0.5, i + 0.5, f'{mean_val:.2f}\n±{std_val:.2f}',
+                                    ha='center', va='center', fontsize=7,
+                                    color='white' if normalized_data.loc[row, col] < 0.5 else 'black')
         
         # Adjust layout and labels
-        ax_heatmap.set_xticklabels(ax_heatmap.get_xticklabels(), rotation=45, ha='right')
-        plt.suptitle(f'{title} - {metric}\n(mean ± std)')
-        plt.tight_layout()
+        plt.suptitle(f'{title} - {metric}\n(mean ± std)', y=1.02)
         
         # Save figures
-        plt.savefig(f'{savedir}/heatmap_{metric}.png', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{savedir}/heatmap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
+        plt.savefig(f'{savedir}/clustermap_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{savedir}/clustermap_{metric}.svg', dpi=300, bbox_inches='tight', format='svg')
         plt.close()
 
     metrics_to_plot = [
@@ -173,7 +219,8 @@ def viz_feature_importance(df, savedir="models/output/"):
         ]
         
     for metric in metrics_to_plot:
-        plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
+        plot_metric_clustermap(df, metric, 'Assay Prediction Performance')
+        # plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
     
     # plot_metric_correlations(df, metrics_to_plot)
 
