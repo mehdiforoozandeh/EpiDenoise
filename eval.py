@@ -1281,35 +1281,10 @@ class VISUALS_CANDI(object):
                 h = np.where(np.isnan(h), 1e-6, h)  # Replace NaN values with the minimum value of h
                 h = h.T
 
-                try:
-                    max_val = np.max(h)
-                    min_val = np.min(h)
-                    # if max_val <= 1e-6:
-                    #     # If maximum value is too small, adjust vmin
-                    #     vmin = max_val / 10
-                    # else:
-                    #     vmin = 1e-6
-                        
-                    # norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
-                    # ax.imshow(
-                    #     h, interpolation='nearest', origin='lower',
-                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    #     aspect='auto', cmap=cmocean.cm.deep, norm=norm
-                    # )
-                    ax.imshow(
-                        h, interpolation='nearest', origin='lower',
-                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap=cmocean.cm.deep
-                    )
-                except Exception as e:
-                    print(f"Failed to plot: {str(e)}")
-                    print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-                    # Fallback to linear normalization if log fails
-                    ax.imshow(
-                        h, interpolation='nearest', origin='lower',
-                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap="Purples"
-                    )
+                ax.imshow(
+                    h, interpolation='nearest', origin='lower',
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                    aspect='auto', cmap="YlOrBr")
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
@@ -1369,30 +1344,10 @@ class VISUALS_CANDI(object):
                 h = np.where(np.isnan(h), 1e-6, h) 
                 h = h.T
 
-                try:
-                    max_val = np.max(h)
-                    min_val = np.min(h)
-                        
-                    # norm = LogNorm(vmin=min_val, vmax=max_val)  # Adjust color scaling
-                    # ax.imshow(
-                    #     h, interpolation='nearest', origin='lower',
-                    #     extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                    #     aspect='auto', cmap=cmocean.cm.deep, norm=norm
-                    # )
-                    ax.imshow(
-                        h, interpolation='nearest', origin='lower',
-                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap='Purples'
-                    )
-                except Exception as e:
-                    print(f"Failed to plot: {str(e)}")
-                    print(f"Histogram stats - min: {np.min(h)}, max: {np.max(h)}, mean: {np.mean(h)}")
-                    # Fallback to linear normalization if log fails
-                    ax.imshow(
-                        h, interpolation='nearest', origin='lower',
-                        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                        aspect='auto', cmap=cmocean.cm.deep
-                    )
+                ax.imshow(
+                    h, interpolation='nearest', origin='lower',
+                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                    aspect='auto', cmap='YlOrBr')
 
                 if share_axes:
                     common_min = min(xedges[0], yedges[0])
