@@ -22,6 +22,151 @@ from multiprocessing import Pool
 import tracemalloc
 from bs4 import BeautifulSoup
 
+import numpy as np
+# from scipy.stats import pearsonr, spearmanr
+# from prettytable import PrettyTable
+# import pyBigWig
+
+def get_binned_vals(bigwig_file, chr, resolution=25):
+    with pyBigWig.open(bigwig_file) as bw:
+        if chr not in bw.chroms():
+            raise ValueError(f"{chr} not found in the BigWig file.")
+        chr21_length = bw.chroms()[chr]
+        start, end = 0, chr21_length
+        vals = np.array(bw.values(chr, start, end, numpy=True))
+        vals = np.nan_to_num(vals, nan=0.0)
+        vals = vals[:end - (end % resolution)]
+        vals = vals.reshape(-1, resolution)
+        bin_means = np.mean(vals, axis=1)
+        return bin_means
+
+def load_npz(file_name):
+    with np.load(file_name, allow_pickle=True) as data:
+        return data[data.files[0]]
+
+def compare_arrays(arr1, arr2, celltype, assay):
+    # 1. Shape Check
+    if arr1.shape != arr2.shape:
+        raise ValueError("Arrays do not have the same shape!")
+    # 2. Basic Statistics
+    arr1_mean, arr2_mean = np.mean(arr1), np.mean(arr2)
+    arr1_var, arr2_var = np.var(arr1), np.var(arr2)
+    arr1_std, arr2_std = np.std(arr1), np.std(arr2)
+    # 3. Element-wise Difference
+    abs_diff = np.abs(arr1 - arr2)
+    rel_diff = np.abs(arr1 - arr2) / (np.abs(arr1) + 1e-10)  # Avoid division by zero
+    max_abs_diff = np.max(abs_diff)
+    mean_abs_diff = np.mean(abs_diff)
+    max_rel_diff = np.max(rel_diff)
+    mean_rel_diff = np.mean(rel_diff)
+    # 4. Correlation
+    pearson_corr, _ = pearsonr(arr1, arr2)
+    spearman_corr, _ = spearmanr(arr1, arr2)
+    # 5. RMSE
+    rmse = np.sqrt(np.mean(abs_diff**2))
+    # 6. MAE
+    mae = np.mean(abs_diff)
+    # Create the table
+    table = PrettyTable()
+    table.title = f"Comparison Results for Cell Type: {celltype}, Assay: {assay}"
+    table.field_names = ["Metric", "Array 1", "Array 2", "Difference"]
+    table.add_row(["Shape", str(arr1.shape), str(arr2.shape), "N/A"])
+    table.add_row(["Mean", f"{arr1_mean:.5f}", f"{arr2_mean:.5f}", f"{abs(arr1_mean - arr2_mean):.5f}"])
+    table.add_row(["Variance", f"{arr1_var:.5f}", f"{arr2_var:.5f}", f"{abs(arr1_var - arr2_var):.5f}"])
+    table.add_row(["Std Dev", f"{arr1_std:.5f}", f"{arr2_std:.5f}", f"{abs(arr1_std - arr2_std):.5f}"])
+    table.add_row(["Max Abs Diff", "-", "-", f"{max_abs_diff:.5f}"])
+    table.add_row(["Mean Abs Diff", "-", "-", f"{mean_abs_diff:.5f}"])
+    table.add_row(["Max Rel Diff", "-", "-", f"{max_rel_diff:.5f}"])
+    table.add_row(["Mean Rel Diff", "-", "-", f"{mean_rel_diff:.5f}"])
+    table.add_row(["Pearson Corr", "-", "-", f"{pearson_corr:.5f}"])
+    table.add_row(["Spearman Corr", "-", "-", f"{spearman_corr:.5f}"])
+    table.add_row(["RMSE", "-", "-", f"{rmse:.5f}"])
+    table.add_row(["MAE", "-", "-", f"{mae:.5f}"])
+    # Print the table
+    print(table)
+
+import matplotlib.pyplot as plt
+def plot_arrays(arr1, arr2, celltype, assay):
+    plt.figure(figsize=(10, 6))
+    plt.hexbin(arr1, arr2, gridsize=50, cmap='plasma', mincnt=1, bins='log')
+    plt.colorbar(label='Counts in bin (log scale)')
+    plt.title(f'{assay} in {celltype.replace("B_","")}')
+    plt.xlabel('ours')
+    plt.ylabel('EIC')
+    # Set identical range for both axes
+    max_range = max(np.max(arr1), np.max(arr2))
+    min_range = min(np.min(arr1), np.min(arr2))
+    plt.xlim(min_range, max_range)
+    plt.ylim(min_range, max_range)
+    plt.savefig(f'EIC/plots/{celltype}_{assay}.png')
+    plt.close()
+
+# Example usage
+# plot_arrays(arr1, arr2, celltype='CellTypeExample', assay='AssayExample')
+
+pairs = [
+    ('EIC/blind_data/C05M17.bigwig', 'encode_data/B_BE2C/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C05M18.bigwig', 'encode_data/B_BE2C/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C05M20.bigwig', 'encode_data/B_BE2C/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C05M29.bigwig', 'encode_data/B_BE2C/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C06M16.bigwig', 'encode_data/B_BMEC/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C06M17.bigwig', 'encode_data/B_BMEC/H3K27me3/signal_BW_res25/chr21.npz'),  
+    ('EIC/blind_data/C06M18.bigwig', 'encode_data/B_BMEC/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C07M20.bigwig', 'encode_data/B_Caco-2/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C07M29.bigwig', 'encode_data/B_Caco-2/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C12M01.bigwig', 'encode_data/B_DND-41/ATAC-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C12M02.bigwig', 'encode_data/B_DND-41/DNase-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M16.bigwig', 'encode_data/B_HAP-1/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M17.bigwig', 'encode_data/B_HAP-1/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M18.bigwig', 'encode_data/B_HAP-1/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M20.bigwig', 'encode_data/B_HAP-1/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M22.bigwig', 'encode_data/B_HAP-1/H3K4me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C19M29.bigwig', 'encode_data/B_HAP-1/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C22M16.bigwig', 'encode_data/B_HL-60/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C22M17.bigwig', 'encode_data/B_HL-60/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C28M17.bigwig', 'encode_data/B_MG63/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C28M18.bigwig', 'encode_data/B_MG63/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C28M22.bigwig', 'encode_data/B_MG63/H3K4me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C28M29.bigwig', 'encode_data/B_MG63/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C31M01.bigwig', 'encode_data/B_NCI-H929/ATAC-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C31M02.bigwig', 'encode_data/B_NCI-H929/DNase-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C31M16.bigwig', 'encode_data/B_NCI-H929/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C31M29.bigwig', 'encode_data/B_NCI-H929/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M01.bigwig', 'encode_data/B_RWPE2/ATAC-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M02.bigwig', 'encode_data/B_RWPE2/DNase-seq/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M17.bigwig', 'encode_data/B_RWPE2/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M18.bigwig', 'encode_data/B_RWPE2/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M20.bigwig', 'encode_data/B_RWPE2/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M22.bigwig', 'encode_data/B_RWPE2/H3K4me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C38M29.bigwig', 'encode_data/B_RWPE2/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M16.bigwig', 'encode_data/B_SJCRH30/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M17.bigwig', 'encode_data/B_SJCRH30/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M18.bigwig', 'encode_data/B_SJCRH30/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M20.bigwig', 'encode_data/B_SJCRH30/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M22.bigwig', 'encode_data/B_SJCRH30/H3K4me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C39M29.bigwig', 'encode_data/B_SJCRH30/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M16.bigwig', 'encode_data/B_SJSA1/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M17.bigwig', 'encode_data/B_SJSA1/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M18.bigwig', 'encode_data/B_SJSA1/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M20.bigwig', 'encode_data/B_SJSA1/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M22.bigwig', 'encode_data/B_SJSA1/H3K4me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C40M29.bigwig', 'encode_data/B_SJSA1/H3K9me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C51M16.bigwig', 'encode_data/B_WERI-Rb-1/H3K27ac/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C51M17.bigwig', 'encode_data/B_WERI-Rb-1/H3K27me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C51M18.bigwig', 'encode_data/B_WERI-Rb-1/H3K36me3/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C51M20.bigwig', 'encode_data/B_WERI-Rb-1/H3K4me1/signal_BW_res25/chr21.npz'),
+    ('EIC/blind_data/C51M29.bigwig', 'encode_data/B_WERI-Rb-1/H3K9me3/signal_BW_res25/chr21.npz')]
+
+for i,j in pairs:
+    celltype_name = j.split('/')[1]  # Extracting the cell type from the file path
+    assay_name = j.split('/')[2]      # Extracting the assay name from the file path
+    arr1 = load_npz(j)
+    arr2 = get_binned_vals(i)
+    arr1 = np.arcsinh(arr1)
+    arr2 = np.arcsinh(arr2)
+    compare_arrays(arr1, arr2, celltype_name, assay_name)
+    plot_arrays(arr1, arr2, celltype_name, assay_name)
+    
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
     """
     Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
@@ -3415,7 +3560,44 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "download_activity_data":
         download_activity_data(metadata_file_path=solar_data_path)
-        
+
+    elif sys.argv[1] == "update_eic_bw":
+        """
+        for eic data, rm */signal_bw_res25
+        look up the corresponding ct-assay from the OG EIC bigwigs
+        bin the values and save them in npz format at */signal_bw_res25
+        """
+
+        main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+        csv_file_path = "/project/compbio-lab/encode_data/EIC_experiments.csv"
+        experiments_df = pd.read_csv(csv_file_path, header=0)
+        # header: data_type,cell_type_id,mark_id,cell_type,mark/assay,filename,experiment
+
+        for i in range(len(experiments_df)):
+            datatype = experiments_df.iloc[i, 0]
+            cell_type_id = experiments_df.iloc[i, 1]
+            mark_id = experiments_df.iloc[i, 2]
+            ct_name = experiments_df.iloc[i, 4]
+            if "H1" in ct_name:
+                ct_name = "H1"
+            assay_name = experiments_df.iloc[i, 4]
+            filename = f"{experiments_df.iloc[i, 5]}"
+            bw_filepath = f"/project/compbio-lab/EIC/{datatype}/{filename}.bigwig"
+
+            if datatype == "training_data":
+                encode_data_path = f"/project/compbio-lab/encode_data/T_{ct_name}/{assay_name}/signal_BW_res25/"
+            elif datatype == "validation_data":
+                encode_data_path =  f"/project/compbio-lab/encode_data/V_{ct_name}/{assay_name}/signal_BW_res25/"
+            elif datatype == "blind_data":
+                encode_data_path =  f"/project/compbio-lab/encode_data/B_{ct_name}/{assay_name}/signal_BW_res25/"
+
+            for chr in main_chrs:
+                binned_chr = get_binned_vals(bw_filepath, chr, resolution=25)
+                if os.path.exists(f"{encode_data_path}/{chr}.npz"):
+                    os.system(f"rm {encode_data_path}/{chr}.npz")
+                    np.savez_compressed(f"{encode_data_path}/{chr}.npz", np.array(binned_chr))
+                    print(f'replaced/updated "{encode_data_path}/{chr}.npz')
+
     else:
         d = GET_DATA()
         d.search_ENCODE(metadata_file_path=solar_data_path)
