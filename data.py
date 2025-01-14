@@ -31,8 +31,8 @@ def get_binned_vals(bigwig_file, chr, resolution=25):
     with pyBigWig.open(bigwig_file) as bw:
         if chr not in bw.chroms():
             raise ValueError(f"{chr} not found in the BigWig file.")
-        chr21_length = bw.chroms()[chr]
-        start, end = 0, chr21_length
+        chr_length = bw.chroms()[chr]
+        start, end = 0, chr_length
         vals = np.array(bw.values(chr, start, end, numpy=True))
         vals = np.nan_to_num(vals, nan=0.0)
         vals = vals[:end - (end % resolution)]
@@ -3592,6 +3592,7 @@ if __name__ == "__main__":
                 encode_data_path =  f"/project/compbio-lab/encode_data/B_{ct_name}/{assay_name}/signal_BW_res25/"
 
             for chr in main_chrs:
+                print(f"binning {encode_data_path}/{chr}.npz")
                 binned_chr = get_binned_vals(bw_filepath, chr, resolution=25)
                 if os.path.exists(f"{encode_data_path}/{chr}.npz"):
                     os.system(f"rm {encode_data_path}/{chr}.npz")
