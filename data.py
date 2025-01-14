@@ -3577,7 +3577,7 @@ if __name__ == "__main__":
             datatype = experiments_df.iloc[i, 0]
             cell_type_id = experiments_df.iloc[i, 1]
             mark_id = experiments_df.iloc[i, 2]
-            ct_name = experiments_df.iloc[i, 4]
+            ct_name = experiments_df.iloc[i, 3]
             if "H1" in ct_name:
                 ct_name = "H1"
             assay_name = experiments_df.iloc[i, 4]
