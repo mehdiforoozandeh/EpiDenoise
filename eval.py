@@ -1740,15 +1740,19 @@ class EVAL_CANDI(object):
         imp_pval_mean = imp_pval_dist.mean()
         ups_pval_mean = ups_pval_dist.mean()
 
-        print("Max of imp_count_std/imp_count_mean:", torch.max(imp_count_std / imp_count_mean).item())
-        print("Min of imp_count_std/imp_count_mean:", torch.min(imp_count_std / imp_count_mean).item())
-
-        print("Max of imp_pval_std/imp_pval_mean:", torch.max(imp_pval_std / imp_pval_mean).item())
-        print("Min of imp_pval_std/imp_pval_mean:", torch.min(imp_pval_std / imp_pval_mean).item())
-        exit()
-
         imp_pval_std = imp_pval_dist.std()
         ups_pval_std = ups_pval_dist.std()
+
+        imp_count_ratio = imp_count_std / imp_count_mean
+        imp_count_ratio = imp_count_ratio[~torch.isnan(imp_count_ratio)]  # Ignore NaN values
+        print("Max of imp_count_std/imp_count_mean:", torch.max(imp_count_ratio).item())
+        print("Min of imp_count_std/imp_count_mean:", torch.min(imp_count_ratio).item())
+
+        imp_pval_ratio = imp_pval_std / imp_pval_mean
+        imp_pval_ratio = imp_pval_ratio[~torch.isnan(imp_pval_ratio)]  # Ignore NaN values
+        print("Max of imp_pval_std/imp_pval_mean:", torch.max(imp_pval_ratio).item())
+        print("Min of imp_pval_std/imp_pval_mean:", torch.min(imp_pval_ratio).item())
+        exit()
 
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
