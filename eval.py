@@ -2432,7 +2432,7 @@ def main():
     m = METRICS()
     zero_array = np.zeros(1865500)
     print(zero_array.sum())
-    c = m.get_prom_positions("chr21", 25)
+    c = m.get_prom_positions("chr21", 25).reset_index(drop=True)
     for t in range(len(c)):
         zero_array[c["start"][t]:c["end"][t]] = 1
     print(zero_array.sum())
