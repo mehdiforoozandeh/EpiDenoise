@@ -1758,6 +1758,11 @@ class EVAL_CANDI(object):
 
         for j in range(Y.shape[1]):
             if j in list(availability):
+                assay_name = self.expnames[j]
+
+                if assay_name != "H3K4me3":
+                    continue
+
                 C_target = Y[:, j].numpy()
                 P_target = P[:, j].numpy()
 
@@ -1798,10 +1803,23 @@ class EVAL_CANDI(object):
                         pval_upper_95 = np.sinh(pval_upper_95)
 
 
+                    if assay_name == "H3K4me3":
+                        pearson_count = self.metrics.pearson(pred_count, pred_count_std)
+                        spearman_count = self.metrics.spearman(pred_count, pred_count_std)
+
+                        pearson_pval = self.metrics.pearson(pred_pval, pred_pval_std)
+                        spearman_pval = self.metrics.spearman(pred_pval, pred_pval_std)
+
+                        print(f"Pearson correlation between pred_count and pred_count_std: {pearson_count}")
+                        print(f"Spearman correlation between pred_count and pred_count_std: {spearman_count}")
+                        print(f"Pearson correlation between pred_pval and pred_pval_std: {pearson_pval}")
+                        print(f"Spearman correlation between pred_pval and pred_pval_std: {spearman_pval}")
+                        exit()
+
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
-                        'feature': self.expnames[j],
+                        'feature': assay_name,
                         'comparison': comparison,
                         'available assays': len(availability),
 
@@ -2360,10 +2378,6 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
 
-    # for k in ec.dataset.navigation.keys():
-    #     print(k, ec.dataset.navigation[k].keys())
-    
-    # exit()
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
     else:
@@ -2372,6 +2386,7 @@ def main():
         else:
             res = ec.bios_pipeline(args.bios_name, args.dsf)
 
+        exit()
         ec.viz_bios(eval_res=res)
         res = ec.filter_res(res)
         print(pd.DataFrame(res))
