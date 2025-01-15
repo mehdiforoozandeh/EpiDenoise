@@ -1748,11 +1748,11 @@ class EVAL_CANDI(object):
             rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
         # print("getting 0.95 interval conf")
-        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
-        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+        # imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+        # ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        # imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+        # ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
@@ -1778,11 +1778,11 @@ class EVAL_CANDI(object):
                         pred_pval = imp_pval_mean[:, j].numpy()
                         pred_pval_std = imp_pval_std[:, j].numpy()
 
-                        count_lower_95 = imp_count_lower_95[:, j].numpy()
-                        count_upper_95 = imp_count_upper_95[:, j].numpy()
+                        # count_lower_95 = imp_count_lower_95[:, j].numpy()
+                        # count_upper_95 = imp_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = imp_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = imp_pval_upper_95[:, j].numpy()
+                        # pval_lower_95 = imp_pval_lower_95[:, j].numpy()
+                        # pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
@@ -1791,11 +1791,11 @@ class EVAL_CANDI(object):
                         pred_pval = ups_pval_mean[:, j].numpy()
                         pred_pval_std = ups_pval_std[:, j].numpy()
 
-                        count_lower_95 = ups_count_lower_95[:, j].numpy()
-                        count_upper_95 = ups_count_upper_95[:, j].numpy()
+                        # count_lower_95 = ups_count_lower_95[:, j].numpy()
+                        # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                        # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                        # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
@@ -1804,11 +1804,11 @@ class EVAL_CANDI(object):
 
 
                     if assay_name == "H3K4me3":
-                        pearson_count = self.metrics.pearson(pred_count/pred_count_std, pred_count_std)
-                        spearman_count = self.metrics.spearman(pred_count/pred_count_std, pred_count_std)
+                        pearson_count = self.metrics.pearson(pred_count/(pred_count_std)**2, pred_count_std)
+                        spearman_count = self.metrics.spearman(pred_count/(pred_count_std)**2, pred_count_std)
 
-                        pearson_pval = self.metrics.pearson(pred_pval/pred_pval_std, pred_pval_std)
-                        spearman_pval = self.metrics.spearman(pred_pval/pred_pval_std, pred_pval_std)
+                        pearson_pval = self.metrics.pearson(pred_pval/(pred_pval_std)**2, pred_pval_std)
+                        spearman_pval = self.metrics.spearman(pred_pval/(pred_pval_std)**2, pred_pval_std)
 
                         print(comparison)
                         print(f"Pearson correlation between pred_count and pred_count_std: {pearson_count}")
