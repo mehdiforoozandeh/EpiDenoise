@@ -1799,8 +1799,8 @@ class EVAL_CANDI(object):
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
-                        pval_lower_95 = np.sinh(pval_lower_95)
-                        pval_upper_95 = np.sinh(pval_upper_95)
+                        # pval_lower_95 = np.sinh(pval_lower_95)
+                        # pval_upper_95 = np.sinh(pval_upper_95)
 
 
                     if assay_name == "H3K4me3":
