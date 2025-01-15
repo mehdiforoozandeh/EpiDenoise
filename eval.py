@@ -1810,11 +1810,12 @@ class EVAL_CANDI(object):
                         pearson_pval = self.metrics.pearson(pred_pval, pred_pval_std)
                         spearman_pval = self.metrics.spearman(pred_pval, pred_pval_std)
 
+                        print(comparison)
                         print(f"Pearson correlation between pred_count and pred_count_std: {pearson_count}")
                         print(f"Spearman correlation between pred_count and pred_count_std: {spearman_count}")
                         print(f"Pearson correlation between pred_pval and pred_pval_std: {pearson_pval}")
                         print(f"Spearman correlation between pred_pval and pred_pval_std: {spearman_pval}")
-                        exit()
+                        continue
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
