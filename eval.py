@@ -1740,6 +1740,13 @@ class EVAL_CANDI(object):
         imp_pval_mean = imp_pval_dist.mean()
         ups_pval_mean = ups_pval_dist.mean()
 
+        print("Max of imp_count_std/imp_count_mean:", np.max(imp_count_std / imp_count_mean))
+        print("Min of imp_count_std/imp_count_mean:", np.min(imp_count_std / imp_count_mean))
+
+        print("Max of imp_pval_std/imp_pval_mean:", np.max(imp_pval_std / imp_pval_mean))
+        print("Min of imp_pval_std/imp_pval_mean:", np.min(imp_pval_std / imp_pval_mean))
+        exit()
+
         imp_pval_std = imp_pval_dist.std()
         ups_pval_std = ups_pval_dist.std()
 
@@ -1759,9 +1766,6 @@ class EVAL_CANDI(object):
         for j in range(Y.shape[1]):
             if j in list(availability):
                 assay_name = self.expnames[j]
-
-                if assay_name != "H3K4me3":
-                    continue
 
                 C_target = Y[:, j].numpy()
                 P_target = P[:, j].numpy()
@@ -1802,25 +1806,6 @@ class EVAL_CANDI(object):
                         # pval_lower_95 = np.sinh(pval_lower_95)
                         # pval_upper_95 = np.sinh(pval_upper_95)
 
-
-                    if assay_name == "H3K4me3":
-                        CV_count = pred_count_std / pred_count
-                        pearson_count = self.metrics.pearson(pred_count, CV_count)
-                        spearman_count = self.metrics.spearman(pred_count, CV_count)
-
-                        CV_pval = pred_pval_std / pred_pval
-                        pearson_pval = self.metrics.pearson(pred_pval, CV_pval)
-                        spearman_pval = self.metrics.spearman(pred_pval, CV_pval)
-
-                        print(f"Correlations for assay '{assay_name}' and comparison '{comparison}':")
-                        # print(f"CV_count: {CV_count}")
-                        print(f"Pearson Count: {pearson_count}")
-                        print(f"Spearman Count: {spearman_count}")
-                        # print(f"CV_pval: {CV_pval}")
-                        print(f"Pearson Pval: {pearson_pval}")
-                        print(f"Spearman Pval: {spearman_pval}")
-                        continue
-
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
@@ -1837,11 +1822,11 @@ class EVAL_CANDI(object):
                         "pred_pval":pred_pval,
                         "pred_pval_std":pred_pval_std,
 
-                        "count_lower_95" : count_lower_95,
-                        "count_upper_95": count_upper_95,
+                        # "count_lower_95" : count_lower_95,
+                        # "count_upper_95": count_upper_95,
 
-                        "pval_lower_95" : pval_lower_95,
-                        "pval_upper_95": pval_upper_95,
+                        # "pval_lower_95" : pval_lower_95,
+                        # "pval_upper_95": pval_upper_95,
 
                         'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
@@ -1926,16 +1911,16 @@ class EVAL_CANDI(object):
                 pred_pval = ups_pval_mean[:, j].numpy()
                 pred_pval_std = ups_pval_std[:, j].numpy()
 
-                count_lower_95 = ups_count_lower_95[:, j].numpy()
-                count_upper_95 = ups_count_upper_95[:, j].numpy()
+                # count_lower_95 = ups_count_lower_95[:, j].numpy()
+                # count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                # pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                # pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                 if arcsinh:
                     pred_pval = np.sinh(pred_pval)
-                    pval_lower_95 = np.sinh(pval_lower_95)
-                    pval_upper_95 = np.sinh(pval_upper_95)
+                    # pval_lower_95 = np.sinh(pval_lower_95)
+                    # pval_upper_95 = np.sinh(pval_upper_95)
 
                 metrics = {
                     'bios':bios_name,
@@ -1949,11 +1934,11 @@ class EVAL_CANDI(object):
                     "pred_pval":pred_pval,
                     "pred_pval_std":pred_pval_std,
 
-                    "count_lower_95" : count_lower_95,
-                    "count_upper_95": count_upper_95,
+                    # "count_lower_95" : count_lower_95,
+                    # "count_upper_95": count_upper_95,
 
-                    "pval_lower_95" : pval_lower_95,
-                    "pval_upper_95": pval_upper_95
+                    # "pval_lower_95" : pval_lower_95,
+                    # "pval_upper_95": pval_upper_95
                     }
 
                 results.append(metrics)
