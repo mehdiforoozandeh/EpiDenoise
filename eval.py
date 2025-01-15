@@ -2430,8 +2430,12 @@ class EVAL_CANDI(object):
 
 def main():
     m = METRICS()
+    zero_array = np.zeros(1865500)
+    print(zero_array.sum())
     c = m.get_prom_positions("chr21", 25)
-    print(c)
+    for t in range(len(c)):
+        zero_array[c["start"][t]:c["end"][t]] = 1
+    print(zero_array.sum())
     exit()
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
