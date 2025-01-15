@@ -1476,6 +1476,69 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_context.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_context.svg", format="svg")
 
+    def count_TSS_confidence_scatter(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+        tss_coords = self.metrics.get_prom_positions("chr21", 25)
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
+
+            hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
+            plt.colorbar(hb, ax=ax, label='Predicted std')
+            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
+            ax.set_xlabel('Observed')
+            ax.set_ylabel('Predicted Mean')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
+            # plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_mean_std_hexbin.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_mean_std_hexbin.svg", format="svg")
+        
+    def signal_TSS_confidence_scatter(self, eval_res):
+        pass
+
+    def count_TSS_confidence_boxplot(self, eval_res):
+        pass
+
+    def signal_TSS_confidence_boxplot(self, eval_res):
+        pass
+
+    def count_TSS_confidence_TSS_position_boxplot(self, eval_res):
+        pass
+
+    def signal_TSS_confidence_TSS_position_boxplot(self, eval_res):
+        pass
+
+    def count_GeneBody_confidence_scatter(self, eval_res):
+        pass
+
+    def signal_GeneBody_confidence_scatter(self, eval_res):
+        pass
+
+    def count_GeneBody_confidence_boxplot(self, eval_res):
+        pass
+
+    def signal_GeneBody_confidence_boxplot(self, eval_res):
+        pass
+
+    def count_GeneBody_confidence_GeneBody_position_boxplot(self, eval_res):
+        pass
+
+    def signal_GeneBody_confidence_GeneBody_position_boxplot(self, eval_res):
+        pass
+
 class EVAL_CANDI(object):
     def __init__(
         self, model, data_path, context_length, batch_size, hyper_parameters_path="",
@@ -2262,22 +2325,41 @@ class EVAL_CANDI(object):
     def viz_bios(self, eval_res):
         # Define a dictionary mapping function names to corresponding methods
         plot_functions = {
-            "count_track": self.viz.count_track,
-            "signal_track": self.viz.signal_track,
-            "count_confidence": self.viz.count_confidence,
-            "signal_confidence": self.viz.signal_confidence,
+            # "count_track": self.viz.count_track,
+            # "signal_track": self.viz.signal_track,
+            # "count_confidence": self.viz.count_confidence,
+            # "signal_confidence": self.viz.signal_confidence,
             
-            "count_error_std_hexbin": self.viz.count_error_std_hexbin,
-            "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
+            # "count_error_std_hexbin": self.viz.count_error_std_hexbin,
+            # "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
+            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
-            "count_heatmap": self.viz.count_heatmap,
-            "signal_heatmap": self.viz.signal_heatmap,
+            # "count_heatmap": self.viz.count_heatmap,
+            # "signal_heatmap": self.viz.signal_heatmap,
             
-            "count_rank_heatmap": self.viz.count_rank_heatmap,
-            "signal_rank_heatmap": self.viz.signal_rank_heatmap,
+            # "count_rank_heatmap": self.viz.count_rank_heatmap,
+            # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
+
+            "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
+            "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
+
+            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+
+            "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
+            "signal_TSS_confidence_TSS_position_boxplot": self.viz.signal_TSS_confidence_TSS_position_boxplot,
+
+            "count_GeneBody_confidence_scatter": self.viz.count_GeneBody_confidence_scatter,
+            "signal_GeneBody_confidence_scatter": self.viz.signal_GeneBody_confidence_scatter,
+
+            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+
+            "count_GeneBody_confidence_GeneBody_position_boxplot": self.viz.count_GeneBody_confidence_GeneBody_position_boxplot,
+            "signal_GeneBody_confidence_GeneBody_position_boxplot": self.viz.signal_GeneBody_confidence_GeneBody_position_boxplot,
+
 
             # "quantile_hist": self.viz.quantile_hist,
             # "quantile_heatmap": self.viz.quantile_heatmap,
@@ -2347,6 +2429,10 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
+    m = METRICS()
+    c = m.get_prom_positions("chr21", 25)
+    print(c)
+    exit()
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
