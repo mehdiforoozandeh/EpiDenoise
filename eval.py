@@ -1804,17 +1804,21 @@ class EVAL_CANDI(object):
 
 
                     if assay_name == "H3K4me3":
-                        pearson_count = self.metrics.pearson(pred_count/(pred_count_std)**2, pred_count_std)
-                        spearman_count = self.metrics.spearman(pred_count/(pred_count_std)**2, pred_count_std)
+                        CV_count = pred_count_std / pred_count
+                        pearson_count = self.metrics.pearson(pred_count, CV_count)
+                        spearman_count = self.metrics.spearman(pred_count, CV_count)
 
-                        pearson_pval = self.metrics.pearson(pred_pval/(pred_pval_std)**2, pred_pval_std)
-                        spearman_pval = self.metrics.spearman(pred_pval/(pred_pval_std)**2, pred_pval_std)
+                        CV_pval = pred_pval_std / pred_pval
+                        pearson_pval = self.metrics.pearson(pred_pval, CV_pval)
+                        spearman_pval = self.metrics.spearman(pred_pval, CV_pval)
 
-                        print(comparison)
-                        print(f"Pearson correlation between pred_count and pred_count_std: {pearson_count}")
-                        print(f"Spearman correlation between pred_count and pred_count_std: {spearman_count}")
-                        print(f"Pearson correlation between pred_pval and pred_pval_std: {pearson_pval}")
-                        print(f"Spearman correlation between pred_pval and pred_pval_std: {spearman_pval}")
+                        print(f"Correlations for assay '{assay_name}' and comparison '{comparison}':")
+                        # print(f"CV_count: {CV_count}")
+                        print(f"Pearson Count: {pearson_count}")
+                        print(f"Spearman Count: {spearman_count}")
+                        # print(f"CV_pval: {CV_pval}")
+                        print(f"Pearson Pval: {pearson_pval}")
+                        print(f"Spearman Pval: {spearman_pval}")
                         continue
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
