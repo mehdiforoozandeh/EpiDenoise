@@ -1804,11 +1804,11 @@ class EVAL_CANDI(object):
 
 
                     if assay_name == "H3K4me3":
-                        pearson_count = self.metrics.pearson(pred_count, pred_count_std)
-                        spearman_count = self.metrics.spearman(pred_count, pred_count_std)
+                        pearson_count = self.metrics.pearson(pred_count/pred_count_std, pred_count_std)
+                        spearman_count = self.metrics.spearman(pred_count/pred_count_std, pred_count_std)
 
-                        pearson_pval = self.metrics.pearson(pred_pval, pred_pval_std)
-                        spearman_pval = self.metrics.spearman(pred_pval, pred_pval_std)
+                        pearson_pval = self.metrics.pearson(pred_pval/pred_pval_std, pred_pval_std)
+                        spearman_pval = self.metrics.spearman(pred_pval/pred_pval_std, pred_pval_std)
 
                         print(comparison)
                         print(f"Pearson correlation between pred_count and pred_count_std: {pearson_count}")
