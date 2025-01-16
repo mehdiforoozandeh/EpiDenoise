@@ -1684,7 +1684,7 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isGB'] = np.where(df['isGB'] == 1, 'Gene Body', 'Non Gene Body')
+            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1721,7 +1721,7 @@ class VISUALS_CANDI(object):
                 y='obs',  # Changed from 'mu' to 'obs'
                 hue='isGB',
                 order=cat_order,
-                palette={'Gene Body': 'yellowgreen', 'non Gene Body': 'grey'},
+                palette={'GeneBody': 'yellowgreen', 'nonGeneBody': 'grey'},
                 ax=ax,
                 showfliers=False
             )
@@ -1771,7 +1771,7 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isGB'] = np.where(df['isGB'] == 1, 'Gene Body', 'Non Gene Body')
+            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1808,7 +1808,7 @@ class VISUALS_CANDI(object):
                 y='obs',  # Changed from 'mu' to 'obs'
                 hue='isGB',
                 order=cat_order,
-                palette={'Gene Body': 'salmon', 'Non Gene Body': 'grey'},
+                palette={'GeneBody': 'yellowgreen', 'NonGeneBody': 'grey'},
                 ax=ax,
                 showfliers=False
             )
