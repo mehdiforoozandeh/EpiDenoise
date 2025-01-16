@@ -1648,11 +1648,11 @@ class VISUALS_CANDI(object):
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
-            # Create 3 signal intensity categories
+            # Create 3 signal intensity categories based on predicted mean (mu)
             conditions = [
-                (df['obs'] < 10),
-                (df['obs'] >= 10) & (df['obs'] < 100),
-                (df['obs'] >= 100)
+                (df['mu'] < 10),
+                (df['mu'] >= 10) & (df['mu'] < 100),
+                (df['mu'] >= 100)
             ]
             choices = ['<10', '[10, 100]', '>100']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='<10')
@@ -1667,21 +1667,21 @@ class VISUALS_CANDI(object):
                 'HighConf_>100', 'LowConf_>100'
             ]
 
-            # Plot
+            # Plot with observed values on y-axis
             sns.set_style("whitegrid")
             sns.boxplot(
                 data=df,
                 x='conf_pred_cat',
-                y='mu',
+                y='obs',  # Changed from 'mu' to 'obs'
                 hue='isTSS',
                 order=cat_order,
-                palette={'TSS': 'red', 'NonTSS': 'grey'},
+                palette={'TSS': 'salmon', 'NonTSS': 'grey'},
                 ax=ax,
-                showfliers=False  # Don't show outliers
+                showfliers=False
             )
 
-            ax.set_xlabel("Confidence_SignalIntensity Category")
-            ax.set_ylabel("Predicted Count")
+            ax.set_xlabel("Predicted Count")
+            ax.set_ylabel("Observed Count")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
             ax.legend(title="Region")
             
@@ -1729,11 +1729,11 @@ class VISUALS_CANDI(object):
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
-            # Create 3 signal intensity categories
+            # Create 3 signal intensity categories based on predicted mean (mu)
             conditions = [
-                (df['obs'] < 10),
-                (df['obs'] >= 10) & (df['obs'] < 100),
-                (df['obs'] >= 100)
+                (df['mu'] < 10),
+                (df['mu'] >= 10) & (df['mu'] < 100),
+                (df['mu'] >= 100)
             ]
             choices = ['<10', '[10, 100]', '>100']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='<10')
@@ -1748,21 +1748,21 @@ class VISUALS_CANDI(object):
                 'HighConf_>100', 'LowConf_>100'
             ]
 
-            # Plot
+            # Plot with observed values on y-axis
             sns.set_style("whitegrid")
             sns.boxplot(
                 data=df,
                 x='conf_pred_cat',
-                y='mu',
+                y='obs',  # Changed from 'mu' to 'obs'
                 hue='isTSS',
                 order=cat_order,
-                palette={'TSS': 'red', 'NonTSS': 'grey'},
+                palette={'TSS': 'salmon', 'NonTSS': 'grey'},
                 ax=ax,
-                showfliers=False  # Don't show outliers
+                showfliers=False
             )
 
-            ax.set_xlabel("Confidence_Signal Intensity Category")
-            ax.set_ylabel("Predicted Signal")
+            ax.set_xlabel("Predicted Signal")
+            ax.set_ylabel("Observed Signal")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
             ax.legend(title="Region")
             
