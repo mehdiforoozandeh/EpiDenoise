@@ -1616,7 +1616,8 @@ class VISUALS_CANDI(object):
             os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
 
         # Define the size of the figure
-        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
 
         tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
 
@@ -1624,56 +1625,56 @@ class VISUALS_CANDI(object):
         for t in range(len(tss_coords)):
             isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
 
-        for j in range(len(eval_res)):
+        for j in range(num_plots):
             if "obs_count" not in eval_res[j]:
                 # skip rows without observed signal
                 continue
 
-            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
-            pred_CV = pred_std/pred_mean
+            pred_CV = pred_std / pred_mean
 
             df = pd.DataFrame({
                 'obs': observed,
                 'mu': pred_mean,
                 'sigma': pred_std,
-                'cv':pred_CV,
+                'cv': pred_CV,
                 'isTSS': isTSS
             })
 
             # --- 2. Create categories ---
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
-            background = gaussian_filter1d(df['mu'], sigma=10)  # Smooth signal for background
-            fold_change = df['mu'] / background
-            df['predIntensityCategory'] = np.where(fold_change > 2, 'HighPred', 'LowPred')
+            background = gaussian_filter1d(df['obs'], sigma=10)  # Smooth signal for background
+            fold_change = df['obs'] / background
+            df['SigIntensityCategory'] = np.where(fold_change > 2, 'HighSig', 'LowSig')
 
             df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
 
             # --- 3. Combine confidence and predicted intensity into one x-axis category ---
-            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['predIntensityCategory']
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Optional: define a custom order for these four categories
-            cat_order = ['LowConf_LowPred', 'LowConf_HighPred', 
-                        'HighConf_LowPred', 'HighConf_HighPred']
+            cat_order = ['LowConf_LowSig', 'LowConf_HighSig', 
+                        'HighConf_LowSig', 'HighConf_HighSig']
 
             # --- 4. Plot the boxplots ---
             sns.set_style("whitegrid")
-            plt.figure(figsize=(8, 5))
 
             sns.boxplot(
                 data=df,
                 x='conf_pred_cat',   # 4 categories on x-axis
-                y='obs',
+                y='mu',
                 hue='isTSS',         # 2 boxes per x category: TSS vs NonTSS
-                order=cat_order
+                order=cat_order,
+                ax=ax  # Specify the current axis
             )
 
-            plt.xlabel("Confidence_PredictedIntensity Category")
-            plt.ylabel("Observed Value (obs)")
-            plt.title("Observed Values by Combined Category and TSS/NonTSS")
-            plt.legend(title="Region")
+            ax.set_xlabel("Confidence_PredictedIntensity Category")
+            ax.set_ylabel("Predicted Mean")
+            ax.set_title(f"Observed Values by Combined Category and TSS/NonTSS")
+            ax.legend(title="Region")
 
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_boxplot.png", dpi=150)
