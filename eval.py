@@ -1560,20 +1560,20 @@ class VISUALS_CANDI(object):
 
             # 2. Adjust hexbin parameters for better visibility
             hb1 = ax.hexbin(observed[~isTSS], pred_CV[~isTSS], 
-                        gridsize=30,  # Reduced gridsize for larger hexagons
+                        gridsize=50,  # Reduced gridsize for larger hexagons
                         cmap='Greys', 
                         label='non-TSS',
                         bins='log',
                         mincnt=1,
-                        alpha=0.6)  # Add transparency
+                        alpha=0.5)  # Add transparency
             
             hb2 = ax.hexbin(observed[isTSS], pred_CV[isTSS], 
-                        gridsize=30,
+                        gridsize=50,
                         cmap='Reds',
                         label='TSS',
                         bins='log',
                         mincnt=1,
-                        alpha=0.8)  # Higher alpha for TSS regions
+                        alpha=0.5)  # Higher alpha for TSS regions
 
             # 3. Add grid for better readability
             ax.grid(True, alpha=0.3, linestyle='--')
@@ -1591,14 +1591,8 @@ class VISUALS_CANDI(object):
             cb2.set_label('log10(TSS count)', fontsize=12, fontweight='bold')
             
             # 6. Set axis limits to focus on relevant range
-            ax.set_xlim(0, np.percentile(observed, 95))  # Limit x-axis to 99th percentile
-            ax.set_ylim(0, min(2.5, np.percentile(pred_CV, 95)))  # Limit y-axis similarly
-
-            # 7. Add legend
-            ax.legend(['non-TSS regions', 'TSS regions'], 
-                    fontsize=12, 
-                    loc='upper right',
-                    framealpha=0.8)
+            ax.set_xlim(0, np.percentile(observed, 99))  # Limit x-axis to 99th percentile
+            ax.set_ylim(0, np.percentile(pred_CV, 99))  # Limit y-axis similarly
 
         plt.tight_layout(h_pad=0.5)  # Increase spacing between subplots
 
@@ -2438,7 +2432,7 @@ class EVAL_CANDI(object):
             # "count_rank_heatmap": self.viz.count_rank_heatmap,
             # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
-            "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
+            # "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
             "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
 
             # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
