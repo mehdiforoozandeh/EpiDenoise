@@ -2536,7 +2536,6 @@ def main():
         else:
             res = ec.bios_pipeline(args.bios_name, args.dsf)
 
-        exit()
         ec.viz_bios(eval_res=res)
         res = ec.filter_res(res)
         print(pd.DataFrame(res))
