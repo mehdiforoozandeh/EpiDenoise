@@ -1671,7 +1671,8 @@ class VISUALS_CANDI(object):
                 hue='isTSS',
                 order=cat_order,
                 palette={'TSS': 'red', 'NonTSS': 'grey'},
-                ax=ax
+                ax=ax,
+                showfliers=False  # Don't show outliers
             )
 
             ax.set_xlabel("Confidence_SignalIntensity Category")
@@ -1746,7 +1747,8 @@ class VISUALS_CANDI(object):
                 hue='isTSS',
                 order=cat_order,
                 palette={'TSS': 'red', 'NonTSS': 'grey'},
-                ax=ax
+                ax=ax,
+                showfliers=False  # Don't show outliers
             )
 
             ax.set_xlabel("Confidence_Signal Intensity Category")
@@ -2578,10 +2580,10 @@ class EVAL_CANDI(object):
             # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
             # "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
-            "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
+            # "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
 
             "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
-            # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
             # "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
             # "signal_TSS_confidence_TSS_position_boxplot": self.viz.signal_TSS_confidence_TSS_position_boxplot,
