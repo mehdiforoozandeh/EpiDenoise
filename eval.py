@@ -1668,6 +1668,7 @@ class VISUALS_CANDI(object):
                 y='mu',
                 hue='isTSS',         # 2 boxes per x category: TSS vs NonTSS
                 order=cat_order,
+                palette={'TSS': 'red', 'NonTSS': 'grey'},  # Set colors for TSS and NonTSS
                 ax=ax  # Specify the current axis
             )
 
