@@ -1676,8 +1676,8 @@ class VISUALS_CANDI(object):
             plt.legend(title="Region")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.svg", format="svg")
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_boxplot.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_boxplot.svg", format="svg")
         
 
     def signal_TSS_confidence_boxplot(self, eval_res):
