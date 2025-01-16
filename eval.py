@@ -1525,18 +1525,18 @@ class VISUALS_CANDI(object):
                 (df['mu'] >= q50) & (df['mu'] < q75),
                 (df['mu'] >= q75)
             ]
-            choices = ['[0-q25)', '[q25-q50)', '[q50-q75)', '[q75-q100]']
-            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-q25)')
+            choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Define category order based on choices
             cat_order = [
-                'HighConf_[0-q25)', 'LowConf_[0-q25)',
-                'HighConf_[q25-q50)', 'LowConf_[q25-q50)',
-                'HighConf_[q50-q75)', 'LowConf_[q50-q75)',
-                'HighConf_[q75-q100]', 'LowConf_[q75-q100]'
+                'HighConf_[0-p25)', 'LowConf_[0-p25)',
+                'HighConf_[p25-p50)', 'LowConf_[p25-p50)',
+                'HighConf_[p50-p75)', 'LowConf_[p50-p75)',
+                'HighConf_[p75-p100]', 'LowConf_[p75-p100]'
             ]
 
             # Plot with observed values on y-axis
@@ -1612,18 +1612,18 @@ class VISUALS_CANDI(object):
                 (df['mu'] >= q50) & (df['mu'] < q75),
                 (df['mu'] >= q75)
             ]
-            choices = ['[0-q25)', '[q25-q50)', '[q50-q75)', '[q75-q100]']
-            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-q25)')
+            choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Define category order based on choices
             cat_order = [
-                'HighConf_[0-q25)', 'LowConf_[0-q25)',
-                'HighConf_[q25-q50)', 'LowConf_[q25-q50)',
-                'HighConf_[q50-q75)', 'LowConf_[q50-q75)',
-                'HighConf_[q75-q100]', 'LowConf_[q75-q100]'
+                'HighConf_[0-p25)', 'LowConf_[0-p25)',
+                'HighConf_[p25-p50)', 'LowConf_[p25-p50)',
+                'HighConf_[p50-p75)', 'LowConf_[p50-p75)',
+                'HighConf_[p75-p100]', 'LowConf_[p75-p100]'
             ]
 
             # Plot with observed values on y-axis
@@ -1651,12 +1651,179 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_confidence_boxplot.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_confidence_boxplot.svg", format="svg")
 
-
     def count_GeneBody_confidence_boxplot(self, eval_res):
-        pass
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        gb_coords = self.metrics.get_gene_positions("chr21", 25).reset_index(drop=True)
+
+        isGB = np.zeros(len(eval_res[0]["obs_count"]), dtype=bool)        
+        for t in range(len(gb_coords)):
+            isGB[gb_coords["start"][t]:gb_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isGB': isGB
+            })
+
+            # Create categories
+            df['isGB'] = np.where(df['isGB'] == 1, 'Gene Body', 'Non Gene Body')
+            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
+
+
+            # Create 4 signal intensity categories based on quantiles
+            q25 = df['mu'].quantile(0.25)
+            q50 = df['mu'].quantile(0.50)
+            q75 = df['mu'].quantile(0.75)
+
+            conditions = [
+                (df['mu'] < q25),
+                (df['mu'] >= q25) & (df['mu'] < q50),
+                (df['mu'] >= q50) & (df['mu'] < q75),
+                (df['mu'] >= q75)
+            ]
+            choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Define category order based on choices
+            cat_order = [
+                'HighConf_[0-p25)', 'LowConf_[0-p25)',
+                'HighConf_[p25-p50)', 'LowConf_[p25-p50)',
+                'HighConf_[p50-p75)', 'LowConf_[p50-p75)',
+                'HighConf_[p75-p100]', 'LowConf_[p75-p100]'
+            ]
+
+            # Plot with observed values on y-axis
+            sns.set_style("whitegrid")
+            sns.boxplot(
+                data=df,
+                x='conf_pred_cat',
+                y='obs',  # Changed from 'mu' to 'obs'
+                hue='isGB',
+                order=cat_order,
+                palette={'Gene Body': 'yellowgreen', 'non Gene Body': 'grey'},
+                ax=ax,
+                showfliers=False
+            )
+
+            ax.set_xlabel("Predicted Count")
+            ax.set_ylabel("Observed Count")  # Updated label
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            ax.legend(title="Region")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_GeneBody_confidence_boxplot.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_Genebody_confidence_boxplot.svg", format="svg")
 
     def signal_GeneBody_confidence_boxplot(self, eval_res):
-        pass
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        gb_coords = self.metrics.get_gene_positions("chr21", 25).reset_index(drop=True)
+
+        isGB = np.zeros(len(eval_res[0]["obs_pval"]), dtype=bool)        
+        for t in range(len(gb_coords)):
+            isGB[gb_coords["start"][t]:gb_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isGB': isGB
+            })
+
+            # Create categories
+            df['isGB'] = np.where(df['isGB'] == 1, 'Gene Body', 'Non Gene Body')
+            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
+
+
+            # Create 4 signal intensity categories based on quantiles
+            q25 = df['mu'].quantile(0.25)
+            q50 = df['mu'].quantile(0.50)
+            q75 = df['mu'].quantile(0.75)
+
+            conditions = [
+                (df['mu'] < q25),
+                (df['mu'] >= q25) & (df['mu'] < q50),
+                (df['mu'] >= q50) & (df['mu'] < q75),
+                (df['mu'] >= q75)
+            ]
+            choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Define category order based on choices
+            cat_order = [
+                'HighConf_[0-p25)', 'LowConf_[0-p25)',
+                'HighConf_[p25-p50)', 'LowConf_[p25-p50)',
+                'HighConf_[p50-p75)', 'LowConf_[p50-p75)',
+                'HighConf_[p75-p100]', 'LowConf_[p75-p100]'
+            ]
+
+            # Plot with observed values on y-axis
+            sns.set_style("whitegrid")
+            sns.boxplot(
+                data=df,
+                x='conf_pred_cat',
+                y='obs',  # Changed from 'mu' to 'obs'
+                hue='isGB',
+                order=cat_order,
+                palette={'Gene Body': 'salmon', 'Non Gene Body': 'grey'},
+                ax=ax,
+                showfliers=False
+            )
+
+            ax.set_xlabel("Predicted Signal")
+            ax.set_ylabel("Observed Signal")  # Updated label
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            ax.legend(title="Region")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_confidence_boxplot.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_confidence_boxplot.svg", format="svg")
 
 
 class EVAL_CANDI(object):
@@ -2451,24 +2618,11 @@ class EVAL_CANDI(object):
             # "count_rank_heatmap": self.viz.count_rank_heatmap,
             # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
-            # "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
-            # "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
-
             "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
             "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
-            # "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
-            # "signal_TSS_confidence_TSS_position_boxplot": self.viz.signal_TSS_confidence_TSS_position_boxplot,
-
-            # "count_GeneBody_confidence_scatter": self.viz.count_GeneBody_confidence_scatter,
-            # "signal_GeneBody_confidence_scatter": self.viz.signal_GeneBody_confidence_scatter,
-
-            # "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
-            # "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
-
-            # "count_GeneBody_confidence_GeneBody_position_boxplot": self.viz.count_GeneBody_confidence_GeneBody_position_boxplot,
-            # "signal_GeneBody_confidence_GeneBody_position_boxplot": self.viz.signal_GeneBody_confidence_GeneBody_position_boxplot,
-
+            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
 
             # "quantile_hist": self.viz.quantile_hist,
             # "quantile_heatmap": self.viz.quantile_heatmap,
