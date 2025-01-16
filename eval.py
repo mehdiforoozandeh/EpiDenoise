@@ -1643,73 +1643,42 @@ class VISUALS_CANDI(object):
                 'isTSS': isTSS
             })
 
-            # Create confidence categories
+            # --- 2. Create categories ---
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+
+            df['SigIntensityCategory'] = np.where(df['obs'] > 100, 'HighSig', 'LowSig')
+
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
-            # Create subplots for this evaluation result
-            ax1 = plt.subplot(num_plots, 2, 2*j + 1)  # Lowconf
-            ax2 = plt.subplot(num_plots, 2, 2*j + 2)  # hiconf
+            # --- 3. Combine confidence and predicted intensity into one x-axis category ---
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
-            # Plot for HighConf
-            high_conf = df[df['confidenceCategory'] == 'HighConf']
-            
-            # Plot non-TSS points first
-            hb1 = ax2.hexbin(high_conf[~high_conf['isTSS']]['obs'], 
-                            high_conf[~high_conf['isTSS']]['mu'],
-                            gridsize=50, cmap='Greys', 
-                            bins='log', mincnt=1)
-            
-            # Then plot TSS points
-            hb2 = ax2.hexbin(high_conf[high_conf['isTSS']]['obs'], 
-                            high_conf[high_conf['isTSS']]['mu'],
-                            gridsize=50, cmap='Reds',
-                            bins='log', mincnt=1)
+            # Optional: define a custom order for these four categories
+            cat_order = ['LowConf_LowSig', 'LowConf_HighSig', 
+                        'HighConf_LowSig', 'HighConf_HighSig']
 
-            ax2.set_title(f"{eval_res[j]['feature']} - High Confidence")
-            ax2.set_xlabel("Observed Count")
-            ax2.set_ylabel("Predicted Count")
-            
-            # Add colorbars
-            plt.colorbar(hb1, ax=ax1, label='log10(non-TSS count)')
-            plt.colorbar(hb2, ax=ax1, label='log10(TSS count)')
+            # --- 4. Plot the boxplots ---
+            sns.set_style("whitegrid")
 
-            # Plot for LowConf
-            low_conf = df[df['confidenceCategory'] == 'LowConf']
-            
-            # Plot non-TSS points first
-            hb3 = ax1.hexbin(low_conf[~low_conf['isTSS']]['obs'], 
-                            low_conf[~low_conf['isTSS']]['mu'],
-                            gridsize=50, cmap='Greys', 
-                            bins='log', mincnt=1)
-            
-            # Then plot TSS points
-            hb4 = ax1.hexbin(low_conf[low_conf['isTSS']]['obs'], 
-                            low_conf[low_conf['isTSS']]['mu'],
-                            gridsize=50, cmap='Reds',
-                            bins='log', mincnt=1)
+            sns.boxplot(
+                data=df,
+                x='conf_pred_cat',   # 4 categories on x-axis
+                y='mu',
+                hue='isTSS',         # 2 boxes per x category: TSS vs NonTSS
+                order=cat_order,
+                palette={'TSS': 'red', 'NonTSS': 'grey'},  # Set colors for TSS and NonTSS
+                ax=ax  # Specify the current axis
+            )
 
-            ax1.set_title(f"{eval_res[j]['feature']} - Low Confidence")
-            ax1.set_xlabel("Observed Count")
-            ax1.set_ylabel("Predicted Count")
-            
-            # Add colorbars
-            plt.colorbar(hb3, ax=ax2, label='log10(non-TSS count)')
-            plt.colorbar(hb4, ax=ax2, label='log10(TSS count)')
-
-            # Set same limits for both plots
-            max_val = max(df['obs'].max(), df['mu'].max())
-            ax1.set_xlim(0, max_val)
-            ax1.set_ylim(0, max_val)
-            ax2.set_xlim(0, max_val)
-            ax2.set_ylim(0, max_val)
-
-            # Add diagonal line
-            ax1.plot([0, max_val], [0, max_val], 'k--', alpha=0.5)
-            ax2.plot([0, max_val], [0, max_val], 'k--', alpha=0.5)
+            ax.set_xlabel("Confidence_PredictedIntensity Category")
+            ax.set_ylabel("Predicted Count")
+            ax.set_title(f"Observed Values by Combined Category and TSS/NonTSS")
+            ax.legend(title="Region")
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_hexbin.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_hexbin.svg", format="svg")
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_boxplot.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_boxplot.svg", format="svg")
+        
 
     def signal_TSS_confidence_boxplot(self, eval_res):
         pass
