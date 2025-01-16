@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from matplotlib.colors import LinearSegmentedColormap
+from scipy.ndimage import gaussian_filter1d
 
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -1591,8 +1592,8 @@ class VISUALS_CANDI(object):
             cb2.set_label('log10(TSS count)', fontsize=12, fontweight='bold')
             
             # 6. Set axis limits to focus on relevant range
-            ax.set_xlim(0, np.percentile(observed, 99))  # Limit x-axis to 99th percentile
-            ax.set_ylim(0, np.percentile(pred_CV, 99))  # Limit y-axis similarly
+            # ax.set_xlim(0, np.percentile(observed, 99))  # Limit x-axis to 99th percentile
+            # ax.set_ylim(0, np.percentile(pred_CV, 99))  # Limit y-axis similarly
 
         plt.tight_layout(h_pad=0.5)  # Increase spacing between subplots
 
@@ -1611,7 +1612,73 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_confidence_scatter.svg", format="svg")
 
     def count_TSS_confidence_boxplot(self, eval_res):
-        pass
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
+
+        isTSS = np.zeros(len(eval_res[0]["obs_count"]), dtype=bool)        
+        for t in range(len(tss_coords)):
+            isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
+
+        for j in range(len(eval_res)):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pred_CV = pred_std/pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv':pred_CV,
+                'isTSS': isTSS
+            })
+
+            # --- 2. Create categories ---
+            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
+
+            background = gaussian_filter1d(df['mu'], sigma=10)  # Smooth signal for background
+            fold_change = df['mu'] / background
+            df['predIntensityCategory'] = np.where(fold_change > 2, 'HighPred', 'LowPred')
+
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+
+            # --- 3. Combine confidence and predicted intensity into one x-axis category ---
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['predIntensityCategory']
+
+            # Optional: define a custom order for these four categories
+            cat_order = ['LowConf_LowPred', 'LowConf_HighPred', 
+                        'HighConf_LowPred', 'HighConf_HighPred']
+
+            # --- 4. Plot the boxplots ---
+            sns.set_style("whitegrid")
+            plt.figure(figsize=(8, 5))
+
+            sns.boxplot(
+                data=df,
+                x='conf_pred_cat',   # 4 categories on x-axis
+                y='obs',
+                hue='isTSS',         # 2 boxes per x category: TSS vs NonTSS
+                order=cat_order
+            )
+
+            plt.xlabel("Confidence_PredictedIntensity Category")
+            plt.ylabel("Observed Value (obs)")
+            plt.title("Observed Values by Combined Category and TSS/NonTSS")
+            plt.legend(title="Region")
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.svg", format="svg")
+        
 
     def signal_TSS_confidence_boxplot(self, eval_res):
         pass
@@ -2435,7 +2502,7 @@ class EVAL_CANDI(object):
             # "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
             "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
 
-            # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
             # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
             # "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
