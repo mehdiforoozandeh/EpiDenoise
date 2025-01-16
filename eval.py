@@ -1648,23 +1648,29 @@ class VISUALS_CANDI(object):
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
-            # Create 3 signal intensity categories based on predicted mean (mu)
+            # Create 4 signal intensity categories based on quantiles
+            q25 = df['mu'].quantile(0.25)
+            q50 = df['mu'].quantile(0.50)
+            q75 = df['mu'].quantile(0.75)
+
             conditions = [
-                (df['mu'] < 10),
-                (df['mu'] >= 10) & (df['mu'] < 100),
-                (df['mu'] >= 100)
+                (df['mu'] < q25),
+                (df['mu'] >= q25) & (df['mu'] < q50),
+                (df['mu'] >= q50) & (df['mu'] < q75),
+                (df['mu'] >= q75)
             ]
-            choices = ['<10', '[10, 100]', '>100']
-            df['SigIntensityCategory'] = np.select(conditions, choices, default='<10')
+            choices = ['[0-q25)', '[q25-q50)', '[q50-q75)', '[q75-q100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-q25)')
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Define category order based on choices
             cat_order = [
-                'HighConf_<10', 'LowConf_<10',
-                'HighConf_[10, 100]', 'LowConf_[10, 100]',
-                'HighConf_>100', 'LowConf_>100'
+                'HighConf_[0-q25)', 'LowConf_[0-q25)',
+                'HighConf_[q25-q50)', 'LowConf_[q25-q50)',
+                'HighConf_[q50-q75)', 'LowConf_[q50-q75)',
+                'HighConf_[q75-q100]', 'LowConf_[q75-q100]'
             ]
 
             # Plot with observed values on y-axis
@@ -1729,23 +1735,29 @@ class VISUALS_CANDI(object):
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
-            # Create 3 signal intensity categories based on predicted mean (mu)
+            # Create 4 signal intensity categories based on quantiles
+            q25 = df['mu'].quantile(0.25)
+            q50 = df['mu'].quantile(0.50)
+            q75 = df['mu'].quantile(0.75)
+
             conditions = [
-                (df['mu'] < 10),
-                (df['mu'] >= 10) & (df['mu'] < 100),
-                (df['mu'] >= 100)
+                (df['mu'] < q25),
+                (df['mu'] >= q25) & (df['mu'] < q50),
+                (df['mu'] >= q50) & (df['mu'] < q75),
+                (df['mu'] >= q75)
             ]
-            choices = ['<10', '[10, 100]', '>100']
-            df['SigIntensityCategory'] = np.select(conditions, choices, default='<10')
+            choices = ['[0-q25)', '[q25-q50)', '[q50-q75)', '[q75-q100]']
+            df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-q25)')
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Define category order based on choices
             cat_order = [
-                'HighConf_<10', 'LowConf_<10',
-                'HighConf_[10, 100]', 'LowConf_[10, 100]',
-                'HighConf_>100', 'LowConf_>100'
+                'HighConf_[0-q25)', 'LowConf_[0-q25)',
+                'HighConf_[q25-q50)', 'LowConf_[q25-q50)',
+                'HighConf_[q50-q75)', 'LowConf_[q50-q75)',
+                'HighConf_[q75-q100]', 'LowConf_[q75-q100]'
             ]
 
             # Plot with observed values on y-axis
