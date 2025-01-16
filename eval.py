@@ -1482,7 +1482,12 @@ class VISUALS_CANDI(object):
 
         # Define the size of the figure
         plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
-        tss_coords = self.metrics.get_prom_positions("chr21", 25)
+
+        tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
+
+        isTSS = np.zeros(len(eval_res[0]["obs_count"]), dtype=bool)        
+        for t in range(len(tss_coords)):
+            isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
 
         for j in range(len(eval_res)):
             if "obs_count" not in eval_res[j]:
@@ -1492,22 +1497,102 @@ class VISUALS_CANDI(object):
             ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
 
             observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
-            pcc = f"PCC_GW: {eval_res[j]['C_Pearson-GW']:.2f}"
+            pred_CV = pred_std/pred_mean
 
-            hb = ax.hexbin(observed, pred_mean, C=pred_std, gridsize=30, cmap='viridis', reduce_C_function=np.mean)
-            plt.colorbar(hb, ax=ax, label='Predicted std')
-            ax.plot([observed.min(), observed.max()], [observed.min(), observed.max()], 'k--')
-            ax.set_xlabel('Observed')
-            ax.set_ylabel('Predicted Mean')
-            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc}")
-            # plt.grid(True)
+            # Plot non-TSS points using hexbin
+            hb1 = ax.hexbin(observed[~isTSS], pred_CV[~isTSS], 
+                        gridsize=50, cmap='Greys', 
+                        label='non-TSS',
+                        bins='log',  # Use log scaling for better visualization
+                        mincnt=1)    # Minimum count for bin coloring
+            
+            # Plot TSS points using hexbin with a different colormap
+            hb2 = ax.hexbin(observed[isTSS], pred_CV[isTSS], 
+                        gridsize=50, cmap='Reds',
+                        label='TSS',
+                        bins='log',
+                        mincnt=1)
+
+            ax.set_xlabel('Observed Count')
+            ax.set_ylabel('Coefficient of Variation (std/mean)')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Add colorbars
+            plt.colorbar(hb1, ax=ax, label='log10(non-TSS count)')
+            plt.colorbar(hb2, ax=ax, label='log10(TSS count)')
+
+            # # Plot non-TSS points in black
+            # ax.scatter(observed[~isTSS], pred_CV[~isTSS], c='black', s=1, alpha=0.5, label='non-TSS')
+            # # Plot TSS points in red
+            # ax.scatter(observed[isTSS], pred_CV[isTSS], c='red', s=1, alpha=0.5, label='TSS')
+            
+            # ax.set_xlabel('Observed Count')
+            # ax.set_ylabel('Coefficient of Variation (std/mean)')
+            # ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            # ax.legend()
 
         plt.tight_layout()
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_mean_std_hexbin.png", dpi=150)
-        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_mean_std_hexbin.svg", format="svg")
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_confidence_scatter.svg", format="svg")
         
     def signal_TSS_confidence_scatter(self, eval_res):
-        pass
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        plt.figure(figsize=(5, len(eval_res) * 5))  # one column with len(eval_res) rows
+
+        tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
+
+        isTSS = np.zeros(len(eval_res[0]["obs_pval"]), dtype=bool)        
+        for t in range(len(tss_coords)):
+            isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
+
+        for j in range(len(eval_res)):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(len(eval_res), 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pred_CV = pred_std/pred_mean
+
+            # Plot non-TSS points using hexbin
+            hb1 = ax.hexbin(observed[~isTSS], pred_CV[~isTSS], 
+                        gridsize=50, cmap='Greys', 
+                        label='non-TSS',
+                        bins='log',  # Use log scaling for better visualization
+                        mincnt=1)    # Minimum count for bin coloring
+            
+            # Plot TSS points using hexbin with a different colormap
+            hb2 = ax.hexbin(observed[isTSS], pred_CV[isTSS], 
+                        gridsize=50, cmap='Reds',
+                        label='TSS',
+                        bins='log',
+                        mincnt=1)
+
+            ax.set_xlabel('Observed Signal')
+            ax.set_ylabel('Coefficient of Variation (std/mean)')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Add colorbars
+            plt.colorbar(hb1, ax=ax, label='log10(non-TSS Signal)')
+            plt.colorbar(hb2, ax=ax, label='log10(TSS Signal)')
+
+            # # Plot non-TSS points in black
+            # ax.scatter(observed[~isTSS], pred_CV[~isTSS], c='black', s=1, alpha=0.5, label='non-TSS')
+            # # Plot TSS points in red
+            # ax.scatter(observed[isTSS], pred_CV[isTSS], c='red', s=1, alpha=0.5, label='TSS')
+            
+            # ax.set_xlabel('Observed Signal')
+            # ax.set_ylabel('Coefficient of Variation (std/mean)')
+            # ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            # ax.legend()
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_confidence_scatter.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_confidence_scatter.svg", format="svg")
 
     def count_TSS_confidence_boxplot(self, eval_res):
         pass
@@ -2345,20 +2430,20 @@ class EVAL_CANDI(object):
             "count_TSS_confidence_scatter": self.viz.count_TSS_confidence_scatter,
             "signal_TSS_confidence_scatter": self.viz.signal_TSS_confidence_scatter,
 
-            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
-            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+            # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
-            "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
-            "signal_TSS_confidence_TSS_position_boxplot": self.viz.signal_TSS_confidence_TSS_position_boxplot,
+            # "count_TSS_confidence_TSS_position_boxplot": self.viz.count_TSS_confidence_TSS_position_boxplot,
+            # "signal_TSS_confidence_TSS_position_boxplot": self.viz.signal_TSS_confidence_TSS_position_boxplot,
 
-            "count_GeneBody_confidence_scatter": self.viz.count_GeneBody_confidence_scatter,
-            "signal_GeneBody_confidence_scatter": self.viz.signal_GeneBody_confidence_scatter,
+            # "count_GeneBody_confidence_scatter": self.viz.count_GeneBody_confidence_scatter,
+            # "signal_GeneBody_confidence_scatter": self.viz.signal_GeneBody_confidence_scatter,
 
-            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
-            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+            # "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            # "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
 
-            "count_GeneBody_confidence_GeneBody_position_boxplot": self.viz.count_GeneBody_confidence_GeneBody_position_boxplot,
-            "signal_GeneBody_confidence_GeneBody_position_boxplot": self.viz.signal_GeneBody_confidence_GeneBody_position_boxplot,
+            # "count_GeneBody_confidence_GeneBody_position_boxplot": self.viz.count_GeneBody_confidence_GeneBody_position_boxplot,
+            # "signal_GeneBody_confidence_GeneBody_position_boxplot": self.viz.signal_GeneBody_confidence_GeneBody_position_boxplot,
 
 
             # "quantile_hist": self.viz.quantile_hist,
@@ -2429,14 +2514,6 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
-    m = METRICS()
-    zero_array = np.zeros(1865500)
-    print(zero_array.sum())
-    c = m.get_prom_positions("chr21", 25).reset_index(drop=True)
-    for t in range(len(c)):
-        zero_array[c["start"][t]:c["end"][t]] = 1
-    print(zero_array.sum())
-    exit()
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
