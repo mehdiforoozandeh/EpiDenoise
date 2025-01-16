@@ -1643,6 +1643,11 @@ class VISUALS_CANDI(object):
                 'isTSS': isTSS
             })
 
+            # Create categories
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
+
+
             # Create 3 signal intensity categories
             conditions = [
                 (df['obs'] < 10),
@@ -1718,6 +1723,11 @@ class VISUALS_CANDI(object):
                 'cv': pred_CV,
                 'isTSS': isTSS
             })
+
+            # Create categories
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
+
 
             # Create 3 signal intensity categories
             conditions = [
