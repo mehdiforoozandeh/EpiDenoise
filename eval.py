@@ -2692,11 +2692,7 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
-    metrics = METRICS()
-    gene_coords = metrics.get_gene_positions("chr21", 25).reset_index(drop=True)
-    print(gene_coords)
-    
-    exit()
+
 
 
     pd.set_option('display.max_rows', None)
