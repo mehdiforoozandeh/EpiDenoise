@@ -1558,27 +1558,49 @@ class VISUALS_CANDI(object):
             observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
             pred_CV = pred_std/pred_mean
 
-            # Plot non-TSS points using hexbin
+            # 2. Adjust hexbin parameters for better visibility
             hb1 = ax.hexbin(observed[~isTSS], pred_CV[~isTSS], 
-                        gridsize=50, cmap='Greys', 
+                        gridsize=30,  # Reduced gridsize for larger hexagons
+                        cmap='Greys', 
                         label='non-TSS',
-                        bins='log',  # Use log scaling for better visualization
-                        mincnt=1)    # Minimum count for bin coloring
+                        bins='log',
+                        mincnt=1,
+                        alpha=0.6)  # Add transparency
             
-            # Plot TSS points using hexbin with a different colormap
             hb2 = ax.hexbin(observed[isTSS], pred_CV[isTSS], 
-                        gridsize=50, cmap='Reds',
+                        gridsize=30,
+                        cmap='Reds',
                         label='TSS',
                         bins='log',
-                        mincnt=1)
+                        mincnt=1,
+                        alpha=0.8)  # Higher alpha for TSS regions
 
-            ax.set_xlabel('Observed Signal')
-            ax.set_ylabel('Coefficient of Variation (std/mean)')
-            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            # 3. Add grid for better readability
+            ax.grid(True, alpha=0.3, linestyle='--')
+
+            # 4. Improve labels and title
+            ax.set_xlabel('Observed Signal', fontsize=14, fontweight='bold')
+            ax.set_ylabel('Coefficient of Variation (std/mean)', fontsize=14, fontweight='bold')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}", 
+                        fontsize=16, fontweight='bold', pad=20)
+
+            # 5. Add colorbars with better formatting
+            cb1 = plt.colorbar(hb1, ax=ax)
+            cb2 = plt.colorbar(hb2, ax=ax)
+            cb1.set_label('log10(non-TSS count)', fontsize=12, fontweight='bold')
+            cb2.set_label('log10(TSS count)', fontsize=12, fontweight='bold')
             
-            # Add colorbars
-            plt.colorbar(hb1, ax=ax, label='log10(non-TSS Signal)')
-            plt.colorbar(hb2, ax=ax, label='log10(TSS Signal)')
+            # 6. Set axis limits to focus on relevant range
+            ax.set_xlim(0, np.percentile(observed, 95))  # Limit x-axis to 99th percentile
+            ax.set_ylim(0, min(2.5, np.percentile(pred_CV, 95)))  # Limit y-axis similarly
+
+            # 7. Add legend
+            ax.legend(['non-TSS regions', 'TSS regions'], 
+                    fontsize=12, 
+                    loc='upper right',
+                    framealpha=0.8)
+
+        plt.tight_layout(h_pad=0.5)  # Increase spacing between subplots
 
             # # Plot non-TSS points in black
             # ax.scatter(observed[~isTSS], pred_CV[~isTSS], c='black', s=1, alpha=0.5, label='non-TSS')
