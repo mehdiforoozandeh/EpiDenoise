@@ -1727,14 +1727,16 @@ class VISUALS_CANDI(object):
             choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
 
-            # Combine confidence and signal intensity
-            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+            
 
             df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
             for sig_cat in df['SigIntensityCategory'].unique():
                 mask = df['SigIntensityCategory'] == sig_cat
                 cv_median = df[mask]['cv'].quantile(0.5)
                 df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Define category order based on choices
             cat_order = [
