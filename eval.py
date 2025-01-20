@@ -862,6 +862,13 @@ class VISUALS_CANDI(object):
                 # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
                 hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
 
+                max_val = subset_error.max()
+                ax.set_xlim(0, max_val)
+                ax.set_ylim(0, max_val)
+                
+                # Add diagonal line
+                ax.plot([0, max_val], [0, max_val], '--', color='yellow', alpha=0.8)
+                
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
                 ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}_{pcc} (Range: {x_min:.2f}-{x_max:.2f})")
@@ -910,6 +917,13 @@ class VISUALS_CANDI(object):
                 # Hexbin plot for the subset data
                 # hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='viridis', mincnt=1, norm=LogNorm())
                 hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
+
+                max_val = subset_error.max()
+                ax.set_xlim(0, max_val)
+                ax.set_ylim(0, max_val)
+                
+                # Add diagonal line
+                ax.plot([0, max_val], [0, max_val], '--', color='yellow', alpha=0.8)
 
                 ax.set_xlabel('Absolute Error')
                 ax.set_ylabel('Predicted Std Dev')
@@ -1510,7 +1524,8 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            # df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            df = df[df['isTSS'] == True].copy()
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1545,9 +1560,9 @@ class VISUALS_CANDI(object):
                 data=df,
                 x='conf_pred_cat',
                 y='obs',  # Changed from 'mu' to 'obs'
-                hue='isTSS',
+                # hue='isTSS',
                 order=cat_order,
-                palette={'TSS': 'salmon', 'NonTSS': 'grey'},
+                # palette={'TSS': 'salmon', 'NonTSS': 'grey'},
                 ax=ax,
                 showfliers=False
             )
@@ -1555,7 +1570,7 @@ class VISUALS_CANDI(object):
             ax.set_xlabel("Predicted Count")
             ax.set_ylabel("Observed Count")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-            ax.legend(title="Region")
+            # ax.legend(title="Region")
             
             # Rotate x-axis labels for better readability
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
@@ -1597,7 +1612,8 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            # df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            df = df[df['isTSS'] == True].copy()
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1632,9 +1648,9 @@ class VISUALS_CANDI(object):
                 data=df,
                 x='conf_pred_cat',
                 y='obs',  # Changed from 'mu' to 'obs'
-                hue='isTSS',
+                # hue='isTSS',
                 order=cat_order,
-                palette={'TSS': 'salmon', 'NonTSS': 'grey'},
+                # palette={'TSS': 'salmon', 'NonTSS': 'grey'},
                 ax=ax,
                 showfliers=False
             )
@@ -1642,7 +1658,7 @@ class VISUALS_CANDI(object):
             ax.set_xlabel("Predicted Signal")
             ax.set_ylabel("Observed Signal")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-            ax.legend(title="Region")
+            # ax.legend(title="Region")
             
             # Rotate x-axis labels for better readability
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
@@ -1684,7 +1700,8 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
+            # df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
+            df = df[df['isGB'] == True].copy()
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1719,9 +1736,9 @@ class VISUALS_CANDI(object):
                 data=df,
                 x='conf_pred_cat',
                 y='obs',  # Changed from 'mu' to 'obs'
-                hue='isGB',
+                # hue='isGB',
                 order=cat_order,
-                palette={'GeneBody': 'yellowgreen', 'nonGeneBody': 'grey'},
+                # palette={'GeneBody': 'yellowgreen', 'nonGeneBody': 'grey'},
                 ax=ax,
                 showfliers=False
             )
@@ -1729,7 +1746,7 @@ class VISUALS_CANDI(object):
             ax.set_xlabel("Predicted Count")
             ax.set_ylabel("Observed Count")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-            ax.legend(title="Region")
+            # ax.legend(title="Region")
             
             # Rotate x-axis labels for better readability
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
@@ -1771,7 +1788,9 @@ class VISUALS_CANDI(object):
             })
 
             # Create categories
-            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
+            # df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
+            df = df[df['isGB'] == True].copy()
+            
             df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
 
 
@@ -1806,9 +1825,9 @@ class VISUALS_CANDI(object):
                 data=df,
                 x='conf_pred_cat',
                 y='obs',  # Changed from 'mu' to 'obs'
-                hue='isGB',
+                # hue='isGB',
                 order=cat_order,
-                palette={'GeneBody': 'yellowgreen', 'NonGeneBody': 'grey'},
+                # palette={'GeneBody': 'yellowgreen', 'NonGeneBody': 'grey'},
                 ax=ax,
                 showfliers=False
             )
@@ -1816,7 +1835,7 @@ class VISUALS_CANDI(object):
             ax.set_xlabel("Predicted Signal")
             ax.set_ylabel("Observed Signal")  # Updated label
             ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
-            ax.legend(title="Region")
+            # ax.legend(title="Region")
             
             # Rotate x-axis labels for better readability
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
@@ -1824,6 +1843,467 @@ class VISUALS_CANDI(object):
         plt.tight_layout()
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_confidence_boxplot.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_confidence_boxplot.svg", format="svg")
+
+    def count_obs_vs_confidence(self, eval_res, n_bins=100):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        for j in range(num_plots):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pred_CV = pred_std / pred_mean
+
+            # Create 100 bins based on observed values
+            # n_bins = 100
+            bins = np.linspace(np.min(observed), np.max(observed), n_bins + 1)
+            digitized = np.digitize(observed, bins)
+            
+            # Calculate statistics for each bin
+            bin_means = []
+            bin_cv_means = []
+            bin_cv_stds = []
+            bin_centers = []
+            
+            # Loop through each bin to calculate statistics
+            for i in range(1, n_bins + 1):
+                # Check if there are any data points in the current bin
+                if len(pred_CV[digitized == i]) > 0:  # Only include bins with data
+                    # Calculate the center of the current bin
+                    bin_centers.append((bins[i-1] + bins[i])/2)
+                    # Calculate the mean of observed values for the current bin
+                    bin_means.append(np.mean(observed[digitized == i]))
+                    # Calculate the mean of the coefficient of variation for the current bin
+                    bin_cv_means.append(np.mean(pred_CV[digitized == i]))
+                    # Calculate the standard deviation of the coefficient of variation for the current bin
+                    bin_cv_stds.append(np.std(pred_CV[digitized == i]))
+            
+            bin_centers = np.array(bin_centers)
+            bin_cv_means = np.array(bin_cv_means)
+            bin_cv_stds = np.array(bin_cv_stds)
+            
+            # Plot the binned data with error bars
+            ax.errorbar(bin_centers, bin_cv_means, yerr=bin_cv_stds, 
+                    fmt='o', color='#4CB391', markersize=4, 
+                    ecolor='grey', capsize=2, alpha=0.7)
+            
+            # Fit and plot trend line
+            z = np.polyfit(bin_centers, bin_cv_means, 2)
+            p = np.poly1d(z)
+            x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
+            ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
+            
+            ax.set_xlabel('Observed Count')
+            ax.set_ylabel('Coefficient of Variation')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Set log scale for x-axis if data spans multiple orders of magnitude
+            # if np.max(observed)/np.min(observed) > 100:
+            #     ax.set_xscale('log')
+            
+            # Add grid
+            ax.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_obs_vs_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_obs_vs_confidence.svg", format="svg")
+
+    def signal_obs_vs_confidence(self, eval_res, n_bins=100):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        for j in range(num_plots):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pred_CV = pred_std / pred_mean
+
+            # Create 100 bins based on observed values
+            # n_bins = 100
+            bins = np.linspace(np.min(observed), np.max(observed), n_bins + 1)
+            digitized = np.digitize(observed, bins)
+            
+            # Calculate statistics for each bin
+            bin_means = []
+            bin_cv_means = []
+            bin_cv_stds = []
+            bin_centers = []
+            
+            # Loop through each bin to calculate statistics
+            for i in range(1, n_bins + 1):
+                # Check if there are any data points in the current bin
+                if len(pred_CV[digitized == i]) > 0:  # Only include bins with data
+                    # Calculate the center of the current bin
+                    bin_centers.append((bins[i-1] + bins[i])/2)
+                    # Calculate the mean of observed values for the current bin
+                    bin_means.append(np.mean(observed[digitized == i]))
+                    # Calculate the mean of the coefficient of variation for the current bin
+                    bin_cv_means.append(np.mean(pred_CV[digitized == i]))
+                    # Calculate the standard deviation of the coefficient of variation for the current bin
+                    bin_cv_stds.append(np.std(pred_CV[digitized == i]))
+            
+            bin_centers = np.array(bin_centers)
+            bin_cv_means = np.array(bin_cv_means)
+            bin_cv_stds = np.array(bin_cv_stds)
+            
+            # Plot the binned data with error bars
+            ax.errorbar(bin_centers, bin_cv_means, yerr=bin_cv_stds, 
+                    fmt='o', color='#4CB391', markersize=4, 
+                    ecolor='grey', capsize=2, alpha=0.7)
+            
+            # Fit and plot trend line
+            z = np.polyfit(bin_centers, bin_cv_means, 2)
+            p = np.poly1d(z)
+            x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
+            ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
+            
+            ax.set_xlabel('Observed signal')
+            ax.set_ylabel('Coefficient of Variation')
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Set log scale for x-axis if data spans multiple orders of magnitude
+            # if np.max(observed)/np.min(observed) > 100:
+            #     ax.set_xscale('log')
+            
+            # Add grid
+            ax.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_obs_vs_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_obs_vs_confidence.svg", format="svg")
+
+    def count_TSS_enrichment_v_confidence(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
+
+        isTSS = np.zeros(len(eval_res[0]["obs_count"]), dtype=bool)        
+        for t in range(len(tss_coords)):
+            isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isTSS': isTSS
+            })
+
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            deciles = np.arange(0, 110, 10)  # 0,10,20,...,100
+            bins = np.percentile(df['mu'], deciles)
+            df['SigIntensityCategory'] = pd.qcut(df['mu'], q=10, labels=[f'[p{i}-p{i+10})' for i in range(0, 100, 10)])
+
+            # For each signal intensity bin, calculate confidence threshold separately
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Calculate fraction of TSS in each category
+            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'TSS').mean()).reset_index()
+            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+
+            # Define category order
+            cat_order = []
+            for sig_cat in [f'[p{i}-p{i+10})' for i in range(0, 100, 10)]:
+                cat_order.extend([f'HighConf_{sig_cat}', f'LowConf_{sig_cat}'])
+
+            # Create bar plot
+            sns.set_style("whitegrid")
+            sns.barplot(
+                data=tss_fractions,
+                x='conf_pred_cat',
+                y='tss_fraction',
+                order=cat_order,
+                color='red',
+                alpha=0.7,
+                ax=ax
+            )
+
+            ax.set_xlabel("Predicted Signal Bins")
+            ax.set_ylabel("Fraction of TSS")
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_enrichment_v_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_TSS_enrichment_v_confidence.svg", format="svg")
+
+    def signal_TSS_enrichment_v_confidence(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        tss_coords = self.metrics.get_prom_positions("chr21", 25).reset_index(drop=True)
+
+        isTSS = np.zeros(len(eval_res[0]["obs_pval"]), dtype=bool)        
+        for t in range(len(tss_coords)):
+            isTSS[tss_coords["start"][t]:tss_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isTSS': isTSS
+            })
+
+            df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
+            deciles = np.arange(0, 110, 10)  # 0,10,20,...,100
+            bins = np.percentile(df['mu'], deciles)
+            df['SigIntensityCategory'] = pd.qcut(df['mu'], q=10, labels=[f'[p{i}-p{i+10})' for i in range(0, 100, 10)])
+
+            # For each signal intensity bin, calculate confidence threshold separately
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Calculate fraction of TSS in each category
+            # Calculate the fraction of TSS in each confidence and signal intensity category
+            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'TSS').mean()).reset_index()
+            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+
+            # Define category order
+            cat_order = []
+            for sig_cat in [f'[p{i}-p{i+10})' for i in range(0, 100, 10)]:
+                cat_order.extend([f'HighConf_{sig_cat}', f'LowConf_{sig_cat}'])
+
+            # Create bar plot
+            sns.set_style("whitegrid")
+            sns.barplot(
+                data=tss_fractions,
+                x='conf_pred_cat',
+                y='tss_fraction',
+                order=cat_order,
+                color='red',
+                alpha=0.7,
+                ax=ax
+            )
+
+            ax.set_xlabel("Predicted Signal Bins")
+            ax.set_ylabel("Fraction of TSS")
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_enrichment_v_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_TSS_enrichment_v_confidence.svg", format="svg")
+
+    def count_GeneBody_enrichment_v_confidence(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        gb_coords = self.metrics.get_gene_positions("chr21", 25).reset_index(drop=True)
+
+        isGB = np.zeros(len(eval_res[0]["obs_count"]), dtype=bool)        
+        for t in range(len(gb_coords)):
+            isGB[gb_coords["start"][t]:gb_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_count" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_count"], eval_res[j]["pred_count"], eval_res[j]["pred_count_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isGB': isGB
+            })
+
+            deciles = np.arange(0, 110, 10)  # 0,10,20,...,100
+            bins = np.percentile(df['mu'], deciles)
+            df['SigIntensityCategory'] = pd.qcut(df['mu'], q=10, labels=[f'[p{i}-p{i+10})' for i in range(0, 100, 10)])
+
+            # For each signal intensity bin, calculate confidence threshold separately
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Calculate fraction of TSS in each category
+            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+
+            # Define category order
+            cat_order = []
+            for sig_cat in [f'[p{i}-p{i+10})' for i in range(0, 100, 10)]:
+                cat_order.extend([f'HighConf_{sig_cat}', f'LowConf_{sig_cat}'])
+
+            # Create bar plot
+            sns.set_style("whitegrid")
+            sns.barplot(
+                data=tss_fractions,
+                x='conf_pred_cat',
+                y='tss_fraction',
+                order=cat_order,
+                color='green',
+                alpha=0.7,
+                ax=ax
+            )
+
+            ax.set_xlabel("Predicted Signal Bins")
+            ax.set_ylabel("Fraction of GeneBody")
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_GeneBody_enrichment_v_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/count_GeneBody_enrichment_v_confidence.svg", format="svg")
+
+    def signal_GeneBody_enrichment_v_confidence(self, eval_res):
+        if not os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"):
+            os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+
+        # Define the size of the figure
+        num_plots = len(eval_res)
+        plt.figure(figsize=(10, 5 * num_plots))  # Adjusted for multipanel figure
+
+        gb_coords = self.metrics.get_gene_positions("chr21", 25).reset_index(drop=True)
+
+        isGB = np.zeros(len(eval_res[0]["obs_pval"]), dtype=bool)        
+        for t in range(len(gb_coords)):
+            isGB[gb_coords["start"][t]:gb_coords["end"][t]] = True
+
+        for j in range(num_plots):
+            if "obs_pval" not in eval_res[j]:
+                # skip rows without observed signal
+                continue
+
+            ax = plt.subplot(num_plots, 1, j + 1)  # One column with len(eval_res) rows
+
+            observed, pred_mean, pred_std = eval_res[j]["obs_pval"], eval_res[j]["pred_pval"], eval_res[j]["pred_pval_std"]
+            pred_CV = pred_std / pred_mean
+
+            df = pd.DataFrame({
+                'obs': observed,
+                'mu': pred_mean,
+                'sigma': pred_std,
+                'cv': pred_CV,
+                'isGB': isGB
+            })
+
+            # Create categories
+            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
+            deciles = np.arange(0, 110, 10)  # 0,10,20,...,100
+            bins = np.percentile(df['mu'], deciles)
+            df['SigIntensityCategory'] = pd.qcut(df['mu'], q=10, labels=[f'[p{i}-p{i+10})' for i in range(0, 100, 10)])
+
+            # For each signal intensity bin, calculate confidence threshold separately
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Combine confidence and signal intensity
+            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+
+            # Calculate fraction of TSS in each category
+            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+
+            # Define category order
+            cat_order = []
+            for sig_cat in [f'[p{i}-p{i+10})' for i in range(0, 100, 10)]:
+                cat_order.extend([f'HighConf_{sig_cat}', f'LowConf_{sig_cat}'])
+
+            # Create bar plot
+            sns.set_style("whitegrid")
+            sns.barplot(
+                data=tss_fractions,
+                x='conf_pred_cat',
+                y='tss_fraction',
+                order=cat_order,
+                color='green',
+                alpha=0.7,
+                ax=ax
+            )
+
+            ax.set_xlabel("Predicted Signal Bins")
+            ax.set_ylabel("Fraction of GeneBody")
+            ax.set_title(f"{eval_res[j]['feature']}_{eval_res[j]['comparison']}")
+            
+            # Rotate x-axis labels for better readability
+            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.png", dpi=150)
+        plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.svg", format="svg")
 
 
 class EVAL_CANDI(object):
@@ -2623,6 +3103,15 @@ class EVAL_CANDI(object):
 
             "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
             "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+
+            "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
+            "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
+
+            "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
+            "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
+
+            "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
+            "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
 
             # "quantile_hist": self.viz.quantile_hist,
             # "quantile_heatmap": self.viz.quantile_heatmap,

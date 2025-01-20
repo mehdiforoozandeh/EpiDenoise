@@ -3187,16 +3187,16 @@ if __name__ == "__main__":
             calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
-        # if os.path.exists("models/DEC18_RESULTS/"):
-        #     viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
-        # else:
-        #     print("EIC test metrics not computed")
-
-        if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
-            df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
-            viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        if os.path.exists("models/DEC18_RESULTS/"):
+            viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
         else:
-            print("Assay importance not computed")
+            print("EIC test metrics not computed")
+
+        # if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
+        #     df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
+        #     viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        # else:
+        #     print("Assay importance not computed")
             
         exit()
 
