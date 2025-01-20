@@ -2196,6 +2196,10 @@ class VISUALS_CANDI(object):
                 cv_median = df[mask]['cv'].quantile(0.5)
                 df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
+            # Convert to string to avoid TypeError when concatenating
+            df['confidenceCategory'] = df['confidenceCategory'].astype(str)
+            df['SigIntensityCategory'] = df['SigIntensityCategory'].astype(str)
+
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
@@ -2275,6 +2279,10 @@ class VISUALS_CANDI(object):
                 mask = df['SigIntensityCategory'] == sig_cat
                 cv_median = df[mask]['cv'].quantile(0.5)
                 df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
+            # Convert to string to avoid TypeError when concatenating
+            df['confidenceCategory'] = df['confidenceCategory'].astype(str)
+            df['SigIntensityCategory'] = df['SigIntensityCategory'].astype(str)
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
