@@ -1526,8 +1526,6 @@ class VISUALS_CANDI(object):
             # Create categories
             # df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
             df = df[df['isTSS'] == True].copy()
-            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
-
 
             # Create 4 signal intensity categories based on quantiles
             q25 = df['mu'].quantile(0.25)
@@ -1542,6 +1540,12 @@ class VISUALS_CANDI(object):
             ]
             choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
+
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
@@ -1563,9 +1567,10 @@ class VISUALS_CANDI(object):
                 # hue='isTSS',
                 order=cat_order,
                 # palette={'TSS': 'salmon', 'NonTSS': 'grey'},
+                color='salmon',  # Changed color to red
                 ax=ax,
                 showfliers=False
-            )
+            )  # End of Selection
 
             ax.set_xlabel("Predicted Count")
             ax.set_ylabel("Observed Count")  # Updated label
@@ -1614,8 +1619,6 @@ class VISUALS_CANDI(object):
             # Create categories
             # df['isTSS'] = np.where(df['isTSS'] == 1, 'TSS', 'NonTSS')
             df = df[df['isTSS'] == True].copy()
-            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
-
 
             # Create 4 signal intensity categories based on quantiles
             q25 = df['mu'].quantile(0.25)
@@ -1630,6 +1633,12 @@ class VISUALS_CANDI(object):
             ]
             choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
+
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
@@ -1650,6 +1659,7 @@ class VISUALS_CANDI(object):
                 y='obs',  # Changed from 'mu' to 'obs'
                 # hue='isTSS',
                 order=cat_order,
+                color='salmon',
                 # palette={'TSS': 'salmon', 'NonTSS': 'grey'},
                 ax=ax,
                 showfliers=False
@@ -1702,8 +1712,6 @@ class VISUALS_CANDI(object):
             # Create categories
             # df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
             df = df[df['isGB'] == True].copy()
-            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
-
 
             # Create 4 signal intensity categories based on quantiles
             q25 = df['mu'].quantile(0.25)
@@ -1722,6 +1730,12 @@ class VISUALS_CANDI(object):
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
+
             # Define category order based on choices
             cat_order = [
                 'HighConf_[0-p25)', 'LowConf_[0-p25)',
@@ -1738,7 +1752,7 @@ class VISUALS_CANDI(object):
                 y='obs',  # Changed from 'mu' to 'obs'
                 # hue='isGB',
                 order=cat_order,
-                # palette={'GeneBody': 'yellowgreen', 'nonGeneBody': 'grey'},
+                color='yellowgreen',  # Changed color to green
                 ax=ax,
                 showfliers=False
             )
@@ -1790,9 +1804,6 @@ class VISUALS_CANDI(object):
             # Create categories
             # df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
             df = df[df['isGB'] == True].copy()
-            
-            df['confidenceCategory'] = np.where(df['cv'] < df['cv'].quantile(0.5), 'HighConf', 'LowConf')
-
 
             # Create 4 signal intensity categories based on quantiles
             q25 = df['mu'].quantile(0.25)
@@ -1807,6 +1818,12 @@ class VISUALS_CANDI(object):
             ]
             choices = ['[0-p25)', '[p25-p50)', '[p50-p75)', '[p75-p100]']
             df['SigIntensityCategory'] = np.select(conditions, choices, default='[0-p25)')
+
+            df['confidenceCategory'] = 'LowConf'  # initialize all as low confidence
+            for sig_cat in df['SigIntensityCategory'].unique():
+                mask = df['SigIntensityCategory'] == sig_cat
+                cv_median = df[mask]['cv'].quantile(0.5)
+                df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
@@ -1826,6 +1843,7 @@ class VISUALS_CANDI(object):
                 x='conf_pred_cat',
                 y='obs',  # Changed from 'mu' to 'obs'
                 # hue='isGB',
+                color='yellowgreen',
                 order=cat_order,
                 # palette={'GeneBody': 'yellowgreen', 'NonGeneBody': 'grey'},
                 ax=ax,
@@ -1896,10 +1914,10 @@ class VISUALS_CANDI(object):
                     ecolor='grey', capsize=2, alpha=0.7)
             
             # Fit and plot trend line
-            z = np.polyfit(bin_centers, bin_cv_means, 2)
-            p = np.poly1d(z)
-            x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
-            ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
+            # z = np.polyfit(bin_centers, bin_cv_means, 2)
+            # p = np.poly1d(z)
+            # x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
+            # ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
             
             ax.set_xlabel('Observed Count')
             ax.set_ylabel('Coefficient of Variation')
@@ -1968,10 +1986,10 @@ class VISUALS_CANDI(object):
                     ecolor='grey', capsize=2, alpha=0.7)
             
             # Fit and plot trend line
-            z = np.polyfit(bin_centers, bin_cv_means, 2)
-            p = np.poly1d(z)
-            x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
-            ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
+            # z = np.polyfit(bin_centers, bin_cv_means, 2)
+            # p = np.poly1d(z)
+            # x_trend = np.linspace(min(bin_centers), max(bin_centers), 100)
+            # ax.plot(x_trend, p(x_trend), '--', color='#f25a64', alpha=0.8)
             
             ax.set_xlabel('Observed signal')
             ax.set_ylabel('Coefficient of Variation')
@@ -2054,7 +2072,7 @@ class VISUALS_CANDI(object):
                 x='conf_pred_cat',
                 y='tss_fraction',
                 order=cat_order,
-                color='red',
+                color='salmon',
                 alpha=0.7,
                 ax=ax
             )
@@ -2137,7 +2155,7 @@ class VISUALS_CANDI(object):
                 x='conf_pred_cat',
                 y='tss_fraction',
                 order=cat_order,
-                color='red',
+                color='salmon',
                 alpha=0.7,
                 ax=ax
             )
@@ -2185,6 +2203,7 @@ class VISUALS_CANDI(object):
                 'isGB': isGB
             })
 
+            df['isGB'] = np.where(df['isGB'] == 1, 'GeneBody', 'NonGeneBody')
             deciles = np.arange(0, 110, 10)  # 0,10,20,...,100
             bins = np.percentile(df['mu'], deciles)
             df['SigIntensityCategory'] = pd.qcut(df['mu'], q=10, labels=[f'[p{i}-p{i+10})' for i in range(0, 100, 10)])
@@ -2204,7 +2223,7 @@ class VISUALS_CANDI(object):
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Calculate fraction of TSS in each category
-            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GeneBody').mean()).reset_index()
             gb_fraction.columns = ['conf_pred_cat', 'gb_fraction']
 
             # Define category order
@@ -2219,7 +2238,7 @@ class VISUALS_CANDI(object):
                 x='conf_pred_cat',
                 y='gb_fraction',
                 order=cat_order,
-                color='green',
+                color='yellowgreen',
                 alpha=0.7,
                 ax=ax
             )
@@ -2288,7 +2307,7 @@ class VISUALS_CANDI(object):
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Calculate fraction of TSS in each category
-            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GeneBody').mean()).reset_index()
             gb_fraction.columns = ['conf_pred_cat', 'gb_fraction']
 
             # Define category order
@@ -2303,7 +2322,7 @@ class VISUALS_CANDI(object):
                 x='conf_pred_cat',
                 y='gb_fraction',
                 order=cat_order,
-                color='green',
+                color='yellowgreen',
                 alpha=0.7,
                 ax=ax
             )
@@ -3112,17 +3131,17 @@ class EVAL_CANDI(object):
             # "count_rank_heatmap": self.viz.count_rank_heatmap,
             # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
-            # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
-            # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
-            # "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
-            # "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
 
-            # "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
-            # "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
+            "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
+            "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
 
-            # "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
-            # "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
+            "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
+            "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
 
             "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
             "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
