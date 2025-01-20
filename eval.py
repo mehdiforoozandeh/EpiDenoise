@@ -2032,8 +2032,11 @@ class VISUALS_CANDI(object):
                 cv_median = df[mask]['cv'].quantile(0.5)
                 df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
+            # Convert 'confidenceCategory' to string type to avoid TypeError
+            df['confidenceCategory'] = df['confidenceCategory'].astype(str)
+
             # Combine confidence and signal intensity
-            df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
+            df['conf_pred_cat'] = df['confidenceCategory'].astype(str) + '_' + df['SigIntensityCategory'].astype(str)
 
             # Calculate fraction of TSS in each category
             tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'TSS').mean()).reset_index()
@@ -2111,11 +2114,14 @@ class VISUALS_CANDI(object):
                 cv_median = df[mask]['cv'].quantile(0.5)
                 df.loc[mask & (df['cv'] < cv_median), 'confidenceCategory'] = 'HighConf'
 
+            # Convert to string to avoid TypeError when concatenating
+            df['confidenceCategory'] = df['confidenceCategory'].astype(str)
+            df['SigIntensityCategory'] = df['SigIntensityCategory'].astype(str)
+
             # Combine confidence and signal intensity
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Calculate fraction of TSS in each category
-            # Calculate the fraction of TSS in each confidence and signal intensity category
             tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'TSS').mean()).reset_index()
             tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
 
