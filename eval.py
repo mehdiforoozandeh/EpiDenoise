@@ -2204,8 +2204,8 @@ class VISUALS_CANDI(object):
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Calculate fraction of TSS in each category
-            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'GB').mean()).reset_index()
-            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            gb_fraction.columns = ['conf_pred_cat', 'gb_fraction']
 
             # Define category order
             cat_order = []
@@ -2215,9 +2215,9 @@ class VISUALS_CANDI(object):
             # Create bar plot
             sns.set_style("whitegrid")
             sns.barplot(
-                data=tss_fractions,
+                data=gb_fraction,
                 x='conf_pred_cat',
-                y='tss_fraction',
+                y='gb_fraction',
                 order=cat_order,
                 color='green',
                 alpha=0.7,
@@ -2288,8 +2288,8 @@ class VISUALS_CANDI(object):
             df['conf_pred_cat'] = df['confidenceCategory'] + '_' + df['SigIntensityCategory']
 
             # Calculate fraction of TSS in each category
-            tss_fractions = df.groupby('conf_pred_cat')['isTSS'].apply(lambda x: (x == 'GB').mean()).reset_index()
-            tss_fractions.columns = ['conf_pred_cat', 'tss_fraction']
+            gb_fraction = df.groupby('conf_pred_cat')['isGB'].apply(lambda x: (x == 'GB').mean()).reset_index()
+            gb_fraction.columns = ['conf_pred_cat', 'gb_fraction']
 
             # Define category order
             cat_order = []
@@ -2299,9 +2299,9 @@ class VISUALS_CANDI(object):
             # Create bar plot
             sns.set_style("whitegrid")
             sns.barplot(
-                data=tss_fractions,
+                data=gb_fraction,
                 x='conf_pred_cat',
-                y='tss_fraction',
+                y='gb_fraction',
                 order=cat_order,
                 color='green',
                 alpha=0.7,
