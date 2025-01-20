@@ -3112,17 +3112,17 @@ class EVAL_CANDI(object):
             # "count_rank_heatmap": self.viz.count_rank_heatmap,
             # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
-            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
-            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+            # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
-            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
-            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+            # "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            # "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
 
-            "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
-            "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
+            # "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
+            # "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
 
-            "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
-            "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
+            # "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
+            # "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
 
             "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
             "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
