@@ -1050,96 +1050,32 @@ class CANDIPredictor:
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
         if self.eic:
-            # Initialize lists to store tensors from each chromosome
-            all_X, all_mX, all_avX = [], [], []
-            all_Y, all_mY, all_avY = [], [], []
-            all_P, all_avlP = [], []
-            all_seq = []
-
-            # Iterate through all chromosomes
-            for chr_name, chr_size in self.chr_sizes.items():
-                try:
-                    print(f"Loading chromosome: {chr_name}. Available memory: {psutil.virtual_memory().available / (1024 ** 2):.2f} MB")
-                    if self.split == "test":
-                        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                    elif self.split == "val":
-                        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                    
-                    X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
-                    all_X.append(X)
-                    all_mX.append(mX)
-                    all_avX.append(avX)
-                    del temp_x, temp_mx
-                    
-                    temp_y, temp_my = self.dataset.load_bios(bios_name, [chr_name, 0, chr_size], y_dsf)
-                    Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
-                    if fill_in_y_prompt:
-                        mY = self.dataset.fill_in_y_prompt(mY)
-                    all_Y.append(Y)
-                    all_mY.append(mY)
-                    all_avY.append(avY)
-                    del temp_y, temp_my
-
-                    temp_py = self.dataset.load_bios_BW(bios_name, [chr_name, 0, chr_size], y_dsf)
-                    if self.split == "test":
-                        temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                    elif self.split == "val":
-                        temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
-
-                    temp_p = {**temp_py, **temp_px}
-                    P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
-                    all_P.append(P)
-                    all_avlP.append(avlP)
-                    del temp_py, temp_px, temp_p
-
-                    if self.DNA:
-                        seq = dna_to_onehot(get_DNA_sequence(chr_name, 0, chr_size))
-                        all_seq.append(seq)
-
-                except Exception as e:
-                    print(f"Error loading chromosome {chr_name}: {e}")
-
-            # Concatenate tensors from all chromosomes
-            X = torch.cat(all_X, dim=0)
-            del all_X
-            mX = all_mX[0]  # Metadata tensors should be identical for all chromosomes
-            avX = all_avX[0]
-            Y = torch.cat(all_Y, dim=0)
-            del all_Y
-            mY = all_mY[0]
-            avY = all_avY[0]
-            P = torch.cat(all_P, dim=0)
-            del all_P
-            avlP = all_avlP[0]
-
-            if self.DNA:
-                seq = torch.cat(all_seq, dim=0)
-                del all_seq
             
-            # if self.split == "test":
-            #     temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
-            # elif self.split == "val":
-            #     temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
             
-            # # print(temp_x.keys(), temp_mx.keys())
-            # X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
-            # del temp_x, temp_mx
+            if self.split == "test":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+            elif self.split == "val":
+                temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
             
-            # temp_y, temp_my = self.dataset.load_bios(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
-            # Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
-            # if fill_in_y_prompt:
-            #     mY = self.dataset.fill_in_y_prompt(mY)
-            # del temp_y, temp_my
+            # print(temp_x.keys(), temp_mx.keys())
+            X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+            del temp_x, temp_mx
+            
+            temp_y, temp_my = self.dataset.load_bios(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
+            Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
+            if fill_in_y_prompt:
+                mY = self.dataset.fill_in_y_prompt(mY)
+            del temp_y, temp_my
 
-            # temp_py = self.dataset.load_bios_BW(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
-            # if self.split == "test":
-            #     temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
-            # elif self.split == "val":
-            #     temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+            temp_py = self.dataset.load_bios_BW(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], y_dsf)
+            if self.split == "test":
+                temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
+            elif self.split == "val":
+                temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
 
-            # temp_p = {**temp_py, **temp_px}
-            # P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
-            # del temp_py, temp_px, temp_p
+            temp_p = {**temp_py, **temp_px}
+            P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
+            del temp_py, temp_px, temp_p
 
         else:
             temp_x, temp_mx = self.dataset.load_bios(bios_name, [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
@@ -1157,11 +1093,11 @@ class CANDIPredictor:
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
 
-            if self.DNA:
-                seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
-
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
+
+        if self.DNA:
+            seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
 
         if self.DNA:
             seq = seq[:num_rows*self.resolution, :]
@@ -3073,28 +3009,93 @@ if __name__ == "__main__":
         # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
         eic = True
 
-        # splits = ["test", "val"]  
-        splits = ["test"]  
-
+        splits = ["test", "val"]  
+        
         for split in splits:
             # Load latent representations
             candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split=split)
             expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-            candi.chr = "chr21"
+            # candi.chr = "chr21"
+            main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
             metrics = {}
 
             for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
                 try:
-                    print(bios_name)
-                    start_time = time.time()
-                    metrics[bios_name] = candi.evaluate(bios_name)
-                    end_time = time.time()
-                    print(f"Evaluation took {end_time - start_time:.2f} seconds")
-                    print("\n\n")
+                    print(f"\nProcessing {bios_name}")
+                    chr_metrics = {}
+                    chr_weights = {}  # Store number of samples per chromosome
+                    
+                    # Evaluate on each chromosome
+                    for chr in main_chrs:
+                        start_time = time.time()
+                        print(f"Processing {chr}...")
+                        
+                        try:
+                            candi.chr = chr
+                            chr_metrics[chr] = candi.evaluate(bios_name)
+                            
+                            # Get number of samples for this chromosome (using first available metric)
+                            first_exp = list(chr_metrics[chr].keys())[0]
+                            X, Y, P, _, _, _, _, _ = candi.load_bios(bios_name, x_dsf=1)
+                            chr_weights[chr] = len(Y.view(-1, Y.shape[-1]))
+                            
+                            end_time = time.time()
+                            print(f"{chr} evaluation took {end_time - start_time:.2f} seconds")
+                        except Exception as e:
+                            print(f"Skipping {chr} due to error: {e}")
+                            continue
+                    
+                    # Skip if no chromosomes were successfully processed
+                    if not chr_metrics:
+                        continue
+                        
+                    # Aggregate metrics across chromosomes using weighted average
+                    total_weight = sum(chr_weights.values())
+                    metrics[bios_name] = {}
+                    
+                    # Get all experiments from first chromosome
+                    first_chr = list(chr_metrics.keys())[0]
+                    for exp in chr_metrics[first_chr].keys():
+                        metrics[bios_name][exp] = {
+                            "comparison": chr_metrics[first_chr][exp]["comparison"],  # Copy comparison type
+                            "count_metrics": {},
+                            "pval_metrics": {}
+                        }
+                        
+                        # Aggregate count metrics
+                        for metric in chr_metrics[first_chr][exp]["count_metrics"].keys():
+                            weighted_sum = sum(
+                                chr_metrics[chr][exp]["count_metrics"][metric] * chr_weights[chr]
+                                for chr in chr_metrics.keys()
+                                if exp in chr_metrics[chr]
+                            )
+                            metrics[bios_name][exp]["count_metrics"][metric] = weighted_sum / total_weight
+                        
+                        # Aggregate pval metrics
+                        for metric in chr_metrics[first_chr][exp]["pval_metrics"].keys():
+                            weighted_sum = sum(
+                                chr_metrics[chr][exp]["pval_metrics"][metric] * chr_weights[chr]
+                                for chr in chr_metrics.keys()
+                                if exp in chr_metrics[chr]
+                            )
+                            metrics[bios_name][exp]["pval_metrics"][metric] = weighted_sum / total_weight
+                    
+                    print(f"Completed processing {bios_name} across all chromosomes")
+                    print("\n")
 
                 except Exception as e:
                     print(f"Error processing {bios_name}: {e}")
                     continue
+                #     print(bios_name)
+                #     start_time = time.time()
+                #     metrics[bios_name] = candi.evaluate(bios_name)
+                #     end_time = time.time()
+                #     print(f"Evaluation took {end_time - start_time:.2f} seconds")
+                #     print("\n\n")
+
+                # except Exception as e:
+                #     print(f"Error processing {bios_name}: {e}")
+                #     continue
             
             results = []
             for bios_name in metrics.keys():
