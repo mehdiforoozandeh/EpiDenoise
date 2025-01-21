@@ -1050,36 +1050,53 @@ class CANDIPredictor:
     def load_bios(self, bios_name, x_dsf, y_dsf=1, fill_in_y_prompt=False, chr=None, start=None, end=None):
         # Load biosample data
         if self.eic:
-            # Initialize lists to store tensors from each chromosome
-            all_X, all_mX, all_avX = [], [], []
-            all_Y, all_mY, all_avY = [], [], []
-            all_P, all_avlP = [], []
-            all_seq = []
+            # Initialize lists to store concatenated tensors
+            X = None
+            P = None 
+            Y = None
+            mX = None  # Will store the first metadata tensor
+            mY = None
+            avX = None
+            avY = None
+            avlP = None
+            seq = None if self.DNA else None
 
-            # Iterate through all chromosomes
+            # Process one chromosome at a time
             for chr_name, chr_size in self.chr_sizes.items():
                 try:
                     print(f"Loading chromosome: {chr_name}. Available memory: {psutil.virtual_memory().available / (1024 ** 2):.2f} MB")
+                    
+                    # Load and process X data
                     if self.split == "test":
                         temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
                     elif self.split == "val":
                         temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
                     
-                    X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
-                    all_X.append(X)
-                    all_mX.append(mX)
-                    all_avX.append(avX)
-                    del temp_x, temp_mx
+                    temp_X, temp_mX, temp_avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
                     
+                    # Store metadata tensors only once since they're identical for all chromosomes
+                    if mX is None:
+                        mX = temp_mX
+                        avX = temp_avX
+                    
+                    # Concatenate X data
+                    X = temp_X if X is None else torch.cat([X, temp_X], dim=0)
+                    del temp_x, temp_mx, temp_X, temp_mX, temp_avX
+                    
+                    # Load and process Y data
                     temp_y, temp_my = self.dataset.load_bios(bios_name, [chr_name, 0, chr_size], y_dsf)
-                    Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
-                    if fill_in_y_prompt:
-                        mY = self.dataset.fill_in_y_prompt(mY)
-                    all_Y.append(Y)
-                    all_mY.append(mY)
-                    all_avY.append(avY)
-                    del temp_y, temp_my
-
+                    temp_Y, temp_mY, temp_avY = self.dataset.make_bios_tensor(temp_y, temp_my)
+                    
+                    if mY is None:
+                        mY = temp_mY
+                        avY = temp_avY
+                        if fill_in_y_prompt:
+                            mY = self.dataset.fill_in_y_prompt(mY)
+                    
+                    Y = temp_Y if Y is None else torch.cat([Y, temp_Y], dim=0)
+                    del temp_y, temp_my, temp_Y, temp_mY, temp_avY
+                    
+                    # Load and process P data
                     temp_py = self.dataset.load_bios_BW(bios_name, [chr_name, 0, chr_size], y_dsf)
                     if self.split == "test":
                         temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
@@ -1087,30 +1104,25 @@ class CANDIPredictor:
                         temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
 
                     temp_p = {**temp_py, **temp_px}
-                    P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
-                    all_P.append(P)
-                    all_avlP.append(avlP)
-                    del temp_py, temp_px, temp_p
+                    temp_P, temp_avlP = self.dataset.make_bios_tensor_BW(temp_p)
+                    
+                    if avlP is None:
+                        avlP = temp_avlP
+                    
+                    P = temp_P if P is None else torch.cat([P, temp_P], dim=0)
+                    del temp_py, temp_px, temp_p, temp_P, temp_avlP
 
                     if self.DNA:
-                        seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
-                        all_seq.append(seq)
+                        temp_seq = dna_to_onehot(get_DNA_sequence(chr_name, 0, chr_size))
+                        seq = temp_seq if seq is None else torch.cat([seq, temp_seq], dim=0)
+                        del temp_seq
+
+                    # Force garbage collection after each chromosome
+                    gc.collect()
+                    torch.cuda.empty_cache()
 
                 except Exception as e:
                     print(f"Error loading chromosome {chr_name}: {e}")
-
-            # Concatenate tensors from all chromosomes
-            X = torch.cat(all_X, dim=0)
-            mX = all_mX[0]  # Metadata tensors should be identical for all chromosomes
-            avX = all_avX[0]
-            Y = torch.cat(all_Y, dim=0)
-            mY = all_mY[0]
-            avY = all_avY[0]
-            P = torch.cat(all_P, dim=0)
-            avlP = all_avlP[0]
-
-            if self.DNA:
-                seq = torch.cat(all_seq, dim=0)
             
             # if self.split == "test":
             #     temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
@@ -3069,7 +3081,8 @@ if __name__ == "__main__":
         # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
         eic = True
 
-        splits = ["test", "val"]  
+        # splits = ["test", "val"]  
+        splits = ["test"]  
 
         for split in splits:
             # Load latent representations
