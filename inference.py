@@ -1052,38 +1052,41 @@ class CANDIPredictor:
 
             # Iterate through all chromosomes
             for chr_name, chr_size in self.chr_sizes.items():
-                print(f"Loading chromosome: {chr_name}. Available memory: {psutil.virtual_memory().available / (1024 ** 2):.2f} MB")
-                if self.split == "test":
-                    temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                elif self.split == "val":
-                    temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                
-                X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
-                all_X.append(X)
-                all_mX.append(mX)
-                all_avX.append(avX)
-                del temp_x, temp_mx
-                
-                temp_y, temp_my = self.dataset.load_bios(bios_name, [chr_name, 0, chr_size], y_dsf)
-                Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
-                if fill_in_y_prompt:
-                    mY = self.dataset.fill_in_y_prompt(mY)
-                all_Y.append(Y)
-                all_mY.append(mY)
-                all_avY.append(avY)
-                del temp_y, temp_my
+                try:
+                    print(f"Loading chromosome: {chr_name}. Available memory: {psutil.virtual_memory().available / (1024 ** 2):.2f} MB")
+                    if self.split == "test":
+                        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
+                    elif self.split == "val":
+                        temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
+                    
+                    X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
+                    all_X.append(X)
+                    all_mX.append(mX)
+                    all_avX.append(avX)
+                    del temp_x, temp_mx
+                    
+                    temp_y, temp_my = self.dataset.load_bios(bios_name, [chr_name, 0, chr_size], y_dsf)
+                    Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
+                    if fill_in_y_prompt:
+                        mY = self.dataset.fill_in_y_prompt(mY)
+                    all_Y.append(Y)
+                    all_mY.append(mY)
+                    all_avY.append(avY)
+                    del temp_y, temp_my
 
-                temp_py = self.dataset.load_bios_BW(bios_name, [chr_name, 0, chr_size], y_dsf)
-                if self.split == "test":
-                    temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
-                elif self.split == "val":
-                    temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
+                    temp_py = self.dataset.load_bios_BW(bios_name, [chr_name, 0, chr_size], y_dsf)
+                    if self.split == "test":
+                        temp_px = self.dataset.load_bios_BW(bios_name.replace("B_", "T_"), [chr_name, 0, chr_size], x_dsf)
+                    elif self.split == "val":
+                        temp_px = self.dataset.load_bios_BW(bios_name.replace("V_", "T_"), [chr_name, 0, chr_size], x_dsf)
 
-                temp_p = {**temp_py, **temp_px}
-                P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
-                all_P.append(P)
-                all_avlP.append(avlP)
-                del temp_py, temp_px, temp_p
+                    temp_p = {**temp_py, **temp_px}
+                    P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
+                    all_P.append(P)
+                    all_avlP.append(avlP)
+                    del temp_py, temp_px, temp_p
+                except Exception as e:
+                    print(f"Error loading chromosome {chr_name}: {e}")
 
             # Concatenate tensors from all chromosomes
             X = torch.cat(all_X, dim=0)
