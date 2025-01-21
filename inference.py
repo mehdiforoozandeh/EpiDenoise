@@ -1049,6 +1049,7 @@ class CANDIPredictor:
             all_X, all_mX, all_avX = [], [], []
             all_Y, all_mY, all_avY = [], [], []
             all_P, all_avlP = [], []
+            all_seq = []
 
             # Iterate through all chromosomes
             for chr_name, chr_size in self.chr_sizes.items():
@@ -1085,6 +1086,11 @@ class CANDIPredictor:
                     all_P.append(P)
                     all_avlP.append(avlP)
                     del temp_py, temp_px, temp_p
+
+                    if self.DNA:
+                        seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
+                        all_seq.append(seq)
+
                 except Exception as e:
                     print(f"Error loading chromosome {chr_name}: {e}")
 
@@ -1097,6 +1103,9 @@ class CANDIPredictor:
             avY = all_avY[0]
             P = torch.cat(all_P, dim=0)
             avlP = all_avlP[0]
+
+            if self.DNA:
+                seq = torch.cat(all_seq, dim=0)
             
             # if self.split == "test":
             #     temp_x, temp_mx = self.dataset.load_bios(bios_name.replace("B_", "T_"), [self.chr, 0, self.chr_sizes[self.chr]], x_dsf)
@@ -1139,8 +1148,8 @@ class CANDIPredictor:
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
 
-        if self.DNA:
-            seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
+            if self.DNA:
+                seq = dna_to_onehot(get_DNA_sequence(self.chr, 0, self.chr_sizes[self.chr]))
 
         num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
