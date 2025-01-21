@@ -3113,8 +3113,9 @@ if __name__ == "__main__":
                         **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
                     })
 
-            print(df)
+            
             df = pd.DataFrame(results)
+            print(df)
             # df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
             print(df)
     
