@@ -995,9 +995,9 @@ class CANDIPredictor:
                     # break
         
         main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
-        for chr in chr_sizes.keys():
+        for chr in self.chr_sizes.keys():
             if chr not in main_chrs.keys():
-                del chr_sizes[chr]
+                del self.chr_sizes[chr]
 
         self.context_length = self.hyper_parameters["context_length"]
         self.batch_size = self.hyper_parameters["batch_size"]
