@@ -3017,10 +3017,11 @@ if __name__ == "__main__":
             expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
             # candi.chr = "chr21"
             # main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
-            main_chrs = ["chr21", "chr22", "chr19"]
+            main_chrs = ["chr21", "chr22"]
             metrics = {}
 
-            for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
+            # for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
+            for bios_name in random.sample(list(candi.dataset.navigation.keys()), 2):
                 try:
                     print(f"\nProcessing {bios_name}")
                     chr_metrics = {}
