@@ -995,7 +995,7 @@ class CANDIPredictor:
                     # break
         
         main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
-        for chr in self.chr_sizes.keys():
+        for chr in list(self.chr_sizes.keys()):
             if chr not in main_chrs:
                 del self.chr_sizes[chr]
 
