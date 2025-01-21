@@ -3072,7 +3072,7 @@ if __name__ == "__main__":
                                 if exp in chr_metrics[chr]
                             )
                             metrics[bios_name][exp]["count_metrics"][metric] = weighted_sum / total_weight
-                            print(metric, metrics[bios_name][exp]["count_metrics"][metric])
+                            # print(metric, metrics[bios_name][exp]["count_metrics"][metric])
                         
                         # Aggregate pval metrics
                         for metric in chr_metrics[first_chr][exp]["pval_metrics"].keys():
@@ -3082,7 +3082,7 @@ if __name__ == "__main__":
                                 if exp in chr_metrics[chr]
                             )
                             metrics[bios_name][exp]["pval_metrics"][metric] = weighted_sum / total_weight
-                            print(metric, metrics[bios_name][exp]["pval_metrics"][metric])
+                            # print(metric, metrics[bios_name][exp]["pval_metrics"][metric])
 
                     
                     print(f"Completed processing {bios_name} across all chromosomes")
