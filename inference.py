@@ -3016,7 +3016,8 @@ if __name__ == "__main__":
             candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split=split)
             expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
             # candi.chr = "chr21"
-            main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+            # main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
+            main_chrs = ["chr21", "chr22", "chr19"]
             metrics = {}
 
             for bios_name in random.sample(list(candi.dataset.navigation.keys()), len(candi.dataset.navigation)):
@@ -3108,8 +3109,9 @@ if __name__ == "__main__":
                         **{"pval_" + k: v for k, v in metrics[bios_name][exp]["pval_metrics"].items()},
                     })
 
+            print(df)
             df = pd.DataFrame(results)
-            df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
+            # df.to_csv(f"models/output/eic_{split}_metrics.csv", index=False)
             print(df)
     
     elif sys.argv[1] == "eval_full_bios":
