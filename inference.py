@@ -3015,7 +3015,6 @@ if __name__ == "__main__":
             # Load latent representations
             candi = CANDIPredictor(model_path, hyper_parameters_path, data_path="/project/compbio-lab/encode_data/", DNA=True, eic=eic, split=split)
             expnames = list(candi.dataset.aliases["experiment_aliases"].keys())
-            # candi.chr = "chr21"
             # main_chrs = ["chr" + str(x) for x in range(1, 23)] + ["chrX"]
             main_chrs = ["chr21", "chr22"]
             metrics = {}
@@ -3035,21 +3034,13 @@ if __name__ == "__main__":
                         try:
                             candi.chr = chr
                             chr_metrics[chr] = candi.evaluate(bios_name)
-                            
-                            # Get number of samples for this chromosome (using first available metric)
-                            first_exp = list(chr_metrics[chr].keys())[0]
-                            X, Y, P, _, _, _, _, _ = candi.load_bios(bios_name, x_dsf=1)
-                            chr_weights[chr] = len(Y.view(-1, Y.shape[-1]))
+                            chr_weights[chr] = candi.chr_sizes[chr]
                             
                             end_time = time.time()
                             print(f"{chr} evaluation took {end_time - start_time:.2f} seconds")
                         except Exception as e:
                             print(f"Skipping {chr} due to error: {e}")
                             continue
-                    
-                    # Skip if no chromosomes were successfully processed
-                    if not chr_metrics:
-                        continue
                         
                     # Aggregate metrics across chromosomes using weighted average
                     total_weight = sum(chr_weights.values())
@@ -3072,7 +3063,6 @@ if __name__ == "__main__":
                                 if exp in chr_metrics[chr]
                             )
                             metrics[bios_name][exp]["count_metrics"][metric] = weighted_sum / total_weight
-                            # print(metric, metrics[bios_name][exp]["count_metrics"][metric])
                         
                         # Aggregate pval metrics
                         for metric in chr_metrics[first_chr][exp]["pval_metrics"].keys():
@@ -3082,8 +3072,6 @@ if __name__ == "__main__":
                                 if exp in chr_metrics[chr]
                             )
                             metrics[bios_name][exp]["pval_metrics"][metric] = weighted_sum / total_weight
-                            # print(metric, metrics[bios_name][exp]["pval_metrics"][metric])
-
                     
                     print(f"Completed processing {bios_name} across all chromosomes")
                     print("\n")
