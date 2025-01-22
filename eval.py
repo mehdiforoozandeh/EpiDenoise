@@ -863,7 +863,7 @@ class VISUALS_CANDI(object):
                 hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
 
                 max_val = subset_error.max()
-                ax.set_xlim(0, max_val)
+                ax.set_xlim(x_min, max_val)
                 ax.set_ylim(0, max_val)
                 
                 # Add diagonal line
@@ -904,7 +904,7 @@ class VISUALS_CANDI(object):
 
             # Define the ranges for subsetting
             # ranges = [(0, x_90), (0, x_99), (0, error.max())]
-            ranges = [(0, x_90), (x_90, x_99), (x_99, error.max())]
+            ranges = [(0, x_90), (0, x_99), (0, error.max())]
 
             for i, (x_min, x_max) in enumerate(ranges):
                 # Subset the data for the current range
@@ -919,7 +919,7 @@ class VISUALS_CANDI(object):
                 hb = ax.hexbin(subset_error, subset_pred_std, gridsize=50, cmap='Purples', mincnt=0, bins='log', vmin=1e-1, reduce_C_function=lambda x: np.where(x == 0, 1, x))
 
                 max_val = subset_error.max()
-                ax.set_xlim(0, max_val)
+                ax.set_xlim(x_min, max_val)
                 ax.set_ylim(0, max_val)
                 
                 # Add diagonal line
