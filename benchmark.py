@@ -47,10 +47,16 @@ for bw in os.listdir(true_data):
 
             metrics = {
                 'file': bw,
-                'model': eic_bw.split("/")[-2],
+                'model': eic_bw.split("/")[-2].replace("blind_", ""),
                 'mse': mse,
                 'pearson': pearson_corr,
                 'spearman': spearman_corr
             }
             results.append(metrics)
             print(metrics)
+
+# Convert results to a DataFrame
+results_df = pd.DataFrame(results)
+
+# Save the DataFrame to a CSV file
+results_df.to_csv('benchmark.csv', index=False)
