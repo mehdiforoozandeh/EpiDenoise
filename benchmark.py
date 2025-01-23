@@ -47,7 +47,7 @@ for bw in os.listdir(true_data):
 
             metrics = {
                 'file': bw,
-                'model': eic_bw,
+                'model': eic_bw.split("/")[-2],
                 'mse': mse,
                 'pearson': pearson_corr,
                 'spearman': spearman_corr
