@@ -3205,14 +3205,15 @@ if __name__ == "__main__":
             print(df)
 
     elif sys.argv[1] == "eval_eic":
-        model_path = "models/CANDIeic_DNA_random_mask_Jan15_20250114215927_params45093285.pt"
-        hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Jan15_20250114215927_params45093285.pkl"
+        # model_path = "models/CANDIeic_DNA_random_mask_Jan15_20250114215927_params45093285.pt"
+        # hyper_parameters_path = "models/hyper_parameters_CANDIeic_DNA_random_mask_Jan15_20250114215927_params45093285.pkl"
 
-        # model_path = "models/CANDIfull_DNA_random_mask_Dec8_model_checkpoint_epoch0.pth"
-        # hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec8_20241208194100_params45093285.pkl"
+        model_path = "models/CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pt"
+        hyper_parameters_path = "models/hyper_parameters_CANDIfull_DNA_random_mask_Dec12_20241212134626_params45093285.pkl"
         eic = True
 
-        splits = ["test", "val"]  
+        splits = ["test"]  
+        # splits = ["test", "val"]  
         
         for split in splits:
             # Load latent representations

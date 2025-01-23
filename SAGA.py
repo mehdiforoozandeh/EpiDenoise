@@ -5,7 +5,6 @@ from tqdm import tqdm
 from scipy.spatial.distance import cosine, euclidean, cityblock
 import seaborn as sns
 
-
 # Third-party imports
 import numpy as np
 import torch
