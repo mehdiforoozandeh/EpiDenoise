@@ -23,7 +23,7 @@ eic_data = [
     "/project/compbio-lab/EIC/blind_avg/",
     "/project/compbio-lab/EIC/blind_guacamole/",
     "/project/compbio-lab/EIC/blind_avocado/",
-    "/project/compbio-lab/EIC/blind_imp",
+    "/project/compbio-lab/EIC/blind_imp/",
 ]
 
 for bw in os.listdir(true_data):
