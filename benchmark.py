@@ -2,6 +2,10 @@ import pyBigWig, os
 import pandas as pd 
 import numpy as np
 
+from sklearn.metrics import mean_squared_error
+from scipy.stats import pearsonr, spearmanr
+
+
 def get_binned_vals(bigwig_file, chr, resolution=25):
     with pyBigWig.open(bigwig_file) as bw:
         if chr not in bw.chroms():
@@ -26,6 +30,8 @@ eic_data = [
     "/project/compbio-lab/EIC/blind_imp/",
 ]
 
+results = []
+
 for bw in os.listdir(true_data):
     if ".bigwig" in bw:
         true_bw = true_data + bw
@@ -35,4 +41,15 @@ for bw in os.listdir(true_data):
             eic_bw = eic + bw
             eic_chr21 = get_binned_vals(eic_bw, chr, resolution=25)
 
-            print(len(true_chr21), len(eic_chr21))
+            mse = mean_squared_error(true_chr21, eic_chr21)
+            pearson_corr, _ = pearsonr(true_chr21, eic_chr21)
+            spearman_corr, _ = spearmanr(true_chr21, eic_chr21)
+
+            metrics = {
+                'file': bw,
+                'mse': mse,
+                'pearson': pearson_corr,
+                'spearman': spearman_corr
+            }
+            results.append(metrics)
+            print(metrics)
