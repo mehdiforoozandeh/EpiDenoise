@@ -1,5 +1,5 @@
 import random
-import torch
+import torch, json
 import pickle
 import os, time, gc, psutil
 from CANDI import *
@@ -9,6 +9,7 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import shuffle
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import integrate
 from sklearn.decomposition import PCA
@@ -219,8 +220,8 @@ def viz_feature_importance(df, savedir="models/output/"):
         ]
         
     for metric in metrics_to_plot:
-        plot_metric_clustermap(df, metric, 'Assay Prediction Performance')
-        # plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
+        # plot_metric_clustermap(df, metric, 'Assay Prediction Performance')
+        plot_metric_heatmap(df, metric, 'Assay Prediction Performance')
     
     # plot_metric_correlations(df, metrics_to_plot)
 
@@ -951,6 +952,208 @@ def get_metrics(prob_pval, prob_count, pval_true, pval_pred, count_true, count_p
             "peak_overlap_pval": peak_overlap_pval, "peak_overlap_count": peak_overlap_count}
 
     return metr
+
+def viz_data_avail(
+    navigation_file="models/DEC18_RESULTS/merged_navigation.json",
+    traintest_split="models/DEC18_RESULTS/merged_train_va_test_split.json", 
+    metrics_results="models/DEC18_RESULTS/full_test_metrics.csv", 
+    savedir="models/DEC18_RESULTS/data_avail/"):
+
+    if os.path.exists(savedir) == False:
+        os.mkdir(savedir)
+
+    # Load navigation data from JSON file
+    with open(navigation_file, 'r') as nav_file:
+        navigation_data = json.load(nav_file)
+
+    with open(traintest_split, 'r') as split_file:
+        train_test_split_data = json.load(split_file)
+
+    # Load metrics results from CSV file
+    metrics_data = pd.read_csv(metrics_results)
+
+    # Print the loaded data for verification
+    print("Navigation Data:")
+    for k, v in navigation_data.items():
+        print(k, list(v.keys()))
+
+    print("\nMetrics Results:")
+    print(metrics_data.head())  # Display the first few rows of the metrics data
+
+    # Define core histone marks
+    core_histone_marks = ['H3K4me1', 'H3K4me3', 'H3K27ac', 'H3K27me3', 'H3K36me3', 'H3K9me3']
+
+    # Create assay type mapping with more detailed histone mark categories
+    assay_types = {
+        'ATAC-seq': ['ATAC-seq'],
+        'DNase-seq': ['DNase-seq'],
+        'Core Histone Marks': core_histone_marks,
+        'Other Histone Marks': [exp for exp in metrics_data["experiment"].unique() 
+                              if any(mark in exp for mark in ['H2', 'H3', 'H4'])
+                              and not any(core in exp for core in core_histone_marks)]
+    }
+    
+    # Create color mapping using a colorblind-friendly palette
+    color_map = {
+        'ATAC-seq': '#E69F00',      # Orange
+        'DNase-seq': '#56B4E9',     # Light blue
+        'Core Histone Marks': '#009E73',  # Green
+        'Other Histone Marks': '#CC79A7'  # Pink
+    }
+
+    # Function to get assay type
+    def get_assay_type(exp):
+        for assay_type, exps in assay_types.items():
+            if exp in exps or any(mark in exp for mark in exps):
+                return assay_type
+        return 'Other'
+
+    num_train_samples_per_exp = {}
+
+    for ct in navigation_data.keys():
+        if train_test_split_data[ct] == "train":
+            for exp in navigation_data[ct].keys():
+                if exp not in num_train_samples_per_exp.keys():
+                    num_train_samples_per_exp[exp] = 1
+                else:
+                    num_train_samples_per_exp[exp] += 1
+
+    # Get metrics columns excluding non-metric columns
+    metric_columns = [col for col in metrics_data.columns 
+                     if col not in ["bios_name", "experiment", "comparison"]]
+    
+    # Calculate number of rows and columns for subplots
+    n_metrics = len(metric_columns)
+    n_cols = 4  # You can adjust this
+    n_rows = (n_metrics + n_cols - 1) // n_cols
+
+    # Create figure with extra space for legend
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5*n_rows + 1))
+    axes = axes.flatten()
+
+    ## Plot each metric
+    for idx, metric in enumerate(metric_columns):
+        ax = axes[idx]
+        
+        # Get unique experiments
+        unique_experiments = metrics_data["experiment"].unique()
+        
+        for exp in unique_experiments:
+            # Skip if experiment not in training data
+            if exp not in num_train_samples_per_exp:
+                continue
+                
+            # Get metric values for this experiment
+            exp_data = metrics_data[metrics_data["experiment"] == exp][metric]
+            
+            # Calculate mean and std
+            mean_val = exp_data.mean()
+            std_val = exp_data.std()
+            
+            # Get assay type and corresponding color
+            assay_type = get_assay_type(exp)
+            color = color_map.get(assay_type, '#999999')
+            
+            # Plot error bar
+            ax.errorbar(num_train_samples_per_exp[exp], mean_val, yerr=std_val,
+                       fmt='o', color=color, markersize=4,
+                       ecolor='grey', capsize=2, alpha=0.7)
+
+        # Customize subplot
+        ax.set_title(metric, fontsize=10)
+        ax.set_xlabel('Number of training samples')
+        ax.set_ylabel('Metric value')
+        ax.grid(True, alpha=0.3)
+        
+        # Use log scale for y-axis if metric contains 'mse'
+        if 'mse' in metric.lower():
+            ax.set_yscale('log')
+
+    # Create legend
+    legend_elements = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color,
+                  label=assay_type, markersize=8)
+        for assay_type, color in color_map.items()
+    ]
+
+    # Place legend below the subplots
+    fig.legend(handles=legend_elements, loc='center', bbox_to_anchor=(0.5, 0.02),
+              ncol=len(color_map), frameon=False)
+
+    # Adjust layout to make room for legend
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.1)
+    
+    # Save figures
+    plt.savefig(f"{savedir}/metrics_vs_training_samples.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{savedir}/metrics_vs_training_samples.svg", format="svg", bbox_inches='tight')
+    plt.close()
+
+    # Create figure with extra space for legend
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5*n_rows + 1))
+    axes = axes.flatten()
+
+    # Create subplots for each metric
+    for idx, metric in enumerate(metric_columns):
+        ax = plt.subplot(n_rows, n_cols, idx + 1)
+        
+        # Get unique biosamples
+        unique_biosamples = metrics_data["bios_name"].unique()
+        
+        for bios in unique_biosamples:
+            # Get data for this biosample
+            bios_data = metrics_data[metrics_data["bios_name"] == bios]
+            
+            # Calculate x value (number of experiments - 1)
+            x = len(bios_data) - 1
+            
+            # Calculate mean and std of the metric for this biosample
+            y = bios_data[metric].mean()
+            err = bios_data[metric].std()
+            
+            # Plot error bar
+            ax.scatter(x, y, color="grey")
+
+        # Customize subplot
+        ax.set_title(metric, fontsize=10)
+        ax.set_xlabel('Number of experiments - 1')
+        ax.set_ylabel('Metric value')
+        ax.grid(True, alpha=0.3)
+        
+        # Use log scale for y-axis if metric contains 'mse'
+        if 'mse' in metric.lower():
+            ax.set_yscale('log')
+
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save figure
+    plt.savefig(f"{savedir}/metrics_vs_experiments.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{savedir}/metrics_vs_experiments.svg", format="svg", bbox_inches='tight')
+    plt.close()
+
+    """
+    iterate over all metrics that are columns of metrics_data file other that ["bios_name", "experiment"]
+    for each metric:
+        for ct in metrics_data["bios_name"].unique()
+                visualize the following:
+                x = len(metrics_data["bios_name"]==ct) - 1 the -1 is to account for leave one out strategy of testing 
+                y = mean of metrics_data[metric] of the subset of metrics_data where metrics_data["bios_name"]==ct
+                err = std of metrics_data[metric] of the subset of metrics_data where metrics_data["bios_name"]==ct
+                plt.errorbar(x, y, yerr=err, 
+                            fmt='o', color='#4CB391', markersize=4, 
+                            ecolor='grey', capsize=2, alpha=0.7)
+                over each dot (belonging to a unique experiment, write the name of that experiment)
+
+    visualize all metrics in a huge multipanel figure with a subplot for each metric instead of making a separate plot for each metric
+    """
+
+    for i in range(len(metrics_data)):
+        exp = metrics_data["experiment"][i]
+        ct = metrics_data["bios_name"][i]
+        # print(exp, ct, train_test_split_data[ct])
+
+    pass
 
 class CANDIPredictor:
     def __init__(self, model, hyper_parameters_path, 
@@ -3254,16 +3457,16 @@ if __name__ == "__main__":
             calibration_curve(candi, bios_name, eic=eic)
 
     elif sys.argv[1] == "viz":
-        if os.path.exists("models/DEC18_RESULTS/"):
-            viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
-        else:
-            print("EIC test metrics not computed")
-
-        # if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
-        #     df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
-        #     viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        # if os.path.exists("models/DEC18_RESULTS/"):
+        #     viz_eic_paper_comparison(res_dir="models/DEC18_RESULTS/")
         # else:
-        #     print("Assay importance not computed")
+        #     print("EIC test metrics not computed")
+
+        if os.path.exists("models/DEC18_RESULTS/assay_importance.csv"):
+            df = pd.read_csv("models/DEC18_RESULTS/assay_importance.csv")
+            viz_feature_importance(df, savedir="models/DEC18_RESULTS/")
+        else:
+            print("Assay importance not computed")
             
         exit()
 
@@ -3298,3 +3501,7 @@ if __name__ == "__main__":
         #     viz_full_metrics(df, savedir="models/output/")
         # else:
         #     print("Full val metrics not computed")  
+
+    elif sys.argv[1] == "viz_data_avail":
+        viz_data_avail()
+    

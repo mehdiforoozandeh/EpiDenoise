@@ -3215,9 +3215,6 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
 def main():
-
-
-
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
