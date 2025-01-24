@@ -9,6 +9,9 @@ def comparison_boxplot(merged_df, name="test", savedir="models/DEC18_RESULTS/"):
     """
     Create separate boxplots for each metric comparing teams across assays.
     """
+
+    merged_df = merged_df[merged_df['assay'] != 'ATAC-seq'].reset_index(drop=True)
+    
     # Get unique teams automatically
     teams_to_visualize = ['CANDI'] + [team for team in merged_df['team'].unique() if team != 'CANDI']
     num_teams = len(teams_to_visualize)
@@ -26,7 +29,10 @@ def comparison_boxplot(merged_df, name="test", savedir="models/DEC18_RESULTS/"):
     
     # Setup for plotting
     unique_assays = merged_df['assay'].unique()
-    assay_positions = {assay: i for i, assay in enumerate(unique_assays)}
+    
+    # Sort assays based on the average of different teams on that assay
+    assay_means = merged_df.groupby('assay')[['gwcorr', 'gwspear', 'mse']].mean().mean(axis=1)
+    sorted_assays = assay_means.sort_values().index.tolist()
     
     metrics = [
         ('gwcorr', 'Genome-wide Correlation'),
@@ -37,7 +43,7 @@ def comparison_boxplot(merged_df, name="test", savedir="models/DEC18_RESULTS/"):
     for metric, title in metrics:
         plt.figure(figsize=(14, 7))
         
-        for i, assay in enumerate(unique_assays):
+        for i, assay in enumerate(sorted_assays):
             assay_data = merged_df[merged_df['assay'] == assay]
             
             # Create boxplot data for each team in the current assay
@@ -67,11 +73,11 @@ def comparison_boxplot(merged_df, name="test", savedir="models/DEC18_RESULTS/"):
         plt.ylabel(title, fontsize=14)  # Increased fontsize by 50%
         xticks_positions = [
             i * (len(teams_to_visualize) + 1) + len(teams_to_visualize) / 2 - 0.5
-            for i in range(len(unique_assays))
+            for i in range(len(sorted_assays))
         ]
-        plt.xticks(xticks_positions, unique_assays, rotation=90, fontsize=12)  # Increased fontsize by 50%
+        plt.xticks(xticks_positions, sorted_assays, rotation=90, fontsize=12)  # Increased fontsize by 50%
         
-        for i in range(len(unique_assays) - 1):
+        for i in range(len(sorted_assays) - 1):
             plt.axvline(x=(i + 1) * (len(teams_to_visualize) + 1) - 1, color='k', linestyle='--', linewidth=0.5)
         
         if metric == 'mse':
