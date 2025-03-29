@@ -223,12 +223,9 @@ def main():
     num_epochs = 200
     mask_prob = 0.3         # Probability to mask each feature per sample
     
-    # Try with a lower learning rate (1e-4) and experiment with sequential attention if needed:
+    # Set parallel_attention=False for sequential attention (more stable)
     model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
-                                            parallel_attention=True, second_mlp=True).to(device)
-    # To try sequential attention, change parallel_attention to False:
-    # model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
-    #                                         parallel_attention=False, second_mlp=True).to(device)
+                                            parallel_attention=False, second_mlp=True).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
