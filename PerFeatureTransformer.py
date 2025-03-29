@@ -225,7 +225,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
     
-    B = 500                  # Batch size
+    B = 50                  # Batch size
     L = 300                  # Sequence length
     num_features = 20        # Number of features (assays)
     E = 20                  # Embedding dimension
