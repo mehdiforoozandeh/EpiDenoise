@@ -23,7 +23,7 @@ class SimplifiedPerFeatureTransformer(nn.Module):
         self.second_mlp = second_mlp  # Whether to include a second MLP after feature attention
         
         # Embedding layer with separate parameters for each feature
-        self.embedding = nn.ModuleList([nn.Linear(1, E) for _ in range(num_features)])  # num_features separate linear layers
+        self.embedding = nn.ModuleList([nn.Linear(1, E) for _ in range(num_features)])
         
         # Stack of transformer layers
         self.transformer_layers = nn.ModuleList([
@@ -158,18 +158,14 @@ def generate_synthetic_data(B, L, num_features, device):
     sine function (with a random offset per sample) and each feature is a different transformation
     (using a different amplitude and phase shift) of that sequence.
     """
-    t = torch.linspace(0, 2 * math.pi, L, device=device)  # shape (L)
-    # Random offsets for each sample to create variability in the underlying sequence
-    offsets = torch.rand(B, device=device) * 2 * math.pi  # shape (B)
-    # Compute a base sine sequence for each sample: shape (B, L)
+    t = torch.linspace(0, 2 * math.pi, L, device=device)
+    offsets = torch.rand(B, device=device) * 2 * math.pi
     base = torch.sin(t.unsqueeze(0) + offsets.unsqueeze(1))
     
-    # Create num_features different transformations of the base sequence
     x = torch.zeros(B, L, num_features, device=device)
     for f in range(num_features):
-        amplitude = 1.0 + 0.2 * f     # Increasing amplitude for higher-indexed features
-        phase_shift = f * 0.5         # Different phase shift per feature
-        # Each feature is a transformation of the base sequence
+        amplitude = 1.0 + 0.2 * f
+        phase_shift = f * 0.5
         x[:, :, f] = amplitude * torch.sin(t.unsqueeze(0) + offsets.unsqueeze(1) + phase_shift)
     return x
 
@@ -181,48 +177,40 @@ def train_model(model, optimizer, num_epochs, B, L, num_features, device, mask_p
     losses = []
     for epoch in range(num_epochs):
         optimizer.zero_grad()
-        # Generate a synthetic data batch: x of shape (B, L, num_features)
         x = generate_synthetic_data(B, L, num_features, device)
-        # Create a random mask for features (per sample) with probability mask_prob
-        # True indicates that the feature is missing and needs to be imputed
         feat_mask = (torch.rand(B, num_features, device=device) < mask_prob)
         
         # Create input where masked features are replaced with zero
         x_input = x.clone()
-        # Expand mask to (B, L, num_features) to apply across the sequence length
         mask_expanded = feat_mask.unsqueeze(1).expand(-1, L, -1)
         x_input[mask_expanded] = 0.0
         
-        # Forward pass: impute missing features
         output = model(x_input, feat_mask)
         
-        # Compute loss only on the masked features using MSE
         loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
         loss.backward()
         optimizer.step()
         
         losses.append(loss.item())
         
-        # Compute R² score on masked features (using numpy arrays)
+        # Compute R² score on masked features safely
         pred_masked = output[mask_expanded].detach().cpu().numpy()
         target_masked = x[mask_expanded].detach().cpu().numpy()
-        if pred_masked.size > 0:
-            r2 = r2_score(target_masked, pred_masked)
-        else:
+        if np.isnan(pred_masked).any() or np.isnan(target_masked).any():
             r2 = float('nan')
+        else:
+            r2 = r2_score(target_masked, pred_masked)
         
         if (epoch + 1) % 10 == 0 or epoch == 0:
             print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item():.4f}, R² (masked): {r2:.4f}")
     return losses
 
 def main():
-    # Use GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
     
-    # Hyperparameters
     B = 16                  # Batch size
-    L = 50                  # Sequence length (e.g., genomic positions)
+    L = 50                  # Sequence length
     num_features = 5        # Number of features (assays)
     E = 32                  # Embedding dimension
     nhead = 4               # Number of attention heads
@@ -232,13 +220,11 @@ def main():
     num_epochs = 200
     mask_prob = 0.3         # Probability to mask each feature per sample
     
-    # Instantiate the model (try with parallel_attention and second_mlp enabled)
     model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
                                             parallel_attention=True, second_mlp=True).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     
-    # Train the model on synthetic data
     losses = train_model(model, optimizer, num_epochs, B, L, num_features, device, mask_prob=mask_prob)
     
     print("\nTraining complete.")
