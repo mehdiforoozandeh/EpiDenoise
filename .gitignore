@@ -10,3 +10,4 @@ data/bins*
 data/*.pt
 data/ExpStat*
 data/*.bigWig
+tabpfn/*
