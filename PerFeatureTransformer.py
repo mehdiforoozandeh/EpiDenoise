@@ -1,4 +1,5 @@
 import math
+import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,11 +35,11 @@ class SimplifiedPerFeatureTransformer(nn.Module):
         # x: (B, L, num_features)
         B, L, num_features = x.shape
         # Embed each feature: (B, L, num_features, E)
-        x_embedded = torch.stack([self.embedding[f](x[..., f].unsqueeze(-1)) for f in range(num_features)], dim=2)
+        x_embedded = torch.stack([self.embedding[f](x[..., f].unsqueeze(-1))
+                                  for f in range(num_features)], dim=2)
         for layer in self.transformer_layers:
             x_embedded = layer(x_embedded, feat_mask)
-        # Map back to original feature space
-        x_output = self.output_layer(x_embedded).squeeze(-1)
+        x_output = self.output_layer(x_embedded).squeeze(-1)  # (B, L, num_features)
         return x_output
 
 class PerFeatureEncoderLayer(nn.Module):
@@ -134,9 +135,9 @@ class StandardTransformer(nn.Module):
     def forward(self, x):
         # x: (B, L, num_features)
         x_emb = self.input_linear(x)
-        x_emb = x_emb.transpose(0, 1)  # (L, B, E)
+        x_emb = x_emb.transpose(0, 1)
         encoded = self.transformer_encoder(x_emb)
-        encoded = encoded.transpose(0, 1)  # (B, L, E)
+        encoded = encoded.transpose(0, 1)
         out = self.output_linear(encoded)
         return out
 
@@ -150,7 +151,6 @@ class LinearBaseline(nn.Module):
         self.linear = nn.Linear(num_features, num_features)
 
     def forward(self, x):
-        # x: (B, L, num_features)
         return self.linear(x)
 
 # -----------------------
@@ -167,12 +167,10 @@ class MLPBaseline(nn.Module):
         )
 
     def forward(self, x):
-        # x: (B, L, num_features)
         B, L, F = x.shape
         x_flat = x.view(B * L, F)
         out = self.mlp(x_flat)
-        out = out.view(B, L, F)
-        return out
+        return out.view(B, L, F)
 
 # -----------------------
 # 1D CNN Baseline Model
@@ -187,62 +185,86 @@ class CNNBaseline(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        # x: (B, L, num_features); rearrange to (B, num_features, L)
+        # x: (B, L, num_features) -> (B, num_features, L)
         x = x.transpose(1, 2)
         x = self.relu(self.conv1(x))
         x = self.relu(self.conv2(x))
         x = self.conv3(x)
-        x = x.transpose(1, 2)  # back to (B, L, num_features)
-        return x
+        return x.transpose(1, 2)
 
 # -----------------------
-# Synthetic Data Generation (Generalized)
+# Synthetic Data Generation (Complicated Transformations)
 # -----------------------
 
 def generate_synthetic_dataset(N, L, num_features, device):
     """
-    Generate a synthetic dataset of shape (N, L, num_features) with complex sequence functions.
-    Features are divided into three groups:
-      - Group 1 (~15%): Related low-noise sine waves.
-      - Group 2 (~35%): Shared combination of sine and cosine with moderate noise.
-      - Group 3 (remaining): Independent functions with varied frequency, amplitude, offset, and noise.
+    Generate a synthetic dataset of shape (N, L, num_features) by first generating a base sequence S
+    (of length L, positive) and then applying F different numerical transformations (with optional noise)
+    to S. For each feature, we randomly choose one of the following transformations:
+        - log2(S)
+        - log10(S)
+        - exp(S)
+        - arcsinh(S)
+        - sinh(S)
+        - linear: w * S (with a random weight w)
+        - taylor: 1 + S + S^2/2 + S^3/6 (Taylor expansion of exp(S))
+        - sqrt(S)
+        - square: S^2
+    Gaussian noise (with a randomly chosen standard deviation) is then added.
     """
-    g1 = max(1, round(0.15 * num_features))
-    g2 = max(1, round(0.35 * num_features))
-    if g1 + g2 > num_features:
-        g2 = num_features - g1
-    g3 = num_features - g1 - g2
+    # Define candidate transformation names.
+    transformations = ["log2", "log10", "exp", "arcsinh", "sinh", "linear", "taylor", "sqrt", "square"]
+    # For each feature, choose a transformation and (if needed) extra parameters and noise level.
+    feat_transforms = []
+    feat_params = []
+    noise_levels = []
+    for f in range(num_features):
+        choice = random.choice(transformations)
+        feat_transforms.append(choice)
+        if choice == "linear":
+            w = random.uniform(0.5, 2.0)
+            feat_params.append({"w": w})
+        else:
+            feat_params.append({})
+        noise = random.uniform(0.01, 0.2)
+        noise_levels.append(noise)
 
-    t = torch.linspace(0, 2 * math.pi, L, device=device)
+    # Prepare output dataset.
     x = torch.zeros(N, L, num_features, device=device)
-    # Group 1
+    t = torch.linspace(0, 2 * math.pi, L, device=device)
+    # For each sample, generate a base sequence S.
+    # Ensure S > 0 for log and sqrt; here we use S = sin(t + offset) + 1.1
     for i in range(N):
-        offset = torch.rand(1).item() * 2 * math.pi
-        base = torch.sin(t + offset)
-        for f in range(g1):
-            amp = 1.0 + 0.1 * (f - (g1 - 1) / 2)
-            noise = 0.1 * torch.randn(L, device=device)
-            x[i, :, f] = amp * base + noise
-    # Group 2
-    for i in range(N):
-        offset1 = torch.rand(1).item() * 2 * math.pi
-        offset2 = torch.rand(1).item() * 2 * math.pi
-        base2 = torch.sin(t + offset1) + 0.5 * torch.cos(2 * t + offset2)
-        for idx, f in enumerate(range(g1, g1 + g2)):
-            amp = 2.0 + 0.5 * idx
-            noise = 0.5 * torch.randn(L, device=device)
-            x[i, :, f] = amp * base2 + noise
-    # Group 3
-    for i in range(N):
-        for f in range(g1 + g2, num_features):
-            freq = 1 + 2 * torch.rand(1).item()
-            phase = torch.rand(1).item() * 2 * math.pi
-            amp = 0.5 + 5.0 * torch.rand(1).item()
-            offset_feature = -5 + 10 * torch.rand(1).item()
-            noise_std = 0.2 + 1.0 * torch.rand(1).item()
-            base_feature = amp * torch.sin(freq * t + phase) + offset_feature
-            noise = noise_std * torch.randn(L, device=device)
-            x[i, :, f] = base_feature + noise
+        offset = random.uniform(0, 2 * math.pi)
+        S = torch.sin(t + offset) + 1.1  # S is in [0.1, 2.1]
+        for f in range(num_features):
+            choice = feat_transforms[f]
+            params = feat_params[f]
+            # Apply the chosen transformation.
+            if choice == "log2":
+                Y = torch.log2(S)
+            elif choice == "log10":
+                Y = torch.log10(S)
+            elif choice == "exp":
+                Y = torch.exp(S)
+            elif choice == "arcsinh":
+                Y = torch.asinh(S)
+            elif choice == "sinh":
+                Y = torch.sinh(S)
+            elif choice == "linear":
+                w = params.get("w", 1.0)
+                Y = w * S
+            elif choice == "taylor":
+                Y = 1 + S + (S**2)/2 + (S**3)/6
+            elif choice == "sqrt":
+                Y = torch.sqrt(S)
+            elif choice == "square":
+                Y = S**2
+            else:
+                Y = S  # fallback (should not happen)
+            # Add Gaussian noise (different noise level for each feature)
+            noise = noise_levels[f] * torch.randn(L, device=device)
+            x[i, :, f] = Y + noise
     return x
 
 def get_batches(data, batch_size):
@@ -264,20 +286,19 @@ def generate_whole_feature_mask(B, num_features, missing_prob):
 # -----------------------
 
 def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epochs, batch_size, mask_prob, device):
-    # We'll record test metrics for each model in dictionaries.
     test_losses = {name: [] for name in models}
     test_r2s = {name: [] for name in models}
-    num_features = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else train_data.shape[-1]
+    # Use the number of features from the first model (if available)
+    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else train_data.shape[-1]
 
     for epoch in range(num_epochs):
-        # Training loop: iterate over batches.
+        # Training
         for x in get_batches(train_data, batch_size):
             B_curr = x.size(0)
-            feat_mask = (torch.rand(B_curr, num_features, device=device) < mask_prob)
+            feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
             mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
             x_input = x.clone()
             x_input[mask_expanded] = 0.0
-
             for name, model in models.items():
                 optimizers[name].zero_grad()
                 if name == "PerFeature":
@@ -300,7 +321,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                     optimizers[name].step()
 
-        # Evaluation on test data with random masking.
+        # Evaluation on test data with random masking
         all_losses = {name: 0.0 for name in models}
         all_counts = 0
         preds = {name: [] for name in models}
@@ -308,7 +329,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
         with torch.no_grad():
             for x in get_batches(test_data, batch_size):
                 B_curr = x.size(0)
-                feat_mask = (torch.rand(B_curr, num_features, device=device) < mask_prob)
+                feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
                 mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
                 x_input = x.clone()
                 x_input[mask_expanded] = 0.0
@@ -332,7 +353,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
             test_r2s[name].append(r2)
 
         if (epoch + 1) % 50 == 0 or epoch == 0:
-            print(f"Epoch {epoch + 1}/{num_epochs} -- Test Metrics (Random Mask):")
+            print(f"Epoch {epoch+1}/{num_epochs} -- Random Mask Test Metrics:")
             for name in models:
                 print(f"  {name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
 
@@ -340,7 +361,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
 
 def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, device):
     print("\nWhole-Feature Missing Evaluation:")
-    num_features = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else test_data.shape[-1]
+    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else test_data.shape[-1]
     results = {}
     with torch.no_grad():
         total_loss = {name: 0.0 for name in models}
@@ -349,7 +370,7 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
         targets = []
         for x in get_batches(test_data, batch_size):
             B_curr = x.size(0)
-            feat_mask = generate_whole_feature_mask(B_curr, num_features, missing_prob).to(device)
+            feat_mask = generate_whole_feature_mask(B_curr, num_feats, missing_prob).to(device)
             mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
             x_input = x.clone()
             x_input[mask_expanded] = 0.0
@@ -379,11 +400,11 @@ def main():
 
     # Hyperparameters
     N = 500                # Total number of samples
-    train_ratio = 0.8      # Train/test split
+    train_ratio = 0.8
     L = 100                # Sequence length
     num_features = 20      # Number of features
     E = 20               # Embedding dimension
-    nhead = 4            # Number of attention heads (for Transformer models)
+    nhead = 4            # For Transformer models
     nhid = 64            # Hidden size for PerFeatureTransformer
     nlayers = 2          # Number of layers for Transformer models
     dropout = 0.1
@@ -392,7 +413,7 @@ def main():
     mask_prob = 0.5        # For random masking during training/evaluation
     whole_missing_prob = 0.5  # For whole-feature missing evaluation
 
-    # Generate synthetic dataset and split
+    # Generate synthetic dataset using our complicated transformation approach
     dataset = generate_synthetic_dataset(N, L, num_features, device)
     indices = torch.randperm(N)
     train_size = int(train_ratio * N)
@@ -401,7 +422,7 @@ def main():
     train_data = dataset[train_indices]
     test_data = dataset[test_indices]
 
-    # Instantiate models
+    # Instantiate all five models
     models = {
         "Linear": LinearBaseline(num_features).to(device),
         "MLP": MLPBaseline(num_features, hidden_dim=64).to(device),
@@ -411,10 +432,8 @@ def main():
                                                       parallel_attention=False, second_mlp=True).to(device)
     }
 
-    # Create optimizers for each model
     optimizers = {name: optim.Adam(model.parameters(), lr=1e-4) for name, model in models.items()}
 
-    # Train all models and evaluate on test set (with random masking)
     test_losses, test_r2s = train_and_evaluate_models(models, optimizers, train_data, test_data,
                                                       num_epochs, batch_size, mask_prob, device)
 
@@ -422,11 +441,8 @@ def main():
     for name in models:
         print(f"{name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
 
-    # Determine which model performed best on random masking (lowest loss and highest R²)
-    # (You can define a ranking scheme; here we simply print all results.)
     print("\nComparing models on Random Masking evaluation:")
 
-    # Whole-Feature Missing Evaluation
     whole_results = evaluate_whole_feature_missing(models, test_data, batch_size, whole_missing_prob, device)
 
     print("\nOverall Results:")
@@ -435,7 +451,7 @@ def main():
         whole_loss, whole_r2 = whole_results[name]
         print(f"{name}: Random Mask -> Loss: {rand_loss:.4f}, R²: {rand_r2:.4f};  Whole-Feature -> Loss: {whole_loss:.4f}, R²: {whole_r2:.4f}")
 
-    # You can then decide which model performed best overall based on these metrics.
+    # You can then decide (manually or via a ranking function) which model performs best overall.
 
 if __name__ == '__main__':
     main()
