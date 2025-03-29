@@ -189,6 +189,10 @@ def train_model(model, optimizer, num_epochs, B, L, num_features, device, mask_p
         
         loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
         loss.backward()
+        
+        # Apply gradient clipping to help stabilize training
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
         optimizer.step()
         
         losses.append(loss.item())
@@ -220,10 +224,11 @@ def main():
     num_epochs = 200
     mask_prob = 0.3         # Probability to mask each feature per sample
     
+    # Try with a lower learning rate (e.g., 1e-4) and see if training stabilizes.
     model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
                                             parallel_attention=True, second_mlp=True).to(device)
     
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
     losses = train_model(model, optimizer, num_epochs, B, L, num_features, device, mask_prob=mask_prob)
     
