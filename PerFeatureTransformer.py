@@ -167,16 +167,65 @@ class StandardTransformer(nn.Module):
 
 def generate_synthetic_dataset(N, L, num_features, device):
     """
-    Generate a synthetic dataset of shape (N, L, num_features), where each sample is generated from an
-    underlying sine function with a random offset and each feature is a different transformation.
+    Generate a synthetic dataset of shape (N, L, num_features) with complex sequence functions.
+    
+    The features are divided into three groups:
+      - Group 1 (~15% of features, at least 1): Related low-noise sine waves.
+      - Group 2 (~35% of features, at least 1): A shared combination of sine and cosine functions
+        with moderate noise and larger numerical ranges.
+      - Group 3 (remaining features): Independent functions per feature with varied frequency, amplitude,
+        offset, and noise levels.
+    
+    The groups are computed as:
+         g1 = max(1, round(0.15 * num_features))
+         g2 = max(1, round(0.35 * num_features))
+         Adjust g2 if g1 + g2 > num_features, and let g3 = num_features - g1 - g2.
+         
+    Returns:
+         x: Tensor of shape (N, L, num_features)
     """
+    # Compute group sizes
+    g1 = max(1, round(0.15 * num_features))
+    g2 = max(1, round(0.35 * num_features))
+    if g1 + g2 > num_features:
+        g2 = num_features - g1
+    g3 = num_features - g1 - g2
+
     t = torch.linspace(0, 2 * math.pi, L, device=device)
-    offsets = torch.rand(N, device=device) * 2 * math.pi
     x = torch.zeros(N, L, num_features, device=device)
-    for f in range(num_features):
-        amplitude = 1.0 + 0.2 * f
-        phase_shift = f * 0.5
-        x[:, :, f] = amplitude * torch.sin(t.unsqueeze(0) + offsets.unsqueeze(1) + phase_shift)
+    
+    # Group 1: Related low-noise sine waves
+    for i in range(N):
+        offset = torch.rand(1).item() * 2 * math.pi
+        base = torch.sin(t + offset)
+        # Vary amplitude slightly around 1.0 for each feature in this group
+        for f in range(g1):
+            amp = 1.0 + 0.1 * (f - (g1 - 1) / 2)  # Center the amplitudes around 1.0
+            noise = 0.1 * torch.randn(L, device=device)
+            x[i, :, f] = amp * base + noise
+    
+    # Group 2: Shared combination of sine and cosine functions with moderate noise
+    for i in range(N):
+        offset1 = torch.rand(1).item() * 2 * math.pi
+        offset2 = torch.rand(1).item() * 2 * math.pi
+        base2 = torch.sin(t + offset1) + 0.5 * torch.cos(2 * t + offset2)
+        for idx, f in enumerate(range(g1, g1 + g2)):
+            amp = 2.0 + 0.5 * idx  # Increasing amplitude within the group
+            noise = 0.5 * torch.randn(L, device=device)
+            x[i, :, f] = amp * base2 + noise
+    
+    # Group 3: Independent functions with varied properties
+    for i in range(N):
+        for f in range(g1 + g2, num_features):
+            freq = 1 + 2 * torch.rand(1).item()           # frequency between 1 and 3
+            phase = torch.rand(1).item() * 2 * math.pi
+            amp = 0.5 + 5.0 * torch.rand(1).item()          # amplitude between 0.5 and 5.5
+            offset_feature = -5 + 10 * torch.rand(1).item()   # offset between -5 and 5
+            noise_std = 0.2 + 1.0 * torch.rand(1).item()      # noise standard deviation between 0.2 and 1.2
+            base_feature = amp * torch.sin(freq * t + phase) + offset_feature
+            noise = noise_std * torch.randn(L, device=device)
+            x[i, :, f] = base_feature + noise
+            
     return x
 
 def get_batches(data, batch_size):
