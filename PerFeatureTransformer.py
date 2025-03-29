@@ -353,7 +353,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
             r2 = r2_score(targets_concat, preds_concat)
             test_r2s[name].append(r2)
 
-        if (epoch + 1) % 50 == 0 or epoch == 0:
+        if (epoch + 1) % 5 == 0 or epoch == 0:
             print(f"Epoch {epoch+1}/{num_epochs} -- Random Mask Test Metrics:")
             for name in models:
                 print(f"  {name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
