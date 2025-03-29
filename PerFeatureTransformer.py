@@ -58,10 +58,9 @@ class PerFeatureEncoderLayer(nn.Module):
         self.parallel_attention = parallel_attention
         self.second_mlp = second_mlp
         
-        # Feature attention (across num_features dimension)
-        self.feature_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead)
-        # Position attention (across L dimension)
-        self.position_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead)
+        # Add dropout to MultiheadAttention for stability
+        self.feature_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead, dropout=dropout)
+        self.position_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead, dropout=dropout)
         
         if parallel_attention:
             # MLP for combined attentions (concatenated outputs)
@@ -79,7 +78,7 @@ class PerFeatureEncoderLayer(nn.Module):
             )
         
         if second_mlp:
-            # Second MLP after feature attention
+            # Second MLP after feature attention (only used in sequential mode)
             self.second_mlp_layer = nn.Sequential(
                 nn.Linear(E, nhid),
                 nn.GELU(),
@@ -224,9 +223,12 @@ def main():
     num_epochs = 200
     mask_prob = 0.3         # Probability to mask each feature per sample
     
-    # Try with a lower learning rate (e.g., 1e-4) and see if training stabilizes.
+    # Try with a lower learning rate (1e-4) and experiment with sequential attention if needed:
     model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
                                             parallel_attention=True, second_mlp=True).to(device)
+    # To try sequential attention, change parallel_attention to False:
+    # model = SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
+    #                                         parallel_attention=False, second_mlp=True).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
