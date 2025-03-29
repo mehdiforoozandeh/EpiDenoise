@@ -189,10 +189,23 @@ def train_model(model, optimizer, num_epochs, B, L, num_features, device, mask_p
         loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
         loss.backward()
         
-        # Apply gradient clipping to help stabilize training
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        
-        optimizer.step()
+        # Check if loss is NaN
+        if torch.isnan(loss).item():
+            print(f"Epoch {epoch + 1}: Loss is NaN, skipping parameter update.")
+            optimizer.zero_grad()  # clear gradients
+        else:
+            # Check if any gradient contains NaN
+            grad_has_nan = False
+            for name, param in model.named_parameters():
+                if param.grad is not None and torch.isnan(param.grad).any():
+                    print(f"Epoch {epoch + 1}: Gradient for {name} contains NaN, skipping update.")
+                    grad_has_nan = True
+                    break
+            if grad_has_nan:
+                optimizer.zero_grad()  # clear gradients
+            else:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
         
         losses.append(loss.item())
         
