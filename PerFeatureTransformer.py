@@ -228,7 +228,7 @@ def main():
     B = 500                  # Batch size
     L = 300                  # Sequence length
     num_features = 20        # Number of features (assays)
-    E = 10                  # Embedding dimension
+    E = 20                  # Embedding dimension
     nhead = 4               # Number of attention heads
     nhid = 64               # Hidden size of the MLP
     nlayers = 2             # Number of transformer layers
