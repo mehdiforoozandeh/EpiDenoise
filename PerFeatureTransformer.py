@@ -446,7 +446,7 @@ def main():
         "Standard": StandardTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
         "PerFeature": SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
                                                       parallel_attention=False, second_mlp=True).to(device),
-        "OGPerFeature": OGPerFeatureTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
+        # "OGPerFeature": OGPerFeatureTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
     }
 
     optimizers = {name: optim.Adam(model.parameters(), lr=1e-4) for name, model in models.items()}
