@@ -179,9 +179,9 @@ class MLPBaseline(nn.Module):
 class CNNBaseline(nn.Module):
     def __init__(self, num_features, hidden_channels=32, kernel_size=3):
         super(CNNBaseline, self).__init__()
-        self.conv1 = nn.Conv1d(num_features, hidden_channels, kernel_size, padding=kernel_size//2)
-        self.conv2 = nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=kernel_size//2)
-        self.conv3 = nn.Conv1d(hidden_channels, num_features, kernel_size, padding=kernel_size//2)
+        self.conv1 = nn.Conv1d(num_features, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
+        self.conv2 = nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
+        self.conv3 = nn.Conv1d(hidden_channels, num_features, kernel_size, padding=kernel_size//2, groups=num_features)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -222,7 +222,7 @@ def generate_synthetic_dataset(N, L, num_features, device):
         choice = random.choice(transformations)
         feat_transforms.append(choice)
         if choice == "linear":
-            w = random.uniform(0.5, 2.0)
+            w = random.uniform(0.1, 10.0)
             feat_params.append({"w": w})
         else:
             feat_params.append({})
@@ -259,7 +259,7 @@ def generate_synthetic_dataset(N, L, num_features, device):
             elif choice == "sqrt":
                 Y = torch.sqrt(S)
             elif choice == "square":
-                Y = S**2
+                Y = S**3.2
             else:
                 Y = S  # fallback (should not happen)
             # Add Gaussian noise (different noise level for each feature)
@@ -399,16 +399,16 @@ def main():
     print("Using device:", device)
 
     # Hyperparameters
-    N = 500                # Total number of samples
+    N = 1000                # Total number of samples
     train_ratio = 0.8
-    L = 100                # Sequence length
-    num_features = 20      # Number of features
-    E = 20               # Embedding dimension
+    L = 200                # Sequence length
+    num_features = 50      # Number of features
+    E = 30               # Embedding dimension
     nhead = 4            # For Transformer models
     nhid = 64            # Hidden size for PerFeatureTransformer
     nlayers = 2          # Number of layers for Transformer models
     dropout = 0.1
-    num_epochs = 2000
+    num_epochs = 1000
     batch_size = 50
     mask_prob = 0.5        # For random masking during training/evaluation
     whole_missing_prob = 0.5  # For whole-feature missing evaluation
