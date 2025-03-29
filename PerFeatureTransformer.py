@@ -179,6 +179,7 @@ class MLPBaseline(nn.Module):
 class CNNBaseline(nn.Module):
     def __init__(self, num_features, hidden_channels=32, kernel_size=3):
         super(CNNBaseline, self).__init__()
+        hidden_channels = num_features * 2
         self.conv1 = nn.Conv1d(num_features, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
         self.conv2 = nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
         self.conv3 = nn.Conv1d(hidden_channels, num_features, kernel_size, padding=kernel_size//2, groups=num_features)
