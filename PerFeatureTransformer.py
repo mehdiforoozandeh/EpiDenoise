@@ -50,11 +50,9 @@ class OGPerFeatureTransformer(nn.Module):
 
     def forward(self, x):
         x_transposed = x.transpose(0, 1)  # (B, L, num_features) -> (L, B, num_features)
-        transformer_out = self.transformer(x_transposed, None, single_eval_pos=0)
+        transformer_out = self.transformer(x_transposed, x_transposed, single_eval_pos=0)
         out = transformer_out.transpose(0, 1)  # (L, B, num_features) -> (B, L, num_features)
         return out
-
-
 
 # -----------------------
 # Simplified PerFeatureTransformer Code
@@ -327,6 +325,43 @@ def generate_whole_feature_mask(B, num_features, missing_prob):
 # Training and Evaluation for All Models
 # -----------------------
 
+def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, device):
+    print("\nWhole-Feature Missing Evaluation:")
+    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else test_data.shape[-1]
+    results = {}
+    with torch.no_grad():
+        total_loss = {name: 0.0 for name in models}
+        count = 0
+        preds = {name: [] for name in models}
+        targets = []
+        for x in get_batches(test_data, batch_size):
+            B_curr = x.size(0)
+            feat_mask = generate_whole_feature_mask(B_curr, num_feats, missing_prob).to(device)
+            mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
+            x_input = x.clone()
+            x_input[mask_expanded] = 0.0
+            for name, model in models.items():
+                if name == "PerFeature":
+                    output = model(x_input, feat_mask)
+                elif name == "OGPerFeature":
+                    output = model(x_input)
+                else:
+                    output = model(x_input)
+                loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
+                total_loss[name] += loss.item() * B_curr
+                preds[name].append(output[mask_expanded].detach().cpu().numpy())
+            targets.append(x[mask_expanded].detach().cpu().numpy())
+            count += B_curr
+
+        for name in models:
+            avg_loss = total_loss[name] / count
+            preds_concat = np.concatenate(preds[name], axis=0)
+            targets_concat = np.concatenate(targets, axis=0)
+            r2 = r2_score(targets_concat, preds_concat)
+            results[name] = (avg_loss, r2)
+            print(f"  {name}: Loss: {avg_loss:.4f}, R²: {r2:.4f}")
+    return results
+
 def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epochs, batch_size, mask_prob, device):
     test_losses = {name: [] for name in models}
     test_r2s = {name: [] for name in models}
@@ -341,7 +376,6 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
             x_input[mask_expanded] = 0.0
             for name, model in models.items():
                 optimizers[name].zero_grad()
-                # For models that use a feature mask (PerFeature) or OGPerFeature (which ignores mask)
                 if name == "PerFeature":
                     output = model(x_input, feat_mask)
                 elif name == "OGPerFeature":
@@ -364,7 +398,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                     optimizers[name].step()
 
-        # Evaluation on test data with random masking
+        # Evaluation (unchanged)
         all_losses = {name: 0.0 for name in models}
         all_counts = 0
         preds = {name: [] for name in models}
@@ -404,49 +438,16 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
 
     return test_losses, test_r2s
 
-def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, device):
-    print("\nWhole-Feature Missing Evaluation:")
-    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else test_data.shape[-1]
-    results = {}
-    with torch.no_grad():
-        total_loss = {name: 0.0 for name in models}
-        count = 0
-        preds = {name: [] for name in models}
-        targets = []
-        for x in get_batches(test_data, batch_size):
-            B_curr = x.size(0)
-            feat_mask = generate_whole_feature_mask(B_curr, num_feats, missing_prob).to(device)
-            mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
-            x_input = x.clone()
-            x_input[mask_expanded] = 0.0
-            for name, model in models.items():
-                if name == "PerFeature":
-                    output = model(x_input, feat_mask)
-                elif name == "OGPerFeature":
-                    output = model(x_input)
-                else:
-                    output = model(x_input)
-                loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
-                total_loss[name] += loss.item() * B_curr
-                preds[name].append(output[mask_expanded].detach().cpu().numpy())
-            targets.append(x[mask_expanded].detach().cpu().numpy())
-            count += B_curr
 
-        for name in models:
-            avg_loss = total_loss[name] / count
-            preds_concat = np.concatenate(preds[name], axis=0)
-            targets_concat = np.concatenate(targets, axis=0)
-            r2 = r2_score(targets_concat, preds_concat)
-            results[name] = (avg_loss, r2)
-            print(f"  {name}: Loss: {avg_loss:.4f}, R²: {r2:.4f}")
-    return results
+
+    # Rest of main (printing, whole-feature evaluation) unchanged
 
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
 
-    # Hyperparameters
+    # Hyperparameters (unchanged)
     N = 1000
     train_ratio = 0.8
     L = 100
@@ -461,7 +462,7 @@ def main():
     mask_prob = 0.5
     whole_missing_prob = 0.5
 
-    # Generate dataset and split
+    # Dataset and models (unchanged except for OGPerFeatureTransformer instantiation)
     dataset = generate_synthetic_dataset(N, L, num_features, device)
     indices = torch.randperm(N)
     train_size = int(train_ratio * N)
@@ -470,7 +471,6 @@ def main():
     train_data = dataset[train_indices]
     test_data = dataset[test_indices]
 
-    # Instantiate models
     models = {
         "Linear": LinearBaseline(num_features).to(device),
         "MLP": MLPBaseline(num_features, hidden_dim=64).to(device),
