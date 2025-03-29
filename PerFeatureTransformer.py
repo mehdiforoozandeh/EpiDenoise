@@ -327,7 +327,7 @@ def main():
     dropout = 0.1
     num_epochs = 2000
     batch_size = 50         # Mini-batch size for training (fits in GPU)
-    mask_prob = 0.8         # Probability to mask each feature per sample
+    mask_prob = 0.5         # Probability to mask each feature per sample
     
     # Generate synthetic dataset of N samples
     dataset = generate_synthetic_dataset(N, L, num_features, device)
