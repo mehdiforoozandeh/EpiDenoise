@@ -36,7 +36,7 @@ class OGPerFeatureTransformer(nn.Module):
             decoder_dict={"standard": (None, num_features)},
             # Explicitly pass parameters instead of layer_kwargs
             activation="gelu",  # Set activation directly
-            dropout=dropout,    # Set dropout directly (if supported)
+            # dropout=dropout,    # Set dropout directly (if supported)
         )
     
     def forward(self, x):
