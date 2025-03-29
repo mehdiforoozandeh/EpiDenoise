@@ -405,7 +405,7 @@ def main():
     L = 200                # Sequence length
     num_features = 50      # Number of features
     E = 30               # Embedding dimension
-    nhead = 4            # For Transformer models
+    nhead = 5            # For Transformer models
     nhid = 64            # Hidden size for PerFeatureTransformer
     nlayers = 2          # Number of layers for Transformer models
     dropout = 0.1
