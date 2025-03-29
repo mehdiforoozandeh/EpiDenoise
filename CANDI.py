@@ -257,12 +257,12 @@ class CANDI_DNA_Encoder(nn.Module):
         src = self.DNA_Epig_fusion(src)
 
         ### TRANSFORMER ENCODER ###
-        # if self.pos_enc != "relative":
-        #     src = self.posEnc(src)
-        #     src = self.transformer_encoder(src)
-        # else:
-        #     for enc in self.transformer_encoder:
-        #         src = enc(src)
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+            src = self.transformer_encoder(src)
+        else:
+            for enc in self.transformer_encoder:
+                src = enc(src)
 
         return src
 

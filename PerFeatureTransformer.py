@@ -1,0 +1,249 @@
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from sklearn.metrics import r2_score
+import numpy as np
+
+# -----------------------
+# Transformer Model Code
+# -----------------------
+
+class SimplifiedPerFeatureTransformer(nn.Module):
+    def __init__(self, F, E, nhead, nhid, nlayers, dropout=0.1, parallel_attention=False, second_mlp=False):
+        super(SimplifiedPerFeatureTransformer, self).__init__()
+        self.F = F  # Number of features
+        self.E = E  # Embedding dimension
+        self.nhead = nhead  # Number of attention heads
+        self.nhid = nhid  # Hidden size of the MLP
+        self.nlayers = nlayers  # Number of transformer layers
+        self.dropout = dropout
+        self.parallel_attention = parallel_attention  # Whether to use parallel attentions
+        self.second_mlp = second_mlp  # Whether to include a second MLP after feature attention
+        
+        # Embedding layer with separate parameters for each feature
+        self.embedding = nn.ModuleList([nn.Linear(1, E) for _ in range(F)])  # F separate linear layers
+        
+        # Stack of transformer layers
+        self.transformer_layers = nn.ModuleList([
+            PerFeatureEncoderLayer(E, nhead, nhid, dropout, parallel_attention, second_mlp) for _ in range(nlayers)
+        ])
+        
+        # Output layer to map back to (B, L, F)
+        self.output_layer = nn.Linear(E, 1)
+        
+    def forward(self, x, feat_mask=None):
+        B, L, F = x.shape
+        # Embed each feature separately: (B, L, F) -> (B, L, F, E)
+        x_embedded = torch.stack([self.embedding[f](x[..., f].unsqueeze(-1)) for f in range(F)], dim=2)
+        
+        # Apply transformer layers
+        for layer in self.transformer_layers:
+            x_embedded = layer(x_embedded, feat_mask)
+        
+        # Map back to original feature space: (B, L, F, E) -> (B, L, F, 1)
+        x_output = self.output_layer(x_embedded)
+        # Remove the extra dimension: (B, L, F, 1) -> (B, L, F)
+        x_output = x_output.squeeze(-1)
+        return x_output
+
+class PerFeatureEncoderLayer(nn.Module):
+    def __init__(self, E, nhead, nhid, dropout, parallel_attention, second_mlp):
+        super(PerFeatureEncoderLayer, self).__init__()
+        self.E = E
+        self.nhead = nhead
+        self.nhid = nhid
+        self.dropout = dropout
+        self.parallel_attention = parallel_attention
+        self.second_mlp = second_mlp
+        
+        # Feature attention (across F dimension)
+        self.feature_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead)
+        # Position attention (across L dimension)
+        self.position_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead)
+        
+        if parallel_attention:
+            # MLP for combined attentions (concatenated outputs)
+            self.mlp = nn.Sequential(
+                nn.Linear(2 * E, nhid),
+                nn.GELU(),
+                nn.Linear(nhid, E)
+            )
+        else:
+            # MLP for sequential attentions
+            self.mlp = nn.Sequential(
+                nn.Linear(E, nhid),
+                nn.GELU(),
+                nn.Linear(nhid, E)
+            )
+        
+        if second_mlp:
+            # Second MLP after feature attention
+            self.second_mlp_layer = nn.Sequential(
+                nn.Linear(E, nhid),
+                nn.GELU(),
+                nn.Linear(nhid, E)
+            )
+        
+        # Layer normalizations
+        self.norm1 = nn.LayerNorm(E)
+        self.norm2 = nn.LayerNorm(E)
+        self.norm3 = nn.LayerNorm(E)
+        if second_mlp:
+            self.norm4 = nn.LayerNorm(E)
+        
+        # Dropout
+        self.dropout_layer = nn.Dropout(dropout)
+        
+    def forward(self, x, feat_mask=None):
+        B, L, F, E = x.shape
+        
+        if self.parallel_attention:
+            # --- Parallel attentions ---
+            # Feature attention (masking applied)
+            x_feat = x.view(B * L, F, E).permute(1, 0, 2)  # (F, B*L, E)
+            if feat_mask is not None:
+                feat_mask_expanded = feat_mask.view(B, 1, F).expand(B, L, F).reshape(B * L, F)
+                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat, key_padding_mask=feat_mask_expanded)
+            else:
+                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat)
+            feat_attn_output = feat_attn_output.permute(1, 0, 2).view(B, L, F, E)
+            
+            # Position attention
+            x_pos = x.permute(0, 2, 1, 3).reshape(B * F, L, E).permute(1, 0, 2)  # (L, B*F, E)
+            pos_attn_output, _ = self.position_attention(x_pos, x_pos, x_pos)
+            pos_attn_output = pos_attn_output.permute(1, 0, 2).view(B, F, L, E).permute(0, 2, 1, 3)
+            
+            # Concatenate outputs along the embedding dimension: (B, L, F, 2*E)
+            combined = torch.cat([feat_attn_output, pos_attn_output], dim=-1)
+            # MLP to mix the combined features
+            mlp_output = self.mlp(combined)
+            x = self.norm1(x + self.dropout_layer(mlp_output))
+        else:
+            # --- Sequential attentions ---
+            # Feature attention (with masking)
+            x_feat = x.view(B * L, F, E).permute(1, 0, 2)
+            if feat_mask is not None:
+                feat_mask_expanded = feat_mask.view(B, 1, F).expand(B, L, F).reshape(B * L, F)
+                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat, key_padding_mask=feat_mask_expanded)
+            else:
+                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat)
+            feat_attn_output = feat_attn_output.permute(1, 0, 2).view(B, L, F, E)
+            x = self.norm1(x + self.dropout_layer(feat_attn_output))
+            
+            if self.second_mlp:
+                # Second MLP after feature attention
+                second_mlp_output = self.second_mlp_layer(x)
+                x = self.norm4(x + self.dropout_layer(second_mlp_output))
+            
+            # Position attention (across L dimension)
+            x_pos = x.permute(0, 2, 1, 3).reshape(B * F, L, E).permute(1, 0, 2)
+            pos_attn_output, _ = self.position_attention(x_pos, x_pos, x_pos)
+            pos_attn_output = pos_attn_output.permute(1, 0, 2).view(B, F, L, E).permute(0, 2, 1, 3)
+            x = self.norm2(x + self.dropout_layer(pos_attn_output))
+            
+            # Final MLP
+            mlp_output = self.mlp(x)
+            x = self.norm3(x + self.dropout_layer(mlp_output))
+        
+        return x
+
+# --------------------------
+# Synthetic Data Generation
+# --------------------------
+def generate_synthetic_data(B, L, F, device):
+    """
+    Generate synthetic data of shape (B, L, F) where each sample is based on an underlying
+    sine function (with a random offset per sample) and each feature is a different transformation
+    (using a different amplitude and phase shift) of that sequence.
+    """
+    t = torch.linspace(0, 2 * math.pi, L, device=device)  # shape (L)
+    # Random offsets for each sample to create variability in the underlying sequence
+    offsets = torch.rand(B, device=device) * 2 * math.pi  # shape (B)
+    # Compute a base sine sequence for each sample: shape (B, L)
+    base = torch.sin(t.unsqueeze(0) + offsets.unsqueeze(1))
+    
+    # Create F different transformations of the base sequence
+    x = torch.zeros(B, L, F, device=device)
+    for f in range(F):
+        amplitude = 1.0 + 0.2 * f     # Increasing amplitude for higher-indexed features
+        phase_shift = f * 0.5         # Different phase shift per feature
+        # Each feature is a transformation of the base sequence
+        x[:, :, f] = amplitude * torch.sin(t.unsqueeze(0) + offsets.unsqueeze(1) + phase_shift)
+    return x
+
+# --------------------------
+# Training and Evaluation
+# --------------------------
+def train_model(model, optimizer, num_epochs, B, L, F, device, mask_prob=0.3):
+    model.train()
+    losses = []
+    for epoch in range(num_epochs):
+        optimizer.zero_grad()
+        # Generate a synthetic data batch: x of shape (B, L, F)
+        x = generate_synthetic_data(B, L, F, device)
+        # Create a random mask for features (per sample) with probability mask_prob
+        # True indicates that the feature is missing and needs to be imputed
+        feat_mask = (torch.rand(B, F, device=device) < mask_prob)
+        
+        # Create input where masked features are replaced with zero
+        x_input = x.clone()
+        # Expand mask to (B, L, F) to apply across the sequence length
+        mask_expanded = feat_mask.unsqueeze(1).expand(-1, L, -1)
+        x_input[mask_expanded] = 0.0
+        
+        # Forward pass: impute missing features
+        output = model(x_input, feat_mask)
+        
+        # Compute loss only on the masked features using MSE
+        loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
+        loss.backward()
+        optimizer.step()
+        
+        losses.append(loss.item())
+        
+        # Compute R² score on masked features (using numpy arrays)
+        pred_masked = output[mask_expanded].detach().cpu().numpy()
+        target_masked = x[mask_expanded].detach().cpu().numpy()
+        if pred_masked.size > 0:
+            r2 = r2_score(target_masked, pred_masked)
+        else:
+            r2 = float('nan')
+        
+        if (epoch + 1) % 10 == 0 or epoch == 0:
+            print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item():.4f}, R² (masked): {r2:.4f}")
+    return losses
+
+def main():
+    # Use GPU if available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print("Using device:", device)
+    
+    # Hyperparameters
+    B = 16          # Batch size
+    L = 50          # Sequence length (e.g., genomic positions)
+    F = 5           # Number of features (assays)
+    E = 32          # Embedding dimension
+    nhead = 4       # Number of attention heads
+    nhid = 64       # Hidden size of the MLP
+    nlayers = 2     # Number of transformer layers
+    dropout = 0.1
+    num_epochs = 200
+    mask_prob = 0.3 # Probability to mask each feature per sample
+    
+    # Instantiate the model (try with parallel_attention and second_mlp enabled)
+    model = SimplifiedPerFeatureTransformer(F, E, nhead, nhid, nlayers, dropout=dropout,
+                                            parallel_attention=True, second_mlp=True).to(device)
+    
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    
+    # Train the model on synthetic data
+    losses = train_model(model, optimizer, num_epochs, B, L, F, device, mask_prob=mask_prob)
+    
+    print("\nTraining complete.")
+    print(f"Initial Loss: {losses[0]:.4f}")
+    print(f"Final Loss: {losses[-1]:.4f}")
+
+if __name__ == '__main__':
+    main()
