@@ -410,7 +410,7 @@ def main():
     nlayers = 2          # Number of layers for Transformer models
     dropout = 0.1
     num_epochs = 1000
-    batch_size = 50
+    batch_size = 10
     mask_prob = 0.5        # For random masking during training/evaluation
     whole_missing_prob = 0.5  # For whole-feature missing evaluation
 
