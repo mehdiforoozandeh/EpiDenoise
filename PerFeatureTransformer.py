@@ -316,9 +316,9 @@ def main():
     print("Using device:", device)
     
     # Hyperparameters
-    N = 5000                # Total number of samples in the dataset
+    N = 500                # Total number of samples in the dataset
     train_ratio = 0.8       # 80% training, 20% test
-    L = 300                 # Sequence length
+    L = 100                 # Sequence length
     num_features = 20       # Number of features
     E = 20                  # Embedding dimension
     nhead = 4               # Number of attention heads (for both models)
