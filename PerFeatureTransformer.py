@@ -180,9 +180,9 @@ class CNNBaseline(nn.Module):
     def __init__(self, num_features, hidden_channels=32, kernel_size=3):
         super(CNNBaseline, self).__init__()
         hidden_channels = num_features * 2
-        self.conv1 = nn.Conv1d(num_features, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
-        self.conv2 = nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=kernel_size//2, groups=num_features)
-        self.conv3 = nn.Conv1d(hidden_channels, num_features, kernel_size, padding=kernel_size//2, groups=num_features)
+        self.conv1 = nn.Conv1d(num_features, hidden_channels, kernel_size, padding=kernel_size//2, groups=1)
+        self.conv2 = nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=kernel_size//2, groups=1)
+        self.conv3 = nn.Conv1d(hidden_channels, num_features, kernel_size, padding=kernel_size//2, groups=1)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -402,7 +402,7 @@ def main():
     # Hyperparameters
     N = 1000                # Total number of samples
     train_ratio = 0.8
-    L = 200                # Sequence length
+    L = 100                # Sequence length
     num_features = 50      # Number of features
     E = 30               # Embedding dimension
     nhead = 5            # For Transformer models
