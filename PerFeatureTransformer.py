@@ -225,15 +225,15 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
     
-    B = 16                  # Batch size
-    L = 50                  # Sequence length
-    num_features = 5        # Number of features (assays)
-    E = 32                  # Embedding dimension
+    B = 500                  # Batch size
+    L = 300                  # Sequence length
+    num_features = 20        # Number of features (assays)
+    E = 10                  # Embedding dimension
     nhead = 4               # Number of attention heads
     nhid = 64               # Hidden size of the MLP
     nlayers = 2             # Number of transformer layers
     dropout = 0.1
-    num_epochs = 200
+    num_epochs = 2000
     mask_prob = 0.3         # Probability to mask each feature per sample
     
     # Set parallel_attention=False for sequential attention (more stable)
