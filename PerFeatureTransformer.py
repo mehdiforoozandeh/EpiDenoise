@@ -8,54 +8,44 @@ from sklearn.metrics import r2_score
 import numpy as np
 
 # -----------------------
-# OGPerFeatureTransformer (Original) Code
+# OGPerFeatureTransformer (Original) – updated usage based on new code
 # -----------------------
-# Ensure you have installed tabpfn (or adjust the import paths accordingly)
 from tabpfn.model.transformer import PerFeatureTransformer
-from tabpfn.model.encoders import (
-    SequentialEncoder, LinearInputEncoderStep, NanHandlingEncoderStep)
+from tabpfn.model.encoders import SequentialEncoder, LinearInputEncoderStep
 
 class OGPerFeatureTransformer(nn.Module):
     def __init__(self, num_features, E, nlayers, dropout=0.1, nhead=4):
-        super(OGPerFeatureTransformer, self).__init__()
+        super().__init__()
         self.transformer = PerFeatureTransformer(
-            ninp=E,
-            nhead=nhead,
-            nhid=4 * E,
-            nlayers=nlayers,
             encoder=SequentialEncoder(
                 LinearInputEncoderStep(
-                    num_features=1,
+                    num_features=num_features,
                     emsize=E,
                     replace_nan_by_zero=False,
                     bias=True,
                     in_keys=("main",),
-                    out_keys=("output",)
-                )
-            ),
-            y_encoder=SequentialEncoder(
-                NanHandlingEncoderStep(),
-                LinearInputEncoderStep(
-                    num_features=2,
-                    emsize=E,
-                    replace_nan_by_zero=False,
-                    bias=True,
                     out_keys=("output",),
-                    in_keys=("main", "nan_indicators")
-                )
+                ),
             ),
+            ninp=E,
+            nhead=nhead,
+            nhid=4 * E,  # Feed-forward dimension
+            nlayers=nlayers,
             decoder_dict={"standard": (None, num_features)},
-            features_per_group=1
+            layer_kwargs={
+                'dropout': dropout,
+                'activation': 'gelu',
+            },
         )
-
+    
     def forward(self, x):
-        x_transposed = x.transpose(0, 1)  # (B, L, num_features) -> (L, B, num_features)
-        transformer_out = self.transformer(x_transposed, x_transposed, single_eval_pos=0)
-        out = transformer_out.transpose(0, 1)  # (L, B, num_features) -> (B, L, num_features)
-        return out
+        # x: (B, L, num_features)
+        x_transposed = x.transpose(0, 1)  # (L, B, num_features)
+        output = self.transformer(x_transposed, None, single_eval_pos=None)
+        return output.transpose(0, 1)  # (B, L, num_features)
 
 # -----------------------
-# Simplified PerFeatureTransformer Code
+# Simplified PerFeatureTransformer Code (Our custom implementation)
 # -----------------------
 
 class SimplifiedPerFeatureTransformer(nn.Module):
@@ -85,8 +75,7 @@ class SimplifiedPerFeatureTransformer(nn.Module):
                                   for f in range(num_features)], dim=2)
         for layer in self.transformer_layers:
             x_embedded = layer(x_embedded, feat_mask)
-        x_output = self.output_layer(x_embedded).squeeze(-1)  # (B, L, num_features)
-        return x_output
+        return self.output_layer(x_embedded).squeeze(-1)  # (B, L, num_features)
 
 class PerFeatureEncoderLayer(nn.Module):
     def __init__(self, E, nhead, nhid, dropout, parallel_attention, second_mlp):
@@ -184,8 +173,7 @@ class StandardTransformer(nn.Module):
         x_emb = x_emb.transpose(0, 1)
         encoded = self.transformer_encoder(x_emb)
         encoded = encoded.transpose(0, 1)
-        out = self.output_linear(encoded)
-        return out
+        return self.output_linear(encoded)
 
 # -----------------------
 # Linear Baseline Model
@@ -256,7 +244,7 @@ def generate_synthetic_dataset(N, L, num_features, device):
         - linear: w * S (with a random weight w)
         - taylor: 1 + S + S^2/2 + S^3/6 (Taylor expansion of exp(S))
         - sqrt(S)
-        - square: S^3.2
+        - square: S^2 (here modified to S^3.2 for more nonlinearity)
     Gaussian noise (with a randomly chosen standard deviation) is then added.
     """
     transformations = ["log2", "log10", "exp", "arcsinh", "sinh", "linear", "taylor", "sqrt", "square"]
@@ -278,7 +266,7 @@ def generate_synthetic_dataset(N, L, num_features, device):
     t = torch.linspace(0, 2 * math.pi, L, device=device)
     for i in range(N):
         offset = random.uniform(0, 2 * math.pi)
-        S = torch.sin(t + offset) + 1.1  # S is in [0.1, 2.1]
+        S = torch.sin(t + offset) + 1.1  # S in [0.1, 2.1]
         for f in range(num_features):
             choice = feat_transforms[f]
             params = feat_params[f]
@@ -325,6 +313,73 @@ def generate_whole_feature_mask(B, num_features, missing_prob):
 # Training and Evaluation for All Models
 # -----------------------
 
+def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epochs, batch_size, mask_prob, device):
+    test_losses = {name: [] for name in models}
+    test_r2s = {name: [] for name in models}
+    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else train_data.shape[-1]
+
+    for epoch in range(num_epochs):
+        for x in get_batches(train_data, batch_size):
+            B_curr = x.size(0)
+            feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
+            mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
+            x_input = x.clone()
+            x_input[mask_expanded] = 0.0
+            for name, model in models.items():
+                optimizers[name].zero_grad()
+                if name == "PerFeature":
+                    output = model(x_input, feat_mask)
+                else:
+                    output = model(x_input)
+                loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
+                loss.backward()
+                valid_update = True
+                if torch.isnan(loss).item():
+                    valid_update = False
+                    optimizers[name].zero_grad()
+                else:
+                    for param in model.parameters():
+                        if param.grad is not None and torch.isnan(param.grad).any():
+                            valid_update = False
+                            optimizers[name].zero_grad()
+                            break
+                if valid_update:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    optimizers[name].step()
+        all_losses = {name: 0.0 for name in models}
+        all_counts = 0
+        preds = {name: [] for name in models}
+        targets = []
+        with torch.no_grad():
+            for x in get_batches(test_data, batch_size):
+                B_curr = x.size(0)
+                feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
+                mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
+                x_input = x.clone()
+                x_input[mask_expanded] = 0.0
+                for name, model in models.items():
+                    if name == "PerFeature":
+                        output = model(x_input, feat_mask)
+                    else:
+                        output = model(x_input)
+                    loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
+                    all_losses[name] += loss.item() * B_curr
+                    preds[name].append(output[mask_expanded].detach().cpu().numpy())
+                targets.append(x[mask_expanded].detach().cpu().numpy())
+                all_counts += B_curr
+        for name in models:
+            avg_loss = all_losses[name] / all_counts
+            test_losses[name].append(avg_loss)
+            preds_concat = np.concatenate(preds[name], axis=0)
+            targets_concat = np.concatenate(targets, axis=0)
+            r2 = r2_score(targets_concat, preds_concat)
+            test_r2s[name].append(r2)
+        if (epoch + 1) % 50 == 0 or epoch == 0:
+            print(f"Epoch {epoch+1}/{num_epochs} -- Random Mask Test Metrics:")
+            for name in models:
+                print(f"  {name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
+    return test_losses, test_r2s
+
 def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, device):
     print("\nWhole-Feature Missing Evaluation:")
     num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else test_data.shape[-1]
@@ -343,8 +398,6 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
             for name, model in models.items():
                 if name == "PerFeature":
                     output = model(x_input, feat_mask)
-                elif name == "OGPerFeature":
-                    output = model(x_input)
                 else:
                     output = model(x_input)
                 loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
@@ -352,7 +405,6 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
                 preds[name].append(output[mask_expanded].detach().cpu().numpy())
             targets.append(x[mask_expanded].detach().cpu().numpy())
             count += B_curr
-
         for name in models:
             avg_loss = total_loss[name] / count
             preds_concat = np.concatenate(preds[name], axis=0)
@@ -362,107 +414,25 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
             print(f"  {name}: Loss: {avg_loss:.4f}, R²: {r2:.4f}")
     return results
 
-def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epochs, batch_size, mask_prob, device):
-    test_losses = {name: [] for name in models}
-    test_r2s = {name: [] for name in models}
-    num_feats = list(models.values())[0].num_features if hasattr(list(models.values())[0], 'num_features') else train_data.shape[-1]
-
-    for epoch in range(num_epochs):
-        for x in get_batches(train_data, batch_size):
-            B_curr = x.size(0)
-            feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
-            mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
-            x_input = x.clone()
-            x_input[mask_expanded] = 0.0
-            for name, model in models.items():
-                optimizers[name].zero_grad()
-                if name == "PerFeature":
-                    output = model(x_input, feat_mask)
-                elif name == "OGPerFeature":
-                    output = model(x_input)
-                else:
-                    output = model(x_input)
-                loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
-                loss.backward()
-                valid_update = True
-                if torch.isnan(loss).item():
-                    valid_update = False
-                    optimizers[name].zero_grad()
-                else:
-                    for param in model.parameters():
-                        if param.grad is not None and torch.isnan(param.grad).any():
-                            valid_update = False
-                            optimizers[name].zero_grad()
-                            break
-                if valid_update:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                    optimizers[name].step()
-
-        # Evaluation (unchanged)
-        all_losses = {name: 0.0 for name in models}
-        all_counts = 0
-        preds = {name: [] for name in models}
-        targets = []
-        with torch.no_grad():
-            for x in get_batches(test_data, batch_size):
-                B_curr = x.size(0)
-                feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
-                mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
-                x_input = x.clone()
-                x_input[mask_expanded] = 0.0
-                for name, model in models.items():
-                    if name == "PerFeature":
-                        output = model(x_input, feat_mask)
-                    elif name == "OGPerFeature":
-                        output = model(x_input)
-                    else:
-                        output = model(x_input)
-                    loss = F.mse_loss(output[mask_expanded], x[mask_expanded])
-                    all_losses[name] += loss.item() * B_curr
-                    preds[name].append(output[mask_expanded].detach().cpu().numpy())
-                targets.append(x[mask_expanded].detach().cpu().numpy())
-                all_counts += B_curr
-
-        for name in models:
-            avg_loss = all_losses[name] / all_counts
-            test_losses[name].append(avg_loss)
-            preds_concat = np.concatenate(preds[name], axis=0)
-            targets_concat = np.concatenate(targets, axis=0)
-            r2 = r2_score(targets_concat, preds_concat)
-            test_r2s[name].append(r2)
-
-        if (epoch + 1) % 5 == 0 or epoch == 0:
-            print(f"Epoch {epoch+1}/{num_epochs} -- Random Mask Test Metrics:")
-            for name in models:
-                print(f"  {name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
-
-    return test_losses, test_r2s
-
-
-
-    # Rest of main (printing, whole-feature evaluation) unchanged
-
-
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
-
-    # Hyperparameters (unchanged)
-    N = 1000
+    # Hyperparameters
+    N = 1000                # Total samples
     train_ratio = 0.8
-    L = 100
-    num_features = 50
-    E = 30
-    nhead = 5
-    nhid = 64
-    nlayers = 2
+    L = 100                 # Sequence length
+    num_features = 50       # Number of features
+    E = 30                  # Embedding dimension
+    nhead = 5               # For Transformer models
+    nhid = 64               # Hidden size for PerFeatureTransformer
+    nlayers = 2             # Number of Transformer layers
     dropout = 0.1
     num_epochs = 1000
     batch_size = 10
-    mask_prob = 0.5
-    whole_missing_prob = 0.5
+    mask_prob = 0.5         # For random masking during training/evaluation
+    whole_missing_prob = 0.5  # For whole-feature missing evaluation
 
-    # Dataset and models (unchanged except for OGPerFeatureTransformer instantiation)
+    # Generate synthetic dataset using complicated transformations
     dataset = generate_synthetic_dataset(N, L, num_features, device)
     indices = torch.randperm(N)
     train_size = int(train_ratio * N)
@@ -471,6 +441,7 @@ def main():
     train_data = dataset[train_indices]
     test_data = dataset[test_indices]
 
+    # Instantiate models (include OGPerFeatureTransformer)
     models = {
         "Linear": LinearBaseline(num_features).to(device),
         "MLP": MLPBaseline(num_features, hidden_dim=64).to(device),
@@ -478,13 +449,26 @@ def main():
         "Standard": StandardTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
         "PerFeature": SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
                                                       parallel_attention=False, second_mlp=True).to(device),
-        "OGPerFeature": OGPerFeatureTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device)
+        "OGPerFeature": OGPerFeatureTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
     }
 
     optimizers = {name: optim.Adam(model.parameters(), lr=1e-4) for name, model in models.items()}
 
     test_losses, test_r2s = train_and_evaluate_models(models, optimizers, train_data, test_data,
                                                       num_epochs, batch_size, mask_prob, device)
+
+    print("\nFinal Test Metrics (Random Masking):")
+    for name in models:
+        print(f"{name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
+
+    print("\nWhole-Feature Missing Evaluation:")
+    whole_results = evaluate_whole_feature_missing(models, test_data, batch_size, whole_missing_prob, device)
+
+    print("\nOverall Results:")
+    for name in models:
+        rand_loss, rand_r2 = test_losses[name][-1], test_r2s[name][-1]
+        whole_loss, whole_r2 = whole_results[name]
+        print(f"{name}: Random Mask -> Loss: {rand_loss:.4f}, R²: {rand_r2:.4f};  Whole-Feature -> Loss: {whole_loss:.4f}, R²: {whole_r2:.4f}")
 
 if __name__ == '__main__':
     main()
