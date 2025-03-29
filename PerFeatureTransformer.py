@@ -18,7 +18,6 @@ from tabpfn.model.encoders import (
 class OGPerFeatureTransformer(nn.Module):
     def __init__(self, num_features, E, nlayers, dropout=0.1, nhead=4):
         super(OGPerFeatureTransformer, self).__init__()
-        
         self.transformer = PerFeatureTransformer(
             ninp=E,
             nhead=nhead,
@@ -51,7 +50,7 @@ class OGPerFeatureTransformer(nn.Module):
 
     def forward(self, x):
         x_transposed = x.transpose(0, 1)  # (B, L, num_features) -> (L, B, num_features)
-        transformer_out = self.transformer((x_transposed, None), single_eval_pos=0)
+        transformer_out = self.transformer(x_transposed, None, single_eval_pos=0)
         out = transformer_out.transpose(0, 1)  # (L, B, num_features) -> (B, L, num_features)
         return out
 
@@ -442,26 +441,27 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
             print(f"  {name}: Loss: {avg_loss:.4f}, R²: {r2:.4f}")
     return results
 
+
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using device:", device)
 
     # Hyperparameters
-    N = 1000                # Total number of samples
+    N = 1000
     train_ratio = 0.8
-    L = 100                 # Sequence length
-    num_features = 50       # Number of features
-    E = 30                  # Embedding dimension
-    nhead = 5               # For Transformer models
-    nhid = 64               # Hidden size for PerFeatureTransformer
-    nlayers = 2             # Number of layers for Transformer models
+    L = 100
+    num_features = 50
+    E = 30
+    nhead = 5
+    nhid = 64
+    nlayers = 2
     dropout = 0.1
     num_epochs = 1000
     batch_size = 10
-    mask_prob = 0.5         # For random masking during training/evaluation
-    whole_missing_prob = 0.5  # For whole-feature missing evaluation
+    mask_prob = 0.5
+    whole_missing_prob = 0.5
 
-    # Generate synthetic dataset using our complicated transformation approach
+    # Generate dataset and split
     dataset = generate_synthetic_dataset(N, L, num_features, device)
     indices = torch.randperm(N)
     train_size = int(train_ratio * N)
@@ -485,20 +485,6 @@ def main():
 
     test_losses, test_r2s = train_and_evaluate_models(models, optimizers, train_data, test_data,
                                                       num_epochs, batch_size, mask_prob, device)
-
-    print("\nFinal Test Metrics (Random Masking):")
-    for name in models:
-        print(f"{name}: Loss: {test_losses[name][-1]:.4f}, R²: {test_r2s[name][-1]:.4f}")
-
-    print("\nComparing models on Random Masking evaluation:")
-
-    whole_results = evaluate_whole_feature_missing(models, test_data, batch_size, whole_missing_prob, device)
-
-    print("\nOverall Results:")
-    for name in models:
-        rand_loss, rand_r2 = test_losses[name][-1], test_r2s[name][-1]
-        whole_loss, whole_r2 = whole_results[name]
-        print(f"{name}: Random Mask -> Loss: {rand_loss:.4f}, R²: {rand_r2:.4f};  Whole-Feature -> Loss: {whole_loss:.4f}, R²: {whole_r2:.4f}")
 
 if __name__ == '__main__':
     main()
