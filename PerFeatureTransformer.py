@@ -12,39 +12,54 @@ import numpy as np
 # -----------------------
 # Ensure you have installed tabpfn (or adjust the import paths accordingly)
 from tabpfn.model.transformer import PerFeatureTransformer
-from tabpfn.model.encoders import SequentialEncoder, LinearInputEncoderStep
+from tabpfn.model.encoders import (
+    SequentialEncoder, LinearInputEncoderStep, NanHandlingEncoderStep)
 
 class OGPerFeatureTransformer(nn.Module):
     def __init__(self, num_features, E, nlayers, dropout=0.1, nhead=4):
-        super().__init__()
-        self.num_features = num_features
+        super(YourModel, self).__init__()
+        
         self.transformer = PerFeatureTransformer(
+            ninp=E,
+            nhead=nhead,
+            nhid=4 * E,
+            nlayers=nlayers,
             encoder=SequentialEncoder(
                 LinearInputEncoderStep(
-                    num_features=num_features,
+                    num_features=1,
                     emsize=E,
                     replace_nan_by_zero=False,
                     bias=True,
                     in_keys=("main",),
-                    out_keys=("output",),
-                ),
+                    out_keys=("output",)
+                )
             ),
-            ninp=E,
-            nhead=nhead,
-            nhid=4 * E,  # Feed-forward dimension
-            nlayers=nlayers,
+            y_encoder=SequentialEncoder(
+                NanHandlingEncoderStep(),
+                LinearInputEncoderStep(
+                    num_features=2,
+                    emsize=E,
+                    replace_nan_by_zero=False,
+                    bias=True,
+                    out_keys=("output",),
+                    in_keys=("main", "nan_indicators")
+                )
+            ),
             decoder_dict={"standard": (None, num_features)},
-            # Explicitly pass parameters instead of layer_kwargs
-            activation="gelu",  # Set activation directly
-            # dropout=dropout,    # Set dropout directly (if supported)
+            features_per_group=1
         )
-    
+        
+        # Additional layers if any
+
     def forward(self, x):
-        # x: (B, L, num_features)
-        x_transposed = x.transpose(0, 1)  # (L, B, num_features)
-        output = self.transformer(x_transposed, None, single_eval_pos=None)
-        output = output.transpose(0, 1)   # (B, L, num_features)
-        return output
+        x_transposed = x.transpose(0, 1)  # (B, L, num_features) -> (L, B, num_features)
+        transformer_out = self.transformer(x_transposed, y=None, single_eval_pos=0)
+        out = transformer_out.transpose(0, 1)  # (L, B, num_features) -> (B, L, num_features)
+        
+        # Additional processing if any
+        return out
+
+
 
 # -----------------------
 # Simplified PerFeatureTransformer Code
