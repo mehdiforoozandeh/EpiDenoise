@@ -333,7 +333,7 @@ def train_and_evaluate_models(models, optimizers, train_data, test_data, num_epo
                 feat_mask = (torch.rand(B_curr, num_feats, device=device) < mask_prob)
                 mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
                 x_input = x.clone()
-                x_input[mask_expanded] = 0.0
+                x_input[mask_expanded] = -1
                 for name, model in models.items():
                     if name == "PerFeature":
                         output = model(x_input, feat_mask)
@@ -374,7 +374,7 @@ def evaluate_whole_feature_missing(models, test_data, batch_size, missing_prob, 
             feat_mask = generate_whole_feature_mask(B_curr, num_feats, missing_prob).to(device)
             mask_expanded = feat_mask.unsqueeze(1).expand(-1, x.size(1), -1)
             x_input = x.clone()
-            x_input[mask_expanded] = 0.0
+            x_input[mask_expanded] = -1
             for name, model in models.items():
                 if name == "PerFeature":
                     output = model(x_input, feat_mask)
