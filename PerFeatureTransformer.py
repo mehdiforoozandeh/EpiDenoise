@@ -17,7 +17,7 @@ from tabpfn.model.encoders import (
 
 class OGPerFeatureTransformer(nn.Module):
     def __init__(self, num_features, E, nlayers, dropout=0.1, nhead=4):
-        super(YourModel, self).__init__()
+        super(OGPerFeatureTransformer, self).__init__()
         
         self.transformer = PerFeatureTransformer(
             ninp=E,
