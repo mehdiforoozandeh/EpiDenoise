@@ -48,15 +48,11 @@ class OGPerFeatureTransformer(nn.Module):
             decoder_dict={"standard": (None, num_features)},
             features_per_group=1
         )
-        
-        # Additional layers if any
 
     def forward(self, x):
         x_transposed = x.transpose(0, 1)  # (B, L, num_features) -> (L, B, num_features)
-        transformer_out = self.transformer(x_transposed, y=None, single_eval_pos=0)
+        transformer_out = self.transformer((x_transposed, None), single_eval_pos=0)
         out = transformer_out.transpose(0, 1)  # (L, B, num_features) -> (B, L, num_features)
-        
-        # Additional processing if any
         return out
 
 
