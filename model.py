@@ -690,18 +690,14 @@ class PositionalEncoding(nn.Module):
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term[:d_model // 2])
-        pe[:, 0, 1::2] = torch.cos(position * div_term[:d_model // 2])
+        # Use the full div_term for both even and odd indices, handling odd d_model
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term[:pe.size(2)//2])  # Ensure matching size
 
-        self.pe = torch.permute(pe, (1, 0, 2))
+        self.register_buffer('pe', pe.permute(1, 0, 2))  # (1, max_len, d_model)
 
     def forward(self, x):
-        """
-        Arguments:
-            x: Tensor, shape ``[batch_size, seq_len, embedding_dim]``
-        """
-        pos = self.pe[:, :x.size(1), :].to(x.device)
-        x = x + pos
+        x = x + self.pe[:, :x.size(1), :]
         return self.dropout(x)
 
 class AbsPositionalEmbedding15(nn.Module):
