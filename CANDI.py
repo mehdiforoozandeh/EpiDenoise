@@ -315,17 +315,15 @@ class CANDI_DNA_Encoder(nn.Module):
             nn.LayerNorm(self.f2), 
             nn.ReLU())
 
-
         self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
         self.transformer_encoder = SimplifiedPerFeatureTransformer(
-            num_features,
-            E, 
-            nhead, 
-            nhid, nlayers,
-            dropout, 
-            parallel_attention, 
-            second_mlp
-        )
+            num_features=d_model,
+            E=210, 
+            nhead=6, 
+            nhid=420, nlayers=n_sab_layers,
+            dropout=dropout, 
+            parallel_attention=False, 
+            second_mlp=False)
 
     def forward(self, src, seq, x_metadata):
         if len(seq.shape) != len(src.shape):
