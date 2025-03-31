@@ -8,40 +8,6 @@ from sklearn.metrics import r2_score
 import numpy as np
 
 # -----------------------
-# OGPerFeatureTransformer (Original) – updated usage based on new code
-# -----------------------
-from tabpfn.model.transformer import PerFeatureTransformer
-from tabpfn.model.encoders import SequentialEncoder, LinearInputEncoderStep
-
-class OGPerFeatureTransformer(nn.Module):
-    def __init__(self, num_features, E, nlayers, dropout=0.1, nhead=4):
-        super().__init__()
-        self.transformer = PerFeatureTransformer(
-            encoder=SequentialEncoder(
-                LinearInputEncoderStep(
-                    num_features=num_features,
-                    emsize=E,
-                    replace_nan_by_zero=False,
-                    bias=True,
-                    in_keys=("main",),
-                    out_keys=("output",),
-                ),
-            ),
-            ninp=E,
-            nhead=nhead,
-            nhid=4 * E,  # Feed-forward dimension
-            nlayers=nlayers,
-            decoder_dict={"standard": (None, num_features)},
-            # Removed 'layer_kwargs' here.
-        )
-    
-    def forward(self, x):
-        # x: (B, L, num_features)
-        x_transposed = x.transpose(0, 1)  # (L, B, num_features)
-        output = self.transformer(x_transposed, None, single_eval_pos=None)
-        return output.transpose(0, 1)  # (B, L, num_features)
-
-# -----------------------
 # Simplified PerFeatureTransformer Code (Our custom implementation)
 # -----------------------
 
