@@ -319,9 +319,9 @@ class CANDI_DNA_Encoder(nn.Module):
         self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
         self.transformer_encoder = SimplifiedPerFeatureTransformer(
             num_features=d_model,
-            E=105, 
-            nhead=3, 
-            nhid=210, 
+            E=70, 
+            nhead=2, 
+            nhid=105, 
             nlayers=n_sab_layers,
             dropout=dropout, 
             parallel_attention=False, 
