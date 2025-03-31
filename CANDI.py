@@ -315,6 +315,7 @@ class CANDI_DNA_Encoder(nn.Module):
             nn.LayerNorm(self.f2), 
             nn.ReLU())
 
+        print(self.l2, d_model)
         self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
         self.transformer_encoder = SimplifiedPerFeatureTransformer(
             num_features=d_model,
