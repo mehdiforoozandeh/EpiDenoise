@@ -14,6 +14,8 @@ import imageio.v2 as imageio
 from io import BytesIO
 from torchinfo import summary
 
+from PerFeatureTransformer import *
+
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 

@@ -411,7 +411,7 @@ def main():
         "CNN": CNNBaseline(num_features, hidden_channels=32, kernel_size=3).to(device),
         "Standard": StandardTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
         "PerFeature": SimplifiedPerFeatureTransformer(num_features, E, nhead, nhid, nlayers, dropout=dropout,
-                                                      parallel_attention=False, second_mlp=True).to(device),
+                                                      parallel_attention=True, second_mlp=True).to(device),
         # "OGPerFeature": OGPerFeatureTransformer(num_features, E, nlayers, dropout=dropout, nhead=nhead).to(device),
     }
 
