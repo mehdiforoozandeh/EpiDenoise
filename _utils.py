@@ -19,6 +19,16 @@ from torch.distributions.utils import (
 )
 import matplotlib.pyplot as plt
 
+def get_divisible_heads(dim, target):
+    """
+    Given a dimension and a target number of heads, returns the largest integer
+    <= target that divides dim. If no such number is found, returns 1.
+    """
+    for n in range(target, 0, -1):
+        if dim % n == 0:
+            return n
+    return 1
+
 def log_resource_usage():
     print(f"CPU Usage: {psutil.cpu_percent()}%")
     print(f"Memory Usage: {psutil.virtual_memory().percent}%")

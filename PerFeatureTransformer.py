@@ -40,8 +40,22 @@ class SimplifiedPerFeatureTransformer(nn.Module):
             x_embedded = layer(x_embedded, feat_mask)
         return self.output_layer(x_embedded).squeeze(-1)  # (B, L, num_features)
 
+import torch
+import torch.nn as nn
+
 class PerFeatureEncoderLayer(nn.Module):
     def __init__(self, E, nhead, nhid, dropout, parallel_attention, second_mlp):
+        """
+        Initialize the PerFeatureEncoderLayer with memory-optimized attention mechanisms.
+
+        Args:
+            E (int): Embedding dimension for each feature.
+            nhead (int): Number of attention heads.
+            nhid (int): Hidden dimension of the MLP.
+            dropout (float): Dropout probability.
+            parallel_attention (bool): If True, apply feature and position attention in parallel.
+            second_mlp (bool): If True, include an additional MLP after feature attention in sequential mode.
+        """
         super(PerFeatureEncoderLayer, self).__init__()
         self.E = E
         self.nhead = nhead
@@ -50,21 +64,27 @@ class PerFeatureEncoderLayer(nn.Module):
         self.parallel_attention = parallel_attention
         self.second_mlp = second_mlp
 
+        # Multi-head attention layers for features and positions
         self.feature_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead, dropout=dropout)
         self.position_attention = nn.MultiheadAttention(embed_dim=E, num_heads=nhead, dropout=dropout)
 
+        # MLP configuration depends on attention mode
         if parallel_attention:
+            # For parallel attention, MLP processes concatenated outputs (2*E)
             self.mlp = nn.Sequential(
                 nn.Linear(2 * E, nhid),
                 nn.GELU(),
                 nn.Linear(nhid, E)
             )
         else:
+            # For sequential attention, MLP processes single output (E)
             self.mlp = nn.Sequential(
                 nn.Linear(E, nhid),
                 nn.GELU(),
                 nn.Linear(nhid, E)
             )
+
+        # Optional second MLP for sequential mode
         if second_mlp:
             self.second_mlp_layer = nn.Sequential(
                 nn.Linear(E, nhid),
@@ -72,52 +92,105 @@ class PerFeatureEncoderLayer(nn.Module):
                 nn.Linear(nhid, E)
             )
 
+        # Layer normalization for residual connections
         self.norm1 = nn.LayerNorm(E)
         self.norm2 = nn.LayerNorm(E)
         self.norm3 = nn.LayerNorm(E)
         if second_mlp:
             self.norm4 = nn.LayerNorm(E)
+        
+        # Dropout layer
         self.dropout_layer = nn.Dropout(dropout)
 
     def forward(self, x, feat_mask=None):
-        # x: (B, L, num_features, E)
+        """
+        Forward pass of the encoder layer with optimized memory usage.
+
+        Args:
+            x (Tensor): Input tensor of shape (B, L, num_features, E)
+                        where B is batch size, L is sequence length,
+                        num_features is number of features, E is embedding dim.
+            feat_mask (Tensor, optional): Mask for features of shape (B, num_features),
+                                          True indicates masked (ignored) positions.
+
+        Returns:
+            Tensor: Output tensor of shape (B, L, num_features, E)
+        """
         B, L, num_features, E = x.shape
+
         if self.parallel_attention:
-            x_feat = x.view(B * L, num_features, E).permute(1, 0, 2)
+            # --- Parallel Attention Path ---
+            
+            # Feature attention: Aggregate across positions
+            x_feat = x.mean(dim=1)  # (B, num_features, E)
+            x_feat = x_feat.permute(1, 0, 2)  # (num_features, B, E)
+            # Apply feature attention with mask if provided
             if feat_mask is not None:
-                feat_mask_expanded = feat_mask.view(B, 1, num_features).expand(B, L, num_features).reshape(B * L, num_features)
-                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat, key_padding_mask=feat_mask_expanded)
+                feat_attn_output, _ = self.feature_attention(
+                    x_feat, x_feat, x_feat, key_padding_mask=feat_mask
+                )
             else:
                 feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat)
-            feat_attn_output = feat_attn_output.permute(1, 0, 2).view(B, L, num_features, E)
+            feat_attn_output = feat_attn_output.permute(1, 0, 2)  # (B, num_features, E)
 
-            x_pos = x.permute(0, 2, 1, 3).reshape(B * num_features, L, E).permute(1, 0, 2)
+            # Position attention: Aggregate across features
+            x_pos = x.mean(dim=2)  # (B, L, E)
+            x_pos = x_pos.permute(1, 0, 2)  # (L, B, E)
             pos_attn_output, _ = self.position_attention(x_pos, x_pos, x_pos)
-            pos_attn_output = pos_attn_output.permute(1, 0, 2).view(B, num_features, L, E).permute(0, 2, 1, 3)
+            pos_attn_output = pos_attn_output.permute(1, 0, 2)  # (B, L, E)
 
-            combined = torch.cat([feat_attn_output, pos_attn_output], dim=-1)
-            mlp_output = self.mlp(combined)
+            # Expand attention outputs to match input shape
+            pos_expanded = pos_attn_output.unsqueeze(2).expand(-1, -1, num_features, -1)  # (B, L, num_features, E)
+            feat_expanded = feat_attn_output.unsqueeze(1).expand(-1, L, -1, -1)  # (B, L, num_features, E)
+            
+            # Concatenate position and feature contexts along embedding dimension
+            combined = torch.cat([pos_expanded, feat_expanded], dim=-1)  # (B, L, num_features, 2*E)
+            
+            # Process combined output through MLP
+            mlp_output = self.mlp(combined)  # (B, L, num_features, E)
+            
+            # Residual connection and normalization
             x = self.norm1(x + self.dropout_layer(mlp_output))
+        
         else:
-            x_feat = x.view(B * L, num_features, E).permute(1, 0, 2)
+            # --- Sequential Attention Path ---
+            
+            # Feature attention first: Aggregate across positions
+            x_feat = x.mean(dim=1)  # (B, num_features, E)
+            x_feat = x_feat.permute(1, 0, 2)  # (num_features, B, E)
             if feat_mask is not None:
-                feat_mask_expanded = feat_mask.view(B, 1, num_features).expand(B, L, num_features).reshape(B * L, num_features)
-                feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat, key_padding_mask=feat_mask_expanded)
+                feat_attn_output, _ = self.feature_attention(
+                    x_feat, x_feat, x_feat, key_padding_mask=feat_mask
+                )
             else:
                 feat_attn_output, _ = self.feature_attention(x_feat, x_feat, x_feat)
-            feat_attn_output = feat_attn_output.permute(1, 0, 2).view(B, L, num_features, E)
-            x = self.norm1(x + self.dropout_layer(feat_attn_output))
+            feat_attn_output = feat_attn_output.permute(1, 0, 2)  # (B, num_features, E)
+            
+            # Expand and apply feature attention output
+            feat_expanded = feat_attn_output.unsqueeze(1).expand(-1, L, -1, -1)  # (B, L, num_features, E)
+            x = self.norm1(x + self.dropout_layer(feat_expanded))
+
+            # Optional second MLP
             if self.second_mlp:
                 second_mlp_output = self.second_mlp_layer(x)
                 x = self.norm4(x + self.dropout_layer(second_mlp_output))
-            x_pos = x.permute(0, 2, 1, 3).reshape(B * num_features, L, E).permute(1, 0, 2)
+
+            # Position attention on updated x: Aggregate across features
+            x_pos = x.mean(dim=2)  # (B, L, E)
+            x_pos = x_pos.permute(1, 0, 2)  # (L, B, E)
             pos_attn_output, _ = self.position_attention(x_pos, x_pos, x_pos)
-            pos_attn_output = pos_attn_output.permute(1, 0, 2).view(B, num_features, L, E).permute(0, 2, 1, 3)
-            x = self.norm2(x + self.dropout_layer(pos_attn_output))
+            pos_attn_output = pos_attn_output.permute(1, 0, 2)  # (B, L, E)
+            
+            # Expand and apply position attention output
+            pos_expanded = pos_attn_output.unsqueeze(2).expand(-1, -1, num_features, -1)  # (B, L, num_features, E)
+            x = self.norm2(x + self.dropout_layer(pos_expanded))
+
+            # Final MLP
             mlp_output = self.mlp(x)
             x = self.norm3(x + self.dropout_layer(mlp_output))
-        return x
 
+        return x
+        
 # -----------------------
 # Standard Transformer Code
 # -----------------------

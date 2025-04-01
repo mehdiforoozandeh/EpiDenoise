@@ -23,6 +23,201 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 #===========================================Building Blocks==============================================#
 #========================================================================================================#
 
+# ---------------------------
+# Absolute Positional Encoding
+# ---------------------------
+class SinusoidalPositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        """
+        Creates positional encodings of shape (1, max_len, d_model).
+        """
+        super().__init__()
+        pe = torch.zeros(max_len, d_model)  # (max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)  # (max_len, 1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)  # even indices
+        pe[:, 1::2] = torch.cos(position * div_term)  # odd indices
+        pe = pe.unsqueeze(0)  # (1, max_len, d_model)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        """
+        Args:
+            x: Tensor of shape (B, L, d_model)
+        Returns:
+            x with added positional encoding for positions [0, L)
+        """
+        L = x.size(1)
+        return x + self.pe[:, :L]
+
+# ---------------------------
+# Relative Positional Bias Module
+# ---------------------------
+class RelativePositionBias(nn.Module):
+    def __init__(self, num_heads, max_distance):
+        """
+        Args:
+            num_heads (int): number of attention heads.
+            max_distance (int): maximum sequence length to support.
+        """
+        super().__init__()
+        self.num_heads = num_heads
+        self.max_distance = max_distance
+        self.relative_bias = nn.Parameter(torch.zeros(2 * max_distance - 1, num_heads))
+        nn.init.trunc_normal_(self.relative_bias, std=0.02)
+
+    def forward(self, L):
+        """
+        Args:
+            L (int): current sequence length.
+        Returns:
+            Tensor of shape (num_heads, L, L) to add as bias.
+        """
+        device = self.relative_bias.device
+        pos = torch.arange(L, device=device)
+        rel_pos = pos[None, :] - pos[:, None]  # shape (L, L)
+        rel_pos = rel_pos + self.max_distance - 1  # shift to [0, 2*max_distance-2]
+        bias = self.relative_bias[rel_pos]  # (L, L, num_heads)
+        bias = bias.permute(2, 0, 1)  # (num_heads, L, L)
+        return bias
+
+# ---------------------------
+# Dual Attention Encoder Block (Post-Norm)
+# ---------------------------
+class DualAttentionEncoderBlock(nn.Module):
+    """
+    Dual Attention Encoder Block with post-norm style.
+    It has two parallel branches:
+      - MHA1 (sequence branch): optionally uses relative or absolute positional encodings.
+      - MHA2 (channel branch): operates along the channel dimension (no positional encoding).
+    The outputs of the two branches are concatenated and fused via a FFN.
+    Residual connections and layer norms are applied following the post-norm convention.
+    """
+    def __init__(self, d_model, num_heads, seq_length, dropout=0.1, 
+                 max_distance=128, pos_encoding_type="relative", max_len=5000):
+        """
+        Args:
+            d_model (int): model (feature) dimension.
+            num_heads (int): number of attention heads.
+            seq_length (int): expected sequence length (used for channel branch).
+            dropout (float): dropout rate.
+            max_distance (int): max distance for relative bias.
+            pos_encoding_type (str): "relative" or "absolute" for MHA1.
+            max_len (int): max sequence length for absolute positional encoding.
+        """
+        super().__init__()
+        self.d_model = d_model
+        self.dropout = dropout
+        self.num_heads = num_heads
+        self.pos_encoding_type = pos_encoding_type
+
+        # Automatically determine the number of heads for each branch.
+        self.num_heads_seq = get_divisible_heads(d_model, num_heads)
+        self.num_heads_chan = get_divisible_heads(seq_length, num_heads)
+        
+        # Sequence branch (MHA1)
+        if pos_encoding_type == "relative":
+            self.q_proj = nn.Linear(d_model, d_model)
+            self.k_proj = nn.Linear(d_model, d_model)
+            self.v_proj = nn.Linear(d_model, d_model)
+            self.out_proj = nn.Linear(d_model, d_model)
+            self.relative_bias = RelativePositionBias(num_heads, max_distance)
+        elif pos_encoding_type == "absolute":
+            # Use PyTorch's built-in MHA; we'll add absolute pos encodings.
+            self.mha_seq = nn.MultiheadAttention(embed_dim=d_model, num_heads=self.num_heads_seq, 
+                                                  dropout=dropout, batch_first=True)
+            self.abs_pos_enc = SinusoidalPositionalEncoding(d_model, max_len)
+        else:
+            raise ValueError("pos_encoding_type must be 'relative' or 'absolute'")
+            
+        # Channel branch (MHA2)
+        # We transpose so that channels (d_model) become sequence tokens.
+        # We set embed_dim for channel attention to seq_length.
+        self.mha_channel = nn.MultiheadAttention(embed_dim=seq_length, num_heads=self.num_heads_chan,
+                                                  dropout=dropout, batch_first=True)
+        
+        # Fusion: concatenate outputs from both branches (dimension becomes 2*d_model)
+        # and then use an FFN to map it back to d_model.
+        self.ffn = nn.Sequential(
+            nn.Linear(2 * d_model, 4 * d_model),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(4 * d_model, d_model),
+            nn.Dropout(dropout)
+        )
+        
+        # Layer Norms (applied after each sublayer, i.e., post-norm)
+        self.norm_seq = nn.LayerNorm(d_model)
+        self.norm_chan = nn.LayerNorm(d_model)
+        self.norm_ffn = nn.LayerNorm(d_model)
+
+    def relative_multihead_attention(self, x):
+        """
+        Custom multi-head self-attention with relative positional bias.
+        Args:
+            x: Tensor of shape (B, L, d_model)
+        Returns:
+            Tensor of shape (B, L, d_model)
+        """
+        B, L, _ = x.shape
+        head_dim = self.d_model // self.num_heads
+        q = self.q_proj(x)  # (B, L, d_model)
+        k = self.k_proj(x)
+        v = self.v_proj(x)
+        # Reshape: (B, L, num_heads, head_dim) -> (B, num_heads, L, head_dim)
+        q = q.view(B, L, self.num_heads, head_dim).transpose(1, 2)
+        k = k.view(B, L, self.num_heads, head_dim).transpose(1, 2)
+        v = v.view(B, L, self.num_heads, head_dim).transpose(1, 2)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(head_dim)  # (B, num_heads, L, L)
+        bias = self.relative_bias(L)  # (num_heads, L, L)
+        scores = scores + bias.unsqueeze(0)  # (B, num_heads, L, L)
+        attn_weights = F.softmax(scores, dim=-1)
+        attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
+        out = torch.matmul(attn_weights, v)  # (B, num_heads, L, head_dim)
+        out = out.transpose(1, 2).contiguous().view(B, L, self.d_model)
+        out = self.out_proj(out)
+        return out
+
+    def forward(self, x):
+        """
+        Args:
+            x: Tensor of shape (B, L, d_model)
+        Returns:
+            Tensor of shape (B, L, d_model)
+        """
+        B, L, _ = x.shape
+        
+        # ----- Sequence Branch (MHA1) using post-norm -----
+        if self.pos_encoding_type == "relative":
+            # Compute sequence attention without pre-norm.
+            seq_attn = self.relative_multihead_attention(x)  # (B, L, d_model)
+        else:
+            # Absolute positional encodings: add pos encoding and use default MHA.
+            x_abs = self.abs_pos_enc(x)
+            seq_attn, _ = self.mha_seq(x_abs, x_abs, x_abs)  # (B, L, d_model)
+        # Add residual and then norm (post-norm)
+        x_seq = self.norm_seq(x + seq_attn)  # (B, L, d_model)
+        
+        # ----- Channel Branch (MHA2) using post-norm -----
+        # Transpose: (B, L, d_model) -> (B, d_model, L)
+        x_trans = x.transpose(1, 2)
+        # Apply channel attention (without pre-norm).
+        chan_attn, _ = self.mha_channel(x_trans, x_trans, x_trans)  # (B, d_model, L)
+        # Transpose back: (B, L, d_model)
+        chan_attn = chan_attn.transpose(1, 2)
+        # Add residual and norm
+        x_chan = self.norm_chan(x + chan_attn)
+        
+        # ----- Fusion via FFN -----
+        # Concatenate along feature dimension: (B, L, 2*d_model)
+        fusion_input = torch.cat([x_seq, x_chan], dim=-1)
+        ffn_out = self.ffn(fusion_input)  # (B, L, d_model)
+        # Residual connection and final norm (post-norm)
+        #out = self.norm_ffn(x + ffn_out)
+        
+        out = self.norm_ffn(x_seq + x_chan + ffn_out)
+        return out
+
 class MetadataEmbeddingModule(nn.Module):
     def __init__(self, input_dim, embedding_dim, non_linearity=True):
         super().__init__()

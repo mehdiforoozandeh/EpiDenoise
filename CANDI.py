@@ -315,17 +315,10 @@ class CANDI_DNA_Encoder(nn.Module):
             nn.LayerNorm(self.f2), 
             nn.ReLU())
 
-        print(self.l2, d_model)
-        self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-        self.transformer_encoder = SimplifiedPerFeatureTransformer(
-            num_features=d_model,
-            E=35, 
-            nhead=5, 
-            nhid=70, 
-            nlayers=1,
-            dropout=dropout, 
-            parallel_attention=False, 
-            second_mlp=False)
+        self.transformer_encoder = nn.ModuleList([
+            DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout, 
+                max_distance=self.l2, pos_encoding_type="absolute", max_len=self.l2
+                ) for _ in range(n_sab_layers)])
 
     def forward(self, src, seq, x_metadata):
         if len(seq.shape) != len(src.shape):
@@ -355,8 +348,8 @@ class CANDI_DNA_Encoder(nn.Module):
         src = self.DNA_Epig_fusion(src)
 
         ### TRANSFORMER ENCODER ###
-        src = self.posEnc(src)
-        src = self.transformer_encoder(src)
+        for enc in self.transformer_encoder:
+            src = enc(src)
 
         return src
 
