@@ -353,7 +353,6 @@ class CANDI_DNA_Encoder(nn.Module):
 
         return src
 
-
 class CANDI_DNA(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 

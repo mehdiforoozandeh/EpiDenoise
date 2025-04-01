@@ -301,43 +301,126 @@ class MetadataEmbeddingModule(nn.Module):
 
 class EmbedMetadata(nn.Module):
     def __init__(self, input_dim, embedding_dim, non_linearity=True):
+        """
+        Args:
+            input_dim (int): Number of metadata features.
+            embedding_dim (int): Final embedding dimension.
+            non_linearity (bool): Whether to apply ReLU at the end.
+        """
         super().__init__()
         self.embedding_dim = embedding_dim
         self.input_dim = input_dim 
         self.non_linearity = non_linearity
+        # We divide the embedding_dim into 3 parts for continuous types.
+        # (You can adjust the splitting scheme as needed.)
         self.continuous_size = embedding_dim // 3
 
-        self.runtype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
-        self.depth_transform = nn.Linear(1, self.continuous_size) 
-        self.coverage_transform = nn.Linear(1, self.continuous_size)
-        self.read_length_transform = nn.Linear(1, self.continuous_size)
+        # For each feature (total input_dim features), create a separate linear transform.
+        self.depth_transforms = nn.ModuleList(
+            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        )
+        self.coverage_transforms = nn.ModuleList(
+            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        )
+        self.read_length_transforms = nn.ModuleList(
+            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        )
+        # For runtype, create separate embedding layers per feature.
+        # Assuming 4 classes for runtype.
+        self.runtype_embeddings = nn.ModuleList(
+            [nn.Embedding(4, self.continuous_size) for _ in range(input_dim)]
+        )
 
-        self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 4, embedding_dim)  # Adjusted for all inputs
+        # Final projection: the concatenated vector for each feature will be of size 4*continuous_size.
+        # For all features, that becomes input_dim * 4 * continuous_size.
+        self.final_embedding = nn.Linear(input_dim * 4 * self.continuous_size, embedding_dim)
         self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
 
     def forward(self, metadata):
-        depth = metadata[:, 0, :].unsqueeze(-1).float() 
-        coverage = metadata[:, 1, :].unsqueeze(-1).float() 
-        read_length = metadata[:, 2, :].unsqueeze(-1).float() 
-        runtype = metadata[:, 3, :].long() 
+        """
+        Args:
+            metadata: Tensor of shape (B, 4, input_dim)
+                      where dimension 1 indexes the four metadata types in the order:
+                      [depth, coverage, read_length, runtype]
+        Returns:
+            embeddings: Tensor of shape (B, embedding_dim)
+        """
+        B = metadata.size(0)
+        # Lists to collect per-feature embeddings.
+        per_feature_embeds = []
+        for i in range(self.input_dim):
+            # Extract each metadata type for feature i.
+            depth = metadata[:, 0, i].unsqueeze(-1).float() 
+            coverage = metadata[:, 1, i].unsqueeze(-1).float() 
+            read_length = metadata[:, 2, i].unsqueeze(-1).float() 
+            runtype = metadata[:, 3, i].long() 
+            
+            # For runtype, map -1 -> 2 (missing) and -2 -> 3 (cloze_masked)
+            runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
+            runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype)
+            
+            # Apply the separate transforms/embeddings for feature i.
+            depth_embed = self.depth_transforms[i](depth)              # (B, continuous_size)
+            coverage_embed = self.coverage_transforms[i](coverage)        # (B, continuous_size)
+            read_length_embed = self.read_length_transforms[i](read_length)  # (B, continuous_size)
+            runtype_embed = self.runtype_embeddings[i](runtype)           # (B, continuous_size)
+            
+            # Concatenate the four embeddings along the last dimension.
+            feature_embed = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)  # (B, 4*continuous_size)
+            per_feature_embeds.append(feature_embed)
         
-        runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
-        runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
-
-        depth_embed = self.depth_transform(depth)
-        coverage_embed = self.coverage_transform(coverage)
-        read_length_embed = self.read_length_transform(read_length)
-        runtype_embed = self.runtype_embedding(runtype)
-
-        embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
-        embeddings = embeddings.view(embeddings.shape[0], -1)
-
-        embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
+        # Now stack along a new dimension for features -> shape (B, input_dim, 4*continuous_size)
+        embeddings = torch.stack(per_feature_embeds, dim=1)
+        # Flatten feature dimension: (B, input_dim * 4*continuous_size)
+        embeddings = embeddings.view(B, -1)
+        # Project to final embedding dimension.
+        embeddings = self.final_embedding(embeddings)
+        embeddings = self.final_emb_layer_norm(embeddings)
         
         if self.non_linearity:
             embeddings = F.relu(embeddings)
         
         return embeddings
+
+# class EmbedMetadata(nn.Module):
+#     def __init__(self, input_dim, embedding_dim, non_linearity=True):
+#         super().__init__()
+#         self.embedding_dim = embedding_dim
+#         self.input_dim = input_dim 
+#         self.non_linearity = non_linearity
+#         self.continuous_size = embedding_dim // 3
+
+#         self.runtype_embedding = nn.Embedding(4, self.continuous_size)  # 4 classes: single_end, pair_end, missing, cloze_masked
+#         self.depth_transform = nn.Linear(1, self.continuous_size) 
+#         self.coverage_transform = nn.Linear(1, self.continuous_size)
+#         self.read_length_transform = nn.Linear(1, self.continuous_size)
+
+#         self.final_embedding = nn.Linear(self.input_dim * self.continuous_size * 4, embedding_dim)  # Adjusted for all inputs
+#         self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
+
+#     def forward(self, metadata):
+#         depth = metadata[:, 0, :].unsqueeze(-1).float() 
+#         coverage = metadata[:, 1, :].unsqueeze(-1).float() 
+#         read_length = metadata[:, 2, :].unsqueeze(-1).float() 
+#         runtype = metadata[:, 3, :].long() 
+        
+#         runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype) # missing
+#         runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype) # cloze_masked
+
+#         depth_embed = self.depth_transform(depth)
+#         coverage_embed = self.coverage_transform(coverage)
+#         read_length_embed = self.read_length_transform(read_length)
+#         runtype_embed = self.runtype_embedding(runtype)
+
+#         embeddings = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)
+#         embeddings = embeddings.view(embeddings.shape[0], -1)
+
+#         embeddings = self.final_emb_layer_norm(self.final_embedding(embeddings))
+        
+#         if self.non_linearity:
+#             embeddings = F.relu(embeddings)
+        
+#         return embeddings
 
 # class EmbedMetadata(nn.Module):
 #     def __init__(self, input_dim, embedding_dim, non_linearity=True):
