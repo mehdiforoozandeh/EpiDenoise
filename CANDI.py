@@ -317,7 +317,7 @@ class CANDI_DNA_Encoder(nn.Module):
 
         self.transformer_encoder = nn.ModuleList([
             DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout, 
-                max_distance=self.l2, pos_encoding_type="absolute", max_len=self.l2
+                max_distance=self.l2, pos_encoding_type="relative", max_len=self.l2
                 ) for _ in range(n_sab_layers)])
 
     def forward(self, src, seq, x_metadata):
