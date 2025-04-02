@@ -289,7 +289,7 @@ class CANDI_DNA_Encoder(nn.Module):
             [ConvTower(
                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
                 DNA_kernel_size[i], S=1, D=1,
-                pool_type="max", residuals=True,
+                pool_type="max", residuals=True, SE=False,
                 groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)])
 
         conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
@@ -301,7 +301,7 @@ class CANDI_DNA_Encoder(nn.Module):
                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
                 conv_kernel_size_list[i], S=1, D=1,
                 pool_type="avg", residuals=True,
-                groups=self.f1,
+                groups=self.f1, SE=False,
                 pool_size=pool_size) for i in range(n_cnn_layers)])
         
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
