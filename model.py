@@ -229,9 +229,9 @@ class EmbedMetadata(nn.Module):
         self.embedding_dim = embedding_dim
         self.input_dim = input_dim 
         self.non_linearity = non_linearity
-        # We divide the embedding_dim into 3 parts for continuous types.
+        # We divide the embedding_dim into 4 parts for continuous types.
         # (You can adjust the splitting scheme as needed.)
-        self.continuous_size = embedding_dim // 3
+        self.continuous_size = embedding_dim // 4
 
         # For each feature (total input_dim features), create a separate linear transform.
         self.depth_transforms = nn.ModuleList(

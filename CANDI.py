@@ -1002,7 +1002,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         eic=eic, merge_ct=merge_ct)
 
     signal_dim = dataset.signal_dim
-    metadata_embedding_dim = dataset.signal_dim
+    metadata_embedding_dim = dataset.signal_dim * 4
 
     if DNA:
         model = CANDI_DNA(
