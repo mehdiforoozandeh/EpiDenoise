@@ -550,7 +550,6 @@ class PRETRAIN(object):
                             loss = (msk_p*(imp_count_loss + imp_pval_loss))
                         
                         elif "pvalonly" in arch:
-                            print("pvalonly")
                             loss = (msk_p*imp_pval_loss) + ((1-msk_p)*obs_pval_loss)
 
                         else:
