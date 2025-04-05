@@ -499,11 +499,11 @@ class PRETRAIN(object):
                                 num_mask += 1
 
                     M_i += 1
+                
+                self.optimizer.zero_grad()
+                torch.cuda.empty_cache()
 
                 for _ in range(inner_epochs):
-                    self.optimizer.zero_grad()
-                    torch.cuda.empty_cache()
-
                     if DNA:
                         X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
                     else:
@@ -550,6 +550,7 @@ class PRETRAIN(object):
                             loss = (msk_p*(imp_count_loss + imp_pval_loss))
                         
                         elif "pvalonly" in arch:
+                            print("pvalonly")
                             loss = (msk_p*imp_pval_loss) + ((1-msk_p)*obs_pval_loss)
 
                         else:
@@ -581,8 +582,6 @@ class PRETRAIN(object):
 
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.1 * total_norm) # APR4 change
 
-                    
-                    self.optimizer.step()
                     #################################################################################
 
                     # IMP Count Predictions
@@ -691,14 +690,27 @@ class PRETRAIN(object):
                     batch_rec["imp_pval_pearson"].append(imp_pval_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
-                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
+                    for k in [
+                        "imp_pval_r2", "imp_pval_pearson", 
+                        "imp_pval_spearman", "imp_count_r2", 
+                        "imp_count_pearson", "imp_count_spearman",
+                        "imp_count_loss", "ups_count_loss",
+                        "imp_pval_loss", "ups_pval_loss"]:
+
                         mean_value = np.mean(batch_rec[k]) if not np.isnan(np.mean(batch_rec[k])) else 0
+                        if "loss" in k:
+                            mean_value = -1 * mean_value # since we are monitoring increasing trends
+
+                        if k not in progress_monitor.keys():
+                            progress_monitor[k] = []
+
                         progress_monitor[k].append(mean_value)
 
                         if k not in prog_mon_ema.keys():
                             prog_mon_ema[k] = mean_value
                         else:
-                            alpha = 2 / (len(progress_monitor[k]) + 1)
+                            # alpha = 2 / (len(progress_monitor[k]) + 1) # APR4 change
+                            alpha = 0.01 # APR4 change
                             prog_mon_ema[k] = alpha*mean_value + (1-alpha)*prog_mon_ema[k]
 
                         if k not in prog_mon_best_so_far.keys():
@@ -763,6 +775,8 @@ class PRETRAIN(object):
 
                     if max_weight_grad_layer:
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
+
+                self.optimizer.step()
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
