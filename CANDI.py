@@ -548,11 +548,14 @@ class PRETRAIN(object):
                         
                         if "imponly" in arch:
                             loss = (msk_p*(imp_count_loss + imp_pval_loss))
+                        
+                        elif "pvalonly" in arch:
+                            loss = (msk_p*imp_pval_loss) + ((1-msk_p)*obs_pval_loss)
+
                         else:
                             loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
 
                     else:
-                        # loss = (mask_percentage*(obs_count_loss + obs_pval_loss)) + ((1-mask_percentage)*(imp_pval_loss + imp_count_loss))
                         loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
 
                     if torch.isnan(loss).sum() > 0:
@@ -573,8 +576,11 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
+
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.1 * total_norm) # APR4 change
+
                     
                     self.optimizer.step()
                     #################################################################################
