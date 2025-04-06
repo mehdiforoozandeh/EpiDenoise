@@ -553,6 +553,8 @@ class PRETRAIN(object):
                             loss = (msk_p*imp_pval_loss) + ((1-msk_p)*obs_pval_loss)
 
                         else:
+                            imp_pval_loss *= 3
+                            obs_pval_loss *= 3
                             loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
 
                     else:
@@ -576,10 +578,8 @@ class PRETRAIN(object):
                             total_norm += param_norm.item() ** 2
                     total_norm = total_norm ** 0.5
 
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 2)
-
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.1 * total_norm) # APR4 change
 
                     #################################################################################
 
