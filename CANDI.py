@@ -321,12 +321,8 @@ class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
-        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)#, eps= 1e-3)
-        self.mse = nn.MSELoss(reduction=reduction)
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
         self.nbin_nll = negative_binomial_loss
-    
-    def mse_loss(self, Y_true, Y_pred):
-        return torch.square(torch.subtract(Y_true,Y_pred)).mean() 
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
         ups_true_count, ups_true_pval = true_count[obs_map], true_pval[obs_map]
@@ -349,8 +345,6 @@ class CANDI_LOSS(nn.Module):
 
         observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
         imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
-        # observed_pval_loss = self.mse_loss(ups_mu_pred, ups_true_pval)
-        # imputed_pval_loss = self.mse_loss(imp_mu_pred, imp_true_pval)
 
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
@@ -553,8 +547,10 @@ class PRETRAIN(object):
                             loss = (msk_p*imp_pval_loss) + ((1-msk_p)*obs_pval_loss)
 
                         else:
-                            imp_pval_loss *= 3
+                            imp_pval_loss *= 4
                             obs_pval_loss *= 3
+                            imp_count_loss *= 2
+                            obs_count_loss *= 1
                             loss = (msk_p*(imp_count_loss + imp_pval_loss)) + ((1-msk_p)*(obs_pval_loss + obs_count_loss))
 
                     else:
@@ -841,7 +837,7 @@ class PRETRAIN(object):
                 log_strs.append(logstr)
                 print(logstr)
 
-                if lr_sch_steps_taken >= 50 and early_stop:
+                if lr_sch_steps_taken >= 100 and early_stop:
                     print("Early stopping due to super small learning rate...")
                     return self.model, best_metric
                 
@@ -1037,7 +1033,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.99)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
 
     print(f"Using optimizer: {optimizer.__class__.__name__}")
 

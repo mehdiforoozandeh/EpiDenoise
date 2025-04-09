@@ -2776,8 +2776,8 @@ class ExtendedEncodeDataHandler:
         # includes = [
         #     "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
         #     "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"],
-        # merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
-        merge_ct=True, eic=False, DSF_list=[1]):
+        merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
+        # merge_ct=True, eic=False, DSF_list=[1]):
         self.eic = eic
         self.merge_ct = merge_ct
         self.set_alias()

@@ -724,6 +724,41 @@ class NegativeBinomialLayer(nn.Module):
 
         return p, n
 
+def negative_binomial_loss(y_true, n_pred, p_pred):
+    """
+        Negative binomial loss function for PyTorch.
+        
+        Parameters
+        ----------
+        y_true : torch.Tensor
+            Ground truth values of the predicted variable.
+        n_pred : torch.Tensor
+            Tensor containing n values of the predicted distribution.
+        p_pred : torch.Tensor
+            Tensor containing p values of the predicted distribution.
+            
+        Returns
+        -------
+        nll : torch.Tensor
+            Negative log likelihood.
+    """
+    eps = 1e-6
+
+    # Clamp predictions for numerical stability
+    p_pred = torch.clamp(p_pred, min=eps, max=1 - eps)
+    n_pred = torch.clamp(n_pred, min=1e-2, max=1e3)
+
+    # Compute NB NLL
+    nll = (
+        torch.lgamma(n_pred + eps)
+        + torch.lgamma(y_true + 1 + eps)
+        - torch.lgamma(n_pred + y_true + eps)
+        - n_pred * torch.log(p_pred + eps)
+        - y_true * torch.log(1 - p_pred + eps)
+    )
+    
+    return nll
+
 class GaussianLayer(nn.Module):
     def __init__(self, input_dim, output_dim, FF=False):
         super(GaussianLayer, self).__init__()
@@ -754,38 +789,6 @@ class GaussianLayer(nn.Module):
         var = self.fc_var(x)
 
         return mu, var
-
-def negative_binomial_loss(y_true, n_pred, p_pred):
-    """
-        Negative binomial loss function for PyTorch.
-        
-        Parameters
-        ----------
-        y_true : torch.Tensor
-            Ground truth values of the predicted variable.
-        n_pred : torch.Tensor
-            Tensor containing n values of the predicted distribution.
-        p_pred : torch.Tensor
-            Tensor containing p values of the predicted distribution.
-            
-        Returns
-        -------
-        nll : torch.Tensor
-            Negative log likelihood.
-    """
-    p_pred = torch.clamp(p_pred, min=1e-6, max=1-1e-6)
-    
-    # Calculate the negative log likelihood using PyTorch functions
-    nll = (
-        torch.lgamma(n_pred)
-        + torch.lgamma(y_true + 1)
-        - torch.lgamma(n_pred + y_true)
-        - n_pred * torch.log(p_pred)
-        - y_true * torch.log(1 - p_pred)
-    )
-    
-    return nll
-
 #========================================================================================================#
 #=============================================== Main ===================================================#
 #========================================================================================================#
