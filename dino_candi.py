@@ -272,7 +272,7 @@ class DINO_CANDI:
 
         log_strs = []
         log_strs.append(str(self.device))
-        log_strs.append(f"DINO CANDI{arch} # model_parameters: {count_parameters(self.model)}")
+        log_strs.append(f"DINO CANDI{arch} # model_parameters: {count_parameters(self.student)}")
         logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
         logfile.write("\n".join(log_strs))
         logfile.close()
@@ -286,7 +286,7 @@ class DINO_CANDI:
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
         if hook:
-            register_hooks(self.model)
+            register_hooks(self.student)
         
         if "eic" in arch:
             val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
