@@ -68,48 +68,6 @@ class CANDI_Encoder(nn.Module):
         
         return src
 
-class CANDI_Decoder(nn.Module):
-    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
-        super(CANDI_Decoder, self).__init__()
-
-        self.l1 = context_length
-        self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-        self.f1 = signal_dim 
-        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
-        self.f3 = self.f2 + metadata_embedding_dim
-        self.d_model =  self.latent_dim = self.f2
-
-        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-        self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
-        self.ymd_fusion = nn.Sequential(
-            nn.Linear(self.f3, self.f2),
-            nn.LayerNorm(self.f2), 
-            # nn.ReLU()
-            )
-
-        self.deconv = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
-    
-    def forward(self, src, y_metadata):
-        ymd_embedding = self.ymd_emb(y_metadata)
-        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.ymd_fusion(src)
-        
-        src = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv:
-            src = dconv(src)
-
-        src = src.permute(0, 2, 1) # to N, L, F1
-
-        return src    
-
 class CANDI(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
         n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 
@@ -172,6 +130,48 @@ class CANDI(nn.Module):
             return p, n, mu, var, z
         else:
             return p, n, mu, var
+
+class CANDI_Decoder(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
+        super(CANDI_Decoder, self).__init__()
+
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        self.d_model =  self.latent_dim = self.f2
+
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
+        self.ymd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            # nn.ReLU()
+            )
+
+        self.deconv = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+    
+    def forward(self, src, y_metadata):
+        ymd_embedding = self.ymd_emb(y_metadata)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
+        
+        src = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv:
+            src = dconv(src)
+
+        src = src.permute(0, 2, 1) # to N, L, F1
+
+        return src    
 
 class CANDI_DNA_Encoder(nn.Module):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
