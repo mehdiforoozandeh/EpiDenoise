@@ -214,7 +214,7 @@ class DINO_CANDI:
             device_student (torch.device): Device for student (e.g., cuda:0).
             device_teacher (torch.device): Device for teacher (e.g., cuda:1).
         """
-
+        self.device = device_student
         self.student = student_encoder.to(device_student)
         self.teacher = teacher_encoder.to(device_teacher)
         self.dataset = dataset
