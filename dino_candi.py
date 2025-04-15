@@ -558,7 +558,7 @@ def main():
         arch="",
         mask_percentage=mask_percentage,
         hook=False,
-        DNA=False,  # Set to True if you use DNA-specific inputs.
+        DNA=True,  # Set to True if you use DNA-specific inputs.
         early_stop=True,
         accumulation_steps=4,
         num_local_views=num_local_views
