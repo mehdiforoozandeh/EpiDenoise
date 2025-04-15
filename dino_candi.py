@@ -492,7 +492,7 @@ def main():
     # Instantiate your dataset.
     # Your dataset is expected to implement methods such as new_epoch(), get_batch(), update_batch_pointers(), etc.
     # For instance, if you are using ExtendedEncodeDataHandler, instantiate and initialize it here.
-    data_path = "/path/to/your/data"  # TODO: Set your actual data path.
+    data_path = "/project/compbio-lab/encode_data/"
     # The following parameters are placeholders. Adjust them as needed.
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
@@ -500,7 +500,7 @@ def main():
         context_length=1200,     # context length (adjust based on your application)
         bios_batchsize=50,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="ccre",         # loci generation method
+        loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=False,
