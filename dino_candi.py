@@ -178,6 +178,11 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
 
         # Fusion.
+
+        print(src.shape)
+        print(xmd_embedding.shape)
+        print(seq.shape)
+        exit()
         src = torch.cat([src, xmd_embedding, seq], dim=-1)
         src = self.fusion(src)
 
