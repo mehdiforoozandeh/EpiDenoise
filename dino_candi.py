@@ -469,16 +469,17 @@ class DINO_CANDI:
 ###############################################
 
 def main():
+    context_length = 1200
     # -------------------------------
     # Instantiate the Student and Teacher Encoders.
     # Replace 'create_candi_encoder()' with your actual function that returns a CANDI encoder instance.
     student_encoder = DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3)
+        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
                  
     teacher_encoder =  DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3)
+        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
 
     teacher_encoder.load_state_dict(student_encoder.state_dict())
 
@@ -497,7 +498,7 @@ def main():
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=3000,                  # number of loci
-        context_length=1200,     # context length (adjust based on your application)
+        context_length=context_length,     # context length (adjust based on your application)
         bios_batchsize=50,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen="random",         # loci generation method
@@ -551,7 +552,7 @@ def main():
     # Start training.
     dino_trainer.train_dino(
         num_epochs=num_epochs,
-        context_length=dataset.context_length,  # Assumes your dataset has a context_length attribute.
+        context_length=context_length,
         batch_size=batch_size,
         inner_epochs=inner_epochs,
         arch="",
