@@ -503,7 +503,7 @@ def main():
         loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
-        eic=False,
+        eic=True,
         merge_ct=True
     )
 
