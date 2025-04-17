@@ -284,7 +284,6 @@ class DINO_CANDI:
         # Initialize a center vector based on the output projection dimension of your encoder.
         self.center = torch.zeros(self.student.projection_head[-1].out_features, device=device_student)
         
-    
     def update_teacher(self):
         """
         Update the teacher parameters using an EMA on the student parameters.
@@ -499,6 +498,7 @@ class DINO_CANDI:
                     self.train_decoder(context_length, batch_size, arch=arch)
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
+        self.dataset.new_epoch()
         next_epoch = False
         self.student.eval()
         self.decoder.train()
