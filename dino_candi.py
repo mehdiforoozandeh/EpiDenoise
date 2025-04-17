@@ -499,192 +499,192 @@ class DINO_CANDI:
                     self.train_decoder(context_length, batch_size, arch=arch)
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
-        for epoch in range(1):
-            self.decoder_dataset.new_epoch()
-            next_epoch = False
+        next_epoch = False
+        self.student.eval()
+        self.decoder.train()
+        
+        while (next_epoch==False):
+            t0 = datetime.now()
+            batch_rec = {
+                "ups_count_loss":[], "ups_pval_loss":[],
+                "ups_count_r2":[], "ups_pval_r2":[],
+                "ups_count_pp":[], "ups_pval_pp":[],
+                "ups_count_conf":[], "ups_pval_conf":[], 
+                "ups_count_mse":[],  "ups_pval_mse":[], 
+                "ups_count_spearman":[], "ups_pval_spearman":[],
+                "ups_count_pearson":[], "ups_pval_pearson":[], 
+                }
 
-            last_lopr = -1
-            while (next_epoch==False):
-                t0 = datetime.now()
-                batch_rec = {
-                    "ups_count_loss":[], "ups_pval_loss":[],
-                    "ups_count_r2":[], "ups_pval_r2":[],
-                    "ups_count_pp":[], "ups_pval_pp":[],
-                    "ups_count_conf":[], "ups_pval_conf":[], 
-                    "ups_count_mse":[],  "ups_pval_mse":[], 
-                    "ups_count_spearman":[], "ups_pval_spearman":[],
-                    "ups_count_pearson":[], "ups_pval_pearson":[], 
-                    }
+            if DNA:
+                _X_batch, _mX_batch, _avX_batch, _dnaseq_batch= self.decoder_dataset.get_batch(side="x", dna_seq=True)
+            else:
+                _X_batch, _mX_batch, _avX_batch = self.decoder_dataset.get_batch(side="x")
 
-                if DNA:
-                    _X_batch, _mX_batch, _avX_batch, _dnaseq_batch= self.decoder_dataset.get_batch(side="x", dna_seq=True)
-                else:
-                    _X_batch, _mX_batch, _avX_batch = self.decoder_dataset.get_batch(side="x")
+            _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.decoder_dataset.get_batch(side="y", pval=True)
 
-                _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.decoder_dataset.get_batch(side="y", pval=True)
-
-                if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
-                    self.decoder_dataset.update_batch_pointers()
-                    print("mismatch in shapes! skipped batch...")
-                    continue
-                    
-                self.decoder_optimizer.zero_grad()
-                torch.cuda.empty_cache()
-
-                for _ in range(1):
-                    if DNA:
-                        X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
-                    else:
-                        X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
-                        
-                    Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
-
-                    masked_map = (X_batch == self.token_dict["cloze_mask"])
-                    observed_map = (X_batch != self.token_dict["missing_mask"]) & (X_batch != self.token_dict["cloze_mask"])
-                    missing_map = (X_batch == self.token_dict["missing_mask"])
-
-                    masked_map = masked_map.to(self.device) # imputation targets
-                    observed_map = observed_map.to(self.device) # upsampling targets
-                    pval_batch = pval_batch.to(self.device)
-
-                    Y_batch = Y_batch.float().to(self.device)
-                    mY_batch = mY_batch.to(self.device)
-
-                    X_batch = X_batch.float().to(self.device)
-                    mX_batch = mX_batch.to(self.device)
-                    avX_batch = avX_batch.to(self.device)
-
-                    ###################################
-                    dnaseq_batch = dnaseq_batch.to(self.device)
-                    with torch.no_grad():
-                        latent = self.student(X_batch, dnaseq_batch, mX_batch, return_projected=False)
-                    output_p, output_n, output_mu, output_var = self.decoder(latent, mY_batch)
-
-                    count_loss, pval_loss = self.decoder_criterion(
-                        output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map)
-                    ###################################
-                    loss = count_loss + pval_loss
-                    if torch.isnan(loss).sum() > 0:
-                        skipmessage = "Encountered nan loss! Skipping batch..."
-                        log_strs.append(skipmessage)
-                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss
-                        print(skipmessage)
-                        torch.cuda.empty_cache() 
-                        continue
-                    
-                    loss = loss.float()
-                    loss.backward()
-
-                    torch.nn.utils.clip_grad_value_(self.decoder.parameters(), clip_value=5)
-
-                    # UPS Count Predictions
-                    neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
-                    ups_count_pred = neg_bin_ups.expect().numpy()
-                    ups_count_std = neg_bin_ups.std().numpy()
-
-                    ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
-                    ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).numpy()
-
-                    ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
-                    ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
-                    ups_count_pp = compute_perplexity(neg_bin_ups.pmf(ups_count_true))
-                    ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
-
-                    ups_count_spearman = spearmanr(ups_count_true, ups_count_pred).correlation
-                    ups_count_pearson = pearsonr(ups_count_true, ups_count_pred)[0]
-
-                    # UPS P-value Predictions
-                    ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
-                    ups_pval_std = output_var[observed_map].cpu().detach().numpy() ** 0.5
-
-                    ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
-                    ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).numpy()
-
-                    ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
-                    ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
-                    gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
-                    ups_pval_pp = compute_perplexity(gaussian_ups.pdf(ups_pval_true))
-                    ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
-
-                    ups_pval_spearman = spearmanr(ups_pval_true, ups_pval_pred).correlation
-                    ups_pval_pearson = pearsonr(ups_pval_true, ups_pval_pred)[0]
-
-                    del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
-
-                    batch_rec["ups_count_loss"].append(count_loss.item())
-                    batch_rec["ups_pval_loss"].append(pval_loss.item())
-
-                    batch_rec["ups_count_r2"].append(ups_count_r2)
-                    batch_rec["ups_pval_r2"].append(ups_pval_r2)
-
-                    batch_rec["ups_count_pp"].append(ups_count_pp)
-                    batch_rec["ups_pval_pp"].append(ups_pval_pp)
-
-                    batch_rec["ups_count_conf"].append(ups_count_errstd)
-                    batch_rec["ups_pval_conf"].append(ups_pval_errstd)
-
-                    batch_rec["ups_count_mse"].append(ups_count_mse)
-                    batch_rec["ups_pval_mse"].append(ups_pval_mse)
-
-                    batch_rec["ups_count_spearman"].append(ups_count_spearman)
-                    batch_rec["ups_pval_spearman"].append(ups_pval_spearman)
-
-                    batch_rec["ups_count_pearson"].append(ups_count_pearson)
-                    batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
-
-                self.decoder_optimizer.step()
-
-                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
-                if DNA:
-                    del _dnaseq_batch
-                gc.collect()
-
-                elapsed_time = datetime.now() - t0
-                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                minutes, seconds = divmod(remainder, 60)
+            if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
+                self.decoder_dataset.update_batch_pointers()
+                print("mismatch in shapes! skipped batch...")
+                continue
                 
-                logstr = [
-                    "\tDECODER",
-                    # f"Ep. {epoch}",
-                    f"Loss: {loss.item():.4f}",
-                    f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
-                    f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
-                    f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n\t",
+            self.decoder_optimizer.zero_grad()
+            torch.cuda.empty_cache()
+
+            for _ in range(1):
+                if DNA:
+                    X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
+                else:
+                    X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
                     
-                    f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
-                    f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
-                    f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
-                    f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
+                Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
 
-                    f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
-                    f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
-                    f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
-                    f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
+                masked_map = (X_batch == self.token_dict["cloze_mask"])
+                observed_map = (X_batch != self.token_dict["missing_mask"]) & (X_batch != self.token_dict["cloze_mask"])
+                missing_map = (X_batch == self.token_dict["missing_mask"])
 
-                    f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
-                    f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
-                    f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
-                    f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n\t",
-                    f"took {int(minutes)}:{int(seconds):02d}",
-                ]
-                logstr = " | ".join(logstr)
-                self.log_strs.append(logstr)
-                print(logstr)
+                masked_map = masked_map.to(self.device) # imputation targets
+                observed_map = observed_map.to(self.device) # upsampling targets
+                pval_batch = pval_batch.to(self.device)
 
-                chr0 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
-                dsf_pointer0 = self.decoder_dataset.dsf_pointer
-                bios_pointer0 = self.decoder_dataset.bios_pointer
+                Y_batch = Y_batch.float().to(self.device)
+                mY_batch = mY_batch.to(self.device)
 
-                next_epoch = self.decoder_dataset.update_batch_pointers()
+                X_batch = X_batch.float().to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                avX_batch = avX_batch.to(self.device)
 
-                dsf_pointer1 = self.decoder_dataset.dsf_pointer
-                chr1 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
-                bios_pointer1 = self.decoder_dataset.bios_pointer
+                ###################################
+                dnaseq_batch = dnaseq_batch.to(self.device)
+                with torch.no_grad():
+                    latent = self.student(X_batch, dnaseq_batch, mX_batch, return_projected=False)
+                output_p, output_n, output_mu, output_var = self.decoder(latent, mY_batch)
 
-                if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
-                    logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
-                    logfile.write("\n".join(self.log_strs))
-                    logfile.close()
+                count_loss, pval_loss = self.decoder_criterion(
+                    output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map)
+                ###################################
+                loss = count_loss + pval_loss
+                if torch.isnan(loss).sum() > 0:
+                    skipmessage = "Encountered nan loss! Skipping batch..."
+                    log_strs.append(skipmessage)
+                    del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss
+                    print(skipmessage)
+                    torch.cuda.empty_cache() 
+                    continue
+                
+                loss = loss.float()
+                loss.backward()
+
+                torch.nn.utils.clip_grad_value_(self.decoder.parameters(), clip_value=5)
+
+                # UPS Count Predictions
+                neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
+                ups_count_pred = neg_bin_ups.expect().numpy()
+                ups_count_std = neg_bin_ups.std().numpy()
+
+                ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
+                ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).numpy()
+
+                ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
+                ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
+                ups_count_pp = compute_perplexity(neg_bin_ups.pmf(ups_count_true))
+                ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
+
+                ups_count_spearman = spearmanr(ups_count_true, ups_count_pred).correlation
+                ups_count_pearson = pearsonr(ups_count_true, ups_count_pred)[0]
+
+                # UPS P-value Predictions
+                ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
+                ups_pval_std = output_var[observed_map].cpu().detach().numpy() ** 0.5
+
+                ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
+                ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).numpy()
+
+                ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
+                ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
+                gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
+                ups_pval_pp = compute_perplexity(gaussian_ups.pdf(ups_pval_true))
+                ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
+
+                ups_pval_spearman = spearmanr(ups_pval_true, ups_pval_pred).correlation
+                ups_pval_pearson = pearsonr(ups_pval_true, ups_pval_pred)[0]
+
+                del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
+
+                batch_rec["ups_count_loss"].append(count_loss.item())
+                batch_rec["ups_pval_loss"].append(pval_loss.item())
+
+                batch_rec["ups_count_r2"].append(ups_count_r2)
+                batch_rec["ups_pval_r2"].append(ups_pval_r2)
+
+                batch_rec["ups_count_pp"].append(ups_count_pp)
+                batch_rec["ups_pval_pp"].append(ups_pval_pp)
+
+                batch_rec["ups_count_conf"].append(ups_count_errstd)
+                batch_rec["ups_pval_conf"].append(ups_pval_errstd)
+
+                batch_rec["ups_count_mse"].append(ups_count_mse)
+                batch_rec["ups_pval_mse"].append(ups_pval_mse)
+
+                batch_rec["ups_count_spearman"].append(ups_count_spearman)
+                batch_rec["ups_pval_spearman"].append(ups_pval_spearman)
+
+                batch_rec["ups_count_pearson"].append(ups_count_pearson)
+                batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
+
+            self.decoder_optimizer.step()
+
+            del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
+            if DNA:
+                del _dnaseq_batch
+            gc.collect()
+
+            elapsed_time = datetime.now() - t0
+            hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            
+            logstr = [
+                "\tDECODER",
+                # f"Ep. {epoch}",
+                f"Loss: {loss.item():.4f}",
+                f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
+                f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
+                f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n\t",
+                
+                f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
+                f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
+                f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
+                f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
+
+                f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
+                f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
+                f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
+                f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
+
+                f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
+                f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
+                f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
+                f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n\t",
+                f"took {int(minutes)}:{int(seconds):02d}",
+            ]
+            logstr = " | ".join(logstr)
+            self.log_strs.append(logstr)
+            print(logstr)
+
+            chr0 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
+            dsf_pointer0 = self.decoder_dataset.dsf_pointer
+            bios_pointer0 = self.decoder_dataset.bios_pointer
+
+            next_epoch = self.decoder_dataset.update_batch_pointers()
+
+            dsf_pointer1 = self.decoder_dataset.dsf_pointer
+            chr1 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
+            bios_pointer1 = self.decoder_dataset.bios_pointer
+
+            if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+                logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+                logfile.write("\n".join(self.log_strs))
+                logfile.close()
+                return
 
 ###############################################
 # Main function: Parse arguments and run training.
@@ -718,7 +718,7 @@ def main():
     data_path = "/project/compbio-lab/encode_data/"
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=3000,                  # number of loci
+        m=1000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
