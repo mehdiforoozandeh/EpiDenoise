@@ -28,8 +28,8 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         context_length=1600,
         pos_enc="relative",
         expansion_factor=3,
-        pooling_type="mean"  # options: "mean", "attention", "cls"
-    ):
+        pooling_type="attention"):
+        
         super().__init__()
         self.pos_enc = pos_enc
         self.l1 = context_length
