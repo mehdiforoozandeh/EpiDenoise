@@ -746,7 +746,7 @@ def main():
         t_teacher=t_teacher,
         device_student=device_student,
         device_teacher=device_teacher,
-        decoder=candidate_decoder, 
+        decoder=candi_decoder, 
         decoder_optimizer=decoder_optimizer,
         decoder_dataset=decoder_dataset,
         decoder_criterion=decoder_criterion
