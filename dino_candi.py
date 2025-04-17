@@ -649,7 +649,7 @@ class DINO_CANDI:
                     f"Loss: {loss.item():.4f}",
                     f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
                     f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
-                    f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n",
+                    f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n\t",
                     
                     f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
