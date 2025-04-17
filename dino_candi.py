@@ -408,6 +408,7 @@ class DINO_CANDI:
                     loss.backward()  
                     
                 self.optimizer.step()
+                self.update_teacher()
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
