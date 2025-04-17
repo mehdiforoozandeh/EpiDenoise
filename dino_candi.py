@@ -701,7 +701,7 @@ def main():
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
     num_local_views = 1    
-    loci_gen = "debug"# "ccre"   
+    loci_gen = "ccre"   
 
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
@@ -746,9 +746,9 @@ def main():
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
-        m= 1000,                  # number of loci
+        m= 500,                  # number of loci
         context_length=context_length*25,
-        bios_batchsize=20,       # batch size for bios samples
+        bios_batchsize=25,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen=loci_gen,         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
