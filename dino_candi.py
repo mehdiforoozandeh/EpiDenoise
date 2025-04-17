@@ -257,7 +257,7 @@ class DINO_CANDI:
         }
         self.masker = DataMasker(self.token_dict["cloze_mask"], 0.15)
 
-        self.decoder = decoder
+        self.decoder = decoder.to(self.device)
         self.decoder_optimizer = decoder_optimizer
         self.decoder_dataset = decoder_dataset
         self.decoder_criterion = decoder_criterion
@@ -355,11 +355,13 @@ class DINO_CANDI:
                     # observed_map = observed_map.to(self.device) # upsampling targets
                     # pval_batch = pval_batch.to(self.device)
 
-                    mY_batch = mY_batch.to(self.device)
+                    
                     Y_batch = Y_batch.float().to(self.device)
+                    mY_batch = mY_batch.to(self.device)
                     
                     X_batch = X_batch.float().to(self.device)
                     mX_batch = mX_batch.to(self.device)
+                    
                     avX_batch = avX_batch.to(self.device)
                     
                     local_views = []
@@ -525,8 +527,10 @@ class DINO_CANDI:
                     masked_map = masked_map.to(self.device) # imputation targets
                     observed_map = observed_map.to(self.device) # upsampling targets
                     pval_batch = pval_batch.to(self.device)
-                    mY_batch = mY_batch.to(self.device)
+
                     Y_batch = Y_batch.float().to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+
                     X_batch = X_batch.float().to(self.device)
                     mX_batch = mX_batch.to(self.device)
                     avX_batch = avX_batch.to(self.device)
@@ -695,7 +699,7 @@ def main():
     data_path = "/project/compbio-lab/encode_data/"
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=100,#3000,                  # number of loci
+        m=10,#3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
@@ -723,7 +727,7 @@ def main():
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
-        m= 100,#1000,                  # number of loci
+        m= 10,#1000,                  # number of loci
         context_length=context_length*25,
         bios_batchsize=20,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
