@@ -462,7 +462,7 @@ class DINO_CANDI:
 ###############################################
 
 def main():
-    context_length = 1600
+    context_length = 1200
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
@@ -485,7 +485,7 @@ def main():
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="random",         # loci generation method
+        loci_gen="ccre",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
