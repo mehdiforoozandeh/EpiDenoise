@@ -190,7 +190,7 @@ class CANDI_Decoder(nn.Module):
 
 class CANDI_Decoder_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
-        super(CANDI_LOSS, self).__init__()
+        super(CANDI_Decoder_LOSS, self).__init__()
         self.reduction = reduction
         self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
         self.nbin_nll = negative_binomial_loss
@@ -211,7 +211,6 @@ class CANDI_Decoder_LOSS(nn.Module):
         observed_pval_loss = observed_pval_loss.float()
         
         return observed_count_loss, observed_pval_loss
-
 
 ###############################################
 # DINO_CANDI Class: DINO-style training for CANDI's encoder
