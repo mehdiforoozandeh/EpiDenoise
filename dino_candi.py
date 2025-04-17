@@ -709,7 +709,7 @@ def main():
     inner_epochs = 1            # Number of inner iterations per batch.
     num_local_views = 1    
     loci_gen = "ccre"   
-    eic = True
+    eic = False
 
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
