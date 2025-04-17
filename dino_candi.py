@@ -160,6 +160,9 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         if len(seq.shape) != len(src.shape):
             seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
 
+        print(src.shape)
+        print(seq.shape)
+
         seq = seq.permute(0, 2, 1)  # to [batch, 4, 25*L]
         seq = seq.float()
 
