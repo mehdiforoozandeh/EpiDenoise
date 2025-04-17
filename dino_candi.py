@@ -506,7 +506,7 @@ def main():
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=3000,                  # number of loci
-        context_length=context_length,     # context length (adjust based on your application)
+        context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=50,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen="random",         # loci generation method
