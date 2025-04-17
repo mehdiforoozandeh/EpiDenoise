@@ -642,34 +642,86 @@ class DINO_CANDI:
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
-                
-                logstr = [
-                    "\tDECODER",
-                    f"Ep. {epoch}",
-                    f"Loss: {loss.item():.4f}",
-                    f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
-                    f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
-                    f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n\t",
-                    
-                    f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
-                    f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
-                    f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
-                    f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
 
-                    f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
-                    f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
-                    f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
-                    f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
+                # 1) Precompute all your fields
+                dsf     = self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]
+                chr_key = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
+                chr_prog  = self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[chr_key])
+                bios_prog = self.decoder_dataset.bios_pointer       / self.decoder_dataset.num_bios
+                loss_val  = loss.item()
 
-                    f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
-                    f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
-                    f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
-                    f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n\t",
-                    f"took {int(minutes)}:{int(seconds):02d}",
-                ]
-                logstr = " | ".join(logstr)
+                # metrics
+                nb_nll  = np.mean(batch_rec['ups_count_loss'])
+                g_nll   = np.mean(batch_rec['ups_pval_loss'])
+                ct_r2   = np.mean(batch_rec['ups_count_r2'])
+                p_r2    = np.mean(batch_rec['ups_pval_r2'])
+                ct_srcc = np.mean(batch_rec['ups_count_spearman'])
+                p_srcc  = np.mean(batch_rec['ups_pval_spearman'])
+                ct_pcc  = np.mean(batch_rec['ups_count_pearson'])
+                p_pcc   = np.mean(batch_rec['ups_pval_pearson'])
+                ct_ppl  = np.mean(batch_rec['ups_count_pp'])
+                p_ppl   = np.mean(batch_rec['ups_pval_pp'])
+                ct_conf = np.mean(batch_rec['ups_count_conf'])
+                p_conf  = np.mean(batch_rec['ups_pval_conf'])
+
+                # 2) Build aligned lines
+                header = (
+                    f"\t{'DECODER':<8}  Ep:{epoch:<3d}  "
+                    f"Loss:{loss_val:>8.4f}  "
+                    f"DSF{dsf}->1  "
+                    f"{chr_key} Prog:{chr_prog:>6.2%}  "
+                    f"Bios Prog:{bios_prog:>6.2%}"
+                )
+
+                line1 = (
+                    f"\tnbNLL:{nb_nll:>6.2f}   gNLL:{g_nll:>6.2f}   "
+                    f"Ct_R2:{ct_r2:>6.2f}   P_R2:{p_r2:>6.2f}"
+                )
+
+                line2 = (
+                    f"\tCt_SRCC:{ct_srcc:>6.2f}   P_SRCC:{p_srcc:>6.2f}   "
+                    f"Ct_PCC:{ct_pcc:>6.2f}   P_PCC:{p_pcc:>6.2f}"
+                )
+
+                line3 = (
+                    f"\tCt_PPL:{ct_ppl:>6.2f}   P_PPL:{p_ppl:>6.2f}   "
+                    f"Ct_Conf:{ct_conf:>6.2f}   P_Conf:{p_conf:>6.2f}   "
+                    f"took {int(minutes)}:{int(seconds):02d}"
+                )
+
+                # 3) Join and print
+                logstr = "\n".join([header, line1, line2, line3])
                 self.log_strs.append(logstr)
                 print(logstr)
+
+                
+                # logstr = [
+                #     "\tDECODER",
+                #     f"Ep. {epoch}",
+                #     f"Loss: {loss.item():.4f}",
+                #     f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
+                #     f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
+                #     f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n\t",
+                    
+                #     f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
+                #     f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
+                #     f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
+                #     f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
+
+                #     f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
+                #     f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
+                #     f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
+                #     f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
+
+                #     f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
+                #     f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
+                #     f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
+                #     f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n\t",
+                #     f"took {int(minutes)}:{int(seconds):02d}",
+                # ]
+                # logstr = " | ".join(logstr)
+                # self.log_strs.append(logstr)
+                # print(logstr)
 
                 chr0 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
                 dsf_pointer0 = self.decoder_dataset.dsf_pointer
