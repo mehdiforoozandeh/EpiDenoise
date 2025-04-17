@@ -502,10 +502,10 @@ def main():
     # Set hyperparameters for DINO_CANDI.
     num_epochs = 100            # Adjust as needed.
     learning_rate = 1e-3        # Learning rate for the student encoder.
-    ema_decay = 0.99            # EMA decay coefficient for teacher updates.
-    center_update = 0.99         # Center update coefficient.
+    ema_decay = 0.95            # EMA decay coefficient for teacher updates.
+    center_update = 0.99        # Center update coefficient.
     t_student = 0.4             # Temperature for student outputs.
-    t_teacher = 0.04            # Temperature for teacher outputs.
+    t_teacher = 0.06            # Temperature for teacher outputs.
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
     mask_percentage = 0.15      # Fraction of assays to mask.
