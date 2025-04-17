@@ -11,184 +11,207 @@ from tqdm import tqdm
 
 
 ###############################################
-# CANDI_Encoder (without DNA) with Projection Head
-###############################################
-
-class DINO_CANDI_Encoder(nn.Module):
-    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-                 n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3):
-        super(DINO_CANDI_Encoder, self).__init__()
-
-        self.pos_enc = pos_enc
-        self.l1 = context_length
-        self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-        self.f1 = signal_dim 
-        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
-        self.f3 = self.f2 + metadata_embedding_dim
-        self.d_model = self.latent_dim = self.f2
-
-        conv_channels = [(self.f1) * (expansion_factor**l) for l in range(n_cnn_layers)]
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
-        self.convEnc = nn.ModuleList(
-            [ConvTower(
-                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
-                conv_kernel_size[i], S=1, D=1,
-                pool_type="avg", residuals=True,
-                groups=self.f1,
-                pool_size=pool_size) for i in range(n_cnn_layers)]
-        )
-
-        self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
-        self.xmd_fusion = nn.Sequential(
-            nn.Linear(self.f3, self.f2),
-            nn.LayerNorm(self.f2), 
-            nn.ReLU()
-        )
-
-        if self.pos_enc == "relative":
-            self.transformer_encoder = nn.ModuleList([
-                RelativeEncoderLayer(d_model=self.d_model, heads=nhead,
-                                     feed_forward_hidden=expansion_factor * self.d_model,
-                                     dropout=dropout) for _ in range(n_sab_layers)
-            ])
-        else:
-            self.posEnc = PositionalEncoding(self.d_model, dropout, self.l2)
-            self.encoder_layer = nn.TransformerEncoderLayer(
-                d_model=self.d_model, nhead=nhead,
-                dim_feedforward=expansion_factor * self.d_model, dropout=dropout,
-                batch_first=True
-            )
-            self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
-
-        # --- Add projection head ---
-        self.projection_head = nn.Sequential(
-            nn.Linear(self.d_model, self.d_model),
-            nn.ReLU(),
-            nn.Linear(self.d_model, self.d_model)
-        )
-    
-    def forward(self, src, x_metadata):
-        # Input src shape: [batch, L, f1]
-        src = src.permute(0, 2, 1)  # to [batch, f1, L]
-        for conv in self.convEnc:
-            src = conv(src)
-        
-        src = src.permute(0, 2, 1)  # to [batch, L', f2]
-        xmd_embedding = self.xmd_emb(x_metadata)
-        # Concatenate metadata embedding expanded to the spatial dimension.
-        src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.xmd_fusion(src)
-
-        # Transformer encoder stage:
-        if self.pos_enc != "relative":
-            src = self.posEnc(src)
-            src = self.transformer_encoder(src)
-        else:
-            for enc in self.transformer_encoder:
-                src = enc(src)
-        
-        # Pool across sequence dimension (mean pooling)
-        rep = src.mean(dim=1)  # shape [batch, d_model]
-        proj = self.projection_head(rep)
-        return proj
-
-###############################################
 # CANDI_DNA_Encoder (with DNA) with Projection Head
 ###############################################
 
 class DINO_CANDI_DNA_Encoder(nn.Module):
-    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-                 n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3):
-        super(DINO_CANDI_DNA_Encoder, self).__init__()
-
+    def __init__(
+        self,
+        signal_dim,
+        metadata_embedding_dim,
+        conv_kernel_size,
+        n_cnn_layers,
+        nhead,
+        n_sab_layers,
+        pool_size=2,
+        dropout=0.1,
+        context_length=1600,
+        pos_enc="relative",
+        expansion_factor=3,
+        pooling_type="mean"  # options: "mean", "attention", "cls"
+    ):
+        super().__init__()
         self.pos_enc = pos_enc
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-        self.f1 = signal_dim 
-        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
-        self.f3 = self.f2 + metadata_embedding_dim
-        d_model = self.f2
-        self.latent_dim = self.f2
+        self.f1 = signal_dim
+        self.f2 = self.f1 * (expansion_factor**n_cnn_layers)
+        d_model = self.latent_dim = self.f2
 
-        # DNA convolution stack with exponentially spaced channels.
+        # DNA convolution stack
         DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
-        DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
-        self.convEncDNA = nn.ModuleList(
-            [ConvTower(
-                DNA_conv_channels[i], DNA_conv_channels[i + 1],
-                DNA_kernel_size[i], S=1, D=1,
-                pool_type="max", residuals=True, SE=False,
-                groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)]
-        )
+        self.convEncDNA = nn.ModuleList([
+            ConvTower(
+                DNA_conv_channels[i], DNA_conv_channels[i+1], conv_kernel_size,
+                S=1, D=1, pool_type="max", residuals=True, SE=False,
+                groups=1,
+                pool_size=5 if i >= n_cnn_layers else pool_size
+            ) for i in range(n_cnn_layers+2)
+        ])
 
-        conv_channels = [(self.f1) * (expansion_factor**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
-        conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
-        self.convEnc = nn.ModuleList(
-            [ConvTower(
-                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
-                conv_kernel_size_list[i], S=1, D=1,
-                pool_type="avg", residuals=True,
-                groups=self.f1, SE=False,
-                pool_size=pool_size) for i in range(n_cnn_layers)]
-        )
-        
+        # Signal convolution stack
+        conv_channels = [self.f1 * (expansion_factor**i) for i in range(n_cnn_layers)]
+        self.convEnc = nn.ModuleList([
+            ConvTower(
+                conv_channels[i],
+                conv_channels[i+1] if i+1 < n_cnn_layers else expansion_factor*conv_channels[i],
+                conv_kernel_size,
+                S=1, D=1, pool_type="avg", residuals=True,
+                groups=self.f1, SE=False, pool_size=pool_size
+            ) for i in range(n_cnn_layers)
+        ])
+
+        # Metadata embedding + fusion
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
         self.fusion = nn.Sequential(
-            nn.Linear((2 * self.f2) + metadata_embedding_dim, self.f2), 
+            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2),
             nn.LayerNorm(self.f2)
-            # nn.ReLU() is commented out based on your design.
         )
 
+        # Transformer encoder blocks
         self.transformer_encoder = nn.ModuleList([
-            DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout, 
-                max_distance=self.l2, pos_encoding_type="relative", max_len=self.l2)
+            DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout,
+                                      max_distance=self.l2, pos_encoding_type="relative",
+                                      max_len=self.l2)
             for _ in range(n_sab_layers)
         ])
 
-        # --- Add projection head ---
+        # Projection head
         self.projection_head = nn.Sequential(
             nn.Linear(self.latent_dim, self.latent_dim),
             nn.GELU(),
             nn.Linear(self.latent_dim, self.latent_dim)
         )
 
-    def forward(self, src, seq, x_metadata):
-        if len(seq.shape) != len(src.shape):
-            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+        # Pooling options
+        self.pooling_type = pooling_type
+        if pooling_type == "attention":
+            self.attn_pool = nn.Linear(self.latent_dim, 1)
+        elif pooling_type == "cls":
+            self.cls_token = nn.Parameter(torch.zeros(1, 1, self.latent_dim))
 
-        seq = seq.permute(0, 2, 1)  # to [batch, 4, 25*L]
-        seq = seq.float()
+    def forward(self, src, seq, x_metadata, return_projected=True):
+        # DNA conv
+        if seq.dim() != src.dim():
+            seq = seq.unsqueeze(0).expand(src.size(0), -1, -1)
+        seq = seq.permute(0, 2, 1).float()
+        for conv in self.convEncDNA:
+            seq = conv(seq)
+        seq = seq.permute(0, 2, 1)
 
-        # DNA Conv encoder.
-        for seq_conv in self.convEncDNA:
-            seq = seq_conv(seq)
-        seq = seq.permute(0, 2, 1)  # to [batch, L', f2]
-
-        # Signal Conv encoder.
-        src = src.permute(0, 2, 1)  # to [batch, f1, L]
+        # Signal conv
+        src = src.permute(0, 2, 1)
         for conv in self.convEnc:
             src = conv(src)
-        src = src.permute(0, 2, 1)  # to [batch, L', f2]
+        src = src.permute(0, 2, 1)
 
-        # Signal metadata embedding.
-        xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
+        # Metadata embed + fusion
+        xmd = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
+        x = torch.cat([src, xmd, seq], dim=-1)
+        x = self.fusion(x)
 
-        # Fusion.
-        src = torch.cat([src, xmd_embedding, seq], dim=-1)
-        src = self.fusion(src)
+        # CLS token prep if needed
+        if self.pooling_type == "cls":
+            bsz = x.size(0)
+            cls_tokens = self.cls_token.expand(bsz, -1, -1)
+            x = torch.cat([cls_tokens, x], dim=1)
 
-        # Transformer encoder.
-        for enc in self.transformer_encoder:
-            src = enc(src)
+        # Transformer blocks
+        for blk in self.transformer_encoder:
+            x = blk(x)
+
+        # Pooling
+        if self.pooling_type == "mean":
+            rep = x.mean(dim=1)
+        elif self.pooling_type == "attention":
+            scores = self.attn_pool(x).squeeze(-1)       # [bsz, seq_len]
+            weights = torch.softmax(scores, dim=1).unsqueeze(-1)
+            rep = (weights * x).sum(dim=1)
+        elif self.pooling_type == "cls":
+            rep = x[:, 0, :]
+        else:
+            raise ValueError(f"Unknown pooling type: {self.pooling_type}")
+
+        if return_projected:
+            return self.projection_head(rep)
+        else:
+            if self.pooling_type == "cls":
+                return x[:, 1:, :]
+            else:
+                return x
+
+###############################################
+# CANDI_Decoder & loss
+###############################################
+
+class CANDI_Decoder(nn.Module):
+    def __init__(
+        self, signal_dim, metadata_embedding_dim, conv_kernel_size,
+         n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
+        super(CANDI_Decoder, self).__init__()
+
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
-        # Pool along the sequence dimension.
-        rep = src.mean(dim=1)  # shape [batch, latent_dim]
-        proj = self.projection_head(rep)
-        return proj
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        self.d_model =  self.latent_dim = self.f2
+
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
+        self.ymd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            # nn.ReLU()
+            )
+
+        self.deconv = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+    
+    def forward(self, src, y_metadata):
+        ymd_embedding = self.ymd_emb(y_metadata)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
+        
+        src = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv:
+            src = dconv(src)
+
+        src = src.permute(0, 2, 1) # to N, L, F1
+
+        return src    
+
+class CANDI_Decoder_LOSS(nn.Module):
+    def __init__(self, reduction='mean'):
+        super(CANDI_LOSS, self).__init__()
+        self.reduction = reduction
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
+        self.nbin_nll = negative_binomial_loss
+
+    def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map):
+        ups_true_count, ups_true_pval = true_count[obs_map], true_pval[obs_map]
+        ups_n_pred, ups_p_pred = n_pred[obs_map], p_pred[obs_map]
+        ups_mu_pred, ups_var_pred = mu_pred[obs_map], var_pred[obs_map]
+
+        observed_count_loss = self.nbin_nll(ups_true_count, ups_n_pred, ups_p_pred) 
+
+        if self.reduction == "mean":
+            observed_count_loss = observed_count_loss.mean()
+        elif self.reduction == "sum":
+            observed_count_loss = observed_count_loss.sum()
+
+        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        observed_pval_loss = observed_pval_loss.float()
+        
+        return observed_count_loss, observed_pval_loss
+
 
 ###############################################
 # DINO_CANDI Class: DINO-style training for CANDI's encoder
@@ -196,9 +219,11 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
 
 class DINO_CANDI:
     def __init__(
-        self, student_encoder, teacher_encoder, decoder,
-        dataset, optimizer, ema_decay, center_update, t_student,
-        t_teacher, device_student, device_teacher):
+        self, student_encoder, teacher_encoder, dataset, 
+        optimizer, ema_decay, center_update, t_student,
+        t_teacher, device_student, device_teacher,
+
+        decoder, decoder_optimizer, decoder_dataset, decoder_criterion):
         """
         Initialize the DINO_CANDI training framework.
 
@@ -226,9 +251,21 @@ class DINO_CANDI:
         self.device_student = device_student
         self.device_teacher = device_teacher
 
+        self.token_dict = {
+            "missing_mask": -1, 
+            "cloze_mask": -2,
+            "pad": -3
+        }
+        self.masker = DataMasker(self.token_dict["cloze_mask"], 0.15)
+
+        self.decoder = decoder
+        self.decoder_optimizer = decoder_optimizer
+        self.decoder_dataset = decoder_dataset
+        self.decoder_criterion = decoder_criterion
+
         # Initialize a center vector based on the output projection dimension of your encoder.
         self.center = torch.zeros(self.student.projection_head[-1].out_features, device=device_student)
-        self.decoder = decoder
+        
     
     def update_teacher(self):
         """
@@ -267,34 +304,16 @@ class DINO_CANDI:
         return loss_val
 
     def train_dino(self, num_epochs, context_length, batch_size, inner_epochs, 
-        arch="", mask_percentage=0.15, hook=False, DNA=False, 
+        arch="", hook=False, DNA=True, 
         early_stop=True, accumulation_steps=1, num_local_views=1):
 
-        log_strs = []
-        log_strs.append(str(self.device))
-        log_strs.append(f"DINO CANDI{arch} # model_parameters: {count_parameters(self.student)}")
+        self.log_strs = []
+        self.log_strs.append(str(self.device))
+        self.log_strs.append(f"DINO CANDI{arch} # model_parameters: {count_parameters(self.student)}")
         logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
-        logfile.write("\n".join(log_strs))
+        logfile.write("\n".join(self.log_strs))
         logfile.close()
-
-        token_dict = {
-            "missing_mask": -1, 
-            "cloze_mask": -2,
-            "pad": -3
-        }
-        num_assays = self.dataset.signal_dim
-        self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
-
-        if hook:
-            register_hooks(self.student)
         
-        if "eic" in arch:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
-        else:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
-
-        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
-
         for epoch in range(num_epochs):
             self.dataset.new_epoch()
             next_epoch = False
@@ -302,6 +321,9 @@ class DINO_CANDI:
             last_lopr = -1
             while (next_epoch==False):
                 t0 = datetime.now()
+
+                self.teacher.eval()
+                self.student.train()
 
                 if DNA:
                     _X_batch, _mX_batch, _avX_batch, _dnaseq_batch= self.dataset.get_batch(side="x", dna_seq=True)
@@ -326,13 +348,14 @@ class DINO_CANDI:
                         
                     Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
 
-                    masked_map = (X_batch == token_dict["cloze_mask"])
-                    observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
-                    missing_map = (X_batch == token_dict["missing_mask"])
+                    masked_map = (X_batch == self.token_dict["cloze_mask"])
+                    observed_map = (X_batch != self.token_dict["missing_mask"]) & (X_batch != self.token_dict["cloze_mask"])
+                    missing_map = (X_batch == self.token_dict["missing_mask"])
 
                     # masked_map = masked_map.to(self.device) # imputation targets
                     # observed_map = observed_map.to(self.device) # upsampling targets
                     # pval_batch = pval_batch.to(self.device)
+
                     mY_batch = mY_batch.to(self.device)
                     Y_batch = Y_batch.float().to(self.device)
                     
@@ -407,55 +430,240 @@ class DINO_CANDI:
                         continue
                     
                     loss = loss.float()
-                    loss.backward()  
-                    
-                self.optimizer.step()
+                    loss.backward()
+                    del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
+
+                self.optimizer.step() # update student
                 self.update_teacher()
 
-                elapsed_time = datetime.now() - t0
-                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
-                minutes, seconds = divmod(remainder, 60)
-                
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
                 if DNA:
                     del _dnaseq_batch
                 gc.collect()
 
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+                
                 logstr = [
+                    "ENCODER",
                     f"Ep. {epoch}",
+                    f"Loss: {loss.item():.4f}",
                     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
                     f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer / len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
                     f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}",
-                    f"Loss: {loss.item():.4f}",
                     f"T_Ent: {normalized_teacher_entropy:.4f}",
                     f"S_Ent: {normalized_student_entropy:.4f}",
                     f"KL_div: {batch_avg_kl_div:.4f}",
                     f"took {int(minutes)}:{int(seconds):02d}",
                 ]
                 logstr = " | ".join(logstr)
-                log_strs.append(logstr)
+                self.log_strs.append(logstr)
                 print(logstr)
 
-                # (Rest of logging, model saving, and validation code as needed.)
-                next_epoch = self.dataset.update_batch_pointers()
-        
-    def evaluate_encoder(self):
-        """
-        Evaluate the current quality of the encoder representations.
-        This evaluation should train (or fine-tune) a candidate decoder to reconstruct the global input
-        and report reconstruction metrics (e.g., MSE, R2 score).
+                chr0 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                dsf_pointer0 = self.dataset.dsf_pointer
+                bios_pointer0 = self.dataset.bios_pointer
 
-        TODO: Please implement your candidate decoder training and evaluation here.
-        You can use a simple regression model or any other decoder architecture that fits your task.
-        """
-        # Example placeholder:
-        print("Running encoder evaluation with candidate decoder...")
-        # TODO: Replace the following with your decoder evaluation code.
-        if self.candidate_decoder is None:
-            print("Candidate decoder is not implemented. Please implement candidate decoder evaluation.")
-        else:
-            # Example: train candidate decoder for a few iterations and compute reconstruction loss.
-            pass
+                next_epoch = self.dataset.update_batch_pointers()
+
+                dsf_pointer1 = self.dataset.dsf_pointer
+                chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
+                bios_pointer1 = self.dataset.bios_pointer
+
+                if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+                    logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+                    logfile.write("\n".join(self.log_strs))
+                    logfile.close()
+
+                    self.train_decoder(context_length, batch_size)
+
+        
+    def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True):
+        for epoch in range(num_epochs):
+            self.decoder_dataset.new_epoch()
+            next_epoch = False
+
+            last_lopr = -1
+            while (next_epoch==False):
+                t0 = datetime.now()
+                batch_rec = {
+                    "ups_count_loss":[], "ups_pval_loss":[],
+                    "ups_count_r2":[], "ups_pval_r2":[],
+                    "ups_count_pp":[], "ups_pval_pp":[],
+                    "ups_count_conf":[], "ups_pval_conf":[], 
+                    "ups_count_mse":[],  "ups_pval_mse":[], 
+                    "ups_count_spearman":[], "ups_pval_spearman":[],
+                    "ups_count_pearson":[], "ups_pval_pearson":[], 
+                    }
+
+                if DNA:
+                    _X_batch, _mX_batch, _avX_batch, _dnaseq_batch= self.decoder_dataset.get_batch(side="x", dna_seq=True)
+                else:
+                    _X_batch, _mX_batch, _avX_batch = self.decoder_dataset.get_batch(side="x")
+
+                _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.decoder_dataset.get_batch(side="y", pval=True)
+
+                if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
+                    self.decoder_dataset.update_batch_pointers()
+                    print("mismatch in shapes! skipped batch...")
+                    continue
+                    
+                self.optimizer.zero_grad()
+                torch.cuda.empty_cache()
+
+                for _ in range(inner_epochs):
+                    if DNA:
+                        X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
+                    else:
+                        X_batch, mX_batch, avX_batch = _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone()
+                        
+                    Y_batch, mY_batch, avY_batch, pval_batch = _Y_batch.clone(), _mY_batch.clone(), _avY_batch.clone(), _pval_batch.clone()
+
+                    masked_map = (X_batch == self.token_dict["cloze_mask"])
+                    observed_map = (X_batch != self.token_dict["missing_mask"]) & (X_batch != self.token_dict["cloze_mask"])
+                    missing_map = (X_batch == self.token_dict["missing_mask"])
+
+                    masked_map = masked_map.to(self.device) # imputation targets
+                    observed_map = observed_map.to(self.device) # upsampling targets
+                    pval_batch = pval_batch.to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+                    Y_batch = Y_batch.float().to(self.device)
+                    X_batch = X_batch.float().to(self.device)
+                    mX_batch = mX_batch.to(self.device)
+                    avX_batch = avX_batch.to(self.device)
+
+                    ###################################
+                    dnaseq_batch = dnaseq_batch.to(self.device)
+                    with torch.no_grad():
+                        latent = self.student(X_batch, dnaseq_batch, mX_batch, return_projected=False)
+                    output_p, output_n, output_mu, output_var = self.decoder(latent, mY_batch)
+
+                    count_loss, pval_loss = self.decoder_criterion(
+                        output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map)
+                    ###################################
+                    loss = count_loss + pval_loss
+                    if torch.isnan(loss).sum() > 0:
+                        skipmessage = "Encountered nan loss! Skipping batch..."
+                        log_strs.append(skipmessage)
+                        del X_batch, mX_batch, mY_batch, avX_batch, output_p, output_n, Y_batch, observed_map, loss
+                        print(skipmessage)
+                        torch.cuda.empty_cache() 
+                        continue
+                    
+                    loss = loss.float()
+                    loss.backward()
+
+                    torch.nn.utils.clip_grad_value_(self.decoder.parameters(), clip_value=5)
+
+                    # UPS Count Predictions
+                    neg_bin_ups = NegativeBinomial(output_p[observed_map].cpu().detach(), output_n[observed_map].cpu().detach())
+                    ups_count_pred = neg_bin_ups.expect().numpy()
+                    ups_count_std = neg_bin_ups.std().numpy()
+
+                    ups_count_true = Y_batch[observed_map].cpu().detach().numpy()
+                    ups_count_abs_error = torch.abs(torch.Tensor(ups_count_true) - torch.Tensor(ups_count_pred)).numpy()
+
+                    ups_count_r2 = r2_score(ups_count_true, ups_count_pred)
+                    ups_count_errstd = spearmanr(ups_count_std, ups_count_abs_error)
+                    ups_count_pp = compute_perplexity(neg_bin_ups.pmf(ups_count_true))
+                    ups_count_mse = ((ups_count_true - ups_count_pred)**2).mean()
+
+                    ups_count_spearman = spearmanr(ups_count_true, ups_count_pred).correlation
+                    ups_count_pearson = pearsonr(ups_count_true, ups_count_pred)[0]
+
+                    # UPS P-value Predictions
+                    ups_pval_pred = output_mu[observed_map].cpu().detach().numpy()
+                    ups_pval_std = output_var[observed_map].cpu().detach().numpy() ** 0.5
+
+                    ups_pval_true = pval_batch[observed_map].cpu().detach().numpy()
+                    ups_pval_abs_error = torch.abs(torch.Tensor(ups_pval_true) - torch.Tensor(ups_pval_pred)).numpy()
+
+                    ups_pval_r2 = r2_score(ups_pval_true, ups_pval_pred)
+                    ups_pval_errstd = spearmanr(ups_pval_std, ups_pval_abs_error)
+                    gaussian_ups = Gaussian(output_mu[observed_map].cpu().detach(), output_var[observed_map].cpu().detach())
+                    ups_pval_pp = compute_perplexity(gaussian_ups.pdf(ups_pval_true))
+                    ups_pval_mse = ((ups_pval_true - ups_pval_pred)**2).mean()
+
+                    ups_pval_spearman = spearmanr(ups_pval_true, ups_pval_pred).correlation
+                    ups_pval_pearson = pearsonr(ups_pval_true, ups_pval_pred)[0]
+
+                    del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
+
+                    batch_rec["ups_count_loss"].append(count_loss.item())
+                    batch_rec["ups_pval_loss"].append(pval_loss.item())
+
+                    batch_rec["ups_count_r2"].append(ups_count_r2)
+                    batch_rec["ups_pval_r2"].append(ups_pval_r2)
+
+                    batch_rec["ups_count_pp"].append(ups_count_pp)
+                    batch_rec["ups_pval_pp"].append(ups_pval_pp)
+
+                    batch_rec["ups_count_conf"].append(ups_count_errstd)
+                    batch_rec["ups_pval_conf"].append(ups_pval_errstd)
+
+                    batch_rec["ups_count_mse"].append(ups_count_mse)
+                    batch_rec["ups_pval_mse"].append(ups_pval_mse)
+
+                    batch_rec["ups_count_spearman"].append(ups_count_spearman)
+                    batch_rec["ups_pval_spearman"].append(ups_pval_spearman)
+
+                    batch_rec["ups_count_pearson"].append(ups_count_pearson)
+                    batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
+
+                self.optimizer.step()
+
+                del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
+                if DNA:
+                    del _dnaseq_batch
+                gc.collect()
+
+                elapsed_time = datetime.now() - t0
+                hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+                
+                logstr = [
+                    "\tDECODER",
+                    f"Ep. {epoch}",
+                    f"Loss: {loss.item():.4f}",
+                    f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
+                    f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
+                    f"Bios Prog. {self.decoder_dataset.bios_pointer / self.decoder_dataset.num_bios:.2%}",  "\n",
+                    
+                    f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
+                    f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
+                    f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
+                    f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n",
+
+                    f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
+                    f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
+                    f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
+                    f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n",
+
+                    f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
+                    f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
+                    f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
+                    f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n",
+                    f"took {int(minutes)}:{int(seconds):02d}",
+                ]
+                logstr = " | ".join(logstr)
+                self.log_strs.append(logstr)
+                print(logstr)
+
+                chr0 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
+                dsf_pointer0 = self.decoder_dataset.dsf_pointer
+                bios_pointer0 = self.decoder_dataset.bios_pointer
+
+                next_epoch = self.decoder_dataset.update_batch_pointers()
+
+                dsf_pointer1 = self.decoder_dataset.dsf_pointer
+                chr1 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
+                bios_pointer1 = self.decoder_dataset.bios_pointer
+
+                if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+                    logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+                    logfile.write("\n".join(self.log_strs))
+                    logfile.close()
 
 ###############################################
 # Main function: Parse arguments and run training.
@@ -474,8 +682,7 @@ def main():
 
     teacher_encoder.load_state_dict(student_encoder.state_dict())
 
-    # -------------------------------
-    candidate_decoder = None  # TODO: Replace with your candidate decoder instantiation if available.
+   
 
     # -------------------------------
     data_path = "/project/compbio-lab/encode_data/"
@@ -493,7 +700,6 @@ def main():
     )
 
     # -------------------------------
-    # Set hyperparameters for DINO_CANDI.
     num_epochs = 100            # Adjust as needed.
     learning_rate = 1e-3        # Learning rate for the student encoder.
     ema_decay = 0.996            # EMA decay coefficient for teacher updates.
@@ -502,22 +708,38 @@ def main():
     t_teacher = 0.04            # Temperature for teacher outputs.
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
-    mask_percentage = 0.15      # Fraction of assays to mask.
     num_local_views = 1         # Number of local views to generate per batch.
     
     # -------------------------------
-    # Device Setup.
     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
-
     # -------------------------------
     optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
+
+    # -------------------------------
+    candi_decoder = CANDI_Decoder(
+        signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
+        context_length=context_length, pool_size=2, expansion_factor=3)
+
+    decoder_optimizer = optim.Adam(candi_decoder.parameters(), lr=learning_rate)
+    decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
+    decoder_dataset = ExtendedEncodeDataHandler(data_path)
+    decoder_dataset.initialize_EED(
+        m=1000,                  # number of loci
+        context_length=context_length*25,
+        bios_batchsize=20,       # batch size for bios samples
+        loci_batchsize=1,        # batch size for loci
+        loci_gen="ccre",         # loci generation method
+        bios_min_exp_avail_threshold=7,  # minimum available bios
+        check_completeness=True,
+        eic=True,
+        merge_ct=True
+    )
 
     # -------------------------------
     dino_trainer = DINO_CANDI(
         student_encoder=student_encoder,
         teacher_encoder=teacher_encoder,
-        decoder=candidate_decoder,
         dataset=dataset,
         optimizer=optimizer,
         ema_decay=ema_decay,
@@ -525,7 +747,11 @@ def main():
         t_student=t_student,
         t_teacher=t_teacher,
         device_student=device_student,
-        device_teacher=device_teacher
+        device_teacher=device_teacher,
+        decoder=candidate_decoder, 
+        decoder_optimizer=decoder_optimizer,
+        decoder_dataset=decoder_dataset,
+        decoder_criterion=decoder_criterion
     )
 
     # -------------------------------
@@ -536,7 +762,6 @@ def main():
         batch_size=batch_size,
         inner_epochs=inner_epochs,
         arch="",
-        mask_percentage=mask_percentage,
         hook=False,
         DNA=True,  # Set to True if you use DNA-specific inputs.
         early_stop=True,
