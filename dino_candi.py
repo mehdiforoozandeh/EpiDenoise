@@ -669,6 +669,17 @@ class DINO_CANDI:
 
 def main():
     context_length = 1200
+    num_epochs = 100            # Adjust as needed.
+    learning_rate = 1e-3        # Learning rate for the student encoder.
+    ema_decay = 0.996            # EMA decay coefficient for teacher updates.
+    center_update = 0.9        # Center update coefficient.
+    t_student = 0.4             # Temperature for student outputs.
+    t_teacher = 0.04            # Temperature for teacher outputs.
+    batch_size = 50             # Batch size to be used by your dataset (if applicable).
+    inner_epochs = 1            # Number of inner iterations per batch.
+    num_local_views = 1    
+    loci_gen = "debug"# "ccre"   
+
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
@@ -680,8 +691,6 @@ def main():
 
     teacher_encoder.load_state_dict(student_encoder.state_dict())
 
-   
-
     # -------------------------------
     data_path = "/project/compbio-lab/encode_data/"
     dataset = ExtendedEncodeDataHandler(data_path)
@@ -690,23 +699,14 @@ def main():
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="ccre",         # loci generation method
+        loci_gen=loci_gen,         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
         merge_ct=True
     )
 
-    # -------------------------------
-    num_epochs = 100            # Adjust as needed.
-    learning_rate = 1e-3        # Learning rate for the student encoder.
-    ema_decay = 0.996            # EMA decay coefficient for teacher updates.
-    center_update = 0.9        # Center update coefficient.
-    t_student = 0.4             # Temperature for student outputs.
-    t_teacher = 0.04            # Temperature for teacher outputs.
-    batch_size = 50             # Batch size to be used by your dataset (if applicable).
-    inner_epochs = 1            # Number of inner iterations per batch.
-    num_local_views = 1         # Number of local views to generate per batch.
+      # Number of local views to generate per batch.
     
     # -------------------------------
     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -727,7 +727,7 @@ def main():
         context_length=context_length*25,
         bios_batchsize=20,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="ccre",         # loci generation method
+        loci_gen=loci_gen,         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
