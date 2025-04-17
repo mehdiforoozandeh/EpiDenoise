@@ -707,7 +707,7 @@ def main():
 
     learning_rate = 1e-4      
     ema_decay = 0.996         
-    center_update = 0.996       
+    center_update = 0.90
     t_student = 0.1        
     t_teacher = 0.04     
                
