@@ -459,7 +459,7 @@ class DINO_CANDI:
 ###############################################
 
 def main():
-    context_length = 1200
+    context_length = 1600
     # -------------------------------
     # Instantiate the Student and Teacher Encoders.
     # Replace 'create_candi_encoder()' with your actual function that returns a CANDI encoder instance.
@@ -489,7 +489,7 @@ def main():
     dataset.initialize_EED(
         m=3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
-        bios_batchsize=20,       # batch size for bios samples
+        bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
