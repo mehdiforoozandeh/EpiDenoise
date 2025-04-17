@@ -498,7 +498,7 @@ class DINO_CANDI:
                     self.train_decoder(context_length, batch_size, arch=arch)
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
-        self.dataset.new_epoch()
+        self.decoder_dataset.new_epoch()
         next_epoch = False
         self.student.eval()
         self.decoder.train()
