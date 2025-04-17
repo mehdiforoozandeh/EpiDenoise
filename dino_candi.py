@@ -505,7 +505,7 @@ def main():
     learning_rate = 1e-3        # Learning rate for the student encoder.
     ema_decay = 0.996            # EMA decay coefficient for teacher updates.
     center_update = 0.9        # Center update coefficient.
-    t_student = 0.1             # Temperature for student outputs.
+    t_student = 0.4             # Temperature for student outputs.
     t_teacher = 0.04            # Temperature for teacher outputs.
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
