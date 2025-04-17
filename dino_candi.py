@@ -485,7 +485,7 @@ def main():
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="ccre",         # loci generation method
+        loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
