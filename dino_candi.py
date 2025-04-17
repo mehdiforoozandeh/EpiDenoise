@@ -152,7 +152,7 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         # --- Add projection head ---
         self.projection_head = nn.Sequential(
             nn.Linear(self.latent_dim, self.latent_dim),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(self.latent_dim, self.latent_dim)
         )
 
@@ -499,7 +499,7 @@ def main():
     dataset.initialize_EED(
         m=3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
-        bios_batchsize=50,       # batch size for bios samples
+        bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
