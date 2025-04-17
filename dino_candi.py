@@ -632,7 +632,7 @@ class DINO_CANDI:
                     batch_rec["ups_count_pearson"].append(ups_count_pearson)
                     batch_rec["ups_pval_pearson"].append(ups_pval_pearson)
 
-                self.optimizer.step()
+                self.decoder_optimizer.step()
 
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
                 if DNA:
