@@ -333,8 +333,8 @@ class DINO_CANDI:
                     # masked_map = masked_map.to(self.device) # imputation targets
                     # observed_map = observed_map.to(self.device) # upsampling targets
                     # pval_batch = pval_batch.to(self.device)
-                    # mY_batch = mY_batch.to(self.device)
-                    # Y_batch = Y_batch.to(self.device)
+                    mY_batch = mY_batch.to(self.device)
+                    Y_batch = Y_batch.to(self.device)
                     
                     X_batch = X_batch.float().to(self.device)
                     mX_batch = mX_batch.to(self.device)
@@ -351,16 +351,18 @@ class DINO_CANDI:
                     if DNA:
                         dnaseq_batch = dnaseq_batch.to(self.device)
                         with torch.no_grad():
-                            teacher_output = self.teacher(X_batch, dnaseq_batch, mX_batch)
+                            teacher_output = self.teacher(Y_batch, dnaseq_batch, mY_batch)
 
+                        student_outputs.append(self.student(Y_batch, dnaseq_batch, mY_batch))
                         student_outputs.append(self.student(X_batch, dnaseq_batch, mX_batch))
                         for loc in local_views:
                             student_outputs.append(self.student(loc[0], dnaseq_batch, loc[1]))
 
                     else:
                         with torch.no_grad():
-                            teacher_output = self.teacher(X_batch, mX_batch)
+                            teacher_output = self.teacher(Y_batch, mY_batch)
 
+                        student_outputs.append(self.student(Y_batch, mY_batch))
                         student_outputs.append(self.student(X_batch, mX_batch))
                         for loc in local_views:
                             student_outputs.append(self.student(loc[0], loc[1]))
@@ -462,8 +464,6 @@ class DINO_CANDI:
 def main():
     context_length = 1600
     # -------------------------------
-    # Instantiate the Student and Teacher Encoders.
-    # Replace 'create_candi_encoder()' with your actual function that returns a CANDI encoder instance.
     student_encoder = DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
         n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
@@ -475,24 +475,17 @@ def main():
     teacher_encoder.load_state_dict(student_encoder.state_dict())
 
     # -------------------------------
-    # Instantiate the candidate decoder (for evaluation) if available.
-    # If you haven't implemented a candidate decoder yet, you can simply set this to None.
-    # Optionally, you can create one using a function like create_candi_decoder().
     candidate_decoder = None  # TODO: Replace with your candidate decoder instantiation if available.
 
     # -------------------------------
-    # Instantiate your dataset.
-    # Your dataset is expected to implement methods such as new_epoch(), get_batch(), update_batch_pointers(), etc.
-    # For instance, if you are using ExtendedEncodeDataHandler, instantiate and initialize it here.
     data_path = "/project/compbio-lab/encode_data/"
-    # The following parameters are placeholders. Adjust them as needed.
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
         m=3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
-        loci_gen="random",         # loci generation method
+        loci_gen="ccre",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
@@ -510,7 +503,7 @@ def main():
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
     mask_percentage = 0.15      # Fraction of assays to mask.
-    num_local_views = 1         # Number of local views to generate per batch.
+    num_local_views = 5         # Number of local views to generate per batch.
     
     # -------------------------------
     # Device Setup.
@@ -518,13 +511,9 @@ def main():
     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
 
     # -------------------------------
-    # Define the optimizer for the student encoder.
     optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
 
     # -------------------------------
-    # Instantiate the DINO_CANDI trainer.
-    # Note: The trainer expects (student_encoder, teacher_encoder, candidate_decoder, dataset, optimizer, 
-    # ema_decay, center_update, t_student, t_teacher, device_student, device_teacher).
     dino_trainer = DINO_CANDI(
         student_encoder=student_encoder,
         teacher_encoder=teacher_encoder,
@@ -551,10 +540,9 @@ def main():
         hook=False,
         DNA=True,  # Set to True if you use DNA-specific inputs.
         early_stop=True,
-        accumulation_steps=4,
+        accumulation_steps=5,
         num_local_views=num_local_views
     )
-
 
 if __name__ == "__main__":
     main()
