@@ -240,7 +240,7 @@ class DINO_CANDI:
     def generate_local_views(self, X_batch, mX_batch, avX_batch): # input is global view
         num_mask = random.randint(1, self.dataset.signal_dim - 1)
         return self.masker.progressive(X_batch, mX_batch, avX_batch, num_mask)
-        
+
     def dino_loss(self, student_out, teacher_out):
         """
         Compute the DINO loss between the student output and teacher output.
@@ -393,7 +393,7 @@ class DINO_CANDI:
                         kl_div = F.kl_div(student_log_probs, teacher_probs_scaled, reduction='batchmean')
                         kl_div_sum += kl_div.item()
                     batch_avg_kl_div = kl_div_sum / len(student_outputs)
-                    epoch_kl_div += batch_avg_kl_div
+                    # epoch_kl_div += batch_avg_kl_div
                     # -----------------------------
 
                     if torch.isnan(loss).sum() > 0:
