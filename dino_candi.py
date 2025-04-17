@@ -407,14 +407,14 @@ class DINO_CANDI:
                     loss = loss.float()
                     loss.backward()  
                     
-                    total_norm = 0.0
-                    for param in self.model.parameters():
-                        if param.grad is not None:
-                            param_norm = param.grad.data.norm(2)
-                            total_norm += param_norm.item() ** 2
-                    total_norm = total_norm ** 0.5
+                    # total_norm = 0.0
+                    # for param in self.model.parameters():
+                    #     if param.grad is not None:
+                    #         param_norm = param.grad.data.norm(2)
+                    #         total_norm += param_norm.item() ** 2
+                    # total_norm = total_norm ** 0.5
 
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
+                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
 
                 self.optimizer.step()
 
