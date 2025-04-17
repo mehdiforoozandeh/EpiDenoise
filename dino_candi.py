@@ -422,10 +422,10 @@ class DINO_CANDI:
                     f"Ep. {epoch}",
                     f"DSF{self.dataset.dsf_list[self.dataset.dsf_pointer]}->{1}",
                     f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]} Prog. {self.dataset.chr_loci_pointer / len(self.dataset.loci[list(self.dataset.loci.keys())[self.dataset.chr_pointer]]):.2%}",
-                    f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}", "\n",
+                    f"Bios Prog. {self.dataset.bios_pointer / self.dataset.num_bios:.2%}",
                     f"Loss: {loss.item():.4f}",
-                    f"S_Ent: {normalized_student_entropy:.4f}",
                     f"T_Ent: {normalized_teacher_entropy:.4f}",
+                    f"S_Ent: {normalized_student_entropy:.4f}",
                     f"KL_div: {batch_avg_kl_div:.4f}",
                     f"took {int(minutes)}:{int(seconds):02d}",
                 ]
@@ -489,7 +489,7 @@ def main():
     dataset.initialize_EED(
         m=3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
-        bios_batchsize=10,       # batch size for bios samples
+        bios_batchsize=20,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen="random",         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
@@ -503,9 +503,9 @@ def main():
     num_epochs = 100            # Adjust as needed.
     learning_rate = 1e-3        # Learning rate for the student encoder.
     ema_decay = 0.99            # EMA decay coefficient for teacher updates.
-    center_update = 0.9         # Center update coefficient.
-    t_student = 0.1             # Temperature for student outputs.
-    t_teacher = 0.07            # Temperature for teacher outputs.
+    center_update = 0.99         # Center update coefficient.
+    t_student = 0.4             # Temperature for student outputs.
+    t_teacher = 0.04            # Temperature for teacher outputs.
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
     mask_percentage = 0.15      # Fraction of assays to mask.
