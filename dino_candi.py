@@ -160,9 +160,6 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         if len(seq.shape) != len(src.shape):
             seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
 
-        print(src.shape)
-        print(seq.shape)
-
         seq = seq.permute(0, 2, 1)  # to [batch, 4, 25*L]
         seq = seq.float()
 
@@ -181,11 +178,6 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
 
         # Fusion.
-
-        print(src.shape)
-        print(xmd_embedding.shape)
-        print(seq.shape)
-        exit()
         src = torch.cat([src, xmd_embedding, seq], dim=-1)
         src = self.fusion(src)
 
