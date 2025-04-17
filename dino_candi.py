@@ -725,7 +725,7 @@ def main():
     data_path = "/project/compbio-lab/encode_data/"
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=100,                  # number of loci
+        m=10,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
@@ -753,7 +753,7 @@ def main():
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
-        m= 100,                  # number of loci
+        m= 10,                  # number of loci
         context_length=context_length*25,
         bios_batchsize=50,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
