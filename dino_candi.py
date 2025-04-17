@@ -645,7 +645,7 @@ class DINO_CANDI:
                 
                 logstr = [
                     "\tDECODER",
-                    f"Ep. {epoch}",
+                    # f"Ep. {epoch}",
                     f"Loss: {loss.item():.4f}",
                     f"DSF{self.decoder_dataset.dsf_list[self.decoder_dataset.dsf_pointer]}->{1}",
                     f"{list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]} Prog. {self.decoder_dataset.chr_loci_pointer / len(self.decoder_dataset.loci[list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]]):.2%}",
