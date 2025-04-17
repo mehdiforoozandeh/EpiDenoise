@@ -407,15 +407,6 @@ class DINO_CANDI:
                     loss = loss.float()
                     loss.backward()  
                     
-                    # total_norm = 0.0
-                    # for param in self.model.parameters():
-                    #     if param.grad is not None:
-                    #         param_norm = param.grad.data.norm(2)
-                    #         total_norm += param_norm.item() ** 2
-                    # total_norm = total_norm ** 0.5
-
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=5)
-
                 self.optimizer.step()
 
                 elapsed_time = datetime.now() - t0
@@ -437,7 +428,6 @@ class DINO_CANDI:
                     f"T_Ent: {normalized_teacher_entropy:.4f}",
                     f"KL_div: {batch_avg_kl_div:.4f}",
                     f"took {int(minutes)}:{int(seconds):02d}",
-                    f"Grad_Norm: {total_norm:.2f}"
                 ]
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
