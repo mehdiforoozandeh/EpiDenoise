@@ -709,6 +709,7 @@ def main():
     inner_epochs = 1            # Number of inner iterations per batch.
     num_local_views = 1    
     loci_gen = "ccre"   
+    eic = True
 
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
@@ -725,15 +726,16 @@ def main():
     data_path = "/project/compbio-lab/encode_data/"
     dataset = ExtendedEncodeDataHandler(data_path)
     dataset.initialize_EED(
-        m=100,                  # number of loci
+        m=3000,                  # number of loci
         context_length=context_length*25,     # context length (adjust based on your application)
         bios_batchsize=10,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen=loci_gen,         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
-        eic=True,
-        merge_ct=True
+        eic=eic,
+        merge_ct=True,
+        DSF_list=[1, 2, 4]
     )
 
       # Number of local views to generate per batch.
@@ -753,14 +755,14 @@ def main():
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
-        m= 100,                  # number of loci
+        m= 1000,                  # number of loci
         context_length=context_length*25,
         bios_batchsize=50,       # batch size for bios samples
         loci_batchsize=1,        # batch size for loci
         loci_gen=loci_gen,         # loci generation method
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
-        eic=True,
+        eic=eic,
         merge_ct=True,
         DSF_list=[1, 2]
     )
