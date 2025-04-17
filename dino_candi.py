@@ -705,17 +705,17 @@ def main():
     num_epochs = 100
     batch_size = 50  
 
-    learning_rate = 1e-2
-    ema_decay = 0.996         
-    center_update = 0.996
-    t_student = 0.1        
-    t_teacher = 0.04     
-               
-    # learning_rate = 1e-3     
+    # learning_rate = 1e-2
     # ema_decay = 0.996         
-    # center_update = 0.9       
-    # t_student = 0.4           
-    # t_teacher = 0.04          
+    # center_update = 0.996
+    # t_student = 0.1        
+    # t_teacher = 0.04     
+               
+    learning_rate = 1e-3     
+    ema_decay = 0.996         
+    center_update = 0.90      
+    t_student = 0.1      
+    t_teacher = 0.04          
     
     inner_epochs = 1 
     num_local_views = 1    
