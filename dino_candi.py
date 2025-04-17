@@ -700,7 +700,7 @@ class DINO_CANDI:
 def main():
     context_length = 1200
     num_epochs = 100            # Adjust as needed.
-    learning_rate = 1e-3        # Learning rate for the student encoder.
+    learning_rate = 1e-4        # Learning rate for the student encoder.
     ema_decay = 0.996            # EMA decay coefficient for teacher updates.
     center_update = 0.9        # Center update coefficient.
     t_student = 0.4             # Temperature for student outputs.
