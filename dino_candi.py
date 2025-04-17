@@ -240,8 +240,8 @@ class DINO_CANDI:
     def generate_local_views(self, X_batch, mX_batch, avX_batch): # input is global view
         num_mask = random.randint(1, self.dataset.signal_dim - 1)
         return self.masker.progressive(X_batch, mX_batch, avX_batch, num_mask)
-
-    def compute_dino_loss(self, student_out, teacher_out):
+        
+    def dino_loss(self, student_out, teacher_out):
         """
         Compute the DINO loss between the student output and teacher output.
         
