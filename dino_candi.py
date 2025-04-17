@@ -462,7 +462,7 @@ class DINO_CANDI:
 ###############################################
 
 def main():
-    context_length = 1200
+    context_length = 1600
     # -------------------------------
     student_encoder = DINO_CANDI_DNA_Encoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
@@ -503,7 +503,7 @@ def main():
     batch_size = 50             # Batch size to be used by your dataset (if applicable).
     inner_epochs = 1            # Number of inner iterations per batch.
     mask_percentage = 0.15      # Fraction of assays to mask.
-    num_local_views = 3         # Number of local views to generate per batch.
+    num_local_views = 1         # Number of local views to generate per batch.
     
     # -------------------------------
     # Device Setup.
