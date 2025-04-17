@@ -278,7 +278,10 @@ class DINO_CANDI:
 
         self.decoder = decoder.to(self.device)
         self.decoder_optimizer = decoder_optimizer
+
         self.decoder_dataset = decoder_dataset
+        self.decoder_dataset.new_epoch()
+
         self.decoder_criterion = decoder_criterion
 
         # Initialize a center vector based on the output projection dimension of your encoder.
@@ -490,7 +493,8 @@ class DINO_CANDI:
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
 
-                if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+                # if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+                if chr0 != chr1:
                     logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
                     logfile.write("\n".join(self.log_strs))
                     logfile.close()
@@ -498,7 +502,6 @@ class DINO_CANDI:
                     self.train_decoder(context_length, batch_size, arch=arch)
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
-        self.decoder_dataset.new_epoch()
         next_epoch = False
         self.student.eval()
         self.decoder.train()
@@ -675,12 +678,16 @@ class DINO_CANDI:
             bios_pointer0 = self.decoder_dataset.bios_pointer
 
             next_epoch = self.decoder_dataset.update_batch_pointers()
-
+            
+            if next_epoch:
+                self.decoder_dataset.new_epoch()
+                
             dsf_pointer1 = self.decoder_dataset.dsf_pointer
             chr1 = list(self.decoder_dataset.loci.keys())[self.decoder_dataset.chr_pointer]
             bios_pointer1 = self.decoder_dataset.bios_pointer
 
-            if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+            # if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
+            if chr0 != chr1:
                 logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
                 logfile.write("\n".join(self.log_strs))
                 logfile.close()
