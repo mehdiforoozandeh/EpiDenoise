@@ -123,10 +123,12 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         # Pooling
         if self.pooling_type == "mean":
             rep = x.mean(dim=1)
+
         elif self.pooling_type == "attention":
             scores = self.attn_pool(x).squeeze(-1)       # [bsz, seq_len]
             weights = torch.softmax(scores, dim=1).unsqueeze(-1)
             rep = (weights * x).sum(dim=1)
+
         elif self.pooling_type == "cls":
             rep = x[:, 0, :]
         else:
@@ -134,6 +136,7 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
 
         if return_projected:
             return self.projection_head(rep)
+
         else:
             if self.pooling_type == "cls":
                 return x[:, 1:, :]
@@ -699,14 +702,22 @@ class DINO_CANDI:
 
 def main():
     context_length = 1200
-    num_epochs = 100            # Adjust as needed.
-    learning_rate = 1e-4        # Learning rate for the student encoder.
-    ema_decay = 0.996            # EMA decay coefficient for teacher updates.
-    center_update = 0.9        # Center update coefficient.
-    t_student = 0.4             # Temperature for student outputs.
-    t_teacher = 0.04            # Temperature for teacher outputs.
-    batch_size = 50             # Batch size to be used by your dataset (if applicable).
-    inner_epochs = 1            # Number of inner iterations per batch.
+    num_epochs = 100
+    batch_size = 50  
+
+    learning_rate = 1e-3      
+    ema_decay = 0.996         
+    center_update = 0.9       
+    t_student = 0.1        
+    t_teacher = 0.04     
+               
+    # learning_rate = 1e-4      
+    # ema_decay = 0.996         
+    # center_update = 0.9       
+    # t_student = 0.4           
+    # t_teacher = 0.04          
+    
+    inner_epochs = 1 
     num_local_views = 1    
     loci_gen = "ccre"   
     eic = False
@@ -744,14 +755,14 @@ def main():
     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
     # -------------------------------
-    optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
+    optimizer = optim.AdamW(student_encoder.parameters(), lr=learning_rate)
 
     # -------------------------------
     candi_decoder = DINO_CANDI_Decoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
         context_length=context_length, pool_size=2, expansion_factor=3)
 
-    decoder_optimizer = optim.Adam(candi_decoder.parameters(), lr=learning_rate)
+    decoder_optimizer = optim.AdamW(candi_decoder.parameters(), lr=learning_rate)
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
