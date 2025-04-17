@@ -477,10 +477,9 @@ class DINO_CANDI:
                     logfile.close()
 
                     self.train_decoder(context_length, batch_size)
-
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True):
-        for epoch in range(num_epochs):
+        for epoch in range(1):
             self.decoder_dataset.new_epoch()
             next_epoch = False
 
@@ -512,7 +511,7 @@ class DINO_CANDI:
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
 
-                for _ in range(inner_epochs):
+                for _ in range(1):
                     if DNA:
                         X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
                     else:
