@@ -334,7 +334,7 @@ class DINO_CANDI:
                     # observed_map = observed_map.to(self.device) # upsampling targets
                     # pval_batch = pval_batch.to(self.device)
                     mY_batch = mY_batch.to(self.device)
-                    Y_batch = Y_batch.to(self.device)
+                    Y_batch = Y_batch.float().to(self.device)
                     
                     X_batch = X_batch.float().to(self.device)
                     mX_batch = mX_batch.to(self.device)
