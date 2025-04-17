@@ -496,9 +496,9 @@ class DINO_CANDI:
                     logfile.write("\n".join(self.log_strs))
                     logfile.close()
 
-                    self.train_decoder(context_length, batch_size)
+                    self.train_decoder(context_length, batch_size, arch=arch)
         
-    def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True):
+    def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
         for epoch in range(1):
             self.decoder_dataset.new_epoch()
             next_epoch = False
@@ -654,17 +654,17 @@ class DINO_CANDI:
                     f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
                     f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
-                    f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n",
+                    f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
 
                     f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
                     f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
                     f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
-                    f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n",
+                    f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
 
                     f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
                     f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
                     f"Ct_Conf {np.mean(batch_rec['ups_count_conf']):.2f}",
-                    f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n",
+                    f"P_Conf {np.mean(batch_rec['ups_pval_conf']):.2f}",  "\n\t",
                     f"took {int(minutes)}:{int(seconds):02d}",
                 ]
                 logstr = " | ".join(logstr)
