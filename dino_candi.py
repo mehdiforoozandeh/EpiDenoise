@@ -528,7 +528,7 @@ class DINO_CANDI:
                     print("mismatch in shapes! skipped batch...")
                     continue
                     
-                self.optimizer.zero_grad()
+                self.decoder_optimizer.zero_grad()
                 torch.cuda.empty_cache()
 
                 for _ in range(1):
