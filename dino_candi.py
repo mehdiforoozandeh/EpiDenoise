@@ -754,7 +754,8 @@ def main():
         bios_min_exp_avail_threshold=7,  # minimum available bios
         check_completeness=True,
         eic=True,
-        merge_ct=True
+        merge_ct=True,
+        DSF_list=[1, 2]
     )
 
     # -------------------------------
