@@ -144,11 +144,11 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
 # CANDI_Decoder & loss
 ###############################################
 
-class CANDI_Decoder(nn.Module):
+class DINO_CANDI_Decoder(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size,
          n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
-        super(CANDI_Decoder, self).__init__()
+        super(DINO_CANDI_Decoder, self).__init__()
 
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
@@ -169,24 +169,43 @@ class CANDI_Decoder(nn.Module):
             # nn.ReLU()
             )
 
-        self.deconv = nn.ModuleList(
+        self.deconv_c = nn.ModuleList(
             [DeconvTower(
                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.deconv_p = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
     def forward(self, src, y_metadata):
         ymd_embedding = self.ymd_emb(y_metadata)
         src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.ymd_fusion(src)
-        
         src = src.permute(0, 2, 1) # to N, F2, L'
-        for dconv in self.deconv:
-            src = dconv(src)
 
-        src = src.permute(0, 2, 1) # to N, L, F1
+        upsampled_p = src
+        upsampled_c = src
 
-        return src    
+        for dconv in self.deconv_c:
+            upsampled_c = dconv(upsampled_c)
+
+        for dconv in self.deconv_p:
+            upsampled_p = dconv(upsampled_p)
+
+        upsampled_p = upsampled_p.permute(0, 2, 1) # to N, L, F1
+        upsampled_c = upsampled_c.permute(0, 2, 1) # to N, L, F1
+
+        p, n = self.neg_binom_layer(upsampled_c)
+        mu, var = self.gaussian_layer(upsampled_p)
+
+        return p, n, mu, var
 
 class CANDI_Decoder_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
@@ -719,7 +738,7 @@ def main():
     optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
 
     # -------------------------------
-    candi_decoder = CANDI_Decoder(
+    candi_decoder = DINO_CANDI_Decoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
         context_length=context_length, pool_size=2, expansion_factor=3)
 
