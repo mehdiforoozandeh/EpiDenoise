@@ -755,14 +755,14 @@ def main():
     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
     # -------------------------------
-    optimizer = optim.AdamW(student_encoder.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
 
     # -------------------------------
     candi_decoder = DINO_CANDI_Decoder(
         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
         context_length=context_length, pool_size=2, expansion_factor=3)
 
-    decoder_optimizer = optim.AdamW(candi_decoder.parameters(), lr=learning_rate)
+    decoder_optimizer = optim.SGD(candi_decoder.parameters(), lr=learning_rate)
     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
     decoder_dataset = ExtendedEncodeDataHandler(data_path)
     decoder_dataset.initialize_EED(
