@@ -784,7 +784,7 @@ def main():
         check_completeness=True,
         eic=eic,
         merge_ct=True,
-        DSF_list=[1, 2]
+        DSF_list=[1, 2, 4]
     )
 
     # -------------------------------
