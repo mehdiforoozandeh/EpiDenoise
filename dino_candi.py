@@ -9,7 +9,6 @@ import os
 import math
 from tqdm import tqdm
 
-
 ###############################################
 # CANDI_DNA_Encoder (with DNA) with Projection Head
 ###############################################
@@ -503,6 +502,16 @@ class DINO_CANDI:
                     logfile.close()
 
                     self.train_decoder(context_length, batch_size, arch=arch)
+
+                    try:
+                        torch.save(
+                            self.student.state_dict(), 
+                            f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}.pth')
+                        torch.save(
+                            self.decoder.state_dict(), 
+                            f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}.pth')
+                    except:
+                        pass
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
         next_epoch = False
