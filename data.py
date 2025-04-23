@@ -3084,9 +3084,15 @@ class ExtendedEncodeDataHandler:
             
             self.merged_train_val_test_split()
 
+            self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
+            self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
+            for bios in self.navigation.keys():
+                if self.has_rnaseq(bios):
+                    rnad = self.load_rna_seq_data(bios, self.gene_coords)
+                    print(rnad)
+                    
         else:
             self.train_val_test_split()
-        
         
         if eic:
             self.init_eic(target_split=split)
