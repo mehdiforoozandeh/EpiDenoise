@@ -27,6 +27,28 @@ import numpy as np
 # from prettytable import PrettyTable
 # import pyBigWig
 
+def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
+    gene_coords = pd.read_csv(file)
+    gene_coords = gene_coords.drop(["Unnamed: 0"], axis=1)
+
+    gene_coords["start"] = gene_coords["start"].astype("int")
+    gene_coords["end"] = gene_coords["end"].astype("int")
+
+    if drop_negative_strand:
+        gene_coords = gene_coords.loc[gene_coords["strand"]=="+", :].reset_index(drop=True)
+    
+    if drop_overlapping:
+        todrop = []
+        for i in range(len(gene_coords)-1):
+            if get_overlap((gene_coords["start"][i], gene_coords["end"][i]),(gene_coords["start"][i+1], gene_coords["end"][i+1])) >0:
+                if (gene_coords["end"][i] - gene_coords["start"][i]) <= gene_coords["end"][i+1] - gene_coords["start"][i+1]:
+                    todrop.append(i)
+                else:
+                    todrop.append(i+1)
+        gene_coords = gene_coords.drop(todrop).reset_index(drop=True)
+
+    return gene_coords
+
 def get_binned_vals(bigwig_file, chr, resolution=25):
     with pyBigWig.open(bigwig_file) as bw:
         if chr not in bw.chroms():
@@ -3090,7 +3112,7 @@ class ExtendedEncodeDataHandler:
                 if self.has_rnaseq(bios):
                     rnad = self.load_rna_seq_data(bios, self.gene_coords)
                     print(rnad)
-                    
+
         else:
             self.train_val_test_split()
         
