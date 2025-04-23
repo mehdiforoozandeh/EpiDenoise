@@ -1206,7 +1206,6 @@ class DataMasker:
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
 
-
 def sequence_pad(data, max_length, pad_value=-1):
     # Get the original dimensions of the data
     original_size = data.size()
@@ -1350,7 +1349,6 @@ class COORD(object):
             self.bg_bins = pd.read_csv(f"{self.outdir}/background_bins_{self.resolution}bp.csv").drop("Unnamed: 0", axis=1)
 
         print(f"number of foreground bins: {len(self.fg_bins)} | number of background bins: {len(self.bg_bins)}")
-
 
 if __name__ == "__main__":
 

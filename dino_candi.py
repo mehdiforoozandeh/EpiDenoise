@@ -9,6 +9,17 @@ import os
 import math
 from tqdm import tqdm
 
+"""
+TODO: ADD
+
+2ENCODER:
+src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+
+2DECODER:
+y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+"""
+
 ###############################################
 # CANDI_DNA_Encoder (with DNA) with Projection Head
 ###############################################
@@ -232,6 +243,100 @@ class CANDI_Decoder_LOSS(nn.Module):
         observed_pval_loss = observed_pval_loss.float()
         
         return observed_count_loss, observed_pval_loss
+
+###############################################
+# Pretrained DINO_CANDI (ENCODER + DECODER)
+###############################################
+
+class DINO_CANDI_Model:
+    """
+    Wrapper to load a trained DINO_CANDI encoder and decoder from checkpoints,
+    and provide encode, decode, and forward methods.
+    """
+    def __init__(
+        self,
+        encoder_class,
+        encoder_args,
+        encoder_ckpt_path,
+        decoder_class,
+        decoder_args,
+        decoder_ckpt_path,
+        device=None):
+
+        # Setup device
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Instantiate encoder and load weights
+        self.encoder = encoder_class(**encoder_args).to(self.device)
+        enc_state = torch.load(encoder_ckpt_path, map_location=self.device)
+        self.encoder.load_state_dict(enc_state)
+        self.encoder.eval()
+        # Instantiate decoder and load weights
+        self.decoder = decoder_class(**decoder_args).to(self.device)
+        dec_state = torch.load(decoder_ckpt_path, map_location=self.device)
+        self.decoder.load_state_dict(dec_state)
+        self.decoder.eval()
+
+    @torch.no_grad()
+    def encode(
+        self,
+        src,
+        seq,
+        metadata,
+        pooled: bool = True):
+        """
+        Encode inputs into latent representations.
+
+        Args:
+            src (Tensor): signal input of shape [batch, L, feature_dim]
+            seq (Tensor): sequence input of shape [batch, 4, L]
+            metadata (Tensor): metadata input of shape [batch, metadata_dim]
+            pooled (bool): if True, returns pooled embedding [batch, d],
+                           else returns per-position embeddings [batch, L', d]
+        Returns:
+            Tensor: latent embeddings, either pooled or per-position
+        """
+        # return_projected=False gives per-position or full representations
+        return self.encoder(src.to(self.device), seq.to(self.device), metadata.to(self.device), return_projected=pooled)
+
+    @torch.no_grad()
+    def decode(
+        self,
+        latent,
+        metadata):
+        """
+        Decode latent embeddings into outputs.
+
+        Args:
+            latent (Tensor): embedding, either [batch, d] or [batch, L', d]
+            metadata (Tensor): metadata input of shape [batch, metadata_dim]
+        Returns:
+            tuple: decoder outputs (p, n, mu, var)
+        """
+        # if per-position latent, decoder expects shape [batch, L', d]
+        return self.decoder(latent.to(self.device), metadata.to(self.device))
+
+    @torch.no_grad()
+    def forward(
+        self,
+        src,
+        seq,
+        encoder_metadata,
+        decoder_metadata,
+        pooled: bool = False):
+        """
+        Full forward: encode then decode.
+
+        Args:
+            src (Tensor): input for encoder
+            seq (Tensor): DNA sequence input for encoder
+            encoder_metadata (Tensor): metadata for encoder
+            decoder_metadata (Tensor): metadata for decoder
+            pooled (bool): whether to pool encoder outputs or keep per-position
+        Returns:
+            tuple: outputs from decoder
+        """
+        latent = self.encode(src, seq, encoder_metadata, pooled)
+        return self.decode(latent, decoder_metadata)
 
 ###############################################
 # DINO_CANDI Class: DINO-style training for CANDI's encoder
@@ -820,5 +925,43 @@ def main():
         num_local_views=num_local_views
     )
 
+def load():
+    context_length = 1200
+    latent_dim = 35 * (3**3)  # signal_dim * (expansion_factor^n_cnn_layers)
+
+    # Load pretrained model
+    model = DINO_CANDI_Model(
+        encoder_class=DINO_CANDI_DNA_Encoder,
+        encoder_args=dict(
+            signal_dim=35,
+            metadata_embedding_dim=4*35,
+            conv_kernel_size=3,
+            n_cnn_layers=3,
+            nhead=9,
+            n_sab_layers=4,
+            pool_size=2,
+            dropout=0.1,
+            context_length=context_length,
+            pos_enc="relative",
+            expansion_factor=3,
+            pooling_type="attention"
+        ),
+        encoder_ckpt_path="models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth",
+        decoder_class=DINO_CANDI_Decoder,
+        decoder_args=dict(
+            signal_dim=35,
+            metadata_embedding_dim=4*35,
+            conv_kernel_size=3,
+            n_cnn_layers=3,
+            context_length=context_length,
+            pool_size=2,
+            expansion_factor=3
+        ),
+        decoder_ckpt_path="models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
+    )
+    summary(model)
+    return model
+
 if __name__ == "__main__":
-    main()
+    load()
+    # main()

@@ -30,123 +30,6 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
-def auc_rec(y_true, y_pred):
-    # Calculate absolute errors
-    errors = np.abs(y_true - y_pred)
-    
-    # Sort the errors
-    sorted_errors = np.sort(errors)
-    
-    # Calculate cumulative proportion of points within error tolerance
-    cumulative_proportion = np.arange(1, len(sorted_errors) + 1) / len(sorted_errors)
-    
-    # Calculate AUC-REC
-    auc_rec = auc(sorted_errors, cumulative_proportion)
-
-    # Determine the maximum possible area under the curve
-    max_error = sorted_errors[-1]  # Maximum error tolerance observed
-    max_area = max_error * 1  # Since the cumulative proportion ranges from 0 to 1
-    
-    # Normalize AUC-REC
-    normalized_auc_rec = auc_rec / max_area if max_area > 0 else 0
-
-    return normalized_auc_rec
-
-def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear'):
-    """
-    Perform k-fold cross-validation for linear regression on the provided data.
-    
-    Args:
-        data (pd.DataFrame): The DataFrame containing features and labels.
-        k (int): The number of folds for cross-validation.
-        target (str): The label to predict ('TPM' or 'FPKM'). Default is 'TPM'.
-        
-    Returns:
-        avg_mse (float): The average Mean Squared Error across all folds.
-        avg_r2 (float): The average R-squared value across all folds.
-    """
-    # Get unique gene IDs
-    unique_gene_ids = data["geneID"].unique()
-    kf = KFold(n_splits=k, shuffle=True, random_state=42)
-
-    if logscale:
-        data["TPM"] = np.log(data["TPM"]+1)
-    
-    mse_scores = []
-    r2_scores = []
-    auc_recs = []
-    pearsonrs = []
-    spearmanrs = []
-
-    all_errors = []
-
-    # Perform K-Fold Cross Validation
-    for train_index, test_index in kf.split(unique_gene_ids):
-        train_gene_ids = unique_gene_ids[train_index]
-        test_gene_ids = unique_gene_ids[test_index]
-
-        # Split the data into training and testing sets
-        train_data = data[data["geneID"].isin(train_gene_ids)]
-        test_data = data[data["geneID"].isin(test_gene_ids)]
-    
-        # Extract features and labels
-        X_train = train_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
-        y_train = train_data[target]
-        
-        X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
-        y_test = test_data[target]
-
-        # Initialize the model based on the model type
-        if model_type == 'linear':
-            model = LinearRegression()
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-        
-        elif model_type == 'svr':
-            model = SVR(kernel='rbf', C=1.0, epsilon=0.2)
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-        
-        elif model_type == 'loess':
-            # LOESS (Local Regression) model
-            lowess_predictions = lowess(y_train, X_train.mean(axis=1), frac=0.3)
-            # For LOESS, we use an averaging of predictions as there is no direct fit/predict method
-            y_pred = lowess_predictions[:, 1]
-        
-        # Collect errors from this fold
-        errors = np.abs(y_test - y_pred)
-        all_errors.extend(errors)
-        
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        aucrec = auc_rec(y_test, y_pred)
-        pcc = pearsonr(y_pred, y_test)[0]
-        scrr = spearmanr(y_pred, y_test)[0]
-        
-        mse_scores.append(mse)
-        r2_scores.append(r2)
-        auc_recs.append(aucrec)
-        pearsonrs.append(pcc)
-        spearmanrs.append(scrr)
-
-    # Compute average metrics
-    avg_mse = np.mean(mse_scores)
-    avg_r2 = np.mean(r2_scores)
-    avg_aucrec = np.mean(auc_recs)
-    avg_pcc = np.mean(pearsonrs)
-    avg_srcc = np.mean(spearmanrs)
-
-    all_errors = np.array(all_errors)
-
-    return {
-        'avg_mse': avg_mse,
-        'avg_r2': avg_r2,
-        'avg_aucrec': avg_aucrec,
-        'avg_pcc': avg_pcc,
-        'avg_srcc': avg_srcc,
-        "errors": all_errors
-    }
-
 def binarize_nbinom(data, threshold=0.0001):
     """
     Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold.
@@ -2340,6 +2223,123 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.svg", format="svg")
 
+def auc_rec(y_true, y_pred):
+    # Calculate absolute errors
+    errors = np.abs(y_true - y_pred)
+    
+    # Sort the errors
+    sorted_errors = np.sort(errors)
+    
+    # Calculate cumulative proportion of points within error tolerance
+    cumulative_proportion = np.arange(1, len(sorted_errors) + 1) / len(sorted_errors)
+    
+    # Calculate AUC-REC
+    auc_rec = auc(sorted_errors, cumulative_proportion)
+
+    # Determine the maximum possible area under the curve
+    max_error = sorted_errors[-1]  # Maximum error tolerance observed
+    max_area = max_error * 1  # Since the cumulative proportion ranges from 0 to 1
+    
+    # Normalize AUC-REC
+    normalized_auc_rec = auc_rec / max_area if max_area > 0 else 0
+
+    return normalized_auc_rec
+
+def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type='linear'):
+    """
+    Perform k-fold cross-validation for linear regression on the provided data.
+    
+    Args:
+        data (pd.DataFrame): The DataFrame containing features and labels.
+        k (int): The number of folds for cross-validation.
+        target (str): The label to predict ('TPM' or 'FPKM'). Default is 'TPM'.
+        
+    Returns:
+        avg_mse (float): The average Mean Squared Error across all folds.
+        avg_r2 (float): The average R-squared value across all folds.
+    """
+    # Get unique gene IDs
+    unique_gene_ids = data["geneID"].unique()
+    kf = KFold(n_splits=k, shuffle=True, random_state=42)
+
+    if logscale:
+        data["TPM"] = np.log(data["TPM"]+1)
+    
+    mse_scores = []
+    r2_scores = []
+    auc_recs = []
+    pearsonrs = []
+    spearmanrs = []
+
+    all_errors = []
+
+    # Perform K-Fold Cross Validation
+    for train_index, test_index in kf.split(unique_gene_ids):
+        train_gene_ids = unique_gene_ids[train_index]
+        test_gene_ids = unique_gene_ids[test_index]
+
+        # Split the data into training and testing sets
+        train_data = data[data["geneID"].isin(train_gene_ids)]
+        test_data = data[data["geneID"].isin(test_gene_ids)]
+    
+        # Extract features and labels
+        X_train = train_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
+        y_train = train_data[target]
+        
+        X_test = test_data[["promoter_signal", "gene_body_signal", "TES_signal"]]
+        y_test = test_data[target]
+
+        # Initialize the model based on the model type
+        if model_type == 'linear':
+            model = LinearRegression()
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+        
+        elif model_type == 'svr':
+            model = SVR(kernel='rbf', C=1.0, epsilon=0.2)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+        
+        elif model_type == 'loess':
+            # LOESS (Local Regression) model
+            lowess_predictions = lowess(y_train, X_train.mean(axis=1), frac=0.3)
+            # For LOESS, we use an averaging of predictions as there is no direct fit/predict method
+            y_pred = lowess_predictions[:, 1]
+        
+        # Collect errors from this fold
+        errors = np.abs(y_test - y_pred)
+        all_errors.extend(errors)
+        
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        aucrec = auc_rec(y_test, y_pred)
+        pcc = pearsonr(y_pred, y_test)[0]
+        scrr = spearmanr(y_pred, y_test)[0]
+        
+        mse_scores.append(mse)
+        r2_scores.append(r2)
+        auc_recs.append(aucrec)
+        pearsonrs.append(pcc)
+        spearmanrs.append(scrr)
+
+    # Compute average metrics
+    avg_mse = np.mean(mse_scores)
+    avg_r2 = np.mean(r2_scores)
+    avg_aucrec = np.mean(auc_recs)
+    avg_pcc = np.mean(pearsonrs)
+    avg_srcc = np.mean(spearmanrs)
+
+    all_errors = np.array(all_errors)
+
+    return {
+        'avg_mse': avg_mse,
+        'avg_r2': avg_r2,
+        'avg_aucrec': avg_aucrec,
+        'avg_pcc': avg_pcc,
+        'avg_srcc': avg_srcc,
+        "errors": all_errors
+    }
+
 class EVAL_CANDI(object):
     def __init__(
         self, model, data_path, context_length, batch_size, hyper_parameters_path="",
@@ -2396,6 +2396,9 @@ class EVAL_CANDI(object):
             return
 
         if type(self.model) == str:
+            """
+            TODO: implement option to load DINO_CANDI
+            """
             with open(hyper_parameters_path, 'rb') as f:
                 self.hyper_parameters = pickle.load(f)
                 self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
@@ -2417,6 +2420,11 @@ class EVAL_CANDI(object):
         true_features = []
         available_assays = [self.expnames[a] for a in range(y_pred.shape[1]) if a in list(availability)]
         print(available_assays)
+
+        """
+        TODO: 
+        ADD LATENT EMBEDDINGS AS ANOTHER INPUT DATA USED FOR PROBING RNA-seq.
+        """
         
         for i in range(len(rna_seq_data)):
             for a in range(y_pred.shape[1]):
@@ -3151,8 +3159,9 @@ class EVAL_CANDI(object):
             # "quantile_heatmap": self.viz.quantile_heatmap,
             # "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
             # "signal_mean_std_hexbin": self.viz.signal_mean_std_hexbin,
-            # "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
-            # "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
+            
+            "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
+            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
         }
         
         for func_name, func in plot_functions.items():
@@ -3242,6 +3251,7 @@ def main():
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
+
     else:
         if args.eic:
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
