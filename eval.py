@@ -3,6 +3,7 @@ from CANDI import *
 from data import *
 from dino_candi import *
 from _utils import *
+from model import *
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.model_selection import KFold
