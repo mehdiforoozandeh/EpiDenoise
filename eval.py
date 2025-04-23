@@ -3158,6 +3158,7 @@ class EVAL_CANDI(object):
         plot_functions = {
             "count_track": self.viz.count_track,
             "signal_track": self.viz.signal_track,
+
             "count_confidence": self.viz.count_confidence,
             "signal_confidence": self.viz.signal_confidence,
             
@@ -3193,8 +3194,8 @@ class EVAL_CANDI(object):
             # "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
             # "signal_mean_std_hexbin": self.viz.signal_mean_std_hexbin,
 
-            "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
-            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
+            # "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
+            # "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
         }
         
         for func_name, func in plot_functions.items():
@@ -3228,6 +3229,9 @@ class EVAL_CANDI(object):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
+            if not self.dataset.has_rnaseq(bios):
+                continue
+
             try:
                 print("evaluating ", bios)
                 if self.eic:
@@ -3264,7 +3268,7 @@ def main():
     parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
     parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
     parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
-    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/CANDI/", help="Directory to save evaluation results.")
+    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/CANDI_APR2025/", help="Directory to save evaluation results.")
     parser.add_argument("--enc_ckpt", type=str, default=None, help="If CANDI-DINO, path to encoder checkpoint model.")
     parser.add_argument("--dec_ckpt", type=str, default=None, help="If CANDI-DINO, path to decoder checkpoint model.")
     parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
@@ -3279,6 +3283,11 @@ def main():
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
     args = parser.parse_args()
+
+    if args.dino:
+        savedir = args.savedir.replace("CANDI", "CANDINO")
+    else:
+        savedir = args.savedir
 
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
