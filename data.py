@@ -3082,14 +3082,16 @@ class ExtendedEncodeDataHandler:
                 self.navigation  = json.load(navfile)
             
             self.merged_train_val_test_split()
+
+            for bios in self.navigation:
+                print(bios, self.navigation[bios].keys())
+
+            exit()
+
         else:
             self.train_val_test_split()
         
-        for bios in self.navigation:
-            print(bios, self.navigation[bios].keys())
         
-        exit()
-
         if eic:
             self.init_eic(target_split=split)
         else:
