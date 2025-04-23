@@ -2400,7 +2400,10 @@ class EVAL_CANDI(object):
             TODO: implement option to load DINO_CANDI
             """
             if "DINO" in self.model:
-                pass
+                self.hyper_parameters = pickle.load(f)
+                self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
+                self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
+                
             else:
                 with open(hyper_parameters_path, 'rb') as f:
                     self.hyper_parameters = pickle.load(f)

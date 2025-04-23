@@ -926,10 +926,11 @@ def main():
         num_local_views=num_local_views
     )
 
-def load():
-    context_length = 1200
-    latent_dim = 35 * (3**3)  # signal_dim * (expansion_factor^n_cnn_layers)
 
+###############################################
+
+def merge_DINO_encoder_decoder():
+    context_length = 1200
     # Load pretrained model
     model = DINO_CANDI_Model(
         encoder_class=DINO_CANDI_DNA_Encoder,
@@ -962,43 +963,156 @@ def load():
     )
     return model
 
+class MergedDINO(nn.Module):
+    """
+    A single module that loads an encoder and decoder,
+    runs encode→decode in forward, and can be saved/loaded as one.
+    """
+    def __init__(
+        self,
+        encoder_ckpt_path: str,
+        decoder_ckpt_path: str,
+        *,
+        signal_dim: int = 35,
+        metadata_embedding_dim: int = 4*35,
+        conv_kernel_size: int = 3,
+        n_cnn_layers: int = 3,
+        nhead: int = 9,
+        n_sab_layers: int = 4,
+        pool_size: int = 2,
+        dropout: float = 0.1,
+        context_length: int = 1200,
+        pos_enc: str = "relative",
+        expansion_factor: int = 3,
+        pooling_type: str = "attention",
+        device: torch.device = None
+    ):
+        super().__init__()
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # instantiate & load encoder
+        self.encoder = DINO_CANDI_DNA_Encoder(
+            signal_dim=signal_dim,
+            metadata_embedding_dim=metadata_embedding_dim,
+            conv_kernel_size=conv_kernel_size,
+            n_cnn_layers=n_cnn_layers,
+            nhead=nhead,
+            n_sab_layers=n_sab_layers,
+            pool_size=pool_size,
+            dropout=dropout,
+            context_length=context_length,
+            pos_enc=pos_enc,
+            expansion_factor=expansion_factor,
+            pooling_type=pooling_type
+        ).to(self.device)
+        enc_state = torch.load(encoder_ckpt_path, map_location=self.device)
+        self.encoder.load_state_dict(enc_state)
+
+        # instantiate & load decoder
+        self.decoder = DINO_CANDI_Decoder(
+            signal_dim=signal_dim,
+            metadata_embedding_dim=metadata_embedding_dim,
+            conv_kernel_size=conv_kernel_size,
+            n_cnn_layers=n_cnn_layers,
+            context_length=context_length,
+            pool_size=pool_size,
+            expansion_factor=expansion_factor
+        ).to(self.device)
+        dec_state = torch.load(decoder_ckpt_path, map_location=self.device)
+        self.decoder.load_state_dict(dec_state)
+
+        self.encoder.eval()
+        self.decoder.eval()
+
+    def forward(
+        self,
+        src: torch.Tensor,
+        seq: torch.Tensor,
+        encoder_metadata: torch.Tensor,
+        decoder_metadata: torch.Tensor,
+        pooled: bool = False
+    ):
+        """
+        Args:
+          src (Tensor): [B, L, signal_dim]
+          seq (Tensor): [B, 4, L]
+          encoder_metadata (Tensor): [B, metadata_dim]
+          decoder_metadata (Tensor): [B, metadata_dim]
+          pooled (bool): if True, encoder returns pooled [B, d]; otherwise per-position [B, L', d]
+        Returns:
+          Tuple[p, n, mu, var], each of shape [B, L, signal_dim] (or [B, signal_dim] if pooled=True)
+        """
+        # encode
+        latent = self.encoder(
+            src.to(self.device),
+            seq.to(self.device),
+            encoder_metadata.to(self.device),
+            return_projected=pooled
+        )
+        # decode
+        return self.decoder(latent, decoder_metadata.to(self.device))
+
 if __name__ == "__main__":
-    hyper_parameters = {
-        "signal_dim": 35,
-        "metadata_embedding_dim": 4 * 35,
-        "conv_kernel_size": 3,
-        "n_cnn_layers": 3,
-        "nhead": 9,
-        "n_sab_layers": 4,
-        "pool_size": 2,
-        "dropout": 0.1,
-        "context_length": 1200,
-        "expansion_factor": 3,
-        "pos_enc": "relative",
-        "pooling_type": "attention",
+    # paths to your saved checkpoints
+    ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
+    DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
 
-        "learning_rate": 4e-3,
-        "ema_decay": 0.996,
-        "center_update": 0.9,
-        "t_student": 0.4,
-        "t_teacher": 0.04,
+    # build and save merged model
+    merged = MergedDINO(
+        encoder_ckpt_path=ENC_CKP,
+        decoder_ckpt_path=DEC_CKP
+    )
+    torch.save(merged.state_dict(), "models/dino_candi_merged.pth")
+    print("Merged DINO_CANDI model saved at models/dino_candi_merged.pth")
 
-        "batch_size": 50,
-        "epochs": 100,
-        "inner_epochs": 1,
-        "num_local_views": 1,
+    del merged
 
-        "data_path": "/project/compbio-lab/encode_data/",
-        "num_loci": 3000,
-        "min_avail": 7,
-        "loci_gen": "ccre",
-        "merge_ct": True,
-        "separate_decoders": False,
-        "mask_percentage": 0.15,  # matches 15% from DataMasker
-        "lr_halflife": None,  # Not used in your `main()` version
-    }
+    model = MergedDINO(
+    encoder_ckpt_path=ENC_CKP,
+    decoder_ckpt_path=DEC_CKP
+    )
+    model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
+    model.eval()
+    print("loaded the merged model again")
+    summary(model)
 
-    with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
-        pickle.dump(hyper_parameters, f)
+# if __name__ == "__main__":
+#     hyper_parameters = {
+#         "signal_dim": 35,
+#         "metadata_embedding_dim": 4 * 35,
+#         "conv_kernel_size": 3,
+#         "n_cnn_layers": 3,
+#         "nhead": 9,
+#         "n_sab_layers": 4,
+#         "pool_size": 2,
+#         "dropout": 0.1,
+#         "context_length": 1200,
+#         "expansion_factor": 3,
+#         "pos_enc": "relative",
+#         "pooling_type": "attention",
 
-    # main()
+#         "learning_rate": 4e-3,
+#         "ema_decay": 0.996,
+#         "center_update": 0.9,
+#         "t_student": 0.4,
+#         "t_teacher": 0.04,
+
+#         "batch_size": 50,
+#         "epochs": 100,
+#         "inner_epochs": 1,
+#         "num_local_views": 1,
+
+#         "data_path": "/project/compbio-lab/encode_data/",
+#         "num_loci": 3000,
+#         "min_avail": 7,
+#         "loci_gen": "ccre",
+#         "merge_ct": True,
+#         "separate_decoders": False,
+#         "mask_percentage": 0.15,  # matches 15% from DataMasker
+#         "lr_halflife": None,  # Not used in your `main()` version
+#     }
+
+#     with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
+#         pickle.dump(hyper_parameters, f)
+
+#     # main()
