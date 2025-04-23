@@ -2368,6 +2368,12 @@ class EVAL_CANDI(object):
             self.context_length, check_completeness=True, split=split, 
             bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True)
 
+        for bios in self.dataset.navigation.keys():
+                if self.dataset.has_rnaseq(bios):
+                    rnad = self.dataset.load_rna_seq_data(bios, self.gene_coords)
+                    print(rnad)
+        exit()
+        
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
 

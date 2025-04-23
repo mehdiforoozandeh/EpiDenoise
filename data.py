@@ -27,8 +27,6 @@ import numpy as np
 # from prettytable import PrettyTable
 # import pyBigWig
 
-from _utils import get_overlap, load_gene_coords
-
 def get_binned_vals(bigwig_file, chr, resolution=25):
     with pyBigWig.open(bigwig_file) as bw:
         if chr not in bw.chroms():
@@ -3085,13 +3083,6 @@ class ExtendedEncodeDataHandler:
                 self.navigation  = json.load(navfile)
             
             self.merged_train_val_test_split()
-
-            self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
-            self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
-            for bios in self.navigation.keys():
-                if self.has_rnaseq(bios):
-                    rnad = self.load_rna_seq_data(bios, self.gene_coords)
-                    print(rnad)
 
         else:
             self.train_val_test_split()
