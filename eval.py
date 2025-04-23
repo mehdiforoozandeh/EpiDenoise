@@ -2402,12 +2402,11 @@ class EVAL_CANDI(object):
                 with open(hyper_parameters_path, 'rb') as f:
                     self.hyper_parameters = pickle.load(f)
                     self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
-                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
+                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim*4
 
                 modelpath = self.model
 
-                print(self.hyper_parameters)
-                exit()
+                # print(self.hyper_parameters)
                 self.model = MergedDINO(
                     encoder_ckpt_path=ENC_CKP,
                     decoder_ckpt_path=DEC_CKP,
@@ -2434,7 +2433,7 @@ class EVAL_CANDI(object):
                 with open(hyper_parameters_path, 'rb') as f:
                     self.hyper_parameters = pickle.load(f)
                     self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
-                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
+                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim*4
                 loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
                 self.model = loader.load_CANDI()
             
