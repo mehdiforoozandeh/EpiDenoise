@@ -2399,12 +2399,15 @@ class EVAL_CANDI(object):
             """
             TODO: implement option to load DINO_CANDI
             """
-            with open(hyper_parameters_path, 'rb') as f:
-                self.hyper_parameters = pickle.load(f)
-                self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
-                self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
-            loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
-            self.model = loader.load_CANDI()
+            if "DINO" in self.model:
+                pass
+            else:
+                with open(hyper_parameters_path, 'rb') as f:
+                    self.hyper_parameters = pickle.load(f)
+                    self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
+                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
+                loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
+                self.model = loader.load_CANDI()
             
         self.model = self.model.to(self.device)
         self.model.eval()  # set the model to evaluation mode
@@ -3159,7 +3162,7 @@ class EVAL_CANDI(object):
             # "quantile_heatmap": self.viz.quantile_heatmap,
             # "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
             # "signal_mean_std_hexbin": self.viz.signal_mean_std_hexbin,
-            
+
             "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
             "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
         }
