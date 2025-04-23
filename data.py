@@ -3084,11 +3084,6 @@ class ExtendedEncodeDataHandler:
             
             self.merged_train_val_test_split()
 
-            # for bios in self.navigation:
-            #     print(bios, self.navigation[bios].keys(), self.has_rnaseq(bios))
-
-            # exit()
-
         else:
             self.train_val_test_split()
         
