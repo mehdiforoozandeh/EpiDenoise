@@ -2361,7 +2361,6 @@ class EVAL_CANDI(object):
         self.DNA = DNA
         self.DINO = DINO
 
-        print(self.eic, self.split)
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
@@ -2425,7 +2424,6 @@ class EVAL_CANDI(object):
                     expansion_factor     = self.hyper_parameters["expansion_factor"],
                     pooling_type         = "attention"
                 )
-
 
                 self.model.load_state_dict(torch.load(modelpath))
                 print("Loaded DINO pretrained merged encoder and decoder!")

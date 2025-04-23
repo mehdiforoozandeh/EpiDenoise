@@ -2813,11 +2813,6 @@ class ExtendedEncodeDataHandler:
             with open(self.merged_navigation_path, 'r') as navfile:
                 self.navigation  = json.load(navfile)
 
-            for bios in self.navigation:
-                print(bios, self.navigation[bios])
-        
-        exit()
-
         if self.merge_ct:
             self.merged_train_val_test_split()
         else:
@@ -3089,6 +3084,11 @@ class ExtendedEncodeDataHandler:
             self.merged_train_val_test_split()
         else:
             self.train_val_test_split()
+        
+        for bios in self.navigation:
+            print(bios, self.navigation[bios])
+        
+        exit()
 
         if eic:
             self.init_eic(target_split=split)
