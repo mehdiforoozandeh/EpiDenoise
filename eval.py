@@ -2361,11 +2361,13 @@ class EVAL_CANDI(object):
         self.DNA = DNA
         self.DINO = DINO
 
+        print(self.eic, self.split)
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
         self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True)
+            self.context_length, check_completeness=True, split=split, 
+            bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True)
 
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
