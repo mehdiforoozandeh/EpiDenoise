@@ -3156,8 +3156,8 @@ class EVAL_CANDI(object):
     def viz_bios(self, eval_res):
         # Define a dictionary mapping function names to corresponding methods
         plot_functions = {
-            "count_track": self.viz.count_track,
-            "signal_track": self.viz.signal_track,
+            # "count_track": self.viz.count_track,
+            # "signal_track": self.viz.signal_track,
 
             "count_confidence": self.viz.count_confidence,
             "signal_confidence": self.viz.signal_confidence,
@@ -3165,8 +3165,8 @@ class EVAL_CANDI(object):
             "count_error_std_hexbin": self.viz.count_error_std_hexbin,
             "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
+            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
             "count_heatmap": self.viz.count_heatmap,
             "signal_heatmap": self.viz.signal_heatmap,
@@ -3283,15 +3283,15 @@ def main():
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
     args = parser.parse_args()
+    savedir = args.savedir
 
     if args.dino:
-        savedir = args.savedir.replace("CANDI", "CANDINO")
-    else:
-        savedir = args.savedir
+        savedir = savedir.replace("CANDI", "CANDINO")
+        
 
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
-        chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
+        chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
 
