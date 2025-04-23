@@ -2373,8 +2373,13 @@ class EVAL_CANDI(object):
 
         for bios in self.dataset.navigation.keys():
                 if self.dataset.has_rnaseq(bios):
-                    rnad = self.dataset.load_rna_seq_data(bios, self.gene_coords)
-                    print(rnad)
+                    try:
+                        rnad = self.dataset.load_rna_seq_data(bios, self.gene_coords)
+                        print(rnad)
+                    except:
+                        print(self.dataset.navigation[bios])
+                        exit()
+
         exit()
 
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
