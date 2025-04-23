@@ -3086,7 +3086,7 @@ class ExtendedEncodeDataHandler:
             self.train_val_test_split()
         
         for bios in self.navigation:
-            print(bios, self.navigation[bios])
+            print(bios, self.navigation[bios].keys())
         
         exit()
 
