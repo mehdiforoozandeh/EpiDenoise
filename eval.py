@@ -2344,7 +2344,8 @@ class EVAL_CANDI(object):
     def __init__(
         self, model, data_path, context_length, batch_size, hyper_parameters_path="",
         train_log={}, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, 
-        savedir="models/evals/", mode="eval", split="test", eic=False, DNA=False):
+        savedir="models/evals/", mode="eval", split="test", eic=False, DNA=False,
+        DINO=False, ENC_CKP=None, DEC_CKP=None):
 
         self.savedir = savedir
         if os.path.exists(self.savedir) == False:
@@ -2358,6 +2359,7 @@ class EVAL_CANDI(object):
         
         self.eic = eic
         self.DNA = DNA
+        self.DINO = DINO
 
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
@@ -2396,14 +2398,17 @@ class EVAL_CANDI(object):
             return
 
         if type(self.model) == str:
-            """
-            TODO: implement option to load DINO_CANDI
-            """
-            if "DINO" in self.model:
-                self.hyper_parameters = pickle.load(f)
-                self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
-                self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
-                
+            if self.DINO:
+                modelpath = self.model
+
+                self.model = MergedDINO(
+                    encoder_ckpt_path=ENC_CKP,
+                    decoder_ckpt_path=DEC_CKP
+                )
+                self.model.load_state_dict(torch.load(modelpath))
+                self.model.eval()
+                print("Loaded DINO pretrained merged encoder and decoder!")
+
             else:
                 with open(hyper_parameters_path, 'rb') as f:
                     self.hyper_parameters = pickle.load(f)
@@ -3238,10 +3243,13 @@ def main():
     parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
     parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
     parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/CANDI/", help="Directory to save evaluation results.")
+    parser.add_argument("--enc_ckpt", type=str, default=None, help="If CANDI-DINO, path to encoder checkpoint model.")
+    parser.add_argument("--dec_ckpt", type=str, default=None, help="If CANDI-DINO, path to decoder checkpoint model.")
     parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
     parser.add_argument("-cl", "--context_length", type=int, default=1200, help="Context length for evaluation.")
     parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
     parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
+    parser.add_argument("--dino", action="store_true", help="Flag to enable DINO mode.")
     parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
@@ -3253,7 +3261,10 @@ def main():
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=args.savedir, 
-        mode="eval", split=args.split, eic=args.eic, DNA=args.dna)
+        mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
+        DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
+
+    exit()
 
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
