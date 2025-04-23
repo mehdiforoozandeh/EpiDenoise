@@ -3084,7 +3084,7 @@ class ExtendedEncodeDataHandler:
             self.merged_train_val_test_split()
 
             for bios in self.navigation:
-                print(bios, self.navigation[bios].keys())
+                print(bios, self.navigation[bios].keys(), self.has_rnaseq(bios))
 
             exit()
 
@@ -3141,7 +3141,7 @@ class ExtendedEncodeDataHandler:
     
     def has_rnaseq(self, bios_name):
         if self.merge_ct:
-            if "RNA-seq" in self.navigation[bios_name]:
+            if "RNA-seq" in self.navigation[bios_name].keys():
                 return True
             else:
                 return False
