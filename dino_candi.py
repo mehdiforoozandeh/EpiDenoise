@@ -1110,7 +1110,7 @@ if __name__ == "__main__":
     # 4) Move to device, load merged checkpoint (optional—you already loaded sub-ckpts)
     model.to(model.device)
     # If you saved `model.state_dict()` to dino_candi_merged.pth you could:
-    # model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
+    model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
 
     model.eval()
     print("Loaded merged DINO_CANDI model with hyperparameters from", hp_path)
