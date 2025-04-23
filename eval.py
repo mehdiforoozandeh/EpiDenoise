@@ -2406,6 +2406,8 @@ class EVAL_CANDI(object):
 
                 modelpath = self.model
 
+                print(self.hyper_parameters)
+                exit()
                 self.model = MergedDINO(
                     encoder_ckpt_path=ENC_CKP,
                     decoder_ckpt_path=DEC_CKP,
