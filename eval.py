@@ -2368,12 +2368,15 @@ class EVAL_CANDI(object):
             self.context_length, check_completeness=True, split=split, 
             bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True)
 
+        self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
+        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
+
         for bios in self.dataset.navigation.keys():
                 if self.dataset.has_rnaseq(bios):
                     rnad = self.dataset.load_rna_seq_data(bios, self.gene_coords)
                     print(rnad)
         exit()
-        
+
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
 
@@ -2397,9 +2400,6 @@ class EVAL_CANDI(object):
         self.eval_data = {}
         self.metrics = METRICS()
         self.viz = VISUALS_CANDI(resolution=self.resolution, savedir=self.savedir)
-
-        self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
-        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
 
         if mode == "dev":
             return
