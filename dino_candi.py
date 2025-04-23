@@ -51,7 +51,7 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         d_model = self.latent_dim = self.f2
 
         # DNA convolution stack
-        DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
+        # DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
         self.convEncDNA = nn.ModuleList([
             ConvTower(
                 DNA_conv_channels[i], DNA_conv_channels[i+1], conv_kernel_size,
