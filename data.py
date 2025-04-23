@@ -3148,7 +3148,11 @@ class ExtendedEncodeDataHandler:
                 return False
 
     def load_rna_seq_data(self, bios_name, gene_coord):
-        directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
+        if self.merge_ct:
+            directory = os.path.dirname(self.navigation[bios_name]["RNA-seq"][0])
+        else:
+            directory = os.path.join(self.base_path, bios_name, "RNA-seq/")
+            
         tsv_files = glob.glob(os.path.join(directory, '*.tsv'))
 
         file = os.path.join(directory, tsv_files[0])
