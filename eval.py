@@ -2399,12 +2399,31 @@ class EVAL_CANDI(object):
 
         if type(self.model) == str:
             if self.DINO:
+                with open(hyper_parameters_path, 'rb') as f:
+                    self.hyper_parameters = pickle.load(f)
+                    self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
+                    self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim
+
                 modelpath = self.model
 
                 self.model = MergedDINO(
                     encoder_ckpt_path=ENC_CKP,
-                    decoder_ckpt_path=DEC_CKP
+                    decoder_ckpt_path=DEC_CKP,
+                    signal_dim=            self.hyper_parameters["signal_dim"],
+                    metadata_embedding_dim=self.hyper_parameters["metadata_embedding_dim"],
+                    conv_kernel_size     = self.hyper_parameters["conv_kernel_size"],
+                    n_cnn_layers         = self.hyper_parameters["n_cnn_layers"],
+                    nhead                = self.hyper_parameters["nhead"],
+                    n_sab_layers         = self.hyper_parameters["n_sab_layers"],
+                    pool_size            = self.hyper_parameters["pool_size"],
+                    dropout              = self.hyper_parameters["dropout"],
+                    context_length       = self.hyper_parameters["context_length"],
+                    pos_enc              = self.hyper_parameters["pos_enc"],
+                    expansion_factor     = self.hyper_parameters["expansion_factor"],
+                    pooling_type         = "attention"
                 )
+
+
                 self.model.load_state_dict(torch.load(modelpath))
                 # self.model.eval()
                 print("Loaded DINO pretrained merged encoder and decoder!")
