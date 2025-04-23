@@ -1,4 +1,4 @@
-from CANDI import *  # Import all components from your CANDI model (including your encoder, decoder, etc.)
+from CANDI import * 
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -926,7 +926,6 @@ def main():
         num_local_views=num_local_views
     )
 
-
 ###############################################
 
 def merge_DINO_encoder_decoder():
@@ -985,8 +984,8 @@ class MergedDINO(nn.Module):
         pos_enc: str = "relative",
         expansion_factor: int = 3,
         pooling_type: str = "attention",
-        device: torch.device = None
-    ):
+        device: torch.device = None):
+
         super().__init__()
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

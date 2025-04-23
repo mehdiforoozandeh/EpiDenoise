@@ -1,9 +1,8 @@
-# from model import *
 from CANDI import *
 from data import *
 from dino_candi import *
 from _utils import *
-from model import *
+
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.model_selection import KFold
@@ -11,7 +10,6 @@ from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.ndimage import gaussian_filter1d
-
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from sklearn.svm import SVR
@@ -2408,7 +2406,7 @@ class EVAL_CANDI(object):
                     decoder_ckpt_path=DEC_CKP
                 )
                 self.model.load_state_dict(torch.load(modelpath))
-                self.model.eval()
+                # self.model.eval()
                 print("Loaded DINO pretrained merged encoder and decoder!")
 
             else:
