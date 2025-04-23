@@ -3284,8 +3284,11 @@ def main():
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
 
     for bios in list(ec.dataset.navigation.keys()):
-        print(bios,end="\t")
+        if ec.dataset.has_rnaseq(bios):
+            print(bios)
+        
     exit()
+
     if args.bios_name == "all":
         ec.viz_all(dsf=1)
 
