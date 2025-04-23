@@ -959,7 +959,19 @@ def load():
         ),
         decoder_ckpt_path="models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
     )
-    summary(model)
+    # Print encoder and decoder summaries
+    print("=== Encoder Summary ===")
+    summary(model.encoder, input_data=(
+        torch.randn(2, context_length, 35),  # src
+        torch.randn(2, 4, context_length),   # seq
+        torch.randn(2, 4*35)                 # metadata
+    ), depth=3)
+
+    print("\n=== Decoder Summary ===")
+    summary(model.decoder, input_data=(
+        torch.randn(2, context_length // (2**3), latent_dim),  # latent
+        torch.randn(2, 4*35)                                    # metadata
+    ), depth=3)
     return model
 
 if __name__ == "__main__":
