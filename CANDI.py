@@ -1144,45 +1144,4 @@ def main():
                 DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
 
 if __name__ == "__main__":
-    import pickle
-
-    hyper_parameters = {
-        "signal_dim": 35,
-        "metadata_embedding_dim": 4 * 35,
-        "conv_kernel_size": 3,
-        "n_cnn_layers": 3,
-        "nhead": 9,
-        "n_sab_layers": 4,
-        "pool_size": 2,
-        "dropout": 0.1,
-        "context_length": 1200,
-        "expansion_factor": 3,
-        "pos_enc": "relative",
-        "pooling_type": "attention",
-
-        "learning_rate": 4e-3,
-        "ema_decay": 0.996,
-        "center_update": 0.9,
-        "t_student": 0.4,
-        "t_teacher": 0.04,
-
-        "batch_size": 50,
-        "epochs": 100,
-        "inner_epochs": 1,
-        "num_local_views": 1,
-
-        "data_path": "/project/compbio-lab/encode_data/",
-        "num_loci": 3000,
-        "min_avail": 7,
-        "loci_gen": "ccre",
-        "merge_ct": True,
-        "separate_decoders": False,
-        "mask_percentage": 0.15,  # matches 15% from DataMasker
-        "lr_halflife": None,  # Not used in your `main()` version
-    }
-
-    with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
-        pickle.dump(hyper_parameters, f)
-
-
     main()
