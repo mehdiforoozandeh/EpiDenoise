@@ -1030,15 +1030,15 @@ if __name__ == "__main__":
         merge_ct=True, 
         DSF_list=[1,2])
 
-    optimizer = optim.AdamW(student.parameters(), lr=args.lr)
-    # optimizer = optim.SGD(student.parameters(), lr=args.lr)
+    # optimizer = optim.AdamW(student.parameters(), lr=args.lr)
+    optimizer = optim.SGD(student.parameters(), lr=args.lr)
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor
         )
 
-    dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
-    # dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
+    # dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
+    dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
 
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
