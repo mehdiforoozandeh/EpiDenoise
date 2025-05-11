@@ -1051,108 +1051,108 @@ class MergedDINO(nn.Module):
         # decode
         return self.decoder(latent, decoder_metadata.to(self.device))
 
-if __name__ == "__main__":
-    # prompt: load model hyper-parameters from pkl file models/hyper_parameters_DINO_CANDI.pkl
-
-    # paths to your saved checkpoints
-    # ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
-    # DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
-
-    # # build and save merged model
-    # merged = MergedDINO(
-    #     encoder_ckpt_path=ENC_CKP,
-    #     decoder_ckpt_path=DEC_CKP
-    # )
-    # torch.save(merged.state_dict(), "models/dino_candi_merged.pth")
-    # print("Merged DINO_CANDI model saved at models/dino_candi_merged.pth")
-
-    # del merged
-
-    # model = MergedDINO(
-    # encoder_ckpt_path=ENC_CKP,
-    # decoder_ckpt_path=DEC_CKP
-    # )
-    # model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
-    # model.eval()
-    # print("loaded the merged model again")
-    # summary(model)
-
-
-    # 1) Load the hyper-parameters you saved during training
-    hp_path = "models/hyper_parameters_DINO_CANDI.pkl"
-    with open(hp_path, "rb") as f:
-        hp = pickle.load(f)
-
-    # 2) Paths to your encoder/decoder checkpoints
-    ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
-    DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
-
-    # 3) Build the merged model using exactly the same settings:
-    model = MergedDINO(
-        encoder_ckpt_path=ENC_CKP,
-        decoder_ckpt_path=DEC_CKP,
-        # these two we can hard-code or pull from hp if you included them:
-        signal_dim=hp.get("signal_dim", 35),
-        metadata_embedding_dim=hp.get("metadata_embedding_dim", 4*35),
-        # everything below comes directly from your hp dict:
-        conv_kernel_size     = hp["conv_kernel_size"],
-        n_cnn_layers         = hp["n_cnn_layers"],
-        nhead                = hp["nhead"],
-        n_sab_layers         = hp["n_sab_layers"],
-        pool_size            = hp["pool_size"],
-        dropout              = hp["dropout"],
-        context_length       = hp["context_length"],
-        pos_enc              = hp["pos_enc"],
-        expansion_factor     = hp["expansion_factor"],
-        pooling_type         = "attention",           # same default you used
-    )
-
-    # 4) Move to device, load merged checkpoint (optional—you already loaded sub-ckpts)
-    model.to(model.device)
-    # If you saved `model.state_dict()` to dino_candi_merged.pth you could:
-    model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
-
-    model.eval()
-    print("Loaded merged DINO_CANDI model with hyperparameters from", hp_path)
-    summary(model)
-
 # if __name__ == "__main__":
-#     hyper_parameters = {
-#         "signal_dim": 35,
-#         "metadata_embedding_dim": 4 * 35,
-#         "conv_kernel_size": 3,
-#         "n_cnn_layers": 3,
-#         "nhead": 9,
-#         "n_sab_layers": 4,
-#         "pool_size": 2,
-#         "dropout": 0.1,
-#         "context_length": 1200,
-#         "expansion_factor": 3,
-#         "pos_enc": "relative",
-#         "pooling_type": "attention",
+#     # prompt: load model hyper-parameters from pkl file models/hyper_parameters_DINO_CANDI.pkl
 
-#         "learning_rate": 4e-3,
-#         "ema_decay": 0.996,
-#         "center_update": 0.9,
-#         "t_student": 0.4,
-#         "t_teacher": 0.04,
+#     # paths to your saved checkpoints
+#     # ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
+#     # DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
 
-#         "batch_size": 50,
-#         "epochs": 100,
-#         "inner_epochs": 1,
-#         "num_local_views": 1,
+#     # # build and save merged model
+#     # merged = MergedDINO(
+#     #     encoder_ckpt_path=ENC_CKP,
+#     #     decoder_ckpt_path=DEC_CKP
+#     # )
+#     # torch.save(merged.state_dict(), "models/dino_candi_merged.pth")
+#     # print("Merged DINO_CANDI model saved at models/dino_candi_merged.pth")
 
-#         "data_path": "/project/compbio-lab/encode_data/",
-#         "num_loci": 3000,
-#         "min_avail": 7,
-#         "loci_gen": "ccre",
-#         "merge_ct": True,
-#         "separate_decoders": False,
-#         "mask_percentage": 0.15,  # matches 15% from DataMasker
-#         "lr_halflife": None,  # Not used in your `main()` version
-#     }
+#     # del merged
 
-#     with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
-#         pickle.dump(hyper_parameters, f)
+#     # model = MergedDINO(
+#     # encoder_ckpt_path=ENC_CKP,
+#     # decoder_ckpt_path=DEC_CKP
+#     # )
+#     # model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
+#     # model.eval()
+#     # print("loaded the merged model again")
+#     # summary(model)
 
-#     # main()
+
+#     # 1) Load the hyper-parameters you saved during training
+#     hp_path = "models/hyper_parameters_DINO_CANDI.pkl"
+#     with open(hp_path, "rb") as f:
+#         hp = pickle.load(f)
+
+#     # 2) Paths to your encoder/decoder checkpoints
+#     ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
+#     DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
+
+#     # 3) Build the merged model using exactly the same settings:
+#     model = MergedDINO(
+#         encoder_ckpt_path=ENC_CKP,
+#         decoder_ckpt_path=DEC_CKP,
+#         # these two we can hard-code or pull from hp if you included them:
+#         signal_dim=hp.get("signal_dim", 35),
+#         metadata_embedding_dim=hp.get("metadata_embedding_dim", 4*35),
+#         # everything below comes directly from your hp dict:
+#         conv_kernel_size     = hp["conv_kernel_size"],
+#         n_cnn_layers         = hp["n_cnn_layers"],
+#         nhead                = hp["nhead"],
+#         n_sab_layers         = hp["n_sab_layers"],
+#         pool_size            = hp["pool_size"],
+#         dropout              = hp["dropout"],
+#         context_length       = hp["context_length"],
+#         pos_enc              = hp["pos_enc"],
+#         expansion_factor     = hp["expansion_factor"],
+#         pooling_type         = "attention",           # same default you used
+#     )
+
+#     # 4) Move to device, load merged checkpoint (optional—you already loaded sub-ckpts)
+#     model.to(model.device)
+#     # If you saved `model.state_dict()` to dino_candi_merged.pth you could:
+#     model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
+
+#     model.eval()
+#     print("Loaded merged DINO_CANDI model with hyperparameters from", hp_path)
+#     summary(model)
+
+if __name__ == "__main__":
+    hyper_parameters = {
+        "signal_dim": 35,
+        "metadata_embedding_dim": 4 * 35,
+        "conv_kernel_size": 3,
+        "n_cnn_layers": 3,
+        "nhead": 9,
+        "n_sab_layers": 4,
+        "pool_size": 2,
+        "dropout": 0.1,
+        "context_length": 1200,
+        "expansion_factor": 3,
+        "pos_enc": "relative",
+        "pooling_type": "attention",
+
+        "learning_rate": 4e-3,
+        "ema_decay": 0.996,
+        "center_update": 0.9,
+        "t_student": 0.4,
+        "t_teacher": 0.04,
+
+        "batch_size": 50,
+        "epochs": 100,
+        "inner_epochs": 1,
+        "num_local_views": 1,
+
+        "data_path": "/project/compbio-lab/encode_data/",
+        "num_loci": 3000,
+        "min_avail": 7,
+        "loci_gen": "ccre",
+        "merge_ct": True,
+        "separate_decoders": False,
+        "mask_percentage": 0.15,  # matches 15% from DataMasker
+        "lr_halflife": None,  # Not used in your `main()` version
+    }
+
+    with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
+        pickle.dump(hyper_parameters, f)
+
+    # main()
