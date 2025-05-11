@@ -815,117 +815,6 @@ class DINO_CANDI:
 # Main function: Parse arguments and run training.
 ###############################################
 
-def main():
-    context_length = 1200
-    num_epochs = 100
-    batch_size = 50  
-
-    # learning_rate = 1e-3
-    # ema_decay = 0.996         
-    # center_update = 0.9
-    t_student = 0.4        
-    # t_teacher = 0.04     
-               
-    learning_rate = 4e-3
-    ema_decay = 0.996    
-    center_update = 0.9
-    # t_student = 0.1   
-    t_teacher = 0.04       
-    
-    inner_epochs = 1 
-    num_local_views = 1    
-    loci_gen = "ccre"   
-    eic = False
-
-    # -------------------------------
-    student_encoder = DINO_CANDI_DNA_Encoder(
-        signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
-                 
-    teacher_encoder =  DINO_CANDI_DNA_Encoder(
-        signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-        n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
-
-    teacher_encoder.load_state_dict(student_encoder.state_dict())
-
-    # -------------------------------
-    data_path = "/project/compbio-lab/encode_data/"
-    dataset = ExtendedEncodeDataHandler(data_path)
-    dataset.initialize_EED(
-        m=3000,                  # number of loci
-        context_length=context_length*25,     # context length (adjust based on your application)
-        bios_batchsize=10,       # batch size for bios samples
-        loci_batchsize=1,        # batch size for loci
-        loci_gen=loci_gen,         # loci generation method
-        bios_min_exp_avail_threshold=7,  # minimum available bios
-        check_completeness=True,
-        eic=eic,
-        merge_ct=True,
-        DSF_list=[1, 2, 4]
-    )
-
-      # Number of local views to generate per batch.
-    
-    # -------------------------------
-    device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
-    # -------------------------------
-    optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
-
-    # -------------------------------
-    candi_decoder = DINO_CANDI_Decoder(
-        signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
-        context_length=context_length, pool_size=2, expansion_factor=3)
-
-    decoder_optimizer = optim.Adam(candi_decoder.parameters(), lr=learning_rate)
-    decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
-    decoder_dataset = ExtendedEncodeDataHandler(data_path)
-    decoder_dataset.initialize_EED(
-        m= 1000,                  # number of loci
-        context_length=context_length*25,
-        bios_batchsize=50,       # batch size for bios samples
-        loci_batchsize=1,        # batch size for loci
-        loci_gen=loci_gen,         # loci generation method
-        bios_min_exp_avail_threshold=7,  # minimum available bios
-        check_completeness=True,
-        eic=eic,
-        merge_ct=True,
-        DSF_list=[1, 2, 4]
-    )
-
-    # -------------------------------
-    dino_trainer = DINO_CANDI(
-        student_encoder=student_encoder,
-        teacher_encoder=teacher_encoder,
-        dataset=dataset,
-        optimizer=optimizer,
-        ema_decay=ema_decay,
-        center_update=center_update,
-        t_student=t_student,
-        t_teacher=t_teacher,
-        device_student=device_student,
-        device_teacher=device_teacher,
-        decoder=candi_decoder, 
-        decoder_optimizer=decoder_optimizer,
-        decoder_dataset=decoder_dataset,
-        decoder_criterion=decoder_criterion
-    )
-
-    # -------------------------------
-    # Start training.
-    dino_trainer.train_dino(
-        num_epochs=num_epochs,
-        context_length=context_length,
-        batch_size=batch_size,
-        inner_epochs=inner_epochs,
-        arch="",
-        hook=False,
-        DNA=True,  # Set to True if you use DNA-specific inputs.
-        early_stop=True,
-        accumulation_steps=5,
-        num_local_views=num_local_views
-    )
-
 ###############################################
 
 def merge_DINO_encoder_decoder():
@@ -1051,6 +940,117 @@ class MergedDINO(nn.Module):
         # decode
         return self.decoder(latent, decoder_metadata.to(self.device))
 
+# def main():
+#     context_length = 1200
+#     num_epochs = 100
+#     batch_size = 50  
+
+#     # learning_rate = 1e-3
+#     # ema_decay = 0.996         
+#     # center_update = 0.9
+#     t_student = 0.4        
+#     # t_teacher = 0.04     
+               
+#     learning_rate = 4e-3
+#     ema_decay = 0.996    
+#     center_update = 0.9
+#     # t_student = 0.1   
+#     t_teacher = 0.04       
+    
+#     inner_epochs = 1 
+#     num_local_views = 1    
+#     loci_gen = "ccre"   
+#     eic = False
+
+#     # -------------------------------
+#     student_encoder = DINO_CANDI_DNA_Encoder(
+#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
+#         n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
+                 
+#     teacher_encoder =  DINO_CANDI_DNA_Encoder(
+#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
+#         n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
+
+#     teacher_encoder.load_state_dict(student_encoder.state_dict())
+
+#     # -------------------------------
+#     data_path = "/project/compbio-lab/encode_data/"
+#     dataset = ExtendedEncodeDataHandler(data_path)
+#     dataset.initialize_EED(
+#         m=3000,                  # number of loci
+#         context_length=context_length*25,     # context length (adjust based on your application)
+#         bios_batchsize=10,       # batch size for bios samples
+#         loci_batchsize=1,        # batch size for loci
+#         loci_gen=loci_gen,         # loci generation method
+#         bios_min_exp_avail_threshold=7,  # minimum available bios
+#         check_completeness=True,
+#         eic=eic,
+#         merge_ct=True,
+#         DSF_list=[1, 2, 4]
+#     )
+
+#       # Number of local views to generate per batch.
+    
+#     # -------------------------------
+#     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
+#     # -------------------------------
+#     optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
+
+#     # -------------------------------
+#     candi_decoder = DINO_CANDI_Decoder(
+#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
+#         context_length=context_length, pool_size=2, expansion_factor=3)
+
+#     decoder_optimizer = optim.Adam(candi_decoder.parameters(), lr=learning_rate)
+#     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
+#     decoder_dataset = ExtendedEncodeDataHandler(data_path)
+#     decoder_dataset.initialize_EED(
+#         m= 1000,                  # number of loci
+#         context_length=context_length*25,
+#         bios_batchsize=50,       # batch size for bios samples
+#         loci_batchsize=1,        # batch size for loci
+#         loci_gen=loci_gen,         # loci generation method
+#         bios_min_exp_avail_threshold=7,  # minimum available bios
+#         check_completeness=True,
+#         eic=eic,
+#         merge_ct=True,
+#         DSF_list=[1, 2, 4]
+#     )
+
+#     # -------------------------------
+#     dino_trainer = DINO_CANDI(
+#         student_encoder=student_encoder,
+#         teacher_encoder=teacher_encoder,
+#         dataset=dataset,
+#         optimizer=optimizer,
+#         ema_decay=ema_decay,
+#         center_update=center_update,
+#         t_student=t_student,
+#         t_teacher=t_teacher,
+#         device_student=device_student,
+#         device_teacher=device_teacher,
+#         decoder=candi_decoder, 
+#         decoder_optimizer=decoder_optimizer,
+#         decoder_dataset=decoder_dataset,
+#         decoder_criterion=decoder_criterion
+#     )
+
+#     # -------------------------------
+#     # Start training.
+#     dino_trainer.train_dino(
+#         num_epochs=num_epochs,
+#         context_length=context_length,
+#         batch_size=batch_size,
+#         inner_epochs=inner_epochs,
+#         arch="",
+#         hook=False,
+#         DNA=True,  # Set to True if you use DNA-specific inputs.
+#         early_stop=True,
+#         accumulation_steps=5,
+#         num_local_views=num_local_views
+#     )
+
 # if __name__ == "__main__":
 #     # prompt: load model hyper-parameters from pkl file models/hyper_parameters_DINO_CANDI.pkl
 
@@ -1116,43 +1116,96 @@ class MergedDINO(nn.Module):
 #     print("Loaded merged DINO_CANDI model with hyperparameters from", hp_path)
 #     summary(model)
 
+# if __name__ == "__main__":
+#     hyper_parameters = {
+#         "signal_dim": 35,
+#         "metadata_embedding_dim": 4 * 35,
+#         "conv_kernel_size": 3,
+#         "n_cnn_layers": 3,
+#         "nhead": 9,
+#         "n_sab_layers": 4,
+#         "pool_size": 2,
+#         "dropout": 0.1,
+#         "context_length": 1200,
+#         "expansion_factor": 3,
+#         "pos_enc": "relative",
+#         "pooling_type": "attention",
+
+#         "learning_rate": 4e-3,
+#         "ema_decay": 0.996,
+#         "center_update": 0.9,
+#         "t_student": 0.4,
+#         "t_teacher": 0.04,
+
+#         "batch_size": 50,
+#         "epochs": 100,
+#         "inner_epochs": 1,
+#         "num_local_views": 1,
+
+#         "data_path": "/project/compbio-lab/encode_data/",
+#         "num_loci": 3000,
+#         "min_avail": 7,
+#         "loci_gen": "ccre",
+#         "merge_ct": True,
+#         "separate_decoders": False,
+#         "mask_percentage": 0.15,  # matches 15% from DataMasker
+#         "lr_halflife": None,  # Not used in your `main()` version
+#     }
+
+#     with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
+#         pickle.dump(hyper_parameters, f)
+
+#     main()
+
 if __name__ == "__main__":
-    hyper_parameters = {
-        "signal_dim": 35,
-        "metadata_embedding_dim": 4 * 35,
-        "conv_kernel_size": 3,
-        "n_cnn_layers": 3,
-        "nhead": 9,
-        "n_sab_layers": 4,
-        "pool_size": 2,
-        "dropout": 0.1,
-        "context_length": 1200,
-        "expansion_factor": 3,
-        "pos_enc": "relative",
-        "pooling_type": "attention",
+    import argparse
+    parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
+    # model & data
+    parser.add_argument('--data_path',    type=str,   default="/project/compbio-lab/encode_data/")
+    parser.add_argument('--num_loci',     type=int,   default=3000)
+    parser.add_argument('--min_avail',    type=int,   default=7)
+    parser.add_argument('--loci_gen',     type=str,   default="ccre")
+    parser.add_argument('--merge_ct',     action='store_true')
+    parser.add_argument('--dna',          action='store_true')
+    parser.add_argument('--eic',          action='store_true')
+    # architecture
+    parser.add_argument('--signal_dim',   type=int,   default=35)
+    parser.add_argument('--metadata_dim', type=int,   default=35*4)
+    parser.add_argument('--conv_kernel',  type=int,   default=3)
+    parser.add_argument('--ncnn',         type=int,   default=3)
+    parser.add_argument('--nhead',        type=int,   default=9)
+    parser.add_argument('--nsab',         type=int,   default=4)
+    parser.add_argument('--pool_size',    type=int,   default=2)
+    parser.add_argument('--dropout',      type=float, default=0.1)
+    parser.add_argument('--ctx_len',      type=int,   default=1200)
+    parser.add_argument('--exp_factor',   type=int,   default=3)
+    parser.add_argument('--pos_enc',      type=str,   default="relative")
+    parser.add_argument('--pooling',      type=str,   default="attention")
+    # training
+    parser.add_argument('--epochs',       type=int,   default=100)
+    parser.add_argument('--batch_size',   type=int,   default=50)
+    parser.add_argument('--inner_epochs', type=int,   default=1)
+    parser.add_argument('--n_views',      type=int,   default=1)
+    parser.add_argument('--lr',           type=float, default=4e-3)
+    parser.add_argument('--ema_decay',    type=float, default=0.996)
+    parser.add_argument('--center_upd',   type=float, default=0.9)
+    parser.add_argument('--t_student',    type=float, default=0.4)
+    parser.add_argument('--t_teacher',    type=float, default=0.04)
+    args = parser.parse_args()
 
-        "learning_rate": 4e-3,
-        "ema_decay": 0.996,
-        "center_update": 0.9,
-        "t_student": 0.4,
-        "t_teacher": 0.04,
+    # assemble hyperparameters dict
+    hps = vars(args)
+    with open("models/hyper_parameters_DINO_CANDI.pkl","wb") as f: pickle.dump(hps, f)
 
-        "batch_size": 50,
-        "epochs": 100,
-        "inner_epochs": 1,
-        "num_local_views": 1,
-
-        "data_path": "/project/compbio-lab/encode_data/",
-        "num_loci": 3000,
-        "min_avail": 7,
-        "loci_gen": "ccre",
-        "merge_ct": True,
-        "separate_decoders": False,
-        "mask_percentage": 0.15,  # matches 15% from DataMasker
-        "lr_halflife": None,  # Not used in your `main()` version
-    }
-
-    with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
-        pickle.dump(hyper_parameters, f)
-
-    main()
+    # build encoders, dataset, trainer...
+    student = DINO_CANDI_DNA_Encoder(args.signal_dim, args.metadata_dim, args.conv_kernel, args.ncnn, args.nhead, args.nsab, args.pool_size, args.dropout, args.ctx_len, args.pos_enc, args.exp_factor, args.pooling)
+    teacher = copy.deepcopy(student)
+    data = ExtendedEncodeDataHandler(args.data_path)
+    data.initialize_EED(m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=args.batch_size, loci_batchsize=1, loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, eic=args.eic, merge_ct=args.merge_ct, DSF_list=[1,2,4])
+    optimizer = optim.SGD(student.parameters(), lr=args.lr)
+    decoder = DINO_CANDI_Decoder(args.signal_dim, args.metadata_dim, args.conv_kernel, args.ncnn, args.ctx_len, args.pool_size, args.exp_factor)
+    dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
+    criterion = CANDI_Decoder_LOSS()
+    dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(m=1000, context_length=args.ctx_len*25, bios_batchsize=50, loci_batchsize=1, loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, eic=args.eic, merge_ct=args.merge_ct, DSF_list=[1,2,4])
+    trainer = DINO_CANDI(student, teacher, data, optimizer, args.ema_decay, args.center_upd, args.t_student, args.t_teacher, torch.device("cuda:0"), torch.device("cuda:1") if torch.cuda.device_count()>1 else torch.device("cuda:0"), decoder, dec_opt, dec_data, criterion)
+    trainer.train_dino(args.epochs, args.ctx_len, args.batch_size, args.inner_epochs, arch="", hook=False, DNA=args.dna, early_stop=True, accumulation_steps=1, num_local_views=args.n_views)
