@@ -1141,7 +1141,6 @@ def main():
     parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
     parser.add_argument('--loci_gen', type=str, default="ccre", help='Loci generation method')
     
-    # python CANDI.py --eic --dna --checkpoint models/CANDIeic_DNA_random_mask_Nov25_model_checkpoint_epoch5.pth --suffix Nov28 --learning_rate 1e-4
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
     parser.add_argument('--dna', action='store_true', help='Flag to enable DNA')

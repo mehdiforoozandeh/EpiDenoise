@@ -608,7 +608,7 @@ class DINO_CANDI:
 
                 # if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
                 if chr0 != chr1:
-                    logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+                    logfile = open(f"models/DINO_CANDI_{arch}_log.txt", "w")
                     logfile.write("\n".join(self.log_strs))
                     logfile.close()
 
@@ -1030,13 +1030,15 @@ if __name__ == "__main__":
         merge_ct=True, 
         DSF_list=[1,2])
 
-    optimizer = optim.SGD(student.parameters(), lr=args.lr)
+    optimizer = optim.AdamW(student.parameters(), lr=args.lr)
+    # optimizer = optim.SGD(student.parameters(), lr=args.lr)
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor
         )
 
-    dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
+    dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
+    # dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
 
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
