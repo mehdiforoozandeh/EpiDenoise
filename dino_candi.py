@@ -1030,8 +1030,7 @@ if __name__ == "__main__":
     optimizer = optim.SGD(student.parameters(), lr=args.lr)
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
-        args.ncnn, args.ctx_len, args.pool_size, args.exp_factor,
-        attn_heads=args.nhead, dropout_rate=args.dropout
+        args.ncnn, args.ctx_len, args.pool_size, args.exp_factor
          )
 
     dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
