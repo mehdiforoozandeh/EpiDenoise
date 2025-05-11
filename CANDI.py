@@ -1184,7 +1184,7 @@ def main():
 
     # Call your training function with parsed arguments, including checkpoint
     Train_CANDI(hyper_parameters, eic=args.eic, checkpoint_path=args.checkpoint, 
-                DNA=args.dna, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
+                DNA=True, suffix=args.suffix, prog_mask=args.prog_mask, HPO=args.hpo)
 
 if __name__ == "__main__":
     main()
