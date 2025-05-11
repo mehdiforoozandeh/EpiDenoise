@@ -1144,7 +1144,7 @@ if __name__ == "__main__":
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor,
-        attn_heads=nhead, dropout_rate=args.dropout)
+        attn_heads=args.nhead, dropout_rate=args.dropout)
 
     dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
