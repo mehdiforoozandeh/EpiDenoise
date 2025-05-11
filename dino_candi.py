@@ -102,6 +102,9 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
             self.cls_token = nn.Parameter(torch.zeros(1, 1, self.latent_dim))
 
     def forward(self, src, seq, x_metadata, return_projected=True):
+        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+
         # DNA conv
         if seq.dim() != src.dim():
             seq = seq.unsqueeze(0).expand(src.size(0), -1, -1)
@@ -199,6 +202,8 @@ class DINO_CANDI_Decoder(nn.Module):
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
     
     def forward(self, src, y_metadata):
+        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        
         ymd_embedding = self.ymd_emb(y_metadata)
         src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
         src = self.ymd_fusion(src)
