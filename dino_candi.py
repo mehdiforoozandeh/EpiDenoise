@@ -815,8 +815,6 @@ class DINO_CANDI:
 # Main function: Parse arguments and run training.
 ###############################################
 
-###############################################
-
 def merge_DINO_encoder_decoder():
     context_length = 1200
     # Load pretrained model
@@ -940,223 +938,6 @@ class MergedDINO(nn.Module):
         # decode
         return self.decoder(latent, decoder_metadata.to(self.device))
 
-# def main():
-#     context_length = 1200
-#     num_epochs = 100
-#     batch_size = 50  
-
-#     # learning_rate = 1e-3
-#     # ema_decay = 0.996         
-#     # center_update = 0.9
-#     t_student = 0.4        
-#     # t_teacher = 0.04     
-               
-#     learning_rate = 4e-3
-#     ema_decay = 0.996    
-#     center_update = 0.9
-#     # t_student = 0.1   
-#     t_teacher = 0.04       
-    
-#     inner_epochs = 1 
-#     num_local_views = 1    
-#     loci_gen = "ccre"   
-#     eic = False
-
-#     # -------------------------------
-#     student_encoder = DINO_CANDI_DNA_Encoder(
-#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-#         n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
-                 
-#     teacher_encoder =  DINO_CANDI_DNA_Encoder(
-#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, nhead=9,
-#         n_sab_layers=4, pool_size=2, dropout=0.1, context_length=context_length, pos_enc="relative", expansion_factor=3)
-
-#     teacher_encoder.load_state_dict(student_encoder.state_dict())
-
-#     # -------------------------------
-#     data_path = "/project/compbio-lab/encode_data/"
-#     dataset = ExtendedEncodeDataHandler(data_path)
-#     dataset.initialize_EED(
-#         m=3000,                  # number of loci
-#         context_length=context_length*25,     # context length (adjust based on your application)
-#         bios_batchsize=10,       # batch size for bios samples
-#         loci_batchsize=1,        # batch size for loci
-#         loci_gen=loci_gen,         # loci generation method
-#         bios_min_exp_avail_threshold=7,  # minimum available bios
-#         check_completeness=True,
-#         eic=eic,
-#         merge_ct=True,
-#         DSF_list=[1, 2, 4]
-#     )
-
-#       # Number of local views to generate per batch.
-    
-#     # -------------------------------
-#     device_student = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#     device_teacher = torch.device("cuda:1" if torch.cuda.device_count() >= 2 else device_student)
-#     # -------------------------------
-#     optimizer = optim.SGD(student_encoder.parameters(), lr=learning_rate)
-
-#     # -------------------------------
-#     candi_decoder = DINO_CANDI_Decoder(
-#         signal_dim=35, metadata_embedding_dim=4*35, conv_kernel_size=3, n_cnn_layers=3, 
-#         context_length=context_length, pool_size=2, expansion_factor=3)
-
-#     decoder_optimizer = optim.Adam(candi_decoder.parameters(), lr=learning_rate)
-#     decoder_criterion = CANDI_Decoder_LOSS(reduction='mean')
-#     decoder_dataset = ExtendedEncodeDataHandler(data_path)
-#     decoder_dataset.initialize_EED(
-#         m= 1000,                  # number of loci
-#         context_length=context_length*25,
-#         bios_batchsize=50,       # batch size for bios samples
-#         loci_batchsize=1,        # batch size for loci
-#         loci_gen=loci_gen,         # loci generation method
-#         bios_min_exp_avail_threshold=7,  # minimum available bios
-#         check_completeness=True,
-#         eic=eic,
-#         merge_ct=True,
-#         DSF_list=[1, 2, 4]
-#     )
-
-#     # -------------------------------
-#     dino_trainer = DINO_CANDI(
-#         student_encoder=student_encoder,
-#         teacher_encoder=teacher_encoder,
-#         dataset=dataset,
-#         optimizer=optimizer,
-#         ema_decay=ema_decay,
-#         center_update=center_update,
-#         t_student=t_student,
-#         t_teacher=t_teacher,
-#         device_student=device_student,
-#         device_teacher=device_teacher,
-#         decoder=candi_decoder, 
-#         decoder_optimizer=decoder_optimizer,
-#         decoder_dataset=decoder_dataset,
-#         decoder_criterion=decoder_criterion
-#     )
-
-#     # -------------------------------
-#     # Start training.
-#     dino_trainer.train_dino(
-#         num_epochs=num_epochs,
-#         context_length=context_length,
-#         batch_size=batch_size,
-#         inner_epochs=inner_epochs,
-#         arch="",
-#         hook=False,
-#         DNA=True,  # Set to True if you use DNA-specific inputs.
-#         early_stop=True,
-#         accumulation_steps=5,
-#         num_local_views=num_local_views
-#     )
-
-# if __name__ == "__main__":
-#     # prompt: load model hyper-parameters from pkl file models/hyper_parameters_DINO_CANDI.pkl
-
-#     # paths to your saved checkpoints
-#     # ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
-#     # DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
-
-#     # # build and save merged model
-#     # merged = MergedDINO(
-#     #     encoder_ckpt_path=ENC_CKP,
-#     #     decoder_ckpt_path=DEC_CKP
-#     # )
-#     # torch.save(merged.state_dict(), "models/dino_candi_merged.pth")
-#     # print("Merged DINO_CANDI model saved at models/dino_candi_merged.pth")
-
-#     # del merged
-
-#     # model = MergedDINO(
-#     # encoder_ckpt_path=ENC_CKP,
-#     # decoder_ckpt_path=DEC_CKP
-#     # )
-#     # model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
-#     # model.eval()
-#     # print("loaded the merged model again")
-#     # summary(model)
-
-
-#     # 1) Load the hyper-parameters you saved during training
-#     hp_path = "models/hyper_parameters_DINO_CANDI.pkl"
-#     with open(hp_path, "rb") as f:
-#         hp = pickle.load(f)
-
-#     # 2) Paths to your encoder/decoder checkpoints
-#     ENC_CKP = "models/DINO_CANDI_encoder__model_checkpoint_epoch4.pth"
-#     DEC_CKP = "models/DINO_CANDI_decoder__model_checkpoint_epoch4.pth"
-
-#     # 3) Build the merged model using exactly the same settings:
-#     model = MergedDINO(
-#         encoder_ckpt_path=ENC_CKP,
-#         decoder_ckpt_path=DEC_CKP,
-#         # these two we can hard-code or pull from hp if you included them:
-#         signal_dim=hp.get("signal_dim", 35),
-#         metadata_embedding_dim=hp.get("metadata_embedding_dim", 4*35),
-#         # everything below comes directly from your hp dict:
-#         conv_kernel_size     = hp["conv_kernel_size"],
-#         n_cnn_layers         = hp["n_cnn_layers"],
-#         nhead                = hp["nhead"],
-#         n_sab_layers         = hp["n_sab_layers"],
-#         pool_size            = hp["pool_size"],
-#         dropout              = hp["dropout"],
-#         context_length       = hp["context_length"],
-#         pos_enc              = hp["pos_enc"],
-#         expansion_factor     = hp["expansion_factor"],
-#         pooling_type         = "attention",           # same default you used
-#     )
-
-#     # 4) Move to device, load merged checkpoint (optional—you already loaded sub-ckpts)
-#     model.to(model.device)
-#     # If you saved `model.state_dict()` to dino_candi_merged.pth you could:
-#     model.load_state_dict(torch.load("models/dino_candi_merged.pth", map_location=model.device))
-
-#     model.eval()
-#     print("Loaded merged DINO_CANDI model with hyperparameters from", hp_path)
-#     summary(model)
-
-# if __name__ == "__main__":
-#     hyper_parameters = {
-#         "signal_dim": 35,
-#         "metadata_embedding_dim": 4 * 35,
-#         "conv_kernel_size": 3,
-#         "n_cnn_layers": 3,
-#         "nhead": 9,
-#         "n_sab_layers": 4,
-#         "pool_size": 2,
-#         "dropout": 0.1,
-#         "context_length": 1200,
-#         "expansion_factor": 3,
-#         "pos_enc": "relative",
-#         "pooling_type": "attention",
-
-#         "learning_rate": 4e-3,
-#         "ema_decay": 0.996,
-#         "center_update": 0.9,
-#         "t_student": 0.4,
-#         "t_teacher": 0.04,
-
-#         "batch_size": 50,
-#         "epochs": 100,
-#         "inner_epochs": 1,
-#         "num_local_views": 1,
-
-#         "data_path": "/project/compbio-lab/encode_data/",
-#         "num_loci": 3000,
-#         "min_avail": 7,
-#         "loci_gen": "ccre",
-#         "merge_ct": True,
-#         "separate_decoders": False,
-#         "mask_percentage": 0.15,  # matches 15% from DataMasker
-#         "lr_halflife": None,  # Not used in your `main()` version
-#     }
-
-#     with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
-#         pickle.dump(hyper_parameters, f)
-
-#     main()
-
 if __name__ == "__main__":
     import argparse, copy
     parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
@@ -1191,7 +972,36 @@ if __name__ == "__main__":
     parser.add_argument('--center_upd',   type=float, default=0.9)
     parser.add_argument('--t_student',    type=float, default=0.4)
     parser.add_argument('--t_teacher',    type=float, default=0.04)
+    # args = parser.parse_args()
+
+    parser.add_argument('--hp_path',  type=str, default=None, help='path to hyperparameters .pkl')
+    parser.add_argument('--enc_ckpt', type=str, default=None, help='path to saved encoder checkpoint')
+    parser.add_argument('--dec_ckpt', type=str, default=None, help='path to saved decoder checkpoint')
+    parser.add_argument('--merge',    action='store_true',    help='only merge and save merged DINO')
+    parser.add_argument('--out',      type=str, default='models/dino_candi_merged.pth', help='output merged model path')
     args = parser.parse_args()
+
+    if args.merge:
+        hp = pickle.load(open(args.hp_path,'rb'))
+        merged = MergedDINO(
+            encoder_ckpt_path=args.enc_ckpt,
+            decoder_ckpt_path=args.dec_ckpt,
+            signal_dim=hp['signal_dim'],
+            metadata_embedding_dim=hp['metadata_embedding_dim'],
+            conv_kernel_size=hp['conv_kernel_size'],
+            n_cnn_layers=hp['n_cnn_layers'],
+            nhead=hp['nhead'],
+            n_sab_layers=hp['n_sab_layers'],
+            pool_size=hp['pool_size'],
+            dropout=hp['dropout'],
+            context_length=hp['context_length'],
+            pos_enc=hp['pos_enc'],
+            expansion_factor=hp['expansion_factor'],
+            pooling_type=hp['pooling_type']
+        )
+        torch.save(merged.state_dict(), args.out)
+        print(f"Merged model saved to {args.out}")
+        sys.exit()
 
     # assemble hyperparameters dict
     hps = vars(args)
