@@ -1,6 +1,7 @@
 from CANDI import * 
 import torch
 import torch.nn as nn
+from torch.nn import MultiheadAttention
 import torch.optim as optim
 import torch.nn.functional as F
 import random
@@ -161,70 +162,182 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
 # CANDI_Decoder & loss
 ###############################################
 
+# class DINO_CANDI_Decoder(nn.Module):
+#     def __init__(
+#         self, signal_dim, metadata_embedding_dim, conv_kernel_size,
+#          n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
+#         super(DINO_CANDI_Decoder, self).__init__()
+
+#         self.l1 = context_length
+#         self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+#         self.f1 = signal_dim 
+#         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+#         self.f3 = self.f2 + metadata_embedding_dim
+#         self.d_model =  self.latent_dim = self.f2
+
+#         conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+#         reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+#         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+#         self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
+#         self.ymd_fusion = nn.Sequential(
+#             nn.Linear(self.f3, self.f2),
+#             nn.LayerNorm(self.f2), 
+#             # nn.ReLU()
+#             )
+
+#         self.deconv_c = nn.ModuleList(
+#             [DeconvTower(
+#                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+#                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+#                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+#         self.deconv_p = nn.ModuleList(
+#             [DeconvTower(
+#                 reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+#                 conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+#                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+
+#         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+#         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
+    
+#     def forward(self, src, y_metadata):
+#         y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        
+#         ymd_embedding = self.ymd_emb(y_metadata)
+#         src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+#         src = self.ymd_fusion(src)
+#         src = src.permute(0, 2, 1) # to N, F2, L'
+
+#         upsampled_p = src
+#         upsampled_c = src
+
+#         for dconv in self.deconv_c:
+#             upsampled_c = dconv(upsampled_c)
+
+#         for dconv in self.deconv_p:
+#             upsampled_p = dconv(upsampled_p)
+
+#         upsampled_p = upsampled_p.permute(0, 2, 1) # to N, L, F1
+#         upsampled_c = upsampled_c.permute(0, 2, 1) # to N, L, F1
+
+#         p, n = self.neg_binom_layer(upsampled_c)
+#         mu, var = self.gaussian_layer(upsampled_p)
+
+#         return p, n, mu, var
+
 class DINO_CANDI_Decoder(nn.Module):
     def __init__(
         self, signal_dim, metadata_embedding_dim, conv_kernel_size,
-         n_cnn_layers, context_length, pool_size=2, expansion_factor=3):
-        super(DINO_CANDI_Decoder, self).__init__()
+        n_cnn_layers, context_length, pool_size=2, expansion_factor=3,
+        attn_heads=4, dropout_rate=0.1
+    ):
+        super().__init__()
 
+        # dimensions
         self.l1 = context_length
         self.l2 = self.l1 // (pool_size**n_cnn_layers)
-        
-        self.f1 = signal_dim 
-        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f1 = signal_dim
+        self.f2 = (self.f1 * (expansion_factor**n_cnn_layers))
         self.f3 = self.f2 + metadata_embedding_dim
-        self.d_model =  self.latent_dim = self.f2
 
-        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
-        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
-        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
-
+        # metadata embedding
         self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
+
+        # linear fusion before upsampling
         self.ymd_fusion = nn.Sequential(
             nn.Linear(self.f3, self.f2),
-            nn.LayerNorm(self.f2), 
-            # nn.ReLU()
+            nn.LayerNorm(self.f2),
+            nn.Dropout(dropout_rate)
+        )
+
+        # learnable upsampling via ConvTranspose1d
+        # and cross-attention + normalization per stage
+        self.up_c = nn.ModuleList()
+        self.norm_c = nn.ModuleList()
+        self.drop_c = nn.ModuleList()
+        self.attn_c = nn.ModuleList()
+
+        self.up_p = nn.ModuleList()
+        self.norm_p = nn.ModuleList()
+        self.drop_p = nn.ModuleList()
+        self.attn_p = nn.ModuleList()
+
+        in_ch = self.f2
+        for _ in range(n_cnn_layers):
+            # channels remain self.f2 at each stage
+            self.up_c.append(
+                nn.ConvTranspose1d(in_ch, in_ch, kernel_size=pool_size, stride=pool_size)
             )
+            self.norm_c.append(nn.LayerNorm(in_ch))
+            self.drop_c.append(nn.Dropout(dropout_rate))
+            self.attn_c.append(MultiheadAttention(embed_dim=in_ch, num_heads=attn_heads, batch_first=True))
 
-        self.deconv_c = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+            self.up_p.append(
+                nn.ConvTranspose1d(in_ch, in_ch, kernel_size=pool_size, stride=pool_size)
+            )
+            self.norm_p.append(nn.LayerNorm(in_ch))
+            self.drop_p.append(nn.Dropout(dropout_rate))
+            self.attn_p.append(MultiheadAttention(embed_dim=in_ch, num_heads=attn_heads, batch_first=True))
 
-        self.deconv_p = nn.ModuleList(
-            [DeconvTower(
-                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
-                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
-                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
-
+        # output layers
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
-        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
-    
+        self.gaussian_layer   = GaussianLayer(self.f1, self.f1)
+
     def forward(self, src, y_metadata):
-        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
-        
-        ymd_embedding = self.ymd_emb(y_metadata)
-        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.ymd_fusion(src)
-        src = src.permute(0, 2, 1) # to N, F2, L'
+        # sanitize metadata tokens
+        y_metadata = torch.where(
+            y_metadata == -2,
+            torch.tensor(-1, device=y_metadata.device),
+            y_metadata
+        )
 
-        upsampled_p = src
-        upsampled_c = src
+        # embed metadata and fuse
+        ymd_embedding = self.ymd_emb(y_metadata)  # [B, metadata_emb]
+        # expand and fuse with src
+        src = torch.cat([
+            src,
+            ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)
+        ], dim=-1)
+        x = self.ymd_fusion(src)
 
-        for dconv in self.deconv_c:
-            upsampled_c = dconv(upsampled_c)
+        # prepare for upsampling: [B, C, L]
+        x = x.permute(0, 2, 1)
+        up_c = x
+        up_p = x
 
-        for dconv in self.deconv_p:
-            upsampled_p = dconv(upsampled_p)
+        # iterative upsampling + cross-attention
+        for up_layer, norm, drop, attn in zip(self.up_c, self.norm_c, self.drop_c, self.attn_c):
+            up_c = up_layer(up_c)
+            # to [B, L, C]
+            up_c = up_c.permute(0, 2, 1)
+            up_c = norm(up_c)
+            up_c = drop(up_c)
+            # cross-attention: query=features, key/value=metadata token
+            meta = ymd_embedding.unsqueeze(1)  # [B,1,C]
+            attn_out, _ = attn(up_c, meta, meta)
+            up_c = (up_c + attn_out).permute(0, 2, 1)  # back to [B,C,L]
 
-        upsampled_p = upsampled_p.permute(0, 2, 1) # to N, L, F1
-        upsampled_c = upsampled_c.permute(0, 2, 1) # to N, L, F1
+        for up_layer, norm, drop, attn in zip(self.up_p, self.norm_p, self.drop_p, self.attn_p):
+            up_p = up_layer(up_p)
+            up_p = up_p.permute(0, 2, 1)
+            up_p = norm(up_p)
+            up_p = drop(up_p)
+            meta = ymd_embedding.unsqueeze(1)
+            attn_out, _ = attn(up_p, meta, meta)
+            up_p = (up_p + attn_out).permute(0, 2, 1)
 
-        p, n = self.neg_binom_layer(upsampled_c)
-        mu, var = self.gaussian_layer(upsampled_p)
+        # final permute to [B, L, F1]
+        up_p = up_p.permute(0, 2, 1)
+        up_c = up_c.permute(0, 2, 1)
+
+        # predict parameters
+        p, n = self.neg_binom_layer(up_c)
+        mu, var = self.gaussian_layer(up_p)
 
         return p, n, mu, var
+
 
 class CANDI_Decoder_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
@@ -969,7 +1082,7 @@ if __name__ == "__main__":
     parser.add_argument('--pooling',      type=str,   default="attention")
     # training
     parser.add_argument('--epochs',       type=int,   default=100)
-    parser.add_argument('--batch_size',   type=int,   default=50)
+    parser.add_argument('--batch_size',   type=int,   default=10)
     parser.add_argument('--inner_epochs', type=int,   default=1)
     parser.add_argument('--n_views',      type=int,   default=1)
     parser.add_argument('--accumulation_steps',      type=int,   default=1)
