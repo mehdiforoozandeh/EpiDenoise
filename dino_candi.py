@@ -1155,4 +1155,4 @@ if __name__ == "__main__":
     with open("models/hyper_parameters_DINO_CANDI.pkl", "wb") as f:
         pickle.dump(hyper_parameters, f)
 
-    # main()
+    main()
