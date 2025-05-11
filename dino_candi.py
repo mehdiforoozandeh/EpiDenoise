@@ -602,7 +602,6 @@ class DINO_CANDI:
                     # observed_map = observed_map.to(self.device) # upsampling targets
                     # pval_batch = pval_batch.to(self.device)
 
-                    
                     Y_batch = Y_batch.float().to(self.device)
                     mY_batch = mY_batch.to(self.device)
                     
@@ -1144,7 +1143,8 @@ if __name__ == "__main__":
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor,
-        attn_heads=args.nhead, dropout_rate=args.dropout)
+        attn_heads=args.nhead, dropout_rate=args.dropout
+         )
 
     dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
