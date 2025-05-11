@@ -950,7 +950,7 @@ if __name__ == "__main__":
     # model & data
     parser.add_argument('--data_path',    type=str,   default="/project/compbio-lab/encode_data/")
     parser.add_argument('--num_loci',     type=int,   default=3000)
-    parser.add_argument('--min_avail',    type=int,   default=7)
+    parser.add_argument('--min_avail',    type=int,   default=3)
     parser.add_argument('--loci_gen',     type=str,   default="ccre")
     parser.add_argument('--merge_ct',     action='store_true')
     parser.add_argument('--dna',          action='store_true')
@@ -979,7 +979,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr',           type=float, default=4e-3)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
     parser.add_argument('--center_upd',   type=float, default=0.9)
-    parser.add_argument('--t_student',    type=float, default=0.4)
+    parser.add_argument('--t_student',    type=float, default=0.1)
     parser.add_argument('--t_teacher',    type=float, default=0.04)
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
 
