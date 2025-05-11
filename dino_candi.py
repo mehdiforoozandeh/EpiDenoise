@@ -1025,13 +1025,15 @@ if __name__ == "__main__":
     data.initialize_EED(
         m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=args.batch_size, loci_batchsize=1, 
         loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, eic=args.eic,
-        merge_ct=args.merge_ct, DSF_list=[1,2,4])
+        merge_ct=args.merge_ct, 
+        # DSF_list=[1,2,4])
+        DSF_list=[1])
 
     optimizer = optim.SGD(student.parameters(), lr=args.lr)
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor
-         )
+        )
 
     dec_opt = optim.Adam(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
@@ -1039,7 +1041,9 @@ if __name__ == "__main__":
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
         m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=50, loci_batchsize=1, 
         loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, 
-        eic=args.eic, merge_ct=args.merge_ct, DSF_list=[1,2,4])
+        eic=args.eic, merge_ct=args.merge_ct, 
+        # DSF_list=[1,2,4])
+        DSF_list=[1])
 
     trainer = DINO_CANDI(
         student, teacher, data, optimizer, args.ema_decay, 
