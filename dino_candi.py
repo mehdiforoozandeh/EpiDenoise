@@ -444,7 +444,7 @@ class DINO_CANDI:
         self.log_strs = []
         self.log_strs.append(str(self.device))
         self.log_strs.append(f"DINO CANDI{arch} # model_parameters: {count_parameters(self.student)}")
-        logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+        logfile = open(f"models/DINO_CANDI_{arch}_log.txt", "w")
         logfile.write("\n".join(self.log_strs))
         logfile.close()
         
@@ -1012,7 +1012,7 @@ if __name__ == "__main__":
 
     # assemble hyperparameters dict
     hps = vars(args)
-    with open("models/hyper_parameters_DINO_CANDI.pkl","wb") as f: pickle.dump(hps, f)
+    with open(f"models/hyper_parameters_DINO_CANDI_{args.suffix}.pkl","wb") as f: pickle.dump(hps, f)
 
     # build encoders, dataset, trainer...
     student = DINO_CANDI_DNA_Encoder(
@@ -1039,7 +1039,7 @@ if __name__ == "__main__":
     criterion = CANDI_Decoder_LOSS()
 
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
-        m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=50, loci_batchsize=1, 
+        m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=2*args.batch_size, loci_batchsize=1, 
         loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, 
         eic=args.eic, merge_ct=args.merge_ct, 
         # DSF_list=[1,2,4])
