@@ -1043,5 +1043,5 @@ if __name__ == "__main__":
 
     trainer.train_dino(
         args.epochs, args.ctx_len, args.batch_size, args.inner_epochs, arch=args.suffix, 
-        hook=False, DNA=args.dna, early_stop=True, accumulation_steps=args.accumulation_steps, 
+        hook=False, DNA=True, early_stop=True, accumulation_steps=args.accumulation_steps, 
         num_local_views=args.n_views)
