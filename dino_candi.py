@@ -1158,7 +1158,7 @@ class MergedDINO(nn.Module):
 #     main()
 
 if __name__ == "__main__":
-    import argparse
+    import argparse, copy
     parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
     # model & data
     parser.add_argument('--data_path',    type=str,   default="/project/compbio-lab/encode_data/")
