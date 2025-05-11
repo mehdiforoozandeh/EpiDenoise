@@ -471,9 +471,9 @@ class DINO_CANDI:
                     print("mismatch in shapes! skipped batch...")
                     continue
                     
-                self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
-
+                self.optimizer.zero_grad()
+                
                 for _ in range(inner_epochs):
                     if DNA:
                         X_batch, mX_batch, avX_batch, dnaseq_batch= _X_batch.clone(), _mX_batch.clone(), _avX_batch.clone(), _dnaseq_batch.clone()
@@ -946,6 +946,7 @@ class MergedDINO(nn.Module):
 if __name__ == "__main__":
     import argparse, copy
     parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
+
     # model & data
     parser.add_argument('--data_path',    type=str,   default="/project/compbio-lab/encode_data/")
     parser.add_argument('--num_loci',     type=int,   default=3000)
@@ -954,6 +955,7 @@ if __name__ == "__main__":
     parser.add_argument('--merge_ct',     action='store_true')
     parser.add_argument('--dna',          action='store_true')
     parser.add_argument('--eic',          action='store_true')
+
     # architecture
     parser.add_argument('--signal_dim',   type=int,   default=35)
     parser.add_argument('--metadata_dim', type=int,   default=35*4)
@@ -967,19 +969,19 @@ if __name__ == "__main__":
     parser.add_argument('--exp_factor',   type=int,   default=3)
     parser.add_argument('--pos_enc',      type=str,   default="relative")
     parser.add_argument('--pooling',      type=str,   default="attention")
+
     # training
-    parser.add_argument('--epochs',       type=int,   default=100)
+    parser.add_argument('--epochs',       type=int,   default=10)
     parser.add_argument('--batch_size',   type=int,   default=10)
-    parser.add_argument('--inner_epochs', type=int,   default=1)
+    parser.add_argument('--inner_epochs', type=int,   default=5)
     parser.add_argument('--n_views',      type=int,   default=1)
-    parser.add_argument('--accumulation_steps',      type=int,   default=1)
+
     parser.add_argument('--lr',           type=float, default=4e-3)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
     parser.add_argument('--center_upd',   type=float, default=0.9)
     parser.add_argument('--t_student',    type=float, default=0.4)
     parser.add_argument('--t_teacher',    type=float, default=0.04)
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
-    # args = parser.parse_args()
 
     parser.add_argument('--hp_path',  type=str, default=None, help='path to hyperparameters .pkl')
     parser.add_argument('--enc_ckpt', type=str, default=None, help='path to saved encoder checkpoint')
@@ -1025,9 +1027,8 @@ if __name__ == "__main__":
     data.initialize_EED(
         m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=args.batch_size, loci_batchsize=1, 
         loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, eic=args.eic,
-        merge_ct=args.merge_ct, 
-        # DSF_list=[1,2,4])
-        DSF_list=[1])
+        merge_ct=True, 
+        DSF_list=[1,2])
 
     optimizer = optim.SGD(student.parameters(), lr=args.lr)
     decoder = DINO_CANDI_Decoder(
@@ -1039,11 +1040,10 @@ if __name__ == "__main__":
     criterion = CANDI_Decoder_LOSS()
 
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
-        m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=2*args.batch_size, loci_batchsize=1, 
+        m=args.num_loci, context_length=args.ctx_len*25, bios_batchsize=5*args.batch_size, loci_batchsize=1, 
         loci_gen=args.loci_gen, bios_min_exp_avail_threshold=args.min_avail, check_completeness=True, 
-        eic=args.eic, merge_ct=args.merge_ct, 
-        # DSF_list=[1,2,4])
-        DSF_list=[1])
+        eic=args.eic, merge_ct=True, 
+        DSF_list=[1,2])
 
     trainer = DINO_CANDI(
         student, teacher, data, optimizer, args.ema_decay, 
@@ -1053,5 +1053,5 @@ if __name__ == "__main__":
 
     trainer.train_dino(
         args.epochs, args.ctx_len, args.batch_size, args.inner_epochs, arch=args.suffix, 
-        hook=False, DNA=True, early_stop=True, accumulation_steps=args.accumulation_steps, 
+        hook=False, DNA=True, early_stop=True, accumulation_steps=1, 
         num_local_views=args.n_views)

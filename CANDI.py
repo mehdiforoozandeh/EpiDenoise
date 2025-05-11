@@ -1014,7 +1014,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen=loci_gen, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, 
-        eic=eic, merge_ct=merge_ct)
+        eic=eic, merge_ct=merge_ct,
+        DSF_list=[1,2])
 
     signal_dim = dataset.signal_dim
     metadata_embedding_dim = dataset.signal_dim * 4
@@ -1125,7 +1126,7 @@ def main():
     parser.add_argument('--nhead', type=int, default=9, help='Number of attention heads')
     parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
-    parser.add_argument('--epochs', type=int, default=20, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
     parser.add_argument('--context_length', type=int, default=1200, help='Context length')
