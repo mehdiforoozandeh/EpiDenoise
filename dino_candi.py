@@ -979,7 +979,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr',           type=float, default=4e-3)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
     parser.add_argument('--center_upd',   type=float, default=0.9)
-    parser.add_argument('--t_student',    type=float, default=0.1)
+    parser.add_argument('--t_student',    type=float, default=0.4)
     parser.add_argument('--t_teacher',    type=float, default=0.04)
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
 
