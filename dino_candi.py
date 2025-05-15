@@ -11,16 +11,24 @@ import math
 from tqdm import tqdm
 import pickle
 
-"""
-TODO: ADD
+import os
+import random
+import numpy as np
+import torch
 
-2ENCODER:
-src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
-x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
-
-2DECODER:
-y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
-"""
+def set_seed(seed: int = 42):
+    # 1) Python built-in RNG
+    random.seed(seed)  
+    # 2) NumPy RNG
+    np.random.seed(seed)   
+    # 3) PyTorch CPU RNG
+    torch.manual_seed(seed)  
+    # 4) PyTorch GPU RNG (for single-GPU and multi-GPU)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  
+    # 5) Disable nondeterministic CuDNN algorithms
+    torch.backends.cudnn.deterministic = True  
+    torch.backends.cudnn.benchmark = False  
 
 ###############################################
 # CANDI_DNA_Encoder (with DNA) with Projection Head
@@ -950,6 +958,7 @@ class MergedDINO(nn.Module):
         return self.decoder(latent, decoder_metadata.to(self.device))
 
 if __name__ == "__main__":
+    set_seed()
     import argparse, copy
     parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
 
