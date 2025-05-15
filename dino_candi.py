@@ -16,7 +16,7 @@ import random
 import numpy as np
 import torch
 
-def set_seed(seed: int = 42):
+def set_seed(seed: int = 123):
     # 1) Python built-in RNG
     random.seed(seed)  
     # 2) NumPy RNG
