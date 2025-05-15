@@ -993,6 +993,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_views',      type=int,   default=1)
 
     parser.add_argument('--optimizer',      type=str,   default="adamw")
+    parser.add_argument('--weight_decay',   type=float, default=0.01)
 
     parser.add_argument('--lr',           type=float, default=5e-4)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
@@ -1050,7 +1051,7 @@ if __name__ == "__main__":
         DSF_list=[1,2])
 
     if args.optimizer.lower() == "adamw":
-        optimizer = optim.AdamW(student.parameters(), lr=args.lr)
+        optimizer = optim.AdamW(student.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         optimizer = optim.SGD(student.parameters(), lr=args.lr)
 
@@ -1060,7 +1061,7 @@ if __name__ == "__main__":
         )
 
     if args.optimizer.lower() == "adamw":
-        dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
+        dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()

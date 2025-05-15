@@ -845,17 +845,11 @@ class PRETRAIN(object):
                 #################################################################################
                 if early_stop:
                     epoch_rec["imp_count_r2"].append(np.mean(batch_rec['imp_count_r2']))
-                    # epoch_rec["ups_count_r2"].append(np.mean(batch_rec['ups_count_r2']))
                     epoch_rec["imp_pval_r2"].append(np.mean(batch_rec['imp_pval_r2']))
-                    # epoch_rec["ups_pval_r2"].append(np.mean(batch_rec['ups_pval_r2']))
                     epoch_rec["imp_count_spearman"].append(np.mean(batch_rec['imp_count_spearman']))
-                    # epoch_rec["ups_count_spearman"].append(np.mean(batch_rec['ups_count_spearman']))
                     epoch_rec["imp_pval_spearman"].append(np.mean(batch_rec['imp_pval_spearman']))
-                    # epoch_rec["ups_pval_spearman"].append(np.mean(batch_rec['ups_pval_spearman']))
                     epoch_rec["imp_count_pearson"].append(np.mean(batch_rec['imp_count_pearson']))
-                    # epoch_rec["ups_count_pearson"].append(np.mean(batch_rec['ups_count_pearson']))
                     epoch_rec["imp_pval_pearson"].append(np.mean(batch_rec['imp_pval_pearson']))
-                    # epoch_rec["ups_pval_pearson"].append(np.mean(batch_rec['ups_pval_pearson']))
                 #################################################################################
                 #################################################################################
 
@@ -869,11 +863,12 @@ class PRETRAIN(object):
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
 
-                if chr0 != chr1:
+                if (chr0 != chr1) or (dsf_pointer0 != dsf_pointer1) or (bios_pointer0 != bios_pointer1):
                     logfile = open(f"models/CANDI{arch}_log.txt", "w")
                     logfile.write("\n".join(log_strs))
                     logfile.close()
 
+                if chr0 != chr1:
                     try:
                         if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
                             os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
@@ -881,24 +876,23 @@ class PRETRAIN(object):
                     except:
                         pass
 
-                # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
-                if self.HPO==False and chr0 != chr1:
-                    try:
-                        # Generate and process the plot
-                        fig_title = " | ".join([
-                            f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
-                            f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
-                        
-                        if "eic" in arch:
-                            plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
-                        else:
-                            plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
+                    if self.HPO==False:
+                        try:
+                            # Generate and process the plot
+                            fig_title = " | ".join([
+                                f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
+                                f"{list(self.dataset.loci.keys())[self.dataset.chr_pointer]}"])
+                            
+                            if "eic" in arch:
+                                plot_buf = val_eval.generate_training_gif_frame_eic(self.model, fig_title)
+                            else:
+                                plot_buf = val_eval.generate_training_gif_frame(self.model, fig_title)
 
-                        images.append(imageio.imread(plot_buf))
-                        plot_buf.close()
-                        imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
-                    except Exception as e:
-                        pass
+                            images.append(imageio.imread(plot_buf))
+                            plot_buf.close()
+                            imageio.mimsave(gif_filename, images, duration=0.5 * len(images))
+                        except Exception as e:
+                            pass
 
                 if next_epoch:
                     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
@@ -908,22 +902,13 @@ class PRETRAIN(object):
                     log_resource_usage()
 
                     if early_stop:
-                        # epoch_rec["val_count_mean_ups_r2"].append(val_metrics["upsampled_counts"]["R2_count"]["mean"])
                         epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                        # epoch_rec["val_count_mean_ups_pcc"].append(val_metrics["upsampled_counts"]["PCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                        # epoch_rec["val_count_mean_ups_srcc"].append(val_metrics["upsampled_counts"]["SRCC_count"]["mean"])
                         epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
                         
-                        # epoch_rec["val_pval_mean_ups_r2"].append(val_metrics["upsampled_pvals"]["R2_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_pcc"].append(val_metrics["upsampled_pvals"]["PCC_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        # epoch_rec["val_pval_mean_ups_srcc"].append(val_metrics["upsampled_pvals"]["SRCC_pval"]["mean"])
                         epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
-
-            # self.scheduler.step()
-            # print("learning rate scheduler step...")
 
             if early_stop:
                 # Initialize the best metrics if it's the first epoch
@@ -1134,7 +1119,7 @@ def main():
     parser.add_argument('--n_sab_layers', type=int, default=4, help='Number of SAB layers')
     parser.add_argument('--pos_enc', type=str, default="relative", help='Transformer Positional Encodings')
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
-    parser.add_argument('--inner_epochs', type=int, default=5, help='Number of inner epochs')
+    parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
     parser.add_argument('--context_length', type=int, default=1200, help='Context length')
     parser.add_argument('--batch_size', type=int, default=10, help='Batch size')
