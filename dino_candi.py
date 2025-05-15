@@ -811,7 +811,7 @@ class DINO_CANDI:
 
             # if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
             if chr0 != chr1:
-                logfile = open(f"models/DINO_CANDI{arch}_log.txt", "w")
+                logfile = open(f"models/DINO_CANDI_{arch}_log.txt", "w")
                 logfile.write("\n".join(self.log_strs))
                 logfile.close()
                 return

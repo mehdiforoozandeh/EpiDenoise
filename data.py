@@ -7,6 +7,7 @@ import requests, os, itertools, ast, io, pysam, datetime, pyBigWig, time, gzip, 
 
 from torch.utils.data import Dataset
 import torch, sys, math
+from intervaltree import IntervalTree
 import pybedtools
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -39,133 +40,6 @@ def get_binned_vals(bigwig_file, chr, resolution=25):
         vals = vals.reshape(-1, resolution)
         bin_means = np.mean(vals, axis=1)
         return bin_means
-
-# def load_npz(file_name):
-#     with np.load(file_name, allow_pickle=True) as data:
-#         return data[data.files[0]]
-
-# def compare_arrays(arr1, arr2, celltype, assay):
-#     # 1. Shape Check
-#     if arr1.shape != arr2.shape:
-#         raise ValueError("Arrays do not have the same shape!")
-#     # 2. Basic Statistics
-#     arr1_mean, arr2_mean = np.mean(arr1), np.mean(arr2)
-#     arr1_var, arr2_var = np.var(arr1), np.var(arr2)
-#     arr1_std, arr2_std = np.std(arr1), np.std(arr2)
-#     # 3. Element-wise Difference
-#     abs_diff = np.abs(arr1 - arr2)
-#     rel_diff = np.abs(arr1 - arr2) / (np.abs(arr1) + 1e-10)  # Avoid division by zero
-#     max_abs_diff = np.max(abs_diff)
-#     mean_abs_diff = np.mean(abs_diff)
-#     max_rel_diff = np.max(rel_diff)
-#     mean_rel_diff = np.mean(rel_diff)
-#     # 4. Correlation
-#     pearson_corr, _ = pearsonr(arr1, arr2)
-#     spearman_corr, _ = spearmanr(arr1, arr2)
-#     # 5. RMSE
-#     rmse = np.sqrt(np.mean(abs_diff**2))
-#     # 6. MAE
-#     mae = np.mean(abs_diff)
-#     # Create the table
-#     table = PrettyTable()
-#     table.title = f"Comparison Results for Cell Type: {celltype}, Assay: {assay}"
-#     table.field_names = ["Metric", "Array 1", "Array 2", "Difference"]
-#     table.add_row(["Shape", str(arr1.shape), str(arr2.shape), "N/A"])
-#     table.add_row(["Mean", f"{arr1_mean:.5f}", f"{arr2_mean:.5f}", f"{abs(arr1_mean - arr2_mean):.5f}"])
-#     table.add_row(["Variance", f"{arr1_var:.5f}", f"{arr2_var:.5f}", f"{abs(arr1_var - arr2_var):.5f}"])
-#     table.add_row(["Std Dev", f"{arr1_std:.5f}", f"{arr2_std:.5f}", f"{abs(arr1_std - arr2_std):.5f}"])
-#     table.add_row(["Max Abs Diff", "-", "-", f"{max_abs_diff:.5f}"])
-#     table.add_row(["Mean Abs Diff", "-", "-", f"{mean_abs_diff:.5f}"])
-#     table.add_row(["Max Rel Diff", "-", "-", f"{max_rel_diff:.5f}"])
-#     table.add_row(["Mean Rel Diff", "-", "-", f"{mean_rel_diff:.5f}"])
-#     table.add_row(["Pearson Corr", "-", "-", f"{pearson_corr:.5f}"])
-#     table.add_row(["Spearman Corr", "-", "-", f"{spearman_corr:.5f}"])
-#     table.add_row(["RMSE", "-", "-", f"{rmse:.5f}"])
-#     table.add_row(["MAE", "-", "-", f"{mae:.5f}"])
-#     # Print the table
-#     print(table)
-
-# import matplotlib.pyplot as plt
-# def plot_arrays(arr1, arr2, celltype, assay):
-    plt.figure(figsize=(10, 6))
-    plt.hexbin(arr1, arr2, gridsize=50, cmap='plasma', mincnt=1, bins='log')
-    plt.colorbar(label='Counts in bin (log scale)')
-    plt.title(f'{assay} in {celltype.replace("B_","")}')
-    plt.xlabel('ours')
-    plt.ylabel('EIC')
-    # Set identical range for both axes
-    max_range = max(np.max(arr1), np.max(arr2))
-    min_range = min(np.min(arr1), np.min(arr2))
-    plt.xlim(min_range, max_range)
-    plt.ylim(min_range, max_range)
-    plt.savefig(f'EIC/plots/{celltype}_{assay}.png')
-    plt.close()
-
-# Example usage
-# plot_arrays(arr1, arr2, celltype='CellTypeExample', assay='AssayExample')
-
-# pairs = [
-#     ('EIC/blind_data/C05M17.bigwig', 'encode_data/B_BE2C/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C05M18.bigwig', 'encode_data/B_BE2C/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C05M20.bigwig', 'encode_data/B_BE2C/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C05M29.bigwig', 'encode_data/B_BE2C/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C06M16.bigwig', 'encode_data/B_BMEC/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C06M17.bigwig', 'encode_data/B_BMEC/H3K27me3/signal_BW_res25/chr21.npz'),  
-#     ('EIC/blind_data/C06M18.bigwig', 'encode_data/B_BMEC/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C07M20.bigwig', 'encode_data/B_Caco-2/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C07M29.bigwig', 'encode_data/B_Caco-2/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C12M01.bigwig', 'encode_data/B_DND-41/ATAC-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C12M02.bigwig', 'encode_data/B_DND-41/DNase-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M16.bigwig', 'encode_data/B_HAP-1/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M17.bigwig', 'encode_data/B_HAP-1/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M18.bigwig', 'encode_data/B_HAP-1/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M20.bigwig', 'encode_data/B_HAP-1/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M22.bigwig', 'encode_data/B_HAP-1/H3K4me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C19M29.bigwig', 'encode_data/B_HAP-1/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C22M16.bigwig', 'encode_data/B_HL-60/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C22M17.bigwig', 'encode_data/B_HL-60/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C28M17.bigwig', 'encode_data/B_MG63/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C28M18.bigwig', 'encode_data/B_MG63/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C28M22.bigwig', 'encode_data/B_MG63/H3K4me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C28M29.bigwig', 'encode_data/B_MG63/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C31M01.bigwig', 'encode_data/B_NCI-H929/ATAC-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C31M02.bigwig', 'encode_data/B_NCI-H929/DNase-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C31M16.bigwig', 'encode_data/B_NCI-H929/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C31M29.bigwig', 'encode_data/B_NCI-H929/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M01.bigwig', 'encode_data/B_RWPE2/ATAC-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M02.bigwig', 'encode_data/B_RWPE2/DNase-seq/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M17.bigwig', 'encode_data/B_RWPE2/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M18.bigwig', 'encode_data/B_RWPE2/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M20.bigwig', 'encode_data/B_RWPE2/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M22.bigwig', 'encode_data/B_RWPE2/H3K4me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C38M29.bigwig', 'encode_data/B_RWPE2/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M16.bigwig', 'encode_data/B_SJCRH30/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M17.bigwig', 'encode_data/B_SJCRH30/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M18.bigwig', 'encode_data/B_SJCRH30/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M20.bigwig', 'encode_data/B_SJCRH30/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M22.bigwig', 'encode_data/B_SJCRH30/H3K4me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C39M29.bigwig', 'encode_data/B_SJCRH30/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M16.bigwig', 'encode_data/B_SJSA1/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M17.bigwig', 'encode_data/B_SJSA1/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M18.bigwig', 'encode_data/B_SJSA1/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M20.bigwig', 'encode_data/B_SJSA1/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M22.bigwig', 'encode_data/B_SJSA1/H3K4me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C40M29.bigwig', 'encode_data/B_SJSA1/H3K9me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C51M16.bigwig', 'encode_data/B_WERI-Rb-1/H3K27ac/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C51M17.bigwig', 'encode_data/B_WERI-Rb-1/H3K27me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C51M18.bigwig', 'encode_data/B_WERI-Rb-1/H3K36me3/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C51M20.bigwig', 'encode_data/B_WERI-Rb-1/H3K4me1/signal_BW_res25/chr21.npz'),
-#     ('EIC/blind_data/C51M29.bigwig', 'encode_data/B_WERI-Rb-1/H3K9me3/signal_BW_res25/chr21.npz')]
-
-# for i,j in pairs:
-    celltype_name = j.split('/')[1]  # Extracting the cell type from the file path
-    assay_name = j.split('/')[2]      # Extracting the assay name from the file path
-    arr1 = load_npz(j)
-    arr2 = get_binned_vals(i)
-    arr1 = np.arcsinh(arr1)
-    arr2 = np.arcsinh(arr2)
-    compare_arrays(arr1, arr2, celltype_name, assay_name)
-    plot_arrays(arr1, arr2, celltype_name, assay_name)
     
 def get_DNA_sequence(chrom, start, end, fasta_file="/project/compbio-lab/encode_data/hg38.fa"):
     """
@@ -1431,7 +1305,10 @@ class ExtendedEncodeDataHandler:
         self.merged_navigation_path = os.path.join(self.base_path, "merged_navigation.json")
         self.split_path = os.path.join(self.base_path, "train_va_test_split.json")
         self.merged_split_path = os.path.join(self.base_path, "merged_train_va_test_split.json")
-        
+
+        self.blacklist_file = os.path.join(self.base_path, "hg38_blacklist_v2.bed") 
+        self.blacklist = self.load_blacklist(blacklist_file)
+
         self.resolution = resolution
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
         self.df1 = pd.read_csv(self.df1_path)
@@ -1445,7 +1322,36 @@ class ExtendedEncodeDataHandler:
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
-        
+    
+    def load_blacklist(self, blacklist_file):
+        """Load blacklist regions from a BED file into IntervalTrees."""
+        blacklist = {}
+        with open(blacklist_file, 'r') as f:
+            for line in f:
+                if line.startswith("#") or not line.strip():
+                    continue
+                parts = line.strip().split()
+                if len(parts) < 3:
+                    continue
+                chrom = parts[0]
+                try:
+                    start = int(parts[1])
+                    end = int(parts[2])
+                except ValueError:
+                    continue
+                if chrom not in blacklist:
+                    blacklist[chrom] = IntervalTree()
+                blacklist[chrom].addi(start, end)
+        return blacklist
+    
+    def is_region_allowed(self, chrom, start, end):
+        """Check if a region overlaps with blacklist regions using IntervalTree."""
+        if chrom not in self.blacklist:
+            return True
+        tree = self.blacklist[chrom]
+        overlapping = tree.overlap(start, end)
+        return len(overlapping) == 0
+
     def report(self):
         """
         Generates a formatted text report of the dataset.
@@ -2460,9 +2366,10 @@ class ExtendedEncodeDataHandler:
 
                 # Check if the region overlaps with any existing region in the same chromosome
                 if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
-                    self.m_regions.append([chr, rand_start, rand_end])
-                    used_regions[chr].append((rand_start, rand_end))
-                    mii += 1
+                    if self.is_region_allowed(chr, rand_start, rand_end):
+                        self.m_regions.append([chr, rand_start, rand_end])
+                        used_regions[chr].append((rand_start, rand_end))
+                        mii += 1
         
         while sum([len(v) for v in used_regions.values()]) < m:
             # Generate a random start position that is divisible by self.resolution
@@ -2471,9 +2378,10 @@ class ExtendedEncodeDataHandler:
 
             # Check if the region overlaps with any existing region in the same chromosome
             if not any(start <= rand_end and end >= rand_start for start, end in used_regions[chr]):
-                self.m_regions.append([chr, rand_start, rand_end])
-                used_regions[chr].append((rand_start, rand_end))
-                mii += 1
+                if self.is_region_allowed(chr, rand_start, rand_end):
+                    self.m_regions.append([chr, rand_start, rand_end])
+                    used_regions[chr].append((rand_start, rand_end))
+                    mii += 1
 
     def generate_ccre_loci(self, m, context_length, ccre_filename="GRCh38-cCREs.bed", exclude_chr=['chr21']):
         """Generate loci based on CCRE data."""
@@ -2504,20 +2412,22 @@ class ExtendedEncodeDataHandler:
                 # Check if the region overlaps with any existing region in the same chromosome
                 if rand_start >= 0 and rand_end <= self.chr_sizes[row['chrom']]:
                     if not any(start <= rand_end and end >= rand_start for start, end in used_regions[row['chrom']]):
-                        self.m_regions.append([row['chrom'], rand_start, rand_end])
-                        used_regions[row['chrom']].append((rand_start, rand_end))
-                        break
+                        if self.is_region_allowed(row['chrom'], rand_start, rand_end):
+                            self.m_regions.append([row['chrom'], rand_start, rand_end])
+                            used_regions[row['chrom']].append((rand_start, rand_end))
+                            break
                         
     def generate_full_chr_loci(self, context_length, chrs=["chr19"]):
         self.m_regions = []
         if chrs == "gw":
             chrs = ["chr" + str(x) for x in range(1,23)] + ["chrX"]
-            chrs.remove("chr21") # reserved for validation
+            chrs.remove("chr21")
             
         for chr in chrs:
             size = (self.chr_sizes[chr] // context_length) * context_length
             for i in range(0, size, context_length):
-                self.m_regions.append([chr, i, i+context_length])
+                if self.is_region_allowed(chr, i, i+context_length):
+                    self.m_regions.append([chr, i, i+context_length])
         
     def load_npz(self, file_name):
         with np.load(file_name, allow_pickle=True) as data:
@@ -2793,8 +2703,10 @@ class ExtendedEncodeDataHandler:
         elif loci_gen == "debug":
             self.generate_full_chr_loci(context_length, chrs=["chr19"])
             self.m_regions = self.m_regions[(len(self.m_regions) - m) // 2 : (len(self.m_regions) + m) // 2]
+        elif loci_gen == "gw":
+            self.generate_full_chr_loci(context_length, chrs="gw")
         else:
-            self.generate_full_chr_loci(context_length, chrs=loci_gen)
+            self.generate_full_chr_loci(context_length, chrs="loci_gen")
 
         print(f"num loci: {len(self.m_regions)}")
         
