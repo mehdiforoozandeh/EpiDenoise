@@ -976,6 +976,8 @@ if __name__ == "__main__":
     parser.add_argument('--inner_epochs', type=int,   default=5)
     parser.add_argument('--n_views',      type=int,   default=1)
 
+    parser.add_argument('--optimizer',      type=int,   default="sgd")
+
     parser.add_argument('--lr',           type=float, default=4e-3)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
     parser.add_argument('--center_upd',   type=float, default=0.9)
@@ -1030,15 +1032,20 @@ if __name__ == "__main__":
         merge_ct=True, 
         DSF_list=[1,2])
 
-    # optimizer = optim.AdamW(student.parameters(), lr=args.lr)
-    optimizer = optim.SGD(student.parameters(), lr=args.lr)
+    if args.optimizer.lower() == "adamw":
+        optimizer = optim.AdamW(student.parameters(), lr=args.lr)
+    else:
+        optimizer = optim.SGD(student.parameters(), lr=args.lr)
+
     decoder = DINO_CANDI_Decoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, 
         args.ncnn, args.ctx_len, args.pool_size, args.exp_factor
         )
 
-    # dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
-    dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
+    if args.optimizer.lower() == "adamw":
+        dec_opt = optim.AdamW(decoder.parameters(), lr=args.lr)
+    else:
+        dec_opt = optim.SGD(decoder.parameters(), lr=args.lr)
     criterion = CANDI_Decoder_LOSS()
 
     dec_data = ExtendedEncodeDataHandler(args.data_path); dec_data.initialize_EED(
