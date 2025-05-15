@@ -987,6 +987,7 @@ if __name__ == "__main__":
 
     # training
     parser.add_argument('--epochs',       type=int,   default=10)
+    parser.add_argument('--seed',       type=int,   default=42)
     parser.add_argument('--batch_size',   type=int,   default=10)
     parser.add_argument('--inner_epochs', type=int,   default=1)
     parser.add_argument('--n_views',      type=int,   default=1)
@@ -1033,6 +1034,7 @@ if __name__ == "__main__":
     hps = vars(args)
     with open(f"models/hyper_parameters_DINO_CANDI_{args.suffix}.pkl","wb") as f: pickle.dump(hps, f)
 
+    set_seed(seed=args.seed)
     # build encoders, dataset, trainer...
     student = DINO_CANDI_DNA_Encoder(
         args.signal_dim, args.metadata_dim, args.conv_kernel, args.ncnn, args.nhead, args.nsab, 
