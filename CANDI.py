@@ -874,6 +874,13 @@ class PRETRAIN(object):
                     logfile.write("\n".join(log_strs))
                     logfile.close()
 
+                    try:
+                        if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                            os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
+                        torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                    except:
+                        pass
+
                 # if dsf_pointer0 != dsf_pointer1 or chr0 != chr1 or bios_pointer0 != bios_pointer1:
                 if self.HPO==False and chr0 != chr1:
                     try:

@@ -606,21 +606,27 @@ class DINO_CANDI:
                 chr1 = list(self.dataset.loci.keys())[self.dataset.chr_pointer]
                 bios_pointer1 = self.dataset.bios_pointer
 
-                # if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
-                if chr0 != chr1:
+                if chr0 != chr1 or dsf_pointer0 != dsf_pointer1 or bios_pointer0 != bios_pointer1:
                     logfile = open(f"models/DINO_CANDI_{arch}_log.txt", "w")
                     logfile.write("\n".join(self.log_strs))
                     logfile.close()
 
                     self.train_decoder(context_length, batch_size, arch=arch)
 
+                if chr0 != chr1:
+                    
                     try:
+                        if os.path.exists(f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                            os.system(f"rm -rf models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
                         torch.save(
                             self.student.state_dict(), 
-                            f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}.pth')
+                            f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                        
+                        if os.path.exists(f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                            os.system(f"rm -rf models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
                         torch.save(
                             self.decoder.state_dict(), 
-                            f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}.pth')
+                            f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
                     except:
                         pass
         
@@ -973,15 +979,15 @@ if __name__ == "__main__":
     # training
     parser.add_argument('--epochs',       type=int,   default=10)
     parser.add_argument('--batch_size',   type=int,   default=10)
-    parser.add_argument('--inner_epochs', type=int,   default=5)
+    parser.add_argument('--inner_epochs', type=int,   default=1)
     parser.add_argument('--n_views',      type=int,   default=1)
 
-    parser.add_argument('--optimizer',      type=str,   default="sgd")
+    parser.add_argument('--optimizer',      type=str,   default="adamw")
 
-    parser.add_argument('--lr',           type=float, default=4e-3)
+    parser.add_argument('--lr',           type=float, default=5e-4)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
     parser.add_argument('--center_upd',   type=float, default=0.9)
-    parser.add_argument('--t_student',    type=float, default=0.4)
+    parser.add_argument('--t_student',    type=float, default=0.1)
     parser.add_argument('--t_teacher',    type=float, default=0.04)
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
 
