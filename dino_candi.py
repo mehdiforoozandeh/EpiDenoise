@@ -976,7 +976,7 @@ if __name__ == "__main__":
     parser.add_argument('--inner_epochs', type=int,   default=5)
     parser.add_argument('--n_views',      type=int,   default=1)
 
-    parser.add_argument('--optimizer',      type=int,   default="sgd")
+    parser.add_argument('--optimizer',      type=str,   default="sgd")
 
     parser.add_argument('--lr',           type=float, default=4e-3)
     parser.add_argument('--ema_decay',    type=float, default=0.996)
