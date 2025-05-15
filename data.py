@@ -1307,7 +1307,7 @@ class ExtendedEncodeDataHandler:
         self.merged_split_path = os.path.join(self.base_path, "merged_train_va_test_split.json")
 
         self.blacklist_file = os.path.join(self.base_path, "hg38_blacklist_v2.bed") 
-        self.blacklist = self.load_blacklist(blacklist_file)
+        self.blacklist = self.load_blacklist(self.blacklist_file)
 
         self.resolution = resolution
         self.df1_path = os.path.join(self.base_path, "DF1.csv")
