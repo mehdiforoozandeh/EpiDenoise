@@ -621,13 +621,11 @@ class DINO_CANDI:
 
                     self.train_decoder(context_length, batch_size, arch=arch)
 
-                if chr0 != chr1:
-                    
                     try:
                         if os.path.exists(f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
                             os.system(f"rm -rf models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
                         torch.save(
-                            self.student.state_dict(), 
+                            self.teacher.state_dict(), 
                             f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
                         
                         if os.path.exists(f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
@@ -640,7 +638,7 @@ class DINO_CANDI:
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
         next_epoch = False
-        self.student.eval()
+        self.teacher.eval()
         self.decoder.train()
         
         while (next_epoch==False):
@@ -696,7 +694,7 @@ class DINO_CANDI:
                 ###################################
                 dnaseq_batch = dnaseq_batch.to(self.device)
                 with torch.no_grad():
-                    latent = self.student(X_batch, dnaseq_batch, mX_batch, return_projected=False)
+                    latent = self.teacher(X_batch, dnaseq_batch, mX_batch, return_projected=False)
                 output_p, output_n, output_mu, output_var = self.decoder(latent, mY_batch)
 
                 count_loss, pval_loss = self.decoder_criterion(
@@ -958,7 +956,6 @@ class MergedDINO(nn.Module):
         return self.decoder(latent, decoder_metadata.to(self.device))
 
 if __name__ == "__main__":
-    set_seed()
     import argparse, copy
     parser = argparse.ArgumentParser(description="Train DINO-CANDI model")
 

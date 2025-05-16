@@ -868,7 +868,7 @@ class PRETRAIN(object):
                     logfile.write("\n".join(log_strs))
                     logfile.close()
 
-                if chr0 != chr1:
+                # if chr0 != chr1:
                     try:
                         if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
                             os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
@@ -1122,7 +1122,7 @@ def main():
     parser.add_argument('--inner_epochs', type=int, default=1, help='Number of inner epochs')
     parser.add_argument('--mask_percentage', type=float, default=0.2, help='Masking percentage (if used)')
     parser.add_argument('--context_length', type=int, default=1200, help='Context length')
-    parser.add_argument('--batch_size', type=int, default=10, help='Batch size')
+    parser.add_argument('--batch_size', type=int, default=25, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--num_loci', type=int, default=3000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
