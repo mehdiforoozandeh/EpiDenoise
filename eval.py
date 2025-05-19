@@ -3166,7 +3166,7 @@ class EVAL_CANDI(object):
             "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
             "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals
+            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
             "count_heatmap": self.viz.count_heatmap,
             "signal_heatmap": self.viz.signal_heatmap,
