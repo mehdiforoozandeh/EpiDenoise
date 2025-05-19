@@ -1022,8 +1022,8 @@ if __name__ == "__main__":
             dropout=hp['dropout'],
             context_length=hp['ctx_len'],
             pos_enc=hp['pos_enc'],
-            expansion_factor=hp['expansion_factor'],
-            pooling_type=hp['pooling_type']
+            expansion_factor=hp['exp_factor'],
+            pooling_type=hp['pooling']
         )
         torch.save(merged.state_dict(), args.out)
         print(f"Merged model saved to {args.out}")
