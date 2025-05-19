@@ -1013,7 +1013,7 @@ if __name__ == "__main__":
             decoder_ckpt_path=args.dec_ckpt,
             signal_dim=hp['signal_dim'],
             metadata_embedding_dim=4*hp['signal_dim'],
-            conv_kernel_size=hp['conv_kernel_size'],
+            conv_kernel_size=args.conv_kernel_size,
             n_cnn_layers=hp['n_cnn_layers'],
             nhead=hp['nhead'],
             n_sab_layers=hp['n_sab_layers'],
