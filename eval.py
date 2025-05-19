@@ -3229,8 +3229,8 @@ class EVAL_CANDI(object):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
-            if not self.dataset.has_rnaseq(bios):
-                continue
+            # if not self.dataset.has_rnaseq(bios):
+            #     continue
 
             try:
                 print("evaluating ", bios)
@@ -3310,3 +3310,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    #python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch4_chr3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --eic all
+    #python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch4_chr3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --eic all

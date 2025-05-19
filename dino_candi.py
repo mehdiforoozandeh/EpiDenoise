@@ -1009,6 +1009,7 @@ if __name__ == "__main__":
     if args.merge:
         hp = pickle.load(open(args.hp_path,'rb'))
         # hp = vars(args)
+        
         merged = MergedDINO(
             encoder_ckpt_path=args.enc_ckpt,
             decoder_ckpt_path=args.dec_ckpt,
