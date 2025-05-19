@@ -3156,8 +3156,8 @@ class EVAL_CANDI(object):
     def viz_bios(self, eval_res):
         # Define a dictionary mapping function names to corresponding methods
         plot_functions = {
-            # "count_track": self.viz.count_track,
-            # "signal_track": self.viz.signal_track,
+            "count_track": self.viz.count_track,
+            "signal_track": self.viz.signal_track,
 
             "count_confidence": self.viz.count_confidence,
             "signal_confidence": self.viz.signal_confidence,
@@ -3165,8 +3165,8 @@ class EVAL_CANDI(object):
             "count_error_std_hexbin": self.viz.count_error_std_hexbin,
             "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals
+            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals
 
             "count_heatmap": self.viz.count_heatmap,
             "signal_heatmap": self.viz.signal_heatmap,
@@ -3194,8 +3194,8 @@ class EVAL_CANDI(object):
             # "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
             # "signal_mean_std_hexbin": self.viz.signal_mean_std_hexbin,
 
-            # "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
-            # "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
+            "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
+            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
         }
         
         for func_name, func in plot_functions.items():
