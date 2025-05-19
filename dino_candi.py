@@ -1007,20 +1007,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.merge:
-        # hp = pickle.load(open(args.hp_path,'rb'))
-        hp = vars(args)
+        hp = pickle.load(open(args.hp_path,'rb'))
+        # hp = vars(args)
         merged = MergedDINO(
             encoder_ckpt_path=args.enc_ckpt,
             decoder_ckpt_path=args.dec_ckpt,
             signal_dim=hp['signal_dim'],
-            metadata_embedding_dim=hp['metadata_embedding_dim'],
-            conv_kernel_size=hp['conv_kernel_size'],
-            n_cnn_layers=hp['n_cnn_layers'],
+            metadata_embedding_dim=hp['metadata_dim'],
+            conv_kernel_size=hp['conv_kernel'],
+            n_cnn_layers=hp['ncnn'],
             nhead=hp['nhead'],
-            n_sab_layers=hp['n_sab_layers'],
+            n_sab_layers=hp['nsab'],
             pool_size=hp['pool_size'],
             dropout=hp['dropout'],
-            context_length=hp['context_length'],
+            context_length=hp['ctx_len'],
             pos_enc=hp['pos_enc'],
             expansion_factor=hp['expansion_factor'],
             pooling_type=hp['pooling_type']
