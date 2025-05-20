@@ -908,8 +908,12 @@ class MergedDINO(nn.Module):
             expansion_factor=expansion_factor,
             pooling_type=pooling_type
         ).to(self.device)
-        enc_state = torch.load(encoder_ckpt_path, map_location=self.device)
-        self.encoder.load_state_dict(enc_state)
+        try:
+            enc_state = torch.load(encoder_ckpt_path, map_location=self.device)
+            self.encoder.load_state_dict(enc_state)
+            print(f"loaded encoder trained parameters from {encoder_ckpt_path}")
+        except:
+            pass
 
         # instantiate & load decoder
         self.decoder = DINO_CANDI_Decoder(
@@ -921,8 +925,12 @@ class MergedDINO(nn.Module):
             pool_size=pool_size,
             expansion_factor=expansion_factor
         ).to(self.device)
-        dec_state = torch.load(decoder_ckpt_path, map_location=self.device)
-        self.decoder.load_state_dict(dec_state)
+        try:
+            dec_state = torch.load(decoder_ckpt_path, map_location=self.device)
+            self.decoder.load_state_dict(dec_state)
+            print(f"loaded decoder trained parameters from {decoder_ckpt_path}")
+        except:
+            pass
 
         self.encoder.eval()
         self.decoder.eval()
@@ -1009,7 +1017,7 @@ if __name__ == "__main__":
     if args.merge:
         hp = pickle.load(open(args.hp_path,'rb'))
         # hp = vars(args)
-        
+
         merged = MergedDINO(
             encoder_ckpt_path=args.enc_ckpt,
             decoder_ckpt_path=args.dec_ckpt,
