@@ -2412,16 +2412,16 @@ class EVAL_CANDI(object):
                     encoder_ckpt_path=ENC_CKP,
                     decoder_ckpt_path=DEC_CKP,
                     signal_dim=            self.hyper_parameters["signal_dim"],
-                    metadata_embedding_dim=self.hyper_parameters["metadata_embedding_dim"],
-                    conv_kernel_size     = self.hyper_parameters["conv_kernel_size"],
-                    n_cnn_layers         = self.hyper_parameters["n_cnn_layers"],
+                    metadata_embedding_dim=self.hyper_parameters["metadata_dim"],
+                    conv_kernel_size     = self.hyper_parameters["conv_kernel"],
+                    n_cnn_layers         = self.hyper_parameters["ncnn"],
                     nhead                = self.hyper_parameters["nhead"],
-                    n_sab_layers         = self.hyper_parameters["n_sab_layers"],
+                    n_sab_layers         = self.hyper_parameters["nsab"],
                     pool_size            = self.hyper_parameters["pool_size"],
                     dropout              = self.hyper_parameters["dropout"],
-                    context_length       = self.hyper_parameters["context_length"],
+                    context_length       = self.hyper_parameters["ctx_len"],
                     pos_enc              = self.hyper_parameters["pos_enc"],
-                    expansion_factor     = self.hyper_parameters["expansion_factor"],
+                    expansion_factor     = self.hyper_parameters["exp_factor"],
                     pooling_type         = "attention"
                 )
 
@@ -3312,4 +3312,5 @@ if __name__ == "__main__":
     main()
 
     #python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch4_chr3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --eic all
-    #python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch4_chr3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --eic all
+    #python eval.py -m models/CANDIeic_DNA_random_mask_rand10k_model_checkpoint_epoch4_chr8.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_rand10k_20250515215719_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_rand10k/ --eic all
+    #python eval.py -m models/CANDINO_ccre10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_ccre10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_ccre10k/ --dino --eic all
