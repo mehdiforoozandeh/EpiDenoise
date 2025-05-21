@@ -2613,11 +2613,6 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
-        # print(df_true_long.shape)
-        # print(df_pred_long.shape)
-
-        # print("========================================")
-
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot_table(
             index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
@@ -2628,25 +2623,6 @@ class EVAL_CANDI(object):
         available_assays = {self.expnames[a] for a in availability}
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
-
-        # print("========================================")
-
-        # print(df_true_wide.head())
-        # print(df_true_wide.shape)
-
-        # print("========================================")
-
-        # print(df_pred_wide_all.head())
-        # print(df_pred_wide_all.shape)
-
-        # print("========================================")
-
-        # print(df_pred_wide_avail.head())
-        # print(df_pred_wide_avail.shape)
-
-        # print("========================================")
-        # exit()
-
 
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
@@ -2717,9 +2693,9 @@ class EVAL_CANDI(object):
             fig, axes = plt.subplots(1, len(methods), figsize=(5*len(methods),5), sharey=True)
             for ax, m in zip(axes, methods):
                 for key, color, label in [
-                    (f'true_{m}', 'blue','true'),
-                    (f'denav_{m}','orange','den_avail'),
-                    (f'denimp_{m}','green','den_imp')
+                    (f'true_{m}', 'blue','Observed'),
+                    (f'denav_{m}','orange','Denoised'),
+                    (f'denimp_{m}','green','Denoised+Imputed')
                 ]:
                     errs = np.sort(report[key]['errors'])
                     ax.plot(errs,
