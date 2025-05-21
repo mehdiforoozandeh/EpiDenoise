@@ -2689,6 +2689,11 @@ class EVAL_CANDI(object):
             np.array(X_tr_v.reshape(-1,))
             ))
 
+        print(mean_squared_error(
+            np.array(X_te_t.reshape(-1,)), 
+            np.array(X_te_v.reshape(-1,))
+            ))
+
         exit()
 
         # 6) hold-out eval helper with 5 algos ⬅ changed
