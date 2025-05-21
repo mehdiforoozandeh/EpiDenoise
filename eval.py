@@ -2544,7 +2544,8 @@ class EVAL_CANDI(object):
         def prep(DF):
             feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
             X = DF[feat_cols].values
-            y = np.log1p(DF['TPM'].values)
+            # y = np.log1p(DF['TPM'].values)
+            y = DF['TPM'].values
             print(X.shape)
             return X, y
 
