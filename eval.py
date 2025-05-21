@@ -3541,11 +3541,10 @@ class EVAL_CANDI(object):
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
-        print(f"Evaluating RNAseq test for {len(list(self.dataset.navigation.keys()))} biosamples...")
+        print(f"Evaluating for {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
             if self.dataset.has_rnaseq(bios):
                 print(bios, len(self.dataset.navigation[bios]))
-                continue
                 self.bios_rnaseq_eval(bios, dsf)
 
 
