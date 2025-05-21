@@ -2665,6 +2665,7 @@ class EVAL_CANDI(object):
             feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
             X = DF[feat_cols].values
             y = np.log1p(DF['TPM'].values)
+            print(X.shape)
             return X, y
 
         X_tr_t, y_tr_t = prep(tr_true)
@@ -2673,7 +2674,16 @@ class EVAL_CANDI(object):
         X_te_a, y_te_a = prep(te_all)
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
-    
+
+        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape)
+        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape)
+        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape)
+        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape)
+        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape)
+        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape)
+
+        exit()
+        
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
         from sklearn.svm import SVR                                                 
