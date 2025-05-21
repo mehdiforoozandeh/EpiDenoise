@@ -2564,7 +2564,12 @@ class EVAL_CANDI(object):
 
     #     return report
 
-    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, plot_REC=True):
+    def eval_rnaseq(
+        self, bios_name, y_pred, y_true, 
+        availability, plot_REC=True,
+        split_mode: str = 'random',        
+        test_size: float = 0.2,           
+        random_state: int = 42)):
         """
         Hold-out evaluation: train on all genes off chr21, test on chr21,
         with one row per gene and 3×A features (A = number of assays).
@@ -2628,26 +2633,26 @@ class EVAL_CANDI(object):
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
             print(df.shape, gene_info.shape)
             df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
-            print(df.head())
-            print(df.tail())
-            input()
 
-        
-
-        # 4) split by chr21 hold‐out ⬅ unchanged
-        def split_df(df):
-            train = df[df['chr'] != 'chr21']
-            test  = df[df['chr'] == 'chr21']
-            return train, test
+        # 4) split data
+        if split_mode == 'chr':              
+            def split_df(df):                
+                train = df[df['chr'] != 'chr21']
+                test  = df[df['chr'] == 'chr21']
+                return train, test
+        elif split_mode == 'random':       
+            from sklearn.model_selection import train_test_split 
+            def split_df(df):           
+                train, test = train_test_split(
+                    df, test_size=test_size, random_state=random_state
+                )
+                return train, test
+        else:                          
+            raise ValueError("split_mode must be either 'chr' or 'random'")  
 
         tr_true, te_true = split_df(df_true_wide)
         tr_all,  te_all  = split_df(df_pred_wide_all)
         tr_av,   te_av   = split_df(df_pred_wide_avail)
-
-        print(tr_true.shape, te_true.shape)
-        print(tr_all.shape, te_all.shape)
-        print(tr_av.shape, te_av.shape)
-        exit()
 
         feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
 
