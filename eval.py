@@ -2369,7 +2369,7 @@ class EVAL_CANDI(object):
             bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True)
 
         self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
-        self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
+        # self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
 
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
@@ -2441,131 +2441,293 @@ class EVAL_CANDI(object):
         summary(self.model)
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10, plot_REC=True):
-        # columns=  chr, start, end, geneID, length, TPM, FPKM
-        rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
-        print(rna_seq_data)
+    # def eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_fold=10, plot_REC=True):
+    #     # columns=  chr, start, end, geneID, length, TPM, FPKM
+    #     rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords) 
+    #     print(rna_seq_data)
         
-        pred_features = []
-        true_features = []
-        available_assays = [self.expnames[a] for a in range(y_pred.shape[1]) if a in list(availability)]
-        print(available_assays)
-
-        """
-        TODO: 
-        ADD LATENT EMBEDDINGS AS ANOTHER INPUT DATA USED FOR PROBING RNA-seq.
-        """
+    #     pred_features = []
+    #     true_features = []
+    #     available_assays = [self.expnames[a] for a in range(y_pred.shape[1]) if a in list(availability)]
+    #     print(available_assays)
         
-        for i in range(len(rna_seq_data)):
-            for a in range(y_pred.shape[1]):
-                assay_name = self.expnames[a]
+    #     for i in range(len(rna_seq_data)):
+    #         for a in range(y_pred.shape[1]):
+    #             assay_name = self.expnames[a]
 
-                if a in list(availability):
-                    true_signal_a = y_true[:, a].numpy()
-                    f = signal_feature_extraction(
-                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
-                        rna_seq_data["strand"][i], true_signal_a
-                        )
+    #             if a in list(availability):
+    #                 true_signal_a = y_true[:, a].numpy()
+    #                 f = signal_feature_extraction(
+    #                     rna_seq_data["start"][i], rna_seq_data["end"][i], 
+    #                     rna_seq_data["strand"][i], true_signal_a
+    #                     )
 
-                    f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
-                        f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+    #                 f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+    #                     f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
 
-                    true_features.append(f)
+    #                 true_features.append(f)
                 
-                pred_signal_a = y_pred[:, a].numpy()
-                f = signal_feature_extraction(
-                        rna_seq_data["start"][i], rna_seq_data["end"][i], 
-                        rna_seq_data["strand"][i], pred_signal_a
-                        )
+    #             pred_signal_a = y_pred[:, a].numpy()
+    #             f = signal_feature_extraction(
+    #                     rna_seq_data["start"][i], rna_seq_data["end"][i], 
+    #                     rna_seq_data["strand"][i], pred_signal_a
+    #                     )
                     
-                f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
-                    f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
+    #             f = [assay_name, rna_seq_data["geneID"][i], f["mean_sig_promoter"], f["mean_sig_gene_body"], 
+    #                 f["mean_sig_around_TES"], rna_seq_data["TPM"][i], rna_seq_data["FPKM"][i]]
 
-                pred_features.append(f)
+    #             pred_features.append(f)
         
-        true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
-        pred_features_avail = pred_features_all[pred_features_all["assay"].isin(available_assays)]
+    #     true_features = pd.DataFrame(true_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+    #     pred_features_all = pd.DataFrame(pred_features, columns=["assay", "geneID", "promoter_signal", "gene_body_signal", "TES_signal", "TPM", "FPKM"])
+    #     pred_features_avail = pred_features_all[pred_features_all["assay"].isin(available_assays)]
 
+    #     report = {}
+    #     # Perform K-Fold Cross Validation for both true and predicted data
+    #     # print("Evaluating Experimental Data")
+    #     report['true_linear'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
+        
+    #     # print("Evaluating Denoised + Imputed Data")
+    #     report['denoised_imputed_linear'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
+
+    #     # print("Evaluating Denoised Data")
+    #     report['denoised_linear'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
+
+    #     # Perform K-Fold Cross Validation for both true and predicted data
+    #     # print("Evaluating Experimental Data")
+    #     report['true_svr'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        
+    #     # print("Evaluating Denoised + Imputed Data")
+    #     report['denoised_imputed_svr'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
+
+    #     # print("Evaluating Denoised Data")
+    #     report['denoised_svr'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
+        
+    #     # Plotting REC curves for comparison
+    #     if plot_REC:
+    #         plt.figure(figsize=(14, 7))
+            
+    #         # Plot REC for SVR models
+    #         plt.subplot(1, 2, 1)
+    #         true_errors_svr = report['true_svr']['errors']
+    #         denoised_errors_svr = report['denoised_svr']['errors']
+    #         denoised_imputed_errors_svr = report['denoised_imputed_svr']['errors']
+            
+    #         sorted_true_errors_svr = np.sort(true_errors_svr)
+    #         cumulative_true_svr = np.arange(1, len(sorted_true_errors_svr) + 1) / len(sorted_true_errors_svr)
+            
+    #         sorted_denoised_errors_svr = np.sort(denoised_errors_svr)
+    #         cumulative_denoised_svr = np.arange(1, len(sorted_denoised_errors_svr) + 1) / len(sorted_denoised_errors_svr)
+
+    #         sorted_denoised_imputed_errors_svr = np.sort(denoised_imputed_errors_svr)
+    #         cumulative_denoised_imputed_svr = np.arange(1, len(sorted_denoised_imputed_errors_svr) + 1) / len(sorted_denoised_imputed_errors_svr)
+            
+    #         plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='Observed', color='blue', alpha=0.7)
+    #         plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised', color='orange', alpha=0.7)
+    #         plt.plot(sorted_denoised_imputed_errors_svr, cumulative_denoised_imputed_svr, label='Denoised+Imputed', color='green', alpha=0.7)
+    #         plt.xlabel('Error Tolerance')
+    #         plt.ylabel('Proportion of Points within Tolerance')
+    #         plt.title('REC Curve - SVR')
+    #         plt.legend()
+    #         plt.grid(True)
+            
+    #         # Plot REC for Linear models
+    #         plt.subplot(1, 2, 2)
+    #         true_errors_linear = report['true_linear']['errors']
+    #         denoised_errors_linear = report['denoised_linear']['errors']
+    #         denoised_imputed_errors_linear = report['denoised_imputed_linear']['errors']
+            
+    #         sorted_true_errors_linear = np.sort(true_errors_linear)
+    #         cumulative_true_linear = np.arange(1, len(sorted_true_errors_linear) + 1) / len(sorted_true_errors_linear)
+            
+    #         sorted_denoised_errors_linear = np.sort(denoised_errors_linear)
+    #         cumulative_denoised_linear = np.arange(1, len(sorted_denoised_errors_linear) + 1) / len(sorted_denoised_errors_linear)
+
+    #         sorted_denoised_imputed_errors_linear = np.sort(denoised_imputed_errors_linear)
+    #         cumulative_denoised_imputed_linear = np.arange(1, len(sorted_denoised_imputed_errors_linear) + 1) / len(sorted_denoised_imputed_errors_linear)
+            
+    #         plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='Observed', color='blue', alpha=0.7)
+    #         plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised', color='orange', alpha=0.7)
+    #         plt.plot(sorted_denoised_imputed_errors_linear, cumulative_denoised_imputed_linear, label='Denoised+Imputed', color='green', alpha=0.7)
+    #         plt.xlabel('Error Tolerance')
+    #         plt.ylabel('Proportion of Points within Tolerance')
+    #         plt.title('REC Curve - Linear Regression')
+    #         plt.legend()
+    #         plt.grid(True)
+            
+    #         plt.tight_layout()
+    #         savepath = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
+    #         if os.path.exists(savepath) ==False:
+    #             os.mkdir(savepath)
+
+    #         plt.savefig(savepath+"/RNAseq_REC.svg", format="svg")
+
+    #     return report
+
+    def eval_rnaseq(self, bios_name, y_pred, y_true, availability, plot_REC=True):
+        """
+        Hold-out evaluation: train on all genes off chr21, test on chr21,
+        with one row per gene and 3×A features (A = number of assays).
+        Supports: linear, lasso, ridge, elasticnet, svr.
+        """
+
+        # 1) load full-genome RNA-seq table ⬅ unchanged
+        rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
+
+        # build gene_info lookup
+        gene_info = (
+            rna_seq_data[['geneID','chr','TPM','FPKM']]
+            .drop_duplicates(subset='geneID')
+            .set_index('geneID')
+        )
+
+        # 2) build long-format for true vs. predicted signals ⬅ unchanged
+        long_rows_true = []
+        long_rows_pred = []
+        for _, row in rna_seq_data.iterrows():
+            gene, start, end, strand = row['geneID'], row['start'], row['end'], row['strand']
+            for a in range(y_pred.shape[1]):
+                assay = self.expnames[a]
+                # true only if available
+                if a in availability:
+                    feats = signal_feature_extraction(start, end, strand, y_true[:, a].numpy())
+                    for region, key in [('promoter','mean_sig_promoter'),
+                                        ('gene_body','mean_sig_gene_body'),
+                                        ('TES','mean_sig_around_TES')]:
+                        long_rows_true.append({
+                            'geneID': gene,
+                            'feature': f"{assay}_{region}",
+                            'signal': feats[key]
+                        })
+                # pred for all
+                feats = signal_feature_extraction(start, end, strand, y_pred[:, a].numpy())
+                for region, key in [('promoter','mean_sig_promoter'),
+                                    ('gene_body','mean_sig_gene_body'),
+                                    ('TES','mean_sig_around_TES')]:
+                    long_rows_pred.append({
+                        'geneID': gene,
+                        'feature': f"{assay}_{region}",
+                        'signal': feats[key]
+                    })
+
+        df_true_long = pd.DataFrame(long_rows_true)
+        df_pred_long = pd.DataFrame(long_rows_pred)
+
+        print(df_true_long)
+        print(df_pred_long)
+        exit()
+
+        # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
+        df_true_wide = df_true_long.pivot(index='geneID', columns='feature', values='signal').fillna(0)
+        df_pred_wide_all = df_pred_long.pivot(index='geneID', columns='feature', values='signal').fillna(0)
+
+        # only-available-assays version
+        available_assays = {self.expnames[a] for a in availability}
+        mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
+        df_pred_wide_avail = df_pred_long[mask].pivot(index='geneID', columns='feature', values='signal').fillna(0)
+
+        # join TPM/chr back
+        for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
+            df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
+
+        # 4) split by chr21 hold‐out ⬅ unchanged
+        def split_df(df):
+            train = df[df['chr'] != 'chr21']
+            test  = df[df['chr'] == 'chr21']
+            return train, test
+
+        tr_true, te_true = split_df(df_true_wide)
+        tr_all,  te_all  = split_df(df_pred_wide_all)
+        tr_av,   te_av   = split_df(df_pred_wide_avail)
+
+        feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
+
+        # 5) prepare X/y ⬅ unchanged
+        def prep(df):
+            X = df[feat_cols].values
+            y = np.log1p(df['TPM'].values)
+            return X, y
+
+        X_tr_t, y_tr_t = prep(tr_true)
+        X_te_t, y_te_t = prep(te_true)
+        X_tr_a, y_tr_a = prep(tr_all)
+        X_te_a, y_te_a = prep(te_all)
+        X_tr_v, y_tr_v = prep(tr_av)
+        X_te_v, y_te_v = prep(te_av)
+
+        # 6) hold-out eval helper with 5 algos ⬅ changed
+        from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet  # ⬅ changed
+        from sklearn.svm import SVR                                                   # ⬅ changed
+
+        def holdout_eval(Xtr, ytr, Xte, yte, algo):
+            if algo == 'linear':
+                m = LinearRegression()
+            elif algo == 'lasso':
+                m = Lasso(max_iter=10000)
+            elif algo == 'ridge':
+                m = Ridge()
+            elif algo == 'elasticnet':
+                m = ElasticNet(max_iter=10000)
+            else:  # 'svr'
+                m = SVR(kernel='rbf', C=1.0, epsilon=0.2)
+            m.fit(Xtr, ytr)
+            pred = m.predict(Xte)
+            err = np.abs(yte - pred)
+            return {
+                'mse':    mean_squared_error(yte, pred),
+                'r2':     r2_score(yte, pred),
+                'aucrec': auc_rec(yte, pred),
+                'pcc':    pearsonr(pred, yte)[0],
+                'scrr':   spearmanr(pred, yte)[0],
+                'errors': err
+            }
+
+        # 7) compute all 6×5 versions ⬅ changed
+        methods = ['linear','lasso','ridge','elasticnet','svr']
         report = {}
-        # Perform K-Fold Cross Validation for both true and predicted data
-        # print("Evaluating Experimental Data")
-        report['true_linear'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='linear')
-        
-        # print("Evaluating Denoised + Imputed Data")
-        report['denoised_imputed_linear'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='linear')
+        for m in methods:
+            report[f'true_{m}']       = holdout_eval(X_tr_t, y_tr_t, X_te_t, y_te_t, m)
+            report[f'denimp_{m}']     = holdout_eval(X_tr_a, y_tr_a, X_te_a, y_te_a, m)
+            report[f'denav_{m}']      = holdout_eval(X_tr_v, y_tr_v, X_te_v, y_te_v, m)
 
-        # print("Evaluating Denoised Data")
-        report['denoised_linear'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='linear')
-
-        # Perform K-Fold Cross Validation for both true and predicted data
-        # print("Evaluating Experimental Data")
-        report['true_svr'] = k_fold_cross_validation(true_features, k=k_fold, target='TPM', logscale=True, model_type='svr')
-        
-        # print("Evaluating Denoised + Imputed Data")
-        report['denoised_imputed_svr'] = k_fold_cross_validation(pred_features_all, k=k_fold, target='TPM', logscale=True, model_type='svr')
-
-        # print("Evaluating Denoised Data")
-        report['denoised_svr'] = k_fold_cross_validation(pred_features_avail, k=k_fold, target='TPM', logscale=True, model_type='svr')
-        
-        # Plotting REC curves for comparison
+        # 8) REC plot: one subplot per method ⬅ changed
         if plot_REC:
-            plt.figure(figsize=(14, 7))
-            
-            # Plot REC for SVR models
-            plt.subplot(1, 2, 1)
-            true_errors_svr = report['true_svr']['errors']
-            denoised_errors_svr = report['denoised_svr']['errors']
-            denoised_imputed_errors_svr = report['denoised_imputed_svr']['errors']
-            
-            sorted_true_errors_svr = np.sort(true_errors_svr)
-            cumulative_true_svr = np.arange(1, len(sorted_true_errors_svr) + 1) / len(sorted_true_errors_svr)
-            
-            sorted_denoised_errors_svr = np.sort(denoised_errors_svr)
-            cumulative_denoised_svr = np.arange(1, len(sorted_denoised_errors_svr) + 1) / len(sorted_denoised_errors_svr)
-
-            sorted_denoised_imputed_errors_svr = np.sort(denoised_imputed_errors_svr)
-            cumulative_denoised_imputed_svr = np.arange(1, len(sorted_denoised_imputed_errors_svr) + 1) / len(sorted_denoised_imputed_errors_svr)
-            
-            plt.plot(sorted_true_errors_svr, cumulative_true_svr, label='Observed', color='blue', alpha=0.7)
-            plt.plot(sorted_denoised_errors_svr, cumulative_denoised_svr, label='Denoised', color='orange', alpha=0.7)
-            plt.plot(sorted_denoised_imputed_errors_svr, cumulative_denoised_imputed_svr, label='Denoised+Imputed', color='green', alpha=0.7)
-            plt.xlabel('Error Tolerance')
-            plt.ylabel('Proportion of Points within Tolerance')
-            plt.title('REC Curve - SVR')
-            plt.legend()
-            plt.grid(True)
-            
-            # Plot REC for Linear models
-            plt.subplot(1, 2, 2)
-            true_errors_linear = report['true_linear']['errors']
-            denoised_errors_linear = report['denoised_linear']['errors']
-            denoised_imputed_errors_linear = report['denoised_imputed_linear']['errors']
-            
-            sorted_true_errors_linear = np.sort(true_errors_linear)
-            cumulative_true_linear = np.arange(1, len(sorted_true_errors_linear) + 1) / len(sorted_true_errors_linear)
-            
-            sorted_denoised_errors_linear = np.sort(denoised_errors_linear)
-            cumulative_denoised_linear = np.arange(1, len(sorted_denoised_errors_linear) + 1) / len(sorted_denoised_errors_linear)
-
-            sorted_denoised_imputed_errors_linear = np.sort(denoised_imputed_errors_linear)
-            cumulative_denoised_imputed_linear = np.arange(1, len(sorted_denoised_imputed_errors_linear) + 1) / len(sorted_denoised_imputed_errors_linear)
-            
-            plt.plot(sorted_true_errors_linear, cumulative_true_linear, label='Observed', color='blue', alpha=0.7)
-            plt.plot(sorted_denoised_errors_linear, cumulative_denoised_linear, label='Denoised', color='orange', alpha=0.7)
-            plt.plot(sorted_denoised_imputed_errors_linear, cumulative_denoised_imputed_linear, label='Denoised+Imputed', color='green', alpha=0.7)
-            plt.xlabel('Error Tolerance')
-            plt.ylabel('Proportion of Points within Tolerance')
-            plt.title('REC Curve - Linear Regression')
-            plt.legend()
-            plt.grid(True)
-            
+            fig, axes = plt.subplots(1, len(methods), figsize=(5*len(methods),5), sharey=True)
+            for ax, m in zip(axes, methods):
+                for key, color, label in [
+                    (f'true_{m}', 'blue','true'),
+                    (f'denav_{m}','orange','den_avail'),
+                    (f'denimp_{m}','green','den_imp')
+                ]:
+                    errs = np.sort(report[key]['errors'])
+                    ax.plot(errs,
+                            np.arange(1,len(errs)+1)/len(errs),
+                            label=label, color=color, alpha=0.7)
+                ax.set_title(m)
+                ax.set_xlabel('Error tol')
+                ax.grid(True)
+                if m == 'linear':
+                    ax.set_ylabel('Coverage')
+                ax.legend(fontsize='small')
             plt.tight_layout()
-            savepath = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
-            if os.path.exists(savepath) ==False:
-                os.mkdir(savepath)
 
-            plt.savefig(savepath+"/RNAseq_REC.svg", format="svg")
+            # out = os.path.join(self.savedir, f"{bios_name}_holdout_chr21")
+            out = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
+            os.makedirs(out, exist_ok=True)
+            fig.savefig(f"{out}/RNAseq_REC.svg", format="svg")
+
+        # 9) save scalar metrics to CSV ⬅ unchanged
+        rows = []
+        for ver, m in report.items():
+            rows.append({
+                'version': ver,
+                'mse':     m['mse'],
+                'r2':      m['r2'],
+                'aucrec':  m['aucrec'],
+                'pcc':     m['pcc'],
+                'scrr':    m['scrr']
+            })
+        pd.DataFrame(rows).to_csv(f"{out}/RNAseq_results.csv", index=False)
 
         return report
 
@@ -3116,7 +3278,7 @@ class EVAL_CANDI(object):
 
         eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices)
         return eval_res
-
+    
     def bios_pipeline_eic(self, bios_name, x_dsf):
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
@@ -3229,8 +3391,8 @@ class EVAL_CANDI(object):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
-            # if not self.dataset.has_rnaseq(bios):
-            #     continue
+            if not self.dataset.has_rnaseq(bios):
+                continue
 
             try:
                 print("evaluating ", bios)
@@ -3260,6 +3422,88 @@ class EVAL_CANDI(object):
         self.model_res = pd.DataFrame(self.model_res)
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
+    def bios_rnaseq_eval(self, bios_name, x_dsf):
+        if self.DNA:
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+        else:
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+
+        mu_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+        var_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
+
+        for leave_one_out in available_indices:
+            if self.DNA:
+                n, p, mu, var = self.pred(X, mX, mY, avX, seq=seq, imp_target=[leave_one_out])
+            else:
+                n, p, mu, var = self.pred(X, mX, mY, avX, seq=None, imp_target=[leave_one_out])
+
+            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
+            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
+
+            mu_imp[:, :, leave_one_out] = mu[:, :, leave_one_out]
+            var_imp[:, :, leave_one_out] = var[:, :, leave_one_out]
+
+            del n, p, mu, var  # Free up memory
+
+        if self.DNA:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
+
+        del X, mX, mY, avX, avY  # Free up memory
+
+        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
+        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
+
+        mu_imp = mu_imp.view((mu_imp.shape[0] * mu_imp.shape[1]), mu_imp.shape[-1])
+        var_imp = var_imp.view((var_imp.shape[0] * var_imp.shape[1]), var_imp.shape[-1])
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
+        var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+
+        imp_count_dist = NegativeBinomial(p_imp, n_imp)
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+
+        imp_pval_dist = Gaussian(mu_imp, var_imp)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+
+        imp_count_mean = imp_count_dist.expect()
+        ups_count_mean = ups_count_dist.expect()
+
+        imp_count_std = imp_count_dist.std()
+        ups_count_std = ups_count_dist.std()
+
+        imp_pval_mean = imp_pval_dist.mean()
+        ups_pval_mean = ups_pval_dist.mean()
+
+        imp_pval_std = imp_pval_dist.std()
+        ups_pval_std = ups_pval_dist.std()
+
+        if self.dataset.has_rnaseq(bios_name):
+            print("got rna-seq data")
+            rnaseq_res = self.eval_rnaseq(
+                bios_name, ups_count_mean, 
+                Y, available_indices, plot_REC=True)
+
+    def rnaseq_all(self, dsf=1):
+        self.model_res = []
+        print(f"Evaluating RNAseq test for {len(list(self.dataset.navigation.keys()))} biosamples...")
+        for bios in list(self.dataset.navigation.keys()):
+            if self.dataset.has_rnaseq(bios):
+                bios_rnaseq_eval(bios, dsf)
+
+
 def main():
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
@@ -3275,6 +3519,7 @@ def main():
     parser.add_argument("-cl", "--context_length", type=int, default=1200, help="Context length for evaluation.")
     parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
     parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
+    parser.add_argument("--rnaonly", action="store_true", help="Flag to evaluate only RNAseq prediction.")
     parser.add_argument("--dino", action="store_true", help="Flag to enable DINO mode.")
     parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
@@ -3296,13 +3541,20 @@ def main():
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
 
     if args.bios_name == "all":
-        ec.viz_all(dsf=1)
+        if args.rnaonly:
+            ec.rnaseq_all(dsf=1)
+        else:
+            ec.viz_all(dsf=1)
 
     else:
         if args.eic:
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
         else:
-            res = ec.bios_pipeline(args.bios_name, args.dsf)
+            if args.rnaonly:
+                res = ec.bios_rnaseq_eval(args.bios_name, args.dsf)
+            else:
+                res = ec.bios_pipeline(args.bios_name, args.dsf)
+
 
         ec.viz_bios(eval_res=res)
         res = ec.filter_res(res)
@@ -3314,3 +3566,4 @@ if __name__ == "__main__":
     #python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch4_chr3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --eic all
     #python eval.py -m models/CANDIeic_DNA_random_mask_rand10k_model_checkpoint_epoch4_chr8.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_rand10k_20250515215719_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_rand10k/ --eic all
     #python eval.py -m models/CANDINO_ccre10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_ccre10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_ccre10k/ --dino --eic all
+    #python eval.py -m models/CANDINO_rand10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_rand10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_rand10k/ --dino --eic all
