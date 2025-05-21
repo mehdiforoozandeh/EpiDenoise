@@ -2620,14 +2620,18 @@ class EVAL_CANDI(object):
 
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot_table(
-            index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
+            index='geneID', columns='feature', 
+            values='signal', aggfunc='mean').fillna(0)
         df_pred_wide_all = df_pred_long.pivot_table(
-            index='geneID', columns='feature', values='signal',  aggfunc='mean').fillna(0)
+            index='geneID', columns='feature', 
+            values='signal',  aggfunc='mean').fillna(0)
 
         # only-available-assays version
-        available_assays = {self.expnames[a] for a in availability}
+        available_assays = {
+            self.expnames[a] for a in availability}
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
-        df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
+        df_pred_wide_avail = df_pred_long[mask].pivot_table(
+            index='geneID', columns='feature', values='signal').fillna(0)
 
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
@@ -2656,10 +2660,11 @@ class EVAL_CANDI(object):
 
         feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
 
-        # 5) prepare X/y ⬅ unchanged
+        # 5) prepare X/y 
         def prep(DF):
             X = DF[feat_cols].values
             y = np.log1p(DF['TPM'].values)
+            print(X.shape)
             return X, y
 
         X_tr_t, y_tr_t = prep(tr_true)
@@ -2669,9 +2674,17 @@ class EVAL_CANDI(object):
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
 
+        
+        exit()
+        # print(mean_squared_error(X_tr_t, ))
+        # print(mean_squared_error())
+        # print(mean_squared_error())
+        # print(mean_squared_error())
+        # print(mean_squared_error())
+
         # 6) hold-out eval helper with 5 algos ⬅ changed
-        from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet  # ⬅ changed
-        from sklearn.svm import SVR                                                   # ⬅ changed
+        from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
+        from sklearn.svm import SVR                                                 
 
         def holdout_eval(Xtr, ytr, Xte, yte, algo):
             if algo == 'linear':
