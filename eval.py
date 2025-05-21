@@ -2675,15 +2675,15 @@ class EVAL_CANDI(object):
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
 
-        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape)
-        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape)
-        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape)
-        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape)
-        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape)
-        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape)
+        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)))
+        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)))
+        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)))
+        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)))
+        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)))
+        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)))
 
         exit()
-        
+
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
         from sklearn.svm import SVR                                                 
