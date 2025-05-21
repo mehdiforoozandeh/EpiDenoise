@@ -2633,7 +2633,7 @@ class EVAL_CANDI(object):
         # 2) For one or two of them, print the raw rows so you can inspect what’s being averaged:
         for gene, feat in dups.head(3)[['geneID','feature']].values:
             print(f"----\nRaw rows for geneID={gene!r}, feature={feat!r}:")
-            display(df_true_long.loc[
+            print(df_true_long.loc[
                 (df_true_long['geneID'] == gene) &
                 (df_true_long['feature'] == feat)
             ])
