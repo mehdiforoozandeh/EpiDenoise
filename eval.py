@@ -2613,30 +2613,10 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
-        print(df_true_long.shape)
-        print(df_pred_long.shape)
+        # print(df_true_long.shape)
+        # print(df_pred_long.shape)
 
-        print("========================================")
-
-        # 1) Identify all (geneID, feature) pairs that occur more than once:
-        dup_counts = (
-            df_true_long
-            .groupby(['geneID','feature'])
-            .size()
-            .reset_index(name='n')
-        )
-        dups = dup_counts[dup_counts['n'] > 1]
-
-        print("These gene/feature pairs have duplicates in df_true_long:")
-        print(dups.head(), "\n")   # show the first few
-
-        # 2) For one or two of them, print the raw rows so you can inspect what’s being averaged:
-        for gene, feat in dups.head(3)[['geneID','feature']].values:
-            print(f"----\nRaw rows for geneID={gene!r}, feature={feat!r}:")
-            print(df_true_long.loc[
-                (df_true_long['geneID'] == gene) &
-                (df_true_long['feature'] == feat)
-            ])
+        # print("========================================")
 
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot_table(
@@ -2649,23 +2629,23 @@ class EVAL_CANDI(object):
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
 
-        print("========================================")
+        # print("========================================")
 
-        print(df_true_wide.head())
-        print(df_true_wide.shape)
+        # print(df_true_wide.head())
+        # print(df_true_wide.shape)
 
-        print("========================================")
+        # print("========================================")
 
-        print(df_pred_wide_all.head())
-        print(df_pred_wide_all.shape)
+        # print(df_pred_wide_all.head())
+        # print(df_pred_wide_all.shape)
 
-        print("========================================")
+        # print("========================================")
 
-        print(df_pred_wide_avail.head())
-        print(df_pred_wide_avail.shape)
+        # print(df_pred_wide_avail.head())
+        # print(df_pred_wide_avail.shape)
 
-        print("========================================")
-        exit()
+        # print("========================================")
+        # exit()
 
 
         # join TPM/chr back
@@ -3473,26 +3453,6 @@ class EVAL_CANDI(object):
 
         available_indices = torch.where(avX[0, :] == 1)[0]
 
-        n_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-        p_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-
-        mu_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-        var_imp = torch.empty_like(X, device="cpu", dtype=torch.float32)
-
-        for leave_one_out in available_indices:
-            if self.DNA:
-                n, p, mu, var = self.pred(X, mX, mY, avX, seq=seq, imp_target=[leave_one_out])
-            else:
-                n, p, mu, var = self.pred(X, mX, mY, avX, seq=None, imp_target=[leave_one_out])
-
-            n_imp[:, :, leave_one_out] = n[:, :, leave_one_out]
-            p_imp[:, :, leave_one_out] = p[:, :, leave_one_out]
-
-            mu_imp[:, :, leave_one_out] = mu[:, :, leave_one_out]
-            var_imp[:, :, leave_one_out] = var[:, :, leave_one_out]
-
-            del n, p, mu, var  # Free up memory
-
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
         else:
@@ -3500,37 +3460,22 @@ class EVAL_CANDI(object):
 
         del X, mX, mY, avX, avY  # Free up memory
 
-        p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
-        n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
-
-        mu_imp = mu_imp.view((mu_imp.shape[0] * mu_imp.shape[1]), mu_imp.shape[-1])
-        var_imp = var_imp.view((var_imp.shape[0] * var_imp.shape[1]), var_imp.shape[-1])
-
         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
 
         mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
         var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
 
-        imp_count_dist = NegativeBinomial(p_imp, n_imp)
         ups_count_dist = NegativeBinomial(p_ups, n_ups)
 
-        imp_pval_dist = Gaussian(mu_imp, var_imp)
         ups_pval_dist = Gaussian(mu_ups, var_ups)
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
 
-        imp_count_mean = imp_count_dist.expect()
         ups_count_mean = ups_count_dist.expect()
-
-        imp_count_std = imp_count_dist.std()
         ups_count_std = ups_count_dist.std()
-
-        imp_pval_mean = imp_pval_dist.mean()
         ups_pval_mean = ups_pval_dist.mean()
-
-        imp_pval_std = imp_pval_dist.std()
         ups_pval_std = ups_pval_dist.std()
 
         if self.dataset.has_rnaseq(bios_name):
