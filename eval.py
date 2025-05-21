@@ -2644,6 +2644,7 @@ class EVAL_CANDI(object):
                 train = DF[DF['chr'] != 'chr21']
                 test  = DF[DF['chr'] == 'chr21']
                 return train, test
+
         elif split_mode == 'random':       
             from sklearn.model_selection import train_test_split 
             def split_df(DF):           
@@ -2651,6 +2652,7 @@ class EVAL_CANDI(object):
                     DF, test_size=test_size, random_state=random_state
                 )
                 return train, test
+
         else:                          
             raise ValueError("split_mode must be either 'chr' or 'random'")  
 
@@ -2675,12 +2677,17 @@ class EVAL_CANDI(object):
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
 
-        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)))
-        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)))
-        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)))
-        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)))
-        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)))
-        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)))
+        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)).shape)
+        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)).shape)
+        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)).shape)
+        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)).shape)
+        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)).shape)
+        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)).shape)
+
+        print(mean_squared_error(
+            np.array(X_tr_t.reshape(-1,)), 
+            np.array(X_tr_v.reshape(-1,))
+            ))
 
         exit()
 
