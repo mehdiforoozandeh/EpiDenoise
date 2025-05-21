@@ -2468,7 +2468,7 @@ class EVAL_CANDI(object):
                 gene_row.start,
                 gene_row.end,
                 gene_row.strand,
-                y_true[:,  <your H3K4me3 assay index> ].numpy()
+                y_true[:, :].numpy()
             )
         print(s)
         exit()
