@@ -2463,16 +2463,6 @@ class EVAL_CANDI(object):
             .set_index('geneID')
         )
 
-        gene_row = rna_seq_data[rna_seq_data.geneID=='ENSG00000141510'].iloc[0]
-        s = signal_feature_extraction(
-                gene_row.start,
-                gene_row.end,
-                gene_row.strand,
-                y_true[:, :].numpy()
-            )
-        print(s)
-        exit()
-
         # 2) build long-format for true vs. predicted signals ⬅ updated
         long_rows_true = []
         long_rows_pred = []
@@ -2564,6 +2554,13 @@ class EVAL_CANDI(object):
         X_te_a, y_te_a = prep(te_all)
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
+
+
+        corrs = [pearsonr(X_tr_t[:,i], y_tr_t)[0] for i in range(X.shape[1])]
+        print("Top 5 features by |corr|:", sorted(enumerate(corrs),
+                                    key=lambda x: -abs(x[1]))[:5])
+
+        exit()
 
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
