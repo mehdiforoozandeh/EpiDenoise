@@ -2636,15 +2636,15 @@ class EVAL_CANDI(object):
 
         # 4) split data
         if split_mode == 'chr':              
-            def split_df(df):                
-                train = df[df['chr'] != 'chr21']
-                test  = df[df['chr'] == 'chr21']
+            def split_df(DF):                
+                train = DF[DF['chr'] != 'chr21']
+                test  = DF[DF['chr'] == 'chr21']
                 return train, test
         elif split_mode == 'random':       
             from sklearn.model_selection import train_test_split 
-            def split_df(df):           
+            def split_df(DF):           
                 train, test = train_test_split(
-                    df, test_size=test_size, random_state=random_state
+                    DF, test_size=test_size, random_state=random_state
                 )
                 return train, test
         else:                          
@@ -2716,7 +2716,7 @@ class EVAL_CANDI(object):
                     errs = np.sort(report[key]['errors'])
                     ax.plot(errs,
                             np.arange(1,len(errs)+1)/len(errs),
-                            label=label, color=color, alpha=0.7)
+                            label=label, color=color, alpha=0.5)
                 ax.set_title(m)
                 ax.set_xlabel('Error tol')
                 ax.grid(True)
@@ -3473,8 +3473,7 @@ class EVAL_CANDI(object):
         if self.dataset.has_rnaseq(bios_name):
             print("got rna-seq data")
             rnaseq_res = self.eval_rnaseq(
-                bios_name, ups_count_mean, 
-                Y, available_indices, plot_REC=True)
+                bios_name, ups_count_mean, Y, available_indices, plot_REC=True)
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
