@@ -2569,7 +2569,7 @@ class EVAL_CANDI(object):
         availability, plot_REC=True,
         split_mode: str = 'random',        
         test_size: float = 0.2,           
-        random_state: int = 42)):
+        random_state: int = 42):
         """
         Hold-out evaluation: train on all genes off chr21, test on chr21,
         with one row per gene and 3×A features (A = number of assays).
