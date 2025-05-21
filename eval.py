@@ -2574,12 +2574,17 @@ class EVAL_CANDI(object):
         # 1) load full-genome RNA-seq table ⬅ unchanged
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
 
+        print(rna_seq_data)
+        input()
         # build gene_info lookup
         gene_info = (
             rna_seq_data[['geneID','chr','TPM','FPKM']]
             .drop_duplicates(subset='geneID')
             .set_index('geneID')
         )
+
+        print(gene_info)
+        input()
 
         # 2) build long-format for true vs. predicted signals ⬅ unchanged
         long_rows_true = []
@@ -2613,6 +2618,10 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
+        print(df_true_long.shape)
+        print(df_pred_long.shape)
+        input()
+
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot_table(
             index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
@@ -2624,9 +2633,20 @@ class EVAL_CANDI(object):
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
 
+
+        print(df_true_wide.shape)
+        print(df_pred_wide_all.shape)
+        print(df_pred_wide_avail.shape)
+        input()
+
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
+            print(df.shape, gene_info.shape)
             df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
+            print(df.shape)
+            input()
+
+        
 
         # 4) split by chr21 hold‐out ⬅ unchanged
         def split_df(df):
@@ -2637,6 +2657,11 @@ class EVAL_CANDI(object):
         tr_true, te_true = split_df(df_true_wide)
         tr_all,  te_all  = split_df(df_pred_wide_all)
         tr_av,   te_av   = split_df(df_pred_wide_avail)
+
+        print(tr_true.shape, te_true.shape)
+        print(tr_all.shape, te_all.shape)
+        print(tr_av.shape, te_av.shape)
+        exit()
 
         feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
 
