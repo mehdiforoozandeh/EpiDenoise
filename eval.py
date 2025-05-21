@@ -2613,11 +2613,10 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
-        
 
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
-        df_true_wide = df_true_long.pivot(index='geneID', columns='feature', values='signal').fillna(0)
-        df_pred_wide_all = df_pred_long.pivot(index='geneID', columns='feature', values='signal').fillna(0)
+        df_true_wide = df_true_long.pivot(index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
+        df_pred_wide_all = df_pred_long.pivot(index='geneID', columns='feature', values='signal',  aggfunc='mean').fillna(0)
 
         # only-available-assays version
         available_assays = {self.expnames[a] for a in availability}
