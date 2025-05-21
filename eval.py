@@ -2657,9 +2657,9 @@ class EVAL_CANDI(object):
         feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
 
         # 5) prepare X/y ⬅ unchanged
-        def prep(df):
-            X = df[feat_cols].values
-            y = np.log1p(df['TPM'].values)
+        def prep(DF):
+            X = DF[feat_cols].values
+            y = np.log1p(DF['TPM'].values)
             return X, y
 
         X_tr_t, y_tr_t = prep(tr_true)
