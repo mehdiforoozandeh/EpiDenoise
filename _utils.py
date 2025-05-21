@@ -970,18 +970,18 @@ def signal_feature_extraction(start, end, strand, chip_seq_signal,
     return {
         'median_sig_promoter':   prom_med,
         'iqr_sig_promoter':      prom_iqr,
-        'min_sig_promoter':      prom_min,
-        'max_sig_promoter':      prom_max,
+        # 'min_sig_promoter':      prom_min,
+        # 'max_sig_promoter':      prom_max,
 
         'median_sig_gene_body':  body_med,
         'iqr_sig_gene_body':     body_iqr,
-        'min_sig_gene_body':     body_min,
-        'max_sig_gene_body':     body_max,
+        # 'min_sig_gene_body':     body_min,
+        # 'max_sig_gene_body':     body_max,
 
         'median_sig_around_TES': tes_med,
         'iqr_sig_around_TES':    tes_iqr,
-        'min_sig_around_TES':    tes_min,
-        'max_sig_around_TES':    tes_max,
+        # 'min_sig_around_TES':    tes_min,
+        # 'max_sig_around_TES':    tes_max,
     }
 
 # def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
