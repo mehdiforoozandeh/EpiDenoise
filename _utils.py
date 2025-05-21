@@ -916,6 +916,74 @@ def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
 
     return gene_coords
 
+def signal_feature_extraction(start, end, strand, chip_seq_signal,
+                              bin_size=25, margin=2000):
+    """
+    Extracts robust ChIP-seq signal summaries for promoter, gene body, and TES regions.
+
+    Returns, for each region:
+      - median signal
+      - inter-quartile range (75th – 25th percentile)
+      - minimum signal
+      - maximum signal
+    """
+
+    # 1) Define TSS and TES by strand
+    tss = start if strand == '+' else end
+    tes = end   if strand == '+' else start
+
+    # 2) Compute bp intervals for each region
+    promoter_bp = (tss - margin, tss + margin)
+    gene_body_bp = (start, end)
+    tes_bp = (tes - margin, tes + margin)
+
+    # 3) Map to bin indices (inclusive of any overlapping bin)
+    def to_bins(bp_start, bp_end):
+        i0 = max(bp_start // bin_size, 0)
+        i1 = min(bp_end   // bin_size + 1, len(chip_seq_signal))
+        return i0, i1
+
+    p0, p1 = to_bins(*promoter_bp)
+    g0, g1 = to_bins(*gene_body_bp)
+    t0, t1 = to_bins(*tes_bp)
+
+    promoter_signal   = chip_seq_signal[p0:p1]
+    gene_body_signal  = chip_seq_signal[g0:g1]
+    tes_region_signal = chip_seq_signal[t0:t1]
+
+    # 4) Compute robust stats
+    def stats(x):
+        if x.size == 0:
+            return 0.0, 0.0, 0.0, 0.0
+        med = np.median(x)
+        q75, q25 = np.percentile(x, [75, 25])
+        iqr = q75 - q25
+        mn = x.min()
+        mx = x.max()
+        return med, iqr, mn, mx
+
+    prom_med, prom_iqr, prom_min, prom_max = stats(promoter_signal)
+    body_med, body_iqr, body_min, body_max = stats(gene_body_signal)
+    tes_med, tes_iqr, tes_min, tes_max = stats(tes_region_signal)
+
+    # 5) Return all 12 features
+    return {
+        'median_sig_promoter':   prom_med,
+        'iqr_sig_promoter':      prom_iqr,
+        'min_sig_promoter':      prom_min,
+        'max_sig_promoter':      prom_max,
+
+        'median_sig_gene_body':  body_med,
+        'iqr_sig_gene_body':     body_iqr,
+        'min_sig_gene_body':     body_min,
+        'max_sig_gene_body':     body_max,
+
+        'median_sig_around_TES': tes_med,
+        'iqr_sig_around_TES':    tes_iqr,
+        'min_sig_around_TES':    tes_min,
+        'max_sig_around_TES':    tes_max,
+    }
+
 # def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
 #     """
 #     Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
@@ -968,73 +1036,6 @@ def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
 #         'mean_sig_around_TES': mean_signal_tes_region
 #     }
 
-def signal_feature_extraction(start, end, strand, chip_seq_signal,
-                              bin_size=25, margin=2000):
-    """
-    Extracts robust ChIP-seq signal summaries for promoter, gene body, and TES regions.
-
-    Returns, for each region:
-      - median signal
-      - inter-quartile range (75th – 25th percentile)
-      - minimum signal
-      - maximum signal
-    """
-
-    # 1) Define TSS and TES by strand
-    tss = start if strand == '+' else end
-    tes = end   if strand == '+' else start
-
-    # 2) Compute bp intervals for each region
-    promoter_bp = (tss - margin, tss + margin)
-    gene_body_bp = (start, end)
-    tes_bp = (tes - margin, tes + margin)
-
-    # 3) Map to bin indices (inclusive of any overlapping bin)
-    def to_bins(bp_start, bp_end):
-        i0 = max(bp_start // bin_size, 0)
-        i1 = min(bp_end   // bin_size + 1, len(chip_seq_signal))
-        return i0, i1
-
-    p0, p1 = to_bins(*promoter_bp)
-    g0, g1 = to_bins(*gene_body_bp)
-    t0, t1 = to_bins(*tes_bp)
-
-    promoter_signal   = chip_seq_signal[p0:p1]
-    gene_body_signal  = chip_seq_signal[g0:g1]
-    tes_region_signal = chip_seq_signal[t0:t1]
-
-    # 4) Compute robust stats
-    def stats(x):
-        if x.size == 0:
-            return 0.0, 0.0, 0.0, 0.0
-        med = np.median(x)
-        q75, q25 = np.percentile(x, [75, 25])
-        iqr = q75 - q25
-        mn = x.min()
-        mx = x.max()
-        return med, iqr, mn, mx
-
-    prom_med, prom_iqr, prom_min, prom_max = stats(promoter_signal)
-    body_med, body_iqr, body_min, body_max = stats(gene_body_signal)
-    tes_med, tes_iqr, tes_min, tes_max       = stats(tes_region_signal)
-
-    # 5) Return all 12 features
-    return {
-        'median_sig_promoter':   prom_med,
-        'iqr_sig_promoter':      prom_iqr,
-        'min_sig_promoter':      prom_min,
-        'max_sig_promoter':      prom_max,
-
-        'median_sig_gene_body':  body_med,
-        'iqr_sig_gene_body':     body_iqr,
-        'min_sig_gene_body':     body_min,
-        'max_sig_gene_body':     body_max,
-
-        'median_sig_around_TES': tes_med,
-        'iqr_sig_around_TES':    tes_iqr,
-        'min_sig_around_TES':    tes_min,
-        'max_sig_around_TES':    tes_max,
-    }
 
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:
