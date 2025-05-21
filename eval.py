@@ -2586,33 +2586,36 @@ class EVAL_CANDI(object):
             .set_index('geneID')
         )
 
-        # 2) build long-format for true vs. predicted signals ⬅ unchanged
+        # 2) build long-format for true vs. predicted signals ⬅ updated
         long_rows_true = []
         long_rows_pred = []
         for _, row in rna_seq_data.iterrows():
             gene, start, end, strand = row['geneID'], row['start'], row['end'], row['strand']
             for a in range(y_pred.shape[1]):
                 assay = self.expnames[a]
-                # true only if available
+                # ---- true only if available ----
                 if a in availability:
-                    feats = signal_feature_extraction(start, end, strand, y_true[:, a].numpy())
-                    for region, key in [('promoter','mean_sig_promoter'),
-                                        ('gene_body','mean_sig_gene_body'),
-                                        ('TES','mean_sig_around_TES')]:
+                    feats_true = signal_feature_extraction(
+                        start, end, strand,
+                        y_true[:, a].numpy()
+                    )  # ⬅ changed here
+                    # stack ALL robust summaries (median, iqr, min, max) per region
+                    for feat_suffix, value in feats_true.items():  # ⬅ changed here
                         long_rows_true.append({
                             'geneID': gene,
-                            'feature': f"{assay}_{region}",
-                            'signal': feats[key]
+                            'feature': f"{assay}_{feat_suffix}",       # ⬅ changed here
+                            'signal':  value
                         })
-                # pred for all
-                feats = signal_feature_extraction(start, end, strand, y_pred[:, a].numpy())
-                for region, key in [('promoter','mean_sig_promoter'),
-                                    ('gene_body','mean_sig_gene_body'),
-                                    ('TES','mean_sig_around_TES')]:
+                # ---- pred for all assays ----
+                feats_pred = signal_feature_extraction(
+                    start, end, strand,
+                    y_pred[:, a].numpy()
+                )  # ⬅ changed here
+                for feat_suffix, value in feats_pred.items():  # ⬅ changed here
                     long_rows_pred.append({
                         'geneID': gene,
-                        'feature': f"{assay}_{region}",
-                        'signal': feats[key]
+                        'feature': f"{assay}_{feat_suffix}",       # ⬅ changed here
+                        'signal':  value
                     })
 
         df_true_long = pd.DataFrame(long_rows_true)
@@ -2674,25 +2677,6 @@ class EVAL_CANDI(object):
         X_te_a, y_te_a = prep(te_all)
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
-
-        # print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)).shape)
-        # print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)).shape)
-        # print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)).shape)
-        # print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)).shape)
-        # print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)).shape)
-        # print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)).shape)
-
-        # print(mean_squared_error(
-        #     np.array(X_tr_t.reshape(-1,)), 
-        #     np.array(X_tr_v.reshape(-1,))
-        #     ))
-
-        # print(mean_squared_error(
-        #     np.array(X_te_t.reshape(-1,)), 
-        #     np.array(X_te_v.reshape(-1,))
-        #     ))
-
-        # exit()
 
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 

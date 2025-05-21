@@ -916,56 +916,124 @@ def load_gene_coords(file, drop_negative_strand=True, drop_overlapping=True):
 
     return gene_coords
 
-def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
+# def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
+#     """
+#     Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
+
+#     Parameters:
+#     - chr: Chromosome (string)
+#     - start: Start position of the gene (int)
+#     - end: End position of the gene (int)
+#     - strand: Strand information ('+' or '-') (string)
+#     - chip_seq_signal: A numpy array representing ChIP-seq signal binned at 25-bp resolution (1D array)
+
+#     Returns:
+#     - dict: Dictionary containing mean signals for the specified regions
+#     """
+
+#     # Define TSS and TES based on the strand
+#     tss = start if strand == '+' else end
+#     tes = end if strand == '+' else start
+
+#     # Define the regions
+#     promoter_start = tss - int(margin)
+#     promoter_end = tss + int(margin)
+#     gene_body_start = start
+#     gene_body_end = end
+#     tes_region_start = tes - int(margin)
+#     tes_region_end = tes + int(margin)
+
+#     # Convert regions to bin indices
+#     promoter_start_bin = max(promoter_start // bin_size, 0)
+#     promoter_end_bin = min(promoter_end // bin_size, len(chip_seq_signal))
+#     gene_body_start_bin = max(gene_body_start // bin_size, 0)
+#     gene_body_end_bin = min(gene_body_end // bin_size, len(chip_seq_signal))
+#     tes_region_start_bin = max(tes_region_start // bin_size, 0)
+#     tes_region_end_bin = min(tes_region_end // bin_size, len(chip_seq_signal))
+
+#     # Extract signal for each region
+#     promoter_signal = chip_seq_signal[promoter_start_bin:promoter_end_bin]
+#     gene_body_signal = chip_seq_signal[gene_body_start_bin:gene_body_end_bin]
+#     tes_region_signal = chip_seq_signal[tes_region_start_bin:tes_region_end_bin]
+
+#     # Calculate mean signal for each region
+#     mean_signal_promoter = np.mean(promoter_signal) if len(promoter_signal) > 0 else 0
+#     mean_signal_gene_body = np.mean(gene_body_signal) if len(gene_body_signal) > 0 else 0
+#     mean_signal_tes_region = np.mean(tes_region_signal) if len(tes_region_signal) > 0 else 0
+
+#     # Return the calculated mean signals in a dictionary
+#     return {
+#         'mean_sig_promoter': mean_signal_promoter,
+#         'mean_sig_gene_body': mean_signal_gene_body,
+#         'mean_sig_around_TES': mean_signal_tes_region
+#     }
+
+def signal_feature_extraction(start, end, strand, chip_seq_signal,
+                              bin_size=25, margin=2000):
     """
-    Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
+    Extracts robust ChIP-seq signal summaries for promoter, gene body, and TES regions.
 
-    Parameters:
-    - chr: Chromosome (string)
-    - start: Start position of the gene (int)
-    - end: End position of the gene (int)
-    - strand: Strand information ('+' or '-') (string)
-    - chip_seq_signal: A numpy array representing ChIP-seq signal binned at 25-bp resolution (1D array)
-
-    Returns:
-    - dict: Dictionary containing mean signals for the specified regions
+    Returns, for each region:
+      - median signal
+      - inter-quartile range (75th – 25th percentile)
+      - minimum signal
+      - maximum signal
     """
 
-    # Define TSS and TES based on the strand
+    # 1) Define TSS and TES by strand
     tss = start if strand == '+' else end
-    tes = end if strand == '+' else start
+    tes = end   if strand == '+' else start
 
-    # Define the regions
-    promoter_start = tss - int(margin)
-    promoter_end = tss + int(margin)
-    gene_body_start = start
-    gene_body_end = end
-    tes_region_start = tes - int(margin)
-    tes_region_end = tes + int(margin)
+    # 2) Compute bp intervals for each region
+    promoter_bp = (tss - margin, tss + margin)
+    gene_body_bp = (start, end)
+    tes_bp = (tes - margin, tes + margin)
 
-    # Convert regions to bin indices
-    promoter_start_bin = max(promoter_start // bin_size, 0)
-    promoter_end_bin = min(promoter_end // bin_size, len(chip_seq_signal))
-    gene_body_start_bin = max(gene_body_start // bin_size, 0)
-    gene_body_end_bin = min(gene_body_end // bin_size, len(chip_seq_signal))
-    tes_region_start_bin = max(tes_region_start // bin_size, 0)
-    tes_region_end_bin = min(tes_region_end // bin_size, len(chip_seq_signal))
+    # 3) Map to bin indices (inclusive of any overlapping bin)
+    def to_bins(bp_start, bp_end):
+        i0 = max(bp_start // bin_size, 0)
+        i1 = min(bp_end   // bin_size + 1, len(chip_seq_signal))
+        return i0, i1
 
-    # Extract signal for each region
-    promoter_signal = chip_seq_signal[promoter_start_bin:promoter_end_bin]
-    gene_body_signal = chip_seq_signal[gene_body_start_bin:gene_body_end_bin]
-    tes_region_signal = chip_seq_signal[tes_region_start_bin:tes_region_end_bin]
+    p0, p1 = to_bins(*promoter_bp)
+    g0, g1 = to_bins(*gene_body_bp)
+    t0, t1 = to_bins(*tes_bp)
 
-    # Calculate mean signal for each region
-    mean_signal_promoter = np.mean(promoter_signal) if len(promoter_signal) > 0 else 0
-    mean_signal_gene_body = np.mean(gene_body_signal) if len(gene_body_signal) > 0 else 0
-    mean_signal_tes_region = np.mean(tes_region_signal) if len(tes_region_signal) > 0 else 0
+    promoter_signal   = chip_seq_signal[p0:p1]
+    gene_body_signal  = chip_seq_signal[g0:g1]
+    tes_region_signal = chip_seq_signal[t0:t1]
 
-    # Return the calculated mean signals in a dictionary
+    # 4) Compute robust stats
+    def stats(x):
+        if x.size == 0:
+            return 0.0, 0.0, 0.0, 0.0
+        med = np.median(x)
+        q75, q25 = np.percentile(x, [75, 25])
+        iqr = q75 - q25
+        mn = x.min()
+        mx = x.max()
+        return med, iqr, mn, mx
+
+    prom_med, prom_iqr, prom_min, prom_max = stats(promoter_signal)
+    body_med, body_iqr, body_min, body_max = stats(gene_body_signal)
+    tes_med, tes_iqr, tes_min, tes_max       = stats(tes_region_signal)
+
+    # 5) Return all 12 features
     return {
-        'mean_sig_promoter': mean_signal_promoter,
-        'mean_sig_gene_body': mean_signal_gene_body,
-        'mean_sig_around_TES': mean_signal_tes_region
+        'median_sig_promoter':   prom_med,
+        'iqr_sig_promoter':      prom_iqr,
+        'min_sig_promoter':      prom_min,
+        'max_sig_promoter':      prom_max,
+
+        'median_sig_gene_body':  body_med,
+        'iqr_sig_gene_body':     body_iqr,
+        'min_sig_gene_body':     body_min,
+        'max_sig_gene_body':     body_max,
+
+        'median_sig_around_TES': tes_med,
+        'iqr_sig_around_TES':    tes_iqr,
+        'min_sig_around_TES':    tes_min,
+        'max_sig_around_TES':    tes_max,
     }
 
 def capture_gradients_hook(module, grad_input, grad_output):
