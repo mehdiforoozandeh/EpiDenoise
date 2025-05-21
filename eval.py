@@ -2515,7 +2515,7 @@ class EVAL_CANDI(object):
 
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
-            print(df.shape)
+            # print(df.shape)
             df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
 
         # 4) split data
@@ -2544,8 +2544,7 @@ class EVAL_CANDI(object):
         def prep(DF):
             feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
             X = DF[feat_cols].values
-            # y = np.log1p(DF['TPM'].values)
-            y = DF['TPM'].values
+            y = np.log1p(DF['TPM'].values)
             print(X.shape)
             return X, y
 
@@ -2555,7 +2554,6 @@ class EVAL_CANDI(object):
         X_te_a, y_te_a = prep(te_all)
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
-
 
         corrs = [pearsonr(X_tr_t[:,i], y_tr_t)[0] for i in range(X_tr_t.shape[1])]
         print("Top 5 features by |corr|:", sorted(enumerate(corrs),
@@ -3373,7 +3371,7 @@ class EVAL_CANDI(object):
         #     bios_name, ups_count_mean, Y, available_indices, plot_REC=True)
 
         rnaseq_res = self.eval_rnaseq(
-            bios_name, ups_pval_mean, P, available_indices, plot_REC=True)
+            bios_name, np.sinh(ups_pval_mean), np.sinh(P), available_indices, plot_REC=True)
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
