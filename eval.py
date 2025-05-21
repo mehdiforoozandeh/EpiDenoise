@@ -2623,7 +2623,7 @@ class EVAL_CANDI(object):
         # only-available-assays version
         available_assays = {self.expnames[a] for a in availability}
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
-        df_pred_wide_avail = df_pred_long[mask].pivot(index='geneID', columns='feature', values='signal').fillna(0)
+        df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
 
 
         print(df_true_wide.head())
