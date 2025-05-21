@@ -3543,11 +3543,9 @@ def main():
                 res = ec.bios_rnaseq_eval(args.bios_name, args.dsf)
             else:
                 res = ec.bios_pipeline(args.bios_name, args.dsf)
-
-
-        ec.viz_bios(eval_res=res)
-        res = ec.filter_res(res)
-        print(pd.DataFrame(res))
+                ec.viz_bios(eval_res=res)
+                res = ec.filter_res(res)
+                print(pd.DataFrame(res))
 
 if __name__ == "__main__":
     main()
