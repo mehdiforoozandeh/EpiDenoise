@@ -2441,202 +2441,12 @@ class EVAL_CANDI(object):
         summary(self.model)
         print(f"# model_parameters: {count_parameters(self.model)}")
 
-    # def eval_rnaseq(
-    #     self, bios_name, y_pred, y_true, 
-    #     availability, plot_REC=True,
-    #     split_mode: str = 'random',        
-    #     test_size: float = 0.2,           
-    #     random_state: int = 42):
-    #     """
-    #     Hold-out evaluation: train on all genes off chr21, test on chr21,
-    #     with one row per gene and 3×A features (A = number of assays).
-    #     Supports: linear, lasso, ridge, elasticnet, svr.
-    #     """
-
-    #     # 1) load full-genome RNA-seq table ⬅ unchanged
-    #     rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
-
-    #     # build gene_info lookup
-    #     gene_info = (
-    #         rna_seq_data[['geneID','chr','TPM','FPKM']]
-    #         .drop_duplicates(subset='geneID')
-    #         .set_index('geneID')
-    #     )
-
-    #     # 2) build long-format for true vs. predicted signals ⬅ updated
-    #     long_rows_true = []
-    #     long_rows_pred = []
-    #     for _, row in rna_seq_data.iterrows():
-    #         gene, start, end, strand = row['geneID'], row['start'], row['end'], row['strand']
-    #         for a in range(y_pred.shape[1]):
-    #             assay = self.expnames[a]
-    #             # ---- true only if available ----
-    #             if a in availability:
-    #                 feats_true = signal_feature_extraction(
-    #                     start, end, strand,
-    #                     y_true[:, a].numpy()
-    #                 )  # ⬅ changed here
-    #                 # stack ALL robust summaries (median, iqr, min, max) per region
-    #                 for feat_suffix, value in feats_true.items():  # ⬅ changed here
-    #                     long_rows_true.append({
-    #                         'geneID': gene,
-    #                         'feature': f"{assay}_{feat_suffix}",       # ⬅ changed here
-    #                         'signal':  value
-    #                     })
-    #             # ---- pred for all assays ----
-    #             feats_pred = signal_feature_extraction(
-    #                 start, end, strand,
-    #                 y_pred[:, a].numpy()
-    #             )  # ⬅ changed here
-    #             for feat_suffix, value in feats_pred.items():  # ⬅ changed here
-    #                 long_rows_pred.append({
-    #                     'geneID': gene,
-    #                     'feature': f"{assay}_{feat_suffix}",       # ⬅ changed here
-    #                     'signal':  value
-    #                 })
-
-    #     df_true_long = pd.DataFrame(long_rows_true)
-    #     df_pred_long = pd.DataFrame(long_rows_pred)
-
-    #     # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
-    #     df_true_wide = df_true_long.pivot_table(
-    #         index='geneID', columns='feature', 
-    #         values='signal', aggfunc='mean').fillna(0)
-    #     df_pred_wide_all = df_pred_long.pivot_table(
-    #         index='geneID', columns='feature', 
-    #         values='signal',  aggfunc='mean').fillna(0)
-
-    #     # only-available-assays version
-    #     available_assays = {
-    #         self.expnames[a] for a in availability}
-    #     mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
-    #     df_pred_wide_avail = df_pred_long[mask].pivot_table(
-    #         index='geneID', columns='feature', values='signal').fillna(0)
-
-    #     # join TPM/chr back
-    #     for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
-    #         # print(df.shape)
-    #         df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
-
-    #     # 4) split data
-    #     if split_mode == 'chr':              
-    #         def split_df(DF):                
-    #             train = DF[DF['chr'] != 'chr21']
-    #             test  = DF[DF['chr'] == 'chr21']
-    #             return train, test
-
-    #     elif split_mode == 'random':       
-    #         from sklearn.model_selection import train_test_split 
-    #         def split_df(DF):           
-    #             train, test = train_test_split(
-    #                 DF, test_size=test_size, random_state=random_state
-    #             )
-    #             return train, test
-
-    #     else:                          
-    #         raise ValueError("split_mode must be either 'chr' or 'random'")  
-
-    #     tr_true, te_true = split_df(df_true_wide)
-    #     tr_all,  te_all  = split_df(df_pred_wide_all)
-    #     tr_av,   te_av   = split_df(df_pred_wide_avail)
-
-    #     # 5) prepare X/y 
-    #     def prep(DF):
-    #         feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
-    #         X = DF[feat_cols].values
-    #         y = np.log1p(DF['TPM'].values)
-    #         print(X.shape)
-    #         return X, y
-
-    #     X_tr_t, y_tr_t = prep(tr_true)
-    #     X_te_t, y_te_t = prep(te_true)
-    #     X_tr_a, y_tr_a = prep(tr_all)
-    #     X_te_a, y_te_a = prep(te_all)
-    #     X_tr_v, y_tr_v = prep(tr_av)
-    #     X_te_v, y_te_v = prep(te_av)
-
-    #     # 6) hold-out eval helper with 5 algos ⬅ changed
-    #     from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
-    #     from sklearn.svm import SVR                                                 
-
-    #     def holdout_eval(Xtr, ytr, Xte, yte, algo):
-    #         if algo == 'linear':
-    #             m = LinearRegression()
-    #         elif algo == 'lasso':
-    #             m = Lasso(max_iter=10000)
-    #         elif algo == 'ridge':
-    #             m = Ridge()
-    #         elif algo == 'elasticnet':
-    #             m = ElasticNet(max_iter=10000)
-    #         else:  # 'svr'
-    #             m = SVR(kernel='rbf', C=1.0, epsilon=0.2)
-    #         m.fit(Xtr, ytr)
-    #         pred = m.predict(Xte)
-    #         err = np.abs(yte - pred)
-    #         return {
-    #             'mse':    mean_squared_error(yte, pred),
-    #             'r2':     r2_score(yte, pred),
-    #             'aucrec': auc_rec(yte, pred),
-    #             'pcc':    pearsonr(pred, yte)[0],
-    #             'scrr':   spearmanr(pred, yte)[0],
-    #             'errors': err
-    #         }
-
-    #     # 7) compute all 6×5 versions ⬅ changed
-    #     methods = ['linear','lasso','ridge','elasticnet','svr']
-    #     report = {}
-    #     for m in methods:
-    #         report[f'true_{m}']       = holdout_eval(X_tr_t, y_tr_t, X_te_t, y_te_t, m)
-    #         report[f'denimp_{m}']     = holdout_eval(X_tr_a, y_tr_a, X_te_a, y_te_a, m)
-    #         report[f'denav_{m}']      = holdout_eval(X_tr_v, y_tr_v, X_te_v, y_te_v, m)
-
-    #     # 8) REC plot: one subplot per method ⬅ changed
-    #     if plot_REC:
-    #         fig, axes = plt.subplots(1, len(methods), figsize=(5*len(methods),5), sharey=True)
-    #         for ax, m in zip(axes, methods):
-    #             for key, color, label in [
-    #                 (f'true_{m}', 'blue','Observed'),
-    #                 (f'denav_{m}','orange','Denoised'),
-    #                 (f'denimp_{m}','green','Denoised+Imputed')
-    #             ]:
-    #                 errs = np.sort(report[key]['errors'])
-    #                 ax.plot(errs,
-    #                         np.arange(1,len(errs)+1)/len(errs),
-    #                         label=label, color=color, alpha=0.5)
-    #             ax.set_title(m)
-    #             ax.set_xlabel('Error tol')
-    #             ax.grid(True)
-    #             if m == 'linear':
-    #                 ax.set_ylabel('Coverage')
-    #             ax.legend(fontsize='small')
-    #         plt.tight_layout()
-
-    #         # out = os.path.join(self.savedir, f"{bios_name}_holdout_chr21")
-    #         out = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
-    #         os.makedirs(out, exist_ok=True)
-    #         fig.savefig(f"{out}/RNAseq_REC.png", format="png")
-    #         fig.savefig(f"{out}/RNAseq_REC.svg", format="svg")
-
-    #     # 9) save scalar metrics to CSV ⬅ unchanged
-    #     rows = []
-    #     for ver, m in report.items():
-    #         rows.append({
-    #             'version': ver,
-    #             'mse':     m['mse'],
-    #             'r2':      m['r2'],
-    #             'aucrec':  m['aucrec'],
-    #             'pcc':     m['pcc'],
-    #             'scrr':    m['scrr']
-    #         })
-    #     pd.DataFrame(rows).to_csv(f"{out}/RNAseq_results.csv", index=False)
-
-    #     return report
-
     def eval_rnaseq(
         self, bios_name, y_pred, y_true, 
         availability, plot_REC=True,
-        k_folds: int = 5,                 # ⬅ changed: new parameter for CV folds
-        random_state: int = 42):          # ⬅ changed: seed for reproducibility
+        k_folds: int = 5,        
+        random_state: int = 42,
+        observed="pval"):        
         """
         k-Fold evaluation over all genes (no single train/test split):
         train on k-1 folds, test on the held-out fold, repeat.
@@ -2727,9 +2537,9 @@ class EVAL_CANDI(object):
                 m = ElasticNet(max_iter=10000)
             else:
                 m = SVR(kernel='rbf', C=1.0, epsilon=0.2)
-            m.fit(Xtr, ytr)                             # ⬅ changed
-            pred = m.predict(Xte)                       # ⬅ changed
-            err  = np.abs(yte - pred)                   # ⬅ changed
+            m.fit(Xtr, ytr)
+            pred = m.predict(Xte)
+            err  = np.abs(yte - pred)
             return {
                 'mse':    mean_squared_error(yte, pred),
                 'r2':     r2_score(yte, pred),
@@ -2741,7 +2551,7 @@ class EVAL_CANDI(object):
 
         # 7) run CV for each version & method ⬅ changed
         methods = [
-            'linear', 'svr'
+            'linear', 'svr',
             'lasso', 'ridge', 'elasticnet']
 
         report = { f'{ver}_{m}': {'folds': []} 
@@ -2800,8 +2610,8 @@ class EVAL_CANDI(object):
             # out = os.path.join(self.savedir, f"{bios_name}_kfold{ k_folds }")
             out = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
             os.makedirs(out, exist_ok=True)
-            fig.savefig(f"{out}/RNAseq_REC.png", format="png")
-            fig.savefig(f"{out}/RNAseq_REC.svg", format="svg")
+            fig.savefig(f"{out}/RNAseq_REC_{observed}.png", format="png")
+            fig.savefig(f"{out}/RNAseq_REC_{observed}.svg", format="svg")
 
         # 10) save scalar metrics to CSV ⬅ changed: use new avg_*
         rows = []
@@ -2814,7 +2624,7 @@ class EVAL_CANDI(object):
                 'pcc':     stats['avg_pcc'],     # ⬅ changed
                 'scrr':    stats['avg_scrr']     # ⬅ changed
             })
-        pd.DataFrame(rows).to_csv(f"{out}/RNAseq_results.csv", index=False)
+        pd.DataFrame(rows).to_csv(f"{out}/RNAseq_results_{observed}.csv", index=False)
 
         return report
 
@@ -3545,12 +3355,15 @@ class EVAL_CANDI(object):
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
-        print("got rna-seq data")
-        # rnaseq_res = self.eval_rnaseq(
-        #     bios_name, ups_count_mean, Y, available_indices, plot_REC=True)
+        print("rna-seq evaluation on count")
+        self.eval_rnaseq(
+            bios_name, ups_count_mean, Y, 
+            available_indices, plot_REC=True, observed="count")
 
-        rnaseq_res = self.eval_rnaseq(
-            bios_name, np.sinh(ups_pval_mean), np.sinh(P), available_indices, plot_REC=True)
+        print("rna-seq evaluation on pval")
+        self.eval_rnaseq(
+            bios_name, np.sinh(ups_pval_mean), np.sinh(P),
+            available_indices, plot_REC=True, observed="pval")
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
