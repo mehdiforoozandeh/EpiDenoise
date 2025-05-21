@@ -2660,8 +2660,6 @@ class EVAL_CANDI(object):
         tr_all,  te_all  = split_df(df_pred_wide_all)
         tr_av,   te_av   = split_df(df_pred_wide_avail)
 
-        
-
         # 5) prepare X/y 
         def prep(DF):
             feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
@@ -2677,24 +2675,24 @@ class EVAL_CANDI(object):
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
 
-        print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)).shape)
-        print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)).shape)
-        print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)).shape)
-        print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)).shape)
-        print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)).shape)
-        print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)).shape)
+        # print("X_tr_t, y_tr_t   ", X_tr_t.shape, y_tr_t.shape, np.array(X_tr_t.reshape(-1,)).shape)
+        # print("X_te_t, y_te_t   ", X_te_t.shape, y_te_t.shape, np.array(X_te_t.reshape(-1,)).shape)
+        # print("X_tr_a, y_tr_a   ", X_tr_a.shape, y_tr_a.shape, np.array(X_tr_a.reshape(-1,)).shape)
+        # print("X_te_a, y_te_a   ", X_te_a.shape, y_te_a.shape, np.array(X_te_a.reshape(-1,)).shape)
+        # print("X_tr_v, y_tr_v   ", X_tr_v.shape, y_tr_v.shape, np.array(X_tr_v.reshape(-1,)).shape)
+        # print("X_te_v, y_te_v   ", X_te_v.shape, y_te_v.shape, np.array(X_te_v.reshape(-1,)).shape)
 
-        print(mean_squared_error(
-            np.array(X_tr_t.reshape(-1,)), 
-            np.array(X_tr_v.reshape(-1,))
-            ))
+        # print(mean_squared_error(
+        #     np.array(X_tr_t.reshape(-1,)), 
+        #     np.array(X_tr_v.reshape(-1,))
+        #     ))
 
-        print(mean_squared_error(
-            np.array(X_te_t.reshape(-1,)), 
-            np.array(X_te_v.reshape(-1,))
-            ))
+        # print(mean_squared_error(
+        #     np.array(X_te_t.reshape(-1,)), 
+        #     np.array(X_te_v.reshape(-1,))
+        #     ))
 
-        exit()
+        # exit()
 
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
