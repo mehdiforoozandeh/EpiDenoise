@@ -2556,7 +2556,7 @@ class EVAL_CANDI(object):
         X_te_v, y_te_v = prep(te_av)
 
 
-        corrs = [pearsonr(X_tr_t[:,i], y_tr_t)[0] for i in range(X.shape[1])]
+        corrs = [pearsonr(X_tr_t[:,i], y_tr_t)[0] for i in range(X_tr_t.shape[1])]
         print("Top 5 features by |corr|:", sorted(enumerate(corrs),
                                     key=lambda x: -abs(x[1]))[:5])
 
