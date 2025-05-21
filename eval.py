@@ -2613,6 +2613,30 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
+        print(df_true_long.shape)
+        print(df_pred_long.shape)
+
+        print("========================================")
+
+        # 1) Identify all (geneID, feature) pairs that occur more than once:
+        dup_counts = (
+            df_true_long
+            .groupby(['geneID','feature'])
+            .size()
+            .reset_index(name='n')
+        )
+        dups = dup_counts[dup_counts['n'] > 1]
+
+        print("These gene/feature pairs have duplicates in df_true_long:")
+        print(dups.head(), "\n")   # show the first few
+
+        # 2) For one or two of them, print the raw rows so you can inspect what’s being averaged:
+        for gene, feat in dups.head(3)[['geneID','feature']].values:
+            print(f"----\nRaw rows for geneID={gene!r}, feature={feat!r}:")
+            display(df_true_long.loc[
+                (df_true_long['geneID'] == gene) &
+                (df_true_long['feature'] == feat)
+            ])
 
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot_table(
@@ -2625,13 +2649,22 @@ class EVAL_CANDI(object):
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot_table(index='geneID', columns='feature', values='signal').fillna(0)
 
+        print("========================================")
 
         print(df_true_wide.head())
         print(df_true_wide.shape)
+
+        print("========================================")
+
         print(df_pred_wide_all.head())
         print(df_pred_wide_all.shape)
+
+        print("========================================")
+
         print(df_pred_wide_avail.head())
         print(df_pred_wide_avail.shape)
+
+        print("========================================")
         exit()
 
 
