@@ -3438,6 +3438,9 @@ class EVAL_CANDI(object):
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
     def bios_rnaseq_eval(self, bios_name, x_dsf):
+        if not self.dataset.has_rnaseq(bios_name):
+            return
+
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
         else:
@@ -3470,10 +3473,13 @@ class EVAL_CANDI(object):
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
-        if self.dataset.has_rnaseq(bios_name):
-            print("got rna-seq data")
-            rnaseq_res = self.eval_rnaseq(
-                bios_name, ups_count_mean, Y, available_indices, plot_REC=True)
+        
+        print("got rna-seq data")
+        # rnaseq_res = self.eval_rnaseq(
+        #     bios_name, ups_count_mean, Y, available_indices, plot_REC=True)
+
+        rnaseq_res = self.eval_rnaseq(
+            bios_name, ups_pval_mean, P, available_indices, plot_REC=True)
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
