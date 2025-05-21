@@ -2635,7 +2635,7 @@ class EVAL_CANDI(object):
 
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
-            print(df.shape, gene_info.shape)
+            print(df.shape)
             df[['chr','TPM','FPKM']] = gene_info[['chr','TPM','FPKM']]
 
         # 4) split data
@@ -2658,13 +2658,13 @@ class EVAL_CANDI(object):
         tr_all,  te_all  = split_df(df_pred_wide_all)
         tr_av,   te_av   = split_df(df_pred_wide_avail)
 
-        feat_cols = [c for c in df_true_wide.columns if c not in ['chr','TPM','FPKM']]
+        
 
         # 5) prepare X/y 
         def prep(DF):
+            feat_cols = [c for c in DF.columns if c not in ['chr','TPM','FPKM']]
             X = DF[feat_cols].values
             y = np.log1p(DF['TPM'].values)
-            print(X.shape)
             return X, y
 
         X_tr_t, y_tr_t = prep(tr_true)
@@ -2673,15 +2673,7 @@ class EVAL_CANDI(object):
         X_te_a, y_te_a = prep(te_all)
         X_tr_v, y_tr_v = prep(tr_av)
         X_te_v, y_te_v = prep(te_av)
-
-        
-        exit()
-        # print(mean_squared_error(X_tr_t, ))
-        # print(mean_squared_error())
-        # print(mean_squared_error())
-        # print(mean_squared_error())
-        # print(mean_squared_error())
-
+    
         # 6) hold-out eval helper with 5 algos ⬅ changed
         from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet 
         from sklearn.svm import SVR                                                 
