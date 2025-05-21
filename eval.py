@@ -2613,9 +2613,7 @@ class EVAL_CANDI(object):
         df_true_long = pd.DataFrame(long_rows_true)
         df_pred_long = pd.DataFrame(long_rows_pred)
 
-        print(df_true_long)
-        print(df_pred_long)
-        exit()
+        
 
         # 3) pivot to wide: rows=genes, cols=3×A features ⬅ unchanged
         df_true_wide = df_true_long.pivot(index='geneID', columns='feature', values='signal').fillna(0)
@@ -2625,6 +2623,16 @@ class EVAL_CANDI(object):
         available_assays = {self.expnames[a] for a in availability}
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot(index='geneID', columns='feature', values='signal').fillna(0)
+
+
+        print(df_true_wide.head())
+        print(df_true_wide.shape)
+        print(df_pred_wide_all.head())
+        print(df_pred_wide_all.shape)
+        print(df_pred_wide_avail.head())
+        print(df_pred_wide_avail.shape)
+        exit()
+
 
         # join TPM/chr back
         for df in (df_true_wide, df_pred_wide_all, df_pred_wide_avail):
@@ -2714,6 +2722,7 @@ class EVAL_CANDI(object):
             # out = os.path.join(self.savedir, f"{bios_name}_holdout_chr21")
             out = os.path.join(self.savedir, bios_name+f"_{len(available_assays)}")
             os.makedirs(out, exist_ok=True)
+            fig.savefig(f"{out}/RNAseq_REC.png", format="png")
             fig.savefig(f"{out}/RNAseq_REC.svg", format="svg")
 
         # 9) save scalar metrics to CSV ⬅ unchanged
