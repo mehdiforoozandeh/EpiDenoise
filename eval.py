@@ -2632,7 +2632,7 @@ class EVAL_CANDI(object):
 
     #     return report
 
-        def eval_rnaseq(
+    def eval_rnaseq(
         self, bios_name, y_pred, y_true, 
         availability, plot_REC=True,
         k_folds: int = 5,                 # ⬅ changed: new parameter for CV folds
