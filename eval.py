@@ -2574,7 +2574,7 @@ class EVAL_CANDI(object):
         # 1) load full-genome RNA-seq table ⬅ unchanged
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
 
-        print(rna_seq_data)
+        print(rna_seq_data.tail())
         input()
         # build gene_info lookup
         gene_info = (
@@ -2583,7 +2583,7 @@ class EVAL_CANDI(object):
             .set_index('geneID')
         )
 
-        print(gene_info)
+        # print(gene_info)
         input()
 
         # 2) build long-format for true vs. predicted signals ⬅ unchanged
