@@ -895,21 +895,24 @@ class PRETRAIN(object):
                             pass
 
                 if next_epoch:
-                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                    try:
+                        validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                        torch.cuda.empty_cache()
+                        log_strs.append(validation_set_eval)
+                        print(validation_set_eval)
+                        log_resource_usage()
 
-                    if early_stop:
-                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
-                        
-                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
-
+                        if early_stop:
+                            epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                            epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                            epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                            
+                            epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                            epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                            epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                    except:
+                        pass 
+                    
             if early_stop:
                 # Initialize the best metrics if it's the first epoch
                 if best_metric is None:
@@ -1179,3 +1182,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    # python CANDI.py --dna --eic --n_sab_layers 1 --context_length 4800 --expansion_factor 2 --n_cnn_layers 5 --nhead 8 --suffix XLctx
+    # python CANDI.py --dna --eic --n_sab_layers 1 --suffix 1sab
+    # python CANDI.py --dna --eic --n_sab_layers 0 --suffix 0sab
+    # python CANDI.py --dna --eic --suffix def
+
+#  watch -n 20 "squeue -u mfa76 && echo  && tail -n 15 models/*sab*txt && echo  && tail -n 15 models/*def*txt && echo  && tail -n 15 models/*XL*txt"
