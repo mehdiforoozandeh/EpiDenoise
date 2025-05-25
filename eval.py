@@ -3435,3 +3435,9 @@ if __name__ == "__main__":
     #python eval.py -m models/CANDIeic_DNA_random_mask_rand10k_model_checkpoint_epoch4_chr8.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_rand10k_20250515215719_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_rand10k/ --eic all
     #python eval.py -m models/CANDINO_ccre10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_ccre10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_ccre10k/ --dino --eic all
     #python eval.py -m models/CANDINO_rand10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_rand10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_rand10k/ --dino --eic all
+
+
+    # python eval.py -m models/CANDIeic_DNA_random_mask_ccre10k_model_checkpoint_epoch5_chr9.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_ccre10k_20250515220155_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_ccre10k/ --rnaonly all
+    # python eval.py -m models/CANDIeic_DNA_random_mask_rand10k_model_checkpoint_epoch4_chr8.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_rand10k_20250515215719_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_rand10k/ --rnaonly all
+    # python eval.py -m models/CANDINO_ccre10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_ccre10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_ccre10k/ --dino --rnaonly all
+    # python eval.py -m models/CANDINO_rand10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_rand10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_rand10k/ --dino --rnaonly all

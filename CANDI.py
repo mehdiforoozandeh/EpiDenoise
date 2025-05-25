@@ -1124,7 +1124,7 @@ def main():
     parser.add_argument('--context_length', type=int, default=1200, help='Context length')
     parser.add_argument('--batch_size', type=int, default=25, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
-    parser.add_argument('--num_loci', type=int, default=3000, help='Number of loci')
+    parser.add_argument('--num_loci', type=int, default=5000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
     parser.add_argument('--min_avail', type=int, default=3, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
