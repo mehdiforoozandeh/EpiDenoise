@@ -1115,7 +1115,7 @@ if __name__ == "__main__":
         optimizer,
         schedulers=[
             LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
-            CosineAnnealingLR(optimizer, T_max=num_epochs - warmup_epochs, eta_min=0.0)],
+            CosineAnnealingLR(optimizer, T_max=args.epochs - warmup_epochs, eta_min=0.0)],
         milestones=[warmup_epochs])
 
     decoder = DINO_CANDI_Decoder(
