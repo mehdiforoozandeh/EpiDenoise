@@ -1110,7 +1110,7 @@ if __name__ == "__main__":
         optimizer = optim.SGD(student.parameters(), lr=args.lr)
     
     num_total_epochs = args.epochs * args.inner_epochs * len(data.m_regions) * 2
-    warmup_epochs = 25
+    warmup_epochs = 10
     scheduler = SequentialLR(
         optimizer,
         schedulers=[
