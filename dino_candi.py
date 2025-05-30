@@ -640,6 +640,15 @@ class DINO_CANDI:
         next_epoch = False
         self.teacher.eval()
         self.decoder.train()
+
+        # added/modified: initialize EMA parameters
+        alpha = 0.01  # added: smoothing factor for EMA
+        ema_Ct_R2 = None  # added
+        ema_P_R2 = None  # added
+        ema_Ct_SRCC = None  # added
+        ema_P_SRCC = None  # added
+        ema_Ct_PCC = None  # added
+        ema_P_PCC = None  # added
         
         while (next_epoch==False):
             t0 = datetime.now()
@@ -780,6 +789,30 @@ class DINO_CANDI:
             hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
             
+            # after computing mean metrics, update EMAs
+            mean_Ct_R2 = np.mean(batch_rec['ups_count_r2'])  # added
+            mean_P_R2 = np.mean(batch_rec['ups_pval_r2'])  # added
+            mean_Ct_SRCC = np.mean(batch_rec['ups_count_spearman'])  # added
+            mean_P_SRCC = np.mean(batch_rec['ups_pval_spearman'])  # added
+            mean_Ct_PCC = np.mean(batch_rec['ups_count_pearson'])  # added
+            mean_P_PCC = np.mean(batch_rec['ups_pval_pearson'])  # added
+
+            # initialize or update EMA values
+            if ema_Ct_R2 is None:  # added
+                ema_Ct_R2 = mean_Ct_R2  # added
+                ema_P_R2 = mean_P_R2  # added
+                ema_Ct_SRCC = mean_Ct_SRCC  # added
+                ema_P_SRCC = mean_P_SRCC  # added
+                ema_Ct_PCC = mean_Ct_PCC  # added
+                ema_P_PCC = mean_P_PCC  # added
+            else:  # added
+                ema_Ct_R2 = alpha * mean_Ct_R2 + (1 - alpha) * ema_Ct_R2  # added
+                ema_P_R2 = alpha * mean_P_R2 + (1 - alpha) * ema_P_R2  # added
+                ema_Ct_SRCC = alpha * mean_Ct_SRCC + (1 - alpha) * ema_Ct_SRCC  # added
+                ema_P_SRCC = alpha * mean_P_SRCC + (1 - alpha) * ema_P_SRCC  # added
+                ema_Ct_PCC = alpha * mean_Ct_PCC + (1 - alpha) * ema_Ct_PCC  # added
+                ema_P_PCC = alpha * mean_P_PCC + (1 - alpha) * ema_P_PCC  # added
+
             logstr = [
                 "\tDECODER",
                 # f"Ep. {epoch}",
@@ -790,13 +823,24 @@ class DINO_CANDI:
                 
                 f"nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                 f"gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", 
-                f"Ct_R2 {np.mean(batch_rec['ups_count_r2']):.2f}", 
-                f"P_R2 {np.mean(batch_rec['ups_pval_r2']):.2f}",  "\n\t",
-
-                f"Ct_SRCC {np.mean(batch_rec['ups_count_spearman']):.2f}",
-                f"P_SRCC {np.mean(batch_rec['ups_pval_spearman']):.2f}",
-                f"Ct_PCC {np.mean(batch_rec['ups_count_pearson']):.2f}",
-                f"P_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}",  "\n\t",
+                f"Ct_R2 {mean_Ct_R2:.2f}",  # modified: use mean_ variable
+                f"P_R2 {mean_P_R2:.2f}",    # modified
+                # added: print EMA values
+                f"EMA_Ct_R2 {ema_Ct_R2:.2f}",  # added
+                f"EMA_P_R2 {ema_P_R2:.2f}",    # added
+                "\n\t",
+                
+                f"Ct_SRCC {mean_Ct_SRCC:.2f}",  # modified
+                f"P_SRCC {mean_P_SRCC:.2f}",    # modified
+                f"EMA_Ct_SRCC {ema_Ct_SRCC:.2f}",  # added
+                f"EMA_P_SRCC {ema_P_SRCC:.2f}",    # added
+                "\n\t",
+                
+                f"Ct_PCC {mean_Ct_PCC:.2f}",  # modified
+                f"P_PCC {mean_P_PCC:.2f}",    # modified
+                f"EMA_Ct_PCC {ema_Ct_PCC:.2f}",  # added
+                f"EMA_P_PCC {ema_P_PCC:.2f}",    # added
+                "\n\t",
 
                 f"Ct_PPL {np.mean(batch_rec['ups_count_pp']):.2f}",
                 f"P_PPL {np.mean(batch_rec['ups_pval_pp']):.2f}",
