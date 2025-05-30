@@ -364,7 +364,7 @@ class DINO_CANDI:
         self, student_encoder, teacher_encoder, dataset, 
         optimizer, ema_decay, center_update, t_student,
         t_teacher, device_student, device_teacher,
-
+        scheduler, 
         decoder, decoder_optimizer, decoder_dataset, decoder_criterion):
         """
         Initialize the DINO_CANDI training framework.
@@ -392,6 +392,7 @@ class DINO_CANDI:
         self.t_teacher = t_teacher
         self.device_student = device_student
         self.device_teacher = device_teacher
+        self.scheduler = scheduler
 
         self.token_dict = {
             "missing_mask": -1, 
@@ -580,6 +581,8 @@ class DINO_CANDI:
 
                 self.optimizer.step() # update student
                 self.update_teacher()
+                
+                self.scheduler.step()
 
                 del _X_batch, _mX_batch, _avX_batch, _Y_batch, _mY_batch, _avY_batch, _pval_batch
                 if DNA:
@@ -1139,6 +1142,7 @@ if __name__ == "__main__":
         student, teacher, data, optimizer, args.ema_decay, 
         args.center_upd, args.t_student, args.t_teacher, 
         torch.device("cuda:0"), torch.device("cuda:1") if torch.cuda.device_count()>1 else torch.device("cuda:0"), 
+        scheduler, 
         decoder, dec_opt, dec_data, criterion)
 
     trainer.train_dino(
