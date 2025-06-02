@@ -213,9 +213,10 @@ class CANDI_DNA_Encoder(nn.Module):
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
 
         self.fusion = nn.Sequential(
-            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
+            # nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
+            nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
             nn.LayerNorm(self.f2), 
-            # nn.ReLU()
+
             )
 
         self.transformer_encoder = nn.ModuleList([
@@ -245,7 +246,8 @@ class CANDI_DNA_Encoder(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
 
         ### FUSION ###
-        src = torch.cat([src, xmd_embedding, seq], dim=-1)
+        # src = torch.cat([src, xmd_embedding, seq], dim=-1)
+        src = torch.cat([src, xmd_embedding], dim=-1)
         src = self.fusion(src)
 
         ### TRANSFORMER ENCODER ###
@@ -912,7 +914,7 @@ class PRETRAIN(object):
                             epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
                     except:
                         pass 
-                    
+
             if early_stop:
                 # Initialize the best metrics if it's the first epoch
                 if best_metric is None:
