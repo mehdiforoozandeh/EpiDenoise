@@ -86,7 +86,8 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
         # Metadata embedding + fusion
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
         self.fusion = nn.Sequential(
-            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2),
+            # nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2),
+            nn.Linear((self.f2)+metadata_embedding_dim, self.f2),
             nn.LayerNorm(self.f2)
         )
 
@@ -132,7 +133,8 @@ class DINO_CANDI_DNA_Encoder(nn.Module):
 
         # Metadata embed + fusion
         xmd = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
-        x = torch.cat([src, xmd, seq], dim=-1)
+        # x = torch.cat([src, xmd, seq], dim=-1)
+        x = torch.cat([src, xmd], dim=-1)
         x = self.fusion(x)
 
         # CLS token prep if needed
