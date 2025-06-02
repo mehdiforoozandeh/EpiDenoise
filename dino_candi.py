@@ -626,23 +626,23 @@ class DINO_CANDI:
                     logfile.write("\n".join(self.log_strs))
                     logfile.close()
 
-                    # if chr0 != chr1:
-                    self.train_decoder(context_length, batch_size, arch=arch)
+                    if chr0 != chr1:
+                        self.train_decoder(context_length, batch_size, arch=arch)
 
-                    try:
-                        if os.path.exists(f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
-                            os.system(f"rm -rf models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
-                        torch.save(
-                            self.teacher.state_dict(), 
-                            f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
-                        
-                        if os.path.exists(f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
-                            os.system(f"rm -rf models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
-                        torch.save(
-                            self.decoder.state_dict(), 
-                            f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
-                    except:
-                        pass
+                        try:
+                            if os.path.exists(f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                                os.system(f"rm -rf models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
+                            torch.save(
+                                self.teacher.state_dict(), 
+                                f'models/DINO_CANDI_encoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                            
+                            if os.path.exists(f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                                os.system(f"rm -rf models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
+                            torch.save(
+                                self.decoder.state_dict(), 
+                                f'models/DINO_CANDI_decoder_{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                        except:
+                            pass
         
     def train_decoder(self, context_length, batch_size, early_stop=True, DNA=True, arch=""):
         next_epoch = False
@@ -1066,7 +1066,8 @@ if __name__ == "__main__":
     parser.add_argument('--out',      type=str, default='models/dino_candi_merged.pth', help='output merged model path')
     args = parser.parse_args()
 
-    #  python dino_candi.py --dna --eic --nsab 1 --ctx_len 4800 --exp_factor 2 --ncnn 5 --nhead 8 --suffix XLctx
+    # python dino_candi.py --dna --eic --nsab 1 --ctx_len 4800 --exp_factor 2 --ncnn 5 --nhead 8 --suffix XLctx_noDNA
+    # python dino_candi.py --dna --eic --suffix def_noDNA
     if args.merge:
         hp = pickle.load(open(args.hp_path,'rb'))
         # hp = vars(args)
