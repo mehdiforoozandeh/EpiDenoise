@@ -247,7 +247,7 @@ class CANDI_DNA_Encoder(nn.Module):
 
         ### FUSION ###
         # src = torch.cat([src, xmd_embedding, seq], dim=-1)
-        src = torch.cat([src, xmd_embedding], dim=-1)
+        src = torch.cat([seq, xmd_embedding], dim=-1)
         src = self.fusion(src)
 
         ### TRANSFORMER ENCODER ###
