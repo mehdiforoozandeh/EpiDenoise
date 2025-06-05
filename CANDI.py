@@ -85,10 +85,10 @@ class CANDI_Decoder(nn.Module):
         conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
 
         self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
-        self.ymd_fusion = nn.Sequential(
-            nn.Linear(self.f3, self.f2),
-            nn.LayerNorm(self.f2), 
-            )
+        # self.ymd_fusion = nn.Sequential(
+        #     nn.Linear(self.f3, self.f2),
+        #     nn.LayerNorm(self.f2), 
+        #     )
 
         self.deconv = nn.ModuleList(
             [DeconvTower(
@@ -97,9 +97,9 @@ class CANDI_Decoder(nn.Module):
                 groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
     
     def forward(self, src, y_metadata):
-        ymd_embedding = self.ymd_emb(y_metadata)
-        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-        src = self.ymd_fusion(src)
+        # ymd_embedding = self.ymd_emb(y_metadata)
+        # src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        # src = self.ymd_fusion(src)
         
         src = src.permute(0, 2, 1) # to N, F2, L'
         for dconv in self.deconv:
@@ -212,8 +212,8 @@ class CANDI_DNA_Encoder(nn.Module):
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=False)
 
         self.fusion = nn.Sequential(
-            # nn.Linear((2*self.f2), self.f2), 
-            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
+            nn.Linear((2*self.f2), self.f2), 
+            # nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
             # nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
             nn.LayerNorm(self.f2), 
 
@@ -246,8 +246,8 @@ class CANDI_DNA_Encoder(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
 
         ### FUSION ###
-        src = torch.cat([src, xmd_embedding, seq], dim=-1)
-        # src = torch.cat([src, seq], dim=-1)
+        # src = torch.cat([src, xmd_embedding, seq], dim=-1)
+        src = torch.cat([src, seq], dim=-1)
         # src = torch.cat([seq, xmd_embedding], dim=-1)
         src = self.fusion(src)
 
