@@ -870,17 +870,16 @@ class PRETRAIN(object):
                     logfile = open(f"models/CANDI{arch}_log.txt", "w")
                     logfile.write("\n".join(log_strs))
                     logfile.close()
-
-                # if chr0 != chr1:
-                    try:
-                        if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
-                            os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
-                        torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
-                    except:
-                        pass
-
+                    
                     if self.HPO==False:
                         try:
+                            try:
+                                if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                                    os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
+                                torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                            except:
+                                pass
+
                             # Generate and process the plot
                             fig_title = " | ".join([
                                 f"Ep. {epoch}", f"DSF{self.dataset.dsf_list[dsf_pointer0]}->{1}",
@@ -1029,8 +1028,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
             pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
 
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
 
