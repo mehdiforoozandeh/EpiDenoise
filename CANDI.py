@@ -737,7 +737,7 @@ class PRETRAIN(object):
                     if no_prog_mon_improvement >= prog_monitor_patience:
                         print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
                         current_lr = self.optimizer.param_groups[0]['lr']
-                        # self.scheduler.step()
+                        self.scheduler.step()
                         lr_sch_steps_taken += 1
                         prog_monitor_patience *= 1.05
                         new_lr = self.optimizer.param_groups[0]['lr']
@@ -774,7 +774,7 @@ class PRETRAIN(object):
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
                 # self.optimizer.step()
-                self.scheduler.step()
+                # self.scheduler.step()
 
 
                 elapsed_time = datetime.now() - t0
@@ -794,8 +794,7 @@ class PRETRAIN(object):
                     f"Imp_nbNLL {np.mean(batch_rec['imp_count_loss']):.2f}",
                     f"Ups_nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"Imp_gNLL {np.mean(batch_rec['imp_pval_loss']):.2f}",
-                    f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}",
-                    f"CurrentLR: {self.optimizer.param_groups[0]['lr']}" "\n",
+                    f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", "\n",
                     f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
                     f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
                     f"Imp_Pval_R2 {np.mean(batch_rec['imp_pval_r2']):.2f}",
@@ -829,6 +828,7 @@ class PRETRAIN(object):
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
+                    # f"CurrentLR: {self.optimizer.param_groups[0]['lr']}" 
                     f"LR_sch_steps_taken {lr_sch_steps_taken}",
                     f"LR_patience {no_prog_mon_improvement}", 
                 ]
