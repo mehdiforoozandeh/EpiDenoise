@@ -1,5 +1,5 @@
 from model import *
-
+from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 import tracemalloc, sys, argparse
 
 # tracemalloc.start()
@@ -213,8 +213,8 @@ class CANDI_DNA_Encoder(nn.Module):
 
         self.fusion = nn.Sequential(
             # nn.Linear((2*self.f2), self.f2), 
-            # nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
-            nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
+            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
+            # nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
             nn.LayerNorm(self.f2), 
 
             )
@@ -246,9 +246,9 @@ class CANDI_DNA_Encoder(nn.Module):
         xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
 
         ### FUSION ###
-        # src = torch.cat([src, xmd_embedding, seq], dim=-1)
+        src = torch.cat([src, xmd_embedding, seq], dim=-1)
         # src = torch.cat([src, seq], dim=-1)
-        src = torch.cat([seq, xmd_embedding], dim=-1)
+        # src = torch.cat([seq, xmd_embedding], dim=-1)
         src = self.fusion(src)
 
         ### TRANSFORMER ENCODER ###
@@ -272,7 +272,6 @@ class CANDI_DNA(nn.Module):
         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
         self.f3 = self.f2 + metadata_embedding_dim
         self.d_model = self.latent_dim = self.f2
-        print("d_model: ", self.d_model)
 
         self.encoder = CANDI_DNA_Encoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size, dropout, context_length, pos_enc, expansion_factor)
@@ -775,6 +774,8 @@ class PRETRAIN(object):
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
                 self.optimizer.step()
+                # self.scheduler.step()
+
 
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -1031,7 +1032,19 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
+    # optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+    
+
+    num_total_epochs = epochs * inner_epochs * len(dataset.m_regions) * 2
+    warmup_epochs = 100
+    scheduler = SequentialLR(
+        optimizer,
+        schedulers=[
+            LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
+            CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
+        milestones=[warmup_epochs])
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
+
 
     print(f"Using optimizer: {optimizer.__class__.__name__}")
 
