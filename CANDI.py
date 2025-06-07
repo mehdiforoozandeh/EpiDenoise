@@ -794,7 +794,8 @@ class PRETRAIN(object):
                     f"Imp_nbNLL {np.mean(batch_rec['imp_count_loss']):.2f}",
                     f"Ups_nbNLL {np.mean(batch_rec['ups_count_loss']):.2f}",
                     f"Imp_gNLL {np.mean(batch_rec['imp_pval_loss']):.2f}",
-                    f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}", "\n",
+                    f"Ups_gNLL {np.mean(batch_rec['ups_pval_loss']):.2f}",
+                    f"CurrentLR: {self.optimizer.param_groups[0]['lr']}" "\n",
                     f"Imp_Count_R2 {np.mean(batch_rec['imp_count_r2']):.2f}",
                     f"Ups_Count_R2 {np.mean(batch_rec['ups_count_r2']):.2f}",
                     f"Imp_Pval_R2 {np.mean(batch_rec['imp_pval_r2']):.2f}",
@@ -830,7 +831,6 @@ class PRETRAIN(object):
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"LR_sch_steps_taken {lr_sch_steps_taken}",
                     f"LR_patience {no_prog_mon_improvement}", 
-                    f"CurrentLR: {self.optimizer.param_groups[0]['lr']:.2f}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
