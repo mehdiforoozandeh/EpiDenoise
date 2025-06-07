@@ -737,7 +737,7 @@ class PRETRAIN(object):
                     if no_prog_mon_improvement >= prog_monitor_patience:
                         print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
                         current_lr = self.optimizer.param_groups[0]['lr']
-                        self.scheduler.step()
+                        # self.scheduler.step()
                         lr_sch_steps_taken += 1
                         prog_monitor_patience *= 1.05
                         new_lr = self.optimizer.param_groups[0]['lr']
@@ -773,8 +773,8 @@ class PRETRAIN(object):
                     if max_weight_grad_layer:
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
-                self.optimizer.step()
-                # self.scheduler.step()
+                # self.optimizer.step()
+                self.scheduler.step()
 
 
                 elapsed_time = datetime.now() - t0
@@ -829,7 +829,8 @@ class PRETRAIN(object):
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"LR_sch_steps_taken {lr_sch_steps_taken}",
-                    f"LR_patience {no_prog_mon_improvement}"
+                    f"LR_patience {no_prog_mon_improvement}", 
+                    f"CurrentLR: {self.optimizer.param_groups[0]['lr']:.2f}"
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
