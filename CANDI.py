@@ -466,9 +466,9 @@ class PRETRAIN(object):
         num_assays = self.dataset.signal_dim
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
-        if "_prog_unmask" in arch or "_prog_mask" in arch:
-            N = len(self.dataset.m_regions) * len(self.dataset.dsf_list) * self.dataset.num_batches
-            mask_step = N // (num_assays - 1)
+        # if "_prog_unmask" in arch or "_prog_mask" in arch:
+        #     N = len(self.dataset.m_regions) * len(self.dataset.dsf_list) * self.dataset.num_batches
+        #     mask_step = N // (num_assays - 1)
 
         if hook:
             register_hooks(self.model)
@@ -516,13 +516,13 @@ class PRETRAIN(object):
             self.dataset.new_epoch()
             next_epoch = False
 
-            if "_prog_unmask" in arch or "_prog_mask" in arch:
-                M_i = 1
-                if "_prog_unmask" in arch:
-                    num_mask = num_assays - 1
+            # if "_prog_unmask" in arch or "_prog_mask" in arch:
+            #     M_i = 1
+            #     if "_prog_unmask" in arch:
+            #         num_mask = num_assays - 1
 
-                elif "_prog_mask" in arch:
-                    num_mask = 1
+            #     elif "_prog_mask" in arch:
+            #         num_mask = 1
 
             last_lopr = -1
             while (next_epoch==False):
@@ -558,17 +558,17 @@ class PRETRAIN(object):
                     "grad_norm":[]
                     }
 
-                if "_prog_unmask" in arch or "_prog_mask" in arch:
-                    if M_i % mask_step == 0:
-                        if "_prog_unmask" in arch:
-                            if num_mask > 1:
-                                num_mask -= 1
+                # if "_prog_unmask" in arch or "_prog_mask" in arch:
+                #     if M_i % mask_step == 0:
+                #         if "_prog_unmask" in arch:
+                #             if num_mask > 1:
+                #                 num_mask -= 1
 
-                        elif "_prog_mask" in arch:
-                            if num_mask < num_assays:
-                                num_mask += 1
+                #         elif "_prog_mask" in arch:
+                #             if num_mask < num_assays:
+                #                 num_mask += 1
 
-                    M_i += 1
+                #     M_i += 1
                 
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
@@ -613,7 +613,8 @@ class PRETRAIN(object):
                     obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
                         output_p, output_n, output_mu, output_var, Y_batch, pval_batch, observed_map, masked_map) 
                     
-                    if "_prog_unmask" in arch or "_prog_mask" in arch or "random_mask" in arch:
+                    # if "_prog_unmask" in arch or "_prog_mask" in arch or "random_mask" in arch:
+                    if "random_mask" in arch:
                         msk_p = float(num_mask/num_assays)
                         
                         if "imponly" in arch:
@@ -817,7 +818,7 @@ class PRETRAIN(object):
                         prog_monitor_patience *= 1.05
                         new_lr = self.optimizer.param_groups[0]['lr']
                         print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
-                        no_prog_mon_improvement = 0  # Reset counter after taking step
+                        no_prog_mon_improvement = 0
 
                     del output_p, output_n, output_mu, output_var, loss, obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss
                     del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
@@ -852,7 +853,6 @@ class PRETRAIN(object):
                 if self.cosine_sched:
                     self.scheduler.step()
 
-
                 elapsed_time = datetime.now() - t0
                 hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
                 minutes, seconds = divmod(remainder, 60)
@@ -867,9 +867,7 @@ class PRETRAIN(object):
                     lr_printstatement = f"CurrentLR: {CurrentLR:.0e}" 
                     
                 else:
-                    lr_printstatement = f"LR_sch_steps_taken {lr_sch_steps_taken}\
-                        | LR_patience {no_prog_mon_improvement}\
-                            | CurrentLR: {CurrentLR:.0e}"
+                    lr_printstatement = f"LR_sch_steps_taken {lr_sch_steps_taken} | LR_patience {no_prog_mon_improvement} | CurrentLR: {CurrentLR:.0e}"
 
                 logstr = [
                     f"Ep. {epoch}",
