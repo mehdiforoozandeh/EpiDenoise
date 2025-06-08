@@ -898,23 +898,23 @@ class PRETRAIN(object):
 
 
 
-                try:
-                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                    torch.cuda.empty_cache()
-                    log_strs.append(validation_set_eval)
-                    print(validation_set_eval)
-                    log_resource_usage()
+                # try:
+                validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                torch.cuda.empty_cache()
+                log_strs.append(validation_set_eval)
+                print(validation_set_eval)
+                log_resource_usage()
 
-                    if early_stop:
-                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
-                        
-                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
-                except:
-                    pass
+                if early_stop:
+                    epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                    epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                    epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                    
+                    epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                    epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                    epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                # except:
+                #     pass
 
 
 
