@@ -558,7 +558,7 @@ class MONITOR_VALIDATION(object): # CANDI
                             torch.Tensor(target_count), 
                             torch.Tensor(pred_n), 
                             torch.Tensor(pred_p)
-                            ).item(),
+                            ).mean().item(),
 
                         
                         'MSE_pval': self.metrics.mse(target_pval, pred_pval),
@@ -617,7 +617,7 @@ class MONITOR_VALIDATION(object): # CANDI
                     torch.Tensor(target_count), 
                     torch.Tensor(pred_n), 
                     torch.Tensor(pred_p)
-                    ).item(),
+                    ).mean().item(),
 
                 'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                 'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
