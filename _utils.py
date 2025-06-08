@@ -149,6 +149,40 @@ class NegativeBinomial:
         upper = self.icdf(q=(1+confidence)/2)
         return lower, upper
 
+def negative_binomial_loss(y_true, n_pred, p_pred):
+    """
+        Negative binomial loss function for PyTorch.
+        
+        Parameters
+        ----------
+        y_true : torch.Tensor
+            Ground truth values of the predicted variable.
+        n_pred : torch.Tensor
+            Tensor containing n values of the predicted distribution.
+        p_pred : torch.Tensor
+            Tensor containing p values of the predicted distribution.
+            
+        Returns
+        -------
+        nll : torch.Tensor
+            Negative log likelihood.
+    """
+    eps = 1e-6
+
+    # Clamp predictions for numerical stability
+    p_pred = torch.clamp(p_pred, min=eps, max=1 - eps)
+    n_pred = torch.clamp(n_pred, min=1e-2, max=1e3)
+
+    # Compute NB NLL
+    nll = (
+        torch.lgamma(n_pred + eps)
+        + torch.lgamma(y_true + 1 + eps)
+        - torch.lgamma(n_pred + y_true + eps)
+        - n_pred * torch.log(p_pred + eps)
+        - y_true * torch.log(1 - p_pred + eps)
+    )
+    
+    return nll
 
 class MONITOR_VALIDATION(object): # CANDI
     def __init__(
@@ -187,6 +221,9 @@ class MONITOR_VALIDATION(object): # CANDI
             ]
 
         self.token_dict = token_dict
+
+        self.gaus_nll = torch.nn.GaussianNLLLoss(reduction="mean", full=True)
+        self.nbin_nll = negative_binomial_loss
 
         self.chr_sizes = {}
         self.metrics = METRICS()
@@ -489,10 +526,20 @@ class MONITOR_VALIDATION(object): # CANDI
                     if comparison == "imputed":
                         pred_count = imp_mean[:, j].numpy()
                         pred_pval = imp_gaussian_mean[:, j].numpy()
+
+                        pred_n = imp_count_dist.n[:, j].numpy()
+                        pred_p = imp_count_dist.p[:, j].numpy()
+                        pred_mu = imp_pval_dist.mu[:, j].numpy()
+                        pred_var = imp_pval_dist.var[:, j].numpy()
                         
                     elif comparison == "upsampled":
                         pred_count = ups_mean[:, j].numpy()
                         pred_pval = ups_gaussian_mean[:, j].numpy()
+                        
+                        pred_n = ups_count_dist.n[:, j].numpy()
+                        pred_p = ups_count_dist.p[:, j].numpy()
+                        pred_mu = ups_pval_dist.mu[:, j].numpy()
+                        pred_var = ups_pval_dist.var[:, j].numpy()
 
                     target_count = Y[:, j].numpy()
                     target_pval = P[:, j].numpy()
@@ -507,11 +554,13 @@ class MONITOR_VALIDATION(object): # CANDI
                         'Pearson_count': self.metrics.pearson(target_count, pred_count),
                         'Spearman_count': self.metrics.spearman(target_count, pred_count),
                         'r2_count': self.metrics.r2(target_count, pred_count),
+                        'loss_count': self.nbin_nll(target_count, pred_n, pred_p)
                         
                         'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                         'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
                         'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
-                        'r2_pval': self.metrics.r2(target_pval, pred_pval)
+                        'r2_pval': self.metrics.r2(target_pval, pred_pval),
+                        'loss_pval': self.gaus_nll(pred_mu, target_pval, pred_var)
                     }
                     results.append(metrics)
 
@@ -525,6 +574,12 @@ class MONITOR_VALIDATION(object): # CANDI
         for j in range(Y.shape[1]):
             pred_count = ups_mean[:, j].numpy()
             pred_pval = ups_pval[:, j].numpy()
+
+            pred_n = ups_count_dist.n[:, j].numpy()
+            pred_p = ups_count_dist.p[:, j].numpy()
+            pred_mu = ups_pval_dist.mu[:, j].numpy()
+            pred_var = ups_pval_dist.var[:, j].numpy()
+
             target_pval = P[:, j].numpy()
 
             if j in list(available_X_indices):
@@ -548,11 +603,13 @@ class MONITOR_VALIDATION(object): # CANDI
                 'Pearson_count': self.metrics.pearson(target_count, pred_count),
                 'Spearman_count': self.metrics.spearman(target_count, pred_count),
                 'r2_count': self.metrics.r2(target_count, pred_count),
+                'loss_count': self.nbin_nll(target_count, pred_n, pred_p)
 
                 'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                 'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
                 'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
-                'r2_pval': self.metrics.r2(target_pval, pred_pval)
+                'r2_pval': self.metrics.r2(target_pval, pred_pval),
+                'loss_pval': self.gaus_nll(pred_mu, target_pval, pred_var)
             }
             results.append(metrics)
 
@@ -578,8 +635,6 @@ class MONITOR_VALIDATION(object): # CANDI
                 try:
                     imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
                         bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-
-                    
                     full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
                 except:
                     pass
@@ -599,31 +654,35 @@ class MONITOR_VALIDATION(object): # CANDI
 
         # Function to calculate mean, min, and max for a given metric
         def calculate_stats(df, metric):
-            return df[metric].mean(), df[metric].min(), df[metric].max()
+            return df[metric].median(), df[metric].min(), df[metric].max()
 
         # Imputed statistics for count metrics
         imp_mse_count_stats = calculate_stats(imputed_df, 'MSE_count')
         imp_pearson_count_stats = calculate_stats(imputed_df, 'Pearson_count')
         imp_spearman_count_stats = calculate_stats(imputed_df, 'Spearman_count')
         imp_r2_count_stats = calculate_stats(imputed_df, 'r2_count')
+        imp_loss_count_stats = calculate_stats(imputed_df, 'loss_count')
 
         # Imputed statistics for p-value metrics
         imp_mse_pval_stats = calculate_stats(imputed_df, 'MSE_pval')
         imp_pearson_pval_stats = calculate_stats(imputed_df, 'Pearson_pval')
         imp_spearman_pval_stats = calculate_stats(imputed_df, 'Spearman_pval')
         imp_r2_pval_stats = calculate_stats(imputed_df, 'r2_pval')
+        imp_loss_pval_stats = calculate_stats(imputed_df, 'loss_pval')
 
         # Upsampled statistics for count metrics
         ups_mse_count_stats = calculate_stats(upsampled_df, 'MSE_count')
         ups_pearson_count_stats = calculate_stats(upsampled_df, 'Pearson_count')
         ups_spearman_count_stats = calculate_stats(upsampled_df, 'Spearman_count')
         ups_r2_count_stats = calculate_stats(upsampled_df, 'r2_count')
+        ups_loss_count_stats = calculate_stats(upsampled_df, 'loss_count')
 
         # Upsampled statistics for p-value metrics
         ups_mse_pval_stats = calculate_stats(upsampled_df, 'MSE_pval')
         ups_pearson_pval_stats = calculate_stats(upsampled_df, 'Pearson_pval')
         ups_spearman_pval_stats = calculate_stats(upsampled_df, 'Spearman_pval')
         ups_r2_pval_stats = calculate_stats(upsampled_df, 'r2_pval')
+        ups_loss_pval_stats = calculate_stats(upsampled_df, 'loss_pval')
 
         elapsed_time = datetime.datetime.now() - t0
         hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
@@ -633,54 +692,62 @@ class MONITOR_VALIDATION(object): # CANDI
         print_statement = f"""
         Took {int(minutes)}:{int(seconds)}
         For Imputed Counts:
-        - MSE_count: mean={imp_mse_count_stats[0]:.2f}, min={imp_mse_count_stats[1]:.2f}, max={imp_mse_count_stats[2]:.2f}
-        - PCC_count: mean={imp_pearson_count_stats[0]:.2f}, min={imp_pearson_count_stats[1]:.2f}, max={imp_pearson_count_stats[2]:.2f}
-        - SRCC_count: mean={imp_spearman_count_stats[0]:.2f}, min={imp_spearman_count_stats[1]:.2f}, max={imp_spearman_count_stats[2]:.2f}
-        - R2_count: mean={imp_r2_count_stats[0]:.2f}, min={imp_r2_count_stats[1]:.2f}, max={imp_r2_count_stats[2]:.2f}
+        - MSE_count: median={imp_mse_count_stats[0]:.2f}, min={imp_mse_count_stats[1]:.2f}, max={imp_mse_count_stats[2]:.2f}
+        - PCC_count: median={imp_pearson_count_stats[0]:.2f}, min={imp_pearson_count_stats[1]:.2f}, max={imp_pearson_count_stats[2]:.2f}
+        - SRCC_count: median={imp_spearman_count_stats[0]:.2f}, min={imp_spearman_count_stats[1]:.2f}, max={imp_spearman_count_stats[2]:.2f}
+        - R2_count: median={imp_r2_count_stats[0]:.2f}, min={imp_r2_count_stats[1]:.2f}, max={imp_r2_count_stats[2]:.2f}
+        - loss_count: median={imp_loss_count_stats[0]:.2f}, min={imp_loss_count_stats[1]:.2f}, max={imp_loss_count_stats[2]:.2f}
 
         For Imputed P-values:
-        - MSE_pval: mean={imp_mse_pval_stats[0]:.2f}, min={imp_mse_pval_stats[1]:.2f}, max={imp_mse_pval_stats[2]:.2f}
-        - PCC_pval: mean={imp_pearson_pval_stats[0]:.2f}, min={imp_pearson_pval_stats[1]:.2f}, max={imp_pearson_pval_stats[2]:.2f}
-        - SRCC_pval: mean={imp_spearman_pval_stats[0]:.2f}, min={imp_spearman_pval_stats[1]:.2f}, max={imp_spearman_pval_stats[2]:.2f}
-        - R2_pval: mean={imp_r2_pval_stats[0]:.2f}, min={imp_r2_pval_stats[1]:.2f}, max={imp_r2_pval_stats[2]:.2f}
+        - MSE_pval: median={imp_mse_pval_stats[0]:.2f}, min={imp_mse_pval_stats[1]:.2f}, max={imp_mse_pval_stats[2]:.2f}
+        - PCC_pval: median={imp_pearson_pval_stats[0]:.2f}, min={imp_pearson_pval_stats[1]:.2f}, max={imp_pearson_pval_stats[2]:.2f}
+        - SRCC_pval: median={imp_spearman_pval_stats[0]:.2f}, min={imp_spearman_pval_stats[1]:.2f}, max={imp_spearman_pval_stats[2]:.2f}
+        - R2_pval: median={imp_r2_pval_stats[0]:.2f}, min={imp_r2_pval_stats[1]:.2f}, max={imp_r2_pval_stats[2]:.2f}
+        - loss_pval: median={imp_loss_pval_stats[0]:.2f}, min={imp_loss_pval_stats[1]:.2f}, max={imp_loss_pval_stats[2]:.2f}
 
         For Upsampled Counts:
-        - MSE_count: mean={ups_mse_count_stats[0]:.2f}, min={ups_mse_count_stats[1]:.2f}, max={ups_mse_count_stats[2]:.2f}
-        - PCC_count: mean={ups_pearson_count_stats[0]:.2f}, min={ups_pearson_count_stats[1]:.2f}, max={ups_pearson_count_stats[2]:.2f}
-        - SRCC_count: mean={ups_spearman_count_stats[0]:.2f}, min={ups_spearman_count_stats[1]:.2f}, max={ups_spearman_count_stats[2]:.2f}
-        - R2_count: mean={ups_r2_count_stats[0]:.2f}, min={ups_r2_count_stats[1]:.2f}, max={ups_r2_count_stats[2]:.2f}
+        - MSE_count: median={ups_mse_count_stats[0]:.2f}, min={ups_mse_count_stats[1]:.2f}, max={ups_mse_count_stats[2]:.2f}
+        - PCC_count: median={ups_pearson_count_stats[0]:.2f}, min={ups_pearson_count_stats[1]:.2f}, max={ups_pearson_count_stats[2]:.2f}
+        - SRCC_count: median={ups_spearman_count_stats[0]:.2f}, min={ups_spearman_count_stats[1]:.2f}, max={ups_spearman_count_stats[2]:.2f}
+        - R2_count: median={ups_r2_count_stats[0]:.2f}, min={ups_r2_count_stats[1]:.2f}, max={ups_r2_count_stats[2]:.2f}
+        - loss_count: median={ups_loss_count_stats[0]:.2f}, min={ups_loss_count_stats[1]:.2f}, max={ups_loss_count_stats[2]:.2f}
 
         For Upsampled P-values:
-        - MSE_pval: mean={ups_mse_pval_stats[0]:.2f}, min={ups_mse_pval_stats[1]:.2f}, max={ups_mse_pval_stats[2]:.2f}
-        - PCC_pval: mean={ups_pearson_pval_stats[0]:.2f}, min={ups_pearson_pval_stats[1]:.2f}, max={ups_pearson_pval_stats[2]:.2f}
-        - SRCC_pval: mean={ups_spearman_pval_stats[0]:.2f}, min={ups_spearman_pval_stats[1]:.2f}, max={ups_spearman_pval_stats[2]:.2f}
-        - R2_pval: mean={ups_r2_pval_stats[0]:.2f}, min={ups_r2_pval_stats[1]:.2f}, max={ups_r2_pval_stats[2]:.2f}
+        - MSE_pval: median={ups_mse_pval_stats[0]:.2f}, min={ups_mse_pval_stats[1]:.2f}, max={ups_mse_pval_stats[2]:.2f}
+        - PCC_pval: median={ups_pearson_pval_stats[0]:.2f}, min={ups_pearson_pval_stats[1]:.2f}, max={ups_pearson_pval_stats[2]:.2f}
+        - SRCC_pval: median={ups_spearman_pval_stats[0]:.2f}, min={ups_spearman_pval_stats[1]:.2f}, max={ups_spearman_pval_stats[2]:.2f}
+        - R2_pval: median={ups_r2_pval_stats[0]:.2f}, min={ups_r2_pval_stats[1]:.2f}, max={ups_r2_pval_stats[2]:.2f}
+        - loss_pval: median={ups_loss_pval_stats[0]:.2f}, min={ups_loss_pval_stats[1]:.2f}, max={ups_loss_pval_stats[2]:.2f}
         """
 
         metrics_dict = {
             "imputed_counts": {
-                "MSE_count": {"mean": imp_mse_count_stats[0], "min": imp_mse_count_stats[1], "max": imp_mse_count_stats[2]},
-                "PCC_count": {"mean": imp_pearson_count_stats[0], "min": imp_pearson_count_stats[1], "max": imp_pearson_count_stats[2]},
-                "SRCC_count": {"mean": imp_spearman_count_stats[0], "min": imp_spearman_count_stats[1], "max": imp_spearman_count_stats[2]},
-                "R2_count": {"mean": imp_r2_count_stats[0], "min": imp_r2_count_stats[1], "max": imp_r2_count_stats[2]},
+                "MSE_count": {"median": imp_mse_count_stats[0], "min": imp_mse_count_stats[1], "max": imp_mse_count_stats[2]},
+                "PCC_count": {"median": imp_pearson_count_stats[0], "min": imp_pearson_count_stats[1], "max": imp_pearson_count_stats[2]},
+                "SRCC_count": {"median": imp_spearman_count_stats[0], "min": imp_spearman_count_stats[1], "max": imp_spearman_count_stats[2]},
+                "R2_count": {"median": imp_r2_count_stats[0], "min": imp_r2_count_stats[1], "max": imp_r2_count_stats[2]},
+                "loss_count": {"median": imp_loss_count_stats[0], "min": imp_loss_count_stats[1], "max": imp_loss_count_stats[2]},
             },
             "imputed_pvals": {
-                "MSE_pval": {"mean": imp_mse_pval_stats[0], "min": imp_mse_pval_stats[1], "max": imp_mse_pval_stats[2]},
-                "PCC_pval": {"mean": imp_pearson_pval_stats[0], "min": imp_pearson_pval_stats[1], "max": imp_pearson_pval_stats[2]},
-                "SRCC_pval": {"mean": imp_spearman_pval_stats[0], "min": imp_spearman_pval_stats[1], "max": imp_spearman_pval_stats[2]},
-                "R2_pval": {"mean": imp_r2_pval_stats[0], "min": imp_r2_pval_stats[1], "max": imp_r2_pval_stats[2]},
+                "MSE_pval": {"median": imp_mse_pval_stats[0], "min": imp_mse_pval_stats[1], "max": imp_mse_pval_stats[2]},
+                "PCC_pval": {"median": imp_pearson_pval_stats[0], "min": imp_pearson_pval_stats[1], "max": imp_pearson_pval_stats[2]},
+                "SRCC_pval": {"median": imp_spearman_pval_stats[0], "min": imp_spearman_pval_stats[1], "max": imp_spearman_pval_stats[2]},
+                "R2_pval": {"median": imp_r2_pval_stats[0], "min": imp_r2_pval_stats[1], "max": imp_r2_pval_stats[2]},
+                "loss_pval": {"median": imp_loss_pval_stats[0], "min": imp_loss_pval_stats[1], "max": imp_loss_pval_stats[2]},
             },
             "upsampled_counts": {
-                "MSE_count": {"mean": ups_mse_count_stats[0], "min": ups_mse_count_stats[1], "max": ups_mse_count_stats[2]},
-                "PCC_count": {"mean": ups_pearson_count_stats[0], "min": ups_pearson_count_stats[1], "max": ups_pearson_count_stats[2]},
-                "SRCC_count": {"mean": ups_spearman_count_stats[0], "min": ups_spearman_count_stats[1], "max": ups_spearman_count_stats[2]},
-                "R2_count": {"mean": ups_r2_count_stats[0], "min": ups_r2_count_stats[1], "max": ups_r2_count_stats[2]},
+                "MSE_count": {"median": ups_mse_count_stats[0], "min": ups_mse_count_stats[1], "max": ups_mse_count_stats[2]},
+                "PCC_count": {"median": ups_pearson_count_stats[0], "min": ups_pearson_count_stats[1], "max": ups_pearson_count_stats[2]},
+                "SRCC_count": {"median": ups_spearman_count_stats[0], "min": ups_spearman_count_stats[1], "max": ups_spearman_count_stats[2]},
+                "R2_count": {"median": ups_r2_count_stats[0], "min": ups_r2_count_stats[1], "max": ups_r2_count_stats[2]},
+                "loss_count": {"median": ups_loss_count_stats[0], "min": ups_loss_count_stats[1], "max": ups_loss_count_stats[2]},
             },
             "upsampled_pvals": {
-                "MSE_pval": {"mean": ups_mse_pval_stats[0], "min": ups_mse_pval_stats[1], "max": ups_mse_pval_stats[2]},
-                "PCC_pval": {"mean": ups_pearson_pval_stats[0], "min": ups_pearson_pval_stats[1], "max": ups_pearson_pval_stats[2]},
-                "SRCC_pval": {"mean": ups_spearman_pval_stats[0], "min": ups_spearman_pval_stats[1], "max": ups_spearman_pval_stats[2]},
-                "R2_pval": {"mean": ups_r2_pval_stats[0], "min": ups_r2_pval_stats[1], "max": ups_r2_pval_stats[2]}
+                "MSE_pval": {"median": ups_mse_pval_stats[0], "min": ups_mse_pval_stats[1], "max": ups_mse_pval_stats[2]},
+                "PCC_pval": {"median": ups_pearson_pval_stats[0], "min": ups_pearson_pval_stats[1], "max": ups_pearson_pval_stats[2]},
+                "SRCC_pval": {"median": ups_spearman_pval_stats[0], "min": ups_spearman_pval_stats[1], "max": ups_spearman_pval_stats[2]},
+                "R2_pval": {"median": ups_r2_pval_stats[0], "min": ups_r2_pval_stats[1], "max": ups_r2_pval_stats[2]}
+                "loss_pval": {"median": ups_loss_pval_stats[0], "min": ups_loss_pval_stats[1], "max": ups_loss_pval_stats[2]}
             }}
 
 
@@ -983,59 +1050,6 @@ def signal_feature_extraction(start, end, strand, chip_seq_signal,
         # 'min_sig_around_TES':    tes_min,
         # 'max_sig_around_TES':    tes_max,
     }
-
-# def signal_feature_extraction(start, end, strand, chip_seq_signal, bin_size=25, margin=2e3):
-#     """
-#     Extracts mean ChIP-seq signals for defined regions around TSS, TES, and within the gene body.
-
-#     Parameters:
-#     - chr: Chromosome (string)
-#     - start: Start position of the gene (int)
-#     - end: End position of the gene (int)
-#     - strand: Strand information ('+' or '-') (string)
-#     - chip_seq_signal: A numpy array representing ChIP-seq signal binned at 25-bp resolution (1D array)
-
-#     Returns:
-#     - dict: Dictionary containing mean signals for the specified regions
-#     """
-
-#     # Define TSS and TES based on the strand
-#     tss = start if strand == '+' else end
-#     tes = end if strand == '+' else start
-
-#     # Define the regions
-#     promoter_start = tss - int(margin)
-#     promoter_end = tss + int(margin)
-#     gene_body_start = start
-#     gene_body_end = end
-#     tes_region_start = tes - int(margin)
-#     tes_region_end = tes + int(margin)
-
-#     # Convert regions to bin indices
-#     promoter_start_bin = max(promoter_start // bin_size, 0)
-#     promoter_end_bin = min(promoter_end // bin_size, len(chip_seq_signal))
-#     gene_body_start_bin = max(gene_body_start // bin_size, 0)
-#     gene_body_end_bin = min(gene_body_end // bin_size, len(chip_seq_signal))
-#     tes_region_start_bin = max(tes_region_start // bin_size, 0)
-#     tes_region_end_bin = min(tes_region_end // bin_size, len(chip_seq_signal))
-
-#     # Extract signal for each region
-#     promoter_signal = chip_seq_signal[promoter_start_bin:promoter_end_bin]
-#     gene_body_signal = chip_seq_signal[gene_body_start_bin:gene_body_end_bin]
-#     tes_region_signal = chip_seq_signal[tes_region_start_bin:tes_region_end_bin]
-
-#     # Calculate mean signal for each region
-#     mean_signal_promoter = np.mean(promoter_signal) if len(promoter_signal) > 0 else 0
-#     mean_signal_gene_body = np.mean(gene_body_signal) if len(gene_body_signal) > 0 else 0
-#     mean_signal_tes_region = np.mean(tes_region_signal) if len(tes_region_signal) > 0 else 0
-
-#     # Return the calculated mean signals in a dictionary
-#     return {
-#         'mean_sig_promoter': mean_signal_promoter,
-#         'mean_sig_gene_body': mean_signal_gene_body,
-#         'mean_sig_around_TES': mean_signal_tes_region
-#     }
-
 
 def capture_gradients_hook(module, grad_input, grad_output):
     if hasattr(module, 'weight') and module.weight is not None:

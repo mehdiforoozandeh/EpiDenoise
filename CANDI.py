@@ -466,10 +466,6 @@ class PRETRAIN(object):
         num_assays = self.dataset.signal_dim
         self.masker = DataMasker(token_dict["cloze_mask"], mask_percentage)
 
-        # if "_prog_unmask" in arch or "_prog_mask" in arch:
-        #     N = len(self.dataset.m_regions) * len(self.dataset.dsf_list) * self.dataset.num_batches
-        #     mask_step = N // (num_assays - 1)
-
         if hook:
             register_hooks(self.model)
         
@@ -516,14 +512,6 @@ class PRETRAIN(object):
             self.dataset.new_epoch()
             next_epoch = False
 
-            # if "_prog_unmask" in arch or "_prog_mask" in arch:
-            #     M_i = 1
-            #     if "_prog_unmask" in arch:
-            #         num_mask = num_assays - 1
-
-            #     elif "_prog_mask" in arch:
-            #         num_mask = 1
-
             last_lopr = -1
             while (next_epoch==False):
                 t0 = datetime.now()
@@ -558,18 +546,6 @@ class PRETRAIN(object):
                     "grad_norm":[]
                     }
 
-                # if "_prog_unmask" in arch or "_prog_mask" in arch:
-                #     if M_i % mask_step == 0:
-                #         if "_prog_unmask" in arch:
-                #             if num_mask > 1:
-                #                 num_mask -= 1
-
-                #         elif "_prog_mask" in arch:
-                #             if num_mask < num_assays:
-                #                 num_mask += 1
-
-                #     M_i += 1
-                
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
 
@@ -589,7 +565,6 @@ class PRETRAIN(object):
 
                     else:
                         X_batch, mX_batch, avX_batch = self.masker.mask_feature30(X_batch, mX_batch, avX_batch)
-                        # X_batch, mX_batch, avX_batch = self.masker.mask_chunk_features_30(X_batch, mX_batch, avX_batch)
 
                     masked_map = (X_batch == token_dict["cloze_mask"])
                     observed_map = (X_batch != token_dict["missing_mask"]) & (X_batch != token_dict["cloze_mask"])
@@ -781,7 +756,6 @@ class PRETRAIN(object):
                         if k not in prog_mon_ema.keys():
                             prog_mon_ema[k] = mean_value
                         else:
-                            # alpha = 2 / (len(progress_monitor[k]) + 1) # APR4 change
                             alpha = 0.01 # APR4 change
                             prog_mon_ema[k] = alpha*mean_value + (1-alpha)*prog_mon_ema[k]
 
@@ -827,7 +801,6 @@ class PRETRAIN(object):
                     gc.collect()
                 
                 if hook:
-
                     # Initialize variables to store maximum gradient norms and corresponding layer names
                     max_weight_grad_norm = 0
                     max_weight_grad_layer = None
@@ -903,16 +876,16 @@ class PRETRAIN(object):
                     f"Imp_Pval_PCC {np.mean(batch_rec['imp_pval_pearson']):.2f}",
                     f"Ups_Pval_PCC {np.mean(batch_rec['ups_pval_pearson']):.2f}", "\n",
                     
-                    # -1 since we multiplied it to -1 earlier :))
+                    
                     f"EMA_imp_pval_r2 {prog_mon_ema['imp_pval_r2']:.2f}",
                     f"EMA_imp_pval_PCC {prog_mon_ema['imp_pval_pearson']:.2f}",
                     f"EMA_imp_pval_SRCC {prog_mon_ema['imp_pval_spearman']:.2f}", 
-                    f"EMA_imp_pval_loss {-1*prog_mon_ema['imp_pval_loss']:.2f}", "\n",
+                    f"EMA_imp_pval_loss {-1*prog_mon_ema['imp_pval_loss']:.2f}", "\n", # -1 since we multiplied it to -1 earlier :))
 
                     f"EMA_imp_count_r2 {prog_mon_ema['imp_count_r2']:.2f}",
                     f"EMA_imp_count_PCC {prog_mon_ema['imp_count_pearson']:.2f}",
                     f"EMA_imp_count_SRCC {prog_mon_ema['imp_count_spearman']:.2f}", 
-                    f"EMA_imp_count_loss {-1*prog_mon_ema['imp_count_loss']:.2f}", "\n",
+                    f"EMA_imp_count_loss {-1*prog_mon_ema['imp_count_loss']:.2f}", "\n", # -1 since we multiplied it to -1 earlier :))
                     
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
@@ -922,6 +895,28 @@ class PRETRAIN(object):
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
+
+
+
+                try:
+                    validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                    torch.cuda.empty_cache()
+                    log_strs.append(validation_set_eval)
+                    print(validation_set_eval)
+                    log_resource_usage()
+
+                    if early_stop:
+                        epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
+                        epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                        
+                        epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
+                        epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                except:
+                    pass
+
+
 
                 if lr_sch_steps_taken >= 100 and early_stop:
                     print("Early stopping due to super small learning rate...")
@@ -998,42 +993,41 @@ class PRETRAIN(object):
                     except:
                         pass 
 
-            if early_stop:
-                # Initialize the best metrics if it's the first epoch
-                if best_metric is None:
-                    best_metric = {key: None for key in epoch_rec.keys()}
-                    patience_counter = {key: 0 for key in epoch_rec.keys()}
+            # if early_stop:
+            #     # Initialize the best metrics if it's the first epoch
+            #     if best_metric is None:
+            #         best_metric = {key: None for key in epoch_rec.keys()}
+            #         patience_counter = {key: 0 for key in epoch_rec.keys()}
 
-                # Loop over all metrics
-                for metric_name in epoch_rec.keys():
-                    current_metric = np.mean(epoch_rec[metric_name])  # Calculate the current epoch's mean for this metric
+            #     # Loop over all metrics
+            #     for metric_name in epoch_rec.keys():
+            #         current_metric = np.mean(epoch_rec[metric_name])  # Calculate the current epoch's mean for this metric
 
-                    if best_metric[metric_name] is None or current_metric > best_metric[metric_name] + early_stop_delta:
-                        best_metric[metric_name] = current_metric  # Update the best metric for this key
-                        patience_counter[metric_name] = 0  # Reset the patience counter
-                    else:
-                        patience_counter[metric_name] += 1  # Increment the patience counter if no improvement
+            #         if best_metric[metric_name] is None or current_metric > best_metric[metric_name] + early_stop_delta:
+            #             best_metric[metric_name] = current_metric  # Update the best metric for this key
+            #             patience_counter[metric_name] = 0  # Reset the patience counter
+            #         else:
+            #             patience_counter[metric_name] += 1  # Increment the patience counter if no improvement
 
-                # Check if all patience counters have exceeded the limit (e.g., 3 epochs of no improvement)
-                if all(patience_counter[metric] >= patience for metric in patience_counter.keys()):
-                    print(f"Early stopping at epoch {epoch}. No significant improvement across metrics.")
-                    logfile = open(f"models/CANDI{arch}_log.txt", "w")
-                    logfile.write("\n".join(log_strs))
-                    logfile.write(f"\n\nFinal best metric records:\n")
-                    for metric_name, value in best_metric.items():
-                        logfile.write(f"{metric_name}: {value}\n")
-                    logfile.close()
-                    return self.model, best_metric
-                else:
-                    print(f"best metric records so far: \n{best_metric}")
-                    logfile = open(f"models/CANDI{arch}_log.txt", "w") 
-                    logfile.write("\n".join(log_strs))
-                    logfile.write(f"\n\nBest metric records so far:\n")
-                    for metric_name, value in best_metric.items():
-                        logfile.write(f"{metric_name}: {value}\n")
-                    logfile.close()
+            #     # Check if all patience counters have exceeded the limit (e.g., 3 epochs of no improvement)
+            #     if all(patience_counter[metric] >= patience for metric in patience_counter.keys()):
+            #         print(f"Early stopping at epoch {epoch}. No significant improvement across metrics.")
+            #         logfile = open(f"models/CANDI{arch}_log.txt", "w")
+            #         logfile.write("\n".join(log_strs))
+            #         logfile.write(f"\n\nFinal best metric records:\n")
+            #         for metric_name, value in best_metric.items():
+            #             logfile.write(f"{metric_name}: {value}\n")
+            #         logfile.close()
+            #         return self.model, best_metric
+            #     else:
+            #         print(f"best metric records so far: \n{best_metric}")
+            #         logfile = open(f"models/CANDI{arch}_log.txt", "w") 
+            #         logfile.write("\n".join(log_strs))
+            #         logfile.write(f"\n\nBest metric records so far:\n")
+            #         for metric_name, value in best_metric.items():
+            #             logfile.write(f"{metric_name}: {value}\n")
+            #         logfile.close()
                 
-            # if self.HPO==False and epoch%5==0 and epoch != (num_epochs-1) and epoch != 0:
             if self.HPO==False and epoch != (num_epochs-1):
                 try:
                     os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch-1}.pth")
