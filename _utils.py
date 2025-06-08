@@ -629,7 +629,6 @@ class MONITOR_VALIDATION(object): # CANDI
                     torch.Tensor(pred_var)
                     ).item()
             }
-            print(metrics)
             results.append(metrics)
 
         return results
