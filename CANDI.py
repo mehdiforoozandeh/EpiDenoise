@@ -318,7 +318,70 @@ class CANDI_DNA(nn.Module):
             return p, n, mu, var, z
         else:
             return p, n, mu, var
-    
+
+class CANDI_UNET(CANDI_DNA):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers,
+                 nhead, n_sab_layers, pool_size=2, dropout=0.1, context_length=1600,
+                 pos_enc="relative", expansion_factor=3, separate_decoders=True):
+        super(CANDI_UNET, self).__init__(signal_dim, metadata_embedding_dim,
+                                          conv_kernel_size, n_cnn_layers,
+                                          nhead, n_sab_layers,
+                                          pool_size, dropout,
+                                          context_length, pos_enc,
+                                          expansion_factor,
+                                          separate_decoders)
+
+    def _compute_skips(self, src):
+        # mask as in encode
+        src = torch.where(src == -2,
+                          torch.tensor(-1, device=src.device), src)
+        x = src.permute(0, 2, 1)  # (N, F1, L)
+        skips = []
+        for conv in self.encoder.convEnc:
+            x = conv(x)
+            skips.append(x)
+        return skips
+
+    def _unet_decode(self, z, y_metadata, skips, decoder):
+        # mask metadata
+        y_metadata = torch.where(y_metadata == -2,
+                                 torch.tensor(-1, device=y_metadata.device),
+                                 y_metadata)
+        # embed and fuse metadata
+        ymd_emb = decoder.ymd_emb(y_metadata)
+        x = torch.cat([z, ymd_emb.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        x = decoder.ymd_fusion(x)
+        x = x.permute(0, 2, 1)  # (N, C, L)
+
+        # apply deconvs with UNet additions
+        for i, dconv in enumerate(decoder.deconv):
+            skip = skips[-(i + 1)]  # matching resolution
+            x = x + skip
+            x = dconv(x)
+
+        x = x.permute(0, 2, 1)  # (N, L, F1)
+        return x
+
+    def forward(self, src, seq, x_metadata, y_metadata, availability=None, return_z=False):
+        # compute skip features from signal branch
+        skips = self._compute_skips(src)
+        # standard encode (fuses seq + signal + metadata)
+        z = self.encode(src, seq, x_metadata)
+
+        # UNet-style decode for counts
+        count_decoded = self._unet_decode(z, y_metadata, skips, self.count_decoder)
+        # Negative binomial parameters
+        p, n = self.neg_binom_layer(count_decoded)
+
+        # UNet-style decode for p-values
+        pval_decoded = self._unet_decode(z, ymd_metadata=y_metadata, skips=skips, decoder=self.pval_decoder)  
+        # Gaussian parameters
+        mu, var = self.gaussian_layer(pval_decoded)
+
+        if return_z:
+            return p, n, mu, var, z
+        return p, n, mu, var
+
 class CANDI_LOSS(nn.Module):
     def __init__(self, reduction='mean'):
         super(CANDI_LOSS, self).__init__()
@@ -1020,7 +1083,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     metadata_embedding_dim = dataset.signal_dim * 4
 
     if DNA:
-        model = CANDI_DNA(
+        # model = CANDI_DNA(
+        model = CANDI_UNET(
             signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
             pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
