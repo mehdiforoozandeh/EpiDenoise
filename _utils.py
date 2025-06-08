@@ -629,6 +629,7 @@ class MONITOR_VALIDATION(object): # CANDI
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
                 full_res += self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
                 
+                print(full_res)
                 # except:
                 #     pass
             else:
@@ -639,7 +640,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 except:
                     pass
 
-        del self.model
+        # del self.model
         del model
 
         if len(full_res) == 0:
