@@ -470,9 +470,9 @@ class PRETRAIN(object):
             register_hooks(self.model)
         
         if "eic" in arch:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 2*batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
         else:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 2*batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
 
@@ -501,12 +501,16 @@ class PRETRAIN(object):
                     "ups_count_pearson":[], "imp_count_pearson":[],
                     "ups_pval_pearson":[], "imp_pval_pearson":[],
 
-                    "val_count_mean_ups_r2":[], "val_count_mean_imp_r2":[], 
-                    "val_pval_mean_ups_r2":[], "val_pval_mean_imp_r2":[], 
-                    "val_count_mean_ups_pcc":[], "val_count_mean_imp_pcc":[], 
-                    "val_pval_mean_ups_pcc":[], "val_pval_mean_imp_pcc":[], 
-                    "val_count_mean_ups_srcc":[], "val_count_mean_imp_srcc":[], 
-                    "val_pval_mean_ups_srcc":[], "val_pval_mean_imp_srcc":[]
+                    "val_count_median_ups_r2":[], "val_count_median_imp_r2":[], 
+                    "val_count_median_ups_pcc":[], "val_count_median_imp_pcc":[], 
+                    "val_count_median_ups_srcc":[], "val_count_median_imp_srcc":[], 
+                    "val_count_median_ups_loss":[], "val_count_median_imp_loss":[], 
+                    
+                    "val_pval_median_ups_pcc":[],  "val_pval_median_imp_pcc":[], 
+                    "val_pval_median_ups_r2":[],   "val_pval_median_imp_r2":[], 
+                    "val_pval_median_ups_srcc":[], "val_pval_median_imp_srcc":[],
+                    "val_pval_median_ups_loss":[], "val_pval_median_imp_loss":[]
+
                     }
 
             self.dataset.new_epoch()
@@ -906,13 +910,13 @@ class PRETRAIN(object):
                 log_resource_usage()
 
                 if early_stop:
-                    epoch_rec["val_count_mean_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["mean"])
-                    epoch_rec["val_count_mean_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["mean"])
-                    epoch_rec["val_count_mean_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["mean"])
+                    epoch_rec["val_count_median_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["median"])
+                    epoch_rec["val_count_median_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["median"])
+                    epoch_rec["val_count_median_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["median"])
                     
-                    epoch_rec["val_pval_mean_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["mean"])
-                    epoch_rec["val_pval_mean_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["mean"])
-                    epoch_rec["val_pval_mean_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["mean"])
+                    epoch_rec["val_pval_median_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["median"])
+                    epoch_rec["val_pval_median_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["median"])
+                    epoch_rec["val_pval_median_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["median"])
                 # except:
                 #     pass
 
