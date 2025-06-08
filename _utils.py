@@ -624,6 +624,7 @@ class MONITOR_VALIDATION(object): # CANDI
 
         for bios_name in bioses:
             if self.eic:
+                print("eic: ", self.eic)
                 # try:
                 ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
@@ -633,15 +634,15 @@ class MONITOR_VALIDATION(object): # CANDI
                 # except:
                 #     pass
             else:
-                try:
-                    imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
-                        bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-                    full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
-                except:
-                    pass
+                # try:
+                imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
+                    bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
+                # except:
+                #     pass
 
         # del self.model
-        del model
+        # del model
 
         if len(full_res) == 0:
             print(f"No validation results found.")
