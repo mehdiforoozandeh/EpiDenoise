@@ -862,12 +862,14 @@ class PRETRAIN(object):
                     del _dnaseq_batch
                 gc.collect()
 
+                CurrentLR = self.optimizer.param_groups[0]['lr']
                 if self.cosine_sched:
-                    CurrentLR = self.optimizer.param_groups[0]['lr']
                     lr_printstatement = f"CurrentLR: {CurrentLR:.0e}" 
                     
                 else:
-                    lr_printstatement = f"LR_sch_steps_taken {lr_sch_steps_taken} | LR_patience {no_prog_mon_improvement}"
+                    lr_printstatement = f"LR_sch_steps_taken {lr_sch_steps_taken}\
+                        | LR_patience {no_prog_mon_improvement}\
+                            | CurrentLR: {CurrentLR:.0e}"
 
                 logstr = [
                     f"Ep. {epoch}",
