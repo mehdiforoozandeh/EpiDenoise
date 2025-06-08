@@ -554,14 +554,23 @@ class MONITOR_VALIDATION(object): # CANDI
                         'Pearson_count': self.metrics.pearson(target_count, pred_count),
                         'Spearman_count': self.metrics.spearman(target_count, pred_count),
                         'r2_count': self.metrics.r2(target_count, pred_count),
-                        'loss_count': self.nbin_nll(target_count, pred_n, pred_p),
+                        'loss_count': self.nbin_nll(
+                            torch.Tensor(target_count), 
+                            torch.Tensor(pred_n), 
+                            torch.Tensor(pred_p)
+                            ).item(),
+
                         
                         'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                         'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
                         'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
                         'r2_pval': self.metrics.r2(target_pval, pred_pval),
-                        'loss_pval': self.gaus_nll(pred_mu, target_pval, pred_var)
-                    }
+                        'loss_pval': self.gaus_nll(
+                            torch.Tensor(pred_mu), 
+                            torch.Tensor(target_pval), 
+                            torch.Tensor(pred_var)
+                            ).item()
+                            }
                     results.append(metrics)
 
         return results
@@ -576,10 +585,10 @@ class MONITOR_VALIDATION(object): # CANDI
             pred_count = ups_mean[:, j].numpy()
             pred_pval = ups_pval[:, j].numpy()
 
-            pred_n = ups_count_dist.n[:, j]#.numpy()
-            pred_p = ups_count_dist.p[:, j]#.numpy()
-            pred_mu = ups_pval_dist.mu[:, j]#.numpy()
-            pred_var = ups_pval_dist.var[:, j]#.numpy()
+            pred_n = ups_count_dist.n[:, j].numpy()
+            pred_p = ups_count_dist.p[:, j].numpy()
+            pred_mu = ups_pval_dist.mu[:, j].numpy()
+            pred_var = ups_pval_dist.var[:, j].numpy()
 
             target_pval = P[:, j].numpy()
 
@@ -604,13 +613,21 @@ class MONITOR_VALIDATION(object): # CANDI
                 'Pearson_count': self.metrics.pearson(target_count, pred_count),
                 'Spearman_count': self.metrics.spearman(target_count, pred_count),
                 'r2_count': self.metrics.r2(target_count, pred_count),
-                'loss_count': self.nbin_nll(target_count, pred_n, pred_p).item(),
+                'loss_count': self.nbin_nll(
+                    torch.Tensor(target_count), 
+                    torch.Tensor(pred_n), 
+                    torch.Tensor(pred_p)
+                    ).item(),
 
                 'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                 'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
                 'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
                 'r2_pval': self.metrics.r2(target_pval, pred_pval),
-                'loss_pval': self.gaus_nll(pred_mu, target_pval, pred_var).item()
+                'loss_pval': self.gaus_nll(
+                    torch.Tensor(pred_mu), 
+                    torch.Tensor(target_pval), 
+                    torch.Tensor(pred_var)
+                    ).item()
             }
             print(metrics)
             results.append(metrics)
