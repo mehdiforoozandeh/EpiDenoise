@@ -572,7 +572,7 @@ class MONITOR_VALIDATION(object): # CANDI
         
         results = []
         for j in range(Y.shape[1]):
-            print(self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"])
+            
             pred_count = ups_mean[:, j].numpy()
             pred_pval = ups_pval[:, j].numpy()
 
@@ -586,12 +586,15 @@ class MONITOR_VALIDATION(object): # CANDI
             if j in list(available_X_indices):
                 comparison = "upsampled"
                 target_count = X[:, j].numpy()
+                print("ups", self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"])
 
             elif j in list(available_Y_indices):
                 comparison = "imputed"
                 target_count = Y[:, j].numpy()
+                print("imp", self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"])
 
             else:
+                print("skipping", self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"])
                 continue
 
             metrics = {
@@ -612,6 +615,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 'r2_pval': self.metrics.r2(target_pval, pred_pval),
                 'loss_pval': self.gaus_nll(pred_mu, target_pval, pred_var)
             }
+            print(metrics)
             results.append(metrics)
 
         return results
