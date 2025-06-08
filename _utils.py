@@ -554,7 +554,7 @@ class MONITOR_VALIDATION(object): # CANDI
                         'Pearson_count': self.metrics.pearson(target_count, pred_count),
                         'Spearman_count': self.metrics.spearman(target_count, pred_count),
                         'r2_count': self.metrics.r2(target_count, pred_count),
-                        'loss_count': self.nbin_nll(target_count, pred_n, pred_p)
+                        'loss_count': self.nbin_nll(target_count, pred_n, pred_p),
                         
                         'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                         'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
@@ -603,7 +603,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 'Pearson_count': self.metrics.pearson(target_count, pred_count),
                 'Spearman_count': self.metrics.spearman(target_count, pred_count),
                 'r2_count': self.metrics.r2(target_count, pred_count),
-                'loss_count': self.nbin_nll(target_count, pred_n, pred_p)
+                'loss_count': self.nbin_nll(target_count, pred_n, pred_p),
 
                 'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                 'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
