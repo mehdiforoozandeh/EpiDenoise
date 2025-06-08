@@ -376,7 +376,7 @@ class CANDI_UNET(CANDI_DNA):
         p, n = self.neg_binom_layer(count_decoded)
 
         # UNet-style decode for p-values
-        pval_decoded = self._unet_decode(z, ymd_metadata=y_metadata, skips=skips, decoder=self.pval_decoder)  
+        pval_decoded = self._unet_decode(z, y_metadata, skips, self.pval_decoder)  
         # Gaussian parameters
         mu, var = self.gaussian_layer(pval_decoded)
 
