@@ -1049,14 +1049,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     else:
         arch = f"{arch}_random_mask"
 
-
     arch = f"{arch}_{suffix}"
     # Defining the hyperparameters
     resolution = 25
-    data_path = hyper_parameters["data_path"]
-    
-    dropout = hyper_parameters["dropout"]
-    nhead = hyper_parameters["nhead"]
     n_sab_layers = hyper_parameters["n_sab_layers"]
     
     epochs = hyper_parameters["epochs"]
@@ -1078,7 +1073,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     merge_ct = hyper_parameters["merge_ct"]
     loci_gen = hyper_parameters["loci_gen"]
 
-    dataset = ExtendedEncodeDataHandler(data_path)
+    dataset = ExtendedEncodeDataHandler(hyper_parameters["data_path"])
     dataset.initialize_EED(
         m=num_training_loci, context_length=context_length*resolution, 
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen=loci_gen, 
@@ -1090,33 +1085,43 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     metadata_embedding_dim = dataset.signal_dim * 4
 
     if DNA:
-        # model = CANDI_DNA(
-        model = CANDI_UNET(
-            signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
-            pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
+        if hyper_parameters["unet"]:
+            model = CANDI_UNET(
+                signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, hyper_parameters["nhead"],
+                n_sab_layers, pool_size=pool_size, dropout=hyper_parameters["dropout"], context_length=context_length, 
+                pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
+        else:
+            model = CANDI_DNA(
+                signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, hyper_parameters["nhead"],
+                n_sab_layers, pool_size=pool_size, dropout=hyper_parameters["dropout"], context_length=context_length, 
+                pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
+
     else:
         model = CANDI(
-            signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
+            signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, hyper_parameters["nhead"],
+            n_sab_layers, pool_size=pool_size, dropout=hyper_parameters["dropout"], context_length=context_length,
             pos_enc=pos_enc, expansion_factor=expansion_factor, separate_decoders=separate_decoders)
 
-    # optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
-    
+    if hyper_parameters["optim"].lower()=="adam":
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    elif hyper_parameters["optim"].lower()=="adamw":
+        optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
+    elif hyper_parameters["optim"].lower()=="adamax":
+        optimizer = optim.Adamax(model.parameters(), lr=learning_rate)
+    else:
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
-    num_total_epochs = epochs * inner_epochs * len(dataset.m_regions) * 2
-    warmup_epochs = 100
-    scheduler = SequentialLR(
-        optimizer,
-        schedulers=[
-            LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
-            CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
-        milestones=[warmup_epochs])
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
-
+    if hyper_parameters["LRschedule"].lower()=="cosine":
+        num_total_epochs = epochs * inner_epochs * len(dataset.m_regions) * 2
+        warmup_epochs = inner_epochs * len(dataset.m_regions) * 2
+        scheduler = SequentialLR(
+            optimizer,
+            schedulers=[
+                LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
+                CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
+            milestones=[warmup_epochs])
+    else:
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
 
     print(f"Using optimizer: {optimizer.__class__.__name__}")
 
@@ -1222,6 +1227,10 @@ def main():
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
     parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
     parser.add_argument('--loci_gen', type=str, default="ccre", help='Loci generation method')
+
+    parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
+    parser.add_argument('--unet', action='store_true', help='whether to use unet skip connections')
+    parser.add_argument('--LRschedule', type=str, default="linear", help='optimizer')
     
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1260,7 +1269,11 @@ def main():
         "hpo": args.hpo,
         "separate_decoders": separate_decoders,
         "merge_ct": merge_ct,
-        "loci_gen": args.loci_gen
+        "loci_gen": args.loci_gen,
+
+        "optim": args.optim,
+        "unet": args.unet,
+        "LRschedule": args.LRschedule
     }
 
     # Call your training function with parsed arguments, including checkpoint
