@@ -572,6 +572,7 @@ class MONITOR_VALIDATION(object): # CANDI
         
         results = []
         for j in range(Y.shape[1]):
+            print(self.mark_dict[f"M{str(j+1).zfill(len(str(len(self.mark_dict))))}"])
             pred_count = ups_mean[:, j].numpy()
             pred_pval = ups_pval[:, j].numpy()
 
@@ -629,7 +630,6 @@ class MONITOR_VALIDATION(object): # CANDI
                 ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices = self.get_bios_frame_eic(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
                 
-                print("got preds for eic: ", self.eic)
                 full_res += self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
                 
                 print(full_res)
