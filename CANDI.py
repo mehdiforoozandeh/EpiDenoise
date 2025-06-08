@@ -788,37 +788,37 @@ class PRETRAIN(object):
                         if k not in prog_mon_best_so_far.keys():
                             prog_mon_best_so_far[k] = mean_value
                         
-                    # check if improvement in EMA
-                    statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"] + prog_monitor_delta)
-                    statement_prog_imp_pval_pearson = bool(prog_mon_ema["imp_pval_pearson"] > prog_mon_best_so_far["imp_pval_pearson"] + prog_monitor_delta)
-                    statement_prog_imp_pval_spearman = bool(prog_mon_ema["imp_pval_spearman"] > prog_mon_best_so_far["imp_pval_spearman"] + prog_monitor_delta)
-                    statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"] + prog_monitor_delta)
-                    statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"] + prog_monitor_delta)
-                    statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"] + prog_monitor_delta)
+                    if not self.cosine_sched:
+                        # check if improvement in EMA
+                        statement_prog_imp_pval_r2 = bool(prog_mon_ema["imp_pval_r2"] > prog_mon_best_so_far["imp_pval_r2"] + prog_monitor_delta)
+                        statement_prog_imp_pval_pearson = bool(prog_mon_ema["imp_pval_pearson"] > prog_mon_best_so_far["imp_pval_pearson"] + prog_monitor_delta)
+                        statement_prog_imp_pval_spearman = bool(prog_mon_ema["imp_pval_spearman"] > prog_mon_best_so_far["imp_pval_spearman"] + prog_monitor_delta)
+                        statement_prog_imp_count_r2 = bool(prog_mon_ema["imp_count_r2"] > prog_mon_best_so_far["imp_count_r2"] + prog_monitor_delta)
+                        statement_prog_imp_count_pearson = bool(prog_mon_ema["imp_count_pearson"] > prog_mon_best_so_far["imp_count_pearson"] + prog_monitor_delta)
+                        statement_prog_imp_count_spearman = bool(prog_mon_ema["imp_count_spearman"] > prog_mon_best_so_far["imp_count_spearman"] + prog_monitor_delta)
 
-                    for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
-                        if epoch > 0:
-                            prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+                        for k in ["imp_pval_r2", "imp_pval_pearson", "imp_pval_spearman", "imp_count_r2", "imp_count_pearson", "imp_count_spearman"]:
+                            if epoch > 0:
+                                prog_mon_best_so_far[k] = max(prog_mon_best_so_far[k], prog_mon_ema[k])
+                            else:
+                                prog_mon_best_so_far[k] = 0.0
+
+                        if not any([
+                            statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
+                            statement_prog_imp_count_r2, statement_prog_imp_count_pearson, statement_prog_imp_count_spearman]):
+                            no_prog_mon_improvement += 1
                         else:
-                            prog_mon_best_so_far[k] = 0.0
-
-                    if not any([
-                        statement_prog_imp_pval_r2, statement_prog_imp_pval_pearson, statement_prog_imp_pval_spearman,
-                        statement_prog_imp_count_r2, statement_prog_imp_count_pearson, statement_prog_imp_count_spearman]):
-                        no_prog_mon_improvement += 1
-                    else:
-                        no_prog_mon_improvement = 0
-                    
-                    if no_prog_mon_improvement >= prog_monitor_patience:
-                        print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
-                        current_lr = self.optimizer.param_groups[0]['lr']
-                        if not self.cosine_sched:
+                            no_prog_mon_improvement = 0
+                        
+                        if no_prog_mon_improvement >= prog_monitor_patience:
+                            print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
+                            current_lr = self.optimizer.param_groups[0]['lr']
                             self.scheduler.step()
-                        lr_sch_steps_taken += 1
-                        prog_monitor_patience *= 1.05
-                        new_lr = self.optimizer.param_groups[0]['lr']
-                        print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
-                        no_prog_mon_improvement = 0
+                            lr_sch_steps_taken += 1
+                            prog_monitor_patience *= 1.05
+                            new_lr = self.optimizer.param_groups[0]['lr']
+                            print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
+                            no_prog_mon_improvement = 0
 
                     del output_p, output_n, output_mu, output_var, loss, obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss
                     del X_batch, mX_batch, mY_batch, avX_batch, Y_batch, pval_batch, observed_map, masked_map
