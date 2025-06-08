@@ -424,7 +424,9 @@ class CANDI_LOSS(nn.Module):
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
 
 class PRETRAIN(object):
-    def __init__(self, model, dataset, criterion, optimizer, scheduler, device=None, HPO=False):
+    def __init__(
+        self, model, dataset, criterion, optimizer, 
+        scheduler, device=None, HPO=False, cosine_sched=False):
         if device == None:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         else:
@@ -437,12 +439,14 @@ class PRETRAIN(object):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.cosine_sched = cosine_sched
 
     def pretrain_CANDI(
         self, num_epochs, context_length, batch_size, inner_epochs, 
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
-        early_stop=True, early_stop_metric="imp_pval_r2", early_stop_delta=0.01, patience=2,
-        prog_monitor_patience=150, prog_monitor_delta=1e-5):
+        early_stop=True, early_stop_metric="imp_pval_r2", 
+        early_stop_delta=0.01, patience=2, prog_monitor_patience=150, 
+        prog_monitor_delta=1e-5):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -807,7 +811,8 @@ class PRETRAIN(object):
                     if no_prog_mon_improvement >= prog_monitor_patience:
                         print(f"No improvement in EMA for {no_prog_mon_improvement} steps. Adjusting learning rate...")
                         current_lr = self.optimizer.param_groups[0]['lr']
-                        self.scheduler.step()
+                        if not self.cosine_sched:
+                            self.scheduler.step()
                         lr_sch_steps_taken += 1
                         prog_monitor_patience *= 1.05
                         new_lr = self.optimizer.param_groups[0]['lr']
@@ -843,8 +848,9 @@ class PRETRAIN(object):
                     if max_weight_grad_layer:
                         print(f"Max Weight Grad Layer: {max_weight_grad_layer}, Weight Grad Norm: {max_weight_grad_norm:.3f}")
 
-                # self.optimizer.step()
-                # self.scheduler.step()
+                self.optimizer.step()
+                if self.cosine_sched:
+                    self.scheduler.step()
 
 
                 elapsed_time = datetime.now() - t0
@@ -855,6 +861,13 @@ class PRETRAIN(object):
                 if DNA:
                     del _dnaseq_batch
                 gc.collect()
+
+                if self.cosine_sched:
+                    CurrentLR = self.optimizer.param_groups[0]['lr']
+                    lr_printstatement = f"CurrentLR: {CurrentLR:.0e}" 
+                    
+                else:
+                    lr_printstatement = f"LR_sch_steps_taken {lr_sch_steps_taken} | LR_patience {no_prog_mon_improvement}"
 
                 logstr = [
                     f"Ep. {epoch}",
@@ -898,9 +911,7 @@ class PRETRAIN(object):
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
-                    # f"CurrentLR: {self.optimizer.param_groups[0]['lr']}" 
-                    f"LR_sch_steps_taken {lr_sch_steps_taken}",
-                    f"LR_patience {no_prog_mon_improvement}", 
+                    lr_printstatement
                 ]
                 if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
                     logstr.append(f"num_mask {num_mask}")
