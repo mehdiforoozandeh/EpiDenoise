@@ -746,7 +746,7 @@ class MONITOR_VALIDATION(object): # CANDI
                 "MSE_pval": {"median": ups_mse_pval_stats[0], "min": ups_mse_pval_stats[1], "max": ups_mse_pval_stats[2]},
                 "PCC_pval": {"median": ups_pearson_pval_stats[0], "min": ups_pearson_pval_stats[1], "max": ups_pearson_pval_stats[2]},
                 "SRCC_pval": {"median": ups_spearman_pval_stats[0], "min": ups_spearman_pval_stats[1], "max": ups_spearman_pval_stats[2]},
-                "R2_pval": {"median": ups_r2_pval_stats[0], "min": ups_r2_pval_stats[1], "max": ups_r2_pval_stats[2]}
+                "R2_pval": {"median": ups_r2_pval_stats[0], "min": ups_r2_pval_stats[1], "max": ups_r2_pval_stats[2]},
                 "loss_pval": {"median": ups_loss_pval_stats[0], "min": ups_loss_pval_stats[1], "max": ups_loss_pval_stats[2]}
             }}
 
