@@ -357,9 +357,7 @@ class CANDI_UNET(CANDI_DNA):
         for i, dconv in enumerate(decoder.deconv):
             skip = skips[-(i + 1)]  # matching resolution
             x = x + skip
-            print(x.shape, skip.shape)
             x = dconv(x)
-            print(x.shape, "\n\n")
 
         x = x.permute(0, 2, 1)  # (N, L, F1)
         return x
@@ -371,17 +369,24 @@ class CANDI_UNET(CANDI_DNA):
         z = self.encode(src, seq, x_metadata)
 
         # UNet-style decode for counts
-        count_decoded = self._unet_decode(z, y_metadata, skips, self.count_decoder)
+        if self.separate_decoders:
+            count_decoded = self._unet_decode(z, y_metadata, skips, self.count_decoder)
+        else:
+            count_decoded = self._unet_decode(z, y_metadata, skips, self.decoder)
         # Negative binomial parameters
         p, n = self.neg_binom_layer(count_decoded)
 
         # UNet-style decode for p-values
-        pval_decoded = self._unet_decode(z, y_metadata, skips, self.pval_decoder)  
+        if self.separate_decoders:
+            pval_decoded = self._unet_decode(z, y_metadata, skips, self.pval_decoder)  
+        else:
+            pval_decoded = self._unet_decode(z, y_metadata, skips, self.decoder)  
         # Gaussian parameters
         mu, var = self.gaussian_layer(pval_decoded)
 
         if return_z:
             return p, n, mu, var, z
+            
         return p, n, mu, var
 
 class CANDI_LOSS(nn.Module):
