@@ -906,14 +906,19 @@ class PRETRAIN(object):
                     f"ema_imp_pval_r2 {prog_mon_ema['imp_pval_r2']:.2f}",
                     f"ema_imp_pval_pearson {prog_mon_ema['imp_pval_pearson']:.2f}",
                     f"ema_imp_pval_spearman {prog_mon_ema['imp_pval_spearman']:.2f}", "\n",
+
                     f"ema_imp_count_r2 {prog_mon_ema['imp_count_r2']:.2f}",
                     f"ema_imp_count_pearson {prog_mon_ema['imp_count_pearson']:.2f}",
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
+
+                    f"ema_imp_count_loss {prog_mon_ema['imp_count_loss']:.2f}",
+                    f"ema_imp_pval_loss {prog_mon_ema['imp_pval_loss']:.2f}", "\n",
+                    
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
                     f"num_mask {num_mask}", lr_printstatement, "\n"
                 ]
-                
+
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
