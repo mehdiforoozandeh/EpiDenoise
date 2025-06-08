@@ -1071,7 +1071,6 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     context_length = hyper_parameters["context_length"]
     batch_size = hyper_parameters["batch_size"]
     learning_rate = hyper_parameters["learning_rate"]
-    lr_halflife = hyper_parameters["lr_halflife"]
     min_avail = hyper_parameters["min_avail"]
     inner_epochs = hyper_parameters["inner_epochs"]
 
@@ -1132,7 +1131,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
                 CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
             milestones=[warmup_epochs])
     else:
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_halflife, gamma=0.95)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=hyper_parameters["lr_halflife"], gamma=0.95)
 
     print(f"Using optimizer: {optimizer.__class__.__name__}")
 
@@ -1151,7 +1151,10 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
 
     start_time = time.time()
 
-    trainer = PRETRAIN(model, dataset, criterion, optimizer, scheduler, device=device, HPO=HPO)
+    trainer = PRETRAIN(
+        model, dataset, criterion, optimizer, scheduler, 
+        device=device, HPO=HPO, cosine_sched=hyper_parameters["LRschedule"].lower()=="cosine")
+
     model, best_metric = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
         batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)
