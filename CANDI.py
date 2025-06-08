@@ -911,14 +911,9 @@ class PRETRAIN(object):
                     f"ema_imp_count_spearman {prog_mon_ema['imp_count_spearman']:.2f}", "\n",
                     f"took {int(minutes)}:{int(seconds):02d}", 
                     f"Gradient_Norm {np.mean(batch_rec['grad_norm']):.2f}",
-                    lr_printstatement
+                    f"num_mask {num_mask}", lr_printstatement, "\n"
                 ]
-                if "_prog_unmask" in arch or "_prog_mask" in arch or "_random_mask" in arch:
-                    logstr.append(f"num_mask {num_mask}")
-                    logstr.append("\n")
-                else:
-                    logstr.append("\n")
-
+                
                 logstr = " | ".join(logstr)
                 log_strs.append(logstr)
                 print(logstr)
