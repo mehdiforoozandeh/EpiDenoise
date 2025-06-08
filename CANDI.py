@@ -357,7 +357,9 @@ class CANDI_UNET(CANDI_DNA):
         for i, dconv in enumerate(decoder.deconv):
             skip = skips[-(i + 1)]  # matching resolution
             x = x + skip
+            print(x.shape, skip.shape)
             x = dconv(x)
+            print(x.shape, "\n\n")
 
         x = x.permute(0, 2, 1)  # (N, L, F1)
         return x
