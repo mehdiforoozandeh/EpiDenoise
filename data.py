@@ -2775,7 +2775,7 @@ class ExtendedEncodeDataHandler:
         # print(len(self.aliases["experiment_aliases"]))
 
         for k in list(self.aliases["experiment_aliases"].keys()):
-            if unique_exp[k] == 0:
+            if k not in includes or k in exludes:
                 del self.aliases["experiment_aliases"][k]
 
         print(f"signal_dim: {self.signal_dim}")
@@ -3010,14 +3010,13 @@ class ExtendedEncodeDataHandler:
         self.signal_dim = len(self.aliases["experiment_aliases"].keys())
         print(f"eval signal_dim: {self.signal_dim}")
 
-        unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
-        for bios in self.navigation.keys():
-            for exp in self.navigation[bios].keys():
-
-                unique_exp[exp] += 1
+        # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
+        # for bios in self.navigation.keys():
+        #     for exp in self.navigation[bios].keys():
+        #         unique_exp[exp] += 1
 
         for k in list(self.aliases["experiment_aliases"].keys()):
-            if unique_exp[k] == 0:
+            if k not in includes or k in exludes:
                 del self.aliases["experiment_aliases"][k]
         
         # print(len(self.aliases["experiment_aliases"]))
