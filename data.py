@@ -2188,11 +2188,11 @@ class ExtendedEncodeDataHandler:
         filter based on a list of assays to include
         """
         for bios in list(self.navigation.keys()):
+            bios_exps = list(self.navigation[bios].keys())
             if bios[0] in ["T", "V", "B"]:
                 del self.navigation[bios]
 
-            bios_exps = list(self.navigation[bios].keys())
-            if self.must_have_chr_access: 
+            elif self.must_have_chr_access: 
                 if "ATAC-seq" not in bios_exps or "DNase-seq" not in bios_exps:
                     del self.navigation[bios]
 
