@@ -203,6 +203,8 @@ class MONITOR_VALIDATION(object): # CANDI
             bios_min_exp_avail_threshold=1, eic=eic)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        print(self.mark_dict)
+        exit()
         if device == None:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         else:
