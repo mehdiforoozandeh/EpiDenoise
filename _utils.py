@@ -344,17 +344,17 @@ class MONITOR_VALIDATION(object): # CANDI
 
 
 
-            temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], x_dsf)
+            temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution, adjusted_end* self.resolution ], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
             
-            temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], y_dsf)
+            temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution, adjusted_end* self.resolution ], y_dsf)
             Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
             if fill_in_y_prompt:
                 mY = self.dataset.fill_in_y_prompt(mY)
             del temp_y, temp_my
 
-            temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], y_dsf)
+            temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", start* self.resolution, adjusted_end*self.resolution ], y_dsf)
             P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
@@ -488,29 +488,31 @@ class MONITOR_VALIDATION(object): # CANDI
             adjusted_length = max(1, int(segment_length // self.context_length)) * self.context_length 
             adjusted_end = start + adjusted_length
 
+            temp_x, temp_mx = self.dataset.load_bios(
+                bios_name, ["chr21", start*self.resolution, adjusted_end*self.resolution], x_dsf)
 
-
-            temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
             
-            temp_y, temp_my = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], y_dsf)
+            temp_y, temp_my = self.dataset.load_bios(
+                bios_name, ["chr21", start*self.resolution, adjusted_end*self.resolution], y_dsf)
+
             Y, mY, avY = self.dataset.make_bios_tensor(temp_y, temp_my)
             if fill_in_y_prompt:
                 mY = self.dataset.fill_in_y_prompt(mY)
             del temp_y, temp_my
 
-            temp_p = self.dataset.load_bios_BW(bios_name, ["chr21", start* self.resolution , adjusted_end* self.resolution ], y_dsf)
+            temp_p = self.dataset.load_bios_BW(
+                bios_name, ["chr21", start*self.resolution, adjusted_end*self.resolution], y_dsf)
+
             P, avlP = self.dataset.make_bios_tensor_BW(temp_p)
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
 
 
-
-
-            subsets_X.append(X[start:adjusted_end, :])
-            subsets_Y.append(Y[start:adjusted_end, :])
-            subsets_P.append(P[start:adjusted_end, :])
+            subsets_X.append(X)#[start:adjusted_end, :])
+            subsets_Y.append(Y)#[start:adjusted_end, :])
+            subsets_P.append(P)#[start:adjusted_end, :])
 
             if self.DNA:
                 subsets_seq.append(
