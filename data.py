@@ -2202,7 +2202,6 @@ class ExtendedEncodeDataHandler:
 
             for exp in list(self.aliases["experiment_aliases"].keys()):
                 if exp not in include:
-                    # print(f"removing {exp}")
                     del self.aliases["experiment_aliases"][exp]
 
         elif len(include) == 0 and len(exclude) != 0:
@@ -2544,6 +2543,7 @@ class ExtendedEncodeDataHandler:
 
         npz_files = []
         for e in exps:
+            print(bios_name, e)
             if self.merge_ct and self.eic==False:
                 l =    os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                 jsn1 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
