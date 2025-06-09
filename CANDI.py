@@ -470,9 +470,9 @@ class PRETRAIN(object):
             register_hooks(self.model)
         
         if "eic" in arch:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 2*batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 4*batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
         else:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 2*batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
+            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 4*batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
 
