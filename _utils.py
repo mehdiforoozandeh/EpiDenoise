@@ -202,7 +202,10 @@ class MONITOR_VALIDATION(object): # CANDI
             self.context_length, check_completeness=True, split=split, 
             bios_min_exp_avail_threshold=1, eic=eic)
 
-        self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        # self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
+        
+        self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
+        self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
 
         if device == None:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -523,13 +526,7 @@ class MONITOR_VALIDATION(object): # CANDI
         for j in range(Y.shape[1]):
 
             if j in list(availability):
-                try:
-                    print(self.mark_dict[f"M{str(j+1).zfill(2)}"])
-                except:
-                    print(availability)
-                    print(self.dataset.navigation[bios_name].keys())
-                    print(self.dataset.aliases["experiment_aliases"])
-                    exit()
+
 
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":

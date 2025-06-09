@@ -2632,7 +2632,7 @@ class ExtendedEncodeDataHandler:
         for assay, alias in self.aliases["experiment_aliases"].items():
             
             if assay in loaded_data.keys():
-                print(i, assay, alias, loaded_data.keys())
+                # print(i, assay, alias, loaded_data.keys())
                 dtensor.append(loaded_data[assay])
                 availability.append(1)
 
