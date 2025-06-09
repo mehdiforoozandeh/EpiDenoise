@@ -523,6 +523,11 @@ class MONITOR_VALIDATION(object): # CANDI
         for j in range(Y.shape[1]):
 
             if j in list(availability):
+                try:
+                    print(self.mark_dict[f"M{str(j+1).zfill(2)}"])
+                except:
+                    print(self.mark_dict)
+
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":
                         pred_count = imp_mean[:, j].numpy()
@@ -652,11 +657,12 @@ class MONITOR_VALIDATION(object): # CANDI
                 # except:
                 #     pass
             else:
+                if bios_name != "MM.1S_grp1_rep1":
+                    continue
                 # try:
                 imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
-                print(self.mark_dict)
-                print(availability)
+
                 full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
                 # except:
                 #     pass
