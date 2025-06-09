@@ -471,7 +471,7 @@ class PRETRAIN(object):
         
         val_eval = MONITOR_VALIDATION(
             self.dataset.base_path, context_length, 4*batch_size, 
-            must_have_chr_access=self.dataset.must_have_chr_access
+            must_have_chr_access=self.dataset.must_have_chr_access,
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
 
