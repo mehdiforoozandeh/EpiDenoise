@@ -475,8 +475,13 @@ class PRETRAIN(object):
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
 
-        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
+        validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+        torch.cuda.empty_cache()
+        log_strs.append(validation_set_eval)
+        print(validation_set_eval)
+        log_resource_usage()
 
+        num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
 
         progress_monitor = {
