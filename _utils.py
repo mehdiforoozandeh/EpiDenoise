@@ -534,9 +534,6 @@ class MONITOR_VALIDATION(object): # CANDI
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
 
-        print(available_X_indices)
-        print(available_Y_indices)
-
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
         else:
@@ -1528,7 +1525,6 @@ if __name__ == "__main__":
     # t1 = datetime.datetime.now()
     # # print("generated training datasets in :", t1-t0)
     # exit()
-
 
 
     solar_path = "/project/compbio-lab/EIC/training_data/"
