@@ -2765,7 +2765,6 @@ class ExtendedEncodeDataHandler:
         unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
         for bios in self.navigation.keys():
             for exp in self.navigation[bios].keys():
-
                 unique_exp[exp] += 1
         
         unique_exp = {k: v for k, v in sorted(unique_exp.items(), key=lambda item: item[1], reverse=True)}
@@ -2775,9 +2774,9 @@ class ExtendedEncodeDataHandler:
         self.signal_dim = len(self.aliases["experiment_aliases"].keys()) # sum(1 for value in unique_exp.values() if value > 0)
         # print(len(self.aliases["experiment_aliases"]))
 
-        # for k in list(self.aliases["experiment_aliases"].keys()):
-        #     if unique_exp[k] == 0:
-        #         del self.aliases["experiment_aliases"][k]
+        for k in list(self.aliases["experiment_aliases"].keys()):
+            if unique_exp[k] == 0:
+                del self.aliases["experiment_aliases"][k]
 
         print(f"signal_dim: {self.signal_dim}")
         self.num_regions = len(self.m_regions)
@@ -3017,9 +3016,9 @@ class ExtendedEncodeDataHandler:
 
         #         unique_exp[exp] += 1
 
-        # for k in list(self.aliases["experiment_aliases"].keys()):
-        #     if unique_exp[k] == 0:
-        #         del self.aliases["experiment_aliases"][k]
+        for k in list(self.aliases["experiment_aliases"].keys()):
+            if unique_exp[k] == 0:
+                del self.aliases["experiment_aliases"][k]
         
         # print(len(self.aliases["experiment_aliases"]))
 
