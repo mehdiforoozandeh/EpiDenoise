@@ -657,8 +657,6 @@ class MONITOR_VALIDATION(object): # CANDI
                 # except:
                 #     pass
             else:
-                if bios_name != "MM.1S_grp1_rep1":
-                    continue
                 # try:
                 imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
@@ -679,6 +677,9 @@ class MONITOR_VALIDATION(object): # CANDI
         # Separate the data based on comparison type
         imputed_df = df[df['comparison'] == 'imputed']
         upsampled_df = df[df['comparison'] == 'upsampled']
+
+        print(imputed_df)
+        print(upsampled_df)
 
         # Function to calculate mean, min, and max for a given metric
         def calculate_stats(df, metric):
