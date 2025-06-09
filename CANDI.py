@@ -475,15 +475,14 @@ class PRETRAIN(object):
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
 
-        # try:
-        #     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-        #     torch.cuda.empty_cache()
-        #     log_strs.append(validation_set_eval)
-        #     print(validation_set_eval)
-        #     log_resource_usage()
-        # except:
-        #     pass
-
+        try:
+            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
+        except:
+            pass
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
@@ -1306,8 +1305,31 @@ if __name__ == "__main__":
     main()
 
 #  watch -n 20 "squeue -u mfa76 && echo  && tail -n 15 models/*sab*txt && echo  && tail -n 15 models/*def*txt && echo  && tail -n 15 models/*XL*txt"
-# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_CosSched --LRschedule cosine 
-# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_adamw --optim adamw 
-# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_adam --optim adam 
-# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_onedec --shared_decoders
-# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_unet --unet
+
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun9_CosSched --LRschedule cosine 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun9_adamw --optim adamw 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun9_adam --optim adam 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun9_onedec --shared_decoders
+
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet --unet
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_CosSched --unet --LRschedule cosine 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_adamax --unet --optim adamax
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_onedec --unet --shared_decoders
+
+
+"""
+#!/bin/bash
+#SBATCH -J candi_abl9_def
+#SBATCH --cpus-per-task=2
+#SBATCH --gres=gpu:1
+#SBATCH --time=07-00:00
+#SBATCH --mem=50G
+#SBATCH --output=candi_abl9_def.out
+#SBATCH --partition=compbio-lab-long
+#SBATCH --nodelist=cs-venus-03
+
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate sslgpu
+
+srun python CANDI.py --dna --eic --hpo --suffix def_imponly
+"""
