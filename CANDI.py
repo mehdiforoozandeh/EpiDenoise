@@ -932,7 +932,7 @@ class PRETRAIN(object):
                     logfile.write("\n".join(log_strs))
                     logfile.close()
 
-                    if (chr0 != chr1)
+                    if (chr0 != chr1):
                         try:
                             validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                             torch.cuda.empty_cache()
