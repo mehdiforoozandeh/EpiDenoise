@@ -901,28 +901,6 @@ class PRETRAIN(object):
                 log_strs.append(logstr)
                 print(logstr)
 
-
-
-                # try:
-                validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                torch.cuda.empty_cache()
-                log_strs.append(validation_set_eval)
-                print(validation_set_eval)
-                log_resource_usage()
-
-                if early_stop:
-                    epoch_rec["val_count_median_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["median"])
-                    epoch_rec["val_count_median_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["median"])
-                    epoch_rec["val_count_median_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["median"])
-                    
-                    epoch_rec["val_pval_median_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["median"])
-                    epoch_rec["val_pval_median_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["median"])
-                    epoch_rec["val_pval_median_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["median"])
-                # except:
-                #     pass
-
-
-
                 if lr_sch_steps_taken >= 100 and early_stop:
                     print("Early stopping due to super small learning rate...")
                     return self.model, best_metric
@@ -953,6 +931,25 @@ class PRETRAIN(object):
                     logfile = open(f"models/CANDI{arch}_log.txt", "w")
                     logfile.write("\n".join(log_strs))
                     logfile.close()
+
+                    if (chr0 != chr1)
+                        try:
+                            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                            torch.cuda.empty_cache()
+                            log_strs.append(validation_set_eval)
+                            print(validation_set_eval)
+                            log_resource_usage()
+
+                            if early_stop:
+                                epoch_rec["val_count_median_imp_r2"].append(val_metrics["imputed_counts"]["R2_count"]["median"])
+                                epoch_rec["val_count_median_imp_pcc"].append(val_metrics["imputed_counts"]["PCC_count"]["median"])
+                                epoch_rec["val_count_median_imp_srcc"].append(val_metrics["imputed_counts"]["SRCC_count"]["median"])
+                                
+                                epoch_rec["val_pval_median_imp_r2"].append(val_metrics["imputed_pvals"]["R2_pval"]["median"])
+                                epoch_rec["val_pval_median_imp_pcc"].append(val_metrics["imputed_pvals"]["PCC_pval"]["median"])
+                                epoch_rec["val_pval_median_imp_srcc"].append(val_metrics["imputed_pvals"]["SRCC_pval"]["median"])
+                        except:
+                            pass
                     
                     if self.HPO==False:
                         try:
