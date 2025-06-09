@@ -469,10 +469,11 @@ class PRETRAIN(object):
         if hook:
             register_hooks(self.model)
         
-        if "eic" in arch:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 4*batch_size, token_dict=token_dict, eic=True, DNA=DNA, device=self.device)
-        else:
-            val_eval = MONITOR_VALIDATION(self.dataset.base_path, context_length, 4*batch_size, token_dict=token_dict, eic=False, DNA=DNA, device=self.device)
+        val_eval = MONITOR_VALIDATION(
+            self.dataset.base_path, context_length, 4*batch_size, 
+            must_have_chr_access=self.dataset.must_have_chr_access
+            token_dict=token_dict, eic=bool("eic" in arch), 
+            DNA=DNA, device=self.device)
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
 
@@ -1087,7 +1088,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         bios_batchsize=batch_size, loci_batchsize=1, loci_gen=loci_gen, 
         bios_min_exp_avail_threshold=min_avail, check_completeness=True, 
         eic=eic, merge_ct=merge_ct,
-        DSF_list=[1,2])
+        DSF_list=[1,2], 
+        must_have_chr_access=hyper_parameters["must_have_chr_access"])
 
     signal_dim = dataset.signal_dim
     metadata_embedding_dim = dataset.signal_dim * 4
@@ -1257,6 +1259,7 @@ def main():
     args = parser.parse_args()
     separate_decoders = not args.shared_decoders
     merge_ct = True
+    must_have_chr_access = True
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
@@ -1282,6 +1285,7 @@ def main():
         "separate_decoders": separate_decoders,
         "merge_ct": merge_ct,
         "loci_gen": args.loci_gen,
+        "must_have_chr_access": must_have_chr_access,
 
         "optim": args.optim,
         "unet": args.unet,

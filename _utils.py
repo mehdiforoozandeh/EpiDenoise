@@ -186,7 +186,7 @@ def negative_binomial_loss(y_true, n_pred, p_pred):
 
 class MONITOR_VALIDATION(object): # CANDI
     def __init__(
-        self, data_path, context_length, batch_size, 
+        self, data_path, context_length, batch_size, must_have_chr_access=False,
         chr_sizes_file="data/hg38.chrom.sizes", DNA=False, eic=False, resolution=25, split="val", 
         token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}, device=None):
 

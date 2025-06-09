@@ -2970,7 +2970,8 @@ class ExtendedEncodeDataHandler:
             'RNA-seq'], 
         excludes=[], 
         eic=False, 
-        merge_ct=True, must_have_chr_access=False): #split in ["test", "val"]
+        merge_ct=True, 
+        must_have_chr_access=False): #split in ["test", "val"]
 
         self.set_alias()
         self.merge_ct = merge_ct
@@ -3005,6 +3006,8 @@ class ExtendedEncodeDataHandler:
         
         self.signal_dim = len(self.aliases["experiment_aliases"].keys())
         print(f"eval signal_dim: {self.signal_dim}")
+        self.num_bios = len(self.navigation)
+        print(f"num eval bios: {self.num_bios}")
 
         # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
         # for bios in self.navigation.keys():
