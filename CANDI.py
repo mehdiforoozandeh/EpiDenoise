@@ -475,11 +475,16 @@ class PRETRAIN(object):
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
 
-        validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-        torch.cuda.empty_cache()
-        log_strs.append(validation_set_eval)
-        print(validation_set_eval)
-        log_resource_usage()
+        try:
+            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
+        except:
+            pass
+
+        
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
@@ -1301,9 +1306,5 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # python CANDI.py --dna --eic --n_sab_layers 1 --context_length 4800 --expansion_factor 2 --n_cnn_layers 5 --nhead 8 --suffix XLctx
-    # python CANDI.py --dna --eic --n_sab_layers 1 --suffix 1sab
-    # python CANDI.py --dna --eic --n_sab_layers 0 --suffix 0sab
-    # python CANDI.py --dna --eic --suffix def
-
 #  watch -n 20 "squeue -u mfa76 && echo  && tail -n 15 models/*sab*txt && echo  && tail -n 15 models/*def*txt && echo  && tail -n 15 models/*XL*txt"
+# python CANDI.py --dna --hpo --suffix test --optim sgd --LRschedule cosine --loci_gen random
