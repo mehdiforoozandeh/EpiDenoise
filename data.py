@@ -2543,7 +2543,6 @@ class ExtendedEncodeDataHandler:
 
         npz_files = []
         for e in exps:
-            print(bios_name, e)
             if self.merge_ct and self.eic==False:
                 l =    os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
                 jsn1 = os.path.join("/".join(self.navigation[bios_name][e][0].split("/")[:-1]), f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
@@ -2631,7 +2630,7 @@ class ExtendedEncodeDataHandler:
         L = len(loaded_data[list(loaded_data.keys())[0]])
         i = 0
         for assay, alias in self.aliases["experiment_aliases"].items():
-            
+            print(i, assay, alias)
             # assert i+1 == int(alias.replace("M",""))
             if assay in loaded_data.keys():
                 dtensor.append(loaded_data[assay])
