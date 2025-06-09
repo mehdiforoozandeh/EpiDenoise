@@ -203,8 +203,7 @@ class MONITOR_VALIDATION(object): # CANDI
             bios_min_exp_avail_threshold=1, eic=eic)
 
         self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
-        print(self.mark_dict)
-        exit()
+
         if device == None:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         else:
@@ -562,7 +561,6 @@ class MONITOR_VALIDATION(object): # CANDI
                             torch.Tensor(pred_p)
                             ).mean().item(),
 
-                        
                         'MSE_pval': self.metrics.mse(target_pval, pred_pval),
                         'Pearson_pval': self.metrics.pearson(target_pval, pred_pval),
                         'Spearman_pval': self.metrics.spearman(target_pval, pred_pval),
@@ -657,6 +655,8 @@ class MONITOR_VALIDATION(object): # CANDI
                 # try:
                 imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability = self.get_bios_frame(
                     bios_name, x_dsf=x_dsf, y_dsf=y_dsf)
+                print(self.mark_dict)
+                print(availability)
                 full_res += self.get_metric(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability)
                 # except:
                 #     pass
