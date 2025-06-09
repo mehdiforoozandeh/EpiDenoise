@@ -342,8 +342,6 @@ class MONITOR_VALIDATION(object): # CANDI
             adjusted_length = max(1, int(segment_length // self.context_length)) * self.context_length 
             adjusted_end = start + adjusted_length
 
-
-
             temp_x, temp_mx = self.dataset.load_bios(bios_name, ["chr21", start* self.resolution, adjusted_end* self.resolution ], x_dsf)
             X, mX, avX = self.dataset.make_bios_tensor(temp_x, temp_mx)
             del temp_x, temp_mx
@@ -359,15 +357,9 @@ class MONITOR_VALIDATION(object): # CANDI
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
 
-
-
-            num_rows = (X.shape[0] // self.context_length) * self.context_length
-            X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
-
-
-            subsets_X.append(X[start:adjusted_end, :])
-            subsets_Y.append(Y[start:adjusted_end, :])
-            subsets_P.append(P[start:adjusted_end, :])
+            subsets_X.append(X) #[start:adjusted_end, :])
+            subsets_Y.append(Y) #[start:adjusted_end, :])
+            subsets_P.append(P) #[start:adjusted_end, :])
 
             if self.DNA:
                 subsets_seq.append(
@@ -509,10 +501,9 @@ class MONITOR_VALIDATION(object): # CANDI
             assert (avlP == avY).all(), "avlP and avY do not match"
             del temp_p
 
-
-            subsets_X.append(X)#[start:adjusted_end, :])
-            subsets_Y.append(Y)#[start:adjusted_end, :])
-            subsets_P.append(P)#[start:adjusted_end, :])
+            subsets_X.append(X) #[start:adjusted_end, :])
+            subsets_Y.append(Y) #[start:adjusted_end, :])
+            subsets_P.append(P) #[start:adjusted_end, :])
 
             if self.DNA:
                 subsets_seq.append(
@@ -525,7 +516,7 @@ class MONITOR_VALIDATION(object): # CANDI
         if self.DNA:
             seq = torch.cat(subsets_seq, dim=0)
         
-        print(X.shape, Y.shape, P.shape, seq.shape)
+        # print(X.shape, Y.shape, P.shape, seq.shape)
             
         X = X.view(-1, self.context_length, X.shape[-1])
         Y = Y.view(-1, self.context_length, Y.shape[-1])
@@ -539,6 +530,9 @@ class MONITOR_VALIDATION(object): # CANDI
 
         available_X_indices = torch.where(avX[0, :] == 1)[0]
         available_Y_indices = torch.where(avY[0, :] == 1)[0]
+
+        print(available_X_indices)
+        print(available_Y_indices)
 
         if self.DNA:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
