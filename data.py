@@ -2193,7 +2193,7 @@ class ExtendedEncodeDataHandler:
                 del self.navigation[bios]
 
             elif self.must_have_chr_access: 
-                if "ATAC-seq" not in bios_exps or "DNase-seq" not in bios_exps:
+                if ("ATAC-seq" not in bios_exps) and ("DNase-seq" not in bios_exps):
                     del self.navigation[bios]
 
         if len(include) == 0 and len(exclude) == 0:
@@ -3003,11 +3003,6 @@ class ExtendedEncodeDataHandler:
         else:
             print("filtering eval navigation")
             self.filter_navigation(exclude=excludes, include=includes)
-        
-        self.signal_dim = len(self.aliases["experiment_aliases"].keys())
-        print(f"eval signal_dim: {self.signal_dim}")
-        self.num_bios = len(self.navigation)
-        print(f"num eval bios: {self.num_bios}")
 
         # unique_exp = {exp:0 for exp in self.df1.columns if exp not in ["Unnamed: 0", "Accession"]}
         # for bios in self.navigation.keys():
@@ -3038,8 +3033,10 @@ class ExtendedEncodeDataHandler:
                     del self.navigation[bios]
         
         self.num_bios = len(self.navigation)
-        # for bios in self.navigation.keys():
-        #     print(bios, list(self.navigation[bios].keys()))
+        self.signal_dim = len(self.aliases["experiment_aliases"].keys())
+        print(f"eval signal_dim: {self.signal_dim}")
+        print(f"num eval bios: {self.num_bios}")
+
         self.test_bios = []
         for b, s in self.split_dict.items():
             if s == split:
