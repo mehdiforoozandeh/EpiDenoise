@@ -2775,7 +2775,7 @@ class ExtendedEncodeDataHandler:
         # print(len(self.aliases["experiment_aliases"]))
 
         for k in list(self.aliases["experiment_aliases"].keys()):
-            if k not in includes or k in exludes:
+            if k not in includes or k in excludes:
                 del self.aliases["experiment_aliases"][k]
 
         print(f"signal_dim: {self.signal_dim}")
@@ -3016,7 +3016,7 @@ class ExtendedEncodeDataHandler:
         #         unique_exp[exp] += 1
 
         for k in list(self.aliases["experiment_aliases"].keys()):
-            if k not in includes or k in exludes:
+            if k not in includes or k in excludes:
                 del self.aliases["experiment_aliases"][k]
         
         # print(len(self.aliases["experiment_aliases"]))
