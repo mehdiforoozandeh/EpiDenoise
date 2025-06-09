@@ -529,7 +529,7 @@ class MONITOR_VALIDATION(object): # CANDI
                     print(availability)
                     print(self.dataset.navigation[bios_name].keys())
                     print(self.dataset.aliases["experiment_aliases"])
-                    continue
+                    exit()
 
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":
