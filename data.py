@@ -2191,6 +2191,11 @@ class ExtendedEncodeDataHandler:
             if bios[0] in ["T", "V", "B"]:
                 del self.navigation[bios]
 
+            bios_exps = list(self.navigation[bios].keys())
+            if self.must_have_chr_access: 
+                if "ATAC-seq" not in bios_exps or "DNase-seq" not in bios_exps:
+                    del self.navigation[bios]
+
         if len(include) == 0 and len(exclude) == 0:
             return
 
@@ -2673,22 +2678,18 @@ class ExtendedEncodeDataHandler:
     def initialize_EED(self,
         m, context_length, bios_batchsize, loci_batchsize, loci_gen="chr19", 
         bios_min_exp_avail_threshold=3, check_completeness=True, shuffle_bios=True, 
-        # excludes=[
-        #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
-        #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         includes=[
             'ATAC-seq', 'DNase-seq', 'H2AFZ', 'H2AK5ac', 'H2AK9ac', 'H2BK120ac', 'H2BK12ac', 'H2BK15ac', 
             'H2BK20ac', 'H2BK5ac', 'H3F3A', 'H3K14ac', 'H3K18ac', 'H3K23ac', 'H3K23me2', 'H3K27ac', 'H3K27me3', 
             'H3K36me3', 'H3K4ac', 'H3K4me1', 'H3K4me2', 'H3K4me3', 'H3K56ac', 'H3K79me1', 'H3K79me2', 'H3K9ac', 
             'H3K9me1', 'H3K9me2', 'H3K9me3', 'H3T11ph', 'H4K12ac', 'H4K20me1', 'H4K5ac', 'H4K8ac', 'H4K91ac'], 
         excludes=[], 
-        # includes = [
-        #     "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
-        #     "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"],
-        merge_ct=True, eic=False, DSF_list=[1, 2, 4]):
-        # merge_ct=True, eic=False, DSF_list=[1]):
+        merge_ct=True, must_have_chr_access=False,
+        eic=False, DSF_list=[1, 2, 4]):
+
         self.eic = eic
         self.merge_ct = merge_ct
+        self.must_have_chr_access = must_have_chr_access
         self.set_alias()
         
         self.coords(mode="train")
@@ -2961,9 +2962,6 @@ class ExtendedEncodeDataHandler:
     def init_eval(
         self, context_length, bios_min_exp_avail_threshold=1, 
         check_completeness=False, split="test",
-        # excludes=[
-        #     "CAGE", "RNA-seq", "ChIA-PET", "H3T11ph", "H2AK9ac", "MYC", "YY1", 
-        #     "CEBPB", "REST", "MAX", "JUND", "EP300", "H4K12ac", "H3K23me2", "POLR2AphosphoS5"], 
         includes=[
             'ATAC-seq', 'DNase-seq', 'H2AFZ', 'H2AK5ac', 'H2AK9ac', 'H2BK120ac', 'H2BK12ac', 'H2BK15ac', 
             'H2BK20ac', 'H2BK5ac', 'H3F3A', 'H3K14ac', 'H3K18ac', 'H3K23ac', 'H3K23me2', 'H3K27ac', 'H3K27me3', 
@@ -2971,13 +2969,12 @@ class ExtendedEncodeDataHandler:
             'H3K9me1', 'H3K9me2', 'H3K9me3', 'H3T11ph', 'H4K12ac', 'H4K20me1', 'H4K5ac', 'H4K8ac', 'H4K91ac', 
             'RNA-seq'], 
         excludes=[], 
-        # includes = [
-        #     "H3K4me3", "H3K36me3", "H3K27me3", "H3K4me1", "H3K9me3", "H3K27ac", "CTCF", 
-        #     "H3K9ac", "DNase-seq", "H3K79me2", "H3K4me2", "H2AFZ", "H4K20me1", "ATAC-seq"],
-        eic=False, merge_ct=True): #split in ["test", "val"]
+        eic=False, 
+        merge_ct=True, must_have_chr_access=False): #split in ["test", "val"]
 
         self.set_alias()
         self.merge_ct = merge_ct
+        self.must_have_chr_access = must_have_chr_access
         self.eic = eic
         self.coords(mode="eval")
         

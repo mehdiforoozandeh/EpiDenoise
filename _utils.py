@@ -200,7 +200,7 @@ class MONITOR_VALIDATION(object): # CANDI
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         self.dataset.init_eval(
             self.context_length, check_completeness=True, split=split, 
-            bios_min_exp_avail_threshold=1, eic=eic)
+            bios_min_exp_avail_threshold=3, eic=eic)
 
         # self.mark_dict = {v: k for k, v in self.dataset.aliases["experiment_aliases"].items()}
         
