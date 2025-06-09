@@ -475,16 +475,15 @@ class PRETRAIN(object):
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
 
-        try:
-            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-            torch.cuda.empty_cache()
-            log_strs.append(validation_set_eval)
-            print(validation_set_eval)
-            log_resource_usage()
-        except:
-            pass
+        # try:
+        #     validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+        #     torch.cuda.empty_cache()
+        #     log_strs.append(validation_set_eval)
+        #     print(validation_set_eval)
+        #     log_resource_usage()
+        # except:
+        #     pass
 
-        
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
@@ -1307,4 +1306,8 @@ if __name__ == "__main__":
     main()
 
 #  watch -n 20 "squeue -u mfa76 && echo  && tail -n 15 models/*sab*txt && echo  && tail -n 15 models/*def*txt && echo  && tail -n 15 models/*XL*txt"
-# python CANDI.py --dna --hpo --suffix test --optim sgd --LRschedule cosine --loci_gen random
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_CosSched --LRschedule cosine 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_adamw --optim adamw 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_adam --optim adam 
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_onedec --shared_decoders
+# python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_unet --unet
