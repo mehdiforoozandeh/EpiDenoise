@@ -526,8 +526,9 @@ class MONITOR_VALIDATION(object): # CANDI
                 try:
                     print(self.mark_dict[f"M{str(j+1).zfill(2)}"])
                 except:
+                    print(availability)
                     print(self.dataset.navigation[bios_name].keys())
-                    # print(self.mark_dict)
+                    continue
 
                 for comparison in ['imputed', 'upsampled']:
                     if comparison == "imputed":
