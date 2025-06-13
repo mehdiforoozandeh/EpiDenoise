@@ -1135,6 +1135,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
                 LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
                 CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
             milestones=[warmup_epochs])
+    elif hyper_parameters["LRschedule"] is None or hyper_parameters["LRschedule"].lower()=="none":
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=hyper_parameters["lr_halflife"], gamma=1)
     else:
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=hyper_parameters["lr_halflife"], gamma=0.95)
@@ -1249,7 +1252,7 @@ def main():
 
     parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
     parser.add_argument('--unet', action='store_true', help='whether to use unet skip connections')
-    parser.add_argument('--LRschedule', type=str, default="linear", help='optimizer')
+    parser.add_argument('--LRschedule', type=str, default=None, help='optimizer lr scheduler')
     
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1315,6 +1318,9 @@ if __name__ == "__main__":
 # python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_CosSched --unet --LRschedule cosine 
 # python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_adamax --unet --optim adamax
 # python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_abljun12_unet_onedec --unet --shared_decoders
+
+# python CANDI.py --dna --eic --hpo --suffix def_jun13_unet_onedec_admx --unet --shared_decoders --optim adamax
+# python CANDI.py --dna --eic --hpo --context_length 2400 --expansion_factor 2 --n_cnn_layers 5 --suffix XLcntx_jun13_unet_onedec --unet --shared_decoders --optim adamax
 
 
 """
