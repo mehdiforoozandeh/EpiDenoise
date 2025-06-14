@@ -1127,9 +1127,11 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
     if hyper_parameters["LRschedule"] is None:
+        cos_sch=False
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=hyper_parameters["lr_halflife"], gamma=1)
     elif hyper_parameters["LRschedule"].lower()=="cosine":
+        cos_sch=True
         num_total_epochs = epochs * inner_epochs * len(dataset.m_regions) * 2
         warmup_epochs = inner_epochs * len(dataset.m_regions) * 2
         scheduler = SequentialLR(
@@ -1139,6 +1141,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
                 CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
             milestones=[warmup_epochs])
     else:
+        cos_sch=False
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=hyper_parameters["lr_halflife"], gamma=0.95)
 
@@ -1161,7 +1164,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
 
     trainer = PRETRAIN(
         model, dataset, criterion, optimizer, scheduler, 
-        device=device, HPO=HPO, cosine_sched=hyper_parameters["LRschedule"].lower()=="cosine")
+        device=device, HPO=HPO, cosine_sched=cos_sch)
 
     model, best_metric = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
