@@ -1126,7 +1126,10 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     else:
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
-    if hyper_parameters["LRschedule"].lower()=="cosine":
+    if hyper_parameters["LRschedule"] is None:
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=hyper_parameters["lr_halflife"], gamma=1)
+    elif hyper_parameters["LRschedule"].lower()=="cosine":
         num_total_epochs = epochs * inner_epochs * len(dataset.m_regions) * 2
         warmup_epochs = inner_epochs * len(dataset.m_regions) * 2
         scheduler = SequentialLR(
@@ -1135,9 +1138,6 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
                 LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_epochs), 
                 CosineAnnealingLR(optimizer, T_max=(num_total_epochs - warmup_epochs), eta_min=0.0)],
             milestones=[warmup_epochs])
-    elif hyper_parameters["LRschedule"] is None:
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=hyper_parameters["lr_halflife"], gamma=1)
     else:
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=hyper_parameters["lr_halflife"], gamma=0.95)
