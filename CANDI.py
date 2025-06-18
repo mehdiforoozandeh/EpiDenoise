@@ -474,15 +474,16 @@ class PRETRAIN(object):
             must_have_chr_access=self.dataset.must_have_chr_access,
             token_dict=token_dict, eic=bool("eic" in arch), 
             DNA=DNA, device=self.device)
-
-        try:
-            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-            torch.cuda.empty_cache()
-            log_strs.append(validation_set_eval)
-            print(validation_set_eval)
-            log_resource_usage()
-        except:
-            pass
+         
+        if "test" not in arch:
+            try:
+                validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+                torch.cuda.empty_cache()
+                log_strs.append(validation_set_eval)
+                print(validation_set_eval)
+                log_resource_usage()
+            except:
+                pass
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
