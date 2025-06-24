@@ -1247,7 +1247,7 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--num_loci', type=int, default=5000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
-    parser.add_argument('--min_avail', type=int, default=3, help='Minimum available')
+    parser.add_argument('--min_avail', type=int, default=7, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
@@ -1326,20 +1326,17 @@ if __name__ == "__main__":
 # python CANDI.py --dna --eic --hpo --suffix def_jun13_unet_onedec_admx --unet --shared_decoders --optim adamax
 # python CANDI.py --dna --eic --hpo --context_length 2400 --expansion_factor 2 --n_cnn_layers 5 --suffix XLcntx_jun13_unet_onedec --unet --shared_decoders --optim adamax
 
+# srun python CANDI.py --dna --eic --hpo --epochs 6 --suffix def_unet_imponly --unet
+# srun python CANDI.py --dna --eic --hpo --epochs 6 --suffix unet_xlc_imponly --unet --expansion_factor 2 --n_cnn_layers 5 --n_sab_layers 1  --nhead 8 --context_length 4800
+# srun python CANDI.py --dna --eic --hpo --epochs 6 --suffix unet_xlc_imponly_adamax --unet --expansion_factor 2 --n_cnn_layers 5 --n_sab_layers 1  --nhead 8 --context_length 4800 --optim adamax
+# srun python CANDI.py --dna --eic --hpo --epochs 6 --suffix unet_xlc --unet --expansion_factor 2 --n_cnn_layers 5 --n_sab_layers 1  --nhead 8 --context_length 4800 
 
-"""
-#!/bin/bash
-#SBATCH -J candi_abl9_def
-#SBATCH --cpus-per-task=2
-#SBATCH --gres=gpu:1
-#SBATCH --time=07-00:00
-#SBATCH --mem=50G
-#SBATCH --output=candi_abl9_def.out
-#SBATCH --partition=compbio-lab-long
-#SBATCH --nodelist=cs-venus-03
+# watch -n 20 "squeue -u mfa76 && tail -n 11 models/*jun21_xlc_imponly_adamax*txt && echo && tail -n 11 models/*unet_xlc_imponly_log*txt && echo && tail -n 11 models/*unet_xlc_imponly_adamax_log*txt && echo && tail -n 11 models/*unet_xlc_log*txt"
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate sslgpu
 
-srun python CANDI.py --dna --eic --hpo --suffix def_imponly
-"""
+
+# srun python CANDI.py --dna --eic --hpo --epochs 10 --suffix def_jun24_unet_admx_onedec --unet --optim adamax --shared_decoders
+# srun python CANDI.py --dna --eic --hpo --epochs 10 --suffix def_jun24_unet_Cos_admx_onedec --unet --optim adamax --LRschedule cosine --shared_decoders
+
+# srun python CANDI.py --dna --hpo --epochs 10 --suffix def_jun24_unet_admx_onedec --unet --optim adamax --shared_decoders
+# srun python CANDI.py --dna --hpo --epochs 10 --suffix def_jun24_unet_Cos_admx_onedec --unet --optim adamax --LRschedule cosine --shared_decoders
