@@ -1247,7 +1247,7 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--num_loci', type=int, default=5000, help='Number of loci')
     parser.add_argument('--lr_halflife', type=int, default=1, help='Learning rate halflife')
-    parser.add_argument('--min_avail', type=int, default=7, help='Minimum available')
+    parser.add_argument('--min_avail', type=int, default=3, help='Minimum available')
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
@@ -1256,7 +1256,7 @@ def main():
 
     parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
     parser.add_argument('--unet', action='store_true', help='whether to use unet skip connections')
-    parser.add_argument('--LRschedule', type=str, default="cosine", help='optimizer lr scheduler')
+    parser.add_argument('--LRschedule', type=str, default=None, help='optimizer lr scheduler')
     
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
@@ -1340,3 +1340,18 @@ if __name__ == "__main__":
 
 # srun python CANDI.py --dna --hpo --epochs 10 --suffix def_jun24_unet_admx_onedec --unet --optim adamax --shared_decoders
 # srun python CANDI.py --dna --hpo --epochs 10 --suffix def_jun24_unet_Cos_admx_onedec --unet --optim adamax --LRschedule cosine --shared_decoders
+
+
+
+
+# python CANDI.py --dna --eic --epochs 15 --suffix admx_cos_shdc --optim adamax --LRschedule cosine --shared_decoders
+# python CANDI.py --dna --epochs 15 --suffix admx_cos_shdc --optim adamax --LRschedule cosine --shared_decoders
+
+# python CANDI.py --dna --eic --epochs 15 --suffix unt_cos_shdc --unet --LRschedule cosine --shared_decoders
+# python CANDI.py --dna --epochs 15 --suffix unt_cos_shdc --unet --LRschedule cosine --shared_decoders
+
+# python CANDI.py --dna --eic --epochs 15 --suffix unt_admx_shdc --unet --optim adamax --shared_decoders
+# python CANDI.py --dna --epochs 15 --suffix unt_admx_shdc --unet --optim adamax --shared_decoders
+
+# python CANDI.py --dna --eic --epochs 15 --suffix unt_admx_cos --unet --optim adamax --LRschedule cosine
+# python CANDI.py --dna --epochs 15 --suffix unt_admx_cos --unet --optim adamax --LRschedule cosine
