@@ -476,14 +476,14 @@ class PRETRAIN(object):
             DNA=DNA, device=self.device)
          
         if "test" not in arch:
-            try:
-                validation_set_eval, val_metrics = val_eval.get_validation(self.model)
-                torch.cuda.empty_cache()
-                log_strs.append(validation_set_eval)
-                print(validation_set_eval)
-                log_resource_usage()
-            except:
-                pass
+            # try:
+            validation_set_eval, val_metrics = val_eval.get_validation(self.model)
+            torch.cuda.empty_cache()
+            log_strs.append(validation_set_eval)
+            print(validation_set_eval)
+            log_resource_usage()
+            # except:
+            #     pass
 
         num_total_samples = len(self.dataset.m_regions) * len(self.dataset.navigation)
         best_metric = None
@@ -1256,7 +1256,7 @@ def main():
 
     parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
     parser.add_argument('--unet', action='store_true', help='whether to use unet skip connections')
-    parser.add_argument('--LRschedule', type=str, default=None, help='optimizer lr scheduler')
+    parser.add_argument('--LRschedule', type=str, default="cosine", help='optimizer lr scheduler')
     
     # Flags for DNA and EIC
     parser.add_argument('--eic', action='store_true', help='Flag to enable EIC')
