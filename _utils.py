@@ -634,15 +634,17 @@ class MONITOR_VALIDATION(object): # CANDI
             pred_mu = ups_pval_dist.mu[:, j].numpy()
             pred_var = ups_pval_dist.var[:, j].numpy()
 
+            target_pval = P[:, j].numpy()
+
             if j in list(available_X_indices):
                 comparison = "upsampled"
                 target_count = X[:, j].numpy()
+                
 
             elif j in list(available_Y_indices):
                 comparison = "imputed"
                 target_count = Y[:, j].numpy()
-                
-            target_pval = P[:, j].numpy()
+
 
             else:
                 continue
