@@ -641,6 +641,7 @@ class MONITOR_VALIDATION(object): # CANDI
             elif j in list(available_Y_indices):
                 comparison = "imputed"
                 target_count = Y[:, j].numpy()
+                target_pval = P[:, j].numpy()
 
             else:
                 continue
