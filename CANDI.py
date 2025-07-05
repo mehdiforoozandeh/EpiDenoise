@@ -962,12 +962,12 @@ class PRETRAIN(object):
                     
                     if self.HPO==False:
                         try:
-                            try:
-                                if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
-                                    os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
-                                torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
-                            except:
-                                pass
+                            # try:
+                            #     if os.path.exists(f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth'):
+                            #         os.system(f"rm -rf models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr0}.pth")
+                            #     torch.save(self.model.state_dict(), f'models/CANDI{arch}_model_checkpoint_epoch{epoch}_{chr1}.pth')
+                            # except:
+                            #     pass
 
                             # Generate and process the plot
                             fig_title = " | ".join([
