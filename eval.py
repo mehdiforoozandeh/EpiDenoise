@@ -15,6 +15,7 @@ from scipy.ndimage import gaussian_filter1d
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from sklearn.svm import SVR
 from scipy.stats import norm, nbinom
+from datetime import datetime
 
 import scipy.stats
 import seaborn as sns
@@ -3580,11 +3581,19 @@ def main():
             exit()
             
         if args.eic:
+            t = datetime.now()
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick)
+            elapsed_time = datetime.now() - t0
+            print(f"took {elapsed_time}")
+            
             if args.quick:
                 print(pd.DataFrame(res))
         else:
+            t = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
+            elapsed_time = datetime.now() - t0
+            print(f"took {elapsed_time}")
+
             if args.quick:
                 print(pd.DataFrame(res))
 
