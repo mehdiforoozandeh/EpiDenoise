@@ -5,6 +5,7 @@ from dino_candi import *
 
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 from sklearn.metrics import mean_squared_error, r2_score, auc
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
@@ -13,6 +14,7 @@ from scipy.ndimage import gaussian_filter1d
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from sklearn.svm import SVR
+from scipy.stats import norm, nbinom
 
 import scipy.stats
 import seaborn as sns
@@ -359,15 +361,124 @@ class METRICS(object):
 
         return analysis
 
+    def c_index_gauss(self, mus, sigmas, y_true, num_pairs=10000):
+        """
+        Concordance index for Gaussian predictive marginals, sampling up to `num_pairs` pairs.
+        Inputs:
+          - mus:       array_like, shape (N,) of predicted means μ_i
+          - sigmas:    array_like, shape (N,) of predicted stddevs σ_i
+          - y_true:    array_like, shape (N,) of true values y_i
+          - num_pairs: how many random (i<j) pairs to sample; -1 = use all pairs
+        Returns:
+          - c_index: float in [0,1]
+        """
+        N = len(y_true)
+        # build list of all valid (i<j) with y_true[i] != y_true[j]
+        pairs = [(i, j)
+                 for i in range(N) for j in range(i+1, N)
+                 if y_true[i] != y_true[j]]
+        M = len(pairs)
+        # decide which pairs to actually score
+        if num_pairs > 0 and num_pairs < M:
+            idx = np.random.choice(M, size=num_pairs, replace=False)
+            pairs = [pairs[k] for k in idx]
 
-    ################################################################################
+        labels = []
+        scores = []
+        for i, j in pairs:
+            labels.append(int(y_true[i] > y_true[j]))
+            delta = mus[i] - mus[j]
+            sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
+            scores.append(norm.cdf(delta / sd))
+        return roc_auc_score(labels, scores)
 
-    """
-    to do -- eval:
-        1. binary classification eval (aucPR, aucROC) on peak called signals (imp vs obs)
-        2. SAGA on a subset of tracks + SAGAconf (imp vs obs)
-        3. sum(abs(log(derivative of correspondence curve))) --> near zero is better 
-    """
+    def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
+        valid_indices = indices[indices < len(array)]
+
+        num_pairs = min(num_pairs, len(valid_indices))
+
+        c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_gauss_prom(self, mus, sigmas, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
+        valid_indices = indices[indices < len(array)]
+
+        num_pairs = min(num_pairs, len(valid_indices))
+
+        c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_gauss_1obs(self, mus, sigmas, y_true, num_pairs=10000):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        num_pairs = min(num_pairs, len(perc_99_pos))
+
+        c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
+        return c_idx
+
+    def c_index_nbinom(self, rs, ps, y_true, epsilon=1e-6, num_pairs=10000):
+        """
+        Concordance index for Negative‐Binomial predictive marginals, sampling up to `num_pairs` pairs.
+        Inputs:
+          - rs:        array_like, shape (N,) of NB 'r' parameters
+          - ps:        array_like, shape (N,) of NB 'p' parameters
+          - y_true:    array_like, shape (N,) of true values y_i
+          - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
+          - num_pairs: how many random (i<j) pairs to sample; -1 = use all pairs
+        Returns:
+          - c_index: float in [0,1]
+        """
+        N = len(y_true)
+        pairs = [(i, j)
+                 for i in range(N) for j in range(i+1, N)
+                 if y_true[i] != y_true[j]]
+        M = len(pairs)
+        if num_pairs > 0 and num_pairs < M:
+            idx = np.random.choice(M, size=num_pairs, replace=False)
+            pairs = [pairs[k] for k in idx]
+
+        labels = []
+        scores = []
+        for i, j in pairs:
+            labels.append(int(y_true[i] > y_true[j]))
+            # truncate Y_j’s tail so P(Y_j ≤ K) ≥ 1−ε
+            K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
+            k = np.arange(K+1)
+            pmf_j = nbinom.pmf(k, rs[j], ps[j])
+            cdf_i = nbinom.cdf(k, rs[i], ps[i])
+            scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+        return roc_auc_score(labels, scores)
+
+    def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
+        valid_indices = indices[indices < len(array)]
+
+        num_pairs = min(num_pairs, len(valid_indices))
+
+        c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_nbinom_prom(self, rs, ps, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
+        valid_indices = indices[indices < len(array)]
+
+        num_pairs = min(num_pairs, len(valid_indices))
+
+        c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_nbinom_1obs(self, rs, ps, y_true, num_pairs=10000):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        num_pairs = min(num_pairs, len(perc_99_pos))
+        
+        c_idx = self.c_index_nbinom(rs[perc_99_pos], ps[perc_99_pos], y_true[perc_99_pos], num_pairs)
+        return c_idx
+
 
 class VISUALS_CANDI(object):
     def __init__(self, resolution=25, savedir="models/evals/"):
@@ -2637,7 +2748,7 @@ class EVAL_CANDI(object):
 
         # make predictions in batches
         for i in range(0, len(X), self.batch_size):
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
             
             x_batch = X[i:i+ self.batch_size]
             mX_batch = mX[i:i+ self.batch_size]
@@ -2648,10 +2759,10 @@ class EVAL_CANDI(object):
                 seq_batch = seq[i:i + self.batch_size]
 
             with torch.no_grad():
-                x_batch = x_batch.clone()
-                avail_batch = avail_batch.clone()
-                mX_batch = mX_batch.clone()
-                mY_batch = mY_batch.clone()
+                # x_batch = x_batch.clone()
+                # avail_batch = avail_batch.clone()
+                # mX_batch = mX_batch.clone()
+                # mY_batch = mY_batch.clone()
 
                 x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
                 mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
@@ -2690,13 +2801,17 @@ class EVAL_CANDI(object):
             var[i:i+outputs_var.shape[0], :, :] = outputs_var.cpu()
 
             del x_batch, mX_batch, mY_batch, avail_batch, outputs_p, outputs_n, outputs_mu, outputs_var  # Free up memory
-            torch.cuda.empty_cache()  # Free up GPU memory
+            # torch.cuda.empty_cache()  # Free up GPU memory
 
         return n, p, mu, var
 
-    def get_metrics(self, imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, availability, arcsinh=True):
-        imp_count_mean = imp_count_dist.expect()
-        ups_count_mean = ups_count_dist.expect()
+    def get_metrics(
+        self, 
+        imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, 
+        Y, P, bios_name, availability, arcsinh=True, quick=False):
+
+        imp_count_mean = imp_count_dist.mean()
+        ups_count_mean = ups_count_dist.mean()
 
         imp_count_std = imp_count_dist.std()
         ups_count_std = ups_count_dist.std()
@@ -2707,16 +2822,17 @@ class EVAL_CANDI(object):
         imp_pval_std = imp_pval_dist.std()
         ups_pval_std = ups_pval_dist.std()
 
-        if self.dataset.has_rnaseq(bios_name):
-            print("got rna-seq data")
-            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
+        if not quick:
+            if self.dataset.has_rnaseq(bios_name):
+                print("got rna-seq data")
+                rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        # print("getting 0.95 interval conf")
-        imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
-        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+            print("getting 0.95 interval conf")
+            imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
+            ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
-        imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+            imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
+            ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
 
         results = []
 
@@ -2736,32 +2852,41 @@ class EVAL_CANDI(object):
                         pred_count = imp_count_mean[:, j].numpy()
                         pred_count_std = imp_count_std[:, j].numpy()
 
+                        pred_count_n = imp_count_dist.n[:, j].numpy()
+                        pred_count_p = imp_count_dist.p[:, j].numpy()
+
                         pred_pval = imp_pval_mean[:, j].numpy()
                         pred_pval_std = imp_pval_std[:, j].numpy()
 
-                        count_lower_95 = imp_count_lower_95[:, j].numpy()
-                        count_upper_95 = imp_count_upper_95[:, j].numpy()
+                        if not quick:
+                            count_lower_95 = imp_count_lower_95[:, j].numpy()
+                            count_upper_95 = imp_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = imp_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = imp_pval_upper_95[:, j].numpy()
+                            pval_lower_95 = imp_pval_lower_95[:, j].numpy()
+                            pval_upper_95 = imp_pval_upper_95[:, j].numpy()
 
                     elif comparison == "upsampled":
                         pred_count = ups_count_mean[:, j].numpy()
                         pred_count_std = ups_count_std[:, j].numpy()
 
+                        pred_count_n = ups_count_dist.n[:, j].numpy()
+                        pred_count_p = ups_count_dist.p[:, j].numpy()
+
                         pred_pval = ups_pval_mean[:, j].numpy()
                         pred_pval_std = ups_pval_std[:, j].numpy()
 
-                        count_lower_95 = ups_count_lower_95[:, j].numpy()
-                        count_upper_95 = ups_count_upper_95[:, j].numpy()
+                        if not quick:
+                            count_lower_95 = ups_count_lower_95[:, j].numpy()
+                            count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                        pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                        pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                            pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                            pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                     if arcsinh:
                         pred_pval = np.sinh(pred_pval)
-                        pval_lower_95 = np.sinh(pval_lower_95)
-                        pval_upper_95 = np.sinh(pval_upper_95)
+                        if not quick:
+                            pval_lower_95 = np.sinh(pval_lower_95)
+                            pval_upper_95 = np.sinh(pval_upper_95)
 
                     # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
@@ -2770,30 +2895,19 @@ class EVAL_CANDI(object):
                         'comparison': comparison,
                         'available assays': len(availability),
 
-                        "obs_count": C_target,
-                        "obs_pval": P_target,
-                        
-                        "pred_count":pred_count,
-                        "pred_count_std":pred_count_std,
-
-                        "pred_pval":pred_pval,
-                        "pred_pval_std":pred_pval_std,
-
-                        "count_lower_95" : count_lower_95,
-                        "count_upper_95": count_upper_95,
-
-                        "pval_lower_95" : pval_lower_95,
-                        "pval_upper_95": pval_upper_95,
+                        ########################################################################
 
                         'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                         'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
+                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
                         'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
                         'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
                         'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
                         'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+                        'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target),
 
                         'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
                         'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
@@ -2804,11 +2918,13 @@ class EVAL_CANDI(object):
                         'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
                         'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
                         'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
+                        'C_Cidx_gene':self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target),
 
                         'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
                         'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
                         'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
                         'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
+                        'C_Cidx_prom':self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target),
 
                         "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
                         "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
@@ -2820,11 +2936,13 @@ class EVAL_CANDI(object):
                         'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
                         'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
                         'P_r2_GW': self.metrics.r2(P_target, pred_pval),
+                        'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
                         'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
                         'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
                         'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
+                        'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
                         'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
@@ -2835,29 +2953,47 @@ class EVAL_CANDI(object):
                         'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
                         'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
                         'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
+                        'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
                         'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
                         'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
                         'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
+                        'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target),
 
                         "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                         "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
                         "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10),
                     }
                     
-                    if self.dataset.has_rnaseq(bios_name):
-                        metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
-                        metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
+                    if not quick:
+                        metric["obs_count"] = C_target
+                        metric["obs_pval"] = P_target
 
-                        metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
-                        metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
+                        metric["pred_count"] = pred_count
+                        metric["pred_count_std"] = pred_count_std
 
-                        metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
-                        metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
-                        
-                        metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
-                        metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
+                        metric["pred_pval"] = pred_pval
+                        metric["pred_pval_std"] = pred_pval_std
+
+                        metric["count_lower_95"] = count_lower_95
+                        metric["count_upper_95"] = count_upper_95
+
+                        metric["pval_lower_95"] = pval_lower_95
+                        metric["pval_upper_95"] = pval_upper_95
+
+                        if self.dataset.has_rnaseq(bios_name):
+                            metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
+                            metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
+
+                            metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
+                            metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
+
+                            metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
+                            metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
+                            
+                            metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
+                            metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
 
                     results.append(metrics)
 
@@ -2868,72 +3004,76 @@ class EVAL_CANDI(object):
                 pred_pval = ups_pval_mean[:, j].numpy()
                 pred_pval_std = ups_pval_std[:, j].numpy()
 
-                count_lower_95 = ups_count_lower_95[:, j].numpy()
-                count_upper_95 = ups_count_upper_95[:, j].numpy()
+                if not quick:
+                    count_lower_95 = ups_count_lower_95[:, j].numpy()
+                    count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+                    pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                    pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
                 if arcsinh:
                     pred_pval = np.sinh(pred_pval)
-                    pval_lower_95 = np.sinh(pval_lower_95)
-                    pval_upper_95 = np.sinh(pval_upper_95)
+                    if not quick:
+                        pval_lower_95 = np.sinh(pval_lower_95)
+                        pval_upper_95 = np.sinh(pval_upper_95)
 
                 metrics = {
                     'bios':bios_name,
                     'feature': self.expnames[j],
                     'comparison': "None",
                     'available assays': len(availability),
-
-                    "pred_count":pred_count,
-                    "pred_count_std":pred_count_std,
-
-                    "pred_pval":pred_pval,
-                    "pred_pval_std":pred_pval_std,
-
-                    "count_lower_95" : count_lower_95,
-                    "count_upper_95": count_upper_95,
-
-                    "pval_lower_95" : pval_lower_95,
-                    "pval_upper_95": pval_upper_95
                     }
+
+                if not quick:
+                    metrics["pred_count"] = pred_count
+                    metrics["pred_count_std"] = pred_count_std
+
+                    metrics["pred_pval"] = pred_pval
+                    metrics["pred_pval_std"] = pred_pval_std
+
+                    metrics["count_lower_95"] =  count_lower_95
+                    metrics["count_upper_95"] =  count_upper_95
+                    
+                    metrics["pval_lower_95"] =  pval_lower_95
+                    metrics["pval_upper_95"] =  pval_upper_9
 
                 results.append(metrics)
             
         return results
     
-    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices, arcsinh=True):
+    def get_metric_eic(self, ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices, arcsinh=True, quick=False):
         ups_count_mean = ups_count_dist.expect()
         ups_count_std = ups_count_dist.std()
 
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
-        if self.dataset.has_rnaseq(bios_name):
-            print("got rna-seq data")
-            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
+        if not quick:
+            if self.dataset.has_rnaseq(bios_name):
+                print("got rna-seq data")
+                rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-        print("getting 0.95 interval conf")
-        ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
-        ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+            print("getting 0.95 interval conf")
+            ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+            ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
         
         results = []
         for j in range(Y.shape[1]):
             pred_count = ups_count_mean[:, j].numpy()
             pred_count_std = ups_count_std[:, j].numpy()
 
+            pred_count_n = ups_count_dist.n[:, j].numpy()
+            pred_count_p = ups_count_dist.p[:, j].numpy()   
+
             pred_pval = ups_pval_mean[:, j].numpy()
             pred_pval_std = ups_pval_std[:, j].numpy()
 
-            count_lower_95 = ups_count_lower_95[:, j].numpy()
-            count_upper_95 = ups_count_upper_95[:, j].numpy()
+            if not quick:
+                count_lower_95 = ups_count_lower_95[:, j].numpy()
+                count_upper_95 = ups_count_upper_95[:, j].numpy()
 
-            pval_lower_95 = ups_pval_lower_95[:, j].numpy()
-            pval_upper_95 = ups_pval_upper_95[:, j].numpy()
-
-            P_target = P[:, j].numpy()
-            if arcsinh:
-                P_target = np.sinh(P_target)
+                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
 
             if j in list(available_X_indices):
                 comparison = "upsampled"
@@ -2945,17 +3085,14 @@ class EVAL_CANDI(object):
 
             else:
                 continue
-
-            count_quantile = self.metrics.confidence_quantile(
-                ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
-
-            count_p0bgdf = self.metrics.foreground_vs_background(
-                ups_count_dist.p[:, j], ups_count_dist.n[:, j], C_target)
-
+                
+            P_target = P[:, j].numpy()
             if arcsinh:
+                P_target = np.sinh(P_target)
                 pred_pval = np.sinh(pred_pval)
-                pval_lower_95 = np.sinh(pval_lower_95)
-                pval_upper_95 = np.sinh(pval_upper_95)
+                if not quick:
+                    pval_lower_95 = np.sinh(pval_lower_95)
+                    pval_upper_95 = np.sinh(pval_upper_95)
 
             metrics = {
                 'bios':bios_name,
@@ -2963,34 +3100,17 @@ class EVAL_CANDI(object):
                 'comparison': comparison,
                 'available assays': len(available_X_indices),
 
-                "obs_count": C_target,
-                "obs_pval": P_target,
-                
-                "pred_count":pred_count,
-                "pred_count_std":pred_count_std,
-
-                "pred_pval":pred_pval,
-                "pred_pval_std":pred_pval_std,
-
-                "count_lower_95" : count_lower_95,
-                "count_upper_95": count_upper_95,
-
-                "pval_lower_95" : pval_lower_95,
-                "pval_upper_95": pval_upper_95,
-
-                "p0_bg":count_p0bgdf["p0_bg"],
-                "p0_fg":count_p0bgdf["p0_fg"],
-                "pred_quantile":count_quantile,
-
                 'C_MSE-GW': self.metrics.mse(C_target, pred_count),
                 'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                 'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                 'C_r2_GW': self.metrics.r2(C_target, pred_count),
+                'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
                 'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
                 'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
                 'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
                 'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+                'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target),
 
                 'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
                 'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
@@ -3001,12 +3121,14 @@ class EVAL_CANDI(object):
                 'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
                 'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
                 'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
+                'C_Cidx_gene':self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target),
 
                 'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
                 'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
                 'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
                 'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
-
+                'C_Cidx_prom':self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target),
+                
                 "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
                 "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
                 "C_peak_overlap_10thr": self.metrics.peak_overlap(C_target, pred_count, p=0.10),
@@ -3017,11 +3139,13 @@ class EVAL_CANDI(object):
                 'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
                 'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
                 'P_r2_GW': self.metrics.r2(P_target, pred_pval),
+                'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
 
                 'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
                 'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
                 'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
                 'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
+                'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target),
 
                 'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
                 'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
@@ -3032,16 +3156,34 @@ class EVAL_CANDI(object):
                 'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
                 'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
                 'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
+                'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target),
 
                 'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
                 'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
                 'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
                 'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
+                'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target),
 
                 "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                 "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
                 "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10)
             }
+
+            if not quick:
+                metrics["obs_count"] =  C_target
+                metrics["obs_pval"] =  P_target
+
+                metrics["pred_count"] = pred_count
+                metrics["pred_count_std"] = pred_count_std
+
+                metrics["pred_pval"] = pred_pval
+                metrics["pred_pval_std"] = pred_pval_std
+
+                metrics["count_lower_95"] = : count_lower_95
+                metrics["count_upper_95"] =  count_upper_95
+
+                metrics["pval_lower_95"] = : pval_lower_95
+                metrics["pval_upper_95"] =  pval_upper_95
 
             results.append(metrics)
 
@@ -3117,7 +3259,7 @@ class EVAL_CANDI(object):
         else:
             return X, Y, P, mX, mY, avX, avY
 
-    def bios_pipeline(self, bios_name, x_dsf):
+    def bios_pipeline(self, bios_name, x_dsf, quick=False):
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
         else:
@@ -3173,10 +3315,10 @@ class EVAL_CANDI(object):
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
 
-        eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices)
+        eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices, quick=quick)
         return eval_res
     
-    def bios_pipeline_eic(self, bios_name, x_dsf):
+    def bios_pipeline_eic(self, bios_name, x_dsf, quick=False):
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
         else:
@@ -3209,7 +3351,7 @@ class EVAL_CANDI(object):
 
         print("getting metrics")
 
-        eval_res = self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices)
+        eval_res = self.get_metric_eic(ups_count_dist, ups_pval_dist, Y, X, P, bios_name, available_X_indices, available_Y_indices, quick=quick)
         return eval_res
 
     def viz_bios(self, eval_res):
@@ -3392,10 +3534,14 @@ def main():
     parser.add_argument("--rnaonly", action="store_true", help="Flag to evaluate only RNAseq prediction.")
     parser.add_argument("--dino", action="store_true", help="Flag to enable DINO mode.")
     parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
+    parser.add_argument("--quick", action="store_true", help="Flag to quickly compute eval metrics for one biosample.")
+    parser.add_argument("--list_bios", action="store_true", help="print the list of all available biosamples for evaluating")
+
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
     parser.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Split to evaluate on. Options: test, val.")
     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
+
 
     args = parser.parse_args()
     savedir = args.savedir
@@ -3403,12 +3549,15 @@ def main():
     if args.dino:
         savedir = savedir.replace("CANDI", "CANDINO")
         
-
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
+
+    if args.list_bios:
+        print(ec.dataset.navigation.keys())
+        exit()
 
     if args.bios_name == "all":
         if args.rnaonly:
@@ -3417,16 +3566,23 @@ def main():
             ec.viz_all(dsf=1)
 
     else:
+        if args.rnaonly and not args.eic:
+            ec.bios_rnaseq_eval(args.bios_name, args.dsf)
+            exit()
+            
         if args.eic:
-            res = ec.bios_pipeline_eic(args.bios_name, args.dsf)
+            res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick)
+            if args.quick:
+                print(res)
         else:
-            if args.rnaonly:
-                res = ec.bios_rnaseq_eval(args.bios_name, args.dsf)
-            else:
-                res = ec.bios_pipeline(args.bios_name, args.dsf)
-                ec.viz_bios(eval_res=res)
-                res = ec.filter_res(res)
-                print(pd.DataFrame(res))
+            res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
+            if args.quick:
+                print(res)
+
+        if not args.quick:
+            ec.viz_bios(eval_res=res)
+            res = ec.filter_res(res)
+            print(pd.DataFrame(res))
 
 if __name__ == "__main__":
     main()
@@ -3441,3 +3597,5 @@ if __name__ == "__main__":
     # python eval.py -m models/CANDIeic_DNA_random_mask_rand10k_model_checkpoint_epoch4_chr8.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_rand10k_20250515215719_params46300375.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDI_rand10k/ --rnaonly all
     # python eval.py -m models/CANDINO_ccre10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_ccre10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_ccre10k/ --dino --rnaonly all
     # python eval.py -m models/CANDINO_rand10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_rand10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_rand10k/ --dino --rnaonly all
+
+    # python eval.py -m models/CANDIfull_DNA_random_mask_admx_cos_shdc_model_checkpoint_epoch6.pth -hp models/hyper_parameters_CANDIfull_DNA_random_mask_admx_cos_shdc_20250705123426_params43234025.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDIfull_admx_cos_shdc/ --quick
