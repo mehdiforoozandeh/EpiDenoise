@@ -2901,12 +2901,12 @@ class EVAL_CANDI(object):
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                         'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
-                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
+                        # 'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
-                        # 'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
-                        # 'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
-                        # 'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
-                        # 'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+                        'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
+                        'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
+                        'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
+                        'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
                         # 'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target),
 
                         'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
@@ -2918,13 +2918,13 @@ class EVAL_CANDI(object):
                         'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
                         'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
                         'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
-                        'C_Cidx_gene':self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target),
+                        # 'C_Cidx_gene':self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target),
 
                         'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
                         'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
                         'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
                         'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
-                        'C_Cidx_prom':self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target),
+                        # 'C_Cidx_prom':self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target),
 
                         "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
                         "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
