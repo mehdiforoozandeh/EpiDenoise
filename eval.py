@@ -362,38 +362,51 @@ class METRICS(object):
 
         return analysis
 
-    def c_index_gauss(self, mus, sigmas, y_true, num_pairs=10000):
+    def c_index_gauss(self, mus, sigmas, y_true, num_pairs: int = 10000):
         """
-        Concordance index for Gaussian predictive marginals, sampling up to `num_pairs` pairs.
+        Concordance index for Gaussian predictive marginals,
+        estimating over `num_pairs` randomly sampled pairs.
+        
         Inputs:
           - mus:       array_like, shape (N,) of predicted means μ_i
           - sigmas:    array_like, shape (N,) of predicted stddevs σ_i
           - y_true:    array_like, shape (N,) of true values y_i
-          - num_pairs: how many random (i<j) pairs to sample; -1 = use all pairs
+          - num_pairs: number of random (i<j) pairs to sample;
+                       if -1, use all possible pairs (i<j)
         Returns:
           - c_index: float in [0,1]
         """
-        print("gauss initing pairs")
         N = len(y_true)
-        # build list of all valid (i<j) with y_true[i] != y_true[j]
-        pairs = [(i, j)
-                 for i in range(N) for j in range(i+1, N)
-                 if y_true[i] != y_true[j]]
-        M = len(pairs)
-        # decide which pairs to actually score
-        if num_pairs > 0 and num_pairs < M:
-            idx = np.random.choice(M, size=num_pairs, replace=False)
-            pairs = [pairs[k] for k in idx]
-
         labels = []
         scores = []
-        for i, j in pairs:
-            t0 = datetime.now()
-            labels.append(int(y_true[i] > y_true[j]))
-            delta = mus[i] - mus[j]
-            sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
-            scores.append(norm.cdf(delta / sd))
-            print("gauss", datetime.now()-t0)
+
+        if num_pairs == -1:
+            # exact over all valid pairs
+            for i in range(N):
+                for j in range(i+1, N):
+                    if y_true[i] == y_true[j]:
+                        continue
+                    labels.append(int(y_true[i] > y_true[j]))
+                    delta = mus[i] - mus[j]
+                    sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
+                    scores.append(norm.cdf(delta / sd))
+        else:
+            # Monte Carlo sampling of pairs
+            rng = np.random.default_rng()
+            count = 0
+            while count < num_pairs:
+                i, j = rng.integers(0, N, size=2)
+                if i == j or y_true[i] == y_true[j]:
+                    continue
+                # Optional: enforce ordering i<j for consistency
+                if i > j:
+                    i, j = j, i
+                labels.append(int(y_true[i] > y_true[j]))
+                delta = mus[i] - mus[j]
+                sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
+                scores.append(norm.cdf(delta / sd))
+                count += 1
+
         return roc_auc_score(labels, scores)
 
     def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
@@ -423,40 +436,57 @@ class METRICS(object):
         c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
 
-    def c_index_nbinom(self, rs, ps, y_true, epsilon=1e-6, num_pairs=10000):
+    def c_index_nbinom(self, rs, ps, y_true, epsilon: float = 1e-6, num_pairs: int = 10000):
         """
-        Concordance index for Negative‐Binomial predictive marginals, sampling up to `num_pairs` pairs.
+        Concordance index for Negative‐Binomial predictive marginals,
+        estimating over `num_pairs` randomly sampled pairs.
+
         Inputs:
-          - rs:        array_like, shape (N,) of NB 'r' parameters
+          - rs:        array_like, shape (N,) of NB 'r' (dispersion) parameters
           - ps:        array_like, shape (N,) of NB 'p' parameters
           - y_true:    array_like, shape (N,) of true values y_i
           - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
-          - num_pairs: how many random (i<j) pairs to sample; -1 = use all pairs
+          - num_pairs: number of random (i<j) pairs to sample;
+                       if -1, use all possible pairs (i<j)
         Returns:
           - c_index: float in [0,1]
         """
-        print("nbinom initing pairs")
         N = len(y_true)
-        pairs = [(i, j)
-                 for i in range(N) for j in range(i+1, N)
-                 if y_true[i] != y_true[j]]
-        M = len(pairs)
-        if num_pairs > 0 and num_pairs < M:
-            idx = np.random.choice(M, size=num_pairs, replace=False)
-            pairs = [pairs[k] for k in idx]
-
         labels = []
         scores = []
-        for i, j in pairs:
-            t0 = datetime.now()
-            labels.append(int(y_true[i] > y_true[j]))
-            # truncate Y_j’s tail so P(Y_j ≤ K) ≥ 1−ε
-            K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
-            k = np.arange(K+1)
-            pmf_j = nbinom.pmf(k, rs[j], ps[j])
-            cdf_i = nbinom.cdf(k, rs[i], ps[i])
-            scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
-            print("nbinom", datetime.now()-t0)
+
+        if num_pairs == -1:
+            # Exact over all valid pairs
+            for i in range(N):
+                for j in range(i+1, N):
+                    if y_true[i] == y_true[j]:
+                        continue
+                    labels.append(int(y_true[i] > y_true[j]))
+                    # truncate Y_j’s tail so P(Y_j ≤ K) ≥ 1−ε
+                    K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
+                    k = np.arange(K + 1)
+                    pmf_j = nbinom.pmf(k, rs[j], ps[j])
+                    cdf_i = nbinom.cdf(k, rs[i], ps[i])
+                    scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+        else:
+            # Monte Carlo sampling of pairs
+            rng = np.random.default_rng()
+            count = 0
+            while count < num_pairs:
+                i, j = rng.integers(0, N, size=2)
+                if i == j or y_true[i] == y_true[j]:
+                    continue
+                # Optional: enforce ordering i<j
+                if i > j:
+                    i, j = j, i
+                labels.append(int(y_true[i] > y_true[j]))
+                K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
+                k = np.arange(K + 1)
+                pmf_j = nbinom.pmf(k, rs[j], ps[j])
+                cdf_i = nbinom.cdf(k, rs[i], ps[i])
+                scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+                count += 1
+
         return roc_auc_score(labels, scores)
 
     def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
