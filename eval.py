@@ -480,12 +480,15 @@ class METRICS(object):
                 if i > j:
                     i, j = j, i
                 labels.append(int(y_true[i] > y_true[j]))
-                K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
-                k = np.arange(K + 1)
-                pmf_j = nbinom.pmf(k, rs[j], ps[j])
-                cdf_i = nbinom.cdf(k, rs[i], ps[i])
-                scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
-                count += 1
+                try:
+                    K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
+                    k = np.arange(K + 1)
+                    pmf_j = nbinom.pmf(k, rs[j], ps[j])
+                    cdf_i = nbinom.cdf(k, rs[i], ps[i])
+                    scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+                    count += 1
+                except:
+                    pass
 
         return roc_auc_score(labels, scores)
 
