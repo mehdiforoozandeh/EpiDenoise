@@ -2936,13 +2936,13 @@ class EVAL_CANDI(object):
                         'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
                         'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
                         'P_r2_GW': self.metrics.r2(P_target, pred_pval),
-                        'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
+                        # 'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
                         'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
                         'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
                         'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
-                        'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target),
+                        # 'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
                         'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
@@ -2953,13 +2953,13 @@ class EVAL_CANDI(object):
                         'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
                         'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
                         'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
-                        'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target),
+                        # 'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
                         'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
                         'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
                         'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
-                        'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target),
+                        # 'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target),
 
                         "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                         "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
