@@ -3556,8 +3556,10 @@ def main():
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
 
     if args.list_bios:
-        print(ec.dataset.navigation.keys())
-        exit()
+        for k, v in ec.dataset.navigation.items():
+            print(f"{k}: {len(v)} available assays")
+        
+        
 
     if args.bios_name == "all":
         if args.rnaonly:
