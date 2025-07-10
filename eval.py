@@ -373,6 +373,7 @@ class METRICS(object):
         Returns:
           - c_index: float in [0,1]
         """
+        print("gauss initing pairs")
         N = len(y_true)
         # build list of all valid (i<j) with y_true[i] != y_true[j]
         pairs = [(i, j)
@@ -434,6 +435,7 @@ class METRICS(object):
         Returns:
           - c_index: float in [0,1]
         """
+        print("nbinom initing pairs")
         N = len(y_true)
         pairs = [(i, j)
                  for i in range(N) for j in range(i+1, N)
