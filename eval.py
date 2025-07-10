@@ -3179,7 +3179,7 @@ class EVAL_CANDI(object):
                 metrics["pred_pval"] = pred_pval
                 metrics["pred_pval_std"] = pred_pval_std
 
-                metrics["count_lower_95"] = : count_lower_95
+                metrics["count_lower_95"] =  count_lower_95
                 metrics["count_upper_95"] =  count_upper_95
 
                 metrics["pval_lower_95"] = : pval_lower_95
