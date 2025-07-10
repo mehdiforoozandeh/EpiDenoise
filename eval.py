@@ -387,10 +387,12 @@ class METRICS(object):
         labels = []
         scores = []
         for i, j in pairs:
+            t0 = datetime.now()
             labels.append(int(y_true[i] > y_true[j]))
             delta = mus[i] - mus[j]
             sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
             scores.append(norm.cdf(delta / sd))
+            print("gauss", datetime.now()-t0)
         return roc_auc_score(labels, scores)
 
     def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
@@ -444,6 +446,7 @@ class METRICS(object):
         labels = []
         scores = []
         for i, j in pairs:
+            t0 = datetime.now()
             labels.append(int(y_true[i] > y_true[j]))
             # truncate Y_j’s tail so P(Y_j ≤ K) ≥ 1−ε
             K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
@@ -451,6 +454,7 @@ class METRICS(object):
             pmf_j = nbinom.pmf(k, rs[j], ps[j])
             cdf_i = nbinom.cdf(k, rs[i], ps[i])
             scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+            print("nbinom", datetime.now()-t0)
         return roc_auc_score(labels, scores)
 
     def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
@@ -2905,7 +2909,7 @@ class EVAL_CANDI(object):
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                         'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
-                        # 'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
+                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
                         'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
                         'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
@@ -2940,7 +2944,7 @@ class EVAL_CANDI(object):
                         'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
                         'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
                         'P_r2_GW': self.metrics.r2(P_target, pred_pval),
-                        # 'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
+                        'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
 
                         'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
                         'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
