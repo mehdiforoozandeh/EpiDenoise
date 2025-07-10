@@ -2454,7 +2454,7 @@ def k_fold_cross_validation(data, k=10, target='TPM', logscale=True, model_type=
 class EVAL_CANDI(object):
     def __init__(
         self, model, data_path, context_length, batch_size, hyper_parameters_path="",
-        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, 
+        train_log={}, chr_sizes_file="data/hg38.chrom.sizes", resolution=25, must_have_chr_access=True,
         savedir="models/evals/", mode="eval", split="test", eic=False, DNA=False,
         DINO=False, ENC_CKP=None, DEC_CKP=None):
 
@@ -2475,7 +2475,10 @@ class EVAL_CANDI(object):
         self.model = model
         self.dataset = ExtendedEncodeDataHandler(self.data_path, resolution=self.resolution)
         
-        
+        self.dataset.init_eval(
+            self.context_length, check_completeness=True, split=split, 
+            bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True, 
+            must_have_chr_access=must_have_chr_access)
 
         self.gene_coords = load_gene_coords("data/parsed_genecode_data_hg38_release42.csv")
         self.gene_coords = self.gene_coords[self.gene_coords["chr"] == "chr21"].reset_index(drop=True)
@@ -2542,10 +2545,7 @@ class EVAL_CANDI(object):
                 loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
                 self.model = loader.load_CANDI()
         
-        self.dataset.init_eval(
-            self.context_length, check_completeness=True, split=split, 
-            bios_min_exp_avail_threshold=3, eic=eic, merge_ct=True, 
-            must_have_chr_access=self.hyper_parameters["must_have_chr_access"])
+        
 
         self.expnames = list(self.dataset.aliases["experiment_aliases"].keys())
         self.mark_dict = {i: self.expnames[i] for i in range(len(self.expnames))}
