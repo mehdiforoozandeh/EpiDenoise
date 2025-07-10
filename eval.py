@@ -2759,10 +2759,10 @@ class EVAL_CANDI(object):
                 seq_batch = seq[i:i + self.batch_size]
 
             with torch.no_grad():
-                # x_batch = x_batch.clone()
-                # avail_batch = avail_batch.clone()
-                # mX_batch = mX_batch.clone()
-                # mY_batch = mY_batch.clone()
+                x_batch = x_batch.clone()
+                avail_batch = avail_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
 
                 x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
                 mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
