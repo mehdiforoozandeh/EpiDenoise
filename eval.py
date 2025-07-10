@@ -2903,11 +2903,11 @@ class EVAL_CANDI(object):
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
                         'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
-                        'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
-                        'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
-                        'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
-                        'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
-                        'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target),
+                        # 'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
+                        # 'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
+                        # 'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
+                        # 'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+                        # 'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target),
 
                         'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
                         'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
