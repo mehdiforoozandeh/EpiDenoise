@@ -3264,6 +3264,8 @@ class EVAL_CANDI(object):
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
         else:
             X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+        
+        print("loaded input data")
 
         available_indices = torch.where(avX[0, :] == 1)[0]
 
@@ -3294,6 +3296,8 @@ class EVAL_CANDI(object):
 
         del X, mX, mY, avX, avY  # Free up memory
 
+        print("got predictions")
+
         p_imp = p_imp.view((p_imp.shape[0] * p_imp.shape[1]), p_imp.shape[-1])
         n_imp = n_imp.view((n_imp.shape[0] * n_imp.shape[1]), n_imp.shape[-1])
 
@@ -3314,7 +3318,8 @@ class EVAL_CANDI(object):
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
-
+        
+        print("evaluating...")
         eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices, quick=quick)
         return eval_res
     
@@ -3558,9 +3563,8 @@ def main():
     if args.list_bios:
         for k, v in ec.dataset.navigation.items():
             print(f"{k}: {len(v)} available assays")
+        exit()
         
-        
-
     if args.bios_name == "all":
         if args.rnaonly:
             ec.rnaseq_all(dsf=1)

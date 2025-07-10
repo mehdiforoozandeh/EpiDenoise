@@ -2971,7 +2971,7 @@ class ExtendedEncodeDataHandler:
         excludes=[], 
         eic=False, 
         merge_ct=True, 
-        must_have_chr_access=False): #split in ["test", "val"]
+        must_have_chr_access=False):
 
         self.set_alias()
         self.merge_ct = merge_ct
