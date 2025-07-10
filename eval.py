@@ -3579,11 +3579,11 @@ def main():
         if args.eic:
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick)
             if args.quick:
-                print(res)
+                print(pd.DataFrame(res))
         else:
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
             if args.quick:
-                print(res)
+                print(pd.DataFrame(res))
 
         if not args.quick:
             ec.viz_bios(eval_res=res)
