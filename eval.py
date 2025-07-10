@@ -2544,6 +2544,8 @@ class EVAL_CANDI(object):
                     self.hyper_parameters = pickle.load(f)
                     self.hyper_parameters["signal_dim"] = self.dataset.signal_dim
                     self.hyper_parameters["metadata_embedding_dim"] = self.dataset.signal_dim*4
+                    print(self.hyper_parameters)
+                    exit()
                 loader = CANDI_LOADER(model, self.hyper_parameters, DNA=self.DNA)
                 self.model = loader.load_CANDI()
             
