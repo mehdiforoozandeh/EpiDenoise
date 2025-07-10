@@ -3581,15 +3581,15 @@ def main():
             exit()
             
         if args.eic:
-            t = datetime.now()
+            t0 = datetime.now()
             res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
-            
+
             if args.quick:
                 print(pd.DataFrame(res))
         else:
-            t = datetime.now()
+            t0 = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
