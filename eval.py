@@ -384,7 +384,6 @@ class METRICS(object):
             # exact over all valid pairs
             for i in range(N):
                 for j in range(i+1, N):
-                    print("Gauss", N, i, j)
                     if y_true[i] == y_true[j]:
                         continue
                     labels.append(int(y_true[i] > y_true[j]))
@@ -490,7 +489,6 @@ class METRICS(object):
             # exact mode
             for i in range(N):
                 for j in range(i+1, N):
-                    print("NBinom", N, i, j)
                     if y_true[i] == y_true[j]:
                         continue
                     sc = compute_score(i, j)
@@ -2985,7 +2983,7 @@ class EVAL_CANDI(object):
                         'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
                         'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
                         'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
-                        'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target, num_pairs=-1),
+                        'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target, num_pairs=5000),
 
                         'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
                         'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
@@ -3020,7 +3018,7 @@ class EVAL_CANDI(object):
                         'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
                         'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
                         'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
-                        'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target, num_pairs=-1),
+                        'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target, num_pairs=5000),
 
                         'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
                         'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
