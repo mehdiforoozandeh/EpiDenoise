@@ -458,45 +458,58 @@ class METRICS(object):
         labels = []
         scores = []
 
-        def compute_pair_score(i, j):
-            # clamp p_j to (epsilon, 1-epsilon) to avoid degenerate ppf
+        def compute_score(i, j):
+            # clamp p_j into (ε,1−ε)
             p_j = np.clip(ps[j], epsilon, 1 - epsilon)
             r_j = rs[j]
-            # attempt to find K so that P(Y_j <= K) >= 1 - epsilon
+            if r_j <= 0:
+                return None
+            # find cutoff K
             K = nbinom.ppf(1 - epsilon, r_j, p_j)
             if not np.isfinite(K):
-                # fallback: if p_j~1, mass nearly all at 0
                 K = 0
             else:
                 K = int(K)
-            # build array [0..K], get pmf_j and cdf_i
+            # PMF/CDF arrays
             k = np.arange(K + 1)
             pmf_j = nbinom.pmf(k, r_j, p_j)
             cdf_i = nbinom.cdf(k, rs[i], ps[i])
+            # if anything is nan, bail
+            if not (np.isfinite(pmf_j).all() and np.isfinite(cdf_i).all()):
+                return None
             return np.sum(pmf_j * (1.0 - cdf_i))
 
         if num_pairs == -1:
-            # exact over all valid pairs
+            # exact mode
             for i in range(N):
                 for j in range(i+1, N):
                     if y_true[i] == y_true[j]:
                         continue
+                    sc = compute_score(i, j)
+                    if sc is None:
+                        continue
                     labels.append(int(y_true[i] > y_true[j]))
-                    scores.append(compute_pair_score(i, j))
+                    scores.append(sc)
         else:
-            # Monte Carlo sampling of pairs
+            # sampling mode
             rng = np.random.default_rng()
             count = 0
             while count < num_pairs:
                 i, j = rng.integers(0, N, size=2)
                 if i == j or y_true[i] == y_true[j]:
                     continue
-                # optionally enforce i<j
                 if i > j:
                     i, j = j, i
+                sc = compute_score(i, j)
+                if sc is None:
+                    continue
                 labels.append(int(y_true[i] > y_true[j]))
-                scores.append(compute_pair_score(i, j))
+                scores.append(sc)
                 count += 1
+
+        if len(labels) == 0:
+            # no valid pairs
+            return np.nan
 
         return roc_auc_score(labels, scores)
 
