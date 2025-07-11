@@ -384,6 +384,7 @@ class METRICS(object):
             # exact over all valid pairs
             for i in range(N):
                 for j in range(i+1, N):
+                    print("Gauss", N, i, j)
                     if y_true[i] == y_true[j]:
                         continue
                     labels.append(int(y_true[i] > y_true[j]))
@@ -489,6 +490,7 @@ class METRICS(object):
             # exact mode
             for i in range(N):
                 for j in range(i+1, N):
+                    print("NBinom", N, i, j)
                     if y_true[i] == y_true[j]:
                         continue
                     sc = compute_score(i, j)
