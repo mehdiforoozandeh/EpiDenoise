@@ -3029,13 +3029,13 @@ class EVAL_CANDI(object):
                         'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
                         'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
                         'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
-                        # 'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target, num_pairs=-1),
+                        'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target, num_pairs=-1),
 
                         'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
                         'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
                         'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
                         'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
-                        # 'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target, num_pairs=-1),
+                        'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target, num_pairs=-1),
 
                         "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                         "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
