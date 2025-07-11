@@ -3660,7 +3660,7 @@ def main():
 
             if args.quick:
                 report = pd.DataFrame(res)
-                print(report[c for c in report.columns if "Cidx" in c])
+                print(report[[c for c in report.columns if "Cidx" in c]])
         else:
             t0 = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
@@ -3669,7 +3669,7 @@ def main():
 
             if args.quick:
                 report = pd.DataFrame(res)
-                print(report[c for c in report.columns if "Cidx" in c])
+                print(report[[c for c in report.columns if "Cidx" in c]])
 
         if not args.quick:
             ec.viz_bios(eval_res=res)
