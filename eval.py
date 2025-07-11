@@ -412,9 +412,10 @@ class METRICS(object):
     def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
         valid_indices = indices[indices < len(array)]
+        
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
-            num_pair = -1
+            num_pairs = -1
 
         c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
         return c_idx
@@ -425,7 +426,7 @@ class METRICS(object):
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
-            num_pair = -1
+            num_pairs = -1
 
         c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
         return c_idx
@@ -434,7 +435,9 @@ class METRICS(object):
         perc_99 = np.percentile(y_true, 99)
         perc_99_pos = np.where(y_true >= perc_99)[0]
 
-        num_pairs = min(num_pairs, len(perc_99_pos))
+        N = len(perc_99_pos)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
 
         c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
@@ -522,7 +525,7 @@ class METRICS(object):
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
-            num_pair = -1
+            num_pairs = -1
 
         c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
         return c_idx
@@ -533,7 +536,7 @@ class METRICS(object):
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
-            num_pair = -1
+            num_pairs = -1
 
         c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
         return c_idx
@@ -544,9 +547,7 @@ class METRICS(object):
 
         N = len(perc_99_pos)
         if (N*(N-1))/2 < num_pairs:
-            num_pair = -1
-
-        num_pairs = min(num_pairs, len(perc_99_pos))
+            num_pairs = -1
         
         c_idx = self.c_index_nbinom(rs[perc_99_pos], ps[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
