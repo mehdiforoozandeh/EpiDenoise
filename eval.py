@@ -542,6 +542,10 @@ class METRICS(object):
         perc_99 = np.percentile(y_true, 99)
         perc_99_pos = np.where(y_true >= perc_99)[0]
 
+        N = len(perc_99_pos)
+        if (N*(N-1))/2 < num_pairs:
+            num_pair = -1
+
         num_pairs = min(num_pairs, len(perc_99_pos))
         
         c_idx = self.c_index_nbinom(rs[perc_99_pos], ps[perc_99_pos], y_true[perc_99_pos], num_pairs)
