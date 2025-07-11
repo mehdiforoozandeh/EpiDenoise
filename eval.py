@@ -436,18 +436,21 @@ class METRICS(object):
         c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
 
-    def c_index_nbinom(self, rs, ps, y_true, epsilon: float = 1e-6, num_pairs: int = 10000):
+    def c_index_nbinom(self,
+                       rs, ps, y_true,
+                       epsilon: float = 1e-6,
+                       num_pairs: int = 10000):
         """
         Concordance index for Negative‐Binomial predictive marginals,
         estimating over `num_pairs` randomly sampled pairs.
 
         Inputs:
-          - rs:        array_like, shape (N,) of NB 'r' (dispersion) parameters
-          - ps:        array_like, shape (N,) of NB 'p' parameters
-          - y_true:    array_like, shape (N,) of true values y_i
+          - rs:        (N,) array of NB 'r' parameters (must be >0)
+          - ps:        (N,) array of NB 'p' parameters (0<p<1)
+          - y_true:    (N,) array of true values y_i
           - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
           - num_pairs: number of random (i<j) pairs to sample;
-                       if -1, use all possible pairs (i<j)
+                       if -1, use all valid pairs (i<j, y_i≠y_j)
         Returns:
           - c_index: float in [0,1]
         """
@@ -455,19 +458,31 @@ class METRICS(object):
         labels = []
         scores = []
 
+        def compute_pair_score(i, j):
+            # clamp p_j to (epsilon, 1-epsilon) to avoid degenerate ppf
+            p_j = np.clip(ps[j], epsilon, 1 - epsilon)
+            r_j = rs[j]
+            # attempt to find K so that P(Y_j <= K) >= 1 - epsilon
+            K = nbinom.ppf(1 - epsilon, r_j, p_j)
+            if not np.isfinite(K):
+                # fallback: if p_j~1, mass nearly all at 0
+                K = 0
+            else:
+                K = int(K)
+            # build array [0..K], get pmf_j and cdf_i
+            k = np.arange(K + 1)
+            pmf_j = nbinom.pmf(k, r_j, p_j)
+            cdf_i = nbinom.cdf(k, rs[i], ps[i])
+            return np.sum(pmf_j * (1.0 - cdf_i))
+
         if num_pairs == -1:
-            # Exact over all valid pairs
+            # exact over all valid pairs
             for i in range(N):
                 for j in range(i+1, N):
                     if y_true[i] == y_true[j]:
                         continue
                     labels.append(int(y_true[i] > y_true[j]))
-                    # truncate Y_j’s tail so P(Y_j ≤ K) ≥ 1−ε
-                    K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
-                    k = np.arange(K + 1)
-                    pmf_j = nbinom.pmf(k, rs[j], ps[j])
-                    cdf_i = nbinom.cdf(k, rs[i], ps[i])
-                    scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
+                    scores.append(compute_pair_score(i, j))
         else:
             # Monte Carlo sampling of pairs
             rng = np.random.default_rng()
@@ -476,19 +491,12 @@ class METRICS(object):
                 i, j = rng.integers(0, N, size=2)
                 if i == j or y_true[i] == y_true[j]:
                     continue
-                # Optional: enforce ordering i<j
+                # optionally enforce i<j
                 if i > j:
                     i, j = j, i
                 labels.append(int(y_true[i] > y_true[j]))
-                try:
-                    K = int(nbinom.ppf(1 - epsilon, rs[j], ps[j]))
-                    k = np.arange(K + 1)
-                    pmf_j = nbinom.pmf(k, rs[j], ps[j])
-                    cdf_i = nbinom.cdf(k, rs[i], ps[i])
-                    scores.append(np.sum(pmf_j * (1.0 - cdf_i)))
-                    count += 1
-                except:
-                    pass
+                scores.append(compute_pair_score(i, j))
+                count += 1
 
         return roc_auc_score(labels, scores)
 
