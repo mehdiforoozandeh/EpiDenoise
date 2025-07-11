@@ -411,7 +411,7 @@ class METRICS(object):
 
     def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
-        valid_indices = indices[indices < len(array)]
+        valid_indices = indices[indices < len(y_true)]
         
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
@@ -422,7 +422,7 @@ class METRICS(object):
 
     def c_index_gauss_prom(self, mus, sigmas, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
-        valid_indices = indices[indices < len(array)]
+        valid_indices = indices[indices < len(y_true)]
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
@@ -521,7 +521,7 @@ class METRICS(object):
 
     def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
-        valid_indices = indices[indices < len(array)]
+        valid_indices = indices[indices < len(y_true)]
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
@@ -532,7 +532,7 @@ class METRICS(object):
 
     def c_index_nbinom_prom(self, rs, ps, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
-        valid_indices = indices[indices < len(array)]
+        valid_indices = indices[indices < len(y_true)]
 
         N = len(valid_indices)
         if (N*(N-1))/2 < num_pairs:
