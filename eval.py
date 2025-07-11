@@ -412,8 +412,8 @@ class METRICS(object):
     def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
         valid_indices = indices[indices < len(array)]
-
-        if len(valid_indices) < num_pairs:
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
             num_pair = -1
 
         c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
@@ -423,7 +423,8 @@ class METRICS(object):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
         valid_indices = indices[indices < len(array)]
 
-        if len(valid_indices) < num_pairs:
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
             num_pair = -1
 
         c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
@@ -519,8 +520,8 @@ class METRICS(object):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
         valid_indices = indices[indices < len(array)]
 
-
-        if len(valid_indices) < num_pairs:
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
             num_pair = -1
 
         c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
@@ -530,7 +531,8 @@ class METRICS(object):
         indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
         valid_indices = indices[indices < len(array)]
 
-        if len(valid_indices) < num_pairs:
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
             num_pair = -1
 
         c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
