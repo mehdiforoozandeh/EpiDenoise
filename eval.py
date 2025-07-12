@@ -3023,7 +3023,7 @@ class EVAL_CANDI(object):
                         'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
                         'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
                         'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, pred_pval),
-                        # 'P_r2_1imp': self.metrics.r2_1imp(P_target, pred_pval),
+                        'P_r2_1imp': self.metrics.r2_1imp(P_target, pred_pval),
 
                         'P_MSE-gene': self.metrics.mse_gene(P_target, pred_pval),
                         'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
