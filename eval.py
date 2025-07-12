@@ -473,10 +473,10 @@ class METRICS(object):
             # find cutoff K
             K = nbinom.ppf(1 - epsilon, r_j, p_j)
             if not np.isfinite(K):
-                print(K, r_j, p_j)
                 K = 0
             else:
                 K = int(K)
+                print(K, r_j, p_j)
               
             # PMF/CDF arrays
             k = np.arange(K + 1)
