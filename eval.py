@@ -442,82 +442,141 @@ class METRICS(object):
         c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
 
+    # def c_index_nbinom(self,
+    #                    rs, ps, y_true,
+    #                    epsilon: float = 1e-6,
+    #                    num_pairs: int = 10000):
+    #     """
+    #     Concordance index for Negative‐Binomial predictive marginals,
+    #     estimating over `num_pairs` randomly sampled pairs.
+
+    #     Inputs:
+    #       - rs:        (N,) array of NB 'r' parameters (must be >0)
+    #       - ps:        (N,) array of NB 'p' parameters (0<p<1)
+    #       - y_true:    (N,) array of true values y_i
+    #       - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
+    #       - num_pairs: number of random (i<j) pairs to sample;
+    #                    if -1, use all valid pairs (i<j, y_i≠y_j)
+    #     Returns:
+    #       - c_index: float in [0,1]
+    #     """
+    #     N = len(y_true)
+    #     labels = []
+    #     scores = []
+
+    #     def compute_score(i, j):
+    #         # clamp p_j into (ε,1−ε)
+    #         p_j = np.clip(ps[j], epsilon, 1 - epsilon)
+    #         r_j = rs[j]
+    #         if r_j <= 0:
+    #             return None
+    #         # find cutoff K
+    #         K = nbinom.ppf(1 - epsilon, r_j, p_j)
+    #         if not np.isfinite(K):
+    #             K = 0
+    #         else:
+    #             K = int(K)
+              
+    #         # PMF/CDF arrays
+    #         k = np.arange(K + 1)
+    #         pmf_j = nbinom.pmf(k, r_j, p_j)
+    #         cdf_i = nbinom.cdf(k, rs[i], ps[i])
+    #         # if anything is nan, bail
+    #         if not (np.isfinite(pmf_j).all() and np.isfinite(cdf_i).all()):
+    #             return None
+    #         return np.sum(pmf_j * (1.0 - cdf_i))
+
+    #     if num_pairs == -1:
+    #         # exact mode
+    #         for i in range(N):
+    #             for j in range(i+1, N):
+    #                 if y_true[i] == y_true[j]:
+    #                     continue
+    #                 sc = compute_score(i, j)
+    #                 if sc is None:
+    #                     continue
+    #                 labels.append(int(y_true[i] > y_true[j]))
+    #                 scores.append(sc)
+    #     else:
+    #         # sampling mode
+    #         rng = np.random.default_rng()
+    #         count = 0
+    #         while count < num_pairs:
+    #             i, j = rng.integers(0, N, size=2)
+    #             if i == j or y_true[i] == y_true[j]:
+    #                 continue
+    #             if i > j:
+    #                 i, j = j, i
+    #             sc = compute_score(i, j)
+    #             if sc is None:
+    #                 continue
+    #             labels.append(int(y_true[i] > y_true[j]))
+    #             scores.append(sc)
+    #             count += 1
+
+    #     if len(labels) == 0:
+    #         # no valid pairs
+    #         return np.nan
+
+    #     return roc_auc_score(labels, scores)
+
     def c_index_nbinom(self,
-                       rs, ps, y_true,
-                       epsilon: float = 1e-6,
-                       num_pairs: int = 10000):
+                    rs, ps, y_true,
+                    M: int = 500,
+                    num_pairs: int = 10000,
+                    random_state: int = None):
         """
-        Concordance index for Negative‐Binomial predictive marginals,
-        estimating over `num_pairs` randomly sampled pairs.
+        Monte Carlo Concordance index for Negative‐Binomial predictive marginals.
+
+        For each sampled pair (i,j), draw M samples from NB(ri,pi) and NB(rj,pj),
+        then estimate Pr(Y_i>Y_j) by the fraction of draws with u>v.
 
         Inputs:
-          - rs:        (N,) array of NB 'r' parameters (must be >0)
-          - ps:        (N,) array of NB 'p' parameters (0<p<1)
+          - rs:        (N,) array of NB 'r' parameters
+          - ps:        (N,) array of NB 'p' parameters
           - y_true:    (N,) array of true values y_i
-          - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
-          - num_pairs: number of random (i<j) pairs to sample;
+          - M:         number of Monte Carlo samples per pair
+          - num_pairs: how many random (i<j) pairs to sample;
                        if -1, use all valid pairs (i<j, y_i≠y_j)
+          - random_state: seed for reproducibility
         Returns:
           - c_index: float in [0,1]
         """
+        rng = np.random.default_rng(random_state)
         N = len(y_true)
         labels = []
         scores = []
 
-        def compute_score(i, j):
-            # clamp p_j into (ε,1−ε)
-            p_j = np.clip(ps[j], epsilon, 1 - epsilon)
-            r_j = rs[j]
-            if r_j <= 0:
-                return None
-            # find cutoff K
-            K = nbinom.ppf(1 - epsilon, r_j, p_j)
-            if not np.isfinite(K):
-                K = 0
-            else:
-                K = min(int(K), 100)
-              
-            # PMF/CDF arrays
-            k = np.arange(K + 1)
-            pmf_j = nbinom.pmf(k, r_j, p_j)
-            cdf_i = nbinom.cdf(k, rs[i], ps[i])
-            # if anything is nan, bail
-            if not (np.isfinite(pmf_j).all() and np.isfinite(cdf_i).all()):
-                return None
-            return np.sum(pmf_j * (1.0 - cdf_i))
+        def mc_score(i, j):
+            # draw M samples from each distribution
+            u = nbinom.rvs(rs[i], ps[i], size=M, random_state=rng)
+            v = nbinom.rvs(rs[j], ps[j], size=M, random_state=rng)
+            return np.mean(u > v)
 
         if num_pairs == -1:
-            # exact mode
+            # exact over all pairs
             for i in range(N):
                 for j in range(i+1, N):
                     if y_true[i] == y_true[j]:
                         continue
-                    sc = compute_score(i, j)
-                    if sc is None:
-                        continue
                     labels.append(int(y_true[i] > y_true[j]))
-                    scores.append(sc)
+                    scores.append(mc_score(i, j))
         else:
-            # sampling mode
-            rng = np.random.default_rng()
+            # sample random pairs
             count = 0
             while count < num_pairs:
                 i, j = rng.integers(0, N, size=2)
                 if i == j or y_true[i] == y_true[j]:
                     continue
+                # ensure i<j for consistency (optional)
                 if i > j:
                     i, j = j, i
-                sc = compute_score(i, j)
-                if sc is None:
-                    continue
                 labels.append(int(y_true[i] > y_true[j]))
-                scores.append(sc)
+                scores.append(mc_score(i, j))
                 count += 1
 
-        if len(labels) == 0:
-            # no valid pairs
+        if not labels:
             return np.nan
-
         return roc_auc_score(labels, scores)
 
     def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
