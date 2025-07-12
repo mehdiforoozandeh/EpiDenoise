@@ -472,6 +472,7 @@ class METRICS(object):
                 return None
             # find cutoff K
             K = nbinom.ppf(1 - epsilon, r_j, p_j)
+            print(K)
             if not np.isfinite(K):
                 K = 0
             else:
@@ -2977,13 +2978,13 @@ class EVAL_CANDI(object):
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                         'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
-                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
+                        # 'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
                         'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
                         'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
                         'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
                         'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
-                        # 'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target, num_pairs=5000),
+                        'C_Cidx_1obs':self.metrics.c_index_nbinom_1obs(pred_count_n, pred_count_p, C_target, num_pairs=5000),
 
                         'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
                         'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
@@ -3029,13 +3030,13 @@ class EVAL_CANDI(object):
                         'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
                         'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
                         'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
-                        'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target, num_pairs=2000),
+                        'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target, num_pairs=5000),
 
                         'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
                         'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
                         'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
                         'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
-                        'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target, num_pairs=2000),
+                        'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target, num_pairs=5000),
 
                         "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
                         "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
