@@ -475,8 +475,7 @@ class METRICS(object):
             if not np.isfinite(K):
                 K = 0
             else:
-                K = int(K)
-                print(K, r_j, p_j)
+                K = min(int(K), 100)
               
             # PMF/CDF arrays
             k = np.arange(K + 1)
