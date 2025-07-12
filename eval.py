@@ -3037,7 +3037,7 @@ class EVAL_CANDI(object):
                         'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
                         'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
                         'C_r2_GW': self.metrics.r2(C_target, pred_count),
-                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target, num_pairs=20000, M=1000),
+                        'C_Cidx_GW':self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
 
                         'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
                         'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
