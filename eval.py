@@ -612,7 +612,6 @@ class METRICS(object):
         c_idx = self.c_index_nbinom(rs[perc_99_pos], ps[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
 
-
 class VISUALS_CANDI(object):
     def __init__(self, resolution=25, savedir="models/evals/"):
         self.metrics = METRICS()
@@ -802,7 +801,7 @@ class VISUALS_CANDI(object):
             (25800151//self.resolution, 26235914//self.resolution), # APP
             (31589009//self.resolution, 31745788//self.resolution), # SOD1
             (39526359//self.resolution, 39802081//self.resolution), # B3GALT5
-            (33577551//self.resolution, 33919338//self.resolution) # ITSN1
+            (33577551//self.resolution, 33919338//self.resolution)  # ITSN1
             ]
 
         # Define the size of the figure
@@ -2467,6 +2466,161 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.svg", format="svg")
 
+    def count_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 100):
+        """
+        Meta-gene count profiles, one subplot per assay.
+        Red = predicted, blue = observed.
+        """
+        import os
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        # output dir
+        outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        os.makedirs(outdir, exist_ok=True)
+
+        flank_bins = flank_bp // self.resolution
+        n = len(eval_res)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        if n == 1: axes = [axes]
+
+        L = len(eval_res[0]['pred_count'])
+        gene_df = self.metrics.gene_df
+
+        for ax, res in zip(axes, eval_res):
+            pred = res['pred_count']
+            obs  = res.get('obs_count', None)
+
+            for _, g in gene_df.iterrows():
+                gs, ge = int(g.start), int(g.end)
+                # skip if entirely out of range
+                if gs>=L and ge>=L: continue
+
+                # upstream
+                up_bins = gs - flank_bins + np.arange(flank_bins)
+                up_vals = np.full(flank_bins, np.nan)
+                mask = (up_bins>=0)&(up_bins<L)
+                up_vals[mask] = pred[up_bins[mask]]
+                if obs is not None:
+                    up_obs = np.full(flank_bins, np.nan)
+                    up_obs[mask] = obs[up_bins[mask]]
+
+                # gene body (interp to fixed bins)
+                if ge>gs and gs<L:
+                    end = min(ge, L-1)
+                    xb = np.linspace(gs, end, gene_body_bins, endpoint=False)
+                    b_pred = np.interp(xb, np.arange(L), pred)
+                    b_obs  = np.interp(xb, np.arange(L), obs ) if obs is not None else None
+                else:
+                    # degenerate gene
+                    b_pred = np.full(gene_body_bins, np.nan)
+                    b_obs  = np.full(gene_body_bins, np.nan) if obs is not None else None
+
+                # downstream
+                dn_bins = ge + np.arange(flank_bins)
+                dn_vals = np.full(flank_bins, np.nan)
+                mask2 = (dn_bins>=0)&(dn_bins<L)
+                dn_vals[mask2] = pred[dn_bins[mask2]]
+                if obs is not None:
+                    dn_obs = np.full(flank_bins, np.nan)
+                    dn_obs[mask2] = obs[dn_bins[mask2]]
+
+                prof_pred = np.concatenate([up_vals, b_pred, dn_vals])
+                prof_obs  = np.concatenate([up_obs,  b_obs,  dn_obs]) if obs is not None else None
+
+                x = np.arange(-flank_bins, gene_body_bins + flank_bins)
+                ax.plot(x, prof_pred, color='red',   alpha=0.5, linewidth=0.8)
+                if prof_obs is not None:
+                    ax.plot(x, prof_obs,  color='blue',  alpha=0.5, linewidth=0.8)
+
+            # mark TSS/TES
+            ax.axvline(0,               color='k', linestyle='--')
+            ax.axvline(gene_body_bins, color='k', linestyle='--')
+            ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
+            ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
+            ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
+            ax.set_title(res['feature'])
+            ax.set_xlabel("Position rel. to gene")
+        axes[0].set_ylabel("Count")
+        plt.tight_layout()
+
+        plt.savefig(outdir + "count_metagene.png", dpi=150)
+        plt.savefig(outdir + "count_metagene.svg", format="svg")
+
+    def signal_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 100):
+        """
+        Meta-gene signal (p-value) profiles, one subplot per assay.
+        Red = predicted, blue = observed.
+        """
+        import os
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        os.makedirs(outdir, exist_ok=True)
+
+        flank_bins = flank_bp // self.resolution
+        n = len(eval_res)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        if n == 1: axes = [axes]
+
+        L = len(eval_res[0]['pred_pval'])
+        gene_df = self.metrics.gene_df
+
+        for ax, res in zip(axes, eval_res):
+            pred = res['pred_pval']
+            obs  = res.get('obs_pval', None)
+
+            for _, g in gene_df.iterrows():
+                gs, ge = int(g.start), int(g.end)
+                if gs>=L and ge>=L: continue
+
+                up_bins = gs - flank_bins + np.arange(flank_bins)
+                up_vals = np.full(flank_bins, np.nan)
+                m = (up_bins>=0)&(up_bins<L)
+                up_vals[m] = pred[up_bins[m]]
+                if obs is not None:
+                    up_obs = np.full(flank_bins, np.nan)
+                    up_obs[m] = obs[up_bins[m]]
+
+                if ge>gs and gs<L:
+                    end = min(ge, L-1)
+                    xb = np.linspace(gs, end, gene_body_bins, endpoint=False)
+                    b_pred = np.interp(xb, np.arange(L), pred)
+                    b_obs  = np.interp(xb, np.arange(L), obs ) if obs is not None else None
+                else:
+                    b_pred = np.full(gene_body_bins, np.nan)
+                    b_obs  = np.full(gene_body_bins, np.nan) if obs is not None else None
+
+                dn_bins = ge + np.arange(flank_bins)
+                dn_vals = np.full(flank_bins, np.nan)
+                m2 = (dn_bins>=0)&(dn_bins<L)
+                dn_vals[m2] = pred[dn_bins[m2]]
+                if obs is not None:
+                    dn_obs = np.full(flank_bins, np.nan)
+                    dn_obs[m2] = obs[dn_bins[m2]]
+
+                prof_pred = np.concatenate([up_vals, b_pred, dn_vals])
+                prof_obs  = np.concatenate([up_obs,  b_obs,  dn_obs]) if obs is not None else None
+
+                x = np.arange(-flank_bins, gene_body_bins + flank_bins)
+                ax.plot(x, prof_pred, color='red',   alpha=0.5, linewidth=0.8)
+                if prof_obs is not None:
+                    ax.plot(x, prof_obs,  color='blue',  alpha=0.5, linewidth=0.8)
+
+            ax.axvline(0,               color='k', linestyle='--')
+            ax.axvline(gene_body_bins, color='k', linestyle='--')
+            ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
+            ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
+            ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
+            ax.set_title(res['feature'])
+            ax.set_xlabel("Position rel. to gene")
+        axes[0].set_ylabel("Signal (p-value)")
+        plt.tight_layout()
+
+        plt.savefig(outdir + "signal_metagene.png", dpi=150)
+        plt.savefig(outdir + "signal_metagene.svg", format="svg")
+
 def auc_rec(y_true, y_pred):
     # Calculate absolute errors
     errors = np.abs(y_true - y_pred)
@@ -2959,16 +3113,12 @@ class EVAL_CANDI(object):
         ups_pval_std = ups_pval_dist.std()
 
         if not quick:
-            if self.dataset.has_rnaseq(bios_name):
-                print("got rna-seq data")
-                rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
-
-            print("getting 0.95 interval conf")
             imp_count_lower_95, imp_count_upper_95 = imp_count_dist.interval(confidence=0.95)
             ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
 
             imp_pval_lower_95, imp_pval_upper_95 = imp_pval_dist.interval(confidence=0.95)
             ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+            print("got 0.95 interval conf")
 
         results = []
 
@@ -3100,25 +3250,28 @@ class EVAL_CANDI(object):
                     }
                     
                     if not quick:
-                        metric['C_Cidx_gene'] = self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target, num_pairs=2000)
-                        metric['C_Cidx_prom'] = self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target, num_pairs=2000)
+                        metrics['C_Cidx_gene'] = self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target, num_pairs=2000)
+                        metrics['C_Cidx_prom'] = self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target, num_pairs=2000)
                         
-                        metric["obs_count"] = C_target
-                        metric["obs_pval"] = P_target
+                        metrics["obs_count"] = C_target
+                        metrics["obs_pval"] = P_target
 
-                        metric["pred_count"] = pred_count
-                        metric["pred_count_std"] = pred_count_std
+                        metrics["pred_count"] = pred_count
+                        metrics["pred_count_std"] = pred_count_std
 
-                        metric["pred_pval"] = pred_pval
-                        metric["pred_pval_std"] = pred_pval_std
+                        metrics["pred_pval"] = pred_pval
+                        metrics["pred_pval_std"] = pred_pval_std
 
-                        metric["count_lower_95"] = count_lower_95
-                        metric["count_upper_95"] = count_upper_95
+                        metrics["count_lower_95"] = count_lower_95
+                        metrics["count_upper_95"] = count_upper_95
 
-                        metric["pval_lower_95"] = pval_lower_95
-                        metric["pval_upper_95"] = pval_upper_95
+                        metrics["pval_lower_95"] = pval_lower_95
+                        metrics["pval_upper_95"] = pval_upper_95
 
                         if self.dataset.has_rnaseq(bios_name):
+                            print("got rna-seq data")
+                            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
+
                             metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
                             metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
 
@@ -3534,13 +3687,11 @@ class EVAL_CANDI(object):
             "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
             "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
 
-            # "quantile_hist": self.viz.quantile_hist,
-            # "quantile_heatmap": self.viz.quantile_heatmap,
-            # "count_mean_std_hexbin": self.viz.count_mean_std_hexbin,
-            # "signal_mean_std_hexbin": self.viz.signal_mean_std_hexbin,
-
             "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
-            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance
+            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance,
+
+            "count_metagene": self.viz.count_metagene,
+            "signal_metagene": self.viz.signal_metagene
         }
         
         for func_name, func in plot_functions.items():
@@ -3574,8 +3725,8 @@ class EVAL_CANDI(object):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
-            if not self.dataset.has_rnaseq(bios):
-                continue
+            # if not self.dataset.has_rnaseq(bios):
+            #     continue
 
             try:
                 print("evaluating ", bios)
@@ -3659,7 +3810,6 @@ class EVAL_CANDI(object):
                 print(bios, len(self.dataset.navigation[bios]))
                 self.bios_rnaseq_eval(bios, dsf)
 
-
 def main():
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
@@ -3668,7 +3818,7 @@ def main():
     parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
     parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
     parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
-    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/EPD/CANDI_APR2025/", help="Directory to save evaluation results.")
+    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/CANDI_res/", help="Directory to save evaluation results.")
     parser.add_argument("--enc_ckpt", type=str, default=None, help="If CANDI-DINO, path to encoder checkpoint model.")
     parser.add_argument("--dec_ckpt", type=str, default=None, help="If CANDI-DINO, path to decoder checkpoint model.")
     parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
@@ -3724,6 +3874,7 @@ def main():
             if args.quick:
                 report = pd.DataFrame(res)
                 print(report[["feature", "comparison"] + [c for c in report.columns if "Cidx" in c]])
+
         else:
             t0 = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
