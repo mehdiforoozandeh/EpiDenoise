@@ -2489,7 +2489,7 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_count', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge, strand = int(g.start), int(g.end), g.strand
+                gs, ge, strand = int(g.start), int(g.end), g['strand']
                 # skip if entirely out of range
                 if gs>=L and ge>=L: continue
 
@@ -2569,7 +2569,7 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_pval', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge, strand = int(g.start), int(g.end), g.strand
+                gs, ge, strand = int(g.start), int(g.end), g['strand']
                 if gs>=L and ge>=L: continue
 
                 if not strand == "+":
