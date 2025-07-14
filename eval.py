@@ -2471,9 +2471,6 @@ class VISUALS_CANDI(object):
         Meta-gene count profiles, one subplot per assay.
         Red = predicted, blue = observed.
         """
-        import os
-        import numpy as np
-        import matplotlib.pyplot as plt
 
         # output dir
         outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
@@ -2481,7 +2478,7 @@ class VISUALS_CANDI(object):
 
         flank_bins = flank_bp // self.resolution
         n = len(eval_res)
-        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
         if n == 1: axes = [axes]
 
         L = len(eval_res[0]['pred_count'])
@@ -2495,6 +2492,9 @@ class VISUALS_CANDI(object):
                 gs, ge = int(g.start), int(g.end)
                 # skip if entirely out of range
                 if gs>=L and ge>=L: continue
+
+                if not strand == "+":
+                    gs, ge = ge, gs
 
                 # upstream
                 up_bins = gs - flank_bins + np.arange(flank_bins)
@@ -2539,7 +2539,7 @@ class VISUALS_CANDI(object):
             ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
             ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
             ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
-            ax.set_title(res['feature'])
+            ax.set_title(f"{res['feature']}|{res['comparison']}")
             ax.set_xlabel("Position rel. to gene")
         axes[0].set_ylabel("Count")
         plt.tight_layout()
@@ -2552,16 +2552,13 @@ class VISUALS_CANDI(object):
         Meta-gene signal (p-value) profiles, one subplot per assay.
         Red = predicted, blue = observed.
         """
-        import os
-        import numpy as np
-        import matplotlib.pyplot as plt
 
         outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         os.makedirs(outdir, exist_ok=True)
 
         flank_bins = flank_bp // self.resolution
         n = len(eval_res)
-        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
         if n == 1: axes = [axes]
 
         L = len(eval_res[0]['pred_pval'])
@@ -2572,8 +2569,11 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_pval', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge = int(g.start), int(g.end)
+                gs, ge, strand = int(g.start), int(g.end), g.strand
                 if gs>=L and ge>=L: continue
+
+                if not strand == "+":
+                    gs, ge = ge, gs
 
                 up_bins = gs - flank_bins + np.arange(flank_bins)
                 up_vals = np.full(flank_bins, np.nan)
@@ -2613,7 +2613,7 @@ class VISUALS_CANDI(object):
             ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
             ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
             ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
-            ax.set_title(res['feature'])
+            ax.set_title(f"{res['feature']}|{res['comparison']}")
             ax.set_xlabel("Position rel. to gene")
         axes[0].set_ylabel("Signal (p-value)")
         plt.tight_layout()
@@ -3654,41 +3654,41 @@ class EVAL_CANDI(object):
     def viz_bios(self, eval_res):
         # Define a dictionary mapping function names to corresponding methods
         plot_functions = {
-            "count_track": self.viz.count_track,
-            "signal_track": self.viz.signal_track,
+            # "count_track": self.viz.count_track,
+            # "signal_track": self.viz.signal_track,
 
-            "count_confidence": self.viz.count_confidence,
-            "signal_confidence": self.viz.signal_confidence,
+            # "count_confidence": self.viz.count_confidence,
+            # "signal_confidence": self.viz.signal_confidence,
             
-            "count_error_std_hexbin": self.viz.count_error_std_hexbin,
-            "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
+            # "count_error_std_hexbin": self.viz.count_error_std_hexbin,
+            # "signal_error_std_hexbin": self.viz.signal_error_std_hexbin,
 
-            "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
-            "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
+            # "count_scatter_with_marginals": self.viz.count_scatter_with_marginals,
+            # "signal_scatter_with_marginals": self.viz.signal_scatter_with_marginals,
 
-            "count_heatmap": self.viz.count_heatmap,
-            "signal_heatmap": self.viz.signal_heatmap,
+            # "count_heatmap": self.viz.count_heatmap,
+            # "signal_heatmap": self.viz.signal_heatmap,
             
-            "count_rank_heatmap": self.viz.count_rank_heatmap,
-            "signal_rank_heatmap": self.viz.signal_rank_heatmap,
+            # "count_rank_heatmap": self.viz.count_rank_heatmap,
+            # "signal_rank_heatmap": self.viz.signal_rank_heatmap,
 
-            "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
-            "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
+            # "count_TSS_confidence_boxplot": self.viz.count_TSS_confidence_boxplot,
+            # "signal_TSS_confidence_boxplot": self.viz.signal_TSS_confidence_boxplot,
 
-            "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
-            "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
+            # "count_GeneBody_confidence_boxplot": self.viz.count_GeneBody_confidence_boxplot,
+            # "signal_GeneBody_confidence_boxplot": self.viz.signal_GeneBody_confidence_boxplot,
 
-            "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
-            "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
+            # "count_obs_vs_confidence": self.viz.count_obs_vs_confidence,
+            # "signal_obs_vs_confidence": self.viz.signal_obs_vs_confidence,
 
-            "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
-            "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
+            # "count_TSS_enrichment_v_confidence": self.viz.count_TSS_enrichment_v_confidence,
+            # "signal_TSS_enrichment_v_confidence": self.viz.signal_TSS_enrichment_v_confidence,
 
-            "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
-            "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
+            # "count_GeneBody_enrichment_v_confidence": self.viz.count_GeneBody_enrichment_v_confidence,
+            # "signal_GeneBody_enrichment_v_confidence": self.viz.signal_GeneBody_enrichment_v_confidence,
 
-            "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
-            "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance,
+            # "count_context_length_specific_performance": self.viz.count_context_length_specific_performance,
+            # "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance,
 
             "count_metagene": self.viz.count_metagene,
             "signal_metagene": self.viz.signal_metagene
