@@ -2466,13 +2466,13 @@ class VISUALS_CANDI(object):
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.png", dpi=150)
         plt.savefig(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/signal_GeneBody_enrichment_v_confidence.svg", format="svg")
 
-    def count_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 100):
+    def count_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 200):
         """
         Meta-gene count profiles, one subplot per assay.
-        Red = predicted, blue = observed.
+        Red = predicted; Blue = observed.
         """
 
-        # output dir
+        # make output directory
         outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
         os.makedirs(outdir, exist_ok=True)
 
@@ -2481,7 +2481,9 @@ class VISUALS_CANDI(object):
         fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
         if n == 1: axes = [axes]
 
+        # length of each track
         L = len(eval_res[0]['pred_count'])
+        # use gene coordinates (start,end,strand in bin units)
         gene_df = self.metrics.prom_df
 
         for ax, res in zip(axes, eval_res):
@@ -2489,68 +2491,75 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_count', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge, strand = int(g.start), int(g.end), g['strand']
-                # skip if entirely out of range
-                if gs>=L and ge>=L: continue
+                # 1) determine TSS/TES based on strand
+                if g['strand'] == '+':
+                    tss, tes = int(g.start), int(g.end)
+                else:
+                    tss, tes = int(g.end),   int(g.start)
 
-                if not strand == "+":
-                    gs, ge = ge, gs
-
-                # upstream
-                up_bins = gs - flank_bins + np.arange(flank_bins)
+                # 2) upstream indices = [tss-flank_bins, ..., tss-1]
+                up_idx = np.arange(tss - flank_bins, tss)
                 up_vals = np.full(flank_bins, np.nan)
-                mask = (up_bins>=0)&(up_bins<L)
-                up_vals[mask] = pred[up_bins[mask]]
+                m_up = (up_idx >= 0) & (up_idx < L)
+                up_vals[m_up] = pred[up_idx[m_up]]
                 if obs is not None:
                     up_obs = np.full(flank_bins, np.nan)
-                    up_obs[mask] = obs[up_bins[mask]]
+                    up_obs[m_up] = obs[up_idx[m_up]]
 
-                # gene body (interp to fixed bins)
-                if ge>gs and gs<L:
-                    end = min(ge, L-1)
-                    xb = np.linspace(gs, end, gene_body_bins, endpoint=False)
-                    b_pred = np.interp(xb, np.arange(L), pred)
-                    b_obs  = np.interp(xb, np.arange(L), obs ) if obs is not None else None
+                # 3) gene-body → fixed # bins via averaging
+                body_idx = np.arange(min(tss, tes), max(tss, tes))
+                if len(body_idx) > 0:
+                    chunks = np.array_split(body_idx, gene_body_bins)
+                    b_pred = np.array([pred[c].mean() for c in chunks])
+                    b_obs  = np.array([obs[c].mean()  for c in chunks]) if obs is not None else None
                 else:
-                    # degenerate gene
                     b_pred = np.full(gene_body_bins, np.nan)
                     b_obs  = np.full(gene_body_bins, np.nan) if obs is not None else None
 
-                # downstream
-                dn_bins = ge + np.arange(flank_bins)
+                # 4) downstream indices = [tes, tes+1, ..., tes+flank_bins-1]
+                dn_idx = np.arange(tes, tes + flank_bins)
                 dn_vals = np.full(flank_bins, np.nan)
-                mask2 = (dn_bins>=0)&(dn_bins<L)
-                dn_vals[mask2] = pred[dn_bins[mask2]]
+                m_dn = (dn_idx >= 0) & (dn_idx < L)
+                dn_vals[m_dn] = pred[dn_idx[m_dn]]
                 if obs is not None:
                     dn_obs = np.full(flank_bins, np.nan)
-                    dn_obs[mask2] = obs[dn_bins[mask2]]
+                    dn_obs[m_dn] = obs[dn_idx[m_dn]]
 
+                # 5) stitch into one profile
                 prof_pred = np.concatenate([up_vals, b_pred, dn_vals])
-                prof_obs  = np.concatenate([up_obs,  b_obs,  dn_obs]) if obs is not None else None
+                prof_obs  = (np.concatenate([up_obs, b_obs, dn_vals])
+                             if obs is not None else None)
 
+                # 6) if on the minus strand, flip so upstream is always left
+                if g['strand'] == '-':
+                    prof_pred = prof_pred[::-1]
+                    if prof_obs is not None:
+                        prof_obs = prof_obs[::-1]
+
+                # 7) x-axis from -flank_bins → gene_body_bins+flank_bins-1
                 x = np.arange(-flank_bins, gene_body_bins + flank_bins)
-                ax.plot(x, prof_pred, color='red',   alpha=0.5, linewidth=0.8)
+                ax.plot(x, prof_pred, color='red',   alpha=0.3, lw=0.8)
                 if prof_obs is not None:
-                    ax.plot(x, prof_obs,  color='blue',  alpha=0.5, linewidth=0.8)
+                    ax.plot(x, prof_obs,  color='blue',  alpha=0.3, lw=0.8)
 
-            # mark TSS/TES
-            ax.axvline(0,               color='k', linestyle='--')
-            ax.axvline(gene_body_bins, color='k', linestyle='--')
+            # 8) mark TSS (0) & TES (gene_body_bins)
+            ax.axvline(0,               color='k', ls='--')
+            ax.axvline(gene_body_bins, color='k', ls='--')
             ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
             ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
             ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
-            ax.set_title(f"{res['feature']}|{res['comparison']}")
+            ax.set_title(f"{res['feature']} | {res['comparison']}")
             ax.set_xlabel("Position rel. to gene")
+
         axes[0].set_ylabel("Count")
         plt.tight_layout()
-
         plt.savefig(outdir + "count_metagene.png", dpi=150)
         plt.savefig(outdir + "count_metagene.svg", format="svg")
 
-    def signal_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 100):
+    def signal_metagene(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 200):
         """
         Meta-gene signal (p-value) profiles, one subplot per assay.
-        Red = predicted, blue = observed.
+        Red = predicted; Blue = observed.
         """
 
         outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
@@ -2569,57 +2578,287 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_pval', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge, strand = int(g.start), int(g.end), g['strand']
-                if gs>=L and ge>=L: continue
+                if g['strand'] == '+':
+                    tss, tes = int(g.start), int(g.end)
+                else:
+                    tss, tes = int(g.end),   int(g.start)
 
-                if not strand == "+":
-                    gs, ge = ge, gs
-
-                up_bins = gs - flank_bins + np.arange(flank_bins)
+                up_idx = np.arange(tss - flank_bins, tss)
                 up_vals = np.full(flank_bins, np.nan)
-                m = (up_bins>=0)&(up_bins<L)
-                up_vals[m] = pred[up_bins[m]]
+                m_up = (up_idx >= 0) & (up_idx < L)
+                up_vals[m_up] = pred[up_idx[m_up]]
                 if obs is not None:
                     up_obs = np.full(flank_bins, np.nan)
-                    up_obs[m] = obs[up_bins[m]]
+                    up_obs[m_up] = obs[up_idx[m_up]]
 
-                if ge>gs and gs<L:
-                    end = min(ge, L-1)
-                    xb = np.linspace(gs, end, gene_body_bins, endpoint=False)
-                    b_pred = np.interp(xb, np.arange(L), pred)
-                    b_obs  = np.interp(xb, np.arange(L), obs ) if obs is not None else None
+                body_idx = np.arange(min(tss,tes), max(tss,tes))
+                if len(body_idx) > 0:
+                    chunks = np.array_split(body_idx, gene_body_bins)
+                    b_pred = np.array([pred[c].mean() for c in chunks])
+                    b_obs  = np.array([obs[c].mean()  for c in chunks]) if obs is not None else None
                 else:
                     b_pred = np.full(gene_body_bins, np.nan)
                     b_obs  = np.full(gene_body_bins, np.nan) if obs is not None else None
 
-                dn_bins = ge + np.arange(flank_bins)
+                dn_idx = np.arange(tes, tes + flank_bins)
                 dn_vals = np.full(flank_bins, np.nan)
-                m2 = (dn_bins>=0)&(dn_bins<L)
-                dn_vals[m2] = pred[dn_bins[m2]]
+                m_dn = (dn_idx >= 0) & (dn_idx < L)
+                dn_vals[m_dn] = pred[dn_idx[m_dn]]
                 if obs is not None:
                     dn_obs = np.full(flank_bins, np.nan)
-                    dn_obs[m2] = obs[dn_bins[m2]]
+                    dn_obs[m_dn] = obs[dn_idx[m_dn]]
 
                 prof_pred = np.concatenate([up_vals, b_pred, dn_vals])
-                prof_obs  = np.concatenate([up_obs,  b_obs,  dn_obs]) if obs is not None else None
+                prof_obs  = (np.concatenate([up_obs, b_obs, dn_vals])
+                             if obs is not None else None)
+
+                if g['strand'] == '-':
+                    prof_pred = prof_pred[::-1]
+                    if prof_obs is not None:
+                        prof_obs = prof_obs[::-1]
 
                 x = np.arange(-flank_bins, gene_body_bins + flank_bins)
-                ax.plot(x, prof_pred, color='red',   alpha=0.5, linewidth=0.8)
+                ax.plot(x, prof_pred, color='red',   alpha=0.4, lw=0.8)
                 if prof_obs is not None:
-                    ax.plot(x, prof_obs,  color='blue',  alpha=0.5, linewidth=0.8)
+                    ax.plot(x, prof_obs,  color='blue',  alpha=0.4, lw=0.8)
 
-            ax.axvline(0,               color='k', linestyle='--')
-            ax.axvline(gene_body_bins, color='k', linestyle='--')
+            ax.axvline(0,               color='k', ls='--')
+            ax.axvline(gene_body_bins, color='k', ls='--')
             ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
             ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
             ax.set_xticklabels([f"-{flank_bp//1000} kb", "TSS", "TES", f"+{flank_bp//1000} kb"])
-            ax.set_title(f"{res['feature']}|{res['comparison']}")
+            ax.set_title(f"{res['feature']} | {res['comparison']}")
             ax.set_xlabel("Position rel. to gene")
+
         axes[0].set_ylabel("Signal (p-value)")
         plt.tight_layout()
-
         plt.savefig(outdir + "signal_metagene.png", dpi=150)
         plt.savefig(outdir + "signal_metagene.svg", format="svg")
+
+    def metagene2_count(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 200):
+        """
+        Meta-gene count (red) vs. observed (blue) summary.
+        - hairball of every gene in light grey
+        - thick median curve and 25–75% IQR ribbon
+        - shaded gene body between TSS (0) and TES (gene_body_bins)
+        """
+
+        # make sure output dir exists
+        outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        os.makedirs(outdir, exist_ok=True)
+
+        # how many bins is 2 kb?
+        flank_bins = flank_bp // self.resolution
+        total_bins = flank_bins + gene_body_bins + flank_bins
+        x = np.arange(-flank_bins, gene_body_bins + flank_bins)
+
+        # pull gene coords in bin units
+        genes = self.metrics.prom_df[['start','end','strand']]
+
+        for res in eval_res:
+            pred_track = res['pred_count']
+            obs_track  = res.get('obs_count', None)
+
+            profiles_pred = []
+            profiles_obs  = []
+
+            L = len(pred_track)
+
+            # build per-gene profiles
+            for _, g in genes.iterrows():
+                # determine TSS/TES by strand
+                if g.strand == '+':
+                    tss, tes = int(g.start), int(g.end)
+                else:
+                    tss, tes = int(g.end),   int(g.start)
+
+                # upstream
+                up_idx = np.arange(tss - flank_bins, tss)
+                up_vals = np.full(flank_bins, np.nan)
+                m = (up_idx>=0) & (up_idx<L)
+                up_vals[m] = pred_track[up_idx[m]]
+
+                # gene body → rescale to fixed # bins
+                body_idx = np.arange(min(tss,tes), max(tss,tes))
+                if len(body_idx)>0:
+                    chunks = np.array_split(body_idx, gene_body_bins)
+                    b_vals = np.array([pred_track[c].mean() for c in chunks])
+                else:
+                    b_vals = np.full(gene_body_bins, np.nan)
+
+                # downstream
+                dn_idx = np.arange(tes, tes + flank_bins)
+                dn_vals = np.full(flank_bins, np.nan)
+                m2 = (dn_idx>=0) & (dn_idx<L)
+                dn_vals[m2] = pred_track[dn_idx[m2]]
+
+                prof = np.concatenate([up_vals, b_vals, dn_vals])
+                # flip if on minus strand
+                if g.strand == '-':
+                    prof = prof[::-1]
+                profiles_pred.append(prof)
+
+                # same for observed if present
+                if obs_track is not None:
+                    up_obs = np.full(flank_bins, np.nan)
+                    up_obs[m] = obs_track[up_idx[m]]
+                    if len(body_idx)>0:
+                        b_obs = np.array([obs_track[c].mean() for c in chunks])
+                    else:
+                        b_obs = np.full(gene_body_bins, np.nan)
+                    dn_obs = np.full(flank_bins, np.nan)
+                    dn_obs[m2] = obs_track[dn_idx[m2]]
+                    prof_obs = np.concatenate([up_obs, b_obs, dn_obs])
+                    if g.strand=='-':
+                        prof_obs = prof_obs[::-1]
+                    profiles_obs.append(prof_obs)
+
+            P = np.vstack(profiles_pred)          # shape (n_genes, total_bins)
+            M = np.vstack(profiles_obs) if obs_track is not None else None
+
+            fig, ax = plt.subplots(figsize=(6,4))
+            # 1) hairball in grey
+            for row in P:
+                ax.plot(x, row, color='grey', alpha=0.1, lw=0.5)
+            if M is not None:
+                for row in M:
+                    ax.plot(x, row, color='grey', alpha=0.1, lw=0.5)
+
+            # 2) summary: median ± IQR
+            medP = np.nanmedian(P, axis=0)
+            q1P, q3P = np.nanpercentile(P, [25,75], axis=0)
+            ax.fill_between(x, q1P, q3P, color='red',   alpha=0.3, label='Pred IQR')
+            ax.plot(x, medP,          color='red',   lw=2, label='Pred median')
+
+            if M is not None:
+                medM = np.nanmedian(M, axis=0)
+                q1M, q3M = np.nanpercentile(M, [25,75], axis=0)
+                ax.fill_between(x, q1M, q3M, color='blue',  alpha=0.3, label='Obs IQR')
+                ax.plot(x, medM,          color='blue',  lw=2, label='Obs median')
+
+            # 3) shade gene body region
+            ax.axvspan(0, gene_body_bins, color='lightgrey', alpha=0.2)
+
+            # 4) dashed TSS/TES
+            ax.axvline(0,               ls='--', color='k')
+            ax.axvline(gene_body_bins, ls='--', color='k')
+
+            ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
+            ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
+            ax.set_xticklabels([f"-{flank_bp//1000}kb", "TSS", "TES", f"+{flank_bp//1000}kb"])
+            ax.set_ylabel("Count")
+            ax.set_xlabel("Position rel. to gene")
+            ax.set_title(f"{res['feature']} | {res['comparison']}")
+            ax.legend(frameon=False, fontsize='small')
+
+            plt.tight_layout()
+            plt.savefig(outdir + f"count_metagene2_{res['feature']}.png", dpi=150)
+            plt.savefig(outdir + f"count_metagene2_{res['feature']}.svg", format="svg")
+            plt.close()
+
+    def metagene2_signal(self, eval_res, flank_bp: int = 2000, gene_body_bins: int = 200):
+        """
+        Meta-gene signal (p-val) summary.
+        Same styling as metagene2_count.
+        """
+
+        outdir = f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/"
+        os.makedirs(outdir, exist_ok=True)
+
+        flank_bins = flank_bp // self.resolution
+        total_bins = flank_bins + gene_body_bins + flank_bins
+        x = np.arange(-flank_bins, gene_body_bins + flank_bins)
+
+        genes = self.metrics.prom_df[['start','end','strand']]
+
+        for res in eval_res:
+            pred_track = res['pred_pval']
+            obs_track  = res.get('obs_pval', None)
+
+            P, M = [], []
+            L = len(pred_track)
+
+            for _, g in genes.iterrows():
+                if g.strand == '+':
+                    tss, tes = int(g.start), int(g.end)
+                else:
+                    tss, tes = int(g.end),   int(g.start)
+
+                up_idx = np.arange(tss - flank_bins, tss)
+                up_vals = np.full(flank_bins, np.nan)
+                m = (up_idx>=0)&(up_idx<L)
+                up_vals[m] = pred_track[up_idx[m]]
+
+                body_idx = np.arange(min(tss,tes), max(tss,tes))
+                if len(body_idx)>0:
+                    chunks = np.array_split(body_idx, gene_body_bins)
+                    b_vals = np.array([pred_track[c].mean() for c in chunks])
+                else:
+                    b_vals = np.full(gene_body_bins, np.nan)
+
+                dn_idx = np.arange(tes, tes + flank_bins)
+                dn_vals = np.full(flank_bins, np.nan)
+                m2 = (dn_idx>=0)&(dn_idx<L)
+                dn_vals[m2] = pred_track[dn_idx[m2]]
+
+                prof = np.concatenate([up_vals, b_vals, dn_vals])
+                if g.strand=='-':
+                    prof = prof[::-1]
+                P.append(prof)
+
+                if obs_track is not None:
+                    up_o = np.full(flank_bins, np.nan)
+                    up_o[m] = obs_track[up_idx[m]]
+                    if len(body_idx)>0:
+                        b_o = np.array([obs_track[c].mean() for c in chunks])
+                    else:
+                        b_o = np.full(gene_body_bins, np.nan)
+                    dn_o = np.full(flank_bins, np.nan)
+                    dn_o[m2] = obs_track[dn_idx[m2]]
+                    prof_o = np.concatenate([up_o, b_o, dn_o])
+                    if g.strand=='-':
+                        prof_o = prof_o[::-1]
+                    M.append(prof_o)
+
+            P = np.vstack(P)
+            M = np.vstack(M) if obs_track is not None else None
+
+            fig, ax = plt.subplots(figsize=(6,4))
+            for r in P:
+                ax.plot(x, r, color='grey', alpha=0.1, lw=0.5)
+            if M is not None:
+                for r in M:
+                    ax.plot(x, r, color='grey', alpha=0.1, lw=0.5)
+
+            medP = np.nanmedian(P, axis=0)
+            q1P, q3P = np.nanpercentile(P, [25,75], axis=0)
+            ax.fill_between(x, q1P, q3P, color='red',   alpha=0.3)
+            ax.plot(x, medP,         color='red',   lw=2, label='Pred median')
+
+            if M is not None:
+                medM = np.nanmedian(M, axis=0)
+                q1M, q3M = np.nanpercentile(M, [25,75], axis=0)
+                ax.fill_between(x, q1M, q3M, color='blue',  alpha=0.3)
+                ax.plot(x, medM,         color='blue',  lw=2, label='Obs median')
+
+            # shade gene body
+            ax.axvspan(0, gene_body_bins, color='lightgrey', alpha=0.2)
+            ax.axvline(0,               ls='--', color='k')
+            ax.axvline(gene_body_bins, ls='--', color='k')
+
+            ax.set_xlim(-flank_bins, gene_body_bins + flank_bins)
+            ax.set_xticks([-flank_bins, 0, gene_body_bins, gene_body_bins+flank_bins])
+            ax.set_xticklabels([f"-{flank_bp//1000}kb","TSS","TES",f"+{flank_bp//1000}kb"])
+            ax.set_ylabel("Signal (p-value)")
+            ax.set_xlabel("Position rel. to gene")
+            ax.set_title(f"{res['feature']} | {res['comparison']}")
+            if obs_track is not None:
+                ax.legend(frameon=False, fontsize='small')
+
+            plt.tight_layout()
+            plt.savefig(outdir + f"signal_metagene2_{res['feature']}.png", dpi=150)
+            plt.savefig(outdir + f"signal_metagene2_{res['feature']}.svg", format="svg")
+            plt.close()
 
 def auc_rec(y_true, y_pred):
     # Calculate absolute errors
