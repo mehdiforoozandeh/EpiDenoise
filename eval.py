@@ -2489,7 +2489,7 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_count', None)
 
             for _, g in gene_df.iterrows():
-                gs, ge = int(g.start), int(g.end)
+                gs, ge, strand = int(g.start), int(g.end), g.strand
                 # skip if entirely out of range
                 if gs>=L and ge>=L: continue
 
