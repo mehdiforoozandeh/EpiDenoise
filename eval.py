@@ -3324,7 +3324,7 @@ class EVAL_CANDI(object):
                     metrics["count_upper_95"] =  count_upper_95
                     
                     metrics["pval_lower_95"] =  pval_lower_95
-                    metrics["pval_upper_95"] =  pval_upper_9
+                    metrics["pval_upper_95"] =  pval_upper_95
 
                 results.append(metrics)
             
