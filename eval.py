@@ -2483,6 +2483,7 @@ class VISUALS_CANDI(object):
 
         L = len(eval_res[0]['pred_count'])
         gene_df = self.metrics.gene_df
+        print(gene_df)
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_count']
@@ -2563,6 +2564,7 @@ class VISUALS_CANDI(object):
 
         L = len(eval_res[0]['pred_pval'])
         gene_df = self.metrics.gene_df
+        print(gene_df)
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_pval']
