@@ -65,9 +65,6 @@ class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
         self.gene_df = self.get_gene_positions(chrom, bin_size)
-        print(self.prom_df)
-        print(self.gene_df)
-        exit()
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
@@ -2485,8 +2482,7 @@ class VISUALS_CANDI(object):
         if n == 1: axes = [axes]
 
         L = len(eval_res[0]['pred_count'])
-        gene_df = self.metrics.gene_df
-        print(gene_df)
+        gene_df = self.metrics.prom_df
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_count']
@@ -2566,8 +2562,7 @@ class VISUALS_CANDI(object):
         if n == 1: axes = [axes]
 
         L = len(eval_res[0]['pred_pval'])
-        gene_df = self.metrics.gene_df
-        print(gene_df)
+        gene_df = self.metrics.prom_df
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_pval']
