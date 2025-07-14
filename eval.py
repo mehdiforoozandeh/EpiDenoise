@@ -2492,10 +2492,10 @@ class VISUALS_CANDI(object):
 
             for _, g in gene_df.iterrows():
                 # 1) determine TSS/TES based on strand
-                if g['strand'] == '+':
-                    tss, tes = int(g.start), int(g.end)
-                else:
-                    tss, tes = int(g.end),   int(g.start)
+                # if g['strand'] == '+':
+                tss, tes = int(g.start), int(g.end)
+                # else:
+                #     tss, tes = int(g.end),   int(g.start)
 
                 # 2) upstream indices = [tss-flank_bins, ..., tss-1]
                 up_idx = np.arange(tss - flank_bins, tss)
@@ -2578,10 +2578,10 @@ class VISUALS_CANDI(object):
             obs  = res.get('obs_pval', None)
 
             for _, g in gene_df.iterrows():
-                if g['strand'] == '+':
-                    tss, tes = int(g.start), int(g.end)
-                else:
-                    tss, tes = int(g.end),   int(g.start)
+                # if g['strand'] == '+':
+                tss, tes = int(g.start), int(g.end)
+                # else:
+                    # tss, tes = int(g.end),   int(g.start)
 
                 up_idx = np.arange(tss - flank_bins, tss)
                 up_vals = np.full(flank_bins, np.nan)
@@ -2672,10 +2672,10 @@ class VISUALS_CANDI(object):
             # 5) build per-gene profiles
             for _, g in genes.iterrows():
                 # TSS/TES depending on strand
-                if g.strand == '+':
-                    tss, tes = int(g.start), int(g.end)
-                else:
-                    tss, tes = int(g.end),   int(g.start)
+                # if g.strand == '+':
+                tss, tes = int(g.start), int(g.end)
+                # else:
+                #     tss, tes = int(g.end),   int(g.start)
 
                 # upstream
                 up_idx = np.arange(tss - flank_bins, tss)
@@ -2786,10 +2786,10 @@ class VISUALS_CANDI(object):
 
             L = len(pred)
             for _, g in genes.iterrows():
-                if g.strand == '+':
-                    tss, tes = int(g.start), int(g.end)
-                else:
-                    tss, tes = int(g.end),   int(g.start)
+                # if g.strand == '+':
+                tss, tes = int(g.start), int(g.end)
+                # else:
+                #     tss, tes = int(g.end),   int(g.start)
 
                 up_idx = np.arange(tss - flank_bins, tss)
                 up_vals = np.full(flank_bins, np.nan)
