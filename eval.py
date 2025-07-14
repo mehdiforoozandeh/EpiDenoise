@@ -3514,21 +3514,21 @@ class EVAL_CANDI(object):
                         metrics["pval_lower_95"] = pval_lower_95
                         metrics["pval_upper_95"] = pval_upper_95
 
-                        if self.dataset.has_rnaseq(bios_name):
-                            print("got rna-seq data")
-                            rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
+                        # if self.dataset.has_rnaseq(bios_name):
+                        #     print("got rna-seq data")
+                        #     rnaseq_res = self.eval_rnaseq(bios_name, ups_count_mean, Y, availability, k_fold=10, plot_REC=True)
 
-                            metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
-                            metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
+                        #     metrics["rnaseq-true-pcc-linear"] = rnaseq_res["true_linear"]["avg_pcc"]
+                        #     metrics["rnaseq-true-pcc-svr"] = rnaseq_res["true_svr"]["avg_pcc"]
 
-                            metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
-                            metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
+                        #     metrics["rnaseq-denoised-pcc-linear"] = rnaseq_res["denoised_linear"]["avg_pcc"]
+                        #     metrics["rnaseq-denoised-pcc-svr"] = rnaseq_res["denoised_svr"]["avg_pcc"]
 
-                            metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
-                            metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
+                        #     metrics["rnaseq-true-mse-linear"] = rnaseq_res["true_linear"]["avg_mse"]
+                        #     metrics["rnaseq-true-mse-svr"] = rnaseq_res["true_svr"]["avg_mse"]
                             
-                            metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
-                            metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
+                        #     metrics["rnaseq-denoised-mse-linear"] = rnaseq_res["denoised_linear"]["avg_mse"]
+                        #     metrics["rnaseq-denoised-mse-svr"] = rnaseq_res["denoised_svr"]["avg_mse"]
 
                     results.append(metrics)
 
