@@ -66,6 +66,10 @@ class METRICS(object):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
         self.gene_df = self.get_gene_positions(chrom, bin_size)
 
+        print(self.prom_df)
+        print(self.gene_df)
+        exit()
+
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
                               names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
@@ -2484,7 +2488,7 @@ class VISUALS_CANDI(object):
         # length of each track
         L = len(eval_res[0]['pred_count'])
         # use gene coordinates (start,end,strand in bin units)
-        gene_df = self.metrics.prom_df
+        gene_df = self.metrics.gene_df
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_count']
@@ -2571,7 +2575,7 @@ class VISUALS_CANDI(object):
         if n == 1: axes = [axes]
 
         L = len(eval_res[0]['pred_pval'])
-        gene_df = self.metrics.prom_df
+        gene_df = self.metrics.gene_df
 
         for ax, res in zip(axes, eval_res):
             pred = res['pred_pval']
@@ -2656,7 +2660,7 @@ class VISUALS_CANDI(object):
         x = np.arange(-flank_bins, gene_body_bins + flank_bins)
 
         # 3) get gene coordinates (start,end,strand) in bin units
-        genes = self.metrics.prom_df[['start','end','strand']]
+        genes = self.metrics.gene_df[['start','end','strand']]
 
         # 4) make one row with one column per assay
         n = len(eval_res)
@@ -2773,7 +2777,7 @@ class VISUALS_CANDI(object):
         total_bins = flank_bins + gene_body_bins + flank_bins
         x = np.arange(-flank_bins, gene_body_bins + flank_bins)
 
-        genes = self.metrics.prom_df[['start','end','strand']]
+        genes = self.metrics.gene_df[['start','end','strand']]
 
         n = len(eval_res)
         fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
