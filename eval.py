@@ -2660,7 +2660,7 @@ class VISUALS_CANDI(object):
 
         # 4) make one row with one column per assay
         n = len(eval_res)
-        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
         if n == 1: axes = [axes]
 
         for ax, res in zip(axes, eval_res):
@@ -2776,7 +2776,7 @@ class VISUALS_CANDI(object):
         genes = self.metrics.prom_df[['start','end','strand']]
 
         n = len(eval_res)
-        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=True)
+        fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
         if n == 1: axes = [axes]
 
         for ax, res in zip(axes, eval_res):
@@ -4125,6 +4125,7 @@ def main():
         else:
             t0 = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
+            ec.viz_bios(eval_res=res)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
 
