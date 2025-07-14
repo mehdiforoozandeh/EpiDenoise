@@ -66,9 +66,7 @@ class METRICS(object):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
         self.gene_df = self.get_gene_positions(chrom, bin_size)
 
-        print(self.prom_df)
-        print(self.gene_df)
-        exit()
+        self.gene_df["strand"] = self.prom_df["strand"]
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
