@@ -65,7 +65,9 @@ class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
         self.gene_df = self.get_gene_positions(chrom, bin_size)
-        print(prom_df)
+        print(self.prom_df)
+        print(self.gene_df)
+        exit()
 
     def get_gene_positions(self, chrom, bin_size):
         gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
