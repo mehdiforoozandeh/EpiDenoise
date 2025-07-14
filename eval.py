@@ -3930,7 +3930,10 @@ class EVAL_CANDI(object):
             # "signal_context_length_specific_performance": self.viz.signal_context_length_specific_performance,
 
             "count_metagene": self.viz.count_metagene,
-            "signal_metagene": self.viz.signal_metagene
+            "signal_metagene": self.viz.signal_metagene,
+
+            "metagene2_count": self.viz.metagene2_count,
+            "metagene2_signal": self.viz.metagene2_signal
         }
         
         for func_name, func in plot_functions.items():
