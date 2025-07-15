@@ -3330,7 +3330,9 @@ if __name__ == "__main__":
 
                     exps2[exp][md].append(exps[exp][i][md])
 
-        print(pd.DataFrame(exps2))
+        raw_exp_md = pd.DataFrame(exps2)
+        raw_exp_md.to_csv(f"{solar_data_path}/RawExpMetaData.csv")
+        print(raw_exp_md)
         exit()
 
         # Calculate basic statistics
