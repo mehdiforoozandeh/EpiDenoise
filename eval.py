@@ -3420,7 +3420,6 @@ class EVAL_CANDI(object):
                             pval_lower_95 = np.sinh(pval_lower_95)
                             pval_upper_95 = np.sinh(pval_upper_95)
 
-                    # corresp, corresp_deriv = self.metrics.correspondence_curve(target, pred)
                     metrics = {
                         'bios':bios_name,
                         'feature': assay_name,
@@ -3797,11 +3796,11 @@ class EVAL_CANDI(object):
         else:
             return X, Y, P, mX, mY, avX, avY
 
-    def bios_pipeline(self, bios_name, x_dsf, quick=False):
+    def bios_pipeline(self, bios_name, x_dsf, quick=False, fill_in_y_prompt=False):
         if self.DNA:
-            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
         else:
-            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
         
         print("loaded input data")
 
@@ -3861,11 +3860,11 @@ class EVAL_CANDI(object):
         eval_res = self.get_metrics(imp_count_dist, ups_count_dist, imp_pval_dist, ups_pval_dist, Y, P, bios_name, available_indices, quick=quick)
         return eval_res
     
-    def bios_pipeline_eic(self, bios_name, x_dsf, quick=False):
+    def bios_pipeline_eic(self, bios_name, x_dsf, quick=False, fill_in_y_prompt=False):
         if self.DNA:
-            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
         else:
-            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf) 
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt) 
 
         print(X.shape, Y.shape, P.shape)
 
@@ -3970,7 +3969,7 @@ class EVAL_CANDI(object):
                 new_res.append(f)
         return new_res
 
-    def viz_all(self, dsf=1):
+    def viz_all(self, dsf=1, fill_in_y_prompt=False):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
@@ -3980,9 +3979,9 @@ class EVAL_CANDI(object):
             try:
                 print("evaluating ", bios)
                 if self.eic:
-                    eval_res_bios = self.bios_pipeline_eic(bios, dsf)
+                    eval_res_bios = self.bios_pipeline_eic(bios, dsf, fill_in_y_prompt)
                 else:
-                    eval_res_bios = self.bios_pipeline(bios, dsf)
+                    eval_res_bios = self.bios_pipeline(bios, dsf, fill_in_y_prompt)
                 print("got results for ", bios)
                 self.viz_bios(eval_res_bios)
                 
@@ -4079,6 +4078,7 @@ def main():
     parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
     parser.add_argument("--quick", action="store_true", help="Flag to quickly compute eval metrics for one biosample.")
     parser.add_argument("--list_bios", action="store_true", help="print the list of all available biosamples for evaluating")
+    parser.add_argument("--supertrack", action="store_true", help="supertrack")
 
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
@@ -4088,6 +4088,7 @@ def main():
 
     args = parser.parse_args()
     savedir = args.savedir
+    fill_in_y_prompt = args.supertrack
 
     if args.dino:
         savedir = savedir.replace("CANDI", "CANDINO")
@@ -4107,7 +4108,7 @@ def main():
         if args.rnaonly:
             ec.rnaseq_all(dsf=1)
         else:
-            ec.viz_all(dsf=1)
+            ec.viz_all(dsf=1, fill_in_y_prompt=fill_in_y_prompt)
 
     else:
         if args.rnaonly and not args.eic:
@@ -4116,7 +4117,7 @@ def main():
             
         if args.eic:
             t0 = datetime.now()
-            res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick)
+            res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
 
@@ -4126,7 +4127,7 @@ def main():
 
         else:
             t0 = datetime.now()
-            res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick)
+            res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
             ec.viz_bios(eval_res=res)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
