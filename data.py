@@ -3288,7 +3288,6 @@ if __name__ == "__main__":
             bios_min_exp_avail_threshold=3, check_completeness=True, eic=True)
 
     elif sys.argv[1] == "prompt":
-        
         bioses = [b for b in os.listdir(solar_data_path) if os.path.isdir(os.path.join(solar_data_path, b))]
         exps = {}
         for bios_name in bioses:
@@ -3319,6 +3318,9 @@ if __name__ == "__main__":
                     except:
                         pass
         
+        print(exps)
+        exit()
+
         exps2 = {}
         for exp in exps.keys():
             if exp not in exps2.keys():
@@ -3364,7 +3366,6 @@ if __name__ == "__main__":
                     summary_rows.append([exp, metric, np.nan, np.nan, stats["mean"], stats["median"], stats["std_dev"], stats["min"], stats["max"]])
 
         summary_report = pd.DataFrame(summary_rows, columns=['Experiment', 'Metric', 'Run Type', 'Count', 'Mean', 'Median', 'Std Dev', 'Min', 'Max'])
-        # summary_report.to_csv("data/ExpStats.csv")
         summary_report.to_csv(f"{solar_data_path}/ExpStats.csv")
 
     elif sys.argv[1] == "check_pval":
@@ -3518,7 +3519,6 @@ if __name__ == "__main__":
                         print(f'replaced/updated "{encode_data_path}/{chr}.npz')
                 except:
                     print(f'FAILED @ "{encode_data_path}/{chr}.npz')
-
 
     else:
         d = GET_DATA()
