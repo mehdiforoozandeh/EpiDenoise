@@ -1327,9 +1327,6 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
 
-        print(self.RawExpMetaData.columns)
-
-    
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
         blacklist = {}
@@ -3341,6 +3338,8 @@ if __name__ == "__main__":
                     exps2[exp][md].append(exps[exp][i][md])
 
         raw_exp_md = pd.DataFrame(exps2)
+
+        print(list(raw_exp_md.columns))
         raw_exp_md.to_csv(f"{solar_data_path}/RawExpMetaData.csv")
         print(raw_exp_md)
         exit()
