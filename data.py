@@ -3324,8 +3324,7 @@ if __name__ == "__main__":
 
                     except:
                         pass
-        print(exps.keys())
-        exit()
+
         exps2 = {}
         for exp in exps.keys():
             if exp not in exps2.keys():
