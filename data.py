@@ -3295,7 +3295,7 @@ if __name__ == "__main__":
             bios_min_exp_avail_threshold=3, check_completeness=True, eic=True)
 
     elif sys.argv[1] == "prompt":
-        bioses = [b for b in os.listdir(solar_data_path) if os.path.isdir(os.path.join(solar_data_path, b))]
+        bioses = [b for b in os.listdir(solar_data_path) if os.path.isdir(os.path.join(solar_data_path, b)) and b not in ["chromatin_state_annotations", "activity_data"]]
         exps = {}
         for bios_name in bioses:
             for exp in os.listdir(os.path.join(solar_data_path, bios_name)):
