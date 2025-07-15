@@ -1324,6 +1324,7 @@ class ExtendedEncodeDataHandler:
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
         self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv"))
         self.RawExpMetaData.index = self.RawExpMetaData["Unnamed: 0"]
+        self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
         print(self.RawExpMetaData)
         exit()
     
