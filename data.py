@@ -1322,7 +1322,8 @@ class ExtendedEncodeDataHandler:
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
-        self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv"), index = "Unnamed: 0")
+        self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv"))
+        self.RawExpMetaData.index = self.RawExpMetaData["Unnamed: 0"]
         print(self.RawExpMetaData)
         exit()
     
