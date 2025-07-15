@@ -4112,8 +4112,6 @@ def main():
                 all_dfs = []
                 # iterate over each biosample key in your dataset
                 for bios in ec.dataset.navigation.keys():
-                    if len(ec.dataset.navigation[bios]) > 6:
-                        continue
 
                     # skip ones without any RNaseq if you like
                     if args.eic:
