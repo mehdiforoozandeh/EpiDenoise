@@ -4128,7 +4128,6 @@ def main():
         else:
             t0 = datetime.now()
             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-            ec.viz_bios(eval_res=res)
             elapsed_time = datetime.now() - t0
             print(f"took {elapsed_time}")
 
