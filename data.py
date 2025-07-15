@@ -3291,6 +3291,7 @@ if __name__ == "__main__":
         bioses = [b for b in os.listdir(solar_data_path) if os.path.isdir(os.path.join(solar_data_path, b))]
         exps = {}
         for bios_name in bioses:
+            print(bios_name)
             for exp in os.listdir(os.path.join(solar_data_path, bios_name)):
                 exp_path = os.path.join(solar_data_path, bios_name, exp)
                 if os.path.isdir(exp_path):
