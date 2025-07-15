@@ -3330,7 +3330,7 @@ if __name__ == "__main__":
 
                     exps2[exp][md].append(exps[exp][i][md])
 
-        print(exps2)
+        print(pd.DataFrame(exps2))
         exit()
 
         # Calculate basic statistics
