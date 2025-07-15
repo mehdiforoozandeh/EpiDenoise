@@ -1322,6 +1322,9 @@ class ExtendedEncodeDataHandler:
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
+        self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv")).drop("Unnamed: 0", axis=1)
+        print(self.RawExpMetaData)
+        exit()
     
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
@@ -2594,40 +2597,43 @@ class ExtendedEncodeDataHandler:
         
         return region
 
-    def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median"):
-        if stat_type not in ["Min", "Max", "Median"]:
-            raise
-        # Create lookup dictionary once outside the loops
-        median_lookup = {}
-        for assay in self.aliases["experiment_aliases"]:
-            median_lookup[assay] = {
-                "depth": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), stat_type].values[0],
-                "coverage": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), stat_type].values[0],
-                "read_length": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), stat_type].values[0]
-            }
-
-        if len(md.shape) == 2:
-            for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                # assert i+1 == int(alias.replace("M",""))
-                
-                if torch.all(md[:, i] == missing_value):
-                    md[0, i] = median_lookup[assay]["depth"]
-                    md[1, i] = median_lookup[assay]["coverage"] 
-                    md[2, i] = median_lookup[assay]["read_length"]
-                    md[3, i] = 1
-
+    def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
+        if sample:
+            
         else:
-            for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                # assert i+1 == int(alias.replace("M",""))
-                
-                for b in range(md.shape[0]):
-                    if torch.all(md[b, :, i] == missing_value):
-                        md[b, 0, i] = median_lookup[assay]["depth"]
-                        md[b, 1, i] = median_lookup[assay]["coverage"]
-                        md[b, 2, i] = median_lookup[assay]["read_length"]
-                        md[b, 3, i] = 1
+            if stat_type not in ["Min", "Max", "Median"]:
+                raise
+            # Create lookup dictionary once outside the loops
+            stat_lookup = {}
+            for assay in self.aliases["experiment_aliases"]:
+                stat_lookup[assay] = {
+                    "depth": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), stat_type].values[0],
+                    "coverage": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), stat_type].values[0],
+                    "read_length": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), stat_type].values[0]
+                }
 
-        return md
+            if len(md.shape) == 2:
+                for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
+                    # assert i+1 == int(alias.replace("M",""))
+                    
+                    if torch.all(md[:, i] == missing_value):
+                        md[0, i] = stat_lookup[assay]["depth"]
+                        md[1, i] = stat_lookup[assay]["coverage"] 
+                        md[2, i] = stat_lookup[assay]["read_length"]
+                        md[3, i] = 1
+
+            else:
+                for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
+                    # assert i+1 == int(alias.replace("M",""))
+                    
+                    for b in range(md.shape[0]):
+                        if torch.all(md[b, :, i] == missing_value):
+                            md[b, 0, i] = stat_lookup[assay]["depth"]
+                            md[b, 1, i] = stat_lookup[assay]["coverage"]
+                            md[b, 2, i] = stat_lookup[assay]["read_length"]
+                            md[b, 3, i] = 1
+
+            return md
          
     def make_bios_tensor(self, loaded_data, loaded_metadata, missing_value=-1):
         dtensor = []
