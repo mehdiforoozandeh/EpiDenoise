@@ -4108,7 +4108,28 @@ def main():
         if args.rnaonly:
             ec.rnaseq_all(dsf=args.dsf)
         else:
-            ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
+            if args.quick:
+                all_dfs = []
+                # iterate over each biosample key in your dataset
+                for bios in ec.dataset.navigation.keys():
+                    if len(ec.dataset.navigation[bios] > 6):
+                        continue
+
+                    # skip ones without any RNaseq if you like
+                    if args.eic:
+                        res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+                    else:
+                        res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+                    # make sure it’s a DataFrame
+                    all_dfs.append(pd.DataFrame(res))
+
+                # concatenate, save
+                report = pd.concat(all_dfs, ignore_index=True)
+                os.makedirs(args.savedir, exist_ok=True)
+                report.to_csv(os.path.join(args.savedir, "quick_report.csv"), index=False)
+                print(report)
+            else:
+                ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
 
     else:
         if args.rnaonly and not args.eic:
