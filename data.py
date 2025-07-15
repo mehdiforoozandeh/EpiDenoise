@@ -1322,11 +1322,13 @@ class ExtendedEncodeDataHandler:
         self.eicdf_path = os.path.join(self.base_path, "EIC_experiments.csv")
         self.eic_df = pd.read_csv(self.eicdf_path)
         self.expstats = pd.read_csv(os.path.join(self.base_path, "ExpStats.csv")).drop("Unnamed: 0", axis=1)
+
         self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv"))
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
-        print(self.RawExpMetaData)
-        exit()
+
+        print(self.RawExpMetaData.columns)
+
     
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
