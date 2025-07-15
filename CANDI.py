@@ -537,6 +537,9 @@ class PRETRAIN(object):
 
                 _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.dataset.get_batch(side="y", pval=True, y_prompt=supertrack)
 
+                print(_avX_batch)
+                print(_avY_batch)
+
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     self.dataset.update_batch_pointers()
                     print("mismatch in shapes! skipped batch...")

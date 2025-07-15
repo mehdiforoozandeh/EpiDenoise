@@ -2600,10 +2600,31 @@ class ExtendedEncodeDataHandler:
 
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
         if sample:
-            pass
+            if len(md.shape) == 2:
+                for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
+                    
+                    if torch.all(md[:, i] == missing_value):
+                        md[0, i] = random.choice(self.RawExpMetaData.loc["depth", assay])
+                        md[1, i] = random.choice(self.RawExpMetaData.loc["coverage", assay])
+                        md[2, i] = random.choice(self.RawExpMetaData.loc["read_length", assay])
+                        md[3, i] = random.choice(self.RawExpMetaData.loc["run_type", assay])
+
+            else:
+                for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
+                    
+                    for b in range(md.shape[0]):
+                        if torch.all(md[b, :, i] == missing_value):
+                            md[b, 0, i] = random.choice(self.RawExpMetaData.loc["depth", assay])
+                            md[b, 1, i] = random.choice(self.RawExpMetaData.loc["coverage", assay])
+                            md[b, 2, i] = random.choice(self.RawExpMetaData.loc["read_length", assay])
+                            md[b, 3, i] = random.choice(self.RawExpMetaData.loc["run_type", assay])
+            
+            return md
+
         else:
             if stat_type not in ["Min", "Max", "Median"]:
                 raise
+
             # Create lookup dictionary once outside the loops
             stat_lookup = {}
             for assay in self.aliases["experiment_aliases"]:
