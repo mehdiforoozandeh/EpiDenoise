@@ -3312,15 +3312,11 @@ if __name__ == "__main__":
                             "read_length":list(md2["read_length"].values())[0], 
                             "run_type":list(md2["run_type"].values())[0] 
                         }
-                        print(bios_name, exp, md)
 
                         exps[exp].append(md)
 
                     except:
                         pass
-        
-        print(pd.DataFrame(exps))
-        exit()
 
         exps2 = {}
         for exp in exps.keys():
@@ -3333,6 +3329,9 @@ if __name__ == "__main__":
                         exps2[exp][md] = []
 
                     exps2[exp][md].append(exps[exp][i][md])
+
+        print(exps2)
+        exit()
 
         # Calculate basic statistics
         statistics = {}
