@@ -3319,7 +3319,7 @@ if __name__ == "__main__":
                     except:
                         pass
         
-        print(exps)
+        print(pd.DataFrame(exps))
         exit()
 
         exps2 = {}
