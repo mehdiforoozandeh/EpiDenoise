@@ -2599,7 +2599,7 @@ class ExtendedEncodeDataHandler:
 
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
         if sample:
-            
+            pass
         else:
             if stat_type not in ["Min", "Max", "Median"]:
                 raise
