@@ -4106,9 +4106,9 @@ def main():
         
     if args.bios_name == "all":
         if args.rnaonly:
-            ec.rnaseq_all(dsf=1)
+            ec.rnaseq_all(dsf=args.dsf)
         else:
-            ec.viz_all(dsf=1, fill_in_y_prompt=fill_in_y_prompt)
+            ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
 
     else:
         if args.rnaonly and not args.eic:

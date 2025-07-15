@@ -2596,14 +2596,16 @@ class ExtendedEncodeDataHandler:
         
         return region
 
-    def fill_in_y_prompt(self, md, missing_value=-1):
+    def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median"):
+        if stat_type not in ["Min", "Max", "Median"]:
+            raise
         # Create lookup dictionary once outside the loops
         median_lookup = {}
         for assay in self.aliases["experiment_aliases"]:
             median_lookup[assay] = {
-                "depth": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), "Median"].values[0],
-                "coverage": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), "Median"].values[0],
-                "read_length": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), "Median"].values[0]
+                "depth": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="depth"), stat_type].values[0],
+                "coverage": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="coverage"), stat_type].values[0],
+                "read_length": self.expstats.loc[(self.expstats["Experiment"]==assay) & (self.expstats["Metric"]=="read_length"), stat_type].values[0]
             }
 
         if len(md.shape) == 2:

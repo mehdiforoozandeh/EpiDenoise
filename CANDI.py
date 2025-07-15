@@ -446,7 +446,7 @@ class PRETRAIN(object):
         arch="", mask_percentage=0.15, hook=False, DNA=False, 
         early_stop=True, early_stop_metric="imp_pval_r2", 
         early_stop_delta=0.01, patience=2, prog_monitor_patience=150, 
-        prog_monitor_delta=1e-5):
+        prog_monitor_delta=1e-5, supertrack=False):
 
         log_strs = []
         log_strs.append(str(self.device))
@@ -535,7 +535,7 @@ class PRETRAIN(object):
                 else:
                     _X_batch, _mX_batch, _avX_batch = self.dataset.get_batch(side="x")
 
-                _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.dataset.get_batch(side="y", pval=True)
+                _Y_batch, _mY_batch, _avY_batch, _pval_batch = self.dataset.get_batch(side="y", pval=True, y_prompt=supertrack)
 
                 if _X_batch.shape != _Y_batch.shape or _mX_batch.shape != _mY_batch.shape or _avX_batch.shape != _avY_batch.shape:
                     self.dataset.update_batch_pointers()
@@ -1087,6 +1087,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     separate_decoders = hyper_parameters["separate_decoders"]
     merge_ct = hyper_parameters["merge_ct"]
     loci_gen = hyper_parameters["loci_gen"]
+    supertrack = hyper_parameters["supertrack"]
 
     dataset = ExtendedEncodeDataHandler(hyper_parameters["data_path"])
     dataset.initialize_EED(
@@ -1169,7 +1170,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
 
     model, best_metric = trainer.pretrain_CANDI(
         num_epochs=epochs, mask_percentage=mask_percentage, context_length=context_length, 
-        batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA)
+        batch_size=batch_size, inner_epochs=inner_epochs, arch=arch, DNA=DNA, supertrack=supertrack)
 
     end_time = time.time()
 
@@ -1265,6 +1266,7 @@ def main():
 
     parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
     parser.add_argument('--unet', action='store_true', help='whether to use unet skip connections')
+    parser.add_argument('--supertrack', action='store_true', help='whether to use train using supertrack setting (fill in y_prompt)')
     parser.add_argument('--LRschedule', type=str, default=None, help='optimizer lr scheduler')
     
     # Flags for DNA and EIC
@@ -1310,7 +1312,8 @@ def main():
 
         "optim": args.optim,
         "unet": args.unet,
-        "LRschedule": args.LRschedule
+        "LRschedule": args.LRschedule,
+        "supertrack": args.supertrack
     }
 
     # Call your training function with parsed arguments, including checkpoint
@@ -1364,3 +1367,5 @@ if __name__ == "__main__":
 
 # python CANDI.py --dna --eic --epochs 15 --suffix unt_admx_cos --unet --optim adamax --LRschedule cosine
 # python CANDI.py --dna --epochs 15 --suffix unt_admx_cos --unet --optim adamax --LRschedule cosine
+
+
