@@ -3798,9 +3798,9 @@ class EVAL_CANDI(object):
 
     def bios_pipeline(self, bios_name, x_dsf, quick=False, fill_in_y_prompt=False):
         if self.DNA:
-            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
-            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         
         print("loaded input data")
 
@@ -3862,9 +3862,9 @@ class EVAL_CANDI(object):
     
     def bios_pipeline_eic(self, bios_name, x_dsf, quick=False, fill_in_y_prompt=False):
         if self.DNA:
-            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt)  
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
-            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt) 
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt) 
 
         print(X.shape, Y.shape, P.shape)
 
@@ -3969,7 +3969,7 @@ class EVAL_CANDI(object):
                 new_res.append(f)
         return new_res
 
-    def viz_all(self, dsf=1, fill_in_y_prompt=False):
+    def viz_all(self, dsf=1):
         self.model_res = []
         print(f"Evaluating {len(list(self.dataset.navigation.keys()))} biosamples...")
         for bios in list(self.dataset.navigation.keys()):
@@ -3979,9 +3979,9 @@ class EVAL_CANDI(object):
             try:
                 print("evaluating ", bios)
                 if self.eic:
-                    eval_res_bios = self.bios_pipeline_eic(bios, dsf, fill_in_y_prompt)
+                    eval_res_bios = self.bios_pipeline_eic(bios, dsf)
                 else:
-                    eval_res_bios = self.bios_pipeline(bios, dsf, fill_in_y_prompt)
+                    eval_res_bios = self.bios_pipeline(bios, dsf)
                 print("got results for ", bios)
                 self.viz_bios(eval_res_bios)
                 
