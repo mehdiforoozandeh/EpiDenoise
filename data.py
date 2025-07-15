@@ -3329,19 +3329,20 @@ if __name__ == "__main__":
         for exp in exps.keys():
             if exp not in exps2.keys():
                 exps2[exp] = {}
+                print(exp)
 
-            for i in range(len(exps[exp])):
-                for md in exps[exp][i].keys():
-                    if md not in exps2[exp].keys():
-                        exps2[exp][md] = []
+        #     for i in range(len(exps[exp])):
+        #         for md in exps[exp][i].keys():
+        #             if md not in exps2[exp].keys():
+        #                 exps2[exp][md] = []
 
-                    exps2[exp][md].append(exps[exp][i][md])
+        #             exps2[exp][md].append(exps[exp][i][md])
 
-        raw_exp_md = pd.DataFrame(exps2)
+        # raw_exp_md = pd.DataFrame(exps2)
 
-        print(list(raw_exp_md.columns))
-        raw_exp_md.to_csv(f"{solar_data_path}/RawExpMetaData.csv")
-        print(raw_exp_md)
+        # print(list(raw_exp_md.columns))
+        # raw_exp_md.to_csv(f"{solar_data_path}/RawExpMetaData.csv")
+        # print(raw_exp_md)
         exit()
 
         # Calculate basic statistics
