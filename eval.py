@@ -3100,17 +3100,17 @@ class EVAL_CANDI(object):
         Supports: linear, lasso, ridge, elasticnet, svr.
         """
 
-        # 1) load full-genome RNA-seq table (unchanged)
+        # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
 
-        # build gene_info lookup (unchanged)
+        # build gene_info lookup 
         gene_info = (
             rna_seq_data[['geneID','chr','TPM','FPKM']]
             .drop_duplicates(subset='geneID')
             .set_index('geneID')
         )
 
-        # 2) build long-format (unchanged)
+        # 2) build long-format
         long_rows_true = []
         long_rows_pred = []
         for _, row in rna_seq_data.iterrows():
@@ -3274,6 +3274,13 @@ class EVAL_CANDI(object):
         pd.DataFrame(rows).to_csv(f"{out}/RNAseq_results_{observed}.csv", index=False)
 
         return report
+
+    def quick_eval_rnaseq(bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, observed="pval"):
+        # build gene_info lookup 
+        gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID'))
+        print(gene_info)
+
+        return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         # Initialize a tensor to store all predictions
@@ -4004,14 +4011,15 @@ class EVAL_CANDI(object):
         self.model_res = pd.DataFrame(self.model_res)
         self.model_res.to_csv(f"{self.savedir}/model_eval_DSF{dsf}.csv", index=False)
 
-    def bios_rnaseq_eval(self, bios_name, x_dsf):
+    def bios_rnaseq_eval(self, bios_name, x_dsf, quick=False, fill_in_y_prompt=False):
         if not self.dataset.has_rnaseq(bios_name):
+            print(f"{bios_name} doesn't have RNA-seq data!")
             return
 
         if self.DNA:
-            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
-            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf)  
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
 
         available_indices = torch.where(avX[0, :] == 1)[0]
 
@@ -4040,15 +4048,27 @@ class EVAL_CANDI(object):
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
-        print("rna-seq evaluation on count")
-        self.eval_rnaseq(
-            bios_name, ups_count_mean, Y, 
-            available_indices, plot_REC=True, observed="count")
+        if quick:
+            print("rna-seq evaluation on count [QUICK]")
+            self.quick_eval_rnaseq(
+                bios_name, ups_count_mean, Y, 
+                available_indices, observed="count")
 
-        print("rna-seq evaluation on pval")
-        self.eval_rnaseq(
-            bios_name, np.sinh(ups_pval_mean), np.sinh(P),
-            available_indices, plot_REC=True, observed="pval")
+            print("rna-seq evaluation on pval [QUICK]")
+            self.quick_eval_rnaseq(
+                bios_name, np.sinh(ups_pval_mean), np.sinh(P), 
+                available_indices, observed="pval")
+
+        else:
+            print("rna-seq evaluation on count")
+            self.eval_rnaseq(
+                bios_name, ups_count_mean, Y, 
+                available_indices, plot_REC=True, observed="count")
+
+            print("rna-seq evaluation on pval")
+            self.eval_rnaseq(
+                bios_name, np.sinh(ups_pval_mean), np.sinh(P),
+                available_indices, plot_REC=True, observed="pval")
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
@@ -4131,7 +4151,7 @@ def main():
 
     else:
         if args.rnaonly and not args.eic:
-            ec.bios_rnaseq_eval(args.bios_name, args.dsf)
+            ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
             exit()
             
         if args.eic:
