@@ -3276,6 +3276,10 @@ class EVAL_CANDI(object):
         return report
 
     def quick_eval_rnaseq(bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, observed="pval"):
+
+        # 1) load full-genome RNA-seq table 
+        rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
+
         # build gene_info lookup 
         gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID'))
         print(gene_info)
