@@ -3279,11 +3279,11 @@ class EVAL_CANDI(object):
         def stats(x):
             if x.size == 0:
                 return 0.0, 0.0, 0.0, 0.0
-            med = np.median(x)
-            q75, q25 = np.percentile(x, [75, 25])
+            med = np.nanmedian(x, axis=0)
+            q75, q25 = np.nanpercentile(x, [75, 25], axis=0)
             iqr = q75 - q25
-            mn = x.min()
-            mx = x.max()
+            mn = x.min(axis=0)
+            mx = x.max(axis=0)
             return med, iqr, mn, mx
 
         # 1) load full-genome RNA-seq table 
