@@ -3275,13 +3275,26 @@ class EVAL_CANDI(object):
 
         return report
 
-    def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, observed="pval"):
+    def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, dtype="pval"):
 
         # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
 
         # build gene_info lookup 
         gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID')) 
+
+        for _, row in rna_seq_data.iterrows():
+            gene, start, end, strand = row['geneID'], row['start'], row['end'], row['strand']
+
+            if dtype.lower() == "z": 
+                # in this case, y_pred is actually predicted latent (z_pred) 
+                # y_true is only used to find the resolution difference between latent and actual signal
+                print(y_true.shape[0]/y_pred.shape[0])
+                
+            else:
+                pass
+                # 1. extract features from pred
+                # 2. extract features from true
 
         return
 
@@ -4090,20 +4103,12 @@ class EVAL_CANDI(object):
         mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
         var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
 
-        
-
         ups_count_dist = NegativeBinomial(p_ups, n_ups)
         ups_pval_dist = Gaussian(mu_ups, var_ups)
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
         Z = Z.view((Z.shape[0] * Z.shape[1]), Z.shape[-1])
-
-        print(Z.shape)
-        print(Y.shape)
-        print(P.shape)
-        print(p_ups.shape)
-        exit()
 
         ups_count_mean = ups_count_dist.expect()
         ups_count_std = ups_count_dist.std()
@@ -4114,12 +4119,15 @@ class EVAL_CANDI(object):
             print("rna-seq evaluation on count [QUICK]")
             self.quick_eval_rnaseq(
                 bios_name, ups_count_mean, Y, 
-                available_indices, observed="count")
+                available_indices, dtype="count")
 
             print("rna-seq evaluation on pval [QUICK]")
             self.quick_eval_rnaseq(
                 bios_name, np.sinh(ups_pval_mean), np.sinh(P), 
-                available_indices, observed="pval")
+                available_indices, dtype="pval")
+
+            print("rna-seq evaluation on latent [QUICK]")
+            self.quick_eval_rnaseq(bios_name, Z, P, available_indices, dtype="Z")
 
         else:
             print("rna-seq evaluation on count")
