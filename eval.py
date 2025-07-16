@@ -3282,8 +3282,6 @@ class EVAL_CANDI(object):
 
         # build gene_info lookup 
         gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID')) 
-        print(rna_seq_data)
-
 
         return
 
@@ -3352,6 +3350,52 @@ class EVAL_CANDI(object):
             # torch.cuda.empty_cache()  # Free up GPU memory
 
         return n, p, mu, var
+
+    def get_latent_z(self, X, mX, mY, avail, seq=None):
+        """
+        Compute the latent representation Z for the input batch using the encoder.
+        """
+        Z_all = []
+
+        for i in range(0, len(X), self.batch_size):
+            x_batch = X[i:i + self.batch_size]
+            mX_batch = mX[i:i + self.batch_size]
+            mY_batch = mY[i:i + self.batch_size]
+            avail_batch = avail[i:i + self.batch_size]
+
+            if self.DNA:
+                seq_batch = seq[i:i + self.batch_size]
+
+            with torch.no_grad():
+                x_batch = x_batch.clone()
+                mX_batch = mX_batch.clone()
+                mY_batch = mY_batch.clone()
+                avail_batch = avail_batch.clone()
+
+                x_batch_missing_vals = (x_batch == self.token_dict["missing_mask"])
+                mX_batch_missing_vals = (mX_batch == self.token_dict["missing_mask"])
+                avail_batch_missing_vals = (avail_batch == 0)
+
+                x_batch[x_batch_missing_vals] = self.token_dict["cloze_mask"]
+                mX_batch[mX_batch_missing_vals] = self.token_dict["cloze_mask"]
+
+                x_batch = x_batch.to(self.device)
+                mX_batch = mX_batch.to(self.device)
+                mY_batch = mY_batch.to(self.device)
+                avail_batch = avail_batch.to(self.device)
+
+                if self.DNA:
+                    seq_batch = seq_batch.to(self.device)
+                    Z = self.model.encode(x_batch.float(), seq_batch, mX_batch, mY_batch)
+                else:
+                    Z = self.model.encode(x_batch.float(), mX_batch, mY_batch)
+
+            Z_all.append(Z.cpu())
+
+            del x_batch, mX_batch, mY_batch, avail_batch, Z
+            # torch.cuda.empty_cache()
+
+        return torch.cat(Z_all, dim=0)
 
     def get_metrics(
         self, 
@@ -4033,7 +4077,15 @@ class EVAL_CANDI(object):
         else:
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
 
+        if self.DNA:
+            z_ups = self.get_latent_z(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            z_ups = self.get_latent_z(X, mX, mY, avX, seq=None, imp_target=[])
         del X, mX, mY, avX, avY  # Free up memory
+
+        print(z_ups.shape)
+        print(p_ups.shape)
+        exit()
 
         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
