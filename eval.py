@@ -3284,7 +3284,7 @@ class EVAL_CANDI(object):
             iqr = q75 - q25
             mn = x.min(axis=0)
             mx = x.max(axis=0)
-            return med, iqr, mn, mx
+            return np.array(med), np.array(iqr), np.array(mn), np.array(mx)
 
         # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
