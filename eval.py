@@ -3276,6 +3276,15 @@ class EVAL_CANDI(object):
         return report
 
     def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, dtype="pval", margin=2000):
+        def stats(x):
+            if x.size == 0:
+                return 0.0, 0.0, 0.0, 0.0
+            med = np.median(x)
+            q75, q25 = np.percentile(x, [75, 25])
+            iqr = q75 - q25
+            mn = x.min()
+            mx = x.max()
+            return med, iqr, mn, mx
 
         # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
@@ -3283,6 +3292,7 @@ class EVAL_CANDI(object):
         # build gene_info lookup 
         gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID')) 
 
+        DF = []
         for _, row in rna_seq_data.iterrows():
             gene, start, end, strand = row['geneID'], row['start'], row['end'], row['strand']
 
@@ -3298,12 +3308,31 @@ class EVAL_CANDI(object):
                 TTS_z = y_pred[z_end-int(margin//bp2z_ratio):z_end+int(margin//bp2z_ratio)]
 
                 print(gene, gene_z.shape, TSS_z.shape, TTS_z.shape)
+                print(stats(gene_z))
+                exit()
+                # integrate here (extract features and add to DF)
                 
             else:
-                pass
-                # 1. extract features from pred
-                # 2. extract features from true
+                for a in range(y_pred.shape[1]):
+                    assay = self.expnames[a]
+                    # true only if available
+                    if a in availability:
+                        feats = signal_feature_extraction(start, end, strand, y_true[:, a].numpy())
+                        for suffix, val in feats.items():
+                            DF.append({
+                                'geneID': gene,
+                                'feature': f"True_{assay}_{suffix}",
+                                'signal': val
+                            })
 
+                    # pred for all
+                    feats = signal_feature_extraction(start, end, strand, y_pred[:, a].numpy())
+                    for suffix, val in feats.items():
+                        DF.append({
+                            'geneID': gene,
+                            'feature': f"Pred_{assay}_{suffix}",
+                            'signal': val
+                        })
         return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
