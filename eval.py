@@ -3277,14 +3277,16 @@ class EVAL_CANDI(object):
 
     def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, dtype="pval", margin=2000):
         def stats(x):
+            if isinstance(x, torch.Tensor):
+                x = x.cpu().numpy()
             if x.size == 0:
                 return 0.0, 0.0, 0.0, 0.0
             med = np.nanmedian(x, axis=0)
             q75, q25 = np.nanpercentile(x, [75, 25], axis=0)
             iqr = q75 - q25
-            mn = x.min(axis=0)
-            mx = x.max(axis=0)
-            return np.array(med), np.array(iqr), np.array(mn), np.array(mx)
+            mn = np.nanmin(x, axis=0)
+            mx = np.nanmax(x, axis=0)
+            return med, iqr, mn, mx
 
         # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
