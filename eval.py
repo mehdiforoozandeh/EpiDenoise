@@ -3281,8 +3281,9 @@ class EVAL_CANDI(object):
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
 
         # build gene_info lookup 
-        gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID'))
-        print(gene_info)
+        gene_info = (rna_seq_data[['geneID','chr','TPM','FPKM']].drop_duplicates(subset='geneID').set_index('geneID')) 
+        print(rna_seq_data)
+
 
         return
 
