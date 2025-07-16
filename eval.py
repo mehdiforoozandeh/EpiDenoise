@@ -3292,6 +3292,7 @@ class EVAL_CANDI(object):
                 y2z_resolution_ratio = y_true.shape[0]/y_pred.shape[0]
                 bp2z_ratio = 25*y2z_resolution_ratio
                 z_start, z_end = start//bp2z_ratio, end//bp2z_ratio
+                print(z_start, z_end)
                 gene_z = y_pred[z_start:z_end]
                 print(gene, gene_z.shape)
                 
