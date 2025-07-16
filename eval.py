@@ -4078,14 +4078,11 @@ class EVAL_CANDI(object):
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
 
         if self.DNA:
-            z_ups = self.get_latent_z(X, mX, mY, avX, seq=seq)
+            Z = self.get_latent_z(X, mX, mY, avX, seq=seq)
         else:
-            z_ups = self.get_latent_z(X, mX, mY, avX, seq=None)
-        del X, mX, mY, avX, avY  # Free up memory
+            Z = self.get_latent_z(X, mX, mY, avX, seq=None)
 
-        print(z_ups.shape)
-        print(p_ups.shape)
-        exit()
+        del X, mX, mY, avX, avY  # Free up memory
 
         p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
         n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
@@ -4093,12 +4090,20 @@ class EVAL_CANDI(object):
         mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
         var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
 
-        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+        
 
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
         ups_pval_dist = Gaussian(mu_ups, var_ups)
 
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+        Z = Z.view((Z.shape[0] * Z.shape[1]), Z.shape[-1])
+
+        print(Z.shape)
+        print(Y.shape)
+        print(P.shape)
+        print(p_ups.shape)
+        exit()
 
         ups_count_mean = ups_count_dist.expect()
         ups_count_std = ups_count_dist.std()
