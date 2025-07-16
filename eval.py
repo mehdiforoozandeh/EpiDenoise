@@ -3386,9 +3386,9 @@ class EVAL_CANDI(object):
 
                 if self.DNA:
                     seq_batch = seq_batch.to(self.device)
-                    Z = self.model.encode(x_batch.float(), seq_batch, mX_batch, mY_batch)
+                    Z = self.model.encode(x_batch.float(), seq_batch, mX_batch)
                 else:
-                    Z = self.model.encode(x_batch.float(), mX_batch, mY_batch)
+                    Z = self.model.encode(x_batch.float(), mX_batch)
 
             Z_all.append(Z.cpu())
 
