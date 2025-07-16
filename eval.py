@@ -3307,8 +3307,14 @@ class EVAL_CANDI(object):
                 gene_z = y_pred[z_start:z_end]
                 TTS_z = y_pred[z_end-int(margin//bp2z_ratio):z_end+int(margin//bp2z_ratio)]
 
-                print(gene, gene_z.shape, TSS_z.shape, TTS_z.shape)
-                print(stats(gene_z))
+                gene_med, gene_iqr, gene_mn, gene_mx = stats(gene_z)
+                tss_med, tss_iqr, tss_mn, tss_mx = stats(TSS_z)
+                tts_med, tts_iqr, tts_mn, tts_mx = stats(TTS_z)
+
+                print(gene_med.shape, gene_iqr.shape, gene_mn.shape, gene_mx.shape)
+                print(tss_med.shape, tss_iqr.shape, tss_mn.shape, tss_mx.shape)
+                print(tts_med.shape, tts_iqr.shape, tts_mn.shape, tts_mx.shape)
+
                 exit()
                 # integrate here (extract features and add to DF)
                 
