@@ -4078,9 +4078,9 @@ class EVAL_CANDI(object):
             n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
 
         if self.DNA:
-            z_ups = self.get_latent_z(X, mX, mY, avX, seq=seq, imp_target=[])
+            z_ups = self.get_latent_z(X, mX, mY, avX, seq=seq)
         else:
-            z_ups = self.get_latent_z(X, mX, mY, avX, seq=None, imp_target=[])
+            z_ups = self.get_latent_z(X, mX, mY, avX, seq=None)
         del X, mX, mY, avX, avY  # Free up memory
 
         print(z_ups.shape)
