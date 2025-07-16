@@ -3289,7 +3289,11 @@ class EVAL_CANDI(object):
             if dtype.lower() == "z": 
                 # in this case, y_pred is actually predicted latent (z_pred) 
                 # y_true is only used to find the resolution difference between latent and actual signal
-                print(y_true.shape[0]/y_pred.shape[0])
+                y2z_resolution_ratio = y_true.shape[0]/y_pred.shape[0]
+                bp2z_ratio = 25*y2z_resolution_ratio
+                z_start, z_end = start//bp2z_ratio, end//bp2z_ratio
+                gene_z = y_pred[z_start:z_end]
+                print(gene, gene_z.shape)
                 
             else:
                 pass
