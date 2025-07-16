@@ -3275,7 +3275,7 @@ class EVAL_CANDI(object):
 
         return report
 
-    def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, dtype="pval"):
+    def quick_eval_rnaseq(self, bios_name, y_pred, y_true, availability, k_folds: int = 5, random_state: int = 42, dtype="pval", margin=2000):
 
         # 1) load full-genome RNA-seq table 
         rna_seq_data = self.dataset.load_rna_seq_data(bios_name, self.gene_coords)
@@ -3292,8 +3292,12 @@ class EVAL_CANDI(object):
                 y2z_resolution_ratio = y_true.shape[0]/y_pred.shape[0]
                 bp2z_ratio = 25*y2z_resolution_ratio
                 z_start, z_end = int(start//bp2z_ratio), int(end//bp2z_ratio)
+
+                TSS_z = y_pred[z_start-int(margin//bp2z_ratio):z_start+int(margin//bp2z_ratio)]
                 gene_z = y_pred[z_start:z_end]
-                print(gene, gene_z.shape)
+                TTS_z = y_pred[z_end-int(margin//bp2z_ratio):z_end+int(margin//bp2z_ratio)]
+
+                print(gene, gene_z.shape, TSS_z.shape, TTS_z.shape)
                 
             else:
                 pass
