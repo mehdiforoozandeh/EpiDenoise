@@ -12,6 +12,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import  mean_absolute_error
 
 from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
+from sklearn.ensemble import RandomForestRegressor
 
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.metrics import roc_auc_score
@@ -3403,7 +3404,6 @@ class EVAL_CANDI(object):
                 "pearson": np.mean(pearson_scores),
                 "spearman": np.mean(spearman_scores)
             }
-
 
         regressors = {
             "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
