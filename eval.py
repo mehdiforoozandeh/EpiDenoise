@@ -3347,6 +3347,7 @@ class EVAL_CANDI(object):
                         })
 
         DF = pd.DataFrame(DF)
+        DF = DF.pivot(index='geneID', columns='feature', values='signal')
         if dtype.lower() == "z": 
             pass
         else:
@@ -3358,7 +3359,7 @@ class EVAL_CANDI(object):
             exit()
 
         # print(DF.shape)
-        # print(DF.pivot(index='geneID', columns='feature', values='signal'))
+        # print()
         return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
