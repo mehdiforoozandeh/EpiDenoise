@@ -3353,9 +3353,9 @@ class EVAL_CANDI(object):
         else:
             DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
             DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
-            
-            available_assays = { self.expnames[a] for a in availability }
-            DF_Pred_Denoised = DF_Pred.loc[:, [c for c in DF_Pred.columns if c in available_assays]]
+
+            available_assays = {self.expnames[a] for a in availability }
+            DF_Pred_Denoised = DF_Pred.loc[:, [c for c in DF_Pred.columns if c.split("_")[-2] in available_assays]]
 
             print(DF.shape)
             print(DF_True.shape)
