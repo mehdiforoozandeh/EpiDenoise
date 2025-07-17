@@ -4250,41 +4250,41 @@ class EVAL_CANDI(object):
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
-        if quick:
-            res = []
-            print("rna-seq evaluation on count [QUICK]")
-            res.append(
-                self.quick_eval_rnaseq(
-                bios_name, ups_count_mean, Y, 
-                available_indices, dtype="count")
-                )
-
-            print("rna-seq evaluation on pval [QUICK]")
-            res.append(
+        # if quick:
+        res = []
+        print("rna-seq evaluation on count [QUICK]")
+        res.append(
             self.quick_eval_rnaseq(
-                bios_name, np.sinh(ups_pval_mean), np.sinh(P), 
-                available_indices, dtype="pval")
-                )
-
-            print("rna-seq evaluation on latent [QUICK]")
-            res.append(
-            self.quick_eval_rnaseq(
-                bios_name, Z, P, available_indices, dtype="Z")
+            bios_name, ups_count_mean, Y, 
+            available_indices, dtype="count")
             )
-            res = pd.concat(res, axis=1)
-            res = res.T
-            print(res)
 
-        else:
-            print("rna-seq evaluation on count")
-            self.eval_rnaseq(
-                bios_name, ups_count_mean, Y, 
-                available_indices, plot_REC=True, observed="count")
+        print("rna-seq evaluation on pval [QUICK]")
+        res.append(
+        self.quick_eval_rnaseq(
+            bios_name, np.sinh(ups_pval_mean), np.sinh(P), 
+            available_indices, dtype="pval")
+            )
 
-            print("rna-seq evaluation on pval")
-            self.eval_rnaseq(
-                bios_name, np.sinh(ups_pval_mean), np.sinh(P),
-                available_indices, plot_REC=True, observed="pval")
+        print("rna-seq evaluation on latent [QUICK]")
+        res.append(
+        self.quick_eval_rnaseq(
+            bios_name, Z, P, available_indices, dtype="Z")
+        )
+        res = pd.concat(res, axis=1)
+        res = res.T
+        return res
+
+        # else:
+        #     print("rna-seq evaluation on count")
+        #     self.eval_rnaseq(
+        #         bios_name, ups_count_mean, Y, 
+        #         available_indices, plot_REC=True, observed="count")
+
+        #     print("rna-seq evaluation on pval")
+        #     self.eval_rnaseq(
+        #         bios_name, np.sinh(ups_pval_mean), np.sinh(P),
+        #         available_indices, plot_REC=True, observed="pval")
 
     def rnaseq_all(self, dsf=1):
         self.model_res = []
@@ -4410,3 +4410,8 @@ if __name__ == "__main__":
     # python eval.py -m models/CANDINO_rand10k_merged.pth -hp models/hyper_parameters_DINO_CANDI_rand10k.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDINO_rand10k/ --dino --rnaonly all
 
     # python eval.py -m models/CANDIfull_DNA_random_mask_admx_cos_shdc_model_checkpoint_epoch6.pth -hp models/hyper_parameters_CANDIfull_DNA_random_mask_admx_cos_shdc_20250705123426_params43234025.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDIfull_admx_cos_shdc/ --quick
+
+
+    # python eval.py -m models/CANDIfull_DNA_random_mask_admx_cos_shdc_model_checkpoint_epoch6.pth -hp models/hyper_parameters_CANDIfull_DNA_random_mask_admx_cos_shdc_20250705123426_params43234025.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDIfull_admx_cos_shdc/ --quick --rnaonly foreskin_keratinocyte_grp1_rep1
+    # python eval.py -m models/CANDIeic_DNA_random_mask_jul15_model_checkpoint_epoch3.pth -hp models/hyper_parameters_CANDIeic_DNA_random_mask_jul15_20250715163659_params43234025.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDIeic_jul15/ --quick --rnaonly foreskin_keratinocyte_grp1_rep1
+    # python eval.py -m models/CANDIfull_DNA_random_mask_jul15_model_checkpoint_epoch1.pth -hp models/hyper_parameters_CANDIfull_DNA_random_mask_jul15_20250715163654_params43234025.pkl -d /project/compbio-lab/encode_data/ -s /project/compbio-lab/CANDIfull_jul15/ --quick --rnaonly foreskin_keratinocyte_grp1_rep1
