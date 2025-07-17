@@ -3313,7 +3313,7 @@ class EVAL_CANDI(object):
                 tss_med, tss_iqr, tss_mn, tss_mx = stats(TSS_z)
                 tts_med, tts_iqr, tts_mn, tts_mx = stats(TTS_z)
                 
-                for j in len(tss_med):
+                for j in range(len(tss_med)):
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_med_f{j}", 'signal': gene_med[j]})
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_iqr_f{j}", 'signal': gene_iqr[j]})
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_tss_med_f{j}", 'signal': tss_med[j]})
