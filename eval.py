@@ -3358,7 +3358,6 @@ class EVAL_CANDI(object):
 
         DF = pd.DataFrame(DF)
         DF = DF.pivot(index='geneID', columns='feature', values='signal')
-        DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
         DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
         
         Y = gene_info.loc[DF.index, "TPM"]
@@ -3371,6 +3370,7 @@ class EVAL_CANDI(object):
                     if assay in c:
                         avail_cols.append(c)
 
+            DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
             DF_Pred_Denoised = DF_Pred.loc[:, avail_cols]
 
         def evaluate_pipeline(pipe, X, y, k_folds=5):
@@ -3408,12 +3408,6 @@ class EVAL_CANDI(object):
         dim_red_options = {"no_pca": None, "pca_80": PCA(n_components=0.8)}
         results = {}
 
-        if dtype.lower()=="z":
-            print(type(DF_True), DF_True.shape)
-            print(DF_True.head())
-            print(Y)
-            exit()
-
         for dr_name, dim_red in dim_red_options.items():
             for reg_name, reg in regressors.items():
                 steps = [('scale', StandardScaler())]
@@ -3422,8 +3416,13 @@ class EVAL_CANDI(object):
                 steps.append(('reg', reg))
 
                 pipe = Pipeline(steps)
-                scores = evaluate_pipeline(pipe, DF_True, Y, k_folds=5)
-                results[(dr_name, reg_name)] = scores
+                if dtype.lower() != "z":
+                    results[(dtype, "Observed", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_True, Y, k_folds=5)
+                    results[(dtype, "Denoised", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_Pred_Denoised, Y, k_folds=5)
+                    results[(dtype, "Denoised+Imputed", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
+                else:
+                    results[("latent", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
+                    
         
         results = pd.DataFrame(results)
         print(results)
