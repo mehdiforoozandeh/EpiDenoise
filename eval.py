@@ -3313,14 +3313,13 @@ class EVAL_CANDI(object):
                 tss_med, tss_iqr, tss_mn, tss_mx = stats(TSS_z)
                 tts_med, tts_iqr, tts_mn, tts_mx = stats(TTS_z)
                 
-                DF.append({'geneID': gene, 'feature': "Pred_Z_gene_med", 'signal': gene_med})
-                DF.append({'geneID': gene, 'feature': "Pred_Z_gene_iqr", 'signal': gene_iqr})
-
-                DF.append({'geneID': gene, 'feature': "Pred_Z_tss_med", 'signal': tss_med})
-                DF.append({'geneID': gene, 'feature': "Pred_Z_tss_iqr", 'signal': tss_iqr})
-
-                DF.append({'geneID': gene, 'feature': "Pred_Z_tts_med", 'signal': tts_med})
-                DF.append({'geneID': gene, 'feature': "Pred_Z_tts_iqr", 'signal': tts_iqr})
+                for j in len(tss_med):
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_med_f{j}", 'signal': gene_med[j]})
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_iqr_f{j}", 'signal': gene_iqr[j]})
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_tss_med_f{j}", 'signal': tss_med[j]})
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_tss_iqr_f{j}", 'signal': tss_iqr[j]})
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_tts_med_f{j}", 'signal': tts_med[j]})
+                    DF.append({'geneID': gene, 'feature': f"Pred_Z_tts_iqr_f{j}", 'signal': tts_iqr[j]})
                 
             else:
                 for a in range(y_pred.shape[1]):
