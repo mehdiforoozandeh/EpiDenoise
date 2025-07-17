@@ -41,6 +41,11 @@ import pyBigWig, sys, argparse
 import scipy.stats as stats
 from scipy.optimize import minimize
 
+import warnings
+from scipy.stats import ConstantInputWarning
+warnings.filterwarnings("ignore", category=ConstantInputWarning)
+
+
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
@@ -3425,9 +3430,7 @@ class EVAL_CANDI(object):
                 else:
                     results[("latent", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
                     
-        
         results = pd.DataFrame(results)
-        print(results)
         return results
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
@@ -4248,18 +4251,29 @@ class EVAL_CANDI(object):
         ups_pval_std = ups_pval_dist.std()
 
         if quick:
+            res = []
             print("rna-seq evaluation on count [QUICK]")
-            self.quick_eval_rnaseq(
+            res.append(
+                self.quick_eval_rnaseq(
                 bios_name, ups_count_mean, Y, 
                 available_indices, dtype="count")
+                )
 
             print("rna-seq evaluation on pval [QUICK]")
+            res.append(
             self.quick_eval_rnaseq(
                 bios_name, np.sinh(ups_pval_mean), np.sinh(P), 
                 available_indices, dtype="pval")
+                )
 
             print("rna-seq evaluation on latent [QUICK]")
-            self.quick_eval_rnaseq(bios_name, Z, P, available_indices, dtype="Z")
+            res.append(
+            self.quick_eval_rnaseq(
+                bios_name, Z, P, available_indices, dtype="Z")
+            )
+            res = pd.concat(res, axis=1)
+            res = res.T
+            print(res)
 
         else:
             print("rna-seq evaluation on count")
