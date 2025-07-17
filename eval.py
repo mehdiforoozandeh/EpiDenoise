@@ -3312,13 +3312,15 @@ class EVAL_CANDI(object):
                 gene_med, gene_iqr, gene_mn, gene_mx = stats(gene_z)
                 tss_med, tss_iqr, tss_mn, tss_mx = stats(TSS_z)
                 tts_med, tts_iqr, tts_mn, tts_mx = stats(TTS_z)
+                
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"gene_med".upper()}", 'signal': gene_med})
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"gene_iqr".upper()}", 'signal': gene_iqr})
 
-                print(gene_med.shape, gene_iqr.shape, gene_mn.shape, gene_mx.shape)
-                print(tss_med.shape, tss_iqr.shape, tss_mn.shape, tss_mx.shape)
-                print(tts_med.shape, tts_iqr.shape, tts_mn.shape, tts_mx.shape)
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"tss_med".upper()}", 'signal': tss_med})
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"tss_iqr".upper()}", 'signal': tss_iqr})
 
-                exit()
-                # integrate here (extract features and add to DF)
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"tts_med".upper()}", 'signal': tts_med})
+                DF.append({'geneID': gene, 'feature': f"Pred_Z_{"tts_iqr".upper()}", 'signal': tts_iqr})
                 
             else:
                 for a in range(y_pred.shape[1]):
@@ -3341,6 +3343,8 @@ class EVAL_CANDI(object):
                             'feature': f"Pred_{assay}_{suffix}",
                             'signal': val
                         })
+
+        print(pd.DataFrame(DF))
         return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
