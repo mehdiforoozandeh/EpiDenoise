@@ -3316,8 +3316,10 @@ class EVAL_CANDI(object):
                 for j in range(len(tss_med)):
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_med_f{j}", 'signal': gene_med[j]})
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_gene_iqr_f{j}", 'signal': gene_iqr[j]})
+
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_tss_med_f{j}", 'signal': tss_med[j]})
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_tss_iqr_f{j}", 'signal': tss_iqr[j]})
+
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_tts_med_f{j}", 'signal': tts_med[j]})
                     DF.append({'geneID': gene, 'feature': f"Pred_Z_tts_iqr_f{j}", 'signal': tts_iqr[j]})
                 
@@ -3343,7 +3345,9 @@ class EVAL_CANDI(object):
                             'signal': val
                         })
 
-        print(pd.DataFrame(DF))
+        DF = pd.DataFrame(DF)
+        print(DF.shape)
+        print(DF.pivot(index='geneID', columns='feature', values='signal'))
         return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
