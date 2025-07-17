@@ -3427,7 +3427,7 @@ class EVAL_CANDI(object):
                 steps.append(('reg', reg))
 
                 pipe = Pipeline(steps)
-                scores = evaluate_pipeline(pipe, X, y, k_folds=5)
+                scores = evaluate_pipeline(pipe, DF_True, Y, k_folds=5)
                 results[(dr_name, reg_name)] = scores
         
         results = pd.DataFrame(results)
