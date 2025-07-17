@@ -3143,6 +3143,7 @@ class EVAL_CANDI(object):
             index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
         df_pred_wide_all = df_pred_long.pivot_table(
             index='geneID', columns='feature', values='signal', aggfunc='mean').fillna(0)
+
         available_assays = { self.expnames[a] for a in availability }
         mask = df_pred_long['feature'].str.split('_').str[0].isin(available_assays)
         df_pred_wide_avail = df_pred_long[mask].pivot_table(
@@ -3346,8 +3347,18 @@ class EVAL_CANDI(object):
                         })
 
         DF = pd.DataFrame(DF)
-        print(DF.shape)
-        print(DF.pivot(index='geneID', columns='feature', values='signal'))
+        if dtype.lower() == "z": 
+            pass
+        else:
+            DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
+            DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
+            print(DF.shape)
+            print(DF_True.shape)
+            print(DF_Pred.shape)
+            exit()
+
+        # print(DF.shape)
+        # print(DF.pivot(index='geneID', columns='feature', values='signal'))
         return
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
