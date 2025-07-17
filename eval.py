@@ -11,8 +11,10 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold
 from sklearn.metrics import  mean_absolute_error
 
-from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
+from sklearn.linear_model import Ridge, Lasso, LinearRegression
+from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.metrics import roc_auc_score
@@ -3360,8 +3362,7 @@ class EVAL_CANDI(object):
         DF = DF.pivot(index='geneID', columns='feature', values='signal')
         DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
         
-        Y = gene_info.loc[DF.index, "TPM"]
-
+        Y = pd.Series(np.arcsinh(gene_info.loc[DF.index, "TPM"]))
         if dtype.lower() != "z": 
             available_assays = {self.expnames[a] for a in availability}
             avail_cols = []
@@ -3376,8 +3377,7 @@ class EVAL_CANDI(object):
         def evaluate_pipeline(pipe, X, y, k_folds=5):
             cv = KFold(n_splits=k_folds, shuffle=True, random_state=42)
             
-            pearson_scores, spearman_scores, mse_scores = [], [], []
-            mae_scores = []
+            pearson_scores, spearman_scores, mse_scores, mae_scores = [], [], [], []
 
             for train_idx, test_idx in cv.split(X):
                 X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
@@ -3399,10 +3399,12 @@ class EVAL_CANDI(object):
             }
 
         regressors = {
-            "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
-            "lasso": LassoCV(cv=5),
-            # "elasticnet": ElasticNetCV(cv=5),
-            "random_forest": RandomForestRegressor(n_estimators=100, random_state=42)
+            "linear": LinearRegression(), 
+            "ridge": Ridge(),
+            "lasso": Lasso(),
+            "svr": SVR(kernel='rbf'),
+            "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
+            "xgb": XGBRegressor(n_estimators=100, random_state=42, verbosity=0)
         }
 
         dim_red_options = {"no_pca": None, "pca_80": PCA(n_components=0.8)}
