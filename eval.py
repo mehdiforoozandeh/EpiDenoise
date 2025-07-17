@@ -3399,8 +3399,8 @@ class EVAL_CANDI(object):
             }
 
         regressors = {
-            # "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
-            # "lasso": LassoCV(cv=5),
+            "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
+            "lasso": LassoCV(cv=5),
             # "elasticnet": ElasticNetCV(cv=5),
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42)
         }
@@ -3417,9 +3417,9 @@ class EVAL_CANDI(object):
 
                 pipe = Pipeline(steps)
                 if dtype.lower() != "z":
-                    results[(dtype, "Observed", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_True, Y, k_folds=5)
-                    results[(dtype, "Denoised", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_Pred_Denoised, Y, k_folds=5)
-                    results[(dtype, "Denoised+Imputed", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
+                    results[(dtype, "Obs", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_True, Y, k_folds=5)
+                    results[(dtype, "Den", dr_name, reg_name)] = evaluate_pipeline(pipe, DF_Pred_Denoised, Y, k_folds=5)
+                    results[(dtype, "Den+Imp", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
                 else:
                     results[("latent", dr_name, reg_name)] = evaluate_pipeline(pipe,  DF_Pred, Y, k_folds=5)
                     
