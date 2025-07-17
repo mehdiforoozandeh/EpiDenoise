@@ -3361,7 +3361,7 @@ class EVAL_CANDI(object):
         DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
         DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
         
-        Y = gene_info.loc[DF.index, "TPM"].values
+        Y = gene_info.loc[DF.index, "TPM"]
 
         if dtype.lower() != "z": 
             available_assays = {self.expnames[a] for a in availability}
