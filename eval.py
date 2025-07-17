@@ -3399,14 +3399,19 @@ class EVAL_CANDI(object):
             }
 
         regressors = {
-            "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
-            "lasso": LassoCV(cv=5),
-            "elasticnet": ElasticNetCV(cv=5),
+            # "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
+            # "lasso": LassoCV(cv=5),
+            # "elasticnet": ElasticNetCV(cv=5),
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42)
         }
 
         dim_red_options = {"no_pca": None, "pca_80": PCA(n_components=0.8)}
         results = {}
+
+        if dtype=="z":
+            print(type(DF_True), DF_True.shape)
+            print(DF_True.head())
+            print(Y)
 
         for dr_name, dim_red in dim_red_options.items():
             for reg_name, reg in regressors.items():
