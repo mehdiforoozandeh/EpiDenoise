@@ -4,6 +4,15 @@ from dino_candi import *
 # from _utils import *
 
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
+
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.model_selection import KFold
+from sklearn.metrics import  mean_absolute_error
+
+from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
+
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
@@ -3348,12 +3357,12 @@ class EVAL_CANDI(object):
 
         DF = pd.DataFrame(DF)
         DF = DF.pivot(index='geneID', columns='feature', values='signal')
-        if dtype.lower() == "z": 
-            pass
-        else:
-            DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
-            DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
+        DF_True = DF.loc[:, [c for c in DF.columns if "True" in c]]
+        DF_Pred = DF.loc[:, [c for c in DF.columns if "Pred" in c]]
+        
+        Y = gene_info.loc[DF.index, "TPM"].values
 
+        if dtype.lower() != "z": 
             available_assays = {self.expnames[a] for a in availability}
             avail_cols = []
             for assay in available_assays:
@@ -3363,15 +3372,67 @@ class EVAL_CANDI(object):
 
             DF_Pred_Denoised = DF_Pred.loc[:, avail_cols]
 
-            print(DF.shape)
-            print(DF_True.shape)
-            print(DF_Pred.shape)
-            print(DF_Pred_Denoised.shape)
-            exit()
+        def evaluate_pipeline(pipe, X, y, k_folds=5):
+            cv = KFold(n_splits=k_folds, shuffle=True, random_state=42)
+            
+            pearson_scores, spearman_scores, mse_scores = [], [], []
+            mae_scores, r2_scores, adj_r2_scores = [], [], []
 
-        # print(DF.shape)
-        # print()
-        return
+            for train_idx, test_idx in cv.split(X):
+                X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+                y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+                
+                pipe.fit(X_train, y_train)
+                y_pred = pipe.predict(X_test)
+
+                r2 = r2_score(y_test, y_pred)
+                adj_r2 = 1 - (1 - r2) * (len(y_test) - 1) / (len(y_test) - X_test.shape[1] - 1)
+
+                r2_scores.append(r2)
+                adj_r2_scores.append(adj_r2)
+                mse_scores.append(mean_squared_error(y_test, y_pred))
+                mae_scores.append(mean_absolute_error(y_test, y_pred))
+                pearson_scores.append(pearsonr(y_test, y_pred)[0])
+                spearman_scores.append(spearmanr(y_test, y_pred)[0])
+            
+            return {
+                "r2": np.mean(r2_scores),
+                "adjusted_r2": np.mean(adj_r2_scores),
+                "mse": np.mean(mse_scores),
+                "mae": np.mean(mae_scores),
+                "pearson": np.mean(pearson_scores),
+                "spearman": np.mean(spearman_scores)
+            }
+
+
+        regressors = {
+            "ridge": RidgeCV(alphas=[0.01, 0.1, 1.0, 10.0]),
+            "lasso": LassoCV(cv=5),
+            "elasticnet": ElasticNetCV(cv=5),
+            "random_forest": RandomForestRegressor(n_estimators=100, random_state=42)
+        }
+
+        dim_red_options = {
+            "no_pca": None,
+            "pca_80": PCA(n_components=0.8),
+            "pca_10": PCA(n_components=10)
+        }
+        results = {}
+
+        for dr_name, dim_red in dim_red_options.items():
+            for reg_name, reg in regressors.items():
+                steps = [('scale', StandardScaler())]
+                if dim_red is not None:
+                    steps.append(('pca', dim_red))
+                steps.append(('reg', reg))
+
+                pipe = Pipeline(steps)
+                scores = evaluate_pipeline(pipe, X, y, k_folds=5)
+                results[(dr_name, reg_name)] = scores
+        
+        results = pd.DataFrame(results)
+        print(results)
+        return results
 
     def pred(self, X, mX, mY, avail, imp_target=[], seq=None):
         # Initialize a tensor to store all predictions
