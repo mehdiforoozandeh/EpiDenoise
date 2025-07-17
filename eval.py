@@ -3408,10 +3408,11 @@ class EVAL_CANDI(object):
         dim_red_options = {"no_pca": None, "pca_80": PCA(n_components=0.8)}
         results = {}
 
-        if dtype=="z":
+        if dtype.lower()=="z":
             print(type(DF_True), DF_True.shape)
             print(DF_True.head())
             print(Y)
+            exit()
 
         for dr_name, dim_red in dim_red_options.items():
             for reg_name, reg in regressors.items():
