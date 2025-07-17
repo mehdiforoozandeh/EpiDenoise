@@ -4273,6 +4273,7 @@ class EVAL_CANDI(object):
         )
         res = pd.concat(res, axis=1)
         res = res.T
+        print(res)
         return res
 
         # else:
