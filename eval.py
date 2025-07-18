@@ -4344,7 +4344,7 @@ def main():
         if args.rnaonly:
             if args.quick:
                 for k, v in ec.dataset.navigation.items():
-                    print(k, v)
+                    print(k, v.keys())
                     # res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
 
                     # if not os.path.exists(f"{ec.savedir}/{k}_{}/"):
