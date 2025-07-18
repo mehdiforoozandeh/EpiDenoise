@@ -4344,13 +4344,12 @@ def main():
         if args.rnaonly:
             if args.quick:
                 for k, v in ec.dataset.navigation.items():
-                    num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
                     res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
-
-                    if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                        os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
-
-                    res.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
+                    if res is not None:
+                        num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+                        if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                            os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+                        res.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}", "RNA-seq.csv"))
 
             else:
                 ec.rnaseq_all(dsf=args.dsf)
@@ -4382,12 +4381,13 @@ def main():
         if args.rnaonly and not args.eic:
             report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
             
-            k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
-            num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-            if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+            if report is not None:
+                k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
+                num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+                if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                    os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
 
-            report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
+                report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
             exit()
             
         if args.eic:
