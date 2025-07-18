@@ -4344,8 +4344,14 @@ def main():
         if args.rnaonly:
             if args.quick:
                 for k, v in ec.dataset.navigation.items():
-                    res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
-                    print(res)
+                    print(k, len(v))
+                    # res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
+
+                    # if not os.path.exists(f"{ec.savedir}/{k}_{}/"):
+                    #     os.mkdir()
+
+                    # res.to_csv(os.path.join(args.savedir, "RNA-seq.csv"))
+                    # print(res)
 
             else:
                 ec.rnaseq_all(dsf=args.dsf)
@@ -4360,7 +4366,7 @@ def main():
                         res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
                     else:
                         res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-                        
+
                     # make sure it’s a DataFrame
                     all_dfs.append(pd.DataFrame(res))
 
@@ -4375,8 +4381,11 @@ def main():
     else:
         if args.rnaonly and not args.eic:
             report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
-            print(report)
-            exit()
+            
+            if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
+                os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
+                print(report)
+                exit()
             
         if args.eic:
             t0 = datetime.now()
