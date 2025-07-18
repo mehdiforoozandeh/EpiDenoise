@@ -4345,17 +4345,16 @@ def main():
             if args.quick:
                 for k, v in ec.dataset.navigation.items():
                     num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-                    print(k, num_avail, v.keys())
-                    # res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
+                    res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
 
-                    # if not os.path.exists(f"{ec.savedir}/{k}_{}/"):
-                    #     os.mkdir()
+                    if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                        os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
 
-                    # res.to_csv(os.path.join(args.savedir, "RNA-seq.csv"))
-                    # print(res)
+                    res.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
 
             else:
                 ec.rnaseq_all(dsf=args.dsf)
+
         else:
             if args.quick:
                 all_dfs = []
@@ -4383,10 +4382,12 @@ def main():
         if args.rnaonly and not args.eic:
             report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
             
-            if os.path.exists(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")==False:
-                os.mkdir(f"{self.savedir}/{eval_res[0]['bios']}_{eval_res[0]['available assays']}/")
-                print(report)
-                exit()
+            k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
+            num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+            if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+
+            report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
             
         if args.eic:
             t0 = datetime.now()
