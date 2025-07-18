@@ -4344,7 +4344,8 @@ def main():
         if args.rnaonly:
             if args.quick:
                 for k, v in ec.dataset.navigation.items():
-                    print(k, v.keys())
+                    num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+                    print(k, num_avail, v)
                     # res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
 
                     # if not os.path.exists(f"{ec.savedir}/{k}_{}/"):
