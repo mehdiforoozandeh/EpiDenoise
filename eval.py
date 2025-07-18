@@ -4388,6 +4388,7 @@ def main():
                 os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
 
             report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
+            exit()
             
         if args.eic:
             t0 = datetime.now()
