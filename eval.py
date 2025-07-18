@@ -4360,6 +4360,7 @@ def main():
                         res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
                     else:
                         res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+                        
                     # make sure it’s a DataFrame
                     all_dfs.append(pd.DataFrame(res))
 
@@ -4373,7 +4374,8 @@ def main():
 
     else:
         if args.rnaonly and not args.eic:
-            ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
+            report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
+            print(report)
             exit()
             
         if args.eic:
