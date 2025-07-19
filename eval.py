@@ -4385,12 +4385,12 @@ class EVAL_CANDI(object):
         # ups_count_std = ups_count_dist.std()
         # observed_Y = Y[:, available_indices]
 
-        denoised_mu = ups_pval_mean[:, available_indices]
-        denoised_std = ups_pval_std[:, available_indices]
+        denoised_mu = mu_ups[:, available_indices]
+        denoised_var = var_ups[:, available_indices]
         
         obs_data = P[:, available_indices]
         denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, 8))
-        den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_std, 8))
+        den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_var, 8))
 
         print(denimp_data.shape)
         print(den_data.shape)
@@ -4399,7 +4399,7 @@ class EVAL_CANDI(object):
         print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_obs.fit(obs_data)
-        SAGA_obs_pred = SAGA_obs.predict(den_data)
+        SAGA_obs_pred = SAGA_obs.predict(obs_data)
 
         print(f"fitting the SAGA on denoised signal (d={len(available_indices)})")
         SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
