@@ -4465,7 +4465,7 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
+            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt)
             exit()
 
         if args.rnaonly and not args.eic:
