@@ -4410,18 +4410,17 @@ class EVAL_CANDI(object):
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
 
-        print(f"fitting the SAGA on latent (d={Z.shape[1]})")
-        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
-        SAGA_latent.fit(Z)
-        SAGA_latent_pred = SAGA_latent.predict(Z)
+        # print(f"fitting the SAGA on latent (d={Z.shape[1]})")
+        # SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        # SAGA_latent.fit(Z)
+        # SAGA_latent_pred = SAGA_latent.predict(Z)
 
         print(SAGA_obs_pred.shape)
         print(SAGA_den_pred.shape)
         print(SAGA_denimp_pred.shape)
-        print(SAGA_latent_pred.shape)
+        # print(SAGA_latent_pred.shape)
 
-        
-
+    
 
 
 def main():
@@ -4511,7 +4510,7 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=2000)
+            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=1000)
             exit()
 
         if args.rnaonly and not args.eic:
