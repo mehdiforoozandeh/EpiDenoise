@@ -4488,7 +4488,7 @@ class EVAL_CANDI(object):
         print("denimp_MAP", Counter(SAGA_denimp_MAP))
 
         print(f"\nfitting the SAGA on latent (d={Z.shape[1]})")
-        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=True)
         SAGA_latent.fit(Z)
         SAGA_latent_MAP = SAGA_latent.predict(Z)
         SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
@@ -4506,9 +4506,6 @@ class EVAL_CANDI(object):
         print("denimp V latent -- hard:\n", compare_hard_clusterings(SAGA_denimp_MAP, SAGA_latent_MAP))
         print("denimp V latent -- soft:\n", compare_soft_clusterings(SAGA_denimp_posterior, SAGA_latent_posterior))
 
-
-
-        
 
     
 def main():
