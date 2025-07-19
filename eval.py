@@ -4480,6 +4480,22 @@ class EVAL_CANDI(object):
 
         print("obs V den -- hard:   ", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
         print("obs V den -- soft:   ", compare_soft_clusterings(SAGA_obs_posterior, SAGA_den_posterior))
+
+
+        # Create a Counter object
+        state_counts = Counter(SAGA_obs_MAP)
+
+        print("\nCoverage per unique state (using Counter):")
+        for state, count in sorted(state_counts.items()):
+            print(f"  State {state}: {count} occurrences")
+
+        # Create a Counter object
+        state_counts = Counter(SAGA_den_MAP)
+
+        print("\nCoverage per unique state (using Counter):")
+        for state, count in sorted(state_counts.items()):
+            print(f"  State {state}: {count} occurrences")
+            
         exit()
 
         print(f"fitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
