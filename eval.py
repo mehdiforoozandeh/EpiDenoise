@@ -4347,8 +4347,8 @@ class EVAL_CANDI(object):
         denoised_std = ups_pval_std[:, available_indices]
         observed_P = P[:, available_indices]
 
-        denimp_data = torch.hstack([ups_pval_mean, ups_pval_std]).astype(torch.float64)
-        den_data =    torch.hstack([denoised_mu, denoised_std]).astype(torch.float64)
+        denimp_data = torch.hstack([ups_pval_mean, ups_pval_std])
+        den_data =    torch.hstack([denoised_mu, denoised_std])
 
         print(denimp_data.shape)
         print(den_data.shape)
