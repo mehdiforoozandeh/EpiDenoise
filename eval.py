@@ -46,6 +46,7 @@ from scipy.optimize import minimize
 from hmmlearn.hmm import GaussianHMM
 
 import warnings
+from typing import Literal
 from scipy.stats import ConstantInputWarning
 warnings.filterwarnings("ignore", category=ConstantInputWarning)
 
@@ -54,6 +55,54 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
+
+def bin_gaussian_predictions(mus_hat: np.ndarray, sigmas_hat_sq: np.ndarray, bin_size: int,
+    strategy: Literal['average', 'sum'] = 'average') -> tuple[np.ndarray, np.ndarray]:
+    """
+    Bins sequences of Gaussian distribution parameters to a coarser resolution.
+
+    Args:
+        mus_hat: Array of mean predictions, shape (L, d).
+        sigmas_hat_sq: Array of variance predictions, shape (L, d).
+        bin_size: The number of consecutive positions to merge (T).
+        strategy: The binning method.
+            - 'average': Computes the distribution of the average signal in the bin.
+                         This maintains the original signal scale. (Default)
+            - 'sum': Computes the distribution of the sum of signals in the bin.
+                     This inflates the signal scale by the bin size.
+
+    Returns:
+        A tuple containing:
+        - binned_mus: The new means, shape (L/T, d).
+        - binned_sigmas_sq: The new variances, shape (L/T, d).
+    """
+    # Validate the strategy input
+    if strategy not in ['average', 'sum']:
+        raise ValueError("strategy must be either 'average' or 'sum'")
+
+    # Ensure the input arrays have a 2D shape (L, d)
+    if mus_hat.ndim == 1:
+        mus_hat = mus_hat.reshape(-1, 1)
+        sigmas_hat_sq = sigmas_hat_sq.reshape(-1, 1)
+
+    # Reshape to group data into bins of size T
+    # Shape becomes (num_bins, bin_size, num_assays)
+    mus_in_bins = mus_hat.reshape(-1, bin_size, mus_hat.shape[1])
+    sigmas_in_bins = sigmas_hat_sq.reshape(-1, bin_size, sigmas_hat_sq.shape[1])
+
+    if strategy == 'average':
+        # New mean is the average of the means
+        binned_mus = np.mean(mus_in_bins, axis=1)
+        # New variance is the average of variances, scaled by the bin size
+        binned_sigmas_sq = np.mean(sigmas_in_bins, axis=1) / bin_size
+    
+    elif strategy == 'sum':
+        # New mean is the sum of the means
+        binned_mus = np.sum(mus_in_bins, axis=1)
+        # New variance is the sum of the variances
+        binned_sigmas_sq = np.sum(sigmas_in_bins, axis=1)
+
+    return binned_mus, binned_sigmas_sq
 
 def binarize_nbinom(data, threshold=0.0001):
     """
@@ -4336,22 +4385,20 @@ class EVAL_CANDI(object):
         # ups_count_std = ups_count_dist.std()
         # observed_Y = Y[:, available_indices]
 
-        ups_pval_mean = ups_pval_dist.mean()
-        ups_pval_std = ups_pval_dist.std()
-
         denoised_mu = ups_pval_mean[:, available_indices]
         denoised_std = ups_pval_std[:, available_indices]
-        observed_P = P[:, available_indices]
+        
+        obs_data = P[:, available_indices]
+        denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, 8))
+        den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_std, 8))
 
-        denimp_data = torch.hstack([ups_pval_mean, ups_pval_std])
-        den_data =    torch.hstack([denoised_mu, denoised_std])
-
-        # print(denimp_data.shape)
-        # print(den_data.shape)
+        print(denimp_data.shape)
+        print(den_data.shape)
+        exit()
 
         print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
-        SAGA_obs.fit(observed_P)
+        SAGA_obs.fit(obs_data)
         SAGA_obs_pred = SAGA_obs.predict(den_data)
 
         print(f"fitting the SAGA on denoised signal (d={len(available_indices)})")
@@ -4359,7 +4406,7 @@ class EVAL_CANDI(object):
         SAGA_den.fit(den_data)
         SAGA_den_pred = SAGA_den.predict(den_data)
 
-        print(f"fitting the SAGA on denoised + imputed signal (d={ups_pval_mean.shape[1]})")
+        print(f"fitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
         SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
