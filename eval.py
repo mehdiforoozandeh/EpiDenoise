@@ -4299,7 +4299,7 @@ class EVAL_CANDI(object):
                 print(bios, len(self.dataset.navigation[bios]))
                 self.bios_rnaseq_eval(bios, dsf)
 
-    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, covariance_type="diag", n_iter=20, tol=1e-4, random_state=0):
+    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=20, tol=1e-4, random_state=0):
         if not self.dataset.has_rnaseq(bios_name):
             print(f"{bios_name} doesn't have RNA-seq data!")
             return
@@ -4336,22 +4336,40 @@ class EVAL_CANDI(object):
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
         Z = Z.view((Z.shape[0] * Z.shape[1]), Z.shape[-1])
 
-        ups_count_mean = ups_count_dist.expect()
-        ups_count_std = ups_count_dist.std()
+        # ups_count_mean = ups_count_dist.expect()
+        # ups_count_std = ups_count_dist.std()
+        # observed_Y = Y[:, available_indices]
+
         ups_pval_mean = ups_pval_dist.mean()
         ups_pval_std = ups_pval_dist.std()
 
         denoised_mu = ups_pval_mean[:, available_indices]
         denoised_std = ups_pval_std[:, available_indices]
-
         observed_P = P[:, available_indices]
-        observed_Y = Y[:, available_indices]
 
-        print(ups_pval_mean.shape)
-        print(ups_pval_std.shape)
+        denimp_data = torch.hstack([ups_pval_mean, ups_pval_std]).astype(torch.float64)
+        den_data =    torch.hstack([denoised_mu, denoised_std]).astype(torch.float64)
 
-        print(denoised_mu.shape, denoised_mu.mean().item(), denoised_mu.std().item())
-        print(observed_P.shape, observed_P.mean().item(), observed_P.std().item())
+        print(denimp_data.shape)
+        print(den_data.shape)
+
+        # print(denoised_mu.shape, denoised_mu.mean().item(), denoised_mu.std().item())
+        # print(observed_P.shape, observed_P.mean().item(), observed_P.std().item())
+
+        # SAGA_obs = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        # SAGA_obs.fit(observed_P)
+
+        # SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
+        # SAGA_den.fit(den_data)
+
+        # SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
+        # SAGA_denimp.fit(denimp_data)
+
+        # SAGA_latent = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        # SAGA_latent.fit(Z)
+
+        
+
 
 
 def main():
