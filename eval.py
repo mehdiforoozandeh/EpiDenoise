@@ -60,7 +60,7 @@ PROC_PROM_BED_PATH = "data/tss.bed"
 
 from sklearn.metrics import (adjusted_rand_score,
                              normalized_mutual_info_score,
-                             contingency_matrix)
+                             confusion_matrix as contingency_matrix)
 from scipy.spatial.distance import jensenshannon
 from typing import Dict, Any, Tuple
 
