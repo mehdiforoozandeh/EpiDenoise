@@ -4423,7 +4423,7 @@ class EVAL_CANDI(object):
                 print(bios, len(self.dataset.navigation[bios]))
                 self.bios_rnaseq_eval(bios, dsf)
 
-    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=20, tol=1e-4, random_state=0, resolution=200):
+    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=100, tol=1e-4, random_state=0, resolution=200):
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
@@ -4487,10 +4487,11 @@ class EVAL_CANDI(object):
         SAGA_denimp_posterior = SAGA_denimp.predict_proba(denimp_data)
         print("denimp_MAP", Counter(SAGA_denimp_MAP))
 
-        print(f"\nfitting the SAGA on latent (d={Z.shape[1]})")
+        
         # 1. Initialize and fit PCA
         pca = PCA(n_components=0.8, random_state=random_state)
-        Z = pca.fit_transform(Z)
+        Z_reduced = pca.fit_transform(Z)
+        print(f"\nfitting the SAGA on latent (d={Z.shape[1]} -pca-> (d'={Z_reduced.shape[1]})")
         SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=True)
         SAGA_latent.fit(Z)
         SAGA_latent_MAP = SAGA_latent.predict(Z)
