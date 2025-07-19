@@ -3,6 +3,8 @@ from data import *
 from dino_candi import *
 # from _utils import *
 
+from SAGA import write_bed, SoftMultiAssayHMM
+
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 
 from sklearn.pipeline import Pipeline
@@ -41,6 +43,8 @@ import pyBigWig, sys, argparse
 import scipy.stats as stats
 from scipy.optimize import minimize
 
+from hmmlearn.hmm import GaussianHMM
+
 import warnings
 from scipy.stats import ConstantInputWarning
 warnings.filterwarnings("ignore", category=ConstantInputWarning)
@@ -49,6 +53,7 @@ warnings.filterwarnings("ignore", category=ConstantInputWarning)
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
+
 
 def binarize_nbinom(data, threshold=0.0001):
     """
@@ -4294,6 +4299,52 @@ class EVAL_CANDI(object):
                 print(bios, len(self.dataset.navigation[bios]))
                 self.bios_rnaseq_eval(bios, dsf)
 
+    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, covariance_type="diag", n_iter=20, tol=1e-4, random_state=0):
+        if not self.dataset.has_rnaseq(bios_name):
+            print(f"{bios_name} doesn't have RNA-seq data!")
+            return
+
+        if self.DNA:
+            X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
+        else:
+            X, Y, P, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
+
+        available_indices = torch.where(avX[0, :] == 1)[0]
+
+        if self.DNA:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=seq, imp_target=[])
+        else:
+            n_ups, p_ups, mu_ups, var_ups = self.pred(X, mX, mY, avX, seq=None, imp_target=[])
+
+        if self.DNA:
+            Z = self.get_latent_z(X, mX, mY, avX, seq=seq)
+        else:
+            Z = self.get_latent_z(X, mX, mY, avX, seq=None)
+
+        del X, mX, mY, avX, avY  # Free up memory
+
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+
+        mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
+        var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+
+        Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+        Z = Z.view((Z.shape[0] * Z.shape[1]), Z.shape[-1])
+
+        ups_count_mean = ups_count_dist.expect()
+        ups_count_std = ups_count_dist.std()
+        ups_pval_mean = ups_pval_dist.mean()
+        ups_pval_std = ups_pval_dist.std()
+
+        print(ups_pval_mean.shape)
+        print(ups_pval_std.shape)
+
+
 def main():
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
@@ -4315,6 +4366,7 @@ def main():
     parser.add_argument("--quick", action="store_true", help="Flag to quickly compute eval metrics for one biosample.")
     parser.add_argument("--list_bios", action="store_true", help="print the list of all available biosamples for evaluating")
     parser.add_argument("--supertrack", action="store_true", help="supertrack")
+    parser.add_argument("--saga", action="store_true", help="saga")
 
     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
@@ -4334,6 +4386,7 @@ def main():
         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir, 
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
+
 
     if args.list_bios:
         for k, v in ec.dataset.navigation.items():
@@ -4378,6 +4431,10 @@ def main():
                 ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
 
     else:
+        if args.saga:
+            res = ec.saga(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
+            exit()
+
         if args.rnaonly and not args.eic:
             report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
             

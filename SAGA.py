@@ -105,6 +105,122 @@ def write_bed(data, chromosome, start_position, resolution, output_file, is_post
 
     print(f"BED file written to {output_file}")
 
+import numpy as np
+from hmmlearn import base
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
+from sklearn.utils import check_random_state
+from sklearn.cluster import KMeans
+
+# --- Class Definition (Final and Complete) ---
+class SoftMultiAssayHMM(base._BaseHMM):
+    """
+    A Hidden Markov Model for soft Gaussian evidence from multiple assays.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.means_ = None
+        self.covars_ = None
+
+    def _init(self, X, lengths=None):
+        """Initializes model parameters."""
+        super()._init(X, lengths)
+        
+        d = X.shape[1] // 2
+        self.n_features = d
+
+        # FINAL FIX: Use k-means for a smart initialization of the means,
+        # just like the baseline GaussianHMM does.
+        if 'm' in self.init_params and self.means_ is None:
+            print("Initializing means with k-means...")
+            mus_hat = X[:, :self.n_features]
+            kmeans = KMeans(n_clusters=self.n_components,
+                            random_state=self.random_state,
+                            n_init=10, # Explicitly set n_init for future sklearn versions
+                            ).fit(mus_hat)
+            self.means_ = kmeans.cluster_centers_
+
+        # Fallback for other cases
+        random_state = check_random_state(self.random_state)
+        if self.means_ is None:
+             self.means_ = random_state.rand(
+                self.n_components, self.n_features) * 10
+
+        if 'c' in self.init_params and self.covars_ is None:
+            self.covars_ = np.ones((self.n_components, self.n_features))
+
+    def _check(self):
+        """Validate model parameters."""
+        super()._check()
+        if np.any(self.covars_ <= 0):
+            raise ValueError("Covariances must be positive.")
+
+    def _get_n_fit_scalars_per_param(self):
+        """Return the number of trainable model parameters as a dictionary."""
+        nc = self.n_components
+        nf = self.n_features
+        param_counts = {
+            's': nc - 1, 't': nc * (nc - 1), 'm': nc * nf, 'c': nc * nf
+        }
+        return param_counts
+
+    def _compute_log_likelihood(self, X):
+        """Computes the expected log-likelihood of soft evidence."""
+        mus_hat = X[:, :self.n_features]
+        sigmas_hat_sq = X[:, self.n_features:]
+        log_likelihood = np.zeros((X.shape[0], self.n_components))
+        epsilon = 1e-7
+
+        for k in range(self.n_components):
+            mu_k = self.means_[k, :]
+            var_k = self.covars_[k, :] + epsilon
+            sq_diff = (mus_hat - mu_k)**2
+            term2 = (sigmas_hat_sq + sq_diff) / var_k
+            term1 = np.log(2 * np.pi * var_k)
+            log_likelihood[:, k] = -0.5 * np.sum(term1 + term2, axis=1)
+            
+        return log_likelihood
+
+    def _initialize_sufficient_statistics(self):
+        """Initialize accumulators for the M-step."""
+        stats = super()._initialize_sufficient_statistics()
+        stats['post'] = np.zeros(self.n_components)
+        stats['obs'] = np.zeros((self.n_components, self.n_features))
+        stats['obs**2'] = np.zeros((self.n_components, self.n_features))
+        return stats
+
+    def _accumulate_sufficient_statistics(self, stats, X, framelogprob,
+                                          posteriors, fwdlattice, bwdlattice):
+        """Accumulate statistics for the M-step."""
+        super()._accumulate_sufficient_statistics(
+            stats, X, framelogprob, posteriors, fwdlattice, bwdlattice)
+        
+        stats['post'] += posteriors.sum(axis=0)
+        mus_hat = X[:, :self.n_features]
+        sigmas_hat_sq = X[:, self.n_features:]
+        stats['obs'] += np.dot(posteriors.T, mus_hat)
+        stats['obs**2'] += np.dot(posteriors.T, sigmas_hat_sq + mus_hat**2)
+
+    def _do_mstep(self, stats):
+        """Perform the M-step to update model parameters."""
+        super()._do_mstep(stats)
+
+        n_posteriors = stats['post']
+        valid_states = n_posteriors > 0
+        
+        if 'm' in self.params:
+            mus_new = self.means_.copy()
+            mus_new[valid_states] = stats['obs'][valid_states] / (
+                n_posteriors[valid_states, np.newaxis] + 1e-7)
+            self.means_ = mus_new
+
+        if 'c' in self.params:
+            vars_new = self.covars_.copy()
+            avg_sq_obs = stats['obs**2'][valid_states] / (
+                n_posteriors[valid_states, np.newaxis] + 1e-7)
+            vars_new[valid_states] = avg_sq_obs - self.means_[valid_states]**2
+            self.covars_ = np.maximum(vars_new, 1e-7)
+
 class SequenceClustering(object):
     def __init__(self):
         self.models = {}
