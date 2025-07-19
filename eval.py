@@ -4353,7 +4353,7 @@ class EVAL_CANDI(object):
         # print(denimp_data.shape)
         # print(den_data.shape)
 
-        SAGA_obs = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_obs.fit(observed_P)
         SAGA_obs_pred = SAGA_obs.predict(den_data)
 
@@ -4365,7 +4365,7 @@ class EVAL_CANDI(object):
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
 
-        SAGA_latent = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_latent.fit(Z)
         SAGA_latent_pred = SAGA_latent.predict(Z)
 
