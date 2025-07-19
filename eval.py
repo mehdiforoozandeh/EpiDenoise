@@ -4,6 +4,8 @@ from dino_candi import *
 # from _utils import *
 
 from SAGA import write_bed, SoftMultiAssayHMM
+from collections import Counter
+
 
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 
@@ -55,6 +57,84 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
+
+from sklearn.metrics import (adjusted_rand_score,
+                             normalized_mutual_info_score,
+                             contingency_matrix)
+from scipy.spatial.distance import jensenshannon
+from typing import Dict, Any, Tuple
+
+def compare_hard_clusterings(labels1: np.ndarray, labels2: np.ndarray) -> Dict[str, Any]:
+    """
+    Compares two hard clustering assignments (MAP state sequences).
+
+    Args:
+        labels1: A 1D NumPy array of state assignments from the first model.
+        labels2: A 1D NumPy array of state assignments from the second model.
+
+    Returns:
+        A dictionary containing the comparison metrics:
+        - 'ari': Adjusted Rand Index.
+        - 'nmi': Normalized Mutual Information.
+        - 'contingency_matrix': A DataFrame showing the overlap between states.
+    """
+    ari = adjusted_rand_score(labels1, labels2)
+    nmi = normalized_mutual_info_score(labels1, labels2)
+    
+    # Create a labeled DataFrame for the contingency matrix
+    matrix = contingency_matrix(labels1, labels2)
+    cont_df = pd.DataFrame(
+        matrix,
+        index=[f"Model1_State_{i}" for i in np.unique(labels1)],
+        columns=[f"Model2_State_{j}" for j in np.unique(labels2)]
+    )
+
+    return {
+        "ari": ari,
+        "nmi": nmi,
+        "contingency_matrix": cont_df
+    }
+
+def compare_soft_clusterings(posteriors1: np.ndarray, posteriors2: np.ndarray) -> Dict[str, Any]:
+    """
+    Compares two soft clustering assignments (posterior probability matrices).
+
+    Args:
+        posteriors1: A 2D NumPy array (L, K1) of posteriors from the first model.
+        posteriors2: A 2D NumPy array (L, K2) of posteriors from the second model.
+
+    Returns:
+        A dictionary containing the comparison metrics:
+        - 'avg_jsd': Average Jensen-Shannon Divergence between posteriors.
+        - 'posterior_correlation': A DataFrame showing the Pearson correlation
+                                   between the posterior probabilities of each pair of states.
+    """
+    # 1. Average Jensen-Shannon Divergence
+    # Clip values to avoid errors with log(0) in JSD calculation
+    p1 = np.clip(posteriors1, 1e-10, 1)
+    p2 = np.clip(posteriors2, 1e-10, 1)
+    jsd_scores = [jensenshannon(p1_row, p2_row, base=2) for p1_row, p2_row in zip(p1, p2)]
+    avg_jsd = np.mean(jsd_scores)
+    
+    # 2. State-wise Posterior Correlation Matrix
+    # np.corrcoef calculates the full matrix between all pairs of columns
+    # from both inputs stacked together.
+    full_corr_matrix = np.corrcoef(p1.T, p2.T)
+    
+    # We only want the cross-correlation block between Model 1 and Model 2
+    num_states1 = p1.shape[1]
+    cross_corr = full_corr_matrix[:num_states1, num_states1:]
+    
+    corr_df = pd.DataFrame(
+        cross_corr,
+        index=[f"Model1_State_{i}" for i in range(num_states1)],
+        columns=[f"Model2_State_{j}" for j in range(p2.shape[1])]
+    )
+    
+    return {
+        "avg_jsd": avg_jsd,
+        "posterior_correlation": corr_df
+    }
 
 def bin_gaussian_predictions(mus_hat: torch.Tensor, sigmas_hat_sq: torch.Tensor, bin_size: int, strategy: Literal['average', 'sum'] = 'average') -> tuple[torch.Tensor, torch.Tensor]:
     """
@@ -4376,10 +4456,6 @@ class EVAL_CANDI(object):
         P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
         Z = Z.view((Z.shape[0] * Z.shape[1]), Z.shape[-1])
 
-        # ups_count_mean = ups_count_dist.expect()
-        # ups_count_std = ups_count_dist.std()
-        # observed_Y = Y[:, available_indices]
-
         denoised_mu = mu_ups[:, available_indices]
         denoised_var = var_ups[:, available_indices]
         obs_data = P[:, available_indices]
@@ -4389,11 +4465,6 @@ class EVAL_CANDI(object):
         obs_data =    torch.mean(obs_data.view(-1, bin_size, obs_data.shape[1]), dim=1)
         denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, bin_size))
         den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_var, bin_size))
-
-        # print(obs_data.shape)
-        # print(denimp_data.shape)
-        # print(den_data.shape)
-        # exit()
 
         print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
@@ -4407,29 +4478,25 @@ class EVAL_CANDI(object):
         SAGA_den_MAP = SAGA_den.predict(den_data)
         SAGA_den_posterior = SAGA_den.predict_proba(den_data)
 
+        print("obs V den -- hard:   ", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
+        print("obs V den -- soft:   ", compare_soft_clusterings(SAGA_obs_posterior, SAGA_den_posterior))
+        exit()
+
         print(f"fitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
         SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_MAP = SAGA_denimp.predict(denimp_data)
         SAGA_denimp_posterior = SAGA_denimp.predict_proba(denimp_data)
 
-        # print(f"fitting the SAGA on latent (d={Z.shape[1]})")
-        # SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
-        # SAGA_latent.fit(Z)
-        # SAGA_latent_MAP = SAGA_latent.predict(Z)
-        # SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
+        print(f"fitting the SAGA on latent (d={Z.shape[1]})")
+        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_latent.fit(Z)
+        SAGA_latent_MAP = SAGA_latent.predict(Z)
+        SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
 
-        print(SAGA_obs_MAP)
-        print(SAGA_den_MAP)
-        print(SAGA_denimp_MAP)
-
-        print(SAGA_obs_posterior.shape)
-        print(SAGA_den_posterior.shape)
-        print(SAGA_denimp_posterior.shape)
+        
 
     
-
-
 def main():
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
@@ -4517,7 +4584,7 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=1000)
+            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=1000, n_components=9)
             exit()
 
         if args.rnaonly and not args.eic:
