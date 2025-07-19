@@ -4495,7 +4495,7 @@ class EVAL_CANDI(object):
         print("\nCoverage per unique state (using Counter):")
         for state, count in sorted(state_counts.items()):
             print(f"  State {state}: {count} occurrences")
-            
+
         exit()
 
         print(f"fitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
@@ -4600,7 +4600,7 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=1000, n_components=9)
+            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=200, n_components=9)
             exit()
 
         if args.rnaonly and not args.eic:
