@@ -4343,7 +4343,7 @@ class EVAL_CANDI(object):
                 print(bios, len(self.dataset.navigation[bios]))
                 self.bios_rnaseq_eval(bios, dsf)
 
-    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=20, tol=1e-4, random_state=0):
+    def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=20, tol=1e-4, random_state=0, resolution=200):
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
@@ -4384,14 +4384,16 @@ class EVAL_CANDI(object):
         denoised_var = var_ups[:, available_indices]
         obs_data = P[:, available_indices]
 
-        obs_data = torch.mean(obs_data.view(-1, 8, obs_data.shape[1]), dim=1)
-        denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, 8))
-        den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_var, 8))
+        bin_size = int(resolution // 25)
 
-        print(obs_data.shape)
-        print(denimp_data.shape)
-        print(den_data.shape)
-        exit()
+        obs_data =    torch.mean(obs_data.view(-1, bin_size, obs_data.shape[1]), dim=1)
+        denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, bin_size))
+        den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_var, bin_size))
+
+        # print(obs_data.shape)
+        # print(denimp_data.shape)
+        # print(den_data.shape)
+        # exit()
 
         print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
@@ -4509,7 +4511,7 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt)
+            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=2000)
             exit()
 
         if args.rnaonly and not args.eic:
