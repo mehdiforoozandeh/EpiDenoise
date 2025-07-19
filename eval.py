@@ -99,7 +99,6 @@ def bin_gaussian_predictions(mus_hat: torch.Tensor, sigmas_hat_sq: torch.Tensor,
 
     return binned_mus, binned_sigmas_sq
 
-
 def binarize_nbinom(data, threshold=0.0001):
     """
     Fits a Negative Binomial distribution to the data, binarizes the data based on a threshold.
@@ -4383,11 +4382,13 @@ class EVAL_CANDI(object):
 
         denoised_mu = mu_ups[:, available_indices]
         denoised_var = var_ups[:, available_indices]
-        
         obs_data = P[:, available_indices]
+
+        obs_data = torch.mean(obs_data.view(-1, 8, obs_data.shape[1]), dim=1)
         denimp_data = torch.hstack(bin_gaussian_predictions(mu_ups, var_ups, 8))
         den_data =    torch.hstack(bin_gaussian_predictions(denoised_mu, denoised_var, 8))
 
+        print(obs_data.shape)
         print(denimp_data.shape)
         print(den_data.shape)
         exit()
