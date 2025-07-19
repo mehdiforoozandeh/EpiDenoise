@@ -4350,23 +4350,29 @@ class EVAL_CANDI(object):
         denimp_data = torch.hstack([ups_pval_mean, ups_pval_std])
         den_data =    torch.hstack([denoised_mu, denoised_std])
 
-        print(denimp_data.shape)
-        print(den_data.shape)
+        # print(denimp_data.shape)
+        # print(den_data.shape)
 
-        # print(denoised_mu.shape, denoised_mu.mean().item(), denoised_mu.std().item())
-        # print(observed_P.shape, observed_P.mean().item(), observed_P.std().item())
+        SAGA_obs = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_obs.fit(observed_P)
+        SAGA_obs_pred = SAGA_obs.predict(den_data)
 
-        # SAGA_obs = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
-        # SAGA_obs.fit(observed_P)
+        SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
+        SAGA_den.fit(den_data)
+        SAGA_den_pred = SAGA_den.predict(den_data)
 
-        # SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
-        # SAGA_den.fit(den_data)
+        SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
+        SAGA_denimp.fit(denimp_data)
+        SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
 
-        # SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
-        # SAGA_denimp.fit(denimp_data)
+        SAGA_latent = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
+        SAGA_latent.fit(Z)
+        SAGA_latent_pred = SAGA_latent.predict(Z)
 
-        # SAGA_latent = hmm.GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
-        # SAGA_latent.fit(Z)
+        print(SAGA_obs_pred.shape)
+        print(SAGA_den_pred.shape)
+        print(SAGA_denimp_pred.shape)
+        print(SAGA_latent_pred.shape)
 
         
 
