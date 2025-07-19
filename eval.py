@@ -4494,10 +4494,18 @@ class EVAL_CANDI(object):
         SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
         print("latent_MAP", Counter(SAGA_latent_MAP))
 
-        # print("obs V den -- hard:   ", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
-        # print("obs V den -- soft:   ", compare_soft_clusterings(SAGA_obs_posterior, SAGA_den_posterior))
-        
-        # exit()
+        print("obs V den -- hard:\n", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
+        print("obs V den -- soft:\n", compare_soft_clusterings(SAGA_obs_posterior, SAGA_den_posterior))
+
+        print("obs V denimp -- hard:\n", compare_hard_clusterings(SAGA_obs_MAP, SAGA_denimp_MAP))
+        print("obs V denimp -- soft:\n", compare_soft_clusterings(SAGA_obs_posterior, SAGA_denimp_posterior))
+
+        print("den V denimp -- hard:\n", compare_hard_clusterings(SAGA_den_MAP, SAGA_denimp_MAP))
+        print("den V denimp -- soft:\n", compare_soft_clusterings(SAGA_den_posterior, SAGA_denimp_posterior))
+
+        print("denimp V latent -- hard:\n", compare_hard_clusterings(SAGA_denimp_MAP, SAGA_latent_MAP))
+        print("denimp V latent -- soft:\n", compare_soft_clusterings(SAGA_denimp_posterior, SAGA_latent_posterior))
+
 
 
         
