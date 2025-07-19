@@ -4300,10 +4300,6 @@ class EVAL_CANDI(object):
                 self.bios_rnaseq_eval(bios, dsf)
 
     def saga(self, bios_name, x_dsf, fill_in_y_prompt=False, n_components=18, n_iter=20, tol=1e-4, random_state=0):
-        if not self.dataset.has_rnaseq(bios_name):
-            print(f"{bios_name} doesn't have RNA-seq data!")
-            return
-
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_bios(bios_name, x_dsf, fill_in_y_prompt=fill_in_y_prompt)  
         else:
@@ -4353,18 +4349,22 @@ class EVAL_CANDI(object):
         # print(denimp_data.shape)
         # print(den_data.shape)
 
+        print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_obs.fit(observed_P)
         SAGA_obs_pred = SAGA_obs.predict(den_data)
 
+        print(f"fitting the SAGA on denoised signal (d={len(available_indices)})")
         SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_den.fit(den_data)
         SAGA_den_pred = SAGA_den.predict(den_data)
 
+        print(f"fitting the SAGA on denoised + imputed signal (d={ups_pval_mean.shape[1]})")
         SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
 
+        print(f"fitting the SAGA on latent (d={Z.shape[1]})")
         SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_latent.fit(Z)
         SAGA_latent_pred = SAGA_latent.predict(Z)
