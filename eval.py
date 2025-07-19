@@ -4342,12 +4342,16 @@ class EVAL_CANDI(object):
         ups_pval_std = ups_pval_dist.std()
 
         denoised_mu = ups_pval_mean[:, available_indices]
-        denoised_var = ups_pval_std[:, available_indices]
+        denoised_std = ups_pval_std[:, available_indices]
+
+        observed_P = P[:, available_indices]
+        observed_Y = Y[:, available_indices]
 
         print(ups_pval_mean.shape)
         print(ups_pval_std.shape)
+
         print(denoised_mu.shape, denoised_mu.mean().item(), denoised_mu.std().item())
-        print(denoised_var.shape)
+        print(observed_P.shape, observed_P.mean().item(), observed_P.std().item())
 
 
 def main():
