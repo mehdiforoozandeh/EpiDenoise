@@ -4488,6 +4488,9 @@ class EVAL_CANDI(object):
         print("denimp_MAP", Counter(SAGA_denimp_MAP))
 
         print(f"\nfitting the SAGA on latent (d={Z.shape[1]})")
+        # 1. Initialize and fit PCA
+        pca = PCA(n_components=0.8, random_state=random_state)
+        Z = pca.fit_transform(Z)
         SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=True)
         SAGA_latent.fit(Z)
         SAGA_latent_MAP = SAGA_latent.predict(Z)
