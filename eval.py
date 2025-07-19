@@ -4398,27 +4398,34 @@ class EVAL_CANDI(object):
         print(f"fitting the SAGA on observed signal (d={len(available_indices)})")
         SAGA_obs = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         SAGA_obs.fit(obs_data)
-        SAGA_obs_pred = SAGA_obs.predict(obs_data)
+        SAGA_obs_MAP = SAGA_obs.predict(obs_data)
+        SAGA_obs_posterior = SAGA_obs.predict_proba(obs_data)
 
         print(f"fitting the SAGA on denoised signal (d={len(available_indices)})")
         SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_den.fit(den_data)
-        SAGA_den_pred = SAGA_den.predict(den_data)
+        SAGA_den_MAP = SAGA_den.predict(den_data)
+        SAGA_den_posterior = SAGA_den.predict_proba(den_data)
 
         print(f"fitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
         SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_denimp.fit(denimp_data)
-        SAGA_denimp_pred = SAGA_denimp.predict(denimp_data)
+        SAGA_denimp_MAP = SAGA_denimp.predict(denimp_data)
+        SAGA_denimp_posterior = SAGA_denimp.predict_proba(denimp_data)
 
         # print(f"fitting the SAGA on latent (d={Z.shape[1]})")
         # SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol)
         # SAGA_latent.fit(Z)
-        # SAGA_latent_pred = SAGA_latent.predict(Z)
+        # SAGA_latent_MAP = SAGA_latent.predict(Z)
+        # SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
 
-        print(SAGA_obs_pred.shape)
-        print(SAGA_den_pred.shape)
-        print(SAGA_denimp_pred.shape)
-        # print(SAGA_latent_pred.shape)
+        print(SAGA_obs_MAP)
+        print(SAGA_den_MAP)
+        print(SAGA_denimp_MAP)
+
+        print(SAGA_obs_posterior.shape)
+        print(SAGA_den_posterior.shape)
+        print(SAGA_denimp_posterior.shape)
 
     
 

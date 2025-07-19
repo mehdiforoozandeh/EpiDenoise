@@ -132,7 +132,7 @@ class SoftMultiAssayHMM(base._BaseHMM):
         # FINAL FIX: Use k-means for a smart initialization of the means,
         # just like the baseline GaussianHMM does.
         if 'm' in self.init_params and self.means_ is None:
-            print("Initializing means with k-means...")
+            # print("Initializing means with k-means...")
             mus_hat = X[:, :self.n_features]
             kmeans = KMeans(n_clusters=self.n_components,
                             random_state=self.random_state,
