@@ -4346,7 +4346,7 @@ class EVAL_CANDI(object):
 
         print(ups_pval_mean.shape)
         print(ups_pval_std.shape)
-        print(denoised_mu.shape)
+        print(denoised_mu.shape, denoised_mu.mean().item(), denoised_mu.std().item())
         print(denoised_var.shape)
 
 
