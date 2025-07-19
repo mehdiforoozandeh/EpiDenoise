@@ -56,23 +56,18 @@ PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
 PROC_PROM_BED_PATH = "data/tss.bed"
 
 
-def bin_gaussian_predictions(mus_hat: np.ndarray, sigmas_hat_sq: np.ndarray, bin_size: int,
-    strategy: Literal['average', 'sum'] = 'average') -> tuple[np.ndarray, np.ndarray]:
+def bin_gaussian_predictions(mus_hat: torch.Tensor, sigmas_hat_sq: torch.Tensor, bin_size: int, strategy: Literal['average', 'sum'] = 'average') -> tuple[torch.Tensor, torch.Tensor]:
     """
-    Bins sequences of Gaussian distribution parameters to a coarser resolution.
+    Bins sequences of Gaussian distribution parameters to a coarser resolution using PyTorch.
 
     Args:
-        mus_hat: Array of mean predictions, shape (L, d).
-        sigmas_hat_sq: Array of variance predictions, shape (L, d).
+        mus_hat: PyTorch tensor of mean predictions, shape (L, d).
+        sigmas_hat_sq: PyTorch tensor of variance predictions, shape (L, d).
         bin_size: The number of consecutive positions to merge (T).
-        strategy: The binning method.
-            - 'average': Computes the distribution of the average signal in the bin.
-                         This maintains the original signal scale. (Default)
-            - 'sum': Computes the distribution of the sum of signals in the bin.
-                     This inflates the signal scale by the bin size.
+        strategy: The binning method ('average' or 'sum').
 
     Returns:
-        A tuple containing:
+        A tuple of PyTorch tensors containing:
         - binned_mus: The new means, shape (L/T, d).
         - binned_sigmas_sq: The new variances, shape (L/T, d).
     """
@@ -82,27 +77,28 @@ def bin_gaussian_predictions(mus_hat: np.ndarray, sigmas_hat_sq: np.ndarray, bin
 
     # Ensure the input arrays have a 2D shape (L, d)
     if mus_hat.ndim == 1:
-        mus_hat = mus_hat.reshape(-1, 1)
-        sigmas_hat_sq = sigmas_hat_sq.reshape(-1, 1)
+        mus_hat = mus_hat.view(-1, 1)
+        sigmas_hat_sq = sigmas_hat_sq.view(-1, 1)
 
-    # Reshape to group data into bins of size T
+    # Reshape to group data into bins of size T using .view()
     # Shape becomes (num_bins, bin_size, num_assays)
-    mus_in_bins = mus_hat.reshape(-1, bin_size, mus_hat.shape[1])
-    sigmas_in_bins = sigmas_hat_sq.reshape(-1, bin_size, sigmas_hat_sq.shape[1])
+    mus_in_bins = mus_hat.view(-1, bin_size, mus_hat.shape[1])
+    sigmas_in_bins = sigmas_hat_sq.view(-1, bin_size, sigmas_hat_sq.shape[1])
 
     if strategy == 'average':
-        # New mean is the average of the means
-        binned_mus = np.mean(mus_in_bins, axis=1)
+        # New mean is the average of the means in the bin (dim=1)
+        binned_mus = torch.mean(mus_in_bins, dim=1)
         # New variance is the average of variances, scaled by the bin size
-        binned_sigmas_sq = np.mean(sigmas_in_bins, axis=1) / bin_size
+        binned_sigmas_sq = torch.mean(sigmas_in_bins, dim=1) / bin_size
     
     elif strategy == 'sum':
-        # New mean is the sum of the means
-        binned_mus = np.sum(mus_in_bins, axis=1)
+        # New mean is the sum of the means in the bin (dim=1)
+        binned_mus = torch.sum(mus_in_bins, dim=1)
         # New variance is the sum of the variances
-        binned_sigmas_sq = np.sum(sigmas_in_bins, axis=1)
+        binned_sigmas_sq = torch.sum(sigmas_in_bins, dim=1)
 
     return binned_mus, binned_sigmas_sq
+
 
 def binarize_nbinom(data, threshold=0.0001):
     """
