@@ -4489,13 +4489,13 @@ class EVAL_CANDI(object):
 
         
         # 1. Initialize and fit PCA
-        pca = PCA(n_components=0.8, random_state=random_state)
+        pca = PCA(n_components=0.9, random_state=random_state)
         Z_reduced = pca.fit_transform(Z)
         print(f"\nfitting the SAGA on latent (d={Z.shape[1]} -pca-> (d'={Z_reduced.shape[1]})")
         SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=True)
-        SAGA_latent.fit(Z)
-        SAGA_latent_MAP = SAGA_latent.predict(Z)
-        SAGA_latent_posterior = SAGA_latent.predict_proba(Z)
+        SAGA_latent.fit(Z_reduced)
+        SAGA_latent_MAP = SAGA_latent.predict(Z_reduced)
+        SAGA_latent_posterior = SAGA_latent.predict_proba(Z_reduced)
         print("latent_MAP", Counter(SAGA_latent_MAP))
 
         print("obs V den -- hard:\n", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
