@@ -26,7 +26,7 @@ from sklearn.decomposition import PCA
 
 # Local imports
 from CANDI import *
-from inference import *
+# from inference import *
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 def write_bed(data, chromosome, start_position, resolution, output_file, is_posterior=False, track_name="Custom Track", track_description="Clustering Results", visibility="dense"):
