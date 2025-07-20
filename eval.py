@@ -4471,32 +4471,37 @@ class EVAL_CANDI(object):
         SAGA_obs.fit(obs_data)
         SAGA_obs_MAP = SAGA_obs.predict(obs_data)
         SAGA_obs_posterior = SAGA_obs.predict_proba(obs_data)
-        print("obs_MAP", Counter(SAGA_obs_MAP))
+        print("obs_MAP", {k: float(v)/len(obs_data.shape[0]) for k, v in Counter(SAGA_obs_MAP)})
 
         print(f"\nfitting the SAGA on denoised signal (d={len(available_indices)})")
         SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_den.fit(den_data)
         SAGA_den_MAP = SAGA_den.predict(den_data)
         SAGA_den_posterior = SAGA_den.predict_proba(den_data)
-        print("den_MAP", Counter(SAGA_den_MAP))
+        # print("den_MAP", Counter(SAGA_den_MAP))
+        print("den_MAP", {k: float(v)/len(obs_data.shape[0]) for k, v in Counter(SAGA_den_MAP)})
+        
 
         print(f"\nfitting the SAGA on denoised + imputed signal (d={mu_ups.shape[1]})")
         SAGA_denimp = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)
         SAGA_denimp.fit(denimp_data)
         SAGA_denimp_MAP = SAGA_denimp.predict(denimp_data)
         SAGA_denimp_posterior = SAGA_denimp.predict_proba(denimp_data)
-        print("denimp_MAP", Counter(SAGA_denimp_MAP))
+        # print("denimp_MAP", Counter(SAGA_denimp_MAP))
+        print("denimp_MAP", {k: float(v)/len(obs_data.shape[0]) for k, v in Counter(SAGA_denimp_MAP)})
 
         
         # 1. Initialize and fit PCA
         pca = PCA(n_components=0.9, random_state=random_state)
         Z_reduced = pca.fit_transform(Z)
         print(f"\nfitting the SAGA on latent (d={Z.shape[1]} -pca-> (d'={Z_reduced.shape[1]})")
-        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=True)
+        SAGA_latent = GaussianHMM(n_components=n_components, covariance_type="diag", random_state=random_state, n_iter=n_iter, tol=tol, verbose=False)
         SAGA_latent.fit(Z_reduced)
         SAGA_latent_MAP = SAGA_latent.predict(Z_reduced)
         SAGA_latent_posterior = SAGA_latent.predict_proba(Z_reduced)
-        print("latent_MAP", Counter(SAGA_latent_MAP))
+        # print("latent_MAP", Counter(SAGA_latent_MAP))
+        print("latent_MAP", {k: float(v)/len(obs_data.shape[0]) for k, v in Counter(SAGA_latent_MAP)})
+        
 
         print("obs V den -- hard:\n", compare_hard_clusterings(SAGA_obs_MAP, SAGA_den_MAP))
         print("obs V den -- soft:\n", compare_soft_clusterings(SAGA_obs_posterior, SAGA_den_posterior))
