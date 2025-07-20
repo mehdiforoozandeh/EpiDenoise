@@ -4506,7 +4506,7 @@ class EVAL_CANDI(object):
                 "denimp":SAGA_denimp_MAP,
                 "latent":SAGA_latent_MAP,
             },
-            "posterior"{
+            "posterior":{
                 "obs":SAGA_obs_posterior,
                 "den":SAGA_den_posterior,
                 "denimp":SAGA_denimp_posterior,
