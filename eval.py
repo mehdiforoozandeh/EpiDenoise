@@ -4511,7 +4511,7 @@ class EVAL_CANDI(object):
                 "den":SAGA_den_posterior,
                 "denimp":SAGA_denimp_posterior,
                 "latent":SAGA_latent_posterior,
-            }:
+            }
         }
         
     
