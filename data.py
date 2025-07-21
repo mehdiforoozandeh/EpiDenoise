@@ -2600,6 +2600,7 @@ class ExtendedEncodeDataHandler:
 
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
         if sample:
+            print("sampled")
             if len(md.shape) == 2:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                     
