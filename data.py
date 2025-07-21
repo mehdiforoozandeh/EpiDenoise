@@ -1328,9 +1328,9 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
 
-        print(self.expstats)
-        print(self.RawExpMetaData)
-        exit()
+        # print(self.expstats)
+        # print(self.RawExpMetaData)
+        # exit()
 
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
