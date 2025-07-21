@@ -1328,9 +1328,9 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop(["Unnamed: 0", "RNA-seq"], axis=1)
 
-        for c in self.RawExpMetaData.columns:
-            for md in self.RawExpMetaData.index:
-                print(len(self.RawExpMetaData.loc[md, c]))
+        # for c in self.RawExpMetaData.columns:
+        #     for md in self.RawExpMetaData.index:
+        #         print(len(self.RawExpMetaData.loc[md, c]))
         #         if type(self.RawExpMetaData.loc[md, c]) != str:
         #             print(md, c, self.RawExpMetaData.loc[md, c])
         # exit()
@@ -1352,14 +1352,14 @@ class ExtendedEncodeDataHandler:
 
         # optional: inspect the converted rows
         # print(self.RawExpMetaData.loc[list(cast_fn)])
-        for c in self.RawExpMetaData.columns:
-            for md in self.RawExpMetaData.index:
-                print(len(self.RawExpMetaData.loc[md, c]))
+        # for c in self.RawExpMetaData.columns:
+        #     for md in self.RawExpMetaData.index:
+        #         print(len(self.RawExpMetaData.loc[md, c]))
 
 
         # print(self.expstats)
         # print(self.RawExpMetaData)
-        exit()
+        # exit()
 
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
