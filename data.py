@@ -2606,6 +2606,8 @@ class ExtendedEncodeDataHandler:
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
         if sample:     
             def typed_choice_retry(seq, want_type, max_tries=1000):
+                print(seq)
+                exit()
                 for _ in itertools.repeat(None, max_tries):
                     pick = random.choice(seq)
                     print(pick, type(pick))
