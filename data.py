@@ -1330,7 +1330,7 @@ class ExtendedEncodeDataHandler:
 
         for c in self.RawExpMetaData.columns:
             for md in self.RawExpMetaData.index:
-                prind(c, md)
+                print(c, md)
                 # seq = list(map(int, seq.strip("[]").split(",")))
 
         # print(self.expstats)
