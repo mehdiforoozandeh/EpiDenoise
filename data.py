@@ -2605,20 +2605,22 @@ class ExtendedEncodeDataHandler:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                     
                     if torch.all(md[:, i] == missing_value):
-                        md[0, i] = random.choice(self.RawExpMetaData.loc["depth", assay])
-                        md[1, i] = random.choice(self.RawExpMetaData.loc["coverage", assay])
-                        md[2, i] = random.choice(self.RawExpMetaData.loc["read_length", assay])
-                        md[3, i] = int(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
+                        md[0, i] = float(random.choice(self.RawExpMetaData.loc["depth", assay]))
+                        md[1, i] = float(random.choice(self.RawExpMetaData.loc["coverage", assay]))
+                        md[2, i] = float(random.choice(self.RawExpMetaData.loc["read_length", assay]))
+                        md[3, i] =  float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
+                        print(float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay]))))
 
             else:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                     
                     for b in range(md.shape[0]):
                         if torch.all(md[b, :, i] == missing_value):
-                            md[b, 0, i] = random.choice(self.RawExpMetaData.loc["depth", assay])
-                            md[b, 1, i] = random.choice(self.RawExpMetaData.loc["coverage", assay])
-                            md[b, 2, i] = random.choice(self.RawExpMetaData.loc["read_length", assay])
-                            md[b, 3, i] = random.choice(self.RawExpMetaData.loc["run_type", assay])
+                            md[b, 0, i] = float(random.choice(self.RawExpMetaData.loc["depth", assay]))
+                            md[b, 1, i] = float(random.choice(self.RawExpMetaData.loc["coverage", assay]))
+                            md[b, 2, i] = float(random.choice(self.RawExpMetaData.loc["read_length", assay]))
+                            md[b, 3, i] = float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
+                            print(float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay]))))
             
             return md
 
