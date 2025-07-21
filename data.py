@@ -2953,7 +2953,7 @@ class ExtendedEncodeDataHandler:
 
                 if y_prompt:
                     # print(f"filling in y prompt for {locus}")
-                    md = self.fill_in_y_prompt(md)
+                    md = self.fill_in_y_prompt(md, sample=True)
 
                 if pval:
                     loc_p = []

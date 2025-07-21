@@ -4769,11 +4769,13 @@ def main():
     parser_rna = subparsers.add_parser('rna-seq', help='Evaluate only the RNA-seq prediction performance.')
     parser_rna.add_argument('bios_name', type=str, help="Name of the biosample to evaluate, or 'all' for all biosamples with RNA-seq data.")
     parser_rna.add_argument('--quick', default=True, action='store_true', help='Generate a summarized CSV report instead of detailed plots.')
+    parser_eval.add_argument('--supertrack', action='store_true', help='Enable supertrack mode (fill_in_y_prompt).')
 
     # Sub-parser for 'saga' command
     parser_saga = subparsers.add_parser('saga', help='Generate chromatin state annotations using SAGA.')
     parser_saga.add_argument('bios_name', type=str, help="Name of the biosample to annotate, or 'all'.")
     parser_saga.add_argument('--n_states', type=int, default=None, help="Number of chromatin states. If None, defaults to 10 + sqrt(num_assays).")
+    parser_eval.add_argument('--supertrack', action='store_true', help='Enable supertrack mode (fill_in_y_prompt).')
 
     # Sub-parser for 'list-bios' command
     subparsers.add_parser('list-bios', help='List all available biosamples in the dataset.')
