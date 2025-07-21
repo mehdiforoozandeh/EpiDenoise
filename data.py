@@ -2638,7 +2638,7 @@ class ExtendedEncodeDataHandler:
                     for b in range(md.shape[0]):
                         if torch.all(md[b, :, i] == missing_value):
                             # md[b, 0, i] = float(np.log2(random.choice(self.RawExpMetaData.loc["depth", assay])))
-                            md[b, 0, i] = float(np.log2(typed_choice_retry(self.RawExpMetaData.loc["depth", assay], float)))
+                            md[b, 0, i] = float(np.log2(typed_choice_retry(self.RawExpMetaData.loc["depth", assay], int)))
                             md[b, 1, i] = float(random.choice(self.RawExpMetaData.loc["coverage", assay]))
                             md[b, 2, i] = float(random.choice(self.RawExpMetaData.loc["read_length", assay]))
                             md[b, 3, i] = float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
