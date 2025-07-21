@@ -1326,7 +1326,7 @@ class ExtendedEncodeDataHandler:
 
         self.RawExpMetaData = pd.read_csv(os.path.join(self.base_path, "RawExpMetaData.csv"))
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
-        self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
+        self.RawExpMetaData = self.RawExpMetaData.drop(["Unnamed: 0", "RNA-seq"], axis=1)
 
         for c in self.RawExpMetaData.columns:
             for md in self.RawExpMetaData.index:
