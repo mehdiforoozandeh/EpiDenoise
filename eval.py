@@ -4739,8 +4739,8 @@ def main():
     model_args = parser.add_argument_group('Model and Data Arguments')
     model_args.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model checkpoint.")
     model_args.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to the model's hyperparameters file (.pkl).")
-    model_args.add_argument("-d", "--data_path", type=str, required=True, help="Path to the root ENCODE data directory.")
-    model_args.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/CANDI_res/", help="Directory to save evaluation results.")
+    model_args.add_argument("-s", "--savedir", type=str, required=True, help="Directory to save evaluation results.")
+    model_args.add_argument("-d", "--data_path", type=str, default="/project/compbio-lab/encode_data/", help="Path to the root ENCODE data directory.")
     model_args.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
     config_args = parser.add_argument_group('Configuration Arguments')
