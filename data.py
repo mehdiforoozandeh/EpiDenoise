@@ -1328,6 +1328,11 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
 
+        for c in self.RawExpMetaData.columns:
+            for md in self.RawExpMetaData.index:
+                print(type(RawExpMetaData.loc[md, c]))
+        exit()
+
         # mapping from metadata row → conversion function
         cast_fn = {
             "depth":        lambda s: list(map(int,   s.strip("[]").split(","))),
