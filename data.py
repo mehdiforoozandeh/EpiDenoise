@@ -1330,8 +1330,16 @@ class ExtendedEncodeDataHandler:
 
         for c in self.RawExpMetaData.columns:
             for md in self.RawExpMetaData.index:
-                print(c, md)
-                # seq = list(map(int, seq.strip("[]").split(",")))
+                if md == "depth":
+                    self.RawExpMetaData.loc[md, c] = list(map(int, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
+                elif md == "coverage":
+                    self.RawExpMetaData.loc[md, c] = list(map(float, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
+                elif md == "read_length":
+                    self.RawExpMetaData.loc[md, c] = list(map(int, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
+                elif md == "run_type":
+                    self.RawExpMetaData.loc[md, c] = list(map(str, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
+                
+                print(self.RawExpMetaData.loc[md, c])
 
         # print(self.expstats)
         # print(self.RawExpMetaData)
