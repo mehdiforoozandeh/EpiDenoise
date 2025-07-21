@@ -105,6 +105,47 @@ def write_bed(data, chromosome, start_position, resolution, output_file, is_post
 
     print(f"BED file written to {output_file}")
 
+def write_posteriors_to_tsv(posteriors_df: pd.DataFrame, chromosome: str, start_position: int, resolution: int, output_file: str):
+    """
+    Writes posterior probabilities for genomic segments to a tab-separated file (TSV).
+
+    The output format is a BED-like file with a header, where the first three
+    columns are chrom, start, and end, followed by k columns for the posterior
+    probabilities of each state.
+
+    Args:
+        posteriors_df (pd.DataFrame): DataFrame of posterior probabilities (shape L x k),
+                                      where L is the number of positions and k is the number of states.
+        chromosome (str): Chromosome name (e.g., 'chr1').
+        start_position (int): Start position of the first segment.
+        resolution (int): Resolution of each segment in base pairs (e.g., 200).
+        output_file (str): Path to the output TSV file.
+    """
+    # Get the number of positions (L) and states (k)
+    L, k = posteriors_df.shape
+
+    # Create the genomic coordinate columns
+    starts = start_position + np.arange(L) * resolution
+    ends = starts + resolution
+
+    # Create a new DataFrame for the coordinate information
+    output_df = pd.DataFrame({
+        'chrom': chromosome,
+        'start': starts,
+        'end': ends
+    })
+
+    # Rename the posterior columns for clarity
+    posteriors_df.columns = [f'state_{i+1}_posterior' for i in range(k)]
+
+    # Combine the coordinate DataFrame and the posterior DataFrame
+    final_df = pd.concat([output_df, posteriors_df.reset_index(drop=True)], axis=1)
+
+    # Write to a tab-separated file with a header and without the index
+    final_df.to_csv(output_file, sep='\t', index=False, header=True, float_format='%.6f')
+    
+    print(f"Posterior probabilities successfully written to {output_file}")
+
 import numpy as np
 from hmmlearn import base
 from scipy.optimize import linear_sum_assignment

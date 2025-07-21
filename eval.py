@@ -3,7 +3,7 @@ from data import *
 from dino_candi import *
 # from _utils import *
 
-from SAGA import write_bed, SoftMultiAssayHMM
+from SAGA import write_bed, SoftMultiAssayHMM, write_posteriors_to_tsv
 from collections import Counter
 
 
@@ -4513,8 +4513,7 @@ class EVAL_CANDI(object):
                 "latent":SAGA_latent_posterior,
             }
         }
-        
-    
+         
 def main():
     pd.set_option('display.max_rows', None)
     # bios -> "B_DND-41"
@@ -4557,7 +4556,6 @@ def main():
         mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
 
-
     if args.list_bios:
         for k, v in ec.dataset.navigation.items():
             print(f"{k}: {len(v)} available assays")
@@ -4576,6 +4574,51 @@ def main():
 
             else:
                 ec.rnaseq_all(dsf=args.dsf)
+        
+        elif args.saga:
+            for k, v in ec.dataset.navigation.items():
+                num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+                saga_res = ec.saga(k, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
+
+                if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                    os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+                write_bed(
+                    saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
+                    is_posterior=False, track_name="Chromatin State Annotation", 
+                    track_description="observed signals", visibility="dense")
+
+                write_posteriors_to_tsv(
+                    saga_res["posterior"]["obs"], "chr21", 0, 200,  
+                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
+
+                write_bed(
+                    saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
+                    is_posterior=False, track_name="Chromatin State Annotation", 
+                    track_description="candi denoised signals", visibility="dense")
+
+                write_posteriors_to_tsv(
+                    saga_res["posterior"]["den"], "chr21", 0, 200, 
+                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
+
+                write_bed(
+                    saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
+                    is_posterior=False, track_name="Chromatin State Annotation", 
+                    track_description="candi denoised and imputed signals", visibility="dense")
+
+                write_posteriors_to_tsv(
+                    saga_res["posterior"]["denimp"], "chr21", 0, 200, 
+                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
+
+                write_bed(
+                    saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
+                    is_posterior=False, track_name="Chromatin State Annotation", 
+                    track_description="candi latent (+ 0.9 PCA)", visibility="dense")
+
+                write_posteriors_to_tsv(
+                    saga_res["posterior"]["latent"], "chr21", 0, 200, 
+                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
+
+            exit()
 
         else:
             if args.quick:
@@ -4602,7 +4645,49 @@ def main():
 
     else:
         if args.saga:
-            res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=200, n_components=9)
+            k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
+            num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+            if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+                os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+
+            saga_res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
+            
+            write_bed(
+                saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
+                is_posterior=False, track_name="Chromatin State Annotation", 
+                track_description="observed signals", visibility="dense")
+
+            write_posteriors_to_tsv(
+                saga_res["posterior"]["obs"], "chr21", 0, 200,  
+                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
+
+            write_bed(
+                saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
+                is_posterior=False, track_name="Chromatin State Annotation", 
+                track_description="candi denoised signals", visibility="dense")
+
+            write_posteriors_to_tsv(
+                saga_res["posterior"]["den"], "chr21", 0, 200, 
+                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
+
+            write_bed(
+                saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
+                is_posterior=False, track_name="Chromatin State Annotation", 
+                track_description="candi denoised and imputed signals", visibility="dense")
+
+            write_posteriors_to_tsv(
+                saga_res["posterior"]["denimp"], "chr21", 0, 200, 
+                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
+
+            write_bed(
+                saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
+                is_posterior=False, track_name="Chromatin State Annotation", 
+                track_description="candi latent (+ 0.9 PCA)", visibility="dense")
+
+            write_posteriors_to_tsv(
+                saga_res["posterior"]["latent"], "chr21", 0, 200, 
+                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
+
             exit()
 
         if args.rnaonly and not args.eic:
