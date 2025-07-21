@@ -2603,11 +2603,11 @@ class ExtendedEncodeDataHandler:
             
             if len(md.shape) == 2:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                    print(self.RawExpMetaData.loc["depth", assay])
-                    print(self.RawExpMetaData.loc["coverage", assay])
-                    print(self.RawExpMetaData.loc["read_length", assay])
-                    print(self.RawExpMetaData.loc["run_type", assay])
-                    return
+                    # print(self.RawExpMetaData.loc["depth", assay])
+                    # print(self.RawExpMetaData.loc["coverage", assay])
+                    # print(self.RawExpMetaData.loc["read_length", assay])
+                    # print(self.RawExpMetaData.loc["run_type", assay])
+                    # return
                     
                     if torch.all(md[:, i] == missing_value):
                         md[0, i] = float(random.choice(self.RawExpMetaData.loc["depth", assay]))
@@ -2618,12 +2618,12 @@ class ExtendedEncodeDataHandler:
 
             else:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
-                    print(self.RawExpMetaData.loc["depth", assay])
-                    print(self.RawExpMetaData.loc["coverage", assay])
-                    print(self.RawExpMetaData.loc["read_length", assay])
-                    print(self.RawExpMetaData.loc["run_type", assay])
-                    return
-                    
+                    # print(self.RawExpMetaData.loc["depth", assay])
+                    # print(self.RawExpMetaData.loc["coverage", assay])
+                    # print(self.RawExpMetaData.loc["read_length", assay])
+                    # print(self.RawExpMetaData.loc["run_type", assay])
+                    # return
+
                     for b in range(md.shape[0]):
                         if torch.all(md[b, :, i] == missing_value):
                             md[b, 0, i] = float(random.choice(self.RawExpMetaData.loc["depth", assay]))
