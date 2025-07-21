@@ -4472,8 +4472,6 @@ class EVAL_CANDI(object):
         SAGA_obs_MAP = SAGA_obs.predict(obs_data)
         SAGA_obs_posterior = SAGA_obs.predict_proba(obs_data)
         print("obs_MAP", {f"state_#{k}": float(v)/obs_data.shape[0] for k, v in Counter(SAGA_obs_MAP).items()})
-        print(SAGA_obs_MAP.shape)
-        print(SAGA_obs_posterior.shape)
     
         print(f"\nfitting the SAGA on denoised signal (d={len(available_indices)})")
         SAGA_den = SoftMultiAssayHMM(n_components=n_components, n_iter=n_iter, tol=tol, init_params="stmc", params="stmc", random_state=random_state)

@@ -137,6 +137,7 @@ def write_posteriors_to_tsv(posteriors_df: pd.DataFrame, chromosome: str, start_
     })
 
     # Rename the posterior columns for clarity
+    posteriors_df = pd.DataFrame(posteriors_df)
     posteriors_df.columns = [f'state_{i+1}_posterior' for i in range(k)]
 
     # Combine the coordinate DataFrame and the posterior DataFrame
