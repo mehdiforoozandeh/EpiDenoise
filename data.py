@@ -2604,8 +2604,14 @@ class ExtendedEncodeDataHandler:
         return region
 
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
-        if sample:
-            
+        if sample:     
+            def typed_choice_retry(seq, want_type, max_tries=1000):
+                for _ in itertools.repeat(None, max_tries):
+                    pick = random.choice(seq)
+                    if isinstance(pick, want_type):
+                        return pick
+                raise LookupError(f"Found no {want_type.__name__} after {max_tries} draws")
+
             if len(md.shape) == 2:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
                     # print(self.RawExpMetaData.loc["depth", assay])
@@ -2631,7 +2637,8 @@ class ExtendedEncodeDataHandler:
 
                     for b in range(md.shape[0]):
                         if torch.all(md[b, :, i] == missing_value):
-                            md[b, 0, i] = float(np.log2(random.choice(self.RawExpMetaData.loc["depth", assay])))
+                            # md[b, 0, i] = float(np.log2(random.choice(self.RawExpMetaData.loc["depth", assay])))
+                            md[b, 0, i] = float(np.log2(typed_choice_retry(self.RawExpMetaData.loc["depth", assay], float)))
                             md[b, 1, i] = float(random.choice(self.RawExpMetaData.loc["coverage", assay]))
                             md[b, 2, i] = float(random.choice(self.RawExpMetaData.loc["read_length", assay]))
                             md[b, 3, i] = float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
