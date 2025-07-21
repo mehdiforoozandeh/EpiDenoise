@@ -4865,7 +4865,7 @@ def main():
                 # Save results
                 for key in saga_res['MAP']:
                     write_bed(saga_res['MAP'][key], "chr21", 0, 200, os.path.join(out_dir, f"MAP_{key}.bed"))
-                    write_posteriors_to_tsv(saga_res['posterior'][key], "chr21", 0, 200, os.path.join(out_dir, f"posterior_{key}.tsv"))
+                    write_posteriors_to_tsv(saga_res['posterior'][key], "chr21", 0, 200, os.path.join(out_dir, f"posterior_{key}.bed"))
                 print(f"SAGA annotations for {bios} saved to {out_dir}")
 
             except Exception as e:
