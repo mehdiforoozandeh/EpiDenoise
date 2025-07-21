@@ -2608,7 +2608,7 @@ class ExtendedEncodeDataHandler:
                         md[0, i] = random.choice(self.RawExpMetaData.loc["depth", assay])
                         md[1, i] = random.choice(self.RawExpMetaData.loc["coverage", assay])
                         md[2, i] = random.choice(self.RawExpMetaData.loc["read_length", assay])
-                        md[3, i] = random.choice(self.RawExpMetaData.loc["run_type", assay])
+                        md[3, i] = int(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
 
             else:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
