@@ -1328,9 +1328,14 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
 
+        for c in self.RawExpMetaData.columns:
+            for md in self.RawExpMetaData.index:
+                prind(c, md)
+                # seq = list(map(int, seq.strip("[]").split(",")))
+
         # print(self.expstats)
         # print(self.RawExpMetaData)
-        # exit()
+        exit()
 
     def load_blacklist(self, blacklist_file):
         """Load blacklist regions from a BED file into IntervalTrees."""
@@ -2606,12 +2611,6 @@ class ExtendedEncodeDataHandler:
     def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
         if sample:     
             def typed_choice_retry(seq, want_type, max_tries=1000):
-                print(seq)
-                print(len(seq))
-                seq = list(map(int, seq.strip("[]").split(",")))
-                print(seq)
-                print(len(seq))
-                exit()
                 for _ in itertools.repeat(None, max_tries):
                     pick = random.choice(seq)
                     print(pick, type(pick))
