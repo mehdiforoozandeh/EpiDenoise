@@ -13,6 +13,7 @@ import matplotlib.patches as mpatches
 import umap
 from intervaltree import IntervalTree
 from hmmlearn import hmm
+import pandas as pd
 
 # Scikit-learn imports
 from sklearn.model_selection import StratifiedKFold
