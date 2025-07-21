@@ -4512,218 +4512,362 @@ class EVAL_CANDI(object):
             }
         }
          
+# def main():
+#     pd.set_option('display.max_rows', None)
+#     # bios -> "B_DND-41"
+#     parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
+
+#     parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
+#     parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
+#     parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
+#     parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/CANDI_res/", help="Directory to save evaluation results.")
+#     parser.add_argument("--enc_ckpt", type=str, default=None, help="If CANDI-DINO, path to encoder checkpoint model.")
+#     parser.add_argument("--dec_ckpt", type=str, default=None, help="If CANDI-DINO, path to decoder checkpoint model.")
+#     parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
+#     parser.add_argument("-cl", "--context_length", type=int, default=1200, help="Context length for evaluation.")
+#     parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
+#     parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
+#     parser.add_argument("--rnaonly", action="store_true", help="Flag to evaluate only RNAseq prediction.")
+#     parser.add_argument("--dino", action="store_true", help="Flag to enable DINO mode.")
+#     parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
+#     parser.add_argument("--quick", action="store_true", help="Flag to quickly compute eval metrics for one biosample.")
+#     parser.add_argument("--list_bios", action="store_true", help="print the list of all available biosamples for evaluating")
+#     parser.add_argument("--supertrack", action="store_true", help="supertrack")
+#     parser.add_argument("--saga", action="store_true", help="saga")
+
+#     parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
+#     parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
+#     parser.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Split to evaluate on. Options: test, val.")
+#     parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
+
+
+#     args = parser.parse_args()
+#     savedir = args.savedir
+#     fill_in_y_prompt = args.supertrack
+
+#     if args.dino:
+#         savedir = savedir.replace("CANDI", "CANDINO")
+        
+#     ec = EVAL_CANDI(
+#         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
+#         chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir, 
+#         mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
+#         DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
+
+#     if args.list_bios:
+#         for k, v in ec.dataset.navigation.items():
+#             print(f"{k}: {len(v)} available assays")
+#         exit()
+        
+#     if args.bios_name == "all":
+#         if args.rnaonly:
+#             if args.quick:
+#                 for k, v in ec.dataset.navigation.items():
+#                     res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
+#                     if res is not None:
+#                         num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+#                         if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+#                             os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+#                         res.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}", "RNA-seq.csv"))
+
+#             else:
+#                 ec.rnaseq_all(dsf=args.dsf)
+        
+#         elif args.saga:
+#             for k, v in ec.dataset.navigation.items():
+#                 num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+#                 saga_res = ec.saga(k, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
+
+#                 if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+#                     os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+#                 write_bed(
+#                     saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
+#                     is_posterior=False, track_name="Chromatin State Annotation", 
+#                     track_description="observed signals", visibility="dense")
+
+#                 write_posteriors_to_tsv(
+#                     saga_res["posterior"]["obs"], "chr21", 0, 200,  
+#                     os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
+
+#                 write_bed(
+#                     saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
+#                     is_posterior=False, track_name="Chromatin State Annotation", 
+#                     track_description="candi denoised signals", visibility="dense")
+
+#                 write_posteriors_to_tsv(
+#                     saga_res["posterior"]["den"], "chr21", 0, 200, 
+#                     os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
+
+#                 write_bed(
+#                     saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
+#                     is_posterior=False, track_name="Chromatin State Annotation", 
+#                     track_description="candi denoised and imputed signals", visibility="dense")
+
+#                 write_posteriors_to_tsv(
+#                     saga_res["posterior"]["denimp"], "chr21", 0, 200, 
+#                     os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
+
+#                 write_bed(
+#                     saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
+#                     is_posterior=False, track_name="Chromatin State Annotation", 
+#                     track_description="candi latent (+ 0.9 PCA)", visibility="dense")
+
+#                 write_posteriors_to_tsv(
+#                     saga_res["posterior"]["latent"], "chr21", 0, 200, 
+#                     os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
+
+#             exit()
+
+#         else:
+#             if args.quick:
+#                 all_dfs = []
+#                 # iterate over each biosample key in your dataset
+#                 for bios in ec.dataset.navigation.keys():
+
+#                     # skip ones without any RNaseq if you like
+#                     if args.eic:
+#                         res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+#                     else:
+#                         res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+
+#                     # make sure it’s a DataFrame
+#                     all_dfs.append(pd.DataFrame(res))
+
+#                 # concatenate, save
+#                 report = pd.concat(all_dfs, ignore_index=True)
+#                 os.makedirs(args.savedir, exist_ok=True)
+#                 report.to_csv(os.path.join(args.savedir, "quick_report.csv"), index=False)
+#                 print(report)
+#             else:
+#                 ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
+
+#     else:
+#         if args.saga:
+#             k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
+#             num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+#             if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+#                 os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+
+#             saga_res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
+            
+#             write_bed(
+#                 saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
+#                 is_posterior=False, track_name="Chromatin State Annotation", 
+#                 track_description="observed signals", visibility="dense")
+
+#             write_posteriors_to_tsv(
+#                 saga_res["posterior"]["obs"], "chr21", 0, 200,  
+#                 os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
+
+#             write_bed(
+#                 saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
+#                 is_posterior=False, track_name="Chromatin State Annotation", 
+#                 track_description="candi denoised signals", visibility="dense")
+
+#             write_posteriors_to_tsv(
+#                 saga_res["posterior"]["den"], "chr21", 0, 200, 
+#                 os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
+
+#             write_bed(
+#                 saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
+#                 is_posterior=False, track_name="Chromatin State Annotation", 
+#                 track_description="candi denoised and imputed signals", visibility="dense")
+
+#             write_posteriors_to_tsv(
+#                 saga_res["posterior"]["denimp"], "chr21", 0, 200, 
+#                 os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
+
+#             write_bed(
+#                 saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
+#                 is_posterior=False, track_name="Chromatin State Annotation", 
+#                 track_description="candi latent (+ 0.9 PCA)", visibility="dense")
+
+#             write_posteriors_to_tsv(
+#                 saga_res["posterior"]["latent"], "chr21", 0, 200, 
+#                 os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
+
+#             exit()
+
+#         if args.rnaonly and not args.eic:
+#             report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
+            
+#             if report is not None:
+#                 k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
+#                 num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+#                 if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
+#                     os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
+
+#                 report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
+#             exit()
+            
+#         if args.eic:
+#             t0 = datetime.now()
+#             res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+#             elapsed_time = datetime.now() - t0
+#             print(f"took {elapsed_time}")
+
+#             if args.quick:
+#                 report = pd.DataFrame(res)
+#                 print(report[["feature", "comparison"] + [c for c in report.columns if "Cidx" in c]])
+
+#         else:
+#             t0 = datetime.now()
+#             res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
+#             elapsed_time = datetime.now() - t0
+#             print(f"took {elapsed_time}")
+
+#             if args.quick:
+#                 report = pd.DataFrame(res)
+#                 print(report[["feature", "comparison"] + [c for c in report.columns if "Cidx" in c]])
+
+#         if not args.quick:
+#             ec.viz_bios(eval_res=res)
+#             res = ec.filter_res(res)
+#             print(pd.DataFrame(res))
+
 def main():
     pd.set_option('display.max_rows', None)
-    # bios -> "B_DND-41"
-    parser = argparse.ArgumentParser(description="Evaluate CANDI model with specified parameters.")
+    
+    # --- 1. Main Parser Setup ---
+    # This parser handles global arguments common to all sub-commands.
+    parser = argparse.ArgumentParser(
+        description="Evaluate CANDI model performance and generate annotations.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
-    parser.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model.")
-    parser.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to hyperparameters file.")
-    parser.add_argument("-d", "--data_path", type=str, required=True, help="Path to the input data.")
-    parser.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/CANDI_res/", help="Directory to save evaluation results.")
-    parser.add_argument("--enc_ckpt", type=str, default=None, help="If CANDI-DINO, path to encoder checkpoint model.")
-    parser.add_argument("--dec_ckpt", type=str, default=None, help="If CANDI-DINO, path to decoder checkpoint model.")
-    parser.add_argument("-r", "--resolution", type=int, default=25, help="Resolution for evaluation.")
-    parser.add_argument("-cl", "--context_length", type=int, default=1200, help="Context length for evaluation.")
-    parser.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for evaluation.")
-    parser.add_argument("--eic", action="store_true", help="Flag to enable EIC mode.")
-    parser.add_argument("--rnaonly", action="store_true", help="Flag to evaluate only RNAseq prediction.")
-    parser.add_argument("--dino", action="store_true", help="Flag to enable DINO mode.")
-    parser.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA in the evaluation.")
-    parser.add_argument("--quick", action="store_true", help="Flag to quickly compute eval metrics for one biosample.")
-    parser.add_argument("--list_bios", action="store_true", help="print the list of all available biosamples for evaluating")
-    parser.add_argument("--supertrack", action="store_true", help="supertrack")
-    parser.add_argument("--saga", action="store_true", help="saga")
+    # Group arguments for better --help output
+    model_args = parser.add_argument_group('Model and Data Arguments')
+    model_args.add_argument("-m", "--model_path", type=str, required=True, help="Path to the trained model checkpoint.")
+    model_args.add_argument("-hp", "--hyper_parameters_path", type=str, required=True, help="Path to the model's hyperparameters file (.pkl).")
+    model_args.add_argument("-d", "--data_path", type=str, required=True, help="Path to the root ENCODE data directory.")
+    model_args.add_argument("-s", "--savedir", type=str, default="/project/compbio-lab/CANDI_res/", help="Directory to save evaluation results.")
+    model_args.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
 
-    parser.add_argument("--dsf", type=int, default=1, help="Down-sampling factor.")
-    parser.add_argument("bios_name", type=str, help="BIOS argument for the pipeline.")
-    parser.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Split to evaluate on. Options: test, val.")
-    parser.add_argument("--chr_sizes_file", type=str, default="data/hg38.chrom.sizes", help="Path to chromosome sizes file.")
+    config_args = parser.add_argument_group('Configuration Arguments')
+    config_args.add_argument("-r", "--resolution", type=int, default=25, help="Data resolution in base pairs.")
+    config_args.add_argument("-cl", "--context_length", type=int, default=1200, help="Model context length.")
+    config_args.add_argument("-b", "--batch_size", type=int, default=50, help="Batch size for predictions.")
+    config_args.add_argument("--dsf", type=int, default=1, help="Down-sampling factor for evaluation data.")
+    config_args.add_argument("--split", type=str, default="test", choices=["test", "val"], help="Data split to evaluate on.")
+    config_args.add_argument("--dna", action="store_true", default=True, help="Flag to include DNA sequence in the model.")
+    config_args.add_argument("--dino", action="store_true", help="Flag to use the CANDI-DINO model architecture.")
+    config_args.add_argument("--enc_ckpt", type=str, default=None, help="Path to encoder checkpoint (for CANDI-DINO).")
+    config_args.add_argument("--dec_ckpt", type=str, default=None, help="Path to decoder checkpoint (for CANDI-DINO).")
 
+    # --- 2. Sub-parser Setup ---
+    # This creates the sub-command structure (eval, rna-seq, etc.)
+    subparsers = parser.add_subparsers(dest='command', required=True, help="Available commands")
+
+    # Sub-parser for 'eval' command
+    parser_eval = subparsers.add_parser('eval', help='Run the full evaluation pipeline on one or all biosamples.')
+    parser_eval.add_argument('bios_name', type=str, help="Name of the biosample to evaluate, or 'all' for all biosamples.")
+    parser_eval.add_argument('--eic', action='store_true', help='Run in Experiment-Input-Control (EIC) mode.')
+    parser_eval.add_argument('--quick', action='store_true', help='Run a quicker, summarized evaluation without generating plots.')
+    parser_eval.add_argument('--supertrack', action='store_true', help='Enable supertrack mode (fill_in_y_prompt).')
+
+    # Sub-parser for 'rna-seq' command
+    parser_rna = subparsers.add_parser('rna-seq', help='Evaluate only the RNA-seq prediction performance.')
+    parser_rna.add_argument('bios_name', type=str, help="Name of the biosample to evaluate, or 'all' for all biosamples with RNA-seq data.")
+    parser_rna.add_argument('--quick', action='store_true', help='Generate a summarized CSV report instead of detailed plots.')
+
+    # Sub-parser for 'saga' command
+    parser_saga = subparsers.add_parser('saga', help='Generate chromatin state annotations using SAGA.')
+    parser_saga.add_argument('bios_name', type=str, help="Name of the biosample to annotate, or 'all'.")
+    parser_saga.add_argument('--n_states', type=int, default=None, help="Number of chromatin states. If None, defaults to 10 + sqrt(num_assays).")
+
+    # Sub-parser for 'list-bios' command
+    subparsers.add_parser('list-bios', help='List all available biosamples in the dataset.')
 
     args = parser.parse_args()
-    savedir = args.savedir
-    fill_in_y_prompt = args.supertrack
 
-    if args.dino:
-        savedir = savedir.replace("CANDI", "CANDINO")
-        
+    # --- 3. Command Execution ---
+    savedir = args.savedir.replace("CANDI", "CANDINO") if args.dino else args.savedir
+
     ec = EVAL_CANDI(
         args.model_path, args.data_path, args.context_length, args.batch_size, args.hyper_parameters_path,
-        chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir, 
-        mode="eval", split=args.split, eic=args.eic, DNA=args.dna, 
-        DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt)
+        chr_sizes_file=args.chr_sizes_file, resolution=args.resolution, savedir=savedir,
+        mode="eval", split=args.split, eic=getattr(args, 'eic', False), DNA=args.dna,
+        DINO=args.dino, ENC_CKP=args.enc_ckpt, DEC_CKP=args.dec_ckpt
+    )
 
-    if args.list_bios:
+    bios_to_process = ec.dataset.navigation.keys() if args.bios_name == 'all' else [args.bios_name]
+
+    # --- Command Logic ---
+    if args.command == 'list-bios':
+        print("Available biosamples for evaluation:")
         for k, v in ec.dataset.navigation.items():
-            print(f"{k}: {len(v)} available assays")
-        exit()
+            print(f"- {k}: {len(v)} available assays")
+            
+    elif args.command == 'eval':
+        all_results = []
+        for bios in bios_to_process:
+            print(f"\n--- Running Full Evaluation for: {bios} ---")
+            try:
+                if args.eic:
+                    res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=args.supertrack)
+                else:
+                    res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=args.supertrack)
+                
+                if args.quick:
+                    all_results.append(pd.DataFrame(res))
+                else:
+                    ec.viz_bios(eval_res=res)
+                    res = ec.filter_res(res)
+                    all_results.append(pd.DataFrame(res))
+
+            except Exception as e:
+                print(f"Failed to evaluate {bios}. Error: {e}")
         
-    if args.bios_name == "all":
-        if args.rnaonly:
-            if args.quick:
-                for k, v in ec.dataset.navigation.items():
-                    res = ec.bios_rnaseq_eval(k, args.dsf, args.quick, fill_in_y_prompt)
-                    if res is not None:
-                        num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-                        if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                            os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
-                        res.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}", "RNA-seq.csv"))
+        if all_results:
+            report = pd.concat(all_results, ignore_index=True)
+            report_path = os.path.join(args.savedir, "full_report.csv")
+            report.to_csv(report_path, index=False)
+            print(f"\nEvaluation complete. Full report saved to {report_path}")
+            print(report)
 
-            else:
-                ec.rnaseq_all(dsf=args.dsf)
+    elif args.command == 'rna-seq':
+        all_results = []
+        for bios in bios_to_process:
+            if not ec.dataset.has_rnaseq(bios):
+                if args.bios_name != 'all': print(f"Skipping {bios}: No RNA-seq data found.")
+                continue
+            print(f"\n--- Running RNA-seq Evaluation for: {bios} ---")
+            try:
+                res = ec.bios_rnaseq_eval(bios, args.dsf, args.quick, fill_in_y_prompt=False)
+                if res is not None:
+                    k, v = bios, ec.dataset.navigation[bios]
+                    num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
+                    out_dir = os.path.join(ec.savedir, f"{k}_{num_avail}")
+                    os.makedirs(out_dir, exist_ok=True)
+                    res.to_csv(os.path.join(out_dir, "RNA-seq_quick_report.csv"))
+                    all_results.append(res)
+            except Exception as e:
+                print(f"Failed RNA-seq evaluation for {bios}. Error: {e}")
         
-        elif args.saga:
-            for k, v in ec.dataset.navigation.items():
-                num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-                saga_res = ec.saga(k, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
+        if all_results:
+             print("\nRNA-seq evaluation complete. Results saved in respective biosample directories.")
 
-                if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                    os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
-                write_bed(
-                    saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
-                    is_posterior=False, track_name="Chromatin State Annotation", 
-                    track_description="observed signals", visibility="dense")
+    elif args.command == 'saga':
+        for bios in bios_to_process:
+            print(f"\n--- Running SAGA Annotation for: {bios} ---")
+            try:
+                v = ec.dataset.navigation[bios]
+                num_avail = len(v.keys()) - 1 if "RNA-seq" in v.keys() else len(v.keys())
+                n_states = args.n_states if args.n_states else int(10 + (num_avail**(1/2)))
+                
+                out_dir = os.path.join(ec.savedir, f"{bios}_{num_avail}")
+                os.makedirs(out_dir, exist_ok=True)
+                
+                saga_res = ec.saga(bios, args.dsf, False, resolution=200, n_components=n_states)
 
-                write_posteriors_to_tsv(
-                    saga_res["posterior"]["obs"], "chr21", 0, 200,  
-                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
+                # Save results
+                for key in saga_res['MAP']:
+                    write_bed(saga_res['MAP'][key], "chr21", 0, 200, os.path.join(out_dir, f"MAP_{key}.bed"))
+                    write_posteriors_to_tsv(saga_res['posterior'][key], "chr21", 0, 200, os.path.join(out_dir, f"posterior_{key}.tsv"))
+                print(f"SAGA annotations for {bios} saved to {out_dir}")
 
-                write_bed(
-                    saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
-                    is_posterior=False, track_name="Chromatin State Annotation", 
-                    track_description="candi denoised signals", visibility="dense")
-
-                write_posteriors_to_tsv(
-                    saga_res["posterior"]["den"], "chr21", 0, 200, 
-                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
-
-                write_bed(
-                    saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
-                    is_posterior=False, track_name="Chromatin State Annotation", 
-                    track_description="candi denoised and imputed signals", visibility="dense")
-
-                write_posteriors_to_tsv(
-                    saga_res["posterior"]["denimp"], "chr21", 0, 200, 
-                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
-
-                write_bed(
-                    saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
-                    is_posterior=False, track_name="Chromatin State Annotation", 
-                    track_description="candi latent (+ 0.9 PCA)", visibility="dense")
-
-                write_posteriors_to_tsv(
-                    saga_res["posterior"]["latent"], "chr21", 0, 200, 
-                    os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
-
-            exit()
-
-        else:
-            if args.quick:
-                all_dfs = []
-                # iterate over each biosample key in your dataset
-                for bios in ec.dataset.navigation.keys():
-
-                    # skip ones without any RNaseq if you like
-                    if args.eic:
-                        res = ec.bios_pipeline_eic(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-                    else:
-                        res = ec.bios_pipeline(bios, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-
-                    # make sure it’s a DataFrame
-                    all_dfs.append(pd.DataFrame(res))
-
-                # concatenate, save
-                report = pd.concat(all_dfs, ignore_index=True)
-                os.makedirs(args.savedir, exist_ok=True)
-                report.to_csv(os.path.join(args.savedir, "quick_report.csv"), index=False)
-                print(report)
-            else:
-                ec.viz_all(dsf=args.dsf, fill_in_y_prompt=fill_in_y_prompt)
-
-    else:
-        if args.saga:
-            k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
-            num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-            if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
-
-            saga_res = ec.saga(args.bios_name, args.dsf, fill_in_y_prompt, resolution=200, n_components=int(10+(num_avail**(1/2))))
-            
-            write_bed(
-                saga_res["MAP"]["obs"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_obs.bed"), 
-                is_posterior=False, track_name="Chromatin State Annotation", 
-                track_description="observed signals", visibility="dense")
-
-            write_posteriors_to_tsv(
-                saga_res["posterior"]["obs"], "chr21", 0, 200,  
-                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_obs.bed"))
-
-            write_bed(
-                saga_res["MAP"]["den"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_den.bed"),
-                is_posterior=False, track_name="Chromatin State Annotation", 
-                track_description="candi denoised signals", visibility="dense")
-
-            write_posteriors_to_tsv(
-                saga_res["posterior"]["den"], "chr21", 0, 200, 
-                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_den.bed"))
-
-            write_bed(
-                saga_res["MAP"]["denimp"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_denimp.bed"), 
-                is_posterior=False, track_name="Chromatin State Annotation", 
-                track_description="candi denoised and imputed signals", visibility="dense")
-
-            write_posteriors_to_tsv(
-                saga_res["posterior"]["denimp"], "chr21", 0, 200, 
-                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_denimp.bed"))
-
-            write_bed(
-                saga_res["MAP"]["latent"], "chr21", 0, 200, os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "MAP_latent.bed"), 
-                is_posterior=False, track_name="Chromatin State Annotation", 
-                track_description="candi latent (+ 0.9 PCA)", visibility="dense")
-
-            write_posteriors_to_tsv(
-                saga_res["posterior"]["latent"], "chr21", 0, 200, 
-                os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "posterior_latent.bed"))
-
-            exit()
-
-        if args.rnaonly and not args.eic:
-            report = ec.bios_rnaseq_eval(args.bios_name, args.dsf, args.quick, fill_in_y_prompt)
-            
-            if report is not None:
-                k, v = args.bios_name, ec.dataset.navigation[args.bios_name]
-                num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
-                if not os.path.exists(f"{ec.savedir}/{k}_{num_avail}/"):
-                    os.mkdir(f"{ec.savedir}/{k}_{num_avail}/")
-
-                report.to_csv(os.path.join(f"{ec.savedir}",f"{k}_{num_avail}/", "RNA-seq.csv"))
-            exit()
-            
-        if args.eic:
-            t0 = datetime.now()
-            res = ec.bios_pipeline_eic(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-            elapsed_time = datetime.now() - t0
-            print(f"took {elapsed_time}")
-
-            if args.quick:
-                report = pd.DataFrame(res)
-                print(report[["feature", "comparison"] + [c for c in report.columns if "Cidx" in c]])
-
-        else:
-            t0 = datetime.now()
-            res = ec.bios_pipeline(args.bios_name, args.dsf, args.quick, fill_in_y_prompt=fill_in_y_prompt)
-            elapsed_time = datetime.now() - t0
-            print(f"took {elapsed_time}")
-
-            if args.quick:
-                report = pd.DataFrame(res)
-                print(report[["feature", "comparison"] + [c for c in report.columns if "Cidx" in c]])
-
-        if not args.quick:
-            ec.viz_bios(eval_res=res)
-            res = ec.filter_res(res)
-            print(pd.DataFrame(res))
+            except Exception as e:
+                print(f"Failed SAGA annotation for {bios}. Error: {e}")
 
 if __name__ == "__main__":
     main()
