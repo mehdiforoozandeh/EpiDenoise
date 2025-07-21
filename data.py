@@ -1328,12 +1328,12 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop(["Unnamed: 0", "RNA-seq"], axis=1)
 
-        for c in self.RawExpMetaData.columns:
-            for md in self.RawExpMetaData.index:
-                print(type(self.RawExpMetaData.loc[md, c]))
-                if type(self.RawExpMetaData.loc[md, c]) != str:
-                    print(md, c, self.RawExpMetaData.loc[md, c])
-        exit()
+        # for c in self.RawExpMetaData.columns:
+        #     for md in self.RawExpMetaData.index:
+        #         print(type(self.RawExpMetaData.loc[md, c]))
+        #         if type(self.RawExpMetaData.loc[md, c]) != str:
+        #             print(md, c, self.RawExpMetaData.loc[md, c])
+        # exit()
 
         # mapping from metadata row → conversion function
         cast_fn = {
