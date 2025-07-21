@@ -2653,7 +2653,6 @@ class ExtendedEncodeDataHandler:
                             md[b, 1, i] = float(random.choice(self.RawExpMetaData.loc["coverage", assay]))
                             md[b, 2, i] = float(random.choice(self.RawExpMetaData.loc["read_length", assay]))
                             md[b, 3, i] = float(bool("pair" in random.choice(self.RawExpMetaData.loc["run_type", assay])))
-                            print(md[b, :, i])
             
             return md
 
