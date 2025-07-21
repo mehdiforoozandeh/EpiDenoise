@@ -4835,7 +4835,7 @@ def main():
                 continue
             print(f"\n--- Running RNA-seq Evaluation for: {bios} ---")
             try:
-                res = ec.bios_rnaseq_eval(bios, args.dsf, args.quick, fill_in_y_prompt=False)
+                res = ec.bios_rnaseq_eval(bios, args.dsf, args.quick, fill_in_y_prompt=args.supertrack)
                 if res is not None:
                     k, v = bios, ec.dataset.navigation[bios]
                     num_avail = len(v.keys())-1 if "RNA-seq" in v.keys() else len(v.keys())
@@ -4860,7 +4860,7 @@ def main():
                 out_dir = os.path.join(ec.savedir, f"{bios}_{num_avail}")
                 os.makedirs(out_dir, exist_ok=True)
                 
-                saga_res = ec.saga(bios, args.dsf, False, resolution=200, n_components=n_states)
+                saga_res = ec.saga(bios, args.dsf, fill_in_y_prompt=args.supertrack, resolution=200, n_components=n_states)
 
                 # Save results
                 for key in saga_res['MAP']:
