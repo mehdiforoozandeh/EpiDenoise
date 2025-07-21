@@ -2608,7 +2608,7 @@ class ExtendedEncodeDataHandler:
             def typed_choice_retry(seq, want_type, max_tries=1000):
                 for _ in itertools.repeat(None, max_tries):
                     pick = random.choice(seq)
-                    print(pick)
+                    print(pick, type(pick))
                     if isinstance(pick, want_type):
                         return pick
                 raise LookupError(f"Found no {want_type.__name__} after {max_tries} draws")
