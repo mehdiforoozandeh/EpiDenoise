@@ -4758,7 +4758,7 @@ def main():
     # This creates the sub-command structure (eval, rna-seq, etc.)
     subparsers = parser.add_subparsers(dest='command', required=True, help="Available commands")
 
-    # Sub-parser for 'eval' command
+    # Sub-parser for 'eval' command 
     parser_eval = subparsers.add_parser('eval', help='Run the full evaluation pipeline on one or all biosamples.')
     parser_eval.add_argument('bios_name', type=str, help="Name of the biosample to evaluate, or 'all' for all biosamples.")
     parser_eval.add_argument('--eic', action='store_true', help='Run in Experiment-Input-Control (EIC) mode.')
@@ -4768,7 +4768,7 @@ def main():
     # Sub-parser for 'rna-seq' command
     parser_rna = subparsers.add_parser('rna-seq', help='Evaluate only the RNA-seq prediction performance.')
     parser_rna.add_argument('bios_name', type=str, help="Name of the biosample to evaluate, or 'all' for all biosamples with RNA-seq data.")
-    parser_rna.add_argument('--quick', action='store_true', help='Generate a summarized CSV report instead of detailed plots.')
+    parser_rna.add_argument('--quick', default=True, action='store_true', help='Generate a summarized CSV report instead of detailed plots.')
 
     # Sub-parser for 'saga' command
     parser_saga = subparsers.add_parser('saga', help='Generate chromatin state annotations using SAGA.')
