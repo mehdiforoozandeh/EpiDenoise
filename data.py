@@ -2608,7 +2608,7 @@ class ExtendedEncodeDataHandler:
             def typed_choice_retry(seq, want_type, max_tries=1000):
                 print(seq)
                 print(len(seq))
-                seq = list(map(int, s.strip("[]").split(",")))
+                seq = list(map(int, seq.strip("[]").split(",")))
                 print(seq)
                 print(len(seq))
                 exit()
