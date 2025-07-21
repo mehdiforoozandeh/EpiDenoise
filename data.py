@@ -1330,7 +1330,7 @@ class ExtendedEncodeDataHandler:
 
         for c in self.RawExpMetaData.columns:
             for md in self.RawExpMetaData.index:
-                print(type(RawExpMetaData.loc[md, c]))
+                print(type(self.RawExpMetaData.loc[md, c]))
         exit()
 
         # mapping from metadata row → conversion function
