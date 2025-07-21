@@ -1328,18 +1328,24 @@ class ExtendedEncodeDataHandler:
         self.RawExpMetaData.index = list(self.RawExpMetaData["Unnamed: 0"])
         self.RawExpMetaData = self.RawExpMetaData.drop("Unnamed: 0", axis=1)
 
-        for c in self.RawExpMetaData.columns:
-            for md in self.RawExpMetaData.index:
-                if md == "depth":
-                    self.RawExpMetaData.loc[md, c] = list(map(int, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
-                elif md == "coverage":
-                    self.RawExpMetaData.loc[md, c] = list(map(float, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
-                elif md == "read_length":
-                    self.RawExpMetaData.loc[md, c] = list(map(int, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
-                elif md == "run_type":
-                    self.RawExpMetaData.loc[md, c] = list(map(str, self.RawExpMetaData.loc[md, c].strip("[]").split(",")))
-                
-                print(self.RawExpMetaData.loc[md, c])
+        # mapping from metadata row → conversion function
+        cast_fn = {
+            "depth":        lambda s: list(map(int,   s.strip("[]").split(","))),
+            "coverage":     lambda s: list(map(float, s.strip("[]").split(","))),
+            "read_length":  lambda s: list(map(int,   s.strip("[]").split(","))),
+            "run_type":     lambda s: list(map(str,   s.strip("[]").split(","))),
+        }
+
+        for row, fn in cast_fn.items():
+            if row in self.RawExpMetaData.index:      # skip rows that don’t exist
+                self.RawExpMetaData.loc[row] = (
+                    self.RawExpMetaData.loc[row]
+                    .apply(fn)                        # apply to every column
+                )
+
+        # optional: inspect the converted rows
+        print(self.RawExpMetaData.loc[list(cast_fn)])
+
 
         # print(self.expstats)
         # print(self.RawExpMetaData)
