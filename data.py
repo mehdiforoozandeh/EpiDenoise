@@ -1339,7 +1339,7 @@ class ExtendedEncodeDataHandler:
         cast_fn = {
             "depth":        lambda s: list(map(int,   s.strip("[]").split(","))),
             "coverage":     lambda s: list(map(float, s.strip("[]").split(","))),
-            "read_length":  lambda s: list(map(int,   s.strip("[]").split(","))),
+            "read_length":  lambda s: list(map(float,   s.strip("[]").split(","))),
             "run_type":     lambda s: list(map(str,   s.strip("[]").split(","))),
         }
 
