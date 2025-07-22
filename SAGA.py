@@ -131,7 +131,7 @@ def write_posteriors_to_tsv(posteriors_df: pd.DataFrame, chromosome: str, start_
 
     # Create a new DataFrame for the coordinate information
     output_df = pd.DataFrame({
-        'chrom': chromosome,
+        'chr': chromosome,
         'start': starts,
         'end': ends
     })
