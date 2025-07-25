@@ -2632,7 +2632,7 @@ class ExtendedEncodeDataHandler:
         
         return region
 
-    def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Median", sample=False):
+    def fill_in_y_prompt(self, md, missing_value=-1, stat_type="Max", sample=False):
         if sample:     
             if len(md.shape) == 2:
                 for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
