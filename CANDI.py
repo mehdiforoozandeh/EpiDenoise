@@ -985,7 +985,7 @@ class PRETRAIN(object):
                         except Exception as e:
                             pass
 
-                if next_epoch and "test" not in arch::
+                if next_epoch and "test" not in arch:
                     try:
                         validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                         torch.cuda.empty_cache()
