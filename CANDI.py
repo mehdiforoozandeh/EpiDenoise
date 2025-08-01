@@ -941,7 +941,7 @@ class PRETRAIN(object):
                     logfile.write("\n".join(log_strs))
                     logfile.close()
 
-                    if (chr0 != chr1):
+                    if (chr0 != chr1) and "test" not in arch:
                         try:
                             validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                             torch.cuda.empty_cache()
@@ -985,7 +985,7 @@ class PRETRAIN(object):
                         except Exception as e:
                             pass
 
-                if next_epoch:
+                if next_epoch and "test" not in arch::
                     try:
                         validation_set_eval, val_metrics = val_eval.get_validation(self.model)
                         torch.cuda.empty_cache()
