@@ -1,0 +1,3542 @@
+{
+    "B_HL-60": {
+        "H3K27me3": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "ENCFF691HBE.bam.bai",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF691HBE.failed",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27ac": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF510IXN.failed",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF510IXN.bam.bai",
+            "file_metadata.json"
+        ]
+    },
+    "T_BE2C": {
+        "H3K4me3": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF108ATO.bam.bai",
+            "ENCFF108ATO.failed"
+        ],
+        "DNase-seq": [
+            "ENCFF202QAJ.failed",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF202QAJ.bam.bai",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ]
+    },
+    "T_endocrine_pancreas": {
+        "H3K9ac": [
+            "ENCFF925QQJ.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "file_metadata.json",
+            "ENCFF321DYL.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF378PSF.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF037AMF.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF154DXP.bam.bai",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF943KUL.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_occipital_lobe": {
+        "DNase-seq": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF436JHH.failed",
+            "ENCFF436JHH.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ]
+    },
+    "T_T47D": {
+        "DNase-seq": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF474NSD.failed",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF474NSD.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_SK-MEL-5": {
+        "DNase-seq": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF260GLS.failed",
+            "signal_DSF2_res25",
+            "ENCFF260GLS.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_cardiac_fibroblast": {
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF852XZM.bam.bai",
+            "file_metadata.json"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF612XOE.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_testis": {
+        "ATAC-seq": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF423JSR.failed",
+            "signal_DSF1_res25",
+            "ENCFF423JSR.bam.bai"
+        ],
+        "H3K9me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF572UCO.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json"
+        ],
+        "DNase-seq": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF985GDK.bam.bai"
+        ]
+    },
+    "T_H1": {
+        "H3K27ac": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF693IFG.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H4K5ac": [
+            "ENCFF052QCF.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K79me2": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF015TSL.bam.bai"
+        ],
+        "H2AFZ": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF897EWW.bam.bai"
+        ],
+        "H3K4me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF765FFD.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H2BK20ac": [
+            "ENCFF712OVK.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K23me2": [
+            "all_files.csv",
+            "ENCFF336SIQ.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H2BK12ac": [
+            "ENCFF341PPR.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K79me1": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF341KSR.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K56ac": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF782BDE.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27me3": [
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF582IQY.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H4K8ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF400BPI.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "H2BK5ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF100NZG.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2BK120ac": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF297TOW.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json"
+        ],
+        "H3K4me2": [
+            "signal_DSF2_res25",
+            "ENCFF080SQV.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "H3K9ac": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF785DXP.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF634HAV.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF767MGL.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H2BK15ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF106UCP.bam.bai"
+        ],
+        "H4K91ac": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF156KJZ.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K18ac": [
+            "ENCFF176NNO.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "DNase-seq": [
+            "all_files.csv",
+            "ENCFF175QBB.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF175QBB.bam.bai"
+        ]
+    },
+    "B_RWPE2": {
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF944YWP.bam.bai",
+            "ENCFF944YWP.failed",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "ENCFF172QTD.failed",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF172QTD.bam.bai"
+        ],
+        "H3K4me1": [
+            "ENCFF679GLB.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "ENCFF679GLB.failed"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF499LZJ.failed",
+            "file_metadata.json",
+            "ENCFF499LZJ.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K9me3": [
+            "ENCFF403WJG.failed",
+            "ENCFF403WJG.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "ENCFF407ORW.failed",
+            "ENCFF407ORW.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "ATAC-seq": [
+            "ENCFF452BSA.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF452BSA.failed",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_SJSA1": {
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF255DYN.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF255DYN.bam.bai",
+            "all_files.csv"
+        ]
+    },
+    "T_mesenchymal_stem_cell": {
+        "H3K14ac": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "ENCFF291GNC.bam.bai",
+            "signal_DSF1_res25"
+        ],
+        "H2AK5ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF399FKZ.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF399FKZ.bam.bai",
+            "all_files.csv"
+        ],
+        "H4K8ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF563KON.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "file_metadata.json",
+            "ENCFF126MVV.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF2_res25",
+            "ENCFF250ELK.bam.bai",
+            "signal_DSF1_res25",
+            "ENCFF250ELK.failed",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H2BK12ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF113ORU.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H2BK120ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF614ZDH.bam.bai"
+        ],
+        "H3K27me3": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF474ZPR.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF474ZPR.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K23ac": [
+            "ENCFF224CMW.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H4K91ac": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF377OEI.bam.bai"
+        ],
+        "H3K4ac": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF443FFP.bam.bai"
+        ],
+        "H3K4me1": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF250JXU.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF988VUR.bam.bai",
+            "file_metadata.json"
+        ],
+        "H2BK15ac": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF395BTH.bam.bai"
+        ],
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF549EIM.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF8_res25"
+        ],
+        "DNase-seq": [
+            "ENCFF474HCY.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K4me2": [
+            "ENCFF201BXG.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2BK5ac": [
+            "ENCFF494EMB.bam.bai",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_brain_microvascular_endothelial_cell": {
+        "H3K4me3": [
+            "ENCFF169NBK.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "DNase-seq": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF774WOB.bam.bai",
+            "signal_DSF1_res25",
+            "ENCFF774WOB.failed",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_urinary_bladder": {
+        "H3K4me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF746QLY.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF761XEA.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "DNase-seq": [
+            "ENCFF351RLC.failed",
+            "signal_DSF1_res25",
+            "ENCFF351RLC.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ]
+    },
+    "T_WERI-Rb-1": {
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF505BXT.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF505BXT.bam.bai"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "ENCFF693VJH.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ]
+    },
+    "V_H1": {
+        "H4K20me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF125LCU.bam.bai",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H2AK5ac": [
+            "signal_DSF1_res25",
+            "ENCFF443OZA.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H3K4ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF680XYN.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K9me3": [
+            "ENCFF898JWE.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ]
+    },
+    "B_BMEC": {
+        "H3K36me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF761ZYL.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "all_files.csv"
+        ],
+        "H3K27me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "ENCFF220CLZ.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "ENCFF887PLJ.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ]
+    },
+    "V_testis": {
+        "H3K4me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF495UCL.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ]
+    },
+    "B_SJCRH30": {
+        "H3K4me3": [
+            "all_files.csv",
+            "ENCFF587NXR.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF587NXR.failed",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF743FZM.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "ENCFF743FZM.bam.bai",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "ENCFF522KPA.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "ENCFF522KPA.failed"
+        ],
+        "H3K9me3": [
+            "signal_DSF1_res25",
+            "ENCFF323SJK.bam.bai",
+            "signal_DSF2_res25",
+            "ENCFF323SJK.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF635JMF.failed",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF635JMF.bam.bai"
+        ],
+        "H3K4me1": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "ENCFF616LJP.bam.bai",
+            "signal_DSF8_res25",
+            "ENCFF616LJP.failed"
+        ]
+    },
+    "V_upper_lobe_of_left_lung": {
+        "H3K36me3": [
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "ENCFF790HIV.bam.bai",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_K562": {
+        "H3K79me2": [
+            "signal_DSF1_res25",
+            "ENCFF132YSI.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF508LLH.bam.bai",
+            "signal_DSF2_res25"
+        ]
+    },
+    "V_endocrine_pancreas": {
+        "H3K4me1": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF262YCU.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ]
+    },
+    "T_heart_left_ventricle": {
+        "H3K27ac": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF372VNC.bam.bai"
+        ],
+        "DNase-seq": [
+            "ENCFF533LLW.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF533LLW.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF180KPZ.bam.bai",
+            "all_files.csv"
+        ],
+        "ATAC-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF097EXD.bam.bai",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF940JCQ.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H3K9me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF930EKP.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF930EKP.bam.bai",
+            "all_files.csv"
+        ],
+        "H3K4me1": [
+            "file_metadata.json",
+            "ENCFF660DDB.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "V_CD4-positive_alpha-beta_memory_T_cell": {
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF084RYS.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_skin_of_body": {
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF198CSA.bam.bai"
+        ]
+    },
+    "B_SJSA1": {
+        "H3K27ac": [
+            "ENCFF238CFV.bam.bai",
+            "ENCFF238CFV.failed",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF656NBV.failed",
+            "signal_DSF1_res25",
+            "ENCFF656NBV.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27me3": [
+            "ENCFF147KJB.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF147KJB.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K9me3": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF355VXR.failed",
+            "ENCFF355VXR.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me1": [
+            "ENCFF165XGW.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF165XGW.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF397TKX.failed",
+            "signal_DSF1_res25",
+            "ENCFF397TKX.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ]
+    },
+    "T_myoepithelial_cell_of_mammary_gland": {
+        "H3K9ac": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF775DRA.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "H3K27me3": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF054CBD.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF471JZC.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF466ITQ.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF359ANK.bam.bai",
+            "all_files.csv"
+        ]
+    },
+    "V_GM06990": {
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF475GDN.bam.bai"
+        ]
+    },
+    "T_RWPE2": {
+        "H3K27ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF132EYY.bam.bai"
+        ]
+    },
+    "V_trophoblast_cell": {
+        "H3K4me2": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF950IZV.failed",
+            "ENCFF950IZV.bam.bai"
+        ],
+        "H2BK5ac": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF682AUE.bam.bai"
+        ],
+        "H4K91ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF914ARK.bam.bai"
+        ],
+        "H3K36me3": [
+            "signal_DSF1_res25",
+            "ENCFF234RNO.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_HL-60": {
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF064VSP.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "DNase-seq": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF331FHB.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "B_Caco-2": {
+        "H3K4me1": [
+            "signal_DSF2_res25",
+            "ENCFF737KSB.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF737KSB.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H3K9me3": [
+            "ENCFF445YBG.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF445YBG.failed",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_chorion": {
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF905JGF.bam.bai"
+        ],
+        "H3K27ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF430YHA.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K36me3": [
+            "ENCFF763FCZ.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me1": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF107JYS.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_DND-41": {
+        "H3K9me3": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "ENCFF270YDP.bam.bai",
+            "signal_DSF4_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF746BJD.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF746BJD.failed"
+        ],
+        "H2AFZ": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF996CNM.bam.bai",
+            "ENCFF996CNM.failed",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me2": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF532RPE.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "ENCFF044KRR.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "ENCFF044KRR.failed"
+        ],
+        "H3K4me1": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF065CQJ.bam.bai",
+            "ENCFF065CQJ.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF764MJJ.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K79me2": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF311LGN.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K9ac": [
+            "signal_DSF1_res25",
+            "ENCFF532REX.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_adrenal_gland_embryonic": {
+        "DNase-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF511DEJ.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ]
+    },
+    "V_neural_stem_progenitor_cell": {
+        "H3K14ac": [
+            "ENCFF407RHN.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H2BK15ac": [
+            "ENCFF622CNC.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K4me1": [
+            "ENCFF797BED.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF797BED.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_peripheral_blood_mononuclear_cell": {
+        "H3K4me1": [
+            "ENCFF803AQX.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K9me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF186JBV.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H3K9ac": [
+            "ENCFF974PLJ.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF883IAD.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "ENCFF126SQQ.bam.bai",
+            "signal_DSF8_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF564QQO.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF564QQO.failed"
+        ]
+    },
+    "T_neural_stem_progenitor_cell": {
+        "H3K9ac": [
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF158DIT.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "ENCFF683OOP.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF683OOP.failed"
+        ],
+        "H3K4me2": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF575YMO.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H2BK5ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF418NKT.bam.bai"
+        ],
+        "H3K9me3": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF065KZL.failed",
+            "ENCFF065KZL.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H4K8ac": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "ENCFF277NHI.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF717KOH.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF717KOH.failed",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K18ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF967RYS.bam.bai"
+        ],
+        "H3K23ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF199MMG.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "H4K91ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF453VBG.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json"
+        ],
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF224MAE.bam.bai",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF805URT.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "ENCFF589KAY.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "ENCFF589KAY.failed",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H3K4ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF023SXI.bam.bai",
+            "signal_DSF1_res25"
+        ],
+        "H2BK120ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF136UYQ.bam.bai"
+        ],
+        "H2BK12ac": [
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF253TBD.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K79me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF067DUE.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H2AK5ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF041QMK.bam.bai",
+            "file_metadata.json"
+        ]
+    },
+    "B_MG63": {
+        "H3K9me3": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF201RFI.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF901IPC.bam.bai",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF876QRO.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF444CLH.bam.bai",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "T_omental_fat_pad": {
+        "ATAC-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF550OUL.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "DNase-seq": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF225NCO.failed",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF225NCO.bam.bai"
+        ]
+    },
+    "T_CD4-positive_alpha-beta_memory_T_cell": {
+        "H3K9me3": [
+            "ENCFF160ATE.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF489CFC.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF184ULC.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "ENCFF537JAK.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K27me3": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF340DVV.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_prostate": {
+        "H3K4me3": [
+            "ENCFF505NKP.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF416EQK.bam.bai"
+        ]
+    },
+    "V_NCI-H929": {
+        "H3K79me2": [
+            "ENCFF397XHP.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF397XHP.failed",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF8_res25"
+        ]
+    },
+    "T_G401": {
+        "DNase-seq": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF989WNS.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF989WNS.failed",
+            "file_metadata.json"
+        ]
+    },
+    "V_OCI-LY7": {
+        "H4K20me1": [
+            "ENCFF292JZN.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "DNase-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF643CGR.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ]
+    },
+    "V_urinary_bladder": {
+        "H3K27ac": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF287TAI.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ]
+    },
+    "V_DND-41": {
+        "H4K20me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF162YCU.bam.bai",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF833XFZ.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF833XFZ.failed"
+        ]
+    },
+    "T_trophoblast_cell": {
+        "H3K18ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF705VZD.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF705VZD.failed",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K9ac": [
+            "ENCFF438FEC.bam.bai",
+            "ENCFF438FEC.failed",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF617FEU.bam.bai",
+            "signal_DSF1_res25",
+            "ENCFF617FEU.failed",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me1": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF396FVA.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H4K8ac": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF406PVM.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H2BK120ac": [
+            "ENCFF086SZO.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H3K9me3": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF897ZLC.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "DNase-seq": [
+            "ENCFF218OXS.failed",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF218OXS.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H2AFZ": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "ENCFF161EDO.bam.bai",
+            "signal_DSF4_res25"
+        ],
+        "H2AK5ac": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF356CJH.bam.bai"
+        ],
+        "H3K14ac": [
+            "ENCFF381CWR.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF381CWR.failed",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K79me2": [
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF190SMB.bam.bai"
+        ],
+        "H3K4ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF195QKA.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H4K12ac": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF246GMV.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me3": [
+            "ENCFF718PRG.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K79me1": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF329TCC.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2BK12ac": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF686AAH.bam.bai"
+        ],
+        "H3K27ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF612QGO.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "T_GM06990": {
+        "DNase-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF289QGE.failed",
+            "all_files.csv",
+            "ENCFF289QGE.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ],
+        "H3K4me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF684SGK.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "ENCFF132QCV.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ]
+    },
+    "B_BE2C": {
+        "H3K36me3": [
+            "ENCFF233OXP.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF233OXP.failed",
+            "file_metadata.json"
+        ],
+        "H3K27me3": [
+            "ENCFF520FHH.failed",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF520FHH.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K9me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF808XLS.bam.bai",
+            "ENCFF808XLS.failed",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H3K4me1": [
+            "file_metadata.json",
+            "ENCFF757WMQ.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF757WMQ.failed"
+        ]
+    },
+    "B_WERI-Rb-1": {
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "ENCFF574GEM.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF574GEM.failed",
+            "all_files.csv"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF563HLT.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF563HLT.failed",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF1_res25",
+            "ENCFF584XYI.bam.bai",
+            "ENCFF584XYI.failed",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF789QVF.bam.bai",
+            "all_files.csv",
+            "ENCFF789QVF.failed"
+        ],
+        "H3K36me3": [
+            "file_metadata.json",
+            "ENCFF462VDJ.failed",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF462VDJ.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_myoepithelial_cell_of_mammary_gland": {
+        "H3K9me3": [
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF090FEH.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "V_KMS-11": {
+        "H3K4me2": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF875DBI.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H3K9ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF159CNY.bam.bai"
+        ]
+    },
+    "V_chorion": {
+        "H3K27me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF329AIM.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json"
+        ]
+    },
+    "T_Caco-2": {
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF513PFC.bam.bai",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF1_res25",
+            "ENCFF064IQV.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "ENCFF788XRD.bam.bai"
+        ],
+        "DNase-seq": [
+            "ENCFF895GQL.bam.bai",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_adrenal_gland_embryonic": {
+        "H3K9me3": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF856DZW.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF795QMF.bam.bai"
+        ],
+        "H3K36me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF687AFJ.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF575IKT.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF937GOA.bam.bai",
+            "file_metadata.json"
+        ],
+        "H3K27me3": [
+            "ENCFF228HLZ.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_HAP-1": {
+        "DNase-seq": [
+            "ENCFF427IVB.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF427IVB.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ]
+    },
+    "B_DND-41": {
+        "DNase-seq": [
+            "ENCFF836RBO.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "ATAC-seq": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF080WSN.bam.bai",
+            "all_files.csv"
+        ]
+    },
+    "V_mesenchymal_stem_cell": {
+        "H3K18ac": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "ENCFF172HAP.bam.bai"
+        ],
+        "H3K79me1": [
+            "signal_DSF1_res25",
+            "ENCFF052TMF.bam.bai",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF052TMF.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2AFZ": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF902FFP.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K9ac": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF125KAM.bam.bai"
+        ]
+    },
+    "T_KMS-11": {
+        "H3K79me2": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF558TKQ.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF433QGW.bam.bai",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "all_files.csv",
+            "ENCFF790PIQ.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me1": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF351LDO.bam.bai"
+        ],
+        "H3K27me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF622TMV.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H4K20me1": [
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF901QZZ.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K36me3": [
+            "ENCFF125PEN.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H2AFZ": [
+            "ENCFF846ERV.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25"
+        ]
+    },
+    "T_adipose_tissue": {
+        "H3K27ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF243URL.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ]
+    },
+    "V_adrenal_gland": {
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF792QXD.bam.bai",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25"
+        ]
+    },
+    "T_OCI-LY7": {
+        "H3K4me2": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF958HVP.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "file_metadata.json",
+            "ENCFF073BOG.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF073BOG.failed"
+        ],
+        "H3K4me1": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF365HMS.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "ENCFF426KLJ.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H3K79me2": [
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF729BTC.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF1_res25",
+            "ENCFF509LTB.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "all_files.csv"
+        ],
+        "H3K9me2": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF660GHF.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "ENCFF058QUN.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H2AFZ": [
+            "signal_DSF2_res25",
+            "ENCFF866WKV.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_adrenal_gland": {
+        "H3K9me3": [
+            "ENCFF282ZSZ.bam.bai",
+            "ENCFF282ZSZ.failed",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "ATAC-seq": [
+            "signal_DSF1_res25",
+            "ENCFF803TLA.failed",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF803TLA.bam.bai"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF346NXC.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF129TMJ.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ],
+        "H3K27ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF678NDN.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "DNase-seq": [
+            "ENCFF729HDS.bam.bai",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_ES-I3": {
+        "H3K9ac": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF143HAP.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K4me1": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF276PYB.failed",
+            "ENCFF276PYB.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "ENCFF698MJT.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25"
+        ],
+        "H3K9me3": [
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF979AMD.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_vagina": {
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF445RUG.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF227VQV.bam.bai",
+            "signal_DSF2_res25"
+        ]
+    },
+    "B_HAP-1": {
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF980BDP.bam.bai",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H3K27ac": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF525ADD.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF651JPK.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF465ZHL.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K9me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF302ELQ.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H3K36me3": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF146XNB.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_NCI-H929": {
+        "H3K9ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF255NUV.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF624XXC.bam.bai",
+            "ENCFF624XXC.failed",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json"
+        ],
+        "H3K36me3": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF997XOK.bam.bai",
+            "signal_DSF2_res25",
+            "ENCFF997XOK.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me2": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF219INS.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF219INS.failed",
+            "file_metadata.json"
+        ],
+        "H3F3A": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF806GPM.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2AFZ": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF378SCW.bam.bai",
+            "ENCFF378SCW.failed"
+        ],
+        "H3K4me1": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF097EKR.failed",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF097EKR.bam.bai"
+        ]
+    },
+    "V_prostate": {
+        "H3K9me3": [
+            "ENCFF017YAL.bam.bai",
+            "ENCFF017YAL.failed",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_IMR-90": {
+        "H3K9me1": [
+            "ENCFF944RPR.failed",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "ENCFF944RPR.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H2BK20ac": [
+            "all_files.csv",
+            "ENCFF237RIX.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF237RIX.bam.bai"
+        ],
+        "H3K14ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF738MHY.bam.bai",
+            "ENCFF738MHY.failed",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K56ac": [
+            "signal_DSF1_res25",
+            "ENCFF281BMK.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF281BMK.failed",
+            "file_metadata.json"
+        ],
+        "H3K79me2": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF571ZDL.bam.bai",
+            "signal_DSF2_res25",
+            "ENCFF571ZDL.failed",
+            "signal_DSF1_res25"
+        ],
+        "H2AK5ac": [
+            "ENCFF809EID.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF809EID.failed",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K27ac": [
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "ENCFF064XTS.bam.bai",
+            "signal_DSF4_res25"
+        ],
+        "H3K4me3": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF021CLP.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H3K79me1": [
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF848ADK.bam.bai",
+            "signal_DSF1_res25"
+        ],
+        "H3K4ac": [
+            "signal_DSF2_res25",
+            "ENCFF250YWX.bam.bai",
+            "ENCFF250YWX.failed",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "ENCFF927WHP.bam.bai",
+            "signal_DSF8_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF084CZB.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H2AK9ac": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF137MZF.bam.bai"
+        ],
+        "H2BK120ac": [
+            "ENCFF268SMV.failed",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF268SMV.bam.bai",
+            "all_files.csv"
+        ],
+        "H3K18ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "ENCFF838VZZ.bam.bai"
+        ],
+        "H4K5ac": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF113XYR.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K23ac": [
+            "file_metadata.json",
+            "ENCFF621JVQ.failed",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "ENCFF621JVQ.bam.bai",
+            "signal_DSF4_res25"
+        ],
+        "H4K91ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF632TWU.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25"
+        ],
+        "H2BK15ac": [
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF988XSO.failed",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF988XSO.bam.bai"
+        ],
+        "DNase-seq": [
+            "ENCFF264LKY.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF264LKY.failed",
+            "file_metadata.json"
+        ],
+        "H2BK5ac": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF711DZO.failed",
+            "ENCFF711DZO.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "H4K20me1": [
+            "signal_DSF1_res25",
+            "ENCFF951EYC.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json"
+        ],
+        "H3K4me2": [
+            "ENCFF842IIU.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K36me3": [
+            "ENCFF994SJM.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ],
+        "H3K9me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "ENCFF942QOQ.bam.bai",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_hematopoietic_multipotent_progenitor_cell": {
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "all_files.csv",
+            "ENCFF292XIO.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ]
+    },
+    "V_H9": {
+        "H3K79me2": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF707PKI.bam.bai",
+            "all_files.csv"
+        ],
+        "H3K4me2": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF690DGC.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "V_heart_left_ventricle": {
+        "H3K4me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "ENCFF023HCZ.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json"
+        ]
+    },
+    "V_amnion": {
+        "H3K27ac": [
+            "ENCFF853KPR.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json"
+        ]
+    },
+    "T_lower_leg_skin": {
+        "H3K4me3": [
+            "ENCFF003VRU.bam.bai",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_H9": {
+        "H3K4me1": [
+            "signal_DSF1_res25",
+            "ENCFF675UDV.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K9ac": [
+            "file_metadata.json",
+            "ENCFF483XQE.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ],
+        "H4K8ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF632MHZ.bam.bai",
+            "signal_DSF2_res25"
+        ],
+        "H3K18ac": [
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF624EAU.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K27me3": [
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF841RXD.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3T11ph": [
+            "signal_DSF4_res25",
+            "ENCFF076YTT.bam.bai",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25"
+        ],
+        "H3K9me3": [
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "signal_DSF1_res25",
+            "ENCFF763MGD.bam.bai",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF677SPP.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json"
+        ],
+        "H4K5ac": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF350VRI.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H2AFZ": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "ENCFF068DKA.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25"
+        ],
+        "H3K14ac": [
+            "file_metadata.json",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF229UGX.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K56ac": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF685QVN.bam.bai",
+            "all_files.csv"
+        ],
+        "H3K4ac": [
+            "file_metadata.json",
+            "ENCFF692SFW.bam.bai",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF793EAG.bam.bai"
+        ],
+        "H3K79me1": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF434DLZ.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF2_res25",
+            "ENCFF508VYN.bam.bai",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF291ZMA.failed",
+            "ENCFF291ZMA.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K23me2": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF836QET.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "T_MG63": {
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF475HVL.failed",
+            "signal_DSF1_res25",
+            "ENCFF475HVL.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_vagina": {
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "ENCFF564NGR.bam.bai",
+            "file_metadata.json",
+            "ENCFF564NGR.failed",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_peripheral_blood_mononuclear_cell": {
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "ENCFF281WTV.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ]
+    },
+    "T_dermis_microvascular_lymphatic_vessel_endothelial_cell": {
+        "DNase-seq": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF937FTE.failed",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF937FTE.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "V_IMR-90": {
+        "H4K8ac": [
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF901TOO.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K9ac": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF121RLC.bam.bai"
+        ],
+        "H2AFZ": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF640IYV.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json"
+        ],
+        "H2BK12ac": [
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "ENCFF662NJI.failed",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF662NJI.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ]
+    },
+    "T_SJCRH30": {
+        "DNase-seq": [
+            "ENCFF477YUQ.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF477YUQ.bam.bai",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_uterus": {
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "ENCFF130PVC.bam.bai",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "ENCFF130PVC.failed",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K27ac": [
+            "ENCFF433JGG.bam.bai",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_upper_lobe_of_left_lung": {
+        "DNase-seq": [
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF125WQU.failed",
+            "ENCFF125WQU.bam.bai",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27ac": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "ENCFF460ZAV.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25"
+        ],
+        "H3K4me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF892ULT.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ]
+    },
+    "T_NCI-H460": {
+        "DNase-seq": [
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "ENCFF628CZS.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25"
+        ]
+    },
+    "T_amnion": {
+        "H3K9me3": [
+            "ENCFF333AZG.bam.bai",
+            "signal_DSF1_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K4me1": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF444XCI.bam.bai",
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K4me3": [
+            "ENCFF399JDM.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF1_res25",
+            "ENCFF307YOL.bam.bai",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF2_res25"
+        ],
+        "H3K27me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "signal_DSF2_res25",
+            "ENCFF096HIU.bam.bai",
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "all_files.csv"
+        ]
+    },
+    "T_K562": {
+        "H3K9me1": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "ENCFF302OEO.bam.bai",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K36me3": [
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF816ECC.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H4K20me1": [
+            "signal_DSF1_res25",
+            "ENCFF255QRL.bam.bai",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "file_metadata.json",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "H3K27ac": [
+            "ENCFF232RQF.failed",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "ENCFF232RQF.bam.bai",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25"
+        ],
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "ENCFF425WDA.bam.bai"
+        ],
+        "H3K9ac": [
+            "ENCFF946AXU.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "all_files.csv"
+        ],
+        "H3K4me3": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "ENCFF752MYF.bam.bai"
+        ],
+        "H3K4me1": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF089KHK.bam.bai",
+            "all_files.csv",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF4_res25"
+        ],
+        "H2AFZ": [
+            "all_files.csv",
+            "signal_DSF4_res25",
+            "signal_DSF8_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "ENCFF874SMO.bam.bai",
+            "signal_DSF1_res25"
+        ],
+        "H3K4me2": [
+            "file_metadata.json",
+            "signal_DSF1_res25",
+            "ENCFF446FUS.bam.bai",
+            "signal_DSF2_res25",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "H3K9me3": [
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "ENCFF104THG.bam.bai",
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv"
+        ]
+    },
+    "B_NCI-H929": {
+        "H3K9me3": [
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF732LKQ.failed",
+            "file_metadata.json",
+            "ENCFF732LKQ.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25",
+            "all_files.csv"
+        ],
+        "DNase-seq": [
+            "signal_DSF1_res25",
+            "file_metadata.json",
+            "signal_DSF2_res25",
+            "all_files.csv",
+            "ENCFF369NRI.failed",
+            "ENCFF369NRI.bam.bai",
+            "signal_DSF8_res25",
+            "signal_DSF4_res25"
+        ],
+        "H3K27ac": [
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "ENCFF230NOF.failed",
+            "signal_DSF4_res25",
+            "all_files.csv",
+            "signal_DSF2_res25",
+            "signal_DSF1_res25",
+            "ENCFF230NOF.bam.bai"
+        ],
+        "ATAC-seq": [
+            "signal_DSF1_res25",
+            "signal_DSF2_res25",
+            "ENCFF818BRH.failed",
+            "signal_DSF4_res25",
+            "file_metadata.json",
+            "signal_DSF8_res25",
+            "ENCFF818BRH.bam.bai",
+            "all_files.csv"
+        ]
+    }
+}
