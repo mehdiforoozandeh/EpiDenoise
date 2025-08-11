@@ -385,7 +385,6 @@ class AvocadoRunner(BaseRunner):
             print("[Avocado] WARNING: avocado-epigenome is not available. Install in avocado_env.", e)
 
     def preprocess(self):
-        # Save arcsinh(pval) vectors for chr19 per (train bios, assay)
         chrom = self.dm.train_scope
         length = self.dm.chr_length(chrom)
         expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
@@ -409,11 +408,9 @@ class AvocadoRunner(BaseRunner):
             print("[Avocado] Skipping train; avocado is not available.")
             return
         from avocado import Avocado
-        # Build celltypes and assays lists
         expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
         celltypes = sorted(set(self.dm.train_bios()))
         assays = sorted(set(expnames))
-        # Build data dict for chr19 from cache
         data = {}
         for bios in celltypes:
             for assay in assays:
@@ -426,7 +423,6 @@ class AvocadoRunner(BaseRunner):
         if not data:
             print("[Avocado] No training data found in cache; skipping.")
             return
-        # Published defaults per tutorial
         model = Avocado(
             celltypes=celltypes,
             assays=assays,
@@ -464,12 +460,11 @@ class AvocadoRunner(BaseRunner):
                 try:
                     import numpy as np
                     pred_arc = model.predict(bios, assay)
-                    pred = np.sinh(pred_arc)  # back to raw pval for evaluation storage
+                    pred = np.sinh(pred_arc)
                     category = "denoised" if assay in assays_obs else "imputed"
                     os.makedirs(self.pred_dir, exist_ok=True)
                     base = f"{bios}__{assay}__{chrom}__{category}__pval"
                     np.save(os.path.join(self.pred_dir, base + ".npy"), pred)
-                    # empirical std per assay (uniform across positions)
                     std = float(np.std(pred))
                     np.save(os.path.join(self.pred_dir, base.replace("__pval","__std") + ".npy"), np.full_like(pred, std))
                 except Exception as e:
@@ -479,17 +474,122 @@ class AvocadoRunner(BaseRunner):
 
 
 class EdiceRunner(BaseRunner):
+    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
+        super().__init__(dm, output_dir, write_bw)
+        self.proc_dir = os.path.join(self.output_dir, 'processed', 'edice')
+        self.model_dir = os.path.join(self.output_dir, 'models', 'edice')
+        self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'edice')
+        for d in [self.proc_dir, self.model_dir, self.pred_dir]:
+            os.makedirs(d, exist_ok=True)
+        self.h5_path = os.path.join(self.proc_dir, f"{self.dm.train_scope}.h5")
+        self.idmap_path = os.path.join(self.proc_dir, 'idmap.json')
+        self.splits_path = os.path.join(self.proc_dir, 'splits.json')
+        self._edice_repo = os.path.join(self.output_dir, 'external', 'eDICE')
+
     def ensure_env(self):
+        # We do not install here; we just note expected location for scripts
         pass
 
     def preprocess(self):
-        pass
+        # Build HDF5 data_matrix with columns as tracks (bios, assay) for training (train bios observed assays)
+        try:
+            import h5py
+            import numpy as np
+        except Exception as e:
+            print("[eDICE] h5py/numpy not available:", e)
+            return
+        chrom = self.dm.train_scope
+        length = self.dm.chr_length(chrom)
+        expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
+        tracks = []  # list of (bios, assay)
+        for bios in self.dm.train_bios():
+            assays = list(self.dm.navigation_all.get(bios, {}).keys())
+            for assay in assays:
+                if assay in expnames:
+                    tracks.append((bios, assay))
+        if not tracks:
+            print("[eDICE] No tracks found for training.")
+            return
+        usable = (length // 25) * 25
+        n_bins = usable // 25
+        data_matrix = np.zeros((n_bins, len(tracks)), dtype=np.float32)
+        for j, (bios, assay) in enumerate(tracks):
+            vec = arcsinh_pval_vector(self.dm.eed, bios, assay, chrom, length)
+            if vec is None:
+                continue
+            data_matrix[:, j] = vec[:n_bins]
+        # write HDF5
+        with h5py.File(self.h5_path, 'w') as h5:
+            h5.create_dataset('data_matrix', data=data_matrix, compression='gzip')
+            h5.create_dataset('chrom', data=np.string_(chrom))
+            h5.create_dataset('bin_size', data=25)
+        # idmap
+        idmap = {str(i): {"bios": b, "assay": a} for i, (b, a) in enumerate(tracks)}
+        with open(self.idmap_path, 'w') as f:
+            json.dump(idmap, f, indent=2)
+        # splits: train columns indices, and targets for test bios (denoise/impute)
+        splits = {
+            "train": list(range(len(tracks))),
+            "val": [],
+            "test_denoise": [],
+            "test_impute": []
+        }
+        # map test bios to indices in training columns if any shared dimension (edice specifics vary)
+        # We keep simple here and let train script control targets. This is a placeholder.
+        with open(self.splits_path, 'w') as f:
+            json.dump(splits, f, indent=2)
+        print(f"[eDICE] Preprocess complete: {self.h5_path}")
 
     def train(self):
-        pass
+        # Call eDICE training script
+        script = os.path.join(self._edice_repo, 'scripts', 'train_eDICE.py')
+        if not os.path.exists(script):
+            print(f"[eDICE] Skipping train. Missing script at {script}")
+            return
+        t0 = time.time()
+        import subprocess
+        cmd = [
+            sys.executable, script,
+            '--dataset_filepath', self.h5_path,
+            '--idmap', self.idmap_path,
+            '--split_file', self.splits_path,
+            '--experiment_name', f'edice-{self.dm.train_scope}',
+            '--transformation', 'arcsinh',
+            '--epochs', '10'
+        ]
+        print("[eDICE] RUN:", " ".join(cmd))
+        subprocess.run(cmd)
+        t1 = time.time()
+        _append_timing(self.output_dir, "edice", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
 
     def infer(self):
-        pass
+        # Parse predictions if produced by eDICE
+        pred_npz = os.path.join(self.model_dir, f"edice-{self.dm.train_scope}", 'predictions.npz')
+        if not os.path.exists(pred_npz):
+            print(f"[eDICE] Skipping infer; predictions not found at {pred_npz}")
+            return
+        import numpy as np
+        chrom = self.dm.test_scope
+        os.makedirs(self.pred_dir, exist_ok=True)
+        tb0 = time.time()
+        data = np.load(pred_npz)
+        # UNCERTAINTY: keys/shape of predictions.npz (depends on eDICE repo). Placeholder parsing:
+        # Expect keys like '{bios}__{assay}' -> arcsinh predictions
+        for key in data.files:
+            try:
+                bios, assay = key.split("__", 1)
+            except Exception:
+                continue
+            pred_arc = data[key]
+            pred = np.sinh(pred_arc)
+            assays_obs = list(self.dm.navigation_all.get(bios, {}).keys())
+            category = "denoised" if assay in assays_obs else "imputed"
+            base = f"{bios}__{assay}__{chrom}__{category}__pval"
+            np.save(os.path.join(self.pred_dir, base + ".npy"), pred)
+            std = float(np.std(pred))
+            np.save(os.path.join(self.pred_dir, base.replace("__pval","__std") + ".npy"), np.full_like(pred, std))
+        tb1 = time.time()
+        _append_timing(self.output_dir, "edice", "infer_total", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.test_bios()), self.dm.n_assays, tb0, tb1)
 
 
 # ----------------- Evaluation -----------------
@@ -507,10 +607,7 @@ def evaluator(args):
         if not os.path.isdir(pred_dir):
             return
         files = glob.glob(os.path.join(pred_dir, f"*__{args.test_scope}__*__pval.npy"))
-        # Load GT via data handler for each file
-        # Build a lightweight EED for GT loading
         eed = ExtendedEncodeDataHandler(args.data_path, resolution=25)
-        # quick mapping for assay index
         try:
             expnames = list(eed.aliases["experiment_aliases"].keys())
         except Exception:
@@ -521,9 +618,8 @@ def evaluator(args):
                 bios, assay, scope, category, _ = base.split("__")
                 import numpy as np
                 pred = np.load(f)
-                # GT pval chr test_scope
-                temp_p = eed.load_bios_BW(bios, [args.test_scope, 0, eed.chr_sizes_file and 0], args.dsf)
-                # We need exact chr length, fallback to reading file
+                # Load GT pval
+                # read chrom size
                 length = 0
                 with open(eed.chr_sizes_file, 'r') as fh:
                     for line in fh:
@@ -568,11 +664,9 @@ def evaluator(args):
             except Exception as e:
                 print(f"[Evaluator] Failed for {method} file {f}: {e}")
 
-    # Aggregate for methods with predictions present
     for method in ["candi", "avocado", "chromimpute", "edice"]:
         append_method(method)
 
-    # Write CSV
     if rows:
         out_csv = os.path.join(args.output_dir, "evaluation", "summary_metrics.csv")
         write_header = not os.path.exists(out_csv)
