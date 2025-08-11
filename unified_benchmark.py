@@ -19,6 +19,7 @@ import sys
 import time
 import json
 import csv
+import glob
 from typing import List, Dict, Tuple
 
 # Mirror data loading via data.py
@@ -27,6 +28,13 @@ try:
 except Exception as e:
     print("[unified_benchmark] ERROR: Failed to import ExtendedEncodeDataHandler from data.py:", e)
     raise
+
+# eval for metrics (pval-only)
+try:
+    from eval import METRICS
+except Exception as e:
+    METRICS = None
+    print("[unified_benchmark] WARNING: Could not import METRICS from eval.py; evaluator will be limited:", e)
 
 # Local imports (created in this branch)
 try:
@@ -141,16 +149,22 @@ class DatasetManager:
     def test_bios(self) -> List[str]:
         return [b for b, s in self.split_dict.items() if s == 'test']
 
+    def chr_length(self, chrom: str) -> int:
+        length = None
+        with open(self.eed.chr_sizes_file, 'r') as f:
+            for line in f:
+                name, size = line.strip().split('\t')
+                if name == chrom:
+                    length = int(size)
+                    break
+        if length is None:
+            raise RuntimeError(f"Chromosome {chrom} not found in {self.eed.chr_sizes_file}")
+        return length
+
 
 # ----------------- IO utilities (mirrors eval/data logic) -----------------
 
 def write_chrom_sizes(single_chr: str, eed: ExtendedEncodeDataHandler, out_path: str) -> None:
-    """Write a chrom.sizes file for a single chromosome (mirrors the way eval handles chr sizes)."""
-    # Load global sizes via eed.chr_sizes, as used in eval.py
-    # Ensure the dictionary is populated (EVAL_CANDI does this in its init)
-    # Here, we create a small helper mapping for single chromosome.
-    # We mirror eval's default main chrs 1-22,X, but here we only need the selected chromosome length.
-    # Use data/hg38.chrom.sizes bundled in repo via eed.chr_sizes_file.
     sizes = {}
     with open(eed.chr_sizes_file, 'r') as f:
         for line in f:
@@ -164,16 +178,25 @@ def write_chrom_sizes(single_chr: str, eed: ExtendedEncodeDataHandler, out_path:
         f.write(f"{single_chr}\t{sizes[single_chr]}\n")
 
 
+def arcsinh_pval_vector(eed: ExtendedEncodeDataHandler, bios: str, assay: str, chrom: str, chrom_len: int):
+    import numpy as np
+    temp_p = eed.load_bios_BW(bios, [chrom, 0, chrom_len], 1)
+    P, avlP = eed.make_bios_tensor_BW(temp_p)
+    expnames = list(eed.aliases["experiment_aliases"].keys())
+    if assay not in expnames:
+        return None
+    aidx = expnames.index(assay)
+    vec = P[:, aidx]
+    try:
+        vec = vec.numpy()
+    except Exception:
+        pass
+    return np.arcsinh(vec)
+
+
 def write_bedgraph_from_pval_arcsinh(eed: ExtendedEncodeDataHandler, bios: str, assay: str,
                                       chrom: str, out_bedgraph: str) -> None:
-    """
-    Generate a bedGraph for arcsinh(pval) at 25bp resolution for a given bios/assay/chromosome.
-    We mirror data loading from data.py (load_bios_BW + make_bios_tensor_BW) and apply arcsinh.
-    We write fixed 25bp bins as bedGraph (start, end, value).
-    """
     import numpy as np
-    temp_p = eed.load_bios_BW(bios, [chrom, 0, eed.coords.__self__.chr_sizes[chrom] if hasattr(eed.coords, '__self__') else 0], 1)
-    # Note: eed.coords is a method; we avoid relying on internal. Use eed.chr_sizes_file instead to compute length.
     length = None
     with open(eed.chr_sizes_file, 'r') as f:
         for line in f:
@@ -183,20 +206,9 @@ def write_bedgraph_from_pval_arcsinh(eed: ExtendedEncodeDataHandler, bios: str, 
                 break
     if length is None:
         raise RuntimeError(f"Failed to read length for {chrom}")
-
-    P, avlP = eed.make_bios_tensor_BW(temp_p)
-    expnames = list(eed.aliases["experiment_aliases"].keys())
-    if assay not in expnames:
-        raise RuntimeError(f"Assay {assay} not in aliases")
-    aidx = expnames.index(assay)
-    vec = P[:, aidx]
-    try:
-        vec = vec.numpy()
-    except Exception:
-        pass
-    vec = np.arcsinh(vec)
-
-    # Ensure length multiple of 25
+    vec = arcsinh_pval_vector(eed, bios, assay, chrom, length)
+    if vec is None:
+        return
     usable = (length // 25) * 25
     n_bins = usable // 25
     vec = vec[:n_bins]
@@ -239,7 +251,6 @@ class BaseRunner:
 
 class CandiRunner(BaseRunner):
     def preprocess(self):
-        # CANDI uses data.py directly; no external preprocess step required.
         return
 
     def train(self, args):
@@ -257,14 +268,6 @@ class CandiRunner(BaseRunner):
 
 
 class ChromImputeRunner(BaseRunner):
-    """
-    Implements ChromImpute multi-step workflow. We do not modify ChromImpute; we only:
-    - create arcsinh(pval) bedGraph inputs via data.py loaders
-    - generate chrom.sizes and samplemarktable.txt
-    - call ChromImpute.jar Convert/ComputeGlobalDist/GenerateTrainData/Train/Apply
-
-    UNCERTAINTY: Path to ChromImpute.jar. We assume lib/ChromImpute.jar. If missing, we log a clear error.
-    """
     def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
         super().__init__(dm, output_dir, write_bw)
         self.base_dir = os.getcwd()
@@ -273,7 +276,6 @@ class ChromImputeRunner(BaseRunner):
         self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'chromimpute')
         for d in [self.proc_dir, self.model_dir, self.pred_dir]:
             os.makedirs(d, exist_ok=True)
-        # subdirs
         self.bedgraph_dir = os.path.join(self.proc_dir, 'bedgraph')
         self.meta_dir = os.path.join(self.proc_dir, 'metadata')
         self.converted_dir = os.path.join(self.proc_dir, 'converted')
@@ -288,24 +290,18 @@ class ChromImputeRunner(BaseRunner):
             print(f"[ChromImpute] ERROR: {self.jar_path} not found. Please place ChromImpute.jar under lib/")
 
     def preprocess(self):
-        # Write chrom.sizes for train and test scopes
         train_sizes = os.path.join(self.meta_dir, f'{self.dm.train_scope}.sizes')
         test_sizes = os.path.join(self.meta_dir, f'{self.dm.test_scope}.sizes')
-        # Use a fresh EED to access chr_sizes_file
         eed = self.dm.eed
         write_chrom_sizes(self.dm.train_scope, eed, train_sizes)
         write_chrom_sizes(self.dm.test_scope, eed, test_sizes)
 
-        # Build bedGraphs for all train bios (train_scope) and test bios (test_scope)
-        # We produce files per (bios, assay, chr)
         nav_all = self.dm.navigation_all
         expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
-        # Samplemarktable accumulates all (bios, assay) bedgraphs for both chromosomes
         sample_entries = []
 
         def build_for_split(bios_list: List[str], chrom: str):
             for bios in bios_list:
-                # available assays for this bios (from navigation)
                 assays = list(nav_all.get(bios, {}).keys())
                 for assay in assays:
                     if assay not in expnames:
@@ -322,7 +318,6 @@ class ChromImputeRunner(BaseRunner):
         build_for_split(self.dm.train_bios(), self.dm.train_scope)
         build_for_split(self.dm.test_bios(), self.dm.test_scope)
 
-        # Write samplemarktable
         smt = os.path.join(self.meta_dir, 'samplemarktable.txt')
         write_samplemarktable(sample_entries, smt)
         print(f"[ChromImpute] Preprocess complete. samplemarktable: {smt}")
@@ -344,13 +339,10 @@ class ChromImputeRunner(BaseRunner):
         t0 = time.time()
         smt = os.path.join(self.meta_dir, 'samplemarktable.txt')
         train_sizes = os.path.join(self.meta_dir, f'{self.dm.train_scope}.sizes')
-        # Convert and ComputeGlobalDist on train_scope
         self._run_java(["Convert", self.bedgraph_dir, smt, train_sizes, self.converted_dir])
         self._run_java(["ComputeGlobalDist", self.converted_dir, smt, train_sizes, self.distance_dir])
-        # For each assay: GenerateTrainData
         for assay in self.dm.eed.aliases["experiment_aliases"].keys():
             self._run_java(["GenerateTrainData", self.converted_dir, self.distance_dir, smt, train_sizes, self.traindata_dir, assay])
-        # For each (train bios, assay): Train
         for bios in self.dm.train_bios():
             for assay in self.dm.eed.aliases["experiment_aliases"].keys():
                 self._run_java(["Train", self.traindata_dir, smt, self.model_dir, bios, assay])
@@ -363,30 +355,127 @@ class ChromImputeRunner(BaseRunner):
             return
         smt = os.path.join(self.meta_dir, 'samplemarktable.txt')
         test_sizes = os.path.join(self.meta_dir, f'{self.dm.test_scope}.sizes')
-        # Apply for each (test bios, assay)
         for bios in self.dm.test_bios():
             tb0 = time.time()
             for assay in self.dm.eed.aliases["experiment_aliases"].keys():
                 self._run_java(["Apply", self.converted_dir, self.distance_dir, self.model_dir, smt, test_sizes, self.pred_dir, bios, assay])
-                # TODO: parse ChromImpute outputs (wig.gz) into .npy arrays under self.pred_dir with naming
-                # {bios}__{assay}__chr21__{denoised|imputed}__pval.npy
-                # UNCERTAINTY: Output file naming format; we will leave conversion for the next step once outputs exist.
+                # TODO: parse ChromImpute outputs (wig.gz) into .npy arrays under self.pred_dir
             tb1 = time.time()
             _append_timing(self.output_dir, "chromimpute", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
 
 
 class AvocadoRunner(BaseRunner):
+    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
+        super().__init__(dm, output_dir, write_bw)
+        self.proc_dir = os.path.join(self.output_dir, 'processed', 'avocado')
+        self.model_dir = os.path.join(self.output_dir, 'models', 'avocado')
+        self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'avocado')
+        for d in [self.proc_dir, self.model_dir, self.pred_dir]:
+            os.makedirs(d, exist_ok=True)
+        self.train_cache_dir = os.path.join(self.proc_dir, self.dm.train_scope)
+        os.makedirs(self.train_cache_dir, exist_ok=True)
+        self._avocado = None
+
     def ensure_env(self):
-        pass
+        try:
+            from avocado import Avocado  # noqa: F401
+            self._avocado = True
+        except Exception as e:
+            self._avocado = False
+            print("[Avocado] WARNING: avocado-epigenome is not available. Install in avocado_env.", e)
 
     def preprocess(self):
-        pass
+        # Save arcsinh(pval) vectors for chr19 per (train bios, assay)
+        chrom = self.dm.train_scope
+        length = self.dm.chr_length(chrom)
+        expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
+        for bios in self.dm.train_bios():
+            assays = list(self.dm.navigation_all.get(bios, {}).keys())
+            for assay in assays:
+                if assay not in expnames:
+                    continue
+                out_npz = os.path.join(self.train_cache_dir, f"{bios}__{assay}.npz")
+                if os.path.exists(out_npz):
+                    continue
+                import numpy as np
+                vec = arcsinh_pval_vector(self.dm.eed, bios, assay, chrom, length)
+                if vec is None:
+                    continue
+                np.savez_compressed(out_npz, vec)
+        print("[Avocado] Preprocess cache complete.")
 
     def train(self):
-        pass
+        if not self._avocado:
+            print("[Avocado] Skipping train; avocado is not available.")
+            return
+        from avocado import Avocado
+        # Build celltypes and assays lists
+        expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
+        celltypes = sorted(set(self.dm.train_bios()))
+        assays = sorted(set(expnames))
+        # Build data dict for chr19 from cache
+        data = {}
+        for bios in celltypes:
+            for assay in assays:
+                cache_path = os.path.join(self.train_cache_dir, f"{bios}__{assay}.npz")
+                if not os.path.exists(cache_path):
+                    continue
+                import numpy as np
+                arr = np.load(cache_path)["arr_0"]
+                data[(bios, assay)] = arr
+        if not data:
+            print("[Avocado] No training data found in cache; skipping.")
+            return
+        # Published defaults per tutorial
+        model = Avocado(
+            celltypes=celltypes,
+            assays=assays,
+            n_layers=1,
+            n_nodes=64,
+            n_assay_factors=24,
+            n_celltype_factors=32,
+            n_25bp_factors=5,
+            n_250bp_factors=20,
+            n_5kbp_factors=30,
+            batch_size=10000,
+        )
+        t0 = time.time()
+        model.fit(data, n_epochs=10, epoch_size=100)
+        t1 = time.time()
+        model.save(os.path.join(self.model_dir, f"avocado-{self.dm.train_scope}"))
+        _append_timing(self.output_dir, "avocado", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
 
     def infer(self):
-        pass
+        if not self._avocado:
+            print("[Avocado] Skipping infer; avocado is not available.")
+            return
+        from avocado import Avocado
+        try:
+            model = Avocado.load(os.path.join(self.model_dir, f"avocado-{self.dm.train_scope}"))
+        except Exception as e:
+            print("[Avocado] Could not load trained model:", e)
+            return
+        chrom = self.dm.test_scope
+        expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
+        for bios in self.dm.test_bios():
+            tb0 = time.time()
+            assays_obs = list(self.dm.navigation_all.get(bios, {}).keys())
+            for assay in expnames:
+                try:
+                    import numpy as np
+                    pred_arc = model.predict(bios, assay)
+                    pred = np.sinh(pred_arc)  # back to raw pval for evaluation storage
+                    category = "denoised" if assay in assays_obs else "imputed"
+                    os.makedirs(self.pred_dir, exist_ok=True)
+                    base = f"{bios}__{assay}__{chrom}__{category}__pval"
+                    np.save(os.path.join(self.pred_dir, base + ".npy"), pred)
+                    # empirical std per assay (uniform across positions)
+                    std = float(np.std(pred))
+                    np.save(os.path.join(self.pred_dir, base.replace("__pval","__std") + ".npy"), np.full_like(pred, std))
+                except Exception as e:
+                    print(f"[Avocado] Predict failed for {bios},{assay}: {e}")
+            tb1 = time.time()
+            _append_timing(self.output_dir, "avocado", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
 
 
 class EdiceRunner(BaseRunner):
@@ -403,11 +492,96 @@ class EdiceRunner(BaseRunner):
         pass
 
 
-# ----------------- Evaluation scaffold -----------------
+# ----------------- Evaluation -----------------
 
 def evaluator(args):
     os.makedirs(os.path.join(args.output_dir, "evaluation"), exist_ok=True)
-    print("[unified_benchmark] Evaluation scaffold ready. Will integrate once predictions exist for all methods.")
+    if METRICS is None:
+        print("[Evaluator] METRICS not available; skipping.")
+        return
+    metrics = METRICS()
+    rows = []
+
+    def append_method(method: str):
+        pred_dir = os.path.join(args.output_dir, "imputed_tracks", method)
+        if not os.path.isdir(pred_dir):
+            return
+        files = glob.glob(os.path.join(pred_dir, f"*__{args.test_scope}__*__pval.npy"))
+        # Load GT via data handler for each file
+        # Build a lightweight EED for GT loading
+        eed = ExtendedEncodeDataHandler(args.data_path, resolution=25)
+        # quick mapping for assay index
+        try:
+            expnames = list(eed.aliases["experiment_aliases"].keys())
+        except Exception:
+            expnames = []
+        for f in files:
+            try:
+                base = os.path.basename(f)
+                bios, assay, scope, category, _ = base.split("__")
+                import numpy as np
+                pred = np.load(f)
+                # GT pval chr test_scope
+                temp_p = eed.load_bios_BW(bios, [args.test_scope, 0, eed.chr_sizes_file and 0], args.dsf)
+                # We need exact chr length, fallback to reading file
+                length = 0
+                with open(eed.chr_sizes_file, 'r') as fh:
+                    for line in fh:
+                        n, sz = line.strip().split('\t')
+                        if n == args.test_scope:
+                            length = int(sz)
+                            break
+                temp_p = eed.load_bios_BW(bios, [args.test_scope, 0, length], args.dsf)
+                P, avlP = eed.make_bios_tensor_BW(temp_p)
+                if assay not in expnames:
+                    continue
+                aidx = expnames.index(assay)
+                try:
+                    gt = P[:, aidx].numpy()
+                except Exception:
+                    gt = P[:, aidx]
+                row = {
+                    "dataset": args.dataset,
+                    "method": method,
+                    "bios": bios,
+                    "assay": assay,
+                    "category": category,
+                    "scope_train": args.train_scope,
+                    "scope_test": args.test_scope,
+                    "P_MSE-GW": metrics.mse(gt, pred),
+                    "P_Pearson-GW": metrics.pearson(gt, pred),
+                    "P_Spearman-GW": metrics.spearman(gt, pred),
+                    "P_MSE-gene": metrics.mse_gene(gt, pred),
+                    "P_Pearson_gene": metrics.pearson_gene(gt, pred),
+                    "P_Spearman_gene": metrics.spearman_gene(gt, pred),
+                    "P_MSE-prom": metrics.mse_prom(gt, pred),
+                    "P_Pearson_prom": metrics.pearson_prom(gt, pred),
+                    "P_Spearman_prom": metrics.spearman_prom(gt, pred),
+                    "P_MSE-1obs": metrics.mse1obs(gt, pred),
+                    "P_Pearson_1obs": metrics.pearson1_obs(gt, pred),
+                    "P_Spearman_1obs": metrics.spearman1_obs(gt, pred),
+                    "P_MSE-1imp": metrics.mse1imp(gt, pred),
+                    "P_Pearson_1imp": metrics.pearson1_imp(gt, pred),
+                    "P_Spearman_1imp": metrics.spearman1_imp(gt, pred),
+                }
+                rows.append(row)
+            except Exception as e:
+                print(f"[Evaluator] Failed for {method} file {f}: {e}")
+
+    # Aggregate for methods with predictions present
+    for method in ["candi", "avocado", "chromimpute", "edice"]:
+        append_method(method)
+
+    # Write CSV
+    if rows:
+        out_csv = os.path.join(args.output_dir, "evaluation", "summary_metrics.csv")
+        write_header = not os.path.exists(out_csv)
+        with open(out_csv, "a", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+            if write_header:
+                w.writeheader()
+            for r in rows:
+                w.writerow(r)
 
 
 # ----------------- CLI -----------------
@@ -423,7 +597,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--output_dir', type=str, default='results/')
     p.add_argument('--write_bw', action='store_true')
 
-    # CANDI args (forwarded to candi handlers as needed)
+    # CANDI args
     p.add_argument('--gpu', type=str, default='auto')
     p.add_argument('--dsf', type=int, default=1)
     p.add_argument('--context_length', type=int, default=1200)
