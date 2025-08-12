@@ -251,6 +251,29 @@ def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
     return status
 
 
+def _inject_env_sitepackages(env_prefix: str) -> bool:
+    """Try to add the env's site-packages to sys.path for import without activation."""
+    if not env_prefix or not os.path.isdir(env_prefix):
+        return False
+    # Try typical locations for venv/conda
+    candidates = []
+    lib_dir = os.path.join(env_prefix, 'lib')
+    if os.path.isdir(lib_dir):
+        for d in os.listdir(lib_dir):
+            if d.startswith('python'):
+                sp = os.path.join(lib_dir, d, 'site-packages')
+                if os.path.isdir(sp):
+                    candidates.append(sp)
+    # Windows-style fallback (unlikely here)
+    candidates.append(os.path.join(env_prefix, 'Lib', 'site-packages'))
+    added = False
+    for sp in candidates:
+        if os.path.isdir(sp) and sp not in sys.path:
+            sys.path.insert(0, sp)
+            added = True
+    return added
+
+
 # ----------------- Navigation / split helpers (mirrors data.py filenames) -----------------
 
 def get_navigation_and_split_paths(data_path: str, dataset: str) -> Tuple[str, str]:
@@ -479,7 +502,6 @@ class CandiRunner(BaseRunner):
 class ChromImputeRunner(BaseRunner):
     def __init__(self, dm: DatasetManager, write_bw: bool):
         super().__init__(dm, write_bw)
-        self.base_dir = os.getcwd()
         self.proc_dir = os.path.join(self.bench_dir, 'processed', 'chromimpute')
         self.model_dir = os.path.join(self.bench_dir, 'models', 'chromimpute')
         self.pred_dir = os.path.join(self.bench_dir, 'imputed_tracks', 'chromimpute')
@@ -492,7 +514,8 @@ class ChromImputeRunner(BaseRunner):
         self.traindata_dir = os.path.join(self.proc_dir, 'traindata')
         for d in [self.bedgraph_dir, self.meta_dir, self.converted_dir, self.distance_dir, self.traindata_dir]:
             os.makedirs(d, exist_ok=True)
-        self.jar_path = os.path.join(self.base_dir, 'lib', 'ChromImpute.jar')
+        # Always use bench_dir/lib for ChromImpute jar
+        self.jar_path = os.path.join(self.bench_dir, 'lib', 'ChromImpute.jar')
 
     def ensure_env(self):
         if not os.path.exists(self.jar_path):
@@ -670,14 +693,34 @@ class AvocadoRunner(BaseRunner):
         self.train_cache_dir = os.path.join(self.proc_dir, self.dm.train_scope)
         os.makedirs(self.train_cache_dir, exist_ok=True)
         self._avocado = None
+        self._avocado_env_prefix = None
 
     def ensure_env(self):
         try:
             from avocado import Avocado  # noqa: F401
             self._avocado = True
         except Exception as e:
+            # Try injecting site-packages from bench_dir/envs/avocado_env
+            install_status = os.path.join(self.bench_dir, 'evaluation', 'install_status.json')
+            env_prefix = None
+            if os.path.exists(install_status):
+                try:
+                    with open(install_status, 'r') as f:
+                        st = json.load(f)
+                    env_prefix = st.get('avocado', {}).get('env_prefix')
+                except Exception:
+                    env_prefix = None
+            if env_prefix and _inject_env_sitepackages(env_prefix):
+                try:
+                    from avocado import Avocado  # noqa: F401
+                    self._avocado = True
+                    self._avocado_env_prefix = env_prefix
+                    print(f"[Avocado] Imported from env: {env_prefix}")
+                    return
+                except Exception as e2:
+                    print("[Avocado] Import failed even after sys.path injection:", e2)
             self._avocado = False
-            print("[Avocado] WARNING: avocado-epigenome is not available. Install in avocado_env.", e)
+            print("[Avocado] WARNING: avocado-epigenome not importable; ensure installed under bench_dir/envs/avocado_env or current env.", e)
 
     def preprocess(self):
         chrom = self.dm.train_scope
