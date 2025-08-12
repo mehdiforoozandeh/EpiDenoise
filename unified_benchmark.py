@@ -111,10 +111,8 @@ def _env_bootstrap(bench_dir: str) -> Dict[str, Dict[str, str]]:
 
 
 def _write_install_log(bench_dir: str, text: str) -> None:
-    log_dir = os.path.join(bench_dir, 'evaluation')
-    os.makedirs(log_dir, exist_ok=True)
-    with open(os.path.join(log_dir, 'install_log.txt'), 'a') as f:
-        f.write(text.rstrip() + "\n")
+    # Print progress to stdout instead of logging only to a file
+    print(text)
 
 
 def _which(cmd: str) -> str:
@@ -124,11 +122,18 @@ def _which(cmd: str) -> str:
 def _download_file(url: str, dest_path: str) -> bool:
     try:
         import urllib.request
-        _write_install_log(os.getcwd(), f"[download] Fetching {url} -> {dest_path}")
-        urllib.request.urlretrieve(url, dest_path)
+        print(f"[download] Fetching {url} -> {dest_path}")
+        def _hook(block_num, block_size, total_size):
+            if total_size <= 0:
+                return
+            downloaded = block_num * block_size
+            percent = min(100.0, downloaded * 100.0 / total_size)
+            end = "\r" if percent < 100 else "\n"
+            print(f"  progress: {percent:5.1f}%", end=end, flush=True)
+        urllib.request.urlretrieve(url, dest_path, reporthook=_hook)
         return True
     except Exception as e:
-        _write_install_log(os.getcwd(), f"[download] Failed {url}: {e}")
+        print(f"[download] Failed {url}: {e}")
         return False
 
 
@@ -200,15 +205,13 @@ def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
         pip_bin = os.path.join(env_prefix, 'bin', 'pip')
         if conda_path:
             _write_install_log(bench_dir, f"[Avocado] Creating conda env at {env_prefix}")
-            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'])
         else:
             _write_install_log(bench_dir, f"[Avocado] Creating venv at {env_prefix}")
-            subprocess.run([sys.executable, '-m', 'venv', env_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([sys.executable, '-m', 'venv', env_prefix])
         _write_install_log(bench_dir, f"[Avocado] Installing avocado-epigenome")
-        res = subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
-        res = subprocess.run([pip_bin, 'install', 'avocado-epigenome'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+        subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'])
+        res = subprocess.run([pip_bin, 'install', 'avocado-epigenome'])
         status['avocado']['installed'] = 'true' if res.returncode == 0 else 'false'
         status['avocado']['env_prefix'] = env_prefix
 
@@ -217,8 +220,7 @@ def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
     if not os.path.isdir(edice_repo):
         if git_path:
             _write_install_log(bench_dir, f"[eDICE] Cloning into {edice_repo}")
-            res = subprocess.run([git_path, 'clone', '--depth', '1', 'https://github.com/alex-hh/eDICE.git', edice_repo], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+            res = subprocess.run([git_path, 'clone', '--depth', '1', 'https://github.com/alex-hh/eDICE.git', edice_repo])
         else:
             _write_install_log(bench_dir, "[eDICE] git not found; skip clone")
     status['edice']['repo_path'] = edice_repo
@@ -229,18 +231,16 @@ def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
         pip_bin = os.path.join(env_prefix, 'bin', 'pip')
         if conda_path:
             _write_install_log(bench_dir, f"[eDICE] Creating conda env at {env_prefix}")
-            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'])
         else:
             _write_install_log(bench_dir, f"[eDICE] Creating venv at {env_prefix}")
-            subprocess.run([sys.executable, '-m', 'venv', env_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([sys.executable, '-m', 'venv', env_prefix])
         # Install eDICE requirements
         req_file = os.path.join(edice_repo, 'requirements.txt')
         if os.path.exists(req_file):
             _write_install_log(bench_dir, f"[eDICE] Installing requirements from {req_file}")
-            res = subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
-            res = subprocess.run([pip_bin, 'install', '-r', req_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+            subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'])
+            res = subprocess.run([pip_bin, 'install', '-r', req_file])
             status['edice']['installed'] = 'true' if res.returncode == 0 else 'false'
         else:
             status['edice']['installed'] = 'false'
