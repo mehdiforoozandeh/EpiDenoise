@@ -1210,6 +1210,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--LRschedule', type=str, default=None)
     p.add_argument('--dropout', type=float, default=0.1)
     p.add_argument('--learning_rate', type=float, default=1e-3)
+    p.add_argument('--lr_halflife', type=float, default=1)
     p.add_argument('--n_cnn_layers', type=int, default=3)
     p.add_argument('--conv_kernel_size', type=int, default=3)
     p.add_argument('--pool_size', type=int, default=2)
