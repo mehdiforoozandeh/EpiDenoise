@@ -4,13 +4,12 @@
 Unified benchmarking orchestrator for CANDI, ChromImpute, Avocado, and eDICE.
 
 Notes:
+- All artifacts are rooted under bench_dir (mandatory): data/, processed/, models/, imputed_tracks/, evaluation/, external/, envs/
 - Data loading and split logic are delegated to data.ExtendedEncodeDataHandler (mirrors data.py usage).
 - Evaluation mirrors eval.py METRICS usage, but this orchestrator only coordinates stages.
-- Each method runner encapsulates env checks, preprocess, train, and infer; evaluation is centralized.
 - Default scopes: train on chr19, test on chr21; allow overrides via CLI.
-- Timings: per-stage totals and per-bios inference timings are recorded to results/evaluation/timings.csv.
-
-This file mirrors some logic from data.py for navigation/split reading, but does not modify core modules.
+- Timings: per-stage totals and per-bios inference timings are recorded to bench_dir/evaluation/timings.csv.
+- TODO: Apply blacklist and gap filtering consistently for all methods during training and evaluation.
 """
 
 import argparse
@@ -20,6 +19,7 @@ import time
 import json
 import csv
 import glob
+import gzip
 from typing import List, Dict, Tuple
 
 # Mirror data loading via data.py
@@ -43,11 +43,11 @@ except Exception:
     candi = None
 
 
-def _append_timing(output_dir: str, method: str, stage: str, dataset: str,
+def _append_timing(bench_dir: str, method: str, stage: str, dataset: str,
                    scope_train: str, scope_test: str,
                    n_bios: int, n_assays: int, start_ts: float, end_ts: float) -> None:
-    os.makedirs(os.path.join(output_dir, "evaluation"), exist_ok=True)
-    path = os.path.join(output_dir, "evaluation", "timings.csv")
+    os.makedirs(os.path.join(bench_dir, "evaluation"), exist_ok=True)
+    path = os.path.join(bench_dir, "evaluation", "timings.csv")
     row = {
         "method": method,
         "stage": stage,
@@ -66,6 +66,46 @@ def _append_timing(output_dir: str, method: str, stage: str, dataset: str,
         if write_header:
             writer.writeheader()
         writer.writerow(row)
+
+
+def _env_bootstrap(bench_dir: str) -> Dict[str, Dict[str, str]]:
+    """Test 0: Check/install external tools and write env_report.json in bench_dir/evaluation.
+    This function only prepares local folders and checks imports; package/env creation and installation
+    are not executed automatically here, but instructions are logged in the report.
+    """
+    report = {
+        "chromimpute": {},
+        "avocado": {},
+        "edice": {},
+    }
+    # ChromImpute jar
+    jar_target = os.path.join(bench_dir, 'lib', 'ChromImpute.jar')
+    os.makedirs(os.path.dirname(jar_target), exist_ok=True)
+    report["chromimpute"]["jar_path"] = jar_target
+    report["chromimpute"]["present"] = str(os.path.exists(jar_target))
+    if not os.path.exists(jar_target):
+        report["chromimpute"]["install_hint"] = "Download ChromImpute.zip from official site and place ChromImpute.jar under bench_dir/lib/"
+
+    # Avocado import
+    try:
+        import avocado  # noqa: F401
+        report["avocado"]["import_ok"] = "true"
+    except Exception as e:
+        report["avocado"]["import_ok"] = "false"
+        report["avocado"]["install_hint"] = "Create avocado_env under bench_dir/envs and pip install avocado-epigenome"
+        report["avocado"]["error"] = str(e)
+
+    # eDICE repo
+    edice_repo = os.path.join(bench_dir, 'external', 'eDICE')
+    report["edice"]["repo_path"] = edice_repo
+    report["edice"]["present"] = str(os.path.isdir(edice_repo))
+    if not os.path.isdir(edice_repo):
+        report["edice"]["install_hint"] = "git clone https://github.com/alex-hh/eDICE.git to bench_dir/external/eDICE and install requirements"
+
+    os.makedirs(os.path.join(bench_dir, 'evaluation'), exist_ok=True)
+    with open(os.path.join(bench_dir, 'evaluation', 'env_report.json'), 'w') as f:
+        json.dump(report, f, indent=2)
+    return report
 
 
 # ----------------- Navigation / split helpers (mirrors data.py filenames) -----------------
@@ -100,7 +140,8 @@ class DatasetManager:
     Thin wrapper over ExtendedEncodeDataHandler to keep the orchestrator readable.
     This mirrors data.py usage strictly and does NOT re-implement loaders.
     """
-    def __init__(self, data_path: str, dataset: str, train_scope: str, test_scope: str, includes_35: List[str]):
+    def __init__(self, bench_dir: str, data_path: str, dataset: str, train_scope: str, test_scope: str, includes_35: List[str]):
+        self.bench_dir = bench_dir
         self.data_path = data_path
         self.dataset = dataset
         self.train_scope = train_scope
@@ -160,6 +201,29 @@ class DatasetManager:
         if length is None:
             raise RuntimeError(f"Chromosome {chrom} not found in {self.eed.chr_sizes_file}")
         return length
+
+
+def prepare_demo_eic_subset(dm: DatasetManager, target_dir: str, train_n=3, test_n=2, assays_subset=None) -> Tuple[str, str]:
+    os.makedirs(target_dir, exist_ok=True)
+    if assays_subset is None:
+        assays_subset = ['H3K4me3','DNase-seq','H3K27ac']
+    train_b = sorted(dm.train_bios())[:train_n]
+    test_b = sorted(dm.test_bios())[:test_n]
+    nav = {}
+    for b in train_b + test_b:
+        nav[b] = {}
+        assays = list(dm.navigation_all.get(b, {}).keys())
+        for a in assays_subset:
+            if a in assays:
+                nav[b][a] = dm.navigation_all[b][a]
+    split = {b: ('train' if b in train_b else 'test') for b in (train_b + test_b)}
+    nav_path = os.path.join(target_dir, 'navigation_eic_demo.json')
+    split_path = os.path.join(target_dir, 'train_va_test_split_eic_demo.json')
+    with open(nav_path, 'w') as f:
+        json.dump(nav, f, indent=2)
+    with open(split_path, 'w') as f:
+        json.dump(split, f, indent=2)
+    return nav_path, split_path
 
 
 # ----------------- IO utilities (mirrors eval/data logic) -----------------
@@ -230,11 +294,11 @@ def write_samplemarktable(entries: List[Tuple[str, str, str]], out_path: str) ->
 # ----------------- Runners -----------------
 
 class BaseRunner:
-    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
+    def __init__(self, dm: DatasetManager, write_bw: bool):
         self.dm = dm
-        self.output_dir = output_dir
+        self.bench_dir = dm.bench_dir
         self.write_bw = write_bw
-        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.bench_dir, exist_ok=True)
 
     def ensure_env(self):
         pass
@@ -257,9 +321,11 @@ class CandiRunner(BaseRunner):
         if candi is None:
             raise RuntimeError("candi module is not importable")
         t0 = time.time()
+        # forward bench_dir to candi CLI
+        orig_output = getattr(args, 'bench_dir', None)
         candi.cmd_train(args)
         t1 = time.time()
-        _append_timing(self.output_dir, "candi", "train_total", args.dataset, args.train_scope, args.test_scope, self.dm.n_train_bios, self.dm.n_assays, t0, t1)
+        _append_timing(self.bench_dir, "candi", "train_total", args.dataset, args.train_scope, args.test_scope, self.dm.n_train_bios, self.dm.n_assays, t0, t1)
 
     def infer(self, args):
         if candi is None:
@@ -268,12 +334,12 @@ class CandiRunner(BaseRunner):
 
 
 class ChromImputeRunner(BaseRunner):
-    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
-        super().__init__(dm, output_dir, write_bw)
+    def __init__(self, dm: DatasetManager, write_bw: bool):
+        super().__init__(dm, write_bw)
         self.base_dir = os.getcwd()
-        self.proc_dir = os.path.join(self.output_dir, 'processed', 'chromimpute')
-        self.model_dir = os.path.join(self.output_dir, 'models', 'chromimpute')
-        self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'chromimpute')
+        self.proc_dir = os.path.join(self.bench_dir, 'processed', 'chromimpute')
+        self.model_dir = os.path.join(self.bench_dir, 'models', 'chromimpute')
+        self.pred_dir = os.path.join(self.bench_dir, 'imputed_tracks', 'chromimpute')
         for d in [self.proc_dir, self.model_dir, self.pred_dir]:
             os.makedirs(d, exist_ok=True)
         self.bedgraph_dir = os.path.join(self.proc_dir, 'bedgraph')
@@ -332,6 +398,91 @@ class ChromImputeRunner(BaseRunner):
             print(p.stderr)
         return p.returncode
 
+    def _convert_wig_gz_to_npy(self, chrom: str) -> None:
+        """Parse ChromImpute .wig.gz outputs in pred_dir into .npy arrays.
+        Handles variableStep/value lines and simple bedGraph-like lines. Unknown formats are logged and skipped.
+        Output naming: {bios}__{assay}__{chrom}__{denoised|imputed}__pval.npy
+        UNCERTAINTY: actual ChromImpute output filenames vary; we attempt common patterns.
+        """
+        # Common output patterns include files per chrom/experiment. We scan all wig.gz in pred_dir.
+        files = glob.glob(os.path.join(self.pred_dir, f"*{chrom}*.wig.gz"))
+        if not files:
+            return
+        # Build category by inspecting availability: if bios has assay in navigation, "denoised", else "imputed"
+        for fp in files:
+            try:
+                name = os.path.basename(fp)
+                # heuristic parse to extract bios and assay
+                # Examples to handle (not exhaustive): chr21_impute_BIOS_ASSAY.wig.gz, chr21_BIOS_ASSAY.wig.gz
+                bios, assay = None, None
+                parts = name.replace('.wig.gz','').split('_')
+                # find tokens that match known bios and assays
+                expnames = list(self.dm.eed.aliases["experiment_aliases"].keys())
+                for i in range(len(parts)):
+                    for a in expnames:
+                        if a == parts[i]:
+                            assay = a
+                            # assume bios precedes assay
+                            if i-1 >= 0:
+                                bios = parts[i-1]
+                            break
+                    if assay is not None:
+                        break
+                if bios is None or assay is None:
+                    print(f"[ChromImpute] Skip unknown naming: {name}")
+                    continue
+                # parse wig
+                values = []
+                with gzip.open(fp, 'rt') as f:
+                    current_pos = None
+                    step = None
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith('track'):
+                            continue
+                        if line.startswith('variableStep'):
+                            # variableStep chrom=chr21 span=25
+                            tokens = dict(t.split('=') for t in line.split()[1:])
+                            step = int(tokens.get('span','25'))
+                            current_pos = None
+                            continue
+                        toks = line.split()
+                        if len(toks) == 1 and current_pos is not None and step is not None:
+                            # value-only line
+                            values.append(float(toks[0]))
+                            current_pos += step
+                        elif len(toks) == 2:
+                            # position value
+                            try:
+                                pos = int(toks[0])
+                                val = float(toks[1])
+                                values.append(val)
+                                current_pos = pos
+                                if step is None:
+                                    step = 25
+                            except Exception:
+                                pass
+                        elif len(toks) == 4:
+                            # bedGraph-style: chrom start end value
+                            try:
+                                val = float(toks[3])
+                                values.append(val)
+                            except Exception:
+                                pass
+                        else:
+                            # unknown line
+                            continue
+                import numpy as np
+                vec = np.array(values, dtype=float)
+                # convert back to raw pval for evaluation storage
+                vec = np.sinh(vec)
+                assays_obs = list(self.dm.navigation_all.get(bios, {}).keys())
+                category = "denoised" if assay in assays_obs else "imputed"
+                base = f"{bios}__{assay}__{chrom}__{category}__pval"
+                np.save(os.path.join(self.pred_dir, base + ".npy"), vec)
+            except Exception as e:
+                print(f"[ChromImpute] Failed to convert {fp}: {e}")
+
     def train(self):
         if not os.path.exists(self.jar_path):
             print(f"[ChromImpute] Skipping train. Missing {self.jar_path}")
@@ -347,7 +498,7 @@ class ChromImputeRunner(BaseRunner):
             for assay in self.dm.eed.aliases["experiment_aliases"].keys():
                 self._run_java(["Train", self.traindata_dir, smt, self.model_dir, bios, assay])
         t1 = time.time()
-        _append_timing(self.output_dir, "chromimpute", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
+        _append_timing(self.bench_dir, "chromimpute", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
 
     def infer(self):
         if not os.path.exists(self.jar_path):
@@ -359,17 +510,18 @@ class ChromImputeRunner(BaseRunner):
             tb0 = time.time()
             for assay in self.dm.eed.aliases["experiment_aliases"].keys():
                 self._run_java(["Apply", self.converted_dir, self.distance_dir, self.model_dir, smt, test_sizes, self.pred_dir, bios, assay])
-                # TODO: parse ChromImpute outputs (wig.gz) into .npy arrays under self.pred_dir
+            # After Apply completes for this bios, parse outputs for test chrom
+            self._convert_wig_gz_to_npy(self.dm.test_scope)
             tb1 = time.time()
-            _append_timing(self.output_dir, "chromimpute", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
+            _append_timing(self.bench_dir, "chromimpute", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
 
 
 class AvocadoRunner(BaseRunner):
-    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
-        super().__init__(dm, output_dir, write_bw)
-        self.proc_dir = os.path.join(self.output_dir, 'processed', 'avocado')
-        self.model_dir = os.path.join(self.output_dir, 'models', 'avocado')
-        self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'avocado')
+    def __init__(self, dm: DatasetManager, write_bw: bool):
+        super().__init__(dm, write_bw)
+        self.proc_dir = os.path.join(self.bench_dir, 'processed', 'avocado')
+        self.model_dir = os.path.join(self.bench_dir, 'models', 'avocado')
+        self.pred_dir = os.path.join(self.bench_dir, 'imputed_tracks', 'avocado')
         for d in [self.proc_dir, self.model_dir, self.pred_dir]:
             os.makedirs(d, exist_ok=True)
         self.train_cache_dir = os.path.join(self.proc_dir, self.dm.train_scope)
@@ -439,7 +591,7 @@ class AvocadoRunner(BaseRunner):
         model.fit(data, n_epochs=10, epoch_size=100)
         t1 = time.time()
         model.save(os.path.join(self.model_dir, f"avocado-{self.dm.train_scope}"))
-        _append_timing(self.output_dir, "avocado", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
+        _append_timing(self.bench_dir, "avocado", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
 
     def infer(self):
         if not self._avocado:
@@ -470,21 +622,21 @@ class AvocadoRunner(BaseRunner):
                 except Exception as e:
                     print(f"[Avocado] Predict failed for {bios},{assay}: {e}")
             tb1 = time.time()
-            _append_timing(self.output_dir, "avocado", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
+            _append_timing(self.bench_dir, "avocado", "infer_bios", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, 1, self.dm.n_assays, tb0, tb1)
 
 
 class EdiceRunner(BaseRunner):
-    def __init__(self, dm: DatasetManager, output_dir: str, write_bw: bool):
-        super().__init__(dm, output_dir, write_bw)
-        self.proc_dir = os.path.join(self.output_dir, 'processed', 'edice')
-        self.model_dir = os.path.join(self.output_dir, 'models', 'edice')
-        self.pred_dir = os.path.join(self.output_dir, 'imputed_tracks', 'edice')
+    def __init__(self, dm: DatasetManager, write_bw: bool):
+        super().__init__(dm, write_bw)
+        self.proc_dir = os.path.join(self.bench_dir, 'processed', 'edice')
+        self.model_dir = os.path.join(self.bench_dir, 'models', 'edice')
+        self.pred_dir = os.path.join(self.bench_dir, 'imputed_tracks', 'edice')
         for d in [self.proc_dir, self.model_dir, self.pred_dir]:
             os.makedirs(d, exist_ok=True)
         self.h5_path = os.path.join(self.proc_dir, f"{self.dm.train_scope}.h5")
         self.idmap_path = os.path.join(self.proc_dir, 'idmap.json')
         self.splits_path = os.path.join(self.proc_dir, 'splits.json')
-        self._edice_repo = os.path.join(self.output_dir, 'external', 'eDICE')
+        self._edice_repo = os.path.join(self.bench_dir, 'external', 'eDICE')
 
     def ensure_env(self):
         # We do not install here; we just note expected location for scripts
@@ -560,7 +712,7 @@ class EdiceRunner(BaseRunner):
         print("[eDICE] RUN:", " ".join(cmd))
         subprocess.run(cmd)
         t1 = time.time()
-        _append_timing(self.output_dir, "edice", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
+        _append_timing(self.bench_dir, "edice", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
 
     def infer(self):
         # Parse predictions if produced by eDICE
@@ -589,13 +741,13 @@ class EdiceRunner(BaseRunner):
             std = float(np.std(pred))
             np.save(os.path.join(self.pred_dir, base.replace("__pval","__std") + ".npy"), np.full_like(pred, std))
         tb1 = time.time()
-        _append_timing(self.output_dir, "edice", "infer_total", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.test_bios()), self.dm.n_assays, tb0, tb1)
+        _append_timing(self.bench_dir, "edice", "infer_total", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.test_bios()), self.dm.n_assays, tb0, tb1)
 
 
 # ----------------- Evaluation -----------------
 
 def evaluator(args):
-    os.makedirs(os.path.join(args.output_dir, "evaluation"), exist_ok=True)
+    os.makedirs(os.path.join(args.bench_dir, "evaluation"), exist_ok=True)
     if METRICS is None:
         print("[Evaluator] METRICS not available; skipping.")
         return
@@ -603,7 +755,7 @@ def evaluator(args):
     rows = []
 
     def append_method(method: str):
-        pred_dir = os.path.join(args.output_dir, "imputed_tracks", method)
+        pred_dir = os.path.join(args.bench_dir, "imputed_tracks", method)
         if not os.path.isdir(pred_dir):
             return
         files = glob.glob(os.path.join(pred_dir, f"*__{args.test_scope}__*__pval.npy"))
@@ -668,7 +820,7 @@ def evaluator(args):
         append_method(method)
 
     if rows:
-        out_csv = os.path.join(args.output_dir, "evaluation", "summary_metrics.csv")
+        out_csv = os.path.join(args.bench_dir, "evaluation", "summary_metrics.csv")
         write_header = not os.path.exists(out_csv)
         with open(out_csv, "a", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
@@ -682,13 +834,13 @@ def evaluator(args):
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Unified benchmarking orchestrator")
+    p.add_argument('--bench_dir', type=str, required=True, help='Root directory for all artifacts (mandatory)')
     p.add_argument('--dataset', choices=['enc','merged','eic'], default='enc')
     p.add_argument('--models', nargs='+', choices=['candi','chromimpute','avocado','edice','all'], default=['all'])
-    p.add_argument('--stages', nargs='+', choices=['preprocess','train','infer','evaluate','all'], default=['all'])
+    p.add_argument('--stages', nargs='+', choices=['bootstrap','preprocess','train','infer','evaluate','all'], default=['all'])
     p.add_argument('--data_path', type=str, default='data/')
     p.add_argument('--train_scope', type=str, default='chr19')
     p.add_argument('--test_scope', type=str, default='chr21')
-    p.add_argument('--output_dir', type=str, default='results/')
     p.add_argument('--write_bw', action='store_true')
 
     # CANDI args
@@ -719,7 +871,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--mask_percentage', type=float, default=0.2)
     p.add_argument('--shared_decoders', action='store_true')
 
-    # For CANDI eval/infer paths
     p.add_argument('--ckpt', type=str, default=None)
     p.add_argument('--hyperparams', type=str, default=None)
 
@@ -736,7 +887,7 @@ def main():
 
     stages = args.stages
     if 'all' in stages:
-        stages = ['preprocess','train','infer','evaluate']
+        stages = ['bootstrap','preprocess','train','infer','evaluate']
 
     includes_35 = [
         'ATAC-seq','DNase-seq','H2AFZ','H2AK5ac','H2AK9ac','H2BK120ac','H2BK12ac','H2BK15ac',
@@ -745,20 +896,22 @@ def main():
         'H3K9me1','H3K9me2','H3K9me3','H3T11ph','H4K12ac','H4K20me1','H4K5ac','H4K8ac','H4K91ac'
     ]
 
-    dm = DatasetManager(args.data_path, args.dataset, args.train_scope, args.test_scope, includes_35)
+    dm = DatasetManager(args.bench_dir, args.data_path, args.dataset, args.train_scope, args.test_scope, includes_35)
 
     runners = {}
     if 'candi' in models:
-        runners['candi'] = CandiRunner(dm, args.output_dir, args.write_bw)
+        runners['candi'] = CandiRunner(dm, args.write_bw)
     if 'chromimpute' in models:
-        runners['chromimpute'] = ChromImputeRunner(dm, args.output_dir, args.write_bw)
+        runners['chromimpute'] = ChromImputeRunner(dm, args.write_bw)
     if 'avocado' in models:
-        runners['avocado'] = AvocadoRunner(dm, args.output_dir, args.write_bw)
+        runners['avocado'] = AvocadoRunner(dm, args.write_bw)
     if 'edice' in models:
-        runners['edice'] = EdiceRunner(dm, args.output_dir, args.write_bw)
+        runners['edice'] = EdiceRunner(dm, args.write_bw)
 
     for stage in stages:
-        if stage == 'preprocess':
+        if stage == 'bootstrap':
+            _env_bootstrap(args.bench_dir)
+        elif stage == 'preprocess':
             for m in models:
                 runners[m].ensure_env()
                 runners[m].preprocess()

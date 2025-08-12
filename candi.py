@@ -85,7 +85,8 @@ def cmd_train(args: argparse.Namespace) -> None:
         "supertrack": args.supertrack,
     }
 
-    os.makedirs(args.output_dir, exist_ok=True)
+    out_root = args.bench_dir
+    os.makedirs(out_root, exist_ok=True)
 
     t0 = time.time()
     Train_CANDI(
@@ -123,7 +124,7 @@ def cmd_train(args: argparse.Namespace) -> None:
     except Exception:
         n_bios, n_assays = -1, 35
 
-    _append_timing(args.output_dir, "candi", "train", args.dataset, args.train_scope, None, n_bios, n_assays, t0, t1)
+    _append_timing(out_root, "candi", "train", args.dataset, args.train_scope, None, n_bios, n_assays, t0, t1)
 
 
 # -------- infer --------
@@ -136,7 +137,8 @@ def cmd_infer(args: argparse.Namespace) -> None:
 
     IMPORTANT: We do not change eval.py; we only use its APIs. We ignore all count outputs.
     """
-    os.makedirs(args.output_dir, exist_ok=True)
+    out_root = args.bench_dir
+    os.makedirs(out_root, exist_ok=True)
 
     handler = EVAL_CANDI(
         model=args.ckpt,
@@ -148,7 +150,7 @@ def cmd_infer(args: argparse.Namespace) -> None:
         split="test",
         eic=(args.dataset == "eic"),
         DNA=True,
-        savedir=os.path.join(args.output_dir, "evals"),
+        savedir=os.path.join(out_root, "evals"),
     )
 
     bios_list = list(handler.dataset.navigation.keys())
@@ -158,7 +160,7 @@ def cmd_infer(args: argparse.Namespace) -> None:
         tb0 = time.time()
         try:
             res = handler.bios_pipeline(bios, x_dsf=args.dsf, quick=False)
-            out_dir = os.path.join(args.output_dir, "imputed_tracks", "candi")
+            out_dir = os.path.join(out_root, "imputed_tracks", "candi")
             os.makedirs(out_dir, exist_ok=True)
             for r in res:
                 cmp = r.get("comparison", "None")
@@ -176,14 +178,13 @@ def cmd_infer(args: argparse.Namespace) -> None:
                 np.save(os.path.join(out_dir, base + ".npy"), pval)
                 if pstd is not None:
                     np.save(os.path.join(out_dir, base.replace("__pval","__std") + ".npy"), pstd)
-                # Optional .bw skipped unless a later flag requires it
         except Exception as e:
             print(f"[candi.infer] Failed {bios}: {e}")
         tb1 = time.time()
-        _append_timing(args.output_dir, "candi", "infer_bios", args.dataset, None, args.test_scope, 1, -1, tb0, tb1)
+        _append_timing(out_root, "candi", "infer_bios", args.dataset, None, args.test_scope, 1, -1, tb0, tb1)
 
     t_total1 = time.time()
-    _append_timing(args.output_dir, "candi", "infer_total", args.dataset, None, args.test_scope, len(bios_list), -1, t_total0, t_total1)
+    _append_timing(out_root, "candi", "infer_total", args.dataset, None, args.test_scope, len(bios_list), -1, t_total0, t_total1)
 
 
 # -------- eval --------
@@ -193,8 +194,9 @@ def cmd_eval(args: argparse.Namespace) -> None:
     Evaluate saved CANDI predictions (pval-only). We do NOT compute/record any count metrics.
     For merged dataset, we mirror quick_eval_rnaseq via EVAL_CANDI.bios_rnaseq_eval(quick=True).
     """
-    os.makedirs(os.path.join(args.output_dir, "evaluation"), exist_ok=True)
-    summary_path = os.path.join(args.output_dir, "evaluation", "summary_metrics.csv")
+    out_root = args.bench_dir
+    os.makedirs(os.path.join(out_root, "evaluation"), exist_ok=True)
+    summary_path = os.path.join(out_root, "evaluation", "summary_metrics.csv")
     write_header = not os.path.exists(summary_path)
 
     handler = EVAL_CANDI(
@@ -206,11 +208,11 @@ def cmd_eval(args: argparse.Namespace) -> None:
         split="test",
         eic=(args.dataset == "eic"),
         DNA=True,
-        savedir=os.path.join(args.output_dir, "evals"),
+        savedir=os.path.join(out_root, "evals"),
     )
 
     metrics = METRICS()
-    pred_dir = os.path.join(args.output_dir, "imputed_tracks", "candi")
+    pred_dir = os.path.join(out_root, "imputed_tracks", "candi")
     files = glob.glob(os.path.join(pred_dir, f"*__{args.test_scope}__*__pval.npy"))
 
     rows = []
@@ -273,7 +275,7 @@ def cmd_eval(args: argparse.Namespace) -> None:
     # RNA-seq (merged only)
     if args.rnaseq and args.dataset == "merged":
         print("[candi.eval] Running RNA-seq evaluation (quick)")
-        out_dir = os.path.join(args.output_dir, "evaluation", "rnaseq")
+        out_dir = os.path.join(out_root, "evaluation", "rnaseq")
         os.makedirs(out_dir, exist_ok=True)
         for bios in list(handler.dataset.navigation.keys()):
             try:
@@ -290,11 +292,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     def add_shared(sp):
+        sp.add_argument('--bench_dir', type=str, required=True, help='Root directory for all artifacts (mandatory)')
         sp.add_argument('--data_path', type=str, default='data/')
         sp.add_argument('--dataset', choices=['enc','merged','eic'], default='enc')
         sp.add_argument('--train_scope', type=str, default='chr19')
         sp.add_argument('--test_scope', type=str, default='chr21')
-        sp.add_argument('--output_dir', type=str, default='results/')
         sp.add_argument('--dsf', type=int, default=1)
         sp.add_argument('--context_length', type=int, default=1200)
         sp.add_argument('--batch_size', type=int, default=25)
@@ -356,8 +358,7 @@ def main():
         parser.error('Unknown command')
 
     t1 = time.time()
-    # High-level timing per command (optional)
-    _append_timing(args.output_dir, "candi", f"cmd_{args.cmd}", args.dataset, args.train_scope, args.test_scope, -1, -1, t0, t1)
+    _append_timing(args.bench_dir, "candi", f"cmd_{args.cmd}", args.dataset, args.train_scope, args.test_scope, -1, -1, t0, t1)
 
 
 if __name__ == '__main__':
