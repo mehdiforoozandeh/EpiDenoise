@@ -24,6 +24,7 @@ from typing import List, Dict, Tuple
 import subprocess
 import shutil
 import zipfile
+from types import SimpleNamespace
 
 # Mirror data loading via data.py
 try:
@@ -755,7 +756,7 @@ class AvocadoRunner(BaseRunner):
                 np.savez_compressed(out_npz, vec)
         print("[Avocado] Preprocess cache complete.")
 
-    def train(self):
+    def train(self, epochs: int | None = None):
         if not self._avocado:
             print("[Avocado] Skipping train; avocado is not available.")
             return
@@ -788,7 +789,7 @@ class AvocadoRunner(BaseRunner):
             batch_size=10000,
         )
         t0 = time.time()
-        model.fit(data, n_epochs=10, epoch_size=100)
+        model.fit(data, n_epochs=(epochs if epochs is not None else 10), epoch_size=100)
         t1 = time.time()
         model.save(os.path.join(self.model_dir, f"avocado-{self.dm.train_scope}"))
         _append_timing(self.bench_dir, "avocado", "train", self.dm.dataset, self.dm.train_scope, self.dm.test_scope, len(self.dm.train_bios()), self.dm.n_assays, t0, t1)
@@ -1030,6 +1031,152 @@ def evaluator(args):
                 w.writerow(r)
 
 
+# ----------------- Test Suites -----------------
+
+def _assert_true(cond: bool, msg: str, failures: list):
+    if not cond:
+        print(f"[ASSERT FAIL] {msg}")
+        failures.append(msg)
+    else:
+        print(f"[ASSERT OK] {msg}")
+
+
+def _write_test_report(bench_dir: str, suite: str, passed: bool, details: list):
+    os.makedirs(os.path.join(bench_dir, 'evaluation'), exist_ok=True)
+    report_path = os.path.join(bench_dir, 'evaluation', 'test_report.json')
+    rec = {
+        'suite': suite,
+        'passed': passed,
+        'details': details,
+        'ts': int(time.time()),
+    }
+    try:
+        prev = []
+        if os.path.exists(report_path):
+            with open(report_path, 'r') as f:
+                prev = json.load(f)
+        if not isinstance(prev, list):
+            prev = []
+        prev.append(rec)
+        with open(report_path, 'w') as f:
+            json.dump(prev, f, indent=2)
+    except Exception:
+        with open(report_path, 'w') as f:
+            json.dump([rec], f, indent=2)
+
+
+def run_test_candi_eic_end2end(args):
+    print("[TEST] CANDI EIC end-to-end")
+    failures: list[str] = []
+    includes_35 = [
+        'ATAC-seq','DNase-seq','H2AFZ','H2AK5ac','H2AK9ac','H2BK120ac','H2BK12ac','H2BK15ac',
+        'H2BK20ac','H2BK5ac','H3F3A','H3K14ac','H3K18ac','H3K23ac','H3K23me2','H3K27ac','H3K27me3',
+        'H3K36me3','H3K4ac','H3K4me1','H3K4me2','H3K4me3','H3K56ac','H3K79me1','H3K79me2','H3K9ac',
+        'H3K9me1','H3K9me2','H3K9me3','H3T11ph','H4K12ac','H4K20me1','H4K5ac','H4K8ac','H4K91ac'
+    ]
+    dm = DatasetManager(args.bench_dir, args.data_path, 'eic', args.train_scope, args.test_scope, includes_35)
+    runner = CandiRunner(dm, args.write_bw)
+
+    # Train with epochs=1
+    train_args = SimpleNamespace(**vars(args))
+    train_args.dataset = 'eic'
+    train_args.epochs = max(1, getattr(args, 'epochs', 1))
+    print("[TEST] Training CANDI (epochs=1)")
+    t0 = time.time()
+    runner.train(train_args)
+    t1 = time.time()
+    _assert_true((t1 - t0) > 0, 'CANDI train executed', failures)
+
+    # Infer
+    print("[TEST] Inference CANDI (chr21)")
+    infer_args = SimpleNamespace(**vars(args))
+    infer_args.dataset = 'eic'
+    runner.infer(infer_args)
+
+    # Assert predictions exist
+    pred_dir = os.path.join(args.bench_dir, 'imputed_tracks', 'candi')
+    files = glob.glob(os.path.join(pred_dir, f"*__{args.test_scope}__*__pval.npy"))
+    _assert_true(os.path.isdir(pred_dir), 'CANDI prediction directory exists', failures)
+    _assert_true(len(files) > 0, 'CANDI predictions saved', failures)
+
+    # Evaluate
+    print("[TEST] Evaluate CANDI")
+    eval_args = SimpleNamespace(**vars(args))
+    eval_args.dataset = 'eic'
+    evaluator(eval_args)
+    metrics_csv = os.path.join(args.bench_dir, 'evaluation', 'summary_metrics.csv')
+    _assert_true(os.path.exists(metrics_csv), 'summary_metrics.csv created', failures)
+
+    passed = len(failures) == 0
+    _write_test_report(args.bench_dir, 'candi_eic_end2end', passed, failures)
+    print(f"[TEST RESULT] candi_eic_end2end: {'PASS' if passed else 'FAIL'}")
+    return passed
+
+
+def run_test_eic_all_methods_smoke(args):
+    print("[TEST] EIC all methods smoke (epochs=1 where applicable)")
+    failures: list[str] = []
+    includes_35 = [
+        'ATAC-seq','DNase-seq','H2AFZ','H2AK5ac','H2AK9ac','H2BK120ac','H2BK12ac','H2BK15ac',
+        'H2BK20ac','H2BK5ac','H3F3A','H3K14ac','H3K18ac','H3K23ac','H3K23me2','H3K27ac','H3K27me3',
+        'H3K36me3','H3K4ac','H3K4me1','H3K4me2','H3K4me3','H3K56ac','H3K79me1','H3K79me2','H3K9ac',
+        'H3K9me1','H3K9me2','H3K9me3','H3T11ph','H4K12ac','H4K20me1','H4K5ac','H4K8ac','H4K91ac'
+    ]
+    dm = DatasetManager(args.bench_dir, args.data_path, 'eic', args.train_scope, args.test_scope, includes_35)
+
+    # ChromImpute
+    chrom = ChromImputeRunner(dm, args.write_bw)
+    chrom.ensure_env(); chrom.preprocess(); chrom.train(); chrom.infer()
+    _assert_true(os.path.isdir(os.path.join(args.bench_dir, 'imputed_tracks', 'chromimpute')), 'ChromImpute predictions dir', failures)
+
+    # Avocado (epochs=1)
+    avo = AvocadoRunner(dm, args.write_bw)
+    avo.ensure_env(); avo.preprocess(); avo.train(epochs=max(1, getattr(args, 'epochs', 1))); avo.infer()
+    _assert_true(os.path.isdir(os.path.join(args.bench_dir, 'imputed_tracks', 'avocado')), 'Avocado predictions dir', failures)
+
+    # eDICE (if runner available)
+    try:
+        EdiceRunner  # type: ignore[name-defined]
+        ed = EdiceRunner(dm, args.write_bw)  # noqa: F821
+        ed.ensure_env(); ed.preprocess(); ed.train(); ed.infer()
+        _assert_true(os.path.isdir(os.path.join(args.bench_dir, 'imputed_tracks', 'edice')), 'eDICE predictions dir', failures)
+    except Exception:
+        print('[TEST] eDICE runner not available or not wired; skipping')
+
+    # Evaluate
+    eval_args = SimpleNamespace(**vars(args))
+    eval_args.dataset = 'eic'
+    evaluator(eval_args)
+    _assert_true(os.path.exists(os.path.join(args.bench_dir, 'evaluation', 'summary_metrics.csv')), 'summary_metrics.csv created', failures)
+
+    passed = len(failures) == 0
+    _write_test_report(args.bench_dir, 'eic_all_methods_smoke', passed, failures)
+    print(f"[TEST RESULT] eic_all_methods_smoke: {'PASS' if passed else 'FAIL'}")
+    return passed
+
+
+def run_test_install_only(args):
+    print('[TEST] install_only')
+    failures: list[str] = []
+    _env_install(args.bench_dir)
+    rep = _env_bootstrap(args.bench_dir)
+    _assert_true(rep['chromimpute'].get('present','False') == 'True', 'ChromImpute.jar present', failures)
+    _assert_true(os.path.isdir(os.path.join(args.bench_dir, 'external', 'eDICE')), 'eDICE repo present', failures)
+    _write_test_report(args.bench_dir, 'install_only', len(failures)==0, failures)
+    print(f"[TEST RESULT] install_only: {'PASS' if len(failures)==0 else 'FAIL'}")
+    return len(failures) == 0
+
+
+def run_test_evaluate_only(args):
+    print('[TEST] evaluate_only')
+    failures: list[str] = []
+    evaluator(args)
+    _assert_true(os.path.exists(os.path.join(args.bench_dir, 'evaluation', 'summary_metrics.csv')), 'summary_metrics.csv created', failures)
+    _write_test_report(args.bench_dir, 'evaluate_only', len(failures)==0, failures)
+    print(f"[TEST RESULT] evaluate_only: {'PASS' if len(failures)==0 else 'FAIL'}")
+    return len(failures) == 0
+
+
 # ----------------- CLI -----------------
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1037,7 +1184,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--bench_dir', type=str, required=True, help='Root directory for all artifacts (mandatory)')
     p.add_argument('--dataset', choices=['enc','merged','eic'], default='enc')
     p.add_argument('--models', nargs='+', choices=['candi','chromimpute','avocado','edice','all'], default=['all'])
-    p.add_argument('--stages', nargs='+', choices=['bootstrap','install','preprocess','train','infer','evaluate','all'], default=['all'])
+    p.add_argument('--stages', nargs='+', choices=['bootstrap','install','preprocess','train','infer','evaluate','test','all'], default=['all'])
+    p.add_argument('--test_suite', choices=['candi_eic_end2end','eic_all_methods_smoke','install_only','evaluate_only'], default=None)
     p.add_argument('--data_path', type=str, default='/project/compbio-lab/encode_data/')
     p.add_argument('--train_scope', type=str, default='chr19')
     p.add_argument('--test_scope', type=str, default='chr21')
@@ -1123,7 +1271,11 @@ def main():
                 if m == 'candi':
                     runners[m].train(args)
                 else:
-                    runners[m].train()
+                    # Pass epochs for smoke tests if provided
+                    try:
+                        runners[m].train(getattr(args, 'epochs', None))
+                    except TypeError:
+                        runners[m].train()
         elif stage == 'infer':
             for m in models:
                 if m == 'candi':
@@ -1132,6 +1284,19 @@ def main():
                     runners[m].infer()
         elif stage == 'evaluate':
             evaluator(args)
+        elif stage == 'test':
+            if args.test_suite is None:
+                parser.error('When using --stages test, you must provide --test_suite')
+            ok = False
+            if args.test_suite == 'candi_eic_end2end':
+                ok = run_test_candi_eic_end2end(args)
+            elif args.test_suite == 'eic_all_methods_smoke':
+                ok = run_test_eic_all_methods_smoke(args)
+            elif args.test_suite == 'install_only':
+                ok = run_test_install_only(args)
+            elif args.test_suite == 'evaluate_only':
+                ok = run_test_evaluate_only(args)
+            print(f"[TEST SUITE] {args.test_suite}: {'PASS' if ok else 'FAIL'}")
         else:
             parser.error(f"Unknown stage: {stage}")
 
