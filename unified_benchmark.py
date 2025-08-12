@@ -43,10 +43,10 @@ except Exception as e:
     print("[unified_benchmark] WARNING: Could not import METRICS from eval.py; evaluator will be limited:", e)
 
 # Local imports (created in this branch)
-try:
-    import candi  # our CLI module for CANDI
-except Exception:
-    candi = None
+# try:
+import candi  # our CLI module for CANDI
+# except Exception:
+#     candi = None
 
 
 def _append_timing(bench_dir: str, method: str, stage: str, dataset: str,
