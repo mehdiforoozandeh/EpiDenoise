@@ -145,8 +145,6 @@ class DatasetManager:
         self.data_path = data_path
         self.dataset = dataset
         self.train_scope = train_scope
-        print(f"train_scope: {train_scope}")
-        exit()
         self.test_scope = test_scope
         self.includes_35 = includes_35
         self.resolution = 25
