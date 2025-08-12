@@ -23,6 +23,7 @@ import gzip
 from typing import List, Dict, Tuple
 import subprocess
 import shutil
+import zipfile
 
 # Mirror data loading via data.py
 try:
@@ -172,25 +173,38 @@ def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
     if os.path.exists(jar_target):
         status['chromimpute']['installed'] = 'true'
     else:
-        url_env = os.environ.get('CHROMIMPUTE_JAR_URL', '').strip()
-        tried_urls = []
-        urls = [
-            url_env,
-            'https://ernstlab.biolchem.ucla.edu/ChromImpute/ChromImpute.jar',
-            'https://storage.googleapis.com/epibench-public/ChromImpute.jar',
-        ]
-        ok = False
-        for url in urls:
-            if not url:
-                continue
-            tried_urls.append(url)
-            _write_install_log(bench_dir, f"[ChromImpute] Attempt download from {url}")
-            if _download_file(url, jar_target):
-                ok = True
-                break
+        # Hardcoded official ZIP URL as provided by user
+        zip_url = 'https://ernstlab.github.io/ChromImpute/ChromImpute.zip'
+        tmp_dir = os.path.join(bench_dir, 'tmp')
+        os.makedirs(tmp_dir, exist_ok=True)
+        zip_path = os.path.join(tmp_dir, 'ChromImpute.zip')
+        _write_install_log(bench_dir, f"[ChromImpute] Downloading ZIP from {zip_url}")
+        ok = _download_file(zip_url, zip_path)
+        if ok and os.path.exists(zip_path):
+            try:
+                _write_install_log(bench_dir, f"[ChromImpute] Extracting {zip_path}")
+                with zipfile.ZipFile(zip_path, 'r') as zf:
+                    # Look for ChromImpute.jar inside the archive
+                    jar_member = None
+                    for m in zf.namelist():
+                        if m.endswith('ChromImpute.jar'):
+                            jar_member = m
+                            break
+                    if not jar_member:
+                        raise RuntimeError('ChromImpute.jar not found inside ZIP')
+                    extract_path = os.path.join(tmp_dir, 'ChromImpute_extracted')
+                    os.makedirs(extract_path, exist_ok=True)
+                    zf.extract(jar_member, path=extract_path)
+                    src_jar = os.path.join(extract_path, jar_member)
+                    _write_install_log(bench_dir, f"[ChromImpute] Placing JAR to {jar_target}")
+                    shutil.copy2(src_jar, jar_target)
+                    ok = os.path.exists(jar_target)
+            except Exception as e:
+                print(f"[ChromImpute] Extraction failed: {e}")
+                ok = False
         status['chromimpute']['installed'] = 'true' if ok else 'false'
         if not ok:
-            status['chromimpute']['message'] = f"Failed to download ChromImpute.jar; tried: {tried_urls}. Place it manually at {jar_target}."
+            status['chromimpute']['message'] = f"Failed to install ChromImpute from ZIP. Please place ChromImpute.jar manually at {jar_target}."
     # Java presence
     status['chromimpute']['java_found'] = 'true' if java_path else 'false'
 
