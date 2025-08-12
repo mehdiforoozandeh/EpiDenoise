@@ -21,6 +21,8 @@ import csv
 import glob
 import gzip
 from typing import List, Dict, Tuple
+import subprocess
+import shutil
 
 # Mirror data loading via data.py
 try:
@@ -106,6 +108,147 @@ def _env_bootstrap(bench_dir: str) -> Dict[str, Dict[str, str]]:
     with open(os.path.join(bench_dir, 'evaluation', 'env_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
     return report
+
+
+def _write_install_log(bench_dir: str, text: str) -> None:
+    log_dir = os.path.join(bench_dir, 'evaluation')
+    os.makedirs(log_dir, exist_ok=True)
+    with open(os.path.join(log_dir, 'install_log.txt'), 'a') as f:
+        f.write(text.rstrip() + "\n")
+
+
+def _which(cmd: str) -> str:
+    return shutil.which(cmd) or ""
+
+
+def _download_file(url: str, dest_path: str) -> bool:
+    try:
+        import urllib.request
+        _write_install_log(os.getcwd(), f"[download] Fetching {url} -> {dest_path}")
+        urllib.request.urlretrieve(url, dest_path)
+        return True
+    except Exception as e:
+        _write_install_log(os.getcwd(), f"[download] Failed {url}: {e}")
+        return False
+
+
+def _env_install(bench_dir: str) -> Dict[str, Dict[str, str]]:
+    """Attempt to install required third-party tools into bench_dir.
+    - ChromImpute: place ChromImpute.jar under bench_dir/lib (try common URLs or env var CHROMIMPUTE_JAR_URL)
+    - Avocado: create Python env under bench_dir/envs/avocado_env and pip install avocado-epigenome
+    - eDICE: clone repo to bench_dir/external/eDICE and pip install -r requirements.txt in bench_dir/envs/edice_env
+    Returns a status dict and writes evaluation/install_status.json with details.
+    """
+    status: Dict[str, Dict[str, str]] = {"chromimpute": {}, "avocado": {}, "edice": {}}
+    eval_dir = os.path.join(bench_dir, 'evaluation')
+    os.makedirs(eval_dir, exist_ok=True)
+
+    # Ensure base dirs
+    lib_dir = os.path.join(bench_dir, 'lib')
+    envs_dir = os.path.join(bench_dir, 'envs')
+    external_dir = os.path.join(bench_dir, 'external')
+    os.makedirs(lib_dir, exist_ok=True)
+    os.makedirs(envs_dir, exist_ok=True)
+    os.makedirs(external_dir, exist_ok=True)
+
+    # Log system basics
+    py = sys.executable
+    conda_path = _which('conda')
+    git_path = _which('git')
+    java_path = _which('java')
+    _write_install_log(bench_dir, f"python: {py}")
+    _write_install_log(bench_dir, f"conda: {conda_path or 'not found'}")
+    _write_install_log(bench_dir, f"git: {git_path or 'not found'}")
+    _write_install_log(bench_dir, f"java: {java_path or 'not found'}")
+
+    # 1) ChromImpute
+    jar_target = os.path.join(lib_dir, 'ChromImpute.jar')
+    status['chromimpute']['jar_path'] = jar_target
+    if os.path.exists(jar_target):
+        status['chromimpute']['installed'] = 'true'
+    else:
+        url_env = os.environ.get('CHROMIMPUTE_JAR_URL', '').strip()
+        tried_urls = []
+        urls = [
+            url_env,
+            'https://ernstlab.biolchem.ucla.edu/ChromImpute/ChromImpute.jar',
+            'https://storage.googleapis.com/epibench-public/ChromImpute.jar',
+        ]
+        ok = False
+        for url in urls:
+            if not url:
+                continue
+            tried_urls.append(url)
+            _write_install_log(bench_dir, f"[ChromImpute] Attempt download from {url}")
+            if _download_file(url, jar_target):
+                ok = True
+                break
+        status['chromimpute']['installed'] = 'true' if ok else 'false'
+        if not ok:
+            status['chromimpute']['message'] = f"Failed to download ChromImpute.jar; tried: {tried_urls}. Place it manually at {jar_target}."
+    # Java presence
+    status['chromimpute']['java_found'] = 'true' if java_path else 'false'
+
+    # 2) Avocado
+    try:
+        import avocado  # noqa: F401
+        status['avocado']['installed'] = 'true'
+        status['avocado']['note'] = 'import works in current interpreter'
+    except Exception:
+        env_prefix = os.path.join(envs_dir, 'avocado_env')
+        py_bin = os.path.join(env_prefix, 'bin', 'python')
+        pip_bin = os.path.join(env_prefix, 'bin', 'pip')
+        if conda_path:
+            _write_install_log(bench_dir, f"[Avocado] Creating conda env at {env_prefix}")
+            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            _write_install_log(bench_dir, f"[Avocado] Creating venv at {env_prefix}")
+            subprocess.run([sys.executable, '-m', 'venv', env_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _write_install_log(bench_dir, f"[Avocado] Installing avocado-epigenome")
+        res = subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+        res = subprocess.run([pip_bin, 'install', 'avocado-epigenome'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+        status['avocado']['installed'] = 'true' if res.returncode == 0 else 'false'
+        status['avocado']['env_prefix'] = env_prefix
+
+    # 3) eDICE
+    edice_repo = os.path.join(external_dir, 'eDICE')
+    if not os.path.isdir(edice_repo):
+        if git_path:
+            _write_install_log(bench_dir, f"[eDICE] Cloning into {edice_repo}")
+            res = subprocess.run([git_path, 'clone', '--depth', '1', 'https://github.com/alex-hh/eDICE.git', edice_repo], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+        else:
+            _write_install_log(bench_dir, "[eDICE] git not found; skip clone")
+    status['edice']['repo_path'] = edice_repo
+    status['edice']['repo_present'] = 'true' if os.path.isdir(edice_repo) else 'false'
+    if os.path.isdir(edice_repo):
+        env_prefix = os.path.join(envs_dir, 'edice_env')
+        py_bin = os.path.join(env_prefix, 'bin', 'python')
+        pip_bin = os.path.join(env_prefix, 'bin', 'pip')
+        if conda_path:
+            _write_install_log(bench_dir, f"[eDICE] Creating conda env at {env_prefix}")
+            subprocess.run([conda_path, 'create', '-y', '-p', env_prefix, 'python=3.10'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            _write_install_log(bench_dir, f"[eDICE] Creating venv at {env_prefix}")
+            subprocess.run([sys.executable, '-m', 'venv', env_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Install eDICE requirements
+        req_file = os.path.join(edice_repo, 'requirements.txt')
+        if os.path.exists(req_file):
+            _write_install_log(bench_dir, f"[eDICE] Installing requirements from {req_file}")
+            res = subprocess.run([py_bin, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+            res = subprocess.run([pip_bin, 'install', '-r', req_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            _write_install_log(bench_dir, res.stdout + "\n" + res.stderr)
+            status['edice']['installed'] = 'true' if res.returncode == 0 else 'false'
+        else:
+            status['edice']['installed'] = 'false'
+            status['edice']['message'] = 'requirements.txt not found; please install manually'
+
+    with open(os.path.join(eval_dir, 'install_status.json'), 'w') as f:
+        json.dump(status, f, indent=2)
+    return status
 
 
 # ----------------- Navigation / split helpers (mirrors data.py filenames) -----------------
@@ -837,8 +980,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--bench_dir', type=str, required=True, help='Root directory for all artifacts (mandatory)')
     p.add_argument('--dataset', choices=['enc','merged','eic'], default='enc')
     p.add_argument('--models', nargs='+', choices=['candi','chromimpute','avocado','edice','all'], default=['all'])
-    p.add_argument('--stages', nargs='+', choices=['bootstrap','preprocess','train','infer','evaluate','all'], default=['all'])
-    p.add_argument('--data_path', type=str, default='/project/compbio-lab/encode_data/')
+    p.add_argument('--stages', nargs='+', choices=['bootstrap','install','preprocess','train','infer','evaluate','all'], default=['all'])
+    p.add_argument('--data_path', type=str, default='data/')
     p.add_argument('--train_scope', type=str, default='chr19')
     p.add_argument('--test_scope', type=str, default='chr21')
     p.add_argument('--write_bw', action='store_true')
@@ -887,7 +1030,7 @@ def main():
 
     stages = args.stages
     if 'all' in stages:
-        stages = ['bootstrap','preprocess','train','infer','evaluate']
+        stages = ['bootstrap','install','preprocess','train','infer','evaluate']
 
     includes_35 = [
         'ATAC-seq','DNase-seq','H2AFZ','H2AK5ac','H2AK9ac','H2BK120ac','H2BK12ac','H2BK15ac',
@@ -911,6 +1054,9 @@ def main():
     for stage in stages:
         if stage == 'bootstrap':
             _env_bootstrap(args.bench_dir)
+        elif stage == 'install':
+            print('[install] Checking and installing external tools...')
+            _env_install(args.bench_dir)
         elif stage == 'preprocess':
             for m in models:
                 runners[m].ensure_env()
