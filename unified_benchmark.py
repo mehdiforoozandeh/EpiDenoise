@@ -981,7 +981,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--dataset', choices=['enc','merged','eic'], default='enc')
     p.add_argument('--models', nargs='+', choices=['candi','chromimpute','avocado','edice','all'], default=['all'])
     p.add_argument('--stages', nargs='+', choices=['bootstrap','install','preprocess','train','infer','evaluate','all'], default=['all'])
-    p.add_argument('--data_path', type=str, default='data/')
+    p.add_argument('--data_path', type=str, default='/project/compbio-lab/encode_data/')
     p.add_argument('--train_scope', type=str, default='chr19')
     p.add_argument('--test_scope', type=str, default='chr21')
     p.add_argument('--write_bw', action='store_true')
