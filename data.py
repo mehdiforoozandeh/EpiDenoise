@@ -2774,7 +2774,7 @@ class ExtendedEncodeDataHandler:
             self.generate_full_chr_loci(context_length, chrs="gw")
         else:
             print(f"generating {loci_gen} loci")
-            self.generate_full_chr_loci(context_length, chrs=loci_gen)
+            self.generate_full_chr_loci(context_length, chrs=[loci_gen])
 
         print(f"num loci: {len(self.m_regions)}")
         
