@@ -18,7 +18,7 @@ from sklearn.metrics import  mean_absolute_error
 from sklearn.linear_model import Ridge, Lasso, LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
+# from xgboost import XGBRegressor
 
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.metrics import roc_auc_score
