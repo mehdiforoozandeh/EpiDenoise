@@ -1,4 +1,4 @@
-from CANDI import * 
+from candi import Train_CANDI
 import torch
 import torch.nn as nn
 from torch.nn import MultiheadAttention

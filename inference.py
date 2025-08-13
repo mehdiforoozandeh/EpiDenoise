@@ -2,7 +2,7 @@ import random
 import torch, json
 import pickle
 import os, time, gc, psutil
-from train_candi import *
+from train_candi import CANDI_LOADER
 from scipy import stats
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score

@@ -4,7 +4,7 @@ import os
 import time
 import psutil
 from multiprocessing import Lock
-from CANDI import *
+from candi import Train_CANDI
 import traceback
 
 # Function to check available GPUs

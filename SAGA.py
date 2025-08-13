@@ -26,7 +26,8 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
 # Local imports
-from train_candi import *
+# Import a minimal public API to avoid heavy module side-effects at import time
+from train_candi import MONITOR_VALIDATION, CANDI, CANDI_LOSS, PRETRAIN, Train_CANDI, CANDI_LOADER
 # from inference import *
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway

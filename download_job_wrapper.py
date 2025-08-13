@@ -1,4 +1,4 @@
-from data import *
+from data import single_download
 import sys, os
 
 

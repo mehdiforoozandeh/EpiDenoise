@@ -1,12 +1,10 @@
 import torch, math, random, time, json, os, pickle, sys, gc
 from torch import nn
 import torch.optim as optim
-from data import * 
 import torch.nn.functional as F
 from scipy.stats import spearmanr, pearsonr
 import pandas as pd
 import numpy as np
-from _utils import *
 from sklearn.metrics import r2_score
 from datetime import datetime
 from scipy.stats import nbinom
@@ -14,6 +12,8 @@ import imageio.v2 as imageio
 from io import BytesIO
 from torchinfo import summary
 
+from _utils import *    
+from data import * 
 from PerFeatureTransformer import *
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
