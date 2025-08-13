@@ -27,7 +27,7 @@ import zipfile
 from types import SimpleNamespace
 
 from data import ExtendedEncodeDataHandler
-from eval import METRICS
+from _utils import METRICS
 import candi  
 
 
