@@ -26,7 +26,7 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
 # Local imports
-from train_candi import *
+# from train_candi import *
 # from inference import *
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
