@@ -1,5 +1,6 @@
 from data import *
 from _utils import *
+from train_candi import CANDI_LOADER
 
 from SAGA import write_bed, SoftMultiAssayHMM, write_posteriors_to_tsv
 from collections import Counter
