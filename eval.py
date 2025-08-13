@@ -3,7 +3,6 @@
 # from _utils import *
 # from SAGA import write_bed, SoftMultiAssayHMM, write_posteriors_to_tsv
 from collections import Counter
-
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
 
 from sklearn.pipeline import Pipeline
@@ -12,6 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold
 from sklearn.metrics import  mean_absolute_error
 
+import numpy as np
 from sklearn.linear_model import Ridge, Lasso, LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
