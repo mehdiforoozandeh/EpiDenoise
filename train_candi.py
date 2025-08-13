@@ -1161,7 +1161,8 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     model_name = f"CANDI{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
     model_root = save_root_dir if save_root_dir is not None else "models/"
     os.makedirs(model_root, exist_ok=True)
-    with open(os.path.join(model_root, f'hyper_parameters_{model_name.replace(".pt", ".pkl")}'), 'wb') as f:
+    hyperparams_path = os.path.join(model_root, f'hyper_parameters_{model_name.replace(".pt", ".pkl")}')
+    with open(hyperparams_path, 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     criterion = CANDI_LOSS()
@@ -1181,8 +1182,10 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     # Save the trained model
     model_dir = model_root
     os.makedirs(model_dir, exist_ok=True)
+    saved_ckpt_path = None
     if not HPO:
-        torch.save(model.state_dict(), os.path.join(model_dir, model_name))
+        saved_ckpt_path = os.path.join(model_dir, model_name)
+        torch.save(model.state_dict(), saved_ckpt_path)
 
         # Write a description text file
         description = {
@@ -1195,7 +1198,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
         with open(os.path.join(model_dir, model_name.replace(".pt", ".txt")), 'w') as f:
             f.write(json.dumps(description, indent=4))
 
-    return model, best_metric
+    return model, best_metric, saved_ckpt_path, hyperparams_path
 
 class CANDI_LOADER(object):
     def __init__(self, model_path, hyper_parameters, DNA=False):

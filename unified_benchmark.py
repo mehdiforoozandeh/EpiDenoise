@@ -1075,6 +1075,9 @@ def run_test_candi_eic_end2end(args):
     print("[TEST] Inference CANDI (chr21)")
     infer_args = SimpleNamespace(**vars(args))
     infer_args.dataset = 'eic'
+    # Ensure infer uses the manifest saved during train
+    infer_args.ckpt = None
+    infer_args.hyperparams = None
     runner.infer(infer_args)
 
     # Assert predictions exist

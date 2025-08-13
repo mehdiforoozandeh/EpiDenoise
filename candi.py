@@ -158,7 +158,7 @@ def cmd_train(args: argparse.Namespace) -> None:
     os.makedirs(out_root, exist_ok=True)
 
     t0 = time.time()
-    Train_CANDI(
+    model_obj, best_metric, saved_ckpt, saved_hparams = Train_CANDI(
         h,
         eic=(args.dataset == "eic"),
         checkpoint_path=args.from_ckpt,
@@ -196,10 +196,15 @@ def cmd_train(args: argparse.Namespace) -> None:
 
     _append_timing(out_root, "candi", "train", args.dataset, args.train_scope, None, n_bios, n_assays, t0, t1)
 
-    # Mirror latest model and hyperparams into bench_dir and write manifest
-    ckpt_path, hp_path = _mirror_latest_model_to_bench_dir(out_root)
-    if ckpt_path and hp_path:
-        print(f"[candi.train] Saved model copy to: {ckpt_path}\n[candi.train] Saved hyperparams copy to: {hp_path}")
+    # Persist manifest for automated inference
+    if saved_ckpt and saved_hparams:
+        _write_model_manifest(out_root, saved_ckpt, saved_hparams)
+        print(f"[candi.train] Model: {saved_ckpt}\n[candi.train] Hyperparams: {saved_hparams}")
+    else:
+        # Fallback: mirror from repo models if needed
+        ckpt_path, hp_path = _mirror_latest_model_to_bench_dir(out_root)
+        if ckpt_path and hp_path:
+            print(f"[candi.train] Saved model copy to: {ckpt_path}\n[candi.train] Saved hyperparams copy to: {hp_path}")
 
 
 # -------- infer --------
