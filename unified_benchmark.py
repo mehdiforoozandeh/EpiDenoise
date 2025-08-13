@@ -34,13 +34,11 @@ except Exception as e:
     raise
 
 # eval for metrics (pval-only)
-try:
-    import importlib
-    eval_mod = importlib.import_module("eval")
-    METRICS = getattr(eval_mod, "METRICS", None)
-except Exception as e:
-    METRICS = None
-    print("[unified_benchmark] WARNING: Could not import METRICS from eval.py; evaluator will be limited:", e)
+# try:
+from eval import METRICS
+# except Exception as e:
+#     METRICS = None
+#     print("[unified_benchmark] WARNING: Could not import METRICS from eval.py; evaluator will be limited:", e)
 
 # Local imports (created in this branch)
 # try:
