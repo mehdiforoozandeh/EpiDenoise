@@ -9,7 +9,7 @@ from scipy.stats import spearmanr, pearsonr
 import pandas as pd
 import numpy as np
 from sklearn.metrics import r2_score
-from datetime import datetime
+import datetime
 from scipy.stats import nbinom
 import imageio.v2 as imageio
 from io import BytesIO
