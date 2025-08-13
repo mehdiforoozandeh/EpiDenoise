@@ -51,9 +51,6 @@ warnings.filterwarnings("ignore", category=ConstantInputWarning)
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
-PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
-PROC_PROM_BED_PATH = "data/tss.bed"
-
 
 from sklearn.metrics import (adjusted_rand_score,
                              normalized_mutual_info_score,

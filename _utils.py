@@ -21,6 +21,8 @@ from scipy.stats import norm
 import psutil
 
 
+PROC_GENE_BED_FPATH = "data/gene_bodies.bed"
+PROC_PROM_BED_PATH = "data/tss.bed"
 
 class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
