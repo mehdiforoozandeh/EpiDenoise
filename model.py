@@ -14,7 +14,7 @@ from torchinfo import summary
 
 from _utils import *    
 from data import * 
-from PerFeatureTransformer import *
+# from PerFeatureTransformer import *
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
