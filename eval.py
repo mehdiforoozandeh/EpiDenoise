@@ -1,9 +1,9 @@
 # from CANDI import *
-# from data import *
+from data import *
 # from dino_candi import *
-# from _utils import *
+from _utils import *
 
-from SAGA import write_bed, SoftMultiAssayHMM, write_posteriors_to_tsv
+# from SAGA import write_bed, SoftMultiAssayHMM, write_posteriors_to_tsv
 from collections import Counter
 
 from scipy.stats import pearsonr, spearmanr, poisson, rankdata
@@ -17,7 +17,6 @@ from sklearn.metrics import  mean_absolute_error
 from sklearn.linear_model import Ridge, Lasso, LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
-# from xgboost import XGBRegressor
 
 from sklearn.metrics import mean_squared_error, r2_score, auc
 from sklearn.metrics import roc_auc_score
