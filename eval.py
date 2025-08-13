@@ -1,5 +1,5 @@
 # from CANDI import *
-# from data import *
+from data import *
 # from dino_candi import *
 from _utils import *
 
