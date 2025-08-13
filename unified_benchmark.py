@@ -26,25 +26,9 @@ import shutil
 import zipfile
 from types import SimpleNamespace
 
-# Mirror data loading via data.py
-try:
-    from data import ExtendedEncodeDataHandler
-except Exception as e:
-    print("[unified_benchmark] ERROR: Failed to import ExtendedEncodeDataHandler from data.py:", e)
-    raise
-
-# eval for metrics (pval-only)
-# try:
+from data import ExtendedEncodeDataHandler
 from eval import METRICS
-# except Exception as e:
-#     METRICS = None
-#     print("[unified_benchmark] WARNING: Could not import METRICS from eval.py; evaluator will be limited:", e)
-
-# Local imports (created in this branch)
-# try:
-import candi  # our CLI module for CANDI
-# except Exception:
-#     candi = None
+import candi  
 
 
 def _append_timing(bench_dir: str, method: str, stage: str, dataset: str,
