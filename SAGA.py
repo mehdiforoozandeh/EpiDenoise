@@ -29,6 +29,12 @@ from sklearn.decomposition import PCA
 # Import a minimal public API to avoid heavy module side-effects at import time
 from train_candi import MONITOR_VALIDATION, CANDI, CANDI_LOSS, PRETRAIN, Train_CANDI, CANDI_LOADER
 # from inference import *
+import numpy as np
+from hmmlearn import base
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
+from sklearn.utils import check_random_state
+from sklearn.cluster import KMeans
 
 # SAGA means segmentation and genome annotation -- similar to ChromHMM or Segway
 def write_bed(data, chromosome, start_position, resolution, output_file, is_posterior=False, track_name="Custom Track", track_description="Clustering Results", visibility="dense"):
@@ -148,13 +154,6 @@ def write_posteriors_to_tsv(posteriors_df: pd.DataFrame, chromosome: str, start_
     final_df.to_csv(output_file, sep='\t', index=False, header=True, float_format='%.6f')
     
     print(f"Posterior probabilities successfully written to {output_file}")
-
-import numpy as np
-from hmmlearn import base
-from scipy.optimize import linear_sum_assignment
-from scipy.spatial.distance import cdist
-from sklearn.utils import check_random_state
-from sklearn.cluster import KMeans
 
 # --- Class Definition (Final and Complete) ---
 class SoftMultiAssayHMM(base._BaseHMM):

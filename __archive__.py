@@ -349,8 +349,6 @@ class PROCESS_EIC_DATA(object):
                 pickle.dump(bios_data, f)
             os.system(f"gzip {file_path}")
 
-
-
 class RelativePositionEncoding(nn.Module):
     def __init__(self, d_model, max_len=8000):
         super(RelativePositionEncoding, self).__init__()
@@ -525,7 +523,6 @@ class DoubleMaskEncoderLayer(torch.nn.Module):
         encoded = self.layernorm(feed_forward_out + interacted)
         return encoded
 
-
 class MaskedConv1d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
         super(MaskedConv1d, self).__init__()
@@ -606,7 +603,6 @@ class TripleConv1d(nn.Module):
         x = x * mask
         x = x.permute(0,2,1)
         return x
-
 
 #________________________________________________________________________________________________________________________#
 class TransformerEncoder(nn.Module):
@@ -704,7 +700,6 @@ def mask_missing(data, missing_features_ind, mask_value=-1):
     masked_data[mask] = mask_value
     # Return the masked data and the mask
     return masked_data, mask
-
 
 def __train_model(model, dataset, criterion, optimizer, num_epochs=25, mask_percentage=0.15, chunk=False, n_chunks=1, context_length=2000, batch_size=100, start_epoch=0):
     log_strs = []
@@ -937,7 +932,6 @@ def _train_model(model, dataset, criterion, optimizer, d_model, num_epochs=25, m
 
     return model
 
-
 class old__BAM_TO_SIGNAL(object):
     def __init__(self, resolution):
         """
@@ -1121,8 +1115,6 @@ class old__BAM_TO_SIGNAL(object):
 
         t1 = datetime.datetime.now()
         print(f"took {t1-t0} to get coverage for {bam_file} at resolution: {resolution}bp")
-
-
 
 def reshape_tensor(tensor, context_length_factor):
     # Get the original size of the tensor
@@ -1310,7 +1302,6 @@ def mask_data18(data, available_features, mask_value=-1, mask_percentage=0.15):
 
     return data, mask
  
-
 def eDICE_eval():
     e = Evaluation(
         model_path= "models/EpiDenoise_20231210014829_params154531.pt", 
@@ -2581,7 +2572,6 @@ class MONITOR_VALIDATION(object):
     
     # print(e.bios_pipeline("ENCBS343AKO", x_dsf=1))
 
-
 class SyntheticData:
     def __init__(self, n, p, num_features, sequence_length):
         self.n = n
@@ -2821,8 +2811,6 @@ class SyntheticData:
 
         data, metadata, availability = torch.stack(data), torch.stack(metadata), torch.stack(availability)
         return data, metadata, availability
-
-
 
 class EVAL_EED(object):
     """
@@ -3457,8 +3445,6 @@ class EVAL_EED(object):
         #     self.viz.MODEL_boxplot(self.model_res, metric=m)
         #     self.viz.MODEL_regplot_overall(self.model_res, metric=m)
         #     self.viz.MODEL_regplot_perassay(self.model_res, metric=m)
-
-
 
 class VISUALS(object):
     def __init__(self, resolution=25, savedir="models/evals/"):
@@ -5178,7 +5164,6 @@ class MetadataEmbeddingModule(nn.Module):
 
         return full_embed
 
-
 class PositionalEncoding10(nn.Module):
 
      def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
@@ -5214,7 +5199,6 @@ class MaskedLinear(nn.Module):
         masked_weight = self.weights * mask
         output = torch.matmul(x, masked_weight) + self.bias
         return output
-
 
 class AbsPositionalEmbedding15(nn.Module):
     def __init__(self, d_model, max_len=128):
@@ -10162,97 +10146,100 @@ def train_epd30_eic(hyper_parameters, checkpoint_path=None, arch="d"):
 
     return model
 
-# class CANDI_DNA_Encoder(nn.Module):
-#     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-#             n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3):
-#         super(CANDI_DNA_Encoder, self).__init__()
+class CANDI_DNA_Encoder(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3):
+        super(CANDI_DNA_Encoder, self).__init__()
 
-#         self.pos_enc = pos_enc
-#         self.l1 = context_length
-#         self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        self.pos_enc = pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
         
-#         self.f1 = signal_dim 
-#         self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
-#         self.f3 = self.f2 + metadata_embedding_dim
-#         d_model = self.f2
-#         self.latent_dim = self.f2
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f2
+        self.latent_dim = self.f2
 
-#         DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
-#         DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
+        DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
+        DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
 
-#         self.convEncDNA = nn.ModuleList(
-#             [ConvTower(
-#                 DNA_conv_channels[i], DNA_conv_channels[i + 1],
-#                 DNA_kernel_size[i], S=1, D=1,
-#                 pool_type="max", residuals=True,
-#                 groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)])
+        self.convEncDNA = nn.ModuleList(
+            [ConvTower(
+                DNA_conv_channels[i], DNA_conv_channels[i + 1],
+                DNA_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True,
+                groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)])
 
-#         conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
-#         reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
-#         conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
 
-#         self.convEnc = nn.ModuleList(
-#             [ConvTower(
-#                 conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
-#                 conv_kernel_size_list[i], S=1, D=1,
-#                 pool_type="avg", residuals=True,
-#                 groups=self.f1,
-#                 pool_size=pool_size) for i in range(n_cnn_layers)])
+        self.convEnc = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
+                conv_kernel_size_list[i], S=1, D=1,
+                pool_type="avg", residuals=True,
+                groups=self.f1,
+                pool_size=pool_size) for i in range(n_cnn_layers)])
         
-#         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
-#         self.xmd_fusion = nn.Sequential(
-#             nn.Linear(self.f3, self.f2),
-#             nn.LayerNorm(self.f2), 
-#             nn.ReLU())
+        self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, non_linearity=True)
+        self.xmd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
 
-#         self.DNA_Epig_fusion = nn.Sequential(
-#             nn.Linear(2*self.f2, self.f2), 
-#             nn.LayerNorm(self.f2), 
-#             nn.ReLU())
+        self.DNA_Epig_fusion = nn.Sequential(
+            nn.Linear(2*self.f2, self.f2), 
+            nn.LayerNorm(self.f2), 
+            nn.ReLU())
 
-#         if self.pos_enc == "relative":
-#             self.transformer_encoder = nn.ModuleList([
-#                 RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
+        if self.pos_enc == "relative":
+            self.transformer_encoder = nn.ModuleList([
+                RelativeEncoderLayer(d_model=d_model, heads=nhead, feed_forward_hidden=expansion_factor*d_model, dropout=dropout) for _ in range(n_sab_layers)])
             
-#         else:
-#             self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
-#             self.encoder_layer = nn.TransformerEncoderLayer(
-#                 d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
-#             self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
+        else:
+            self.posEnc = PositionalEncoding(d_model, dropout, self.l2)
+            self.encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=expansion_factor*d_model, dropout=dropout, batch_first=True)
+            self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_sab_layers)
 
-#     def forward(self, src, seq, x_metadata):
-#         if len(seq.shape) != len(src.shape):
-#             seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+    def forward(self, src, seq, x_metadata):
+        if len(seq.shape) != len(src.shape):
+            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
 
-#         seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
-#         seq = seq.float()
+        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
+        seq = seq.float()
 
-#         ### DNA CONV ENCODER ###
-#         for seq_conv in self.convEncDNA:
-#             seq = seq_conv(seq)
-#         seq = seq.permute(0, 2, 1)  # to N, L', F2
+        ### DNA CONV ENCODER ###
+        for seq_conv in self.convEncDNA:
+            seq = seq_conv(seq)
+        seq = seq.permute(0, 2, 1)  # to N, L', F2
 
-#         ### SIGNAL CONV ENCODER ###
-#         src = src.permute(0, 2, 1) # to N, F1, L
-#         for conv in self.convEnc:
-#             src = conv(src)
-#         src = src.permute(0, 2, 1)  # to N, L', F2
+        ### SIGNAL CONV ENCODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            src = conv(src)
+        src = src.permute(0, 2, 1)  # to N, L', F2
 
-#         ### SIGNAL METADATA EMBEDDING ###
-#         xmd_embedding = self.xmd_emb(x_metadata)
-#         src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
-#         src = self.xmd_fusion(src)
+        ### SIGNAL METADATA EMBEDDING ###
+        xmd_embedding = self.xmd_emb(x_metadata)
+        src = torch.cat([src, xmd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.xmd_fusion(src)
         
-#         ### DNA EPIGENETIC SIGNAL FUSION ###
-#         src = torch.cat([src, seq], dim=-1)
-#         src = self.DNA_Epig_fusion(src)
+        ### DNA EPIGENETIC SIGNAL FUSION ###
+        src = torch.cat([src, seq], dim=-1)
+        src = self.DNA_Epig_fusion(src)
 
-#         ### TRANSFORMER ENCODER ###
-#         if self.pos_enc != "relative":
-#             src = self.posEnc(src)
-#             src = self.transformer_encoder(src)
-#         else:
-#             for enc in self.transformer_encoder:
-#                 src = enc(src)
+        ### TRANSFORMER ENCODER ###
+        if self.pos_enc != "relative":
+            src = self.posEnc(src)
+            src = self.transformer_encoder(src)
+        else:
+            for enc in self.transformer_encoder:
+                src = enc(src)
 
-#         return src
+        return src
+
+#========================================================================================================#
+
