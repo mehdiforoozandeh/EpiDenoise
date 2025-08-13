@@ -20,6 +20,39 @@ def _auto_device_str() -> str:
     except Exception:
         return "cpu"
 
+def _latest_file_in_dir(directory: str, pattern_suffix: str) -> str | None:
+    try:
+        candidates = [
+            os.path.join(directory, f)
+            for f in os.listdir(directory)
+            if f.endswith(pattern_suffix)
+        ]
+        if not candidates:
+            return None
+        candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+        return candidates[0]
+    except Exception:
+        return None
+
+def _autodiscover_ckpt_and_hparams() -> tuple[str | None, str | None]:
+    # Train script saves under repo-root models/
+    models_dir = os.path.join("models")
+    if not os.path.isdir(models_dir):
+        return None, None
+    ckpt = _latest_file_in_dir(models_dir, ".pt")
+    # Match hyperparams by timestamp if possible; else take latest pkl
+    hparams = _latest_file_in_dir(models_dir, ".pkl")
+    if hparams and not os.path.basename(hparams).startswith("hyper_parameters_"):
+        # search for hyper_parameters_*.pkl explicitly
+        try:
+            hp = [os.path.join(models_dir, f) for f in os.listdir(models_dir) if f.startswith("hyper_parameters_") and f.endswith('.pkl')]
+            if hp:
+                hp.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                hparams = hp[0]
+        except Exception:
+            pass
+    return ckpt, hparams
+
 
 def _append_timing(output_dir: str, method: str, stage: str, dataset: str,
                    scope_train: Optional[str], scope_test: Optional[str],
@@ -141,12 +174,12 @@ def cmd_infer(args: argparse.Namespace) -> None:
     os.makedirs(out_root, exist_ok=True)
 
     handler = EVAL_CANDI(
-        model=args.ckpt,
+        model=args.ckpt if args.ckpt else "",
         data_path=args.data_path,
         context_length=args.context_length,
         batch_size=args.batch_size,
-        hyper_parameters_path=args.hyperparams,
-        mode="dev",
+        hyper_parameters_path=(args.hyperparams if args.hyperparams else ""),
+        mode="eval",
         split="test",
         eic=(args.dataset == "eic"),
         DNA=True,
@@ -159,7 +192,28 @@ def cmd_infer(args: argparse.Namespace) -> None:
     for bios in bios_list:
         tb0 = time.time()
         try:
-            res = handler.bios_pipeline(bios, x_dsf=args.dsf, quick=False)
+            # Ensure model is loaded if not provided
+            if handler.model is None or (isinstance(handler.model, str) and handler.model == ""):
+                ckpt_path, hp_path = _autodiscover_ckpt_and_hparams()
+                if ckpt_path and hp_path:
+                    # re-init a fresh handler with proper paths
+                    handler = EVAL_CANDI(
+                        model=ckpt_path,
+                        data_path=args.data_path,
+                        context_length=args.context_length,
+                        batch_size=args.batch_size,
+                        hyper_parameters_path=hp_path,
+                        mode="eval",
+                        split="test",
+                        eic=(args.dataset == "eic"),
+                        DNA=True,
+                        savedir=os.path.join(out_root, "evals"),
+                    )
+
+            if args.dataset == "eic":
+                res = handler.bios_pipeline_eic(bios, x_dsf=args.dsf, quick=False)
+            else:
+                res = handler.bios_pipeline(bios, x_dsf=args.dsf, quick=False)
             out_dir = os.path.join(out_root, "imputed_tracks", "candi")
             os.makedirs(out_dir, exist_ok=True)
             for r in res:
