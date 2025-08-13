@@ -20,6 +20,561 @@ import torch
 from scipy.stats import norm
 import psutil
 
+
+
+class METRICS(object):
+    def __init__(self, chrom='chr21', bin_size=25):
+        self.prom_df = self.get_prom_positions(chrom, bin_size)
+        self.gene_df = self.get_gene_positions(chrom, bin_size)
+
+        self.gene_df["strand"] = self.prom_df["strand"]
+
+    def get_gene_positions(self, chrom, bin_size):
+        gene_df = pd.read_csv(PROC_GENE_BED_FPATH, sep='\t', header=None,
+                              names=['chrom', 'start', 'end', 'gene_id', 'gene_name'])
+        chrom_subset = gene_df[gene_df['chrom'] == chrom].copy()
+
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+        return chrom_subset
+
+    def get_prom_positions(self, chrom, bin_size):
+        prom_df = pd.read_csv(PROC_PROM_BED_PATH, sep='\t', header=None,
+                              names=['chrom', 'start', 'end', 'gene_id', 'gene_name', "strand"])
+        chrom_subset = prom_df[prom_df['chrom'] == chrom].copy()
+
+        chrom_subset['start'] = (chrom_subset['start'] / bin_size).apply(lambda s: math.floor(s))
+        chrom_subset['end'] = (chrom_subset['end'] / bin_size).apply(lambda s: math.floor(s))
+
+        return chrom_subset
+        
+    def get_signals(self, array, df):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in df.iterrows()])
+        valid_indices = indices[indices < len(array)]
+
+        signals = array[valid_indices]
+        return signals
+
+    ################################################################################
+
+    def get_gene_signals(self, y_true, y_pred, bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+
+        return gt_vals, pred_vals
+    
+    def get_prom_signals(self, y_true, y_pred, bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+
+        return gt_vals, pred_vals
+    
+    def get_1obs_signals(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return y_true[perc_99_pos], y_pred[perc_99_pos]
+
+    def get_1imp_signals(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return y_true[perc_99_pos], y_pred[perc_99_pos]
+    
+    ################################################################################
+    def r2(self, y_true, y_pred):
+        return r2_score(y_true, y_pred)
+
+    def r2_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+
+        return self.r2(y_true=gt_vals, y_pred=pred_vals)
+    
+    def r2_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+
+        return self.r2(y_true=gt_vals, y_pred=pred_vals)
+
+    def r2_1obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def r2_1imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return self.r2(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def mse(self, y_true, y_pred):
+        """
+        Calculate the genome-wide Mean Squared Error (MSE). This is a measure of the average squared difference 
+        between the true and predicted values across the entire genome at a resolution of 25bp.
+        """
+        return np.mean((np.array(y_true) - np.array(y_pred))**2)
+    
+    def mse_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+
+        return self.mse(y_true=gt_vals, y_pred=pred_vals)
+
+    def pearson_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+
+        return self.pearson(y_true=gt_vals, y_pred=pred_vals)
+
+    def spearman_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # gene_df = self.get_gene_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+
+        return self.spearman(y_true=gt_vals, y_pred=pred_vals)
+
+    def pearson(self, y_true, y_pred):
+        """
+        Calculate the genome-wide Pearson Correlation. This measures the linear relationship between the true 
+        and predicted values across the entire genome at a resolution of 25bp.
+        """
+        return pearsonr(y_pred, y_true)[0]
+
+    def spearman(self, y_true, y_pred):
+        """
+        Calculate the genome-wide Spearman Correlation. This measures the monotonic relationship between the true 
+        and predicted values across the entire genome at a resolution of 25bp.
+        """
+        return spearmanr(y_pred, y_true)[0]
+
+    def mse_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+
+        return self.mse(y_true=gt_vals, y_pred=pred_vals)
+
+    def pearson_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+
+        return self.pearson(y_true=gt_vals, y_pred=pred_vals)
+
+    def spearman_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        # assert chrom == 'chr21', f'Got evaluation with unsupported chromosome {chrom}'
+
+        # prom_df = self.get_prom_positions(chrom, bin_size)
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+
+        return self.spearman(y_true=gt_vals, y_pred=pred_vals)
+
+    def mse1obs(self, y_true, y_pred):
+        """
+        Calculate the Mean Squared Error at the top 1% of genomic positions ranked by experimental signal (mse1obs). 
+        This is a measure of how well predictions match observations at positions with high experimental signal. 
+        It's similar to recall.
+        """
+        top_1_percent = int(0.01 * len(y_true))
+        top_1_percent_indices = np.argsort(y_true)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
+
+    def mse1imp(self, y_true, y_pred):
+        """
+        Calculate the Mean Squared Error at the top 1% of genomic positions ranked by predicted signal (mse1imp). 
+        This is a measure of how well predictions match observations at positions with high predicted signal. 
+        It's similar to precision.
+        """
+        top_1_percent = int(0.01 * len(y_pred))
+        top_1_percent_indices = np.argsort(y_pred)[-top_1_percent:]
+        return mean_squared_error(y_true[top_1_percent_indices], y_pred[top_1_percent_indices])
+
+    def pearson1_obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def spearman1_obs(self, y_true, y_pred):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def pearson1_imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return self.pearson(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def spearman1_imp(self, y_true, y_pred):
+        perc_99 = np.percentile(y_pred, 99)
+        perc_99_pos = np.where(y_pred >= perc_99)[0]
+
+        return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
+
+    def peak_overlap(self, y_true, y_pred, p=0.01):
+        if p == 0:
+            return 0
+
+        elif p == 1:
+            return 1
+
+        top_p_percent = int(p * len(y_true))
+
+        # Get the indices of the top p percent of the observed (true) values
+        top_p_percent_obs_i = np.argsort(y_true)[-top_p_percent:]
+        
+        # Get the indices of the top p percent of the predicted values
+        top_p_percent_pred_i = np.argsort(y_pred)[-top_p_percent:]
+
+        # Calculate the overlap
+        overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
+
+        # Calculate the percentage of overlap
+        overlap_percent = overlap / top_p_percent 
+
+        return overlap_percent
+
+    def correspondence_curve(self, y_true, y_pred):
+        curve = []
+        derivatives = []
+        steps = [float(p / 100) for p in range(0, 101, 1)]
+
+        obs_rank = np.argsort(y_true)
+        pred_rank = np.argsort(y_pred)
+
+        for p in steps:
+            if p == 0 or p == 1:
+                overlap_percent = p
+            else:
+                top_p_percent = int(p * len(y_true))
+                top_p_percent_obs_i = obs_rank[-top_p_percent:]
+                top_p_percent_pred_i = pred_rank[-top_p_percent:]
+
+                overlap = len(np.intersect1d(top_p_percent_obs_i, top_p_percent_pred_i))
+                overlap_percent = overlap / len(y_true)
+
+            curve.append((p, overlap_percent))
+
+        # Calculate derivatives using finite differences
+        for i in range(1, len(curve)):
+            dp = curve[i][0] - curve[i-1][0]
+            d_overlap_percent = curve[i][1] - curve[i-1][1]
+            derivative = d_overlap_percent / dp
+            derivatives.append((curve[i][0], derivative))
+
+        return curve, derivatives
+
+    def confidence_quantile(self, nbinom_p, nbinom_n, y_true):
+        nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
+        return nbinom_dist.cdf(y_true)
+
+    def foreground_vs_background(self, nbinom_p, nbinom_n, y_true):
+        """
+        inputs: 1) nbinom_p, nbinom_n -> two arrays with length L -> negative binomial dist parameters for each position
+                2) y_true -> one array of true observed signal
+
+        task:
+
+            - NEW 2: peak vs. background comparison
+            - binarize each observed experiment according to some threshold.
+            - measure the two following
+                - what fraction of positions outside peaks have overlap (confidence interval) with zero
+                - for peaks, for what fraction, the confidence interval overlap with 0. this should ideally be low since otherwise the model is not sure about the peak
+            - intervals 90 95 99 percent
+        """
+
+        nbinom_dist = NegativeBinomial(nbinom_p, nbinom_n)
+        binarized_y = binarize_nbinom(y_true)
+
+        pmf_zero = (nbinom_dist.pmf(0))
+
+        analysis = {}
+
+        background_pmf_zero = pmf_zero[binarized_y == 0].mean() 
+        peak_pmf_zero = pmf_zero[binarized_y == 1].mean() 
+
+        analysis["p0_bg"] = background_pmf_zero.item()
+        analysis["p0_fg"] = peak_pmf_zero.item()
+
+        return analysis
+
+    def c_index_gauss(self, mus, sigmas, y_true, num_pairs: int = 10000):
+        """
+        Concordance index for Gaussian predictive marginals,
+        estimating over `num_pairs` randomly sampled pairs.
+        
+        Inputs:
+          - mus:       array_like, shape (N,) of predicted means μ_i
+          - sigmas:    array_like, shape (N,) of predicted stddevs σ_i
+          - y_true:    array_like, shape (N,) of true values y_i
+          - num_pairs: number of random (i<j) pairs to sample;
+                       if -1, use all possible pairs (i<j)
+        Returns:
+          - c_index: float in [0,1]
+        """
+        N = len(y_true)
+        labels = []
+        scores = []
+
+        if num_pairs == -1:
+            # exact over all valid pairs
+            for i in range(N):
+                for j in range(i+1, N):
+                    if y_true[i] == y_true[j]:
+                        continue
+                    labels.append(int(y_true[i] > y_true[j]))
+                    delta = mus[i] - mus[j]
+                    sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
+                    scores.append(norm.cdf(delta / sd))
+        else:
+            # Monte Carlo sampling of pairs
+            rng = np.random.default_rng()
+            count = 0
+            while count < num_pairs:
+                i, j = rng.integers(0, N, size=2)
+                if i == j or y_true[i] == y_true[j]:
+                    continue
+                # Optional: enforce ordering i<j for consistency
+                if i > j:
+                    i, j = j, i
+                labels.append(int(y_true[i] > y_true[j]))
+                delta = mus[i] - mus[j]
+                sd = np.sqrt(sigmas[i]**2 + sigmas[j]**2)
+                scores.append(norm.cdf(delta / sd))
+                count += 1
+
+        return roc_auc_score(labels, scores)
+
+    def c_index_gauss_gene(self, mus, sigmas, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
+        valid_indices = indices[indices < len(y_true)]
+        
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+
+        c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_gauss_prom(self, mus, sigmas, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
+        valid_indices = indices[indices < len(y_true)]
+
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+
+        c_idx = self.c_index_gauss(mus[valid_indices], sigmas[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_gauss_1obs(self, mus, sigmas, y_true, num_pairs=10000):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        N = len(perc_99_pos)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+
+        c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
+        return c_idx
+
+    # def c_index_nbinom(self,
+    #                    rs, ps, y_true,
+    #                    epsilon: float = 1e-6,
+    #                    num_pairs: int = 10000):
+    #     """
+    #     Concordance index for Negative‐Binomial predictive marginals,
+    #     estimating over `num_pairs` randomly sampled pairs.
+
+    #     Inputs:
+    #       - rs:        (N,) array of NB 'r' parameters (must be >0)
+    #       - ps:        (N,) array of NB 'p' parameters (0<p<1)
+    #       - y_true:    (N,) array of true values y_i
+    #       - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
+    #       - num_pairs: number of random (i<j) pairs to sample;
+    #                    if -1, use all valid pairs (i<j, y_i≠y_j)
+    #     Returns:
+    #       - c_index: float in [0,1]
+    #     """
+    #     N = len(y_true)
+    #     labels = []
+    #     scores = []
+
+    #     def compute_score(i, j):
+    #         # clamp p_j into (ε,1−ε)
+    #         p_j = np.clip(ps[j], epsilon, 1 - epsilon)
+    #         r_j = rs[j]
+    #         if r_j <= 0:
+    #             return None
+    #         # find cutoff K
+    #         K = nbinom.ppf(1 - epsilon, r_j, p_j)
+    #         if not np.isfinite(K):
+    #             K = 0
+    #         else:
+    #             K = int(K)
+              
+    #         # PMF/CDF arrays
+    #         k = np.arange(K + 1)
+    #         pmf_j = nbinom.pmf(k, r_j, p_j)
+    #         cdf_i = nbinom.cdf(k, rs[i], ps[i])
+    #         # if anything is nan, bail
+    #         if not (np.isfinite(pmf_j).all() and np.isfinite(cdf_i).all()):
+    #             return None
+    #         return np.sum(pmf_j * (1.0 - cdf_i))
+
+    #     if num_pairs == -1:
+    #         # exact mode
+    #         for i in range(N):
+    #             for j in range(i+1, N):
+    #                 if y_true[i] == y_true[j]:
+    #                     continue
+    #                 sc = compute_score(i, j)
+    #                 if sc is None:
+    #                     continue
+    #                 labels.append(int(y_true[i] > y_true[j]))
+    #                 scores.append(sc)
+    #     else:
+    #         # sampling mode
+    #         rng = np.random.default_rng()
+    #         count = 0
+    #         while count < num_pairs:
+    #             i, j = rng.integers(0, N, size=2)
+    #             if i == j or y_true[i] == y_true[j]:
+    #                 continue
+    #             if i > j:
+    #                 i, j = j, i
+    #             sc = compute_score(i, j)
+    #             if sc is None:
+    #                 continue
+    #             labels.append(int(y_true[i] > y_true[j]))
+    #             scores.append(sc)
+    #             count += 1
+
+    #     if len(labels) == 0:
+    #         # no valid pairs
+    #         return np.nan
+
+    #     return roc_auc_score(labels, scores)
+
+    def c_index_nbinom(self,
+                    rs, ps, y_true,
+                    M: int = 500,
+                    num_pairs: int = 10000,
+                    random_state: int = None):
+        """
+        Monte Carlo Concordance index for Negative‐Binomial predictive marginals.
+
+        For each sampled pair (i,j), draw M samples from NB(ri,pi) and NB(rj,pj),
+        then estimate Pr(Y_i>Y_j) by the fraction of draws with u>v.
+
+        Inputs:
+          - rs:        (N,) array of NB 'r' parameters
+          - ps:        (N,) array of NB 'p' parameters
+          - y_true:    (N,) array of true values y_i
+          - M:         number of Monte Carlo samples per pair
+          - num_pairs: how many random (i<j) pairs to sample;
+                       if -1, use all valid pairs (i<j, y_i≠y_j)
+          - random_state: seed for reproducibility
+        Returns:
+          - c_index: float in [0,1]
+        """
+        rng = np.random.default_rng(random_state)
+        N = len(y_true)
+        labels = []
+        scores = []
+
+        def mc_score(i, j):
+            # draw M samples from each distribution
+            u = nbinom.rvs(rs[i], ps[i], size=M, random_state=rng)
+            v = nbinom.rvs(rs[j], ps[j], size=M, random_state=rng)
+            return np.mean(u > v)
+
+        if num_pairs == -1:
+            # exact over all pairs
+            for i in range(N):
+                for j in range(i+1, N):
+                    if y_true[i] == y_true[j]:
+                        continue
+                    labels.append(int(y_true[i] > y_true[j]))
+                    scores.append(mc_score(i, j))
+        else:
+            # sample random pairs
+            count = 0
+            while count < num_pairs:
+                i, j = rng.integers(0, N, size=2)
+                if i == j or y_true[i] == y_true[j]:
+                    continue
+                # ensure i<j for consistency (optional)
+                if i > j:
+                    i, j = j, i
+                labels.append(int(y_true[i] > y_true[j]))
+                scores.append(mc_score(i, j))
+                count += 1
+
+        if not labels:
+            return np.nan
+        return roc_auc_score(labels, scores)
+
+    def c_index_nbinom_gene(self, rs, ps, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.gene_df.iterrows()])
+        valid_indices = indices[indices < len(y_true)]
+
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+
+        c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_nbinom_prom(self, rs, ps, y_true, num_pairs=10000):
+        indices = np.concatenate([np.arange(row['start'], row['end']) for _, row in self.prom_df.iterrows()])
+        valid_indices = indices[indices < len(y_true)]
+
+        N = len(valid_indices)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+
+        c_idx = self.c_index_nbinom(rs[valid_indices], ps[valid_indices], y_true[valid_indices], num_pairs)
+        return c_idx
+
+    def c_index_nbinom_1obs(self, rs, ps, y_true, num_pairs=10000):
+        perc_99 = np.percentile(y_true, 99)
+        perc_99_pos = np.where(y_true >= perc_99)[0]
+
+        N = len(perc_99_pos)
+        if (N*(N-1))/2 < num_pairs:
+            num_pairs = -1
+        
+        c_idx = self.c_index_nbinom(rs[perc_99_pos], ps[perc_99_pos], y_true[perc_99_pos], num_pairs)
+        return c_idx
+
 def get_divisible_heads(dim, target):
     """
     Given a dimension and a target number of heads, returns the largest integer
