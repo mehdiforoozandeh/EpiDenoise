@@ -1053,7 +1053,7 @@ class PRETRAIN(object):
         else:
             return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None, HPO=False):
+def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None, HPO=False, save_root_dir: str | None = None):
     if eic:
         arch="eic"
     else:
@@ -1159,7 +1159,9 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     summary(model)
     
     model_name = f"CANDI{arch}_{datetime.now().strftime('%Y%m%d%H%M%S')}_params{count_parameters(model)}.pt"
-    with open(f'models/hyper_parameters_{model_name.replace(".pt", ".pkl")}', 'wb') as f:
+    model_root = save_root_dir if save_root_dir is not None else "models/"
+    os.makedirs(model_root, exist_ok=True)
+    with open(os.path.join(model_root, f'hyper_parameters_{model_name.replace(".pt", ".pkl")}'), 'wb') as f:
         pickle.dump(hyper_parameters, f)
 
     criterion = CANDI_LOSS()
@@ -1177,7 +1179,7 @@ def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, su
     end_time = time.time()
 
     # Save the trained model
-    model_dir = "models/"
+    model_dir = model_root
     os.makedirs(model_dir, exist_ok=True)
     if not HPO:
         torch.save(model.state_dict(), os.path.join(model_dir, model_name))

@@ -53,6 +53,42 @@ def _autodiscover_ckpt_and_hparams() -> tuple[str | None, str | None]:
             pass
     return ckpt, hparams
 
+def _write_model_manifest(bench_dir: str, ckpt: str | None, hyperparams: str | None) -> None:
+    os.makedirs(os.path.join(bench_dir, "evaluation"), exist_ok=True)
+    manifest = {"ckpt": ckpt or "", "hyperparams": hyperparams or ""}
+    with open(os.path.join(bench_dir, "evaluation", "candi_model_paths.json"), "w") as f:
+        import json
+        json.dump(manifest, f, indent=2)
+
+def _read_model_manifest(bench_dir: str) -> tuple[str | None, str | None]:
+    try:
+        with open(os.path.join(bench_dir, "evaluation", "candi_model_paths.json"), "r") as f:
+            import json
+            data = json.load(f)
+            ckpt = data.get("ckpt") or None
+            hp = data.get("hyperparams") or None
+            return ckpt, hp
+    except Exception:
+        return None, None
+
+def _mirror_latest_model_to_bench_dir(bench_dir: str) -> tuple[str | None, str | None]:
+    ckpt, hp = _autodiscover_ckpt_and_hparams()
+    if not ckpt or not hp:
+        return ckpt, hp
+    dst_dir = os.path.join(bench_dir, "models", "candi")
+    os.makedirs(dst_dir, exist_ok=True)
+    try:
+        import shutil
+        ckpt_dst = os.path.join(dst_dir, os.path.basename(ckpt))
+        hp_dst = os.path.join(dst_dir, os.path.basename(hp))
+        shutil.copy2(ckpt, ckpt_dst)
+        shutil.copy2(hp, hp_dst)
+        _write_model_manifest(bench_dir, ckpt_dst, hp_dst)
+        return ckpt_dst, hp_dst
+    except Exception:
+        _write_model_manifest(bench_dir, ckpt, hp)
+        return ckpt, hp
+
 
 def _append_timing(output_dir: str, method: str, stage: str, dataset: str,
                    scope_train: Optional[str], scope_test: Optional[str],
@@ -130,6 +166,7 @@ def cmd_train(args: argparse.Namespace) -> None:
         suffix=args.suffix,
         prog_mask=args.prog_mask,
         HPO=args.hpo,
+        save_root_dir=os.path.join(out_root, "models", "candi"),
     )
     t1 = time.time()
 
@@ -159,6 +196,11 @@ def cmd_train(args: argparse.Namespace) -> None:
 
     _append_timing(out_root, "candi", "train", args.dataset, args.train_scope, None, n_bios, n_assays, t0, t1)
 
+    # Mirror latest model and hyperparams into bench_dir and write manifest
+    ckpt_path, hp_path = _mirror_latest_model_to_bench_dir(out_root)
+    if ckpt_path and hp_path:
+        print(f"[candi.train] Saved model copy to: {ckpt_path}\n[candi.train] Saved hyperparams copy to: {hp_path}")
+
 
 # -------- infer --------
 
@@ -173,12 +215,26 @@ def cmd_infer(args: argparse.Namespace) -> None:
     out_root = args.bench_dir
     os.makedirs(out_root, exist_ok=True)
 
+    # Ensure we have valid model and hyperparams paths
+    ckpt_path = args.ckpt
+    hp_path = args.hyperparams
+    if not ckpt_path or not hp_path:
+        m_ckpt, m_hp = _read_model_manifest(out_root)
+        ckpt_path = ckpt_path or m_ckpt
+        hp_path = hp_path or m_hp
+    if not ckpt_path or not hp_path:
+        a_ckpt, a_hp = _autodiscover_ckpt_and_hparams()
+        ckpt_path = ckpt_path or a_ckpt
+        hp_path = hp_path or a_hp
+    if not ckpt_path or not hp_path:
+        raise FileNotFoundError("CANDI checkpoint/hyperparameters not found. Train first or provide --ckpt/--hyperparams.")
+
     handler = EVAL_CANDI(
-        model=args.ckpt if args.ckpt else "",
+        model=ckpt_path,
         data_path=args.data_path,
         context_length=args.context_length,
         batch_size=args.batch_size,
-        hyper_parameters_path=(args.hyperparams if args.hyperparams else ""),
+        hyper_parameters_path=hp_path,
         mode="eval",
         split="test",
         eic=(args.dataset == "eic"),
