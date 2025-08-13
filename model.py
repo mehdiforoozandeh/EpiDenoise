@@ -1,3 +1,6 @@
+from _utils import *    
+from data import * 
+
 import torch, math, random, time, json, os, pickle, sys, gc
 from torch import nn
 import torch.optim as optim
@@ -11,9 +14,6 @@ from scipy.stats import nbinom
 import imageio.v2 as imageio
 from io import BytesIO
 from torchinfo import summary
-
-from _utils import *    
-from data import * 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
