@@ -3644,9 +3644,10 @@ if __name__ == "__main__":
                         #     biosample_accession = None
                         #     experiment_accession = None
                     else:
-                        file_accession = None
-                        biosample_accession = None
-                        experiment_accession = None
+                        print(f"no file_metadata.json for {biosample}-{exp}, {file_metadata_path}")
+                        # file_accession = None
+                        # biosample_accession = None
+                        # experiment_accession = None
                     biosample_dict[biosample][exp] = {
                         "biosample": biosample_accession,
                         "experiment": experiment_accession,
