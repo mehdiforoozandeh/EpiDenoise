@@ -3603,46 +3603,46 @@ if __name__ == "__main__":
                     # Path to file_metadata.json
                     file_metadata_path = os.path.join(solar_data_path, biosample, exp, "file_metadata.json")
                     if os.path.exists(file_metadata_path):
-                        try:
-                            with open(file_metadata_path, "r") as fm:
-                                file_metadata = json.load(fm)
-                            # Extract file accession (ENCFF*), biosample (ENCB*), and experiment (ENCR*)
-                            # The file_metadata structure is a dict with keys like "accession", "biosample", "experiment"
-                            # Each of these is a dict with a single key (e.g., "5") mapping to the value
-                            def extract_first_matching(d, prefix):
-                                if isinstance(d, dict):
-                                    for v in d.values():
-                                        if isinstance(v, str) and v.startswith(prefix):
-                                            return v
-                                elif isinstance(d, str) and d.startswith(prefix):
-                                    return d
-                                return None
+                        # try:
+                        with open(file_metadata_path, "r") as fm:
+                            file_metadata = json.load(fm)
+                        # Extract file accession (ENCFF*), biosample (ENCB*), and experiment (ENCR*)
+                        # The file_metadata structure is a dict with keys like "accession", "biosample", "experiment"
+                        # Each of these is a dict with a single key (e.g., "5") mapping to the value
+                        def extract_first_matching(d, prefix):
+                            if isinstance(d, dict):
+                                for v in d.values():
+                                    if isinstance(v, str) and v.startswith(prefix):
+                                        return v
+                            elif isinstance(d, str) and d.startswith(prefix):
+                                return d
+                            return None
 
-                            file_accession = extract_first_matching(file_metadata.get("accession", {}), "ENCFF")
-                            biosample_accession = extract_first_matching(file_metadata.get("biosample", {}), "ENCB")
-                            experiment_accession = None
-                            exp_val = file_metadata.get("experiment", {})
-                            if isinstance(exp_val, dict):
-                                for v in exp_val.values():
-                                    # Sometimes experiment is a path like "/experiments/ENCSR133QBG/"
-                                    if isinstance(v, str):
-                                        parts = v.split("/")
-                                        for part in parts:
-                                            if part.startswith("ENCSR"):
-                                                experiment_accession = part
-                                                break
-                                        if experiment_accession:
+                        file_accession = extract_first_matching(file_metadata.get("accession", {}), "ENCFF")
+                        biosample_accession = extract_first_matching(file_metadata.get("biosample", {}), "ENCB")
+                        experiment_accession = None
+                        exp_val = file_metadata.get("experiment", {})
+                        if isinstance(exp_val, dict):
+                            for v in exp_val.values():
+                                # Sometimes experiment is a path like "/experiments/ENCSR133QBG/"
+                                if isinstance(v, str):
+                                    parts = v.split("/")
+                                    for part in parts:
+                                        if part.startswith("ENCSR"):
+                                            experiment_accession = part
                                             break
-                            elif isinstance(exp_val, str):
-                                parts = exp_val.split("/")
-                                for part in parts:
-                                    if part.startswith("ENCSR"):
-                                        experiment_accession = part
+                                    if experiment_accession:
                                         break
-                        except Exception as e:
-                            file_accession = None
-                            biosample_accession = None
-                            experiment_accession = None
+                        elif isinstance(exp_val, str):
+                            parts = exp_val.split("/")
+                            for part in parts:
+                                if part.startswith("ENCSR"):
+                                    experiment_accession = part
+                                    break
+                        # except Exception as e:
+                        #     file_accession = None
+                        #     biosample_accession = None
+                        #     experiment_accession = None
                     else:
                         file_accession = None
                         biosample_accession = None
@@ -3650,12 +3650,12 @@ if __name__ == "__main__":
                     biosample_dict[biosample][exp] = {
                         "biosample": biosample_accession,
                         "experiment": experiment_accession,
-                        "filename_accession": file_accession
+                        "bam_filename_accession": file_accession
                     }
                     print(biosample_dict[biosample][exp])
             # Save to output json
-            with open(output_json_path, "w") as out_f:
-                json.dump(biosample_dict, out_f, indent=2)
+            # with open(output_json_path, "w") as out_f:
+            #     json.dump(biosample_dict, out_f, indent=2)
 
         # Paths
         navigation_eic_path = os.path.join(solar_data_path, "navigation_eic.json")
