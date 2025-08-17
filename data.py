@@ -3828,10 +3828,10 @@ if __name__ == "__main__":
                         "bios_accession": biosample_accession,
                         "exp_accession": experiment_accession,
                         "file_accession": file_accession,
-                        "bam_accession": bam_accession 
-                        "tsv_accession": tsv_accession if exp == "RNA-seq" else None,
-                        "signal_bigwig_accession": signal_bigwig_accession if exp != "RNA-seq" else None,
-                        "peaks_bigbed_accession": peaks_bigbed_ccession if exp != "RNA-seq" else None
+                        "bam_accession": bam_accession, 
+                        "tsv_accession": tsv_accession,
+                        "signal_bigwig_accession": signal_bigwig_accession,
+                        "peaks_bigbed_accession": peaks_bigbed_accession
                     }
                     print(biosample, exp, biosample_dict[biosample][exp])
             # Save to output json
