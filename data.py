@@ -3593,34 +3593,60 @@ if __name__ == "__main__":
         import requests
 
         def select_preferred_row(df):
-            """Helper function to select the preferred file from multiple options based on preferences."""
+            """
+            Enhanced helper function to select the preferred file with strict requirements.
+            Now requires: preferred_default == True, status == "released", assembly == "GRCh38"
+            """
             if df.empty:
                 raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
             
-            # Define preferences (same as in get_signal_pval_bigwig and get_peaks_bigbed)
+            # First apply MANDATORY filters
+            mandatory_filters = [
+                ('status', 'released'),
+                ('assembly', 'GRCh38')
+            ]
+            
+            original_df = df.copy()
+            
+            for column, required_value in mandatory_filters:
+                if column in df.columns:
+                    df = df[df[column] == required_value]
+                    
+                    if df.empty:
+                        return None
+            
+            # Apply preference-based filters (with preferred_default as priority)
             preferences = [
+                ('default', True),  # preferred_default == True (renamed in our DataFrame)
                 ('derived_from_bam', True),
                 ('bio_replicate_number', lambda x: len(x) == 1),
                 ('same_bios', True),
-                ('default', True)
             ]
-
+            
             for column, condition in preferences:
-                if len(df) > 1:
+                if len(df) > 1 and column in df.columns:
                     if callable(condition):
-                        df = df[df[column].apply(condition)]
+                        filtered_df = df[df[column].apply(condition)]
                     else:
-                        df = df[df[column] == condition]
+                        filtered_df = df[df[column] == condition]
+                    
+                    # Only apply the filter if it doesn't make DataFrame empty
+                    if not filtered_df.empty:
+                        df = filtered_df
+                            
                 if len(df) == 1:
                     return df.iloc[0]
             
-            # Sort by date_created if still multiple rows
+            # If no preferences worked but we still have candidates, sort by date_created
             if len(df) > 1:
                 df['date_created'] = pd.to_datetime(df['date_created'])
                 df = df.sort_values(by='date_created', ascending=False)
 
             # Return the top row of the filtered DataFrame
-            return df.iloc[0]
+            if not df.empty:
+                return df.iloc[0]
+            else:
+                return None
 
         def get_file_accessions_from_experiment(exp_accession, bios_accession, assay_name, assembly="GRCh38"):
             """
@@ -3690,10 +3716,9 @@ if __name__ == "__main__":
                     f"https://www.encodeproject.org{efile_results.get('href', '')}", 
                     efile_results.get('date_created', ''), efile_results.get('status', '')]
                 
-                if "preferred_default" in efile_results.keys():
-                    parsed.append(efile_results["preferred_default"])
-                else:
-                    parsed.append(None)
+                # Check for preferred_default flag
+                preferred_default = efile_results.get("preferred_default", False)
+                parsed.append(preferred_default)
                 
                 parsed.append(True)  # derived_from_bam (assume True)
                 
@@ -3726,7 +3751,8 @@ if __name__ == "__main__":
             if bigwig_files:
                 bigwig_df = pd.DataFrame(bigwig_files, columns=columns)
                 best_bigwig = select_preferred_row(bigwig_df)
-                result['signal_bigwig_accession'] = best_bigwig['accession']
+                if best_bigwig is not None:
+                    result['signal_bigwig_accession'] = best_bigwig['accession']
             
             # Get best bigbed file  
             if bigbed_files:
@@ -3734,11 +3760,15 @@ if __name__ == "__main__":
                 bigbed_df['date_created'] = pd.to_datetime(bigbed_df['date_created'])
                 bigbed_df = bigbed_df[bigbed_df['date_created'] == bigbed_df['date_created'].max()]
                 best_bigbed = select_preferred_row(bigbed_df)
-                result['peaks_bigbed_accession'] = best_bigbed['accession']
+                if best_bigbed is not None:
+                    result['peaks_bigbed_accession'] = best_bigbed['accession']
             
-            # Get TSV file (just return first one found)
+            # Get TSV file (apply same filtering logic)
             if tsv_files:
-                result['tsv_accession'] = tsv_files[0][1]  # accession is at index 1
+                tsv_df = pd.DataFrame(tsv_files, columns=columns)
+                best_tsv = select_preferred_row(tsv_df)
+                if best_tsv is not None:
+                    result['tsv_accession'] = best_tsv['accession']
             
             return result
                 
