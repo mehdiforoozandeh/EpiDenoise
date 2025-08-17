@@ -3922,67 +3922,67 @@ if __name__ == "__main__":
                 
             headers = {'accept': 'application/json'}
             
-            # try:    
-            # Single JSON fetch for entire experiment
-            exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
-            response = requests.get(exp_url, headers=headers)
-            
-            if response.status_code != 200:
-                print(f"Error fetching experiment: HTTP {response.status_code}")
+            try:
+                # Single JSON fetch for entire experiment
+                exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
+                response = requests.get(exp_url, headers=headers)
+                
+                if response.status_code != 200:
+                    print(f"Error fetching experiment: HTTP {response.status_code}")
+                    return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
+                
+                exp_data = response.json()
+                files = exp_data.get('files', [])
+                
+                # Filter files by type and criteria
+                bigwig_candidates = []
+                bigbed_candidates = []
+                tsv_candidates = []
+                
+                for file_info in files:
+                    file_format = file_info.get('file_format', '')
+                    output_type = file_info.get('output_type', '')
+                    assembly_val = file_info.get('assembly', '')
+                    status = file_info.get('status', '')
+                    
+                    # Only consider files with correct assembly and status
+                    if assembly_val != assembly or status != "released":
+                        continue
+                    
+                    if file_format == "bigWig" and "signal p-value" in output_type:
+                        bigwig_candidates.append(file_info)
+                    elif file_format == "bigBed" and "peaks" in output_type:
+                        bigbed_candidates.append(file_info)
+                    elif file_format == "tsv":
+                        tsv_candidates.append(file_info)
+                
+                # Select best files using optimized selection
+                result = {
+                    'signal_bigwig_accession': None,
+                    'peaks_bigbed_accession': None,
+                    'tsv_accession': None
+                }
+                
+                # Select BigWig
+                best_bigwig = select_preferred_file_optimized(bigwig_candidates, "bigWig")
+                if best_bigwig is not None:
+                    result['signal_bigwig_accession'] = best_bigwig['accession']
+                
+                # Select BigBed
+                best_bigbed = select_preferred_file_optimized(bigbed_candidates, "bigBed")
+                if best_bigbed is not None:
+                    result['peaks_bigbed_accession'] = best_bigbed['accession']
+                
+                # Select TSV
+                best_tsv = select_preferred_file_optimized(tsv_candidates, "tsv")
+                if best_tsv is not None:
+                    result['tsv_accession'] = best_tsv['accession']
+                
+                return result
+                
+            except Exception as e:
+                print(f"Error getting file accessions for experiment {exp_accession}: {e}")
                 return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
-            
-            exp_data = response.json()
-            files = exp_data.get('files', [])
-            
-            # Filter files by type and criteria
-            bigwig_candidates = []
-            bigbed_candidates = []
-            tsv_candidates = []
-            
-            for file_info in files:
-                file_format = file_info.get('file_format', '')
-                output_type = file_info.get('output_type', '')
-                assembly_val = file_info.get('assembly', '')
-                status = file_info.get('status', '')
-                
-                # Only consider files with correct assembly and status
-                if assembly_val != assembly or status != "released":
-                    continue
-                
-                if file_format == "bigWig" and "signal p-value" in output_type:
-                    bigwig_candidates.append(file_info)
-                elif file_format == "bigBed" and "peaks" in output_type:
-                    bigbed_candidates.append(file_info)
-                elif file_format == "tsv":
-                    tsv_candidates.append(file_info)
-            
-            # Select best files using optimized selection
-            result = {
-                'signal_bigwig_accession': None,
-                'peaks_bigbed_accession': None,
-                'tsv_accession': None
-            }
-            
-            # Select BigWig
-            best_bigwig = select_preferred_file_optimized(bigwig_candidates, "bigWig")
-            if best_bigwig is not None:
-                result['signal_bigwig_accession'] = best_bigwig['accession']
-            
-            # Select BigBed
-            best_bigbed = select_preferred_file_optimized(bigbed_candidates, "bigBed")
-            if best_bigbed is not None:
-                result['peaks_bigbed_accession'] = best_bigbed['accession']
-            
-            # Select TSV
-            best_tsv = select_preferred_file_optimized(tsv_candidates, "tsv")
-            if best_tsv is not None:
-                result['tsv_accession'] = best_tsv['accession']
-            
-            return result
-                
-            # except Exception as e:
-            #     print(f"Error getting file accessions for experiment {exp_accession}: {e}")
-            #     return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
 
         def build_eic_exp_dict(eic_csv_path, output_json_path):
             """
@@ -4027,33 +4027,33 @@ if __name__ == "__main__":
                 biosample_name = f"{prefix}{cell_type}"
                 
                 # Get file accessions using the optimized function
-                # try:
-                file_accessions = get_file_accessions_from_experiment(exp_accession)
-                
-                # Create experiment entry
-                exp_entry = {
-                    'bios_accession': biosample_name,  # Generated name like T_adrenal_gland
-                    'exp_accession': exp_accession,    # ENCSR* from CSV
-                    'exp': assay,                      # Assay name like DNase-seq, H3K27ac
-                    'filename': filename,              # Original filename from CSV
-                    'data_type': data_type,            # training_data, validation_data, blind_data
-                    'cell_type': cell_type,            # Original cell type
-                    'signal_bigwig_accession': file_accessions['signal_bigwig_accession'],
-                    'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession'],
-                    'tsv_accession': file_accessions['tsv_accession']
-                }
-                
-                # Use filename as key (consistent with current structure)
-                eic_exp_dict[filename] = exp_entry
-                
-                print(f"  ✅ Added {filename}: {biosample_name} | {assay} | {exp_accession}")
-                print(f"     📁 BigWig: {file_accessions['signal_bigwig_accession']}")
-                print(f"     📁 BigBed: {file_accessions['peaks_bigbed_accession']}")
-                print(f"     📁 TSV: {file_accessions['tsv_accession']}")
+                try:
+                    file_accessions = get_file_accessions_from_experiment(exp_accession)
                     
-                # except Exception as e:
-                #     print(f"  ❌ Error processing {exp_accession}: {e}")
-                #     continue
+                    # Create experiment entry
+                    exp_entry = {
+                        'bios_accession': biosample_name,  # Generated name like T_adrenal_gland
+                        'exp_accession': exp_accession,    # ENCSR* from CSV
+                        'exp': assay,                      # Assay name like DNase-seq, H3K27ac
+                        'filename': filename,              # Original filename from CSV
+                        'data_type': data_type,            # training_data, validation_data, blind_data
+                        'cell_type': cell_type,            # Original cell type
+                        'signal_bigwig_accession': file_accessions['signal_bigwig_accession'],
+                        'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession'],
+                        'tsv_accession': file_accessions['tsv_accession']
+                    }
+                    
+                    # Use filename as key (consistent with current structure)
+                    eic_exp_dict[filename] = exp_entry
+                    
+                    print(f"  ✅ Added {filename}: {biosample_name} | {assay} | {exp_accession}")
+                    print(f"     📁 BigWig: {file_accessions['signal_bigwig_accession']}")
+                    print(f"     📁 BigBed: {file_accessions['peaks_bigbed_accession']}")
+                    print(f"     📁 TSV: {file_accessions['tsv_accession']}")
+                    
+                except Exception as e:
+                    print(f"  ❌ Error processing {exp_accession}: {e}")
+                    continue
             
             # Save to JSON
             print(f"💾 Saving EIC experiment dictionary to: {output_json_path}")
