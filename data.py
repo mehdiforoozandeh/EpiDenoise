@@ -3596,15 +3596,22 @@ if __name__ == "__main__":
             with open(navigation_path, "r") as f:
                 navigation = json.load(f)
 
-            print(navigation)
-            exit()
-
             biosample_dict = {}
             for biosample, exps in navigation.items():
                 biosample_dict[biosample] = {}
                 for exp in exps:
                     # Path to file_metadata.json
-                    file_metadata_path = os.path.join(solar_data_path, biosample, exp, "file_metadata.json")
+                    if "eic" in navigation_path:
+                        file_metadata_path = os.path.join(solar_data_path, biosample, exp, "file_metadata.json")
+                    else:
+                        # Find the file that ends with 'file_metadata.json' in the list
+                        file_metadata_candidates = [f for f in navigation[biosample][exp] if f.endswith("file_metadata.json")]
+                        if file_metadata_candidates:
+                            file_metadata_path = os.path.join(solar_data_path, biosample, exp, file_metadata_candidates[0])
+                        else:
+                            file_metadata_path = None
+                            print(f"no file_metadata.json for {biosample}-{exp}, {navigation_path}")
+
                     if os.path.exists(file_metadata_path):
                         # try:
                         with open(file_metadata_path, "r") as fm:
