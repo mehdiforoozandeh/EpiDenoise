@@ -3663,7 +3663,7 @@ if __name__ == "__main__":
                         "experiment": experiment_accession,
                         "bam_filename_accession": file_accession
                     }
-                    print(biosample_dict[biosample][exp])
+                    print(biosample, exp, biosample_dict[biosample][exp])
             # Save to output json
             # with open(output_json_path, "w") as out_f:
             #     json.dump(biosample_dict, out_f, indent=2)
