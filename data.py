@@ -3592,39 +3592,47 @@ if __name__ == "__main__":
         import json
         import requests
 
-        def select_preferred_row(df):
+        def select_preferred_file_optimized(files, file_type="bigWig"):
             """
-            Enhanced helper function to select the preferred file with strict requirements.
-            Now requires: preferred_default == True, status == "released", assembly == "GRCh38"
+            Optimized file selection that works directly with files array from experiment JSON.
+            Applies preference filtering before date filtering to ensure correct selection.
             """
+            if not files:
+                return None
+            
+            # Create DataFrame for easier filtering
+            df_data = []
+            for f in files:
+                df_data.append({
+                    'accession': f.get('accession', ''),
+                    'output_type': f.get('output_type', ''),
+                    'preferred_default': f.get('preferred_default', False),
+                    'date_created': f.get('date_created', ''),
+                    'biological_replicates': f.get('biological_replicates', []),
+                    'status': f.get('status', ''),
+                    'assembly': f.get('assembly', ''),
+                    'file_format': f.get('file_format', '')
+                })
+            
+            df = pd.DataFrame(df_data)
+            
             if df.empty:
-                raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
+                return None
             
-            # First apply MANDATORY filters
-            mandatory_filters = [
-                ('status', 'released'),
-                ('assembly', 'GRCh38')
-            ]
+            # Apply mandatory filters
+            df = df[(df['status'] == 'released') & (df['assembly'] == 'GRCh38')]
             
-            original_df = df.copy()
+            if df.empty:
+                return None
             
-            for column, required_value in mandatory_filters:
-                if column in df.columns:
-                    df = df[df[column] == required_value]
-                    
-                    if df.empty:
-                        return None
-            
-            # Apply preference-based filters (with preferred_default as priority)
+            # Apply preference filters BEFORE date filtering (preference should take priority)
             preferences = [
-                ('default', True),  # preferred_default == True (renamed in our DataFrame)
-                ('derived_from_bam', True),
-                ('bio_replicate_number', lambda x: len(x) == 1),
-                ('same_bios', True),
+                ('preferred_default', True),
+                ('biological_replicates', lambda x: len(x) == 1),
             ]
             
             for column, condition in preferences:
-                if len(df) > 1 and column in df.columns:
+                if len(df) > 1:
                     if callable(condition):
                         filtered_df = df[df[column].apply(condition)]
                     else:
@@ -3633,29 +3641,35 @@ if __name__ == "__main__":
                     # Only apply the filter if it doesn't make DataFrame empty
                     if not filtered_df.empty:
                         df = filtered_df
-                            
+                        
                 if len(df) == 1:
-                    return df.iloc[0]
+                    break
             
-            # If no preferences worked but we still have candidates, sort by date_created
+            # For bigBed files, apply date filtering AFTER preference filtering (if still multiple candidates)
+            if file_type == "bigBed" and len(df) > 1:
+                df['date_created'] = pd.to_datetime(df['date_created'])
+                max_date = df['date_created'].max()
+                df = df[df['date_created'] == max_date]
+            
+            # Sort by date if still multiple
             if len(df) > 1:
                 df['date_created'] = pd.to_datetime(df['date_created'])
-                df = df.sort_values(by='date_created', ascending=False)
+                df = df.sort_values('date_created', ascending=False)
 
-            # Return the top row of the filtered DataFrame
             if not df.empty:
                 return df.iloc[0]
-            else:
-                return None
+            
+            return None
 
         def get_file_accessions_from_experiment(exp_accession, bios_accession, assay_name, assembly="GRCh38"):
             """
-            Get bigwig, bigbed, and TSV file accessions from an experiment accession by mining ENCODE JSON API.
+            Optimized version that fetches experiment JSON once and processes all files.
+            Fixes BigBed selection logic by applying preference filtering before date filtering.
             
             Args:
                 exp_accession: Experiment accession (ENCSR*)
-                bios_accession: Biosample accession for filtering
-                assay_name: Assay name for metadata
+                bios_accession: Biosample accession for filtering (not used in new approach)
+                assay_name: Assay name for metadata (not used in new approach)
                 assembly: Genome assembly (default: GRCh38)
                 
             Returns:
@@ -3670,111 +3684,67 @@ if __name__ == "__main__":
                 
             headers = {'accept': 'application/json'}
             
-            # try:
-            exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
-            exp_respond = requests.get(exp_url, headers=headers)
-            exp_results = exp_respond.json()
-            
-            e_fileslist = list(exp_results['original_files'])
-            
-            # Separate lists for different file types
-            bigwig_files = []
-            bigbed_files = []
-            tsv_files = []
-
-            for ef in e_fileslist:
-                efile_respond = requests.get(f"https://www.encodeproject.org{ef}", headers=headers)
-                efile_results = efile_respond.json()
-
-                # Skip if not the right assembly or not released
-                if (efile_results.get('assembly') != assembly or 
-                    efile_results.get('status') != "released"):
-                    continue
-
-                # Extract biosample accession from file
-                e_file_biosample = None
-                try:
-                    if "origin_batches" in efile_results.keys():
-                        if ',' not in str(efile_results['origin_batches']):
-                            e_file_biosample = str(efile_results['origin_batches'])
-                            e_file_biosample = e_file_biosample.replace('/', '')
-                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                        else:
-                            repnumber = int(efile_results.get('biological_replicates', [1])[0]) - 1
-                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                    else:
-                        repnumber = int(efile_results.get('biological_replicates', [1])[0]) - 1
-                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                except (KeyError, IndexError, TypeError):
-                    e_file_biosample = None
+            try:
+                # Single JSON fetch for entire experiment
+                exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
+                response = requests.get(exp_url, headers=headers)
                 
-                # Create common parsed data with safe field access
-                parsed = [assay_name, efile_results.get('accession', ''), bios_accession,
-                    efile_results.get('file_format', ''), efile_results.get('output_type', ''), 
-                    efile_results.get('dataset', ''), efile_results.get('biological_replicates', []), 
-                    efile_results.get('file_size', 0), efile_results.get('assembly', ''), 
-                    f"https://www.encodeproject.org{efile_results.get('href', '')}", 
-                    efile_results.get('date_created', ''), efile_results.get('status', '')]
+                if response.status_code != 200:
+                    print(f"Error fetching experiment: HTTP {response.status_code}")
+                    return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
                 
-                # Check for preferred_default flag
-                preferred_default = efile_results.get("preferred_default", False)
-                parsed.append(preferred_default)
+                exp_data = response.json()
+                files = exp_data.get('files', [])
                 
-                parsed.append(True)  # derived_from_bam (assume True)
+                # Filter files by type and criteria
+                bigwig_candidates = []
+                bigbed_candidates = []
+                tsv_candidates = []
                 
-                if e_file_biosample == bios_accession:
-                    parsed.append(True)
-                else:
-                    parsed.append(False)
-
-                # Categorize files by type
-                file_format = efile_results.get('file_format', '')
-                output_type = efile_results.get('output_type', '')
+                for file_info in files:
+                    file_format = file_info.get('file_format', '')
+                    output_type = file_info.get('output_type', '')
+                    assembly_val = file_info.get('assembly', '')
+                    status = file_info.get('status', '')
+                    
+                    # Only consider files with correct assembly and status
+                    if assembly_val != assembly or status != "released":
+                        continue
+                    
+                    if file_format == "bigWig" and "signal p-value" in output_type:
+                        bigwig_candidates.append(file_info)
+                    elif file_format == "bigBed" and "peaks" in output_type:
+                        bigbed_candidates.append(file_info)
+                    elif file_format == "tsv":
+                        tsv_candidates.append(file_info)
                 
-                if (file_format == "bigWig" and 
-                    output_type in ['signal p-value', "read-depth normalized signal"]):
-                    bigwig_files.append(parsed)
-                elif (file_format == "bigBed" and "peaks" in output_type):
-                    bigbed_files.append(parsed)
-                elif file_format == "tsv":
-                    tsv_files.append(parsed)
-            
-            # Process each file type and select best file
-            columns = ['assay', 'accession', 'biosample', 'file_format', 
-                        'output_type', 'experiment', 'bio_replicate_number', 
-                        'file_size', 'assembly', 'download_url', 'date_created', 
-                        'status', "default", "derived_from_bam", "same_bios"]
-            
-            result = {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
-            
-            # Get best bigwig file
-            if bigwig_files:
-                bigwig_df = pd.DataFrame(bigwig_files, columns=columns)
-                best_bigwig = select_preferred_row(bigwig_df)
+                # Select best files using optimized selection
+                result = {
+                    'signal_bigwig_accession': None,
+                    'peaks_bigbed_accession': None,
+                    'tsv_accession': None
+                }
+                
+                # Select BigWig
+                best_bigwig = select_preferred_file_optimized(bigwig_candidates, "bigWig")
                 if best_bigwig is not None:
                     result['signal_bigwig_accession'] = best_bigwig['accession']
-            
-            # Get best bigbed file  
-            if bigbed_files:
-                bigbed_df = pd.DataFrame(bigbed_files, columns=columns)
-                bigbed_df['date_created'] = pd.to_datetime(bigbed_df['date_created'])
-                bigbed_df = bigbed_df[bigbed_df['date_created'] == bigbed_df['date_created'].max()]
-                best_bigbed = select_preferred_row(bigbed_df)
+                
+                # Select BigBed
+                best_bigbed = select_preferred_file_optimized(bigbed_candidates, "bigBed")
                 if best_bigbed is not None:
                     result['peaks_bigbed_accession'] = best_bigbed['accession']
-            
-            # Get TSV file (apply same filtering logic)
-            if tsv_files:
-                tsv_df = pd.DataFrame(tsv_files, columns=columns)
-                best_tsv = select_preferred_row(tsv_df)
+                
+                # Select TSV
+                best_tsv = select_preferred_file_optimized(tsv_candidates, "tsv")
                 if best_tsv is not None:
                     result['tsv_accession'] = best_tsv['accession']
-            
-            return result
                 
-            # except Exception as e:
-            #     print(f"Error getting file accessions for experiment {exp_accession}: {e}")
-            #     return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
+                return result
+                
+            except Exception as e:
+                print(f"Error getting file accessions for experiment {exp_accession}: {e}")
+                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
 
         def build_exp_dict(navigation_path, solar_data_path, output_json_path):
             # Load navigation file
