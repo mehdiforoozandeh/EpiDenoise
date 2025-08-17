@@ -4324,10 +4324,10 @@ if __name__ == "__main__":
             with open(output_json_path, "w") as out_f:
                 json.dump(biosample_dict, out_f, indent=2)
 
-        merged_navigation_path = os.path.join(solar_data_path, "merged_navigation.json")
-        output_merged_json = os.path.join("data/", "download_plan_merged.json")
-        build_exp_dict(merged_navigation_path, solar_data_path, output_merged_json)
-        print(f"Saved experiment plan for merged_navigation.json to {output_merged_json}")
+        # merged_navigation_path = os.path.join(solar_data_path, "merged_navigation.json")
+        # output_merged_json = os.path.join("data/", "download_plan_merged.json")
+        # build_exp_dict(merged_navigation_path, solar_data_path, output_merged_json)
+        # print(f"Saved experiment plan for merged_navigation.json to {output_merged_json}")
     
         eic_csv_path = os.path.join(solar_data_path, "EIC_experiments.csv")
         output_eic_json = os.path.join("data/", "download_plan_eic.json")
