@@ -3596,6 +3596,9 @@ if __name__ == "__main__":
             with open(navigation_path, "r") as f:
                 navigation = json.load(f)
 
+            print(navigation)
+            exit()
+
             biosample_dict = {}
             for biosample, exps in navigation.items():
                 biosample_dict[biosample] = {}
