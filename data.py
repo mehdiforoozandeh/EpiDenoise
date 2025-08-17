@@ -3922,6 +3922,60 @@ if __name__ == "__main__":
                 print(f"    ❌ Error in search API: {e}")
                 return None
 
+        def extract_biosample_accession_from_experiment(exp_data):
+            """
+            Extract biosample accession (ENCBS*) from experiment JSON.
+            
+            Args:
+                exp_data: Experiment JSON data
+                
+            Returns:
+                str: Biosample accession (ENCBS*) or None
+            """
+            try:
+                replicates = exp_data.get('replicates', [])
+                if replicates:
+                    for replicate in replicates:
+                        if isinstance(replicate, str):
+                            # Get replicate details
+                            replicate_url = f"https://www.encodeproject.org{replicate}"
+                            headers = {'accept': 'application/json'}
+                            rep_response = requests.get(replicate_url, headers=headers)
+                            if rep_response.status_code == 200:
+                                rep_data = rep_response.json()
+                                library = rep_data.get('library', {})
+                                
+                                if isinstance(library, str):
+                                    lib_url = f"https://www.encodeproject.org{library}"
+                                    lib_response = requests.get(lib_url, headers=headers)
+                                    if lib_response.status_code == 200:
+                                        lib_data = lib_response.json()
+                                        biosample = lib_data.get('biosample', {})
+                                        if isinstance(biosample, str):
+                                            return biosample.split('/')[-2] if biosample.startswith('/biosamples/') else None
+                                        elif isinstance(biosample, dict):
+                                            return biosample.get('accession', None)
+                                else:
+                                    biosample = library.get('biosample', {})
+                                    if isinstance(biosample, dict):
+                                        return biosample.get('accession', None)
+                                    elif isinstance(biosample, str) and biosample.startswith('/biosamples/'):
+                                        return biosample.split('/')[-2]
+                        
+                        elif isinstance(replicate, dict):
+                            library = replicate.get('library', {})
+                            if isinstance(library, dict):
+                                biosample = library.get('biosample', {})
+                                if isinstance(biosample, dict):
+                                    return biosample.get('accession', None)
+                                elif isinstance(biosample, str) and biosample.startswith('/biosamples/'):
+                                    return biosample.split('/')[-2]
+                
+                return None
+            except Exception as e:
+                print(f"    ⚠️  Error extracting biosample accession: {e}")
+                return None
+
         def get_file_accessions_from_experiment(exp_accession, bios_accession=None, assay_name=None, cell_type=None, assembly="GRCh38"):
             """
             ENHANCED version with archived experiment handling and BAM extraction.
@@ -3930,10 +3984,12 @@ if __name__ == "__main__":
                 exp_accession: Experiment accession (ENCSR*)
                 bios_accession: Biosample accession for filtering (not used in new approach)
                 assay_name: Assay name for metadata 
+                cell_type: Cell type for archived experiment replacement
                 assembly: Genome assembly (default: GRCh38)
                 
             Returns:
                 dict: {
+                    'bios_accession': ENCBS* or None,
                     'signal_bigwig_accession': ENCFF* or None,
                     'peaks_bigbed_accession': ENCFF* or None,
                     'bam_accession': ENCFF* or None, 
@@ -3941,7 +3997,7 @@ if __name__ == "__main__":
                 }
             """
             if not exp_accession:
-                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                 
             headers = {'accept': 'application/json'}
             original_exp = exp_accession
@@ -3953,7 +4009,7 @@ if __name__ == "__main__":
                 
                 if response.status_code != 200:
                     print(f"    ❌ Error fetching experiment: HTTP {response.status_code}")
-                    return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                    return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                 
                 exp_data = response.json()
                 exp_status = exp_data.get('status', '')
@@ -3977,7 +4033,7 @@ if __name__ == "__main__":
                                 exp_data = response.json()
                             else:
                                 print(f"    ❌ Error fetching released experiment: HTTP {response.status_code}")
-                                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                                return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                         else:
                             print(f"    ⚠️  Cell type strategy failed, trying biosample fallback...")
                             
@@ -3995,16 +4051,16 @@ if __name__ == "__main__":
                                         exp_data = response.json()
                                     else:
                                         print(f"    ❌ Error fetching released experiment: HTTP {response.status_code}")
-                                        return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                                        return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                                 else:
                                     print(f"    ❌ No released alternative found for archived {original_exp}")
-                                    return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                                    return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                             else:
                                 print(f"    ❌ Could not extract biosample from archived {original_exp}")
-                                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                                return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                     else:
                         print(f"    ❌ No cell type or assay provided for archived experiment replacement")
-                        return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                        return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                 
                 files = exp_data.get('files', [])
                 
@@ -4049,8 +4105,12 @@ if __name__ == "__main__":
                     elif file_format == "tsv":
                         tsv_candidates.append(file_info)
                 
+                # Extract biosample accession
+                bios_acc = extract_biosample_accession_from_experiment(exp_data)
+                
                 # Select best files using optimized selection
                 result = {
+                    'bios_accession': bios_acc,
                     'signal_bigwig_accession': None,
                     'peaks_bigbed_accession': None,
                     'bam_accession': None,
@@ -4081,7 +4141,7 @@ if __name__ == "__main__":
                 
             except Exception as e:
                 print(f"    ❌ Error getting file accessions for experiment {exp_accession}: {e}")
-                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                return {'bios_accession': None, 'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
 
         def build_eic_exp_dict(eic_csv_path, output_json_path):
             """
@@ -4129,23 +4189,22 @@ if __name__ == "__main__":
                 try:
                     file_accessions = get_file_accessions_from_experiment(exp_accession, assay_name=assay, cell_type=cell_type)
                     
-                    # Create experiment entry
+                    # Create experiment entry (matching merged navigation format)
                     exp_entry = {
-                        'bios_accession': biosample_name,  # Generated name like T_adrenal_gland
+                        'bios_accession': file_accessions['bios_accession'],  # ENCBS* from experiment JSON
                         'exp_accession': exp_accession,    # ENCSR* from CSV
-                        'exp': assay,                      # Assay name like DNase-seq, H3K27ac
-                        'filename': filename,              # Original filename from CSV
-                        'data_type': data_type,            # training_data, validation_data, blind_data
-                        'cell_type': cell_type,            # Original cell type
                         'file_accession': file_accessions['bam_accession'],  # For compatibility with merged format
-                        'bam_accession': file_accessions['bam_accession'],   # NEW: BAM files
+                        'bam_accession': file_accessions['bam_accession'],   # BAM files
+                        'tsv_accession': file_accessions['tsv_accession'],
                         'signal_bigwig_accession': file_accessions['signal_bigwig_accession'],
-                        'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession'],
-                        'tsv_accession': file_accessions['tsv_accession']
+                        'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession']
                     }
                     
-                    # Use filename as key (consistent with current structure)
-                    eic_exp_dict[filename] = exp_entry
+                    # Use biosample_name as key (matching merged navigation format)
+                    if biosample_name not in eic_exp_dict:
+                        eic_exp_dict[biosample_name] = {}
+                    
+                    eic_exp_dict[biosample_name][assay] = exp_entry
                     
                     print(f"  ✅ Added {filename}: {biosample_name} | {assay} | {exp_accession}")
                     print(f"     📁 BAM: {file_accessions['bam_accession']}")
