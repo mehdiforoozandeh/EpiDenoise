@@ -3669,8 +3669,8 @@ if __name__ == "__main__":
         output_merged_json = os.path.join(solar_data_path, "download_plan_merged_navigation.json")
 
         # Build and save for navigation_eic.json
-        build_exp_dict(navigation_eic_path, solar_data_path, output_eic_json)
-        print(f"Saved experiment plan for navigation_eic.json to {output_eic_json}")
+        # build_exp_dict(navigation_eic_path, solar_data_path, output_eic_json)
+        # print(f"Saved experiment plan for navigation_eic.json to {output_eic_json}")
 
         # Build and save for merged_navigation.json
         build_exp_dict(merged_navigation_path, solar_data_path, output_merged_json)
