@@ -3660,52 +3660,59 @@ if __name__ == "__main__":
                 efile_respond = requests.get(f"https://www.encodeproject.org{ef}", headers=headers)
                 efile_results = efile_respond.json()
 
-                # Skip if not the right assembly or not released
-                if efile_results['assembly'] != assembly or efile_results['status'] != "released":
-                    continue
+                 # Skip if not the right assembly or not released
+                 if (efile_results.get('assembly') != assembly or 
+                     efile_results.get('status') != "released"):
+                     continue
 
-                # Extract biosample accession from file
-                if "origin_batches" in efile_results.keys():
-                    if ',' not in str(efile_results['origin_batches']):
-                        e_file_biosample = str(efile_results['origin_batches'])
-                        e_file_biosample = e_file_biosample.replace('/', '')
-                        e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
-                    else:
-                        repnumber = int(efile_results['biological_replicates'][0]) - 1
-                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                else:
-                    repnumber = int(efile_results['biological_replicates'][0]) - 1
-                    e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
-                
-                # Create common parsed data
-                parsed = [assay_name, efile_results['accession'], bios_accession,
-                    efile_results['file_format'], efile_results['output_type'], 
-                    efile_results['dataset'], efile_results['biological_replicates'], 
-                    efile_results['file_size'], efile_results['assembly'], 
-                    f"https://www.encodeproject.org{efile_results['href']}", 
-                    efile_results['date_created'], efile_results['status']]
-                
-                if "preferred_default" in efile_results.keys():
-                    parsed.append(efile_results["preferred_default"])
-                else:
-                    parsed.append(None)
-                
-                parsed.append(True)  # derived_from_bam (assume True)
-                
-                if e_file_biosample == bios_accession:
-                    parsed.append(True)
-                else:
-                    parsed.append(False)
+                 # Extract biosample accession from file
+                 e_file_biosample = None
+                 try:
+                     if "origin_batches" in efile_results.keys():
+                         if ',' not in str(efile_results['origin_batches']):
+                             e_file_biosample = str(efile_results['origin_batches'])
+                             e_file_biosample = e_file_biosample.replace('/', '')
+                             e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                         else:
+                             repnumber = int(efile_results.get('biological_replicates', [1])[0]) - 1
+                             e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                     else:
+                         repnumber = int(efile_results.get('biological_replicates', [1])[0]) - 1
+                         e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                 except (KeyError, IndexError, TypeError):
+                     e_file_biosample = None
+                 
+                 # Create common parsed data with safe field access
+                 parsed = [assay_name, efile_results.get('accession', ''), bios_accession,
+                     efile_results.get('file_format', ''), efile_results.get('output_type', ''), 
+                     efile_results.get('dataset', ''), efile_results.get('biological_replicates', []), 
+                     efile_results.get('file_size', 0), efile_results.get('assembly', ''), 
+                     f"https://www.encodeproject.org{efile_results.get('href', '')}", 
+                     efile_results.get('date_created', ''), efile_results.get('status', '')]
+                 
+                 if "preferred_default" in efile_results.keys():
+                     parsed.append(efile_results["preferred_default"])
+                 else:
+                     parsed.append(None)
+                 
+                 parsed.append(True)  # derived_from_bam (assume True)
+                 
+                 if e_file_biosample == bios_accession:
+                     parsed.append(True)
+                 else:
+                     parsed.append(False)
 
-                # Categorize files by type
-                if (efile_results['file_format'] == "bigWig" and 
-                    efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"]):
-                    bigwig_files.append(parsed)
-                elif (efile_results['file_format'] == "bigBed" and 
-                        "peaks" in efile_results['output_type']):
-                    bigbed_files.append(parsed)
-                elif efile_results['file_format'] == "tsv":
-                    tsv_files.append(parsed)
+                 # Categorize files by type
+                 file_format = efile_results.get('file_format', '')
+                 output_type = efile_results.get('output_type', '')
+                 
+                 if (file_format == "bigWig" and 
+                     output_type in ['signal p-value', "read-depth normalized signal"]):
+                     bigwig_files.append(parsed)
+                 elif (file_format == "bigBed" and "peaks" in output_type):
+                     bigbed_files.append(parsed)
+                 elif file_format == "tsv":
+                     tsv_files.append(parsed)
             
             # Process each file type and select best file
             columns = ['assay', 'accession', 'biosample', 'file_format', 
