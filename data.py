@@ -4027,33 +4027,33 @@ if __name__ == "__main__":
                 biosample_name = f"{prefix}{cell_type}"
                 
                 # Get file accessions using the optimized function
-                try:
-                    file_accessions = get_file_accessions_from_experiment(exp_accession)
-                    
-                    # Create experiment entry
-                    exp_entry = {
-                        'bios_accession': biosample_name,  # Generated name like T_adrenal_gland
-                        'exp_accession': exp_accession,    # ENCSR* from CSV
-                        'exp': assay,                      # Assay name like DNase-seq, H3K27ac
-                        'filename': filename,              # Original filename from CSV
-                        'data_type': data_type,            # training_data, validation_data, blind_data
-                        'cell_type': cell_type,            # Original cell type
-                        'signal_bigwig_accession': file_accessions['signal_bigwig_accession'],
-                        'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession'],
-                        'tsv_accession': file_accessions['tsv_accession']
-                    }
-                    
-                    # Use filename as key (consistent with current structure)
-                    eic_exp_dict[filename] = exp_entry
-                    
-                    print(f"  ✅ Added {filename}: {biosample_name} | {assay} | {exp_accession}")
-                    print(f"     📁 BigWig: {file_accessions['signal_bigwig_accession']}")
-                    print(f"     📁 BigBed: {file_accessions['peaks_bigbed_accession']}")
-                    print(f"     📁 TSV: {file_accessions['tsv_accession']}")
-                    
-                except Exception as e:
-                    print(f"  ❌ Error processing {exp_accession}: {e}")
-                    continue
+                # try:
+                file_accessions = get_file_accessions_from_experiment(exp_accession)
+                
+                # Create experiment entry
+                exp_entry = {
+                    'bios_accession': biosample_name,  # Generated name like T_adrenal_gland
+                    'exp_accession': exp_accession,    # ENCSR* from CSV
+                    'exp': assay,                      # Assay name like DNase-seq, H3K27ac
+                    'filename': filename,              # Original filename from CSV
+                    'data_type': data_type,            # training_data, validation_data, blind_data
+                    'cell_type': cell_type,            # Original cell type
+                    'signal_bigwig_accession': file_accessions['signal_bigwig_accession'],
+                    'peaks_bigbed_accession': file_accessions['peaks_bigbed_accession'],
+                    'tsv_accession': file_accessions['tsv_accession']
+                }
+                
+                # Use filename as key (consistent with current structure)
+                eic_exp_dict[filename] = exp_entry
+                
+                print(f"  ✅ Added {filename}: {biosample_name} | {assay} | {exp_accession}")
+                print(f"     📁 BigWig: {file_accessions['signal_bigwig_accession']}")
+                print(f"     📁 BigBed: {file_accessions['peaks_bigbed_accession']}")
+                print(f"     📁 TSV: {file_accessions['tsv_accession']}")
+                
+                # except Exception as e:
+                #     print(f"  ❌ Error processing {exp_accession}: {e}")
+                #     continue
             
             # Save to JSON
             print(f"💾 Saving EIC experiment dictionary to: {output_json_path}")
