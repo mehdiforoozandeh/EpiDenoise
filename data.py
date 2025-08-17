@@ -3755,9 +3755,142 @@ if __name__ == "__main__":
                 print(f"    ❌ Error extracting biosample: {e}")
                 return None
 
+        def normalize_cell_type_for_search(cell_type):
+            """Convert cell type from CSV format to ENCODE search format."""
+            search_terms = []
+            
+            # Replace underscores with spaces
+            spaced_version = cell_type.replace('_', ' ')
+            search_terms.append(spaced_version)
+            
+            # Handle special cases
+            special_cases = {
+                'H1-hESC': ['H1', 'H1-hESC'],
+                'myoepithelial_cell_of_mammary_gland': ['myoepithelial cell', 'mammary gland', 'myoepithelial'],
+                'neural_stem_progenitor_cell': ['neural stem cell', 'neural progenitor', 'neural stem progenitor'],
+                'peripheral_blood_mononuclear_cell': ['PBMC', 'peripheral blood', 'mononuclear cell'],
+                'CD4-positive_alpha-beta_memory_T_cell': ['CD4 T cell', 'memory T cell', 'CD4'],
+                'hematopoietic_multipotent_progenitor_cell': ['hematopoietic progenitor', 'multipotent progenitor'],
+                'brain_microvascular_endothelial_cell': ['brain endothelial', 'microvascular endothelial'],
+                'dermis_microvascular_lymphatic_vessel_endothelial_cell': ['dermis endothelial', 'lymphatic endothelial'],
+                'skin_of_body': ['skin', 'skin of body'],
+            }
+            
+            if cell_type in special_cases:
+                search_terms.extend(special_cases[cell_type])
+            
+            # Also try the original term
+            if cell_type not in search_terms:
+                search_terms.append(cell_type)
+            
+            # Remove duplicates while preserving order
+            unique_terms = []
+            for term in search_terms:
+                if term not in unique_terms:
+                    unique_terms.append(term)
+            
+            return unique_terms
+
+        def select_best_experiment_hybrid(experiments):
+            """Hybrid selection: Lab reputation → First match fallback."""
+            if not experiments:
+                return None
+            
+            if len(experiments) == 1:
+                return experiments[0]
+            
+            print(f"    🎯 Selecting best from {len(experiments)} experiments using hybrid strategy")
+            
+            # Strategy 1: Lab Reputation
+            lab_counts = {}
+            lab_to_experiments = {}
+            
+            for exp in experiments:
+                lab = exp.get('lab', {})
+                lab_title = lab.get('title', 'Unknown') if isinstance(lab, dict) else 'Unknown'
+                
+                if lab_title not in lab_counts:
+                    lab_counts[lab_title] = 0
+                    lab_to_experiments[lab_title] = []
+                
+                lab_counts[lab_title] += 1
+                lab_to_experiments[lab_title].append(exp)
+            
+            # Find lab with most experiments
+            if lab_counts:
+                best_lab = max(lab_counts.keys(), key=lambda x: lab_counts[x])
+                best_lab_count = lab_counts[best_lab]
+                
+                # If one lab dominates (>50%), use it
+                if best_lab_count > len(experiments) * 0.5:
+                    selected_exp = lab_to_experiments[best_lab][0]
+                    print(f"    ✅ Selected from dominant lab {best_lab}: {selected_exp.get('accession')}")
+                    return selected_exp
+            
+            # Strategy 2: First Match Fallback
+            selected_exp = experiments[0]
+            print(f"    ✅ Selected first match: {selected_exp.get('accession')}")
+            return selected_exp
+
+        def find_released_experiment_by_celltype(cell_type, target_assay):
+            """
+            NEW: Find released experiment by cell type instead of biosample.
+            """
+            print(f"    🔍 Finding released {target_assay} experiment for cell type: {cell_type}")
+            
+            headers = {'accept': 'application/json'}
+            search_terms = normalize_cell_type_for_search(cell_type)
+            
+            all_experiments = []
+            
+            for search_term in search_terms:
+                # URL encode the search term
+                encoded_term = search_term.replace(' ', '+').replace('-', '%2D')
+                encoded_assay = target_assay.replace('-', '%2D')
+                
+                search_url = f"https://www.encodeproject.org/search/?type=Experiment&replicates.library.biosample.biosample_ontology.term_name={encoded_term}&assay_title={encoded_assay}&status=released"
+                
+                try:
+                    response = requests.get(search_url, headers=headers)
+                    if response.status_code == 200:
+                        search_data = response.json()
+                        experiments = search_data.get('@graph', [])
+                        
+                        if experiments:
+                            print(f"    ✅ Found {len(experiments)} experiments for '{search_term}'")
+                            all_experiments.extend(experiments)
+                            break  # Use first successful search term
+                        
+                except Exception as e:
+                    print(f"    ❌ Error searching for '{search_term}': {e}")
+            
+            # Remove duplicates
+            unique_experiments = {}
+            for exp in all_experiments:
+                acc = exp.get('accession', '')
+                if acc and acc not in unique_experiments:
+                    unique_experiments[acc] = exp
+            
+            experiments = list(unique_experiments.values())
+            
+            if not experiments:
+                print(f"    ❌ No released {target_assay} experiments found for {cell_type}")
+                return None
+            
+            # Select best experiment using hybrid strategy
+            selected_exp = select_best_experiment_hybrid(experiments)
+            
+            if selected_exp:
+                selected_acc = selected_exp.get('accession', '')
+                print(f"    ✅ Selected experiment: {selected_acc}")
+                return selected_acc
+            else:
+                return None
+
         def find_released_experiment_for_biosample(biosample_acc, target_assay):
             """
-            FIXED: Use ENCODE search API to find released experiments for the same biosample and assay.
+            FALLBACK: Use ENCODE search API to find released experiments for the same biosample and assay.
+            This is kept as a fallback method.
             """
             print(f"    🔍 Finding released {target_assay} experiment for biosample {biosample_acc}")
             
@@ -3778,8 +3911,6 @@ if __name__ == "__main__":
                 print(f"    📊 Found {len(experiments)} released {target_assay} experiments")
                 
                 if experiments:
-                    # Return the first released experiment found
-                    # Could add more sophisticated selection logic here if needed
                     selected_exp = experiments[0].get('accession', '')
                     print(f"    ✅ Selected released experiment: {selected_exp}")
                     return selected_exp
@@ -3791,7 +3922,7 @@ if __name__ == "__main__":
                 print(f"    ❌ Error in search API: {e}")
                 return None
 
-        def get_file_accessions_from_experiment(exp_accession, bios_accession=None, assay_name=None, assembly="GRCh38"):
+        def get_file_accessions_from_experiment(exp_accession, bios_accession=None, assay_name=None, cell_type=None, assembly="GRCh38"):
             """
             ENHANCED version with archived experiment handling and BAM extraction.
             
@@ -3831,11 +3962,11 @@ if __name__ == "__main__":
                 if exp_status == 'archived':
                     print(f"    🚨 Experiment {exp_accession} is archived, looking for released alternative...")
                     
-                    # Find biosample from archived experiment
-                    biosample_acc = find_biosample_from_archived_experiment(exp_accession)
-                    if biosample_acc and assay_name:
-                        # Find released experiment for same biosample and assay
-                        released_exp = find_released_experiment_for_biosample(biosample_acc, assay_name)
+                    # NEW: Try cell type strategy first
+                    if cell_type and assay_name:
+                        print(f"    🔄 Trying cell type strategy: {cell_type} + {assay_name}")
+                        released_exp = find_released_experiment_by_celltype(cell_type, assay_name)
+                        
                         if released_exp:
                             print(f"    🔄 Using released experiment {released_exp} instead of archived {exp_accession}")
                             exp_accession = released_exp
@@ -3848,10 +3979,31 @@ if __name__ == "__main__":
                                 print(f"    ❌ Error fetching released experiment: HTTP {response.status_code}")
                                 return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                         else:
-                            print(f"    ❌ No released alternative found for archived {original_exp}")
-                            return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                            print(f"    ⚠️  Cell type strategy failed, trying biosample fallback...")
+                            
+                            # FALLBACK: Try original biosample strategy
+                            biosample_acc = find_biosample_from_archived_experiment(exp_accession)
+                            if biosample_acc:
+                                released_exp = find_released_experiment_for_biosample(biosample_acc, assay_name)
+                                if released_exp:
+                                    print(f"    🔄 Using released experiment {released_exp} instead of archived {exp_accession}")
+                                    exp_accession = released_exp
+                                    # Re-fetch with the released experiment
+                                    exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
+                                    response = requests.get(exp_url, headers=headers)
+                                    if response.status_code == 200:
+                                        exp_data = response.json()
+                                    else:
+                                        print(f"    ❌ Error fetching released experiment: HTTP {response.status_code}")
+                                        return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                                else:
+                                    print(f"    ❌ No released alternative found for archived {original_exp}")
+                                    return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
+                            else:
+                                print(f"    ❌ Could not extract biosample from archived {original_exp}")
+                                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                     else:
-                        print(f"    ❌ Could not extract biosample from archived {original_exp}")
+                        print(f"    ❌ No cell type or assay provided for archived experiment replacement")
                         return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'bam_accession': None, 'tsv_accession': None}
                 
                 files = exp_data.get('files', [])
@@ -3975,7 +4127,7 @@ if __name__ == "__main__":
                 
                 # Get file accessions using the optimized function
                 try:
-                    file_accessions = get_file_accessions_from_experiment(exp_accession, assay_name=assay)
+                    file_accessions = get_file_accessions_from_experiment(exp_accession, assay_name=assay, cell_type=cell_type)
                     
                     # Create experiment entry
                     exp_entry = {
