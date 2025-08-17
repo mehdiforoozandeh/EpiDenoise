@@ -3757,46 +3757,38 @@ if __name__ == "__main__":
 
         def find_released_experiment_for_biosample(biosample_acc, target_assay):
             """
-            Find a released experiment for the same biosample and assay.
+            FIXED: Use ENCODE search API to find released experiments for the same biosample and assay.
             """
             print(f"    🔍 Finding released {target_assay} experiment for biosample {biosample_acc}")
             
             headers = {'accept': 'application/json'}
-            biosample_url = f"https://www.encodeproject.org/biosamples/{biosample_acc}/"
+            
+            # Use ENCODE search API to find experiments using this biosample
+            search_url = f"https://www.encodeproject.org/search/?type=Experiment&replicates.library.biosample.accession={biosample_acc}&assay_title={target_assay}&status=released"
             
             try:
-                response = requests.get(biosample_url, headers=headers)
+                response = requests.get(search_url, headers=headers)
                 if response.status_code != 200:
-                    print(f"    ❌ Error fetching biosample: HTTP {response.status_code}")
+                    print(f"    ❌ Error in search API: HTTP {response.status_code}")
                     return None
                 
-                biosample_data = response.json()
+                search_data = response.json()
+                experiments = search_data.get('@graph', [])
                 
-                # Check experiments associated with this biosample
-                related_experiments = biosample_data.get('related_experiments', [])
+                print(f"    📊 Found {len(experiments)} released {target_assay} experiments")
                 
-                for exp_ref in related_experiments:
-                    if isinstance(exp_ref, str) and exp_ref.startswith('/experiments/'):
-                        exp_acc = exp_ref.split('/')[-2]
-                        
-                        # Get experiment details
-                        exp_url = f"https://www.encodeproject.org/experiments/{exp_acc}/"
-                        exp_response = requests.get(exp_url, headers=headers)
-                        
-                        if exp_response.status_code == 200:
-                            exp_data = exp_response.json()
-                            exp_assay = exp_data.get('assay_title', '')
-                            exp_status = exp_data.get('status', '')
-                            
-                            if exp_assay == target_assay and exp_status == 'released':
-                                print(f"    ✅ Found released experiment: {exp_acc}")
-                                return exp_acc
-                
-                print(f"    ❌ No released {target_assay} experiment found for {biosample_acc}")
-                return None
+                if experiments:
+                    # Return the first released experiment found
+                    # Could add more sophisticated selection logic here if needed
+                    selected_exp = experiments[0].get('accession', '')
+                    print(f"    ✅ Selected released experiment: {selected_exp}")
+                    return selected_exp
+                else:
+                    print(f"    ❌ No released {target_assay} experiments found for {biosample_acc}")
+                    return None
                 
             except Exception as e:
-                print(f"    ❌ Error finding released experiment: {e}")
+                print(f"    ❌ Error in search API: {e}")
                 return None
 
         def get_file_accessions_from_experiment(exp_accession, bios_accession=None, assay_name=None, assembly="GRCh38"):
@@ -3892,8 +3884,16 @@ if __name__ == "__main__":
                             bigwig_candidates.append(file_info)
                     elif file_format == "bigBed" and "peaks" in output_type:
                         bigbed_candidates.append(file_info)
-                    elif file_format == "bam" and output_type == "alignments":  # NEW: BAM files
-                        bam_candidates.append(file_info)
+                    elif file_format == "bam":  # FIXED: Accept redacted alignments for BAM files
+                        # Accept various alignment types (including redacted ones)
+                        valid_alignment_types = [
+                            'alignments',                    # Standard alignments
+                            'redacted alignments',           # Redacted alignments (common in newer data)
+                        ]
+                        
+                        # Exclude unfiltered alignments (as requested)
+                        if any(align_type in output_type for align_type in valid_alignment_types) and 'unfiltered' not in output_type:
+                            bam_candidates.append(file_info)
                     elif file_format == "tsv":
                         tsv_candidates.append(file_info)
                 
