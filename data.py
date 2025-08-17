@@ -3899,7 +3899,7 @@ if __name__ == "__main__":
             
             return None
 
-        def get_file_accessions_from_experiment(exp_accession, bios_accession, assay_name, assembly="GRCh38"):
+        def get_file_accessions_from_experiment(exp_accession, bios_accession=None, assay_name=None, assembly="GRCh38"):
             """
             Optimized version that fetches experiment JSON once and processes all files.
             Fixes BigBed selection logic by applying preference filtering before date filtering.
