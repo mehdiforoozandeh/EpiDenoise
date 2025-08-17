@@ -3965,8 +3965,8 @@ if __name__ == "__main__":
                         valid_signal_types = [
                             'signal p-value',           # ATAC-seq, ChIP-seq
                             'read-depth normalized signal',  # DNase-seq
-                            'signal of unique reads',   # Some DNase-seq
-                            'fold change over control'  # ChIP-seq alternatives
+                            # 'signal of unique reads',   # Some DNase-seq
+                            # 'fold change over control'  # ChIP-seq alternatives
                         ]
                         
                         if any(signal_type in output_type for signal_type in valid_signal_types):
