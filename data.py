@@ -3848,7 +3848,7 @@ if __name__ == "__main__":
                 encoded_term = search_term.replace(' ', '+').replace('-', '%2D')
                 encoded_assay = target_assay.replace('-', '%2D')
                 
-                search_url = f"https://www.encodeproject.org/search/?type=Experiment&replicates.library.biosample.biosample_ontology.term_name={encoded_term}&assay_title={encoded_assay}&status=released"
+                search_url = f"https://www.encodeproject.org/search/?type=Experiment&replicates.library.biosample.biosample_ontology.term_name={encoded_term}&assay_title={encoded_assay}&status=released&replicates.library.biosample.organism.scientific_name=Homo+sapiens"
                 
                 try:
                     response = requests.get(search_url, headers=headers)
