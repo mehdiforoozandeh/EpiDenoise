@@ -3659,10 +3659,10 @@ if __name__ == "__main__":
             #     json.dump(biosample_dict, out_f, indent=2)
 
         # Paths
-        navigation_eic_path = os.path.join(solar_data_path, "navigation_eic.json")
+        # navigation_eic_path = os.path.join(solar_data_path, "navigation_eic.json")
         merged_navigation_path = os.path.join(solar_data_path, "merged_navigation.json")
 
-        output_eic_json = os.path.join(solar_data_path, "download_plan_navigation_eic.json")
+        # output_eic_json = os.path.join(solar_data_path, "download_plan_navigation_eic.json")
         output_merged_json = os.path.join(solar_data_path, "download_plan_merged_navigation.json")
 
         # Build and save for navigation_eic.json
