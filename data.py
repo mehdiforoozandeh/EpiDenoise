@@ -3590,6 +3590,154 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "download_plan":
         import json
+        import requests
+
+        def select_preferred_row(df):
+            """Helper function to select the preferred file from multiple options based on preferences."""
+            if df.empty:
+                raise ValueError("The DataFrame is empty. Cannot select a preferred row.")
+            
+            # Define preferences (same as in get_signal_pval_bigwig and get_peaks_bigbed)
+            preferences = [
+                ('derived_from_bam', True),
+                ('bio_replicate_number', lambda x: len(x) == 1),
+                ('same_bios', True),
+                ('default', True)
+            ]
+
+            for column, condition in preferences:
+                if len(df) > 1:
+                    if callable(condition):
+                        df = df[df[column].apply(condition)]
+                    else:
+                        df = df[df[column] == condition]
+                if len(df) == 1:
+                    return df.iloc[0]
+            
+            # Sort by date_created if still multiple rows
+            if len(df) > 1:
+                df['date_created'] = pd.to_datetime(df['date_created'])
+                df = df.sort_values(by='date_created', ascending=False)
+
+            # Return the top row of the filtered DataFrame
+            return df.iloc[0]
+
+        def get_file_accessions_from_experiment(exp_accession, bios_accession, assay_name, assembly="GRCh38"):
+            """
+            Get bigwig, bigbed, and TSV file accessions from an experiment accession by mining ENCODE JSON API.
+            
+            Args:
+                exp_accession: Experiment accession (ENCSR*)
+                bios_accession: Biosample accession for filtering
+                assay_name: Assay name for metadata
+                assembly: Genome assembly (default: GRCh38)
+                
+            Returns:
+                dict: {
+                    'signal_bigwig_accession': ENCFF* or None,
+                    'peaks_bigbed_accession': ENCFF* or None, 
+                    'tsv_accession': ENCFF* or None
+                }
+            """
+            if not exp_accession:
+                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
+                
+            headers = {'accept': 'application/json'}
+            
+            try:
+                exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/"
+                exp_respond = requests.get(exp_url, headers=headers)
+                exp_results = exp_respond.json()
+                
+                e_fileslist = list(exp_results['original_files'])
+                
+                # Separate lists for different file types
+                bigwig_files = []
+                bigbed_files = []
+                tsv_files = []
+
+                for ef in e_fileslist:
+                    efile_respond = requests.get(f"https://www.encodeproject.org{ef}", headers=headers)
+                    efile_results = efile_respond.json()
+
+                    # Skip if not the right assembly or not released
+                    if efile_results['assembly'] != assembly or efile_results['status'] != "released":
+                        continue
+
+                    # Extract biosample accession from file
+                    if "origin_batches" in efile_results.keys():
+                        if ',' not in str(efile_results['origin_batches']):
+                            e_file_biosample = str(efile_results['origin_batches'])
+                            e_file_biosample = e_file_biosample.replace('/', '')
+                            e_file_biosample = e_file_biosample.replace('biosamples','')[2:-2]
+                        else:
+                            repnumber = int(efile_results['biological_replicates'][0]) - 1
+                            e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                    else:
+                        repnumber = int(efile_results['biological_replicates'][0]) - 1
+                        e_file_biosample = exp_results["replicates"][repnumber]["library"]["biosample"]["accession"]
+                    
+                    # Create common parsed data
+                    parsed = [assay_name, efile_results['accession'], bios_accession,
+                        efile_results['file_format'], efile_results['output_type'], 
+                        efile_results['dataset'], efile_results['biological_replicates'], 
+                        efile_results['file_size'], efile_results['assembly'], 
+                        f"https://www.encodeproject.org{efile_results['href']}", 
+                        efile_results['date_created'], efile_results['status']]
+                    
+                    if "preferred_default" in efile_results.keys():
+                        parsed.append(efile_results["preferred_default"])
+                    else:
+                        parsed.append(None)
+                    
+                    parsed.append(True)  # derived_from_bam (assume True)
+                    
+                    if e_file_biosample == bios_accession:
+                        parsed.append(True)
+                    else:
+                        parsed.append(False)
+
+                    # Categorize files by type
+                    if (efile_results['file_format'] == "bigWig" and 
+                        efile_results['output_type'] in ['signal p-value', "read-depth normalized signal"]):
+                        bigwig_files.append(parsed)
+                    elif (efile_results['file_format'] == "bigBed" and 
+                          "peaks" in efile_results['output_type']):
+                        bigbed_files.append(parsed)
+                    elif efile_results['file_format'] == "tsv":
+                        tsv_files.append(parsed)
+                
+                # Process each file type and select best file
+                columns = ['assay', 'accession', 'biosample', 'file_format', 
+                          'output_type', 'experiment', 'bio_replicate_number', 
+                          'file_size', 'assembly', 'download_url', 'date_created', 
+                          'status', "default", "derived_from_bam", "same_bios"]
+                
+                result = {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
+                
+                # Get best bigwig file
+                if bigwig_files:
+                    bigwig_df = pd.DataFrame(bigwig_files, columns=columns)
+                    best_bigwig = select_preferred_row(bigwig_df)
+                    result['signal_bigwig_accession'] = best_bigwig['accession']
+                
+                # Get best bigbed file  
+                if bigbed_files:
+                    bigbed_df = pd.DataFrame(bigbed_files, columns=columns)
+                    bigbed_df['date_created'] = pd.to_datetime(bigbed_df['date_created'])
+                    bigbed_df = bigbed_df[bigbed_df['date_created'] == bigbed_df['date_created'].max()]
+                    best_bigbed = select_preferred_row(bigbed_df)
+                    result['peaks_bigbed_accession'] = best_bigbed['accession']
+                
+                # Get TSV file (just return first one found)
+                if tsv_files:
+                    result['tsv_accession'] = tsv_files[0][1]  # accession is at index 1
+                
+                return result
+                
+            except Exception as e:
+                print(f"Error getting file accessions for experiment {exp_accession}: {e}")
+                return {'signal_bigwig_accession': None, 'peaks_bigbed_accession': None, 'tsv_accession': None}
 
         def build_exp_dict(navigation_path, solar_data_path, output_json_path):
             # Load navigation file
@@ -3613,12 +3761,9 @@ if __name__ == "__main__":
                             print(f"no file_metadata.json for {biosample}-{exp}, {navigation_path}")
 
                     if os.path.exists(file_metadata_path):
-                        # try:
                         with open(file_metadata_path, "r") as fm:
                             file_metadata = json.load(fm)
-                        # Extract file accession (ENCFF*), biosample (ENCB*), and experiment (ENCR*)
-                        # The file_metadata structure is a dict with keys like "accession", "biosample", "experiment"
-                        # Each of these is a dict with a single key (e.g., "5") mapping to the value
+
                         def extract_first_matching(d, prefix):
                             if isinstance(d, dict):
                                 for v in d.values():
@@ -3649,19 +3794,44 @@ if __name__ == "__main__":
                                 if part.startswith("ENCSR"):
                                     experiment_accession = part
                                     break
-                        # except Exception as e:
-                        #     file_accession = None
-                        #     biosample_accession = None
-                        #     experiment_accession = None
                     else:
                         print(f"no file_metadata.json for {biosample}-{exp}, {file_metadata_path}")
-                        # file_accession = None
-                        # biosample_accession = None
-                        # experiment_accession = None
+                        file_accession = None
+                        biosample_accession = None
+                        experiment_accession = None
+
+                    # Get additional file accessions based on experiment type
+                    signal_bigwig_accession = None
+                    peaks_bigbed_accession = None
+                    tsv_accession = None
+                    bam_accession = None
+
+                    if file_metadata_path and os.path.exists(file_metadata_path):
+                        # Get BAM accession from existing metadata
+                        file_accession = extract_first_matching(file_metadata.get("accession", {}), "ENCFF")
+                        if exp == "RNA-seq":
+                            tsv_accession = file_accession
+                        else:
+                            bam_accession = file_accession
+                        
+                        # Get all file accessions using the unified function
+                        file_accessions = get_file_accessions_from_experiment(
+                            experiment_accession, biosample_accession, exp
+                        )
+                        
+                        if exp != "RNA-seq":
+                            # For other experiments, use bigwig and bigbed accessions
+                            signal_bigwig_accession = file_accessions['signal_bigwig_accession']
+                            peaks_bigbed_accession = file_accessions['peaks_bigbed_accession']
+
                     biosample_dict[biosample][exp] = {
-                        "biosample": biosample_accession,
-                        "experiment": experiment_accession,
-                        "bam_filename_accession": file_accession
+                        "bios_accession": biosample_accession,
+                        "exp_accession": experiment_accession,
+                        "file_accession": file_accession,
+                        "bam_accession": bam_accession 
+                        "tsv_accession": tsv_accession if exp == "RNA-seq" else None,
+                        "signal_bigwig_accession": signal_bigwig_accession if exp != "RNA-seq" else None,
+                        "peaks_bigbed_accession": peaks_bigbed_ccession if exp != "RNA-seq" else None
                     }
                     print(biosample, exp, biosample_dict[biosample][exp])
             # Save to output json
