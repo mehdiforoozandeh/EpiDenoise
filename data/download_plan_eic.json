@@ -1,0 +1,3447 @@
+{
+  "T_adrenal_gland": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS063ABX",
+      "exp_accession": "ENCSR113MBR",
+      "file_accession": "ENCFF803TLA",
+      "bam_accession": "ENCFF803TLA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF264BDI",
+      "peaks_bigbed_accession": "ENCFF724EWH"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS450CEG",
+      "exp_accession": "ENCSR191FOV",
+      "file_accession": "ENCFF646WNW",
+      "bam_accession": "ENCFF646WNW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF231WCT",
+      "peaks_bigbed_accession": "ENCFF188MFO"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS078MQQ",
+      "exp_accession": "ENCSR177QFY",
+      "file_accession": "ENCFF678NDN",
+      "bam_accession": "ENCFF678NDN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF292ERX",
+      "peaks_bigbed_accession": "ENCFF489LNG"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS078MQQ",
+      "exp_accession": "ENCSR857XRG",
+      "file_accession": "ENCFF129TMJ",
+      "bam_accession": "ENCFF129TMJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF580EXN",
+      "peaks_bigbed_accession": "ENCFF837VYF"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS078MQQ",
+      "exp_accession": "ENCSR406PCK",
+      "file_accession": "ENCFF346NXC",
+      "bam_accession": "ENCFF346NXC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF016WYI",
+      "peaks_bigbed_accession": "ENCFF786KXE"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS078MQQ",
+      "exp_accession": "ENCSR408ZEW",
+      "file_accession": "ENCFF282ZSZ",
+      "bam_accession": "ENCFF282ZSZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF973FEF",
+      "peaks_bigbed_accession": "ENCFF096YBO"
+    }
+  },
+  "T_heart_left_ventricle": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS106FXL",
+      "exp_accession": "ENCSR851EBF",
+      "file_accession": "ENCFF097EXD",
+      "bam_accession": "ENCFF097EXD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF073QRI",
+      "peaks_bigbed_accession": "ENCFF967ADB"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS260UTX",
+      "exp_accession": "ENCSR070CMW",
+      "file_accession": "ENCFF533LLW",
+      "bam_accession": "ENCFF533LLW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF417JSF",
+      "peaks_bigbed_accession": "ENCFF982UYZ"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR854OXF",
+      "file_accession": "ENCFF284LSK",
+      "bam_accession": "ENCFF284LSK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF929IHB",
+      "peaks_bigbed_accession": "ENCFF816LCO"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR988JLN",
+      "file_accession": "ENCFF940JCQ",
+      "bam_accession": "ENCFF940JCQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF475TEQ",
+      "peaks_bigbed_accession": "ENCFF110MUD"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR500ZGF",
+      "file_accession": "ENCFF180KPZ",
+      "bam_accession": "ENCFF180KPZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF282XIN",
+      "peaks_bigbed_accession": "ENCFF658PUU"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR438QZN",
+      "file_accession": "ENCFF660DDB",
+      "bam_accession": "ENCFF660DDB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF756WZY",
+      "peaks_bigbed_accession": "ENCFF806JCJ"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR000XAA",
+      "file_accession": "ENCFF177POB",
+      "bam_accession": "ENCFF177POB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF358VCH",
+      "peaks_bigbed_accession": "ENCFF962UHM"
+    }
+  },
+  "T_omental_fat_pad": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS971HUW",
+      "exp_accession": "ENCSR788TRR",
+      "file_accession": "ENCFF550OUL",
+      "bam_accession": "ENCFF550OUL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF403DWZ",
+      "peaks_bigbed_accession": "ENCFF072RBJ"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS148MNC",
+      "exp_accession": "ENCSR244ZEJ",
+      "file_accession": "ENCFF225NCO",
+      "bam_accession": "ENCFF225NCO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF606INL",
+      "peaks_bigbed_accession": "ENCFF190JLM"
+    }
+  },
+  "T_testis": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS133MOQ",
+      "exp_accession": "ENCSR210NKB",
+      "file_accession": "ENCFF423JSR",
+      "bam_accession": "ENCFF423JSR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF690FVX",
+      "peaks_bigbed_accession": "ENCFF123QEO"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS141OYJ",
+      "exp_accession": "ENCSR978QUT",
+      "file_accession": "ENCFF867KYD",
+      "bam_accession": "ENCFF867KYD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF428COP",
+      "peaks_bigbed_accession": "ENCFF686XMQ"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS631HJF",
+      "exp_accession": "ENCSR376JOC",
+      "file_accession": "ENCFF572UCO",
+      "bam_accession": "ENCFF572UCO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF256XIR",
+      "peaks_bigbed_accession": "ENCFF517ZEE"
+    }
+  },
+  "T_BE2C": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS403ENC",
+      "exp_accession": "ENCSR000EMD",
+      "file_accession": "ENCFF334VBI",
+      "bam_accession": "ENCFF334VBI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF579OJG",
+      "peaks_bigbed_accession": "ENCFF461RJX"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS271SFD",
+      "exp_accession": "ENCSR000DQB",
+      "file_accession": "ENCFF881PUF",
+      "bam_accession": "ENCFF881PUF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF772IBT",
+      "peaks_bigbed_accession": "ENCFF527BOF"
+    }
+  },
+  "T_brain_microvascular_endothelial_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS304AAA",
+      "exp_accession": "ENCSR000ENE",
+      "file_accession": "ENCFF788MPI",
+      "bam_accession": "ENCFF788MPI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF018WSO",
+      "peaks_bigbed_accession": "ENCFF264BPY"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS304AAA",
+      "exp_accession": "ENCSR000DTC",
+      "file_accession": "ENCFF775JHL",
+      "bam_accession": "ENCFF775JHL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF719JKO",
+      "peaks_bigbed_accession": "ENCFF760ODA"
+    }
+  },
+  "T_Caco-2": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS890JZY",
+      "exp_accession": "ENCSR000EMI",
+      "file_accession": "ENCFF474LBE",
+      "bam_accession": "ENCFF474LBE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF472DRE",
+      "peaks_bigbed_accession": "ENCFF975LAQ"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS390JMI",
+      "exp_accession": "ENCSR000DQL",
+      "file_accession": "ENCFF957OES",
+      "bam_accession": "ENCFF957OES",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF376XYC",
+      "peaks_bigbed_accession": "ENCFF396CJZ"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS390JMI",
+      "exp_accession": "ENCSR000DQK",
+      "file_accession": "ENCFF691XDC",
+      "bam_accession": "ENCFF691XDC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF693MPJ",
+      "peaks_bigbed_accession": "ENCFF260KQL"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS700RKG",
+      "exp_accession": "ENCSR000DQM",
+      "file_accession": "ENCFF513PFC",
+      "bam_accession": "ENCFF513PFC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF086CVA",
+      "peaks_bigbed_accession": "ENCFF028WJS"
+    }
+  },
+  "T_cardiac_fibroblast": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS032BLA",
+      "exp_accession": "ENCSR000ENI",
+      "file_accession": "ENCFF852XZM",
+      "bam_accession": "ENCFF852XZM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF258OVM",
+      "peaks_bigbed_accession": "ENCFF215WHT"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS501ROB",
+      "exp_accession": "ENCSR000DTH",
+      "file_accession": "ENCFF612XOE",
+      "bam_accession": "ENCFF612XOE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF740ETU",
+      "peaks_bigbed_accession": "ENCFF215TVV"
+    }
+  },
+  "T_dermis_microvascular_lymphatic_vessel_endothelial_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS315AAA",
+      "exp_accession": "ENCSR000EOA",
+      "file_accession": "ENCFF750AZP",
+      "bam_accession": "ENCFF750AZP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF871HUQ",
+      "peaks_bigbed_accession": "ENCFF335UNH"
+    }
+  },
+  "T_G401": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS062JBT",
+      "exp_accession": "ENCSR269SIA",
+      "file_accession": "ENCFF671CNQ",
+      "bam_accession": "ENCFF671CNQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF364UAO",
+      "peaks_bigbed_accession": "ENCFF154CNA"
+    }
+  },
+  "T_GM06990": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS414HDG",
+      "exp_accession": "ENCSR000EMQ",
+      "file_accession": "ENCFF311YYM",
+      "bam_accession": "ENCFF311YYM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF691MRD",
+      "peaks_bigbed_accession": "ENCFF977HWX"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS875KTK",
+      "exp_accession": "ENCSR000DQT",
+      "file_accession": "ENCFF810IOI",
+      "bam_accession": "ENCFF810IOI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF040XXG",
+      "peaks_bigbed_accession": "ENCFF097YPX"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS146QHV",
+      "exp_accession": "ENCSR000DQV",
+      "file_accession": "ENCFF684SGK",
+      "bam_accession": "ENCFF684SGK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF659HNT",
+      "peaks_bigbed_accession": "ENCFF121AXM"
+    }
+  },
+  "T_H1-hESC": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS474GKG",
+      "exp_accession": "ENCSR794OFW",
+      "file_accession": "ENCFF579KRZ",
+      "bam_accession": "ENCFF579KRZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF232GUZ",
+      "peaks_bigbed_accession": "ENCFF236MQL"
+    },
+    "H2AFZ": {
+      "bios_accession": "ENCBS534NMZ",
+      "exp_accession": "ENCSR571IIS",
+      "file_accession": "ENCFF897EWW",
+      "bam_accession": "ENCFF897EWW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF519VGB",
+      "peaks_bigbed_accession": "ENCFF456BLH"
+    },
+    "H2BK120ac": {
+      "bios_accession": "ENCBS534NMZ",
+      "exp_accession": "ENCSR848DUN",
+      "file_accession": "ENCFF372FSW",
+      "bam_accession": "ENCFF372FSW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF664PDL",
+      "peaks_bigbed_accession": "ENCFF398UHT"
+    },
+    "H2BK12ac": {
+      "bios_accession": "ENCBS945MCY",
+      "exp_accession": "ENCSR364BKW",
+      "file_accession": "ENCFF595KTU",
+      "bam_accession": "ENCFF595KTU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF111JQJ",
+      "peaks_bigbed_accession": "ENCFF505KWX"
+    },
+    "H2BK15ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR739BZR",
+      "file_accession": "ENCFF106UCP",
+      "bam_accession": "ENCFF106UCP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF276YTK",
+      "peaks_bigbed_accession": "ENCFF632HBS"
+    },
+    "H2BK20ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR462XRE",
+      "file_accession": "ENCFF712OVK",
+      "bam_accession": "ENCFF712OVK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF548DAY",
+      "peaks_bigbed_accession": "ENCFF605PFG"
+    },
+    "H2BK5ac": {
+      "bios_accession": "ENCBS945MCY",
+      "exp_accession": "ENCSR161NON",
+      "file_accession": "ENCFF285CHR",
+      "bam_accession": "ENCFF285CHR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF179DYB",
+      "peaks_bigbed_accession": "ENCFF383PNP"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR038PFD",
+      "file_accession": "ENCFF176NNO",
+      "bam_accession": "ENCFF176NNO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF339DXG",
+      "peaks_bigbed_accession": "ENCFF983IAH"
+    },
+    "H3K23me2": {
+      "bios_accession": "ENCBS282MUP",
+      "exp_accession": "ENCSR326NQF",
+      "file_accession": "ENCFF567CRD",
+      "bam_accession": "ENCFF567CRD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF490YFM",
+      "peaks_bigbed_accession": "ENCFF964WJI"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS368BPP",
+      "exp_accession": "ENCSR880SUY",
+      "file_accession": "ENCFF693IFG",
+      "bam_accession": "ENCFF693IFG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF103PND",
+      "peaks_bigbed_accession": "ENCFF026CUR"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS409PYK",
+      "exp_accession": "ENCSR928HYM",
+      "file_accession": "ENCFF781BZF",
+      "bam_accession": "ENCFF781BZF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF395GVR",
+      "peaks_bigbed_accession": "ENCFF886NTG"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS055DBZ",
+      "exp_accession": "ENCSR925LJZ",
+      "file_accession": "ENCFF828OZC",
+      "bam_accession": "ENCFF828OZC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF734GAZ",
+      "peaks_bigbed_accession": "ENCFF340KRR"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS718AAA",
+      "exp_accession": "ENCSR000ANA",
+      "file_accession": "ENCFF767MGL",
+      "bam_accession": "ENCFF767MGL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF706CHK",
+      "peaks_bigbed_accession": "ENCFF199DKJ"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS945MCY",
+      "exp_accession": "ENCSR322MEI",
+      "file_accession": "ENCFF080SQV",
+      "bam_accession": "ENCFF080SQV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF649WBU",
+      "peaks_bigbed_accession": "ENCFF434UNV"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS253TYD",
+      "exp_accession": "ENCSR814XPE",
+      "file_accession": "ENCFF765FFD",
+      "bam_accession": "ENCFF765FFD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF698DKQ",
+      "peaks_bigbed_accession": "ENCFF991DOM"
+    },
+    "H3K56ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR768FWX",
+      "file_accession": "ENCFF782BDE",
+      "bam_accession": "ENCFF782BDE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF782SYZ",
+      "peaks_bigbed_accession": "ENCFF450WNM"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS497CZZ",
+      "exp_accession": "ENCSR442DGE",
+      "file_accession": "ENCFF535GVC",
+      "bam_accession": "ENCFF535GVC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF940RZG",
+      "peaks_bigbed_accession": "ENCFF677EFL"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS945MCY",
+      "exp_accession": "ENCSR301HRV",
+      "file_accession": "ENCFF015TSL",
+      "bam_accession": "ENCFF015TSL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF868TLW",
+      "peaks_bigbed_accession": "ENCFF629LFU"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS055DBZ",
+      "exp_accession": "ENCSR952GVX",
+      "file_accession": "ENCFF986GZQ",
+      "bam_accession": "ENCFF986GZQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF225ZYN",
+      "peaks_bigbed_accession": "ENCFF727VOV"
+    },
+    "H4K5ac": {
+      "bios_accession": "ENCBS368BPP",
+      "exp_accession": "ENCSR675FLJ",
+      "file_accession": "ENCFF431BVU",
+      "bam_accession": "ENCFF431BVU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF648KXC",
+      "peaks_bigbed_accession": "ENCFF204IDD"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS945MCY",
+      "exp_accession": "ENCSR891KGZ",
+      "file_accession": "ENCFF400BPI",
+      "bam_accession": "ENCFF400BPI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF816CJJ",
+      "peaks_bigbed_accession": "ENCFF499UAV"
+    },
+    "H4K91ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR858BOF",
+      "file_accession": "ENCFF156KJZ",
+      "bam_accession": "ENCFF156KJZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF497QPQ",
+      "peaks_bigbed_accession": "ENCFF437KQS"
+    }
+  },
+  "T_H9": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS113LZP",
+      "exp_accession": "ENCSR275ICP",
+      "file_accession": "ENCFF291ZMA",
+      "bam_accession": "ENCFF291ZMA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF405MMH",
+      "peaks_bigbed_accession": "ENCFF770VMR"
+    },
+    "H2AFZ": {
+      "bios_accession": "ENCBS399JWQ",
+      "exp_accession": "ENCSR265EDV",
+      "file_accession": "ENCFF068DKA",
+      "bam_accession": "ENCFF068DKA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF360BPO",
+      "peaks_bigbed_accession": "ENCFF055SWP"
+    },
+    "H3K14ac": {
+      "bios_accession": "ENCBS399JWQ",
+      "exp_accession": "ENCSR440BZV",
+      "file_accession": "ENCFF997SKW",
+      "bam_accession": "ENCFF997SKW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF505KQH",
+      "peaks_bigbed_accession": "ENCFF642ORB"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS399JWQ",
+      "exp_accession": "ENCSR294WUR",
+      "file_accession": "ENCFF813CLW",
+      "bam_accession": "ENCFF813CLW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF134YSG",
+      "peaks_bigbed_accession": "ENCFF922MSE"
+    },
+    "H3K23me2": {
+      "bios_accession": "ENCBS399JWQ",
+      "exp_accession": "ENCSR063WYJ",
+      "file_accession": "ENCFF355UMO",
+      "bam_accession": "ENCFF355UMO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF989FRA",
+      "peaks_bigbed_accession": "ENCFF386HNK"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR876RGF",
+      "file_accession": "ENCFF940QDV",
+      "bam_accession": "ENCFF940QDV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF223OYF",
+      "peaks_bigbed_accession": "ENCFF263VAY"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR792GCH",
+      "file_accession": "ENCFF841RXD",
+      "bam_accession": "ENCFF841RXD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF231DDC",
+      "peaks_bigbed_accession": "ENCFF390SAJ"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR324UNL",
+      "file_accession": "ENCFF513JUN",
+      "bam_accession": "ENCFF513JUN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF189TNV",
+      "peaks_bigbed_accession": "ENCFF881XKC"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS656LSW",
+      "exp_accession": "ENCSR230WNU",
+      "file_accession": "ENCFF692SFW",
+      "bam_accession": "ENCFF692SFW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF921UBQ",
+      "peaks_bigbed_accession": "ENCFF142PDU"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR276HBK",
+      "file_accession": "ENCFF675UDV",
+      "bam_accession": "ENCFF675UDV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF107VFB",
+      "peaks_bigbed_accession": "ENCFF503IKH"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR043VGU",
+      "file_accession": "ENCFF900TYA",
+      "bam_accession": "ENCFF900TYA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF995SME",
+      "peaks_bigbed_accession": "ENCFF145UQF"
+    },
+    "H3K56ac": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR047TJL",
+      "file_accession": "ENCFF345SVV",
+      "bam_accession": "ENCFF345SVV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF658RDX",
+      "peaks_bigbed_accession": "ENCFF509WUE"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS656LSW",
+      "exp_accession": "ENCSR280IFJ",
+      "file_accession": "ENCFF434DLZ",
+      "bam_accession": "ENCFF434DLZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF743QDE",
+      "peaks_bigbed_accession": "ENCFF131CLL"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR879TAS",
+      "file_accession": "ENCFF649KCM",
+      "bam_accession": "ENCFF649KCM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF296RPG",
+      "peaks_bigbed_accession": "ENCFF038JJB"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR972SMV",
+      "file_accession": "ENCFF763MGD",
+      "bam_accession": "ENCFF763MGD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF143IEH",
+      "peaks_bigbed_accession": "ENCFF853PZE"
+    },
+    "H3T11ph": {
+      "bios_accession": "ENCBS399JWQ",
+      "exp_accession": "ENCSR957GYL",
+      "file_accession": "ENCFF076YTT",
+      "bam_accession": "ENCFF076YTT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF124KLT",
+      "peaks_bigbed_accession": "ENCFF081WHA"
+    },
+    "H4K5ac": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR554TZE",
+      "file_accession": "ENCFF400OVH",
+      "bam_accession": "ENCFF400OVH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF824EPH",
+      "peaks_bigbed_accession": "ENCFF611HNV"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR367JIO",
+      "file_accession": "ENCFF101CCN",
+      "bam_accession": "ENCFF101CCN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF504TGP",
+      "peaks_bigbed_accession": "ENCFF185XWM"
+    }
+  },
+  "T_HAP-1": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS217AEF",
+      "exp_accession": "ENCSR620QNS",
+      "file_accession": "ENCFF303JZI",
+      "bam_accession": "ENCFF303JZI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF314TDG",
+      "peaks_bigbed_accession": "ENCFF526EUM"
+    }
+  },
+  "T_hematopoietic_multipotent_progenitor_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS374YBC",
+      "exp_accession": "ENCSR328UMC",
+      "file_accession": "ENCFF292XIO",
+      "bam_accession": "ENCFF292XIO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF567PRD",
+      "peaks_bigbed_accession": "ENCFF895BCX"
+    }
+  },
+  "T_HL-60": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS069ENC",
+      "exp_accession": "ENCSR000ENU",
+      "file_accession": "ENCFF508CUD",
+      "bam_accession": "ENCFF508CUD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF627AZY",
+      "peaks_bigbed_accession": "ENCFF149YYK"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS215JQI",
+      "exp_accession": "ENCSR000DUO",
+      "file_accession": "ENCFF646NNF",
+      "bam_accession": "ENCFF646NNF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF444RAO",
+      "peaks_bigbed_accession": "ENCFF942MXV"
+    }
+  },
+  "T_IMR-90": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS048TNH",
+      "exp_accession": "ENCSR477RTP",
+      "file_accession": "ENCFF264LKY",
+      "bam_accession": "ENCFF264LKY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF971HXR",
+      "peaks_bigbed_accession": "ENCFF423QOA"
+    },
+    "H2AK5ac": {
+      "bios_accession": "ENCBS992YMT",
+      "exp_accession": "ENCSR424ZJH",
+      "file_accession": "ENCFF809EID",
+      "bam_accession": "ENCFF809EID",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF443FLN",
+      "peaks_bigbed_accession": "ENCFF330IXQ"
+    },
+    "H2AK9ac": {
+      "bios_accession": "ENCBS357USI",
+      "exp_accession": "ENCSR038MKB",
+      "file_accession": "ENCFF312WUR",
+      "bam_accession": "ENCFF312WUR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF625ZJC",
+      "peaks_bigbed_accession": "ENCFF635OXE"
+    },
+    "H2BK120ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR210RXE",
+      "file_accession": "ENCFF475ABK",
+      "bam_accession": "ENCFF475ABK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF577LCU",
+      "peaks_bigbed_accession": "ENCFF432YRR"
+    },
+    "H2BK15ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR274TJB",
+      "file_accession": "ENCFF510XXG",
+      "bam_accession": "ENCFF510XXG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF828SKT",
+      "peaks_bigbed_accession": "ENCFF163AXV"
+    },
+    "H2BK20ac": {
+      "bios_accession": "ENCBS981IKS",
+      "exp_accession": "ENCSR054IRX",
+      "file_accession": "ENCFF237RIX",
+      "bam_accession": "ENCFF237RIX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF217JTN",
+      "peaks_bigbed_accession": "ENCFF386IDM"
+    },
+    "H2BK5ac": {
+      "bios_accession": "ENCBS780OTZ",
+      "exp_accession": "ENCSR248KRU",
+      "file_accession": "ENCFF711DZO",
+      "bam_accession": "ENCFF711DZO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF513DXL",
+      "peaks_bigbed_accession": "ENCFF119QHQ"
+    },
+    "H3K14ac": {
+      "bios_accession": "ENCBS981IKS",
+      "exp_accession": "ENCSR283STF",
+      "file_accession": "ENCFF738MHY",
+      "bam_accession": "ENCFF738MHY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF361LHT",
+      "peaks_bigbed_accession": "ENCFF660EBS"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS371NWL",
+      "exp_accession": "ENCSR383CBN",
+      "file_accession": "ENCFF564USN",
+      "bam_accession": "ENCFF564USN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF572ALP",
+      "peaks_bigbed_accession": "ENCFF807EZS"
+    },
+    "H3K23ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR942NME",
+      "file_accession": "ENCFF773OTU",
+      "bam_accession": "ENCFF773OTU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF873YOP",
+      "peaks_bigbed_accession": "ENCFF441YLL"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR002YRE",
+      "file_accession": "ENCFF827KCG",
+      "bam_accession": "ENCFF827KCG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF222IQN",
+      "peaks_bigbed_accession": "ENCFF305SRT"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR431UUY",
+      "file_accession": "ENCFF084CZB",
+      "bam_accession": "ENCFF084CZB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF045HZZ",
+      "peaks_bigbed_accession": "ENCFF801FIP"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR437ORF",
+      "file_accession": "ENCFF197BAZ",
+      "bam_accession": "ENCFF197BAZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF314QXF",
+      "peaks_bigbed_accession": "ENCFF340LKS"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS981IKS",
+      "exp_accession": "ENCSR039ZLS",
+      "file_accession": "ENCFF250YWX",
+      "bam_accession": "ENCFF250YWX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF411RET",
+      "peaks_bigbed_accession": "ENCFF695OWA"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR831JSP",
+      "file_accession": "ENCFF927WHP",
+      "bam_accession": "ENCFF927WHP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF148PNW",
+      "peaks_bigbed_accession": "ENCFF353BUA"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS371NWL",
+      "exp_accession": "ENCSR672XZZ",
+      "file_accession": "ENCFF681OHX",
+      "bam_accession": "ENCFF681OHX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF400CAD",
+      "peaks_bigbed_accession": "ENCFF093PCN"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS371NWL",
+      "exp_accession": "ENCSR087PFU",
+      "file_accession": "ENCFF355WLE",
+      "bam_accession": "ENCFF355WLE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF518GFI",
+      "peaks_bigbed_accession": "ENCFF494AEZ"
+    },
+    "H3K56ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR066VKQ",
+      "file_accession": "ENCFF492AKV",
+      "bam_accession": "ENCFF492AKV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF350ATK",
+      "peaks_bigbed_accession": "ENCFF184PIN"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS982GUC",
+      "exp_accession": "ENCSR579TJT",
+      "file_accession": "ENCFF848ADK",
+      "bam_accession": "ENCFF848ADK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF049TRD",
+      "peaks_bigbed_accession": "ENCFF730NVD"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS982GUC",
+      "exp_accession": "ENCSR713QLX",
+      "file_accession": "ENCFF571ZDL",
+      "bam_accession": "ENCFF571ZDL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF961CWW",
+      "peaks_bigbed_accession": "ENCFF590BWI"
+    },
+    "H3K9me1": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR580LZO",
+      "file_accession": "ENCFF936ASR",
+      "bam_accession": "ENCFF936ASR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF164FXG",
+      "peaks_bigbed_accession": "ENCFF286IXA"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR055ZZY",
+      "file_accession": "ENCFF942QOQ",
+      "bam_accession": "ENCFF942QOQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF733CJA",
+      "peaks_bigbed_accession": "ENCFF681KGW"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS992YMT",
+      "exp_accession": "ENCSR804SRO",
+      "file_accession": "ENCFF951EYC",
+      "bam_accession": "ENCFF951EYC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF398QPY",
+      "peaks_bigbed_accession": "ENCFF275IFK"
+    },
+    "H4K5ac": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR706RRA",
+      "file_accession": "ENCFF113XYR",
+      "bam_accession": "ENCFF113XYR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF524BQQ",
+      "peaks_bigbed_accession": "ENCFF393UGK"
+    },
+    "H4K91ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR164RFI",
+      "file_accession": "ENCFF291HMI",
+      "bam_accession": "ENCFF291HMI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF335IHO",
+      "peaks_bigbed_accession": "ENCFF838PDH"
+    }
+  },
+  "T_K562": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS775AAA",
+      "exp_accession": "ENCSR921NMD",
+      "file_accession": "ENCFF257HEE",
+      "bam_accession": "ENCFF257HEE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF972GVB",
+      "peaks_bigbed_accession": "ENCFF070TML"
+    },
+    "H2AFZ": {
+      "bios_accession": "ENCBS639AAA",
+      "exp_accession": "ENCSR000APC",
+      "file_accession": "ENCFF007YZT",
+      "bam_accession": "ENCFF007YZT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF202EVH",
+      "peaks_bigbed_accession": "ENCFF415KCI"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS674MPN",
+      "exp_accession": "ENCSR000AKP",
+      "file_accession": "ENCFF232RQF",
+      "bam_accession": "ENCFF232RQF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF465GBD",
+      "peaks_bigbed_accession": "ENCFF498JGL"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS349ULG",
+      "exp_accession": "ENCSR000DWB",
+      "file_accession": "ENCFF035SOZ",
+      "bam_accession": "ENCFF035SOZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF633OZC",
+      "peaks_bigbed_accession": "ENCFF130NUM"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS667AAA",
+      "exp_accession": "ENCSR000EWC",
+      "file_accession": "ENCFF089KHK",
+      "bam_accession": "ENCFF089KHK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF287LBI",
+      "peaks_bigbed_accession": "ENCFF058DKW"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS674MPN",
+      "exp_accession": "ENCSR000AKT",
+      "file_accession": "ENCFF583GSH",
+      "bam_accession": "ENCFF583GSH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF054RSU",
+      "peaks_bigbed_accession": "ENCFF079OFC"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS980HYW",
+      "exp_accession": "ENCSR668LDD",
+      "file_accession": "ENCFF752MYF",
+      "bam_accession": "ENCFF752MYF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF405ZDL",
+      "peaks_bigbed_accession": "ENCFF136RIH"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS667AAA",
+      "exp_accession": "ENCSR000EVZ",
+      "file_accession": "ENCFF946AXU",
+      "bam_accession": "ENCFF946AXU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF178QDA",
+      "peaks_bigbed_accession": "ENCFF237XSP"
+    },
+    "H3K9me1": {
+      "bios_accession": "ENCBS639AAA",
+      "exp_accession": "ENCSR000AKW",
+      "file_accession": "ENCFF302OEO",
+      "bam_accession": "ENCFF302OEO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF220RGS",
+      "peaks_bigbed_accession": "ENCFF580ITL"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS674MPN",
+      "exp_accession": "ENCSR000APE",
+      "file_accession": "ENCFF155UQU",
+      "bam_accession": "ENCFF155UQU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF632NQA",
+      "peaks_bigbed_accession": "ENCFF459JZD"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS639AAA",
+      "exp_accession": "ENCSR000AKX",
+      "file_accession": "ENCFF923YUN",
+      "bam_accession": "ENCFF923YUN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF694ODT",
+      "peaks_bigbed_accession": "ENCFF832DAL"
+    }
+  },
+  "T_mesenchymal_stem_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS725VAK",
+      "exp_accession": "ENCSR731QLJ",
+      "file_accession": "ENCFF474HCY",
+      "bam_accession": "ENCFF474HCY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF387STL",
+      "peaks_bigbed_accession": "ENCFF508FYE"
+    },
+    "H2AK5ac": {
+      "bios_accession": "ENCBS725VAK",
+      "exp_accession": "ENCSR753RYH",
+      "file_accession": "ENCFF399FKZ",
+      "bam_accession": "ENCFF399FKZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF720PYW",
+      "peaks_bigbed_accession": "ENCFF796RGT"
+    },
+    "H2BK120ac": {
+      "bios_accession": "ENCBS783XLR",
+      "exp_accession": "ENCSR502IWF",
+      "file_accession": "ENCFF614ZDH",
+      "bam_accession": "ENCFF614ZDH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF846PVA",
+      "peaks_bigbed_accession": "ENCFF986CMM"
+    },
+    "H2BK12ac": {
+      "bios_accession": "ENCBS732PNZ",
+      "exp_accession": "ENCSR895YWA",
+      "file_accession": "ENCFF113ORU",
+      "bam_accession": "ENCFF113ORU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF805THH",
+      "peaks_bigbed_accession": "ENCFF718RVU"
+    },
+    "H2BK15ac": {
+      "bios_accession": "ENCBS783XLR",
+      "exp_accession": "ENCSR491CCY",
+      "file_accession": "ENCFF395BTH",
+      "bam_accession": "ENCFF395BTH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF150NUD",
+      "peaks_bigbed_accession": "ENCFF495RGA"
+    },
+    "H2BK5ac": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR809CVZ",
+      "file_accession": "ENCFF854UOA",
+      "bam_accession": "ENCFF854UOA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF713BNJ",
+      "peaks_bigbed_accession": "ENCFF720XXW"
+    },
+    "H3K14ac": {
+      "bios_accession": "ENCBS732PNZ",
+      "exp_accession": "ENCSR719QMW",
+      "file_accession": "ENCFF291GNC",
+      "bam_accession": "ENCFF291GNC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF987THO",
+      "peaks_bigbed_accession": "ENCFF404VFC"
+    },
+    "H3K23ac": {
+      "bios_accession": "ENCBS732PNZ",
+      "exp_accession": "ENCSR734MEM",
+      "file_accession": "ENCFF224CMW",
+      "bam_accession": "ENCFF224CMW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF803CNI",
+      "peaks_bigbed_accession": "ENCFF895GXX"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR013KEC",
+      "file_accession": "ENCFF419HKZ",
+      "bam_accession": "ENCFF419HKZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF800CQD",
+      "peaks_bigbed_accession": "ENCFF651HCX"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS725VAK",
+      "exp_accession": "ENCSR832JVP",
+      "file_accession": "ENCFF474ZPR",
+      "bam_accession": "ENCFF474ZPR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF519EFD",
+      "peaks_bigbed_accession": "ENCFF398WWR"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS725VAK",
+      "exp_accession": "ENCSR824UNY",
+      "file_accession": "ENCFF549EIM",
+      "bam_accession": "ENCFF549EIM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF403XCA",
+      "peaks_bigbed_accession": "ENCFF236QRJ"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS783XLR",
+      "exp_accession": "ENCSR902EEI",
+      "file_accession": "ENCFF443FFP",
+      "bam_accession": "ENCFF443FFP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF297UVM",
+      "peaks_bigbed_accession": "ENCFF170UKB"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR065HOR",
+      "file_accession": "ENCFF362KVF",
+      "bam_accession": "ENCFF362KVF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF225HZV",
+      "peaks_bigbed_accession": "ENCFF499MUY"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS725VAK",
+      "exp_accession": "ENCSR786GJM",
+      "file_accession": "ENCFF201BXG",
+      "bam_accession": "ENCFF201BXG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF012IME",
+      "peaks_bigbed_accession": "ENCFF912LDI"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR501JET",
+      "file_accession": "ENCFF655EKU",
+      "bam_accession": "ENCFF655EKU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF540NAQ",
+      "peaks_bigbed_accession": "ENCFF428TYO"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR746CUY",
+      "file_accession": "ENCFF112SIY",
+      "bam_accession": "ENCFF112SIY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF562YON",
+      "peaks_bigbed_accession": "ENCFF993UAJ"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS783XLR",
+      "exp_accession": "ENCSR350YQC",
+      "file_accession": "ENCFF563KON",
+      "bam_accession": "ENCFF563KON",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF740LIZ",
+      "peaks_bigbed_accession": "ENCFF397SDB"
+    },
+    "H4K91ac": {
+      "bios_accession": "ENCBS783XLR",
+      "exp_accession": "ENCSR509MHV",
+      "file_accession": "ENCFF377OEI",
+      "bam_accession": "ENCFF377OEI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF651WCX",
+      "peaks_bigbed_accession": "ENCFF691GHM"
+    }
+  },
+  "T_MG63": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS091SUW",
+      "exp_accession": "ENCSR083STA",
+      "file_accession": "ENCFF785KVP",
+      "bam_accession": "ENCFF785KVP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF344LQD",
+      "peaks_bigbed_accession": "ENCFF630GJC"
+    }
+  },
+  "T_NCI-H460": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS514AAA",
+      "exp_accession": "ENCSR000FJH",
+      "file_accession": "ENCFF876IBR",
+      "bam_accession": "ENCFF876IBR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF227KZN",
+      "peaks_bigbed_accession": "ENCFF226LGM"
+    }
+  },
+  "T_neural_stem_progenitor_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS805ZNK",
+      "exp_accession": "ENCSR278FVO",
+      "file_accession": "ENCFF224MAE",
+      "bam_accession": "ENCFF224MAE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF287XRW",
+      "peaks_bigbed_accession": "ENCFF854YJS"
+    },
+    "H2AK5ac": {
+      "bios_accession": "ENCBS289YMC",
+      "exp_accession": "ENCSR732NFR",
+      "file_accession": "ENCFF094UHO",
+      "bam_accession": "ENCFF094UHO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF832VED",
+      "peaks_bigbed_accession": "ENCFF717VTI"
+    },
+    "H2BK120ac": {
+      "bios_accession": "ENCBS289YMC",
+      "exp_accession": "ENCSR811NNT",
+      "file_accession": "ENCFF504LNP",
+      "bam_accession": "ENCFF504LNP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF950RAD",
+      "peaks_bigbed_accession": "ENCFF009TAN"
+    },
+    "H2BK12ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR940RIU",
+      "file_accession": "ENCFF253TBD",
+      "bam_accession": "ENCFF253TBD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF569QVE",
+      "peaks_bigbed_accession": "ENCFF209VDL"
+    },
+    "H2BK5ac": {
+      "bios_accession": "ENCBS289YMC",
+      "exp_accession": "ENCSR651SVZ",
+      "file_accession": "ENCFF418NKT",
+      "bam_accession": "ENCFF418NKT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF996YGT",
+      "peaks_bigbed_accession": "ENCFF681NUL"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS289YMC",
+      "exp_accession": "ENCSR182XTG",
+      "file_accession": "ENCFF285VWE",
+      "bam_accession": "ENCFF285VWE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF391XQM",
+      "peaks_bigbed_accession": "ENCFF998ATB"
+    },
+    "H3K23ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR361LIU",
+      "file_accession": "ENCFF199MMG",
+      "bam_accession": "ENCFF199MMG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF380FEI",
+      "peaks_bigbed_accession": "ENCFF613WTN"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR799SRL",
+      "file_accession": "ENCFF477FHN",
+      "bam_accession": "ENCFF477FHN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF362MEV",
+      "peaks_bigbed_accession": "ENCFF989CMY"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR694LBI",
+      "file_accession": "ENCFF391VPZ",
+      "bam_accession": "ENCFF391VPZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF245CBZ",
+      "peaks_bigbed_accession": "ENCFF385NTU"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR256ESY",
+      "file_accession": "ENCFF870AGH",
+      "bam_accession": "ENCFF870AGH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF247LVC",
+      "peaks_bigbed_accession": "ENCFF982KNO"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS661CUF",
+      "exp_accession": "ENCSR476FBL",
+      "file_accession": "ENCFF793FNE",
+      "bam_accession": "ENCFF793FNE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF187MMM",
+      "peaks_bigbed_accession": "ENCFF152FRH"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR486GWT",
+      "file_accession": "ENCFF575YMO",
+      "bam_accession": "ENCFF575YMO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF084LJK",
+      "peaks_bigbed_accession": "ENCFF621JGX"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR956CTX",
+      "file_accession": "ENCFF212FUS",
+      "bam_accession": "ENCFF212FUS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF017EZJ",
+      "peaks_bigbed_accession": "ENCFF061ECL"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR570POG",
+      "file_accession": "ENCFF067DUE",
+      "bam_accession": "ENCFF067DUE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF352KAK",
+      "peaks_bigbed_accession": "ENCFF015XDQ"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR626UPW",
+      "file_accession": "ENCFF158DIT",
+      "bam_accession": "ENCFF158DIT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF444TGS",
+      "peaks_bigbed_accession": "ENCFF292SGV"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR391WDE",
+      "file_accession": "ENCFF906APX",
+      "bam_accession": "ENCFF906APX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF341YBW",
+      "peaks_bigbed_accession": "ENCFF387PJT"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR277JAU",
+      "file_accession": "ENCFF277NHI",
+      "bam_accession": "ENCFF277NHI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF540VIA",
+      "peaks_bigbed_accession": "ENCFF161DKZ"
+    },
+    "H4K91ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR260CXF",
+      "file_accession": "ENCFF453VBG",
+      "bam_accession": "ENCFF453VBG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF277PLB",
+      "peaks_bigbed_accession": "ENCFF619QXN"
+    }
+  },
+  "T_occipital_lobe": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS312LJS",
+      "exp_accession": "ENCSR859CZM",
+      "file_accession": "ENCFF436JHH",
+      "bam_accession": "ENCFF436JHH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF935KGD",
+      "peaks_bigbed_accession": "ENCFF339QYU"
+    }
+  },
+  "T_SJCRH30": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS598ERL",
+      "exp_accession": "ENCSR700ILE",
+      "file_accession": "ENCFF477YUQ",
+      "bam_accession": "ENCFF477YUQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF110QOO",
+      "peaks_bigbed_accession": "ENCFF717QCI"
+    }
+  },
+  "T_SJSA1": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS489PLT",
+      "exp_accession": "ENCSR620WAR",
+      "file_accession": "ENCFF204JPE",
+      "bam_accession": "ENCFF204JPE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF443TYV",
+      "peaks_bigbed_accession": "ENCFF132TUS"
+    }
+  },
+  "T_SK-MEL-5": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS518AAA",
+      "exp_accession": "ENCSR000FEK",
+      "file_accession": "ENCFF207FFJ",
+      "bam_accession": "ENCFF207FFJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF627WEJ",
+      "peaks_bigbed_accession": "ENCFF124YLW"
+    }
+  },
+  "T_skin_fibroblast": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS336CDQ",
+      "exp_accession": "ENCSR184LMY",
+      "file_accession": "ENCFF966XVI",
+      "bam_accession": "ENCFF966XVI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF779UTQ",
+      "peaks_bigbed_accession": "ENCFF783KAK"
+    }
+  },
+  "T_skin_of_body": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS948BKE",
+      "exp_accession": "ENCSR092OFK",
+      "file_accession": "ENCFF198CSA",
+      "bam_accession": "ENCFF198CSA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF530QBT",
+      "peaks_bigbed_accession": "ENCFF115YMO"
+    }
+  },
+  "T_T47D": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS440ENC",
+      "exp_accession": "ENCSR000EQB",
+      "file_accession": "ENCFF563OCJ",
+      "bam_accession": "ENCFF563OCJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF085GPE",
+      "peaks_bigbed_accession": "ENCFF206QYG"
+    }
+  },
+  "T_trophoblast_cell": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS376RZJ",
+      "exp_accession": "ENCSR179CDH",
+      "file_accession": "ENCFF218OXS",
+      "bam_accession": "ENCFF218OXS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF843JKM",
+      "peaks_bigbed_accession": "ENCFF326WIA"
+    },
+    "H2AFZ": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR485OSV",
+      "file_accession": "ENCFF161EDO",
+      "bam_accession": "ENCFF161EDO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF231TXD",
+      "peaks_bigbed_accession": "ENCFF348OMI"
+    },
+    "H2AK5ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR427RFW",
+      "file_accession": "ENCFF356CJH",
+      "bam_accession": "ENCFF356CJH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF742MTL",
+      "peaks_bigbed_accession": "ENCFF830BMF"
+    },
+    "H2BK120ac": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR355ZYK",
+      "file_accession": "ENCFF407OFJ",
+      "bam_accession": "ENCFF407OFJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF615BYJ",
+      "peaks_bigbed_accession": "ENCFF909CFM"
+    },
+    "H2BK12ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR634IIF",
+      "file_accession": "ENCFF686AAH",
+      "bam_accession": "ENCFF686AAH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF312WJU",
+      "peaks_bigbed_accession": "ENCFF668XLX"
+    },
+    "H3K14ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR499CAZ",
+      "file_accession": "ENCFF381CWR",
+      "bam_accession": "ENCFF381CWR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF500SQQ",
+      "peaks_bigbed_accession": "ENCFF603EYG"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR081JRM",
+      "file_accession": "ENCFF705VZD",
+      "bam_accession": "ENCFF705VZD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF009VCO",
+      "peaks_bigbed_accession": "ENCFF645FKT"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR425PQI",
+      "file_accession": "ENCFF230PTY",
+      "bam_accession": "ENCFF230PTY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF020JKO",
+      "peaks_bigbed_accession": "ENCFF719DFT"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR960CWQ",
+      "file_accession": "ENCFF617FEU",
+      "bam_accession": "ENCFF617FEU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF090DQD",
+      "peaks_bigbed_accession": "ENCFF563JWB"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR354UVU",
+      "file_accession": "ENCFF195QKA",
+      "bam_accession": "ENCFF195QKA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF754ZSZ",
+      "peaks_bigbed_accession": "ENCFF309IOR"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR035DUS",
+      "file_accession": "ENCFF396FVA",
+      "bam_accession": "ENCFF396FVA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF856LAF",
+      "peaks_bigbed_accession": "ENCFF076HJV"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR874WOB",
+      "file_accession": "ENCFF718PRG",
+      "bam_accession": "ENCFF718PRG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF137EUG",
+      "peaks_bigbed_accession": "ENCFF631ENP"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR213JMO",
+      "file_accession": "ENCFF329TCC",
+      "bam_accession": "ENCFF329TCC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF057CJH",
+      "peaks_bigbed_accession": "ENCFF922VYS"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR486PWP",
+      "file_accession": "ENCFF807MVR",
+      "bam_accession": "ENCFF807MVR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF085BMC",
+      "peaks_bigbed_accession": "ENCFF912YVK"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR815DXY",
+      "file_accession": "ENCFF438FEC",
+      "bam_accession": "ENCFF438FEC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF025UFC",
+      "peaks_bigbed_accession": "ENCFF647ARX"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR044WCY",
+      "file_accession": "ENCFF897ZLC",
+      "bam_accession": "ENCFF897ZLC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF924FZA",
+      "peaks_bigbed_accession": "ENCFF379DOH"
+    },
+    "H4K12ac": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR960JPH",
+      "file_accession": "ENCFF829KYP",
+      "bam_accession": "ENCFF829KYP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF583NJY",
+      "peaks_bigbed_accession": "ENCFF110LWL"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR888MKB",
+      "file_accession": "ENCFF117TSF",
+      "bam_accession": "ENCFF117TSF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF219KUK",
+      "peaks_bigbed_accession": "ENCFF438OHO"
+    }
+  },
+  "T_upper_lobe_of_left_lung": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS956JIK",
+      "exp_accession": "ENCSR490JVQ",
+      "file_accession": "ENCFF824KSF",
+      "bam_accession": "ENCFF824KSF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF831NQC",
+      "peaks_bigbed_accession": "ENCFF631ESR"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS684YJH",
+      "exp_accession": "ENCSR738SXD",
+      "file_accession": "ENCFF460ZAV",
+      "bam_accession": "ENCFF460ZAV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF333RHP",
+      "peaks_bigbed_accession": "ENCFF394PHQ"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS684YJH",
+      "exp_accession": "ENCSR208WDY",
+      "file_accession": "ENCFF892ULT",
+      "bam_accession": "ENCFF892ULT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF466ADC",
+      "peaks_bigbed_accession": "ENCFF387CWY"
+    }
+  },
+  "T_urinary_bladder": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS241XYR",
+      "exp_accession": "ENCSR813CKU",
+      "file_accession": "ENCFF351RLC",
+      "bam_accession": "ENCFF351RLC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF284ARV",
+      "peaks_bigbed_accession": "ENCFF352XLM"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS364KFR",
+      "exp_accession": "ENCSR449TNC",
+      "file_accession": "ENCFF761XEA",
+      "bam_accession": "ENCFF761XEA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF539VSU",
+      "peaks_bigbed_accession": "ENCFF898ZKH"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS364KFR",
+      "exp_accession": "ENCSR632OWD",
+      "file_accession": "ENCFF746QLY",
+      "bam_accession": "ENCFF746QLY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF828JSQ",
+      "peaks_bigbed_accession": "ENCFF023ISC"
+    }
+  },
+  "T_uterus": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS469EGD",
+      "exp_accession": "ENCSR237WJY",
+      "file_accession": "ENCFF130PVC",
+      "bam_accession": "ENCFF130PVC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF609VNS",
+      "peaks_bigbed_accession": "ENCFF622WXI"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS469FLQ",
+      "exp_accession": "ENCSR249INE",
+      "file_accession": "ENCFF142RDG",
+      "bam_accession": "ENCFF142RDG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF428HWZ",
+      "peaks_bigbed_accession": "ENCFF264MGR"
+    }
+  },
+  "T_WERI-Rb-1": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS270AAA",
+      "exp_accession": "ENCSR000EQL",
+      "file_accession": "ENCFF816ZVF",
+      "bam_accession": "ENCFF816ZVF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF667GPM",
+      "peaks_bigbed_accession": "ENCFF154FOK"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS087YAE",
+      "exp_accession": "ENCSR000DXU",
+      "file_accession": "ENCFF749HNO",
+      "bam_accession": "ENCFF749HNO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF437YLQ",
+      "peaks_bigbed_accession": "ENCFF183CHX"
+    }
+  },
+  "T_DND-41": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000AQV",
+      "file_accession": "ENCFF255SZS",
+      "bam_accession": "ENCFF255SZS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF848RJU",
+      "peaks_bigbed_accession": "ENCFF541VTQ"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS688JZQ",
+      "exp_accession": "ENCSR000ASX",
+      "file_accession": "ENCFF200ECC",
+      "bam_accession": "ENCFF200ECC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF856PLM",
+      "peaks_bigbed_accession": "ENCFF249ZDP"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS688JZQ",
+      "exp_accession": "ENCSR000AQX",
+      "file_accession": "ENCFF973TDF",
+      "bam_accession": "ENCFF973TDF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF906BOA",
+      "peaks_bigbed_accession": "ENCFF339PMR"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000AQY",
+      "file_accession": "ENCFF192WKN",
+      "bam_accession": "ENCFF192WKN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF738JXM",
+      "peaks_bigbed_accession": "ENCFF556LYR"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS688JZQ",
+      "exp_accession": "ENCSR000AQZ",
+      "file_accession": "ENCFF585ZDW",
+      "bam_accession": "ENCFF585ZDW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF937SCV",
+      "peaks_bigbed_accession": "ENCFF514DBS"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS688JZQ",
+      "exp_accession": "ENCSR564VIX",
+      "file_accession": "ENCFF764MJJ",
+      "bam_accession": "ENCFF764MJJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF322IYZ",
+      "peaks_bigbed_accession": "ENCFF197IMF"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000ARB",
+      "file_accession": "ENCFF015TDF",
+      "bam_accession": "ENCFF015TDF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF873VZC",
+      "peaks_bigbed_accession": "ENCFF897ZAV"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000ARY",
+      "file_accession": "ENCFF703ZGI",
+      "bam_accession": "ENCFF703ZGI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF417ESF",
+      "peaks_bigbed_accession": "ENCFF022VVR"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000ARZ",
+      "file_accession": "ENCFF030PGK",
+      "bam_accession": "ENCFF030PGK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF122DVA",
+      "peaks_bigbed_accession": "ENCFF434SAB"
+    }
+  },
+  "T_KMS-11": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR499RMZ",
+      "file_accession": "ENCFF680AEE",
+      "bam_accession": "ENCFF680AEE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF768NKN",
+      "peaks_bigbed_accession": "ENCFF977EOQ"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR955IXZ",
+      "file_accession": "ENCFF028BMC",
+      "bam_accession": "ENCFF028BMC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF920RKX",
+      "peaks_bigbed_accession": "ENCFF676TUW"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS682HMC",
+      "exp_accession": "ENCSR474VGQ",
+      "file_accession": "ENCFF622TMV",
+      "bam_accession": "ENCFF622TMV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF386YQT",
+      "peaks_bigbed_accession": "ENCFF285IWN"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR835YBD",
+      "file_accession": "ENCFF125PEN",
+      "bam_accession": "ENCFF125PEN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF237JCO",
+      "peaks_bigbed_accession": "ENCFF314YVT"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR976JHS",
+      "file_accession": "ENCFF351LDO",
+      "bam_accession": "ENCFF351LDO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF300VUR",
+      "peaks_bigbed_accession": "ENCFF473WKW"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR539TKY",
+      "file_accession": "ENCFF790PIQ",
+      "bam_accession": "ENCFF790PIQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF919OYN",
+      "peaks_bigbed_accession": "ENCFF919VZF"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS682HMC",
+      "exp_accession": "ENCSR847UJW",
+      "file_accession": "ENCFF558TKQ",
+      "bam_accession": "ENCFF558TKQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF007PDL",
+      "peaks_bigbed_accession": "ENCFF955EZL"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR790QWJ",
+      "file_accession": "ENCFF901QZZ",
+      "bam_accession": "ENCFF901QZZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF549QMQ",
+      "peaks_bigbed_accession": "ENCFF967QVQ"
+    }
+  },
+  "T_NCI-H929": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS197CBA",
+      "exp_accession": "ENCSR559IFS",
+      "file_accession": "ENCFF378SCW",
+      "bam_accession": "ENCFF378SCW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF665FSX",
+      "peaks_bigbed_accession": "ENCFF738DRZ"
+    },
+    "H3F3A": {
+      "bios_accession": "ENCBS197CBA",
+      "exp_accession": "ENCSR536SZD",
+      "file_accession": "ENCFF678EEL",
+      "bam_accession": "ENCFF678EEL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF418HSP",
+      "peaks_bigbed_accession": "ENCFF941GAN"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS197CBA",
+      "exp_accession": "ENCSR562JTY",
+      "file_accession": "ENCFF479IOR",
+      "bam_accession": "ENCFF479IOR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF863VMA",
+      "peaks_bigbed_accession": "ENCFF588PFL"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS197CBA",
+      "exp_accession": "ENCSR011CSR",
+      "file_accession": "ENCFF617CAT",
+      "bam_accession": "ENCFF617CAT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF289DWP",
+      "peaks_bigbed_accession": "ENCFF521VOW"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS571AQH",
+      "exp_accession": "ENCSR692HIO",
+      "file_accession": "ENCFF311PFB",
+      "bam_accession": "ENCFF311PFB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF811HOL",
+      "peaks_bigbed_accession": "ENCFF426FVP"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS197CBA",
+      "exp_accession": "ENCSR082NQB",
+      "file_accession": "ENCFF818DII",
+      "bam_accession": "ENCFF818DII",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF754JLX",
+      "peaks_bigbed_accession": "ENCFF018QUH"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS571AQH",
+      "exp_accession": "ENCSR327OGS",
+      "file_accession": "ENCFF255NUV",
+      "bam_accession": "ENCFF255NUV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF795GES",
+      "peaks_bigbed_accession": "ENCFF160KEE"
+    }
+  },
+  "T_OCI-LY7": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS699NWP",
+      "exp_accession": "ENCSR331RGM",
+      "file_accession": "ENCFF866WKV",
+      "bam_accession": "ENCFF866WKV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF460QTP",
+      "peaks_bigbed_accession": "ENCFF179PMR"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS006VZG",
+      "exp_accession": "ENCSR447ZGY",
+      "file_accession": "ENCFF322PGT",
+      "bam_accession": "ENCFF322PGT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF454CCX",
+      "peaks_bigbed_accession": "ENCFF115HIB"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS886BJZ",
+      "exp_accession": "ENCSR243AIS",
+      "file_accession": "ENCFF426KLJ",
+      "bam_accession": "ENCFF426KLJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF152FUE",
+      "peaks_bigbed_accession": "ENCFF229RCJ"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS006VZG",
+      "exp_accession": "ENCSR060WGK",
+      "file_accession": "ENCFF100UUK",
+      "bam_accession": "ENCFF100UUK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF028IIS",
+      "peaks_bigbed_accession": "ENCFF395LNK"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS886BJZ",
+      "exp_accession": "ENCSR850QKN",
+      "file_accession": "ENCFF958HVP",
+      "bam_accession": "ENCFF958HVP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF592CQJ",
+      "peaks_bigbed_accession": "ENCFF242KTS"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS886BJZ",
+      "exp_accession": "ENCSR005SXO",
+      "file_accession": "ENCFF058QUN",
+      "bam_accession": "ENCFF058QUN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF855COE",
+      "peaks_bigbed_accession": "ENCFF029MCE"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS699NWP",
+      "exp_accession": "ENCSR347DAG",
+      "file_accession": "ENCFF630AHI",
+      "bam_accession": "ENCFF630AHI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF487XPV",
+      "peaks_bigbed_accession": "ENCFF231ZUL"
+    },
+    "H3K9me2": {
+      "bios_accession": "ENCBS304FAI",
+      "exp_accession": "ENCSR199KHR",
+      "file_accession": "ENCFF660GHF",
+      "bam_accession": "ENCFF660GHF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF199ZRL",
+      "peaks_bigbed_accession": "ENCFF191NGT"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS699NWP",
+      "exp_accession": "ENCSR389WWC",
+      "file_accession": "ENCFF073BOG",
+      "bam_accession": "ENCFF073BOG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF183CGU",
+      "peaks_bigbed_accession": "ENCFF743VGD"
+    }
+  },
+  "T_adipose_tissue": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS628VEX",
+      "exp_accession": "ENCSR082SHT",
+      "file_accession": "ENCFF243URL",
+      "bam_accession": "ENCFF243URL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF824VRM",
+      "peaks_bigbed_accession": "ENCFF742CUG"
+    }
+  },
+  "T_adrenal_gland_embryonic": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR847AIA",
+      "file_accession": "ENCFF575IKT",
+      "bam_accession": "ENCFF575IKT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF798RPA",
+      "peaks_bigbed_accession": "ENCFF395ZME"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR218BPG",
+      "file_accession": "ENCFF228HLZ",
+      "bam_accession": "ENCFF228HLZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF250RPU",
+      "peaks_bigbed_accession": "ENCFF774GPV"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR760LFY",
+      "file_accession": "ENCFF687AFJ",
+      "bam_accession": "ENCFF687AFJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF877CDU",
+      "peaks_bigbed_accession": "ENCFF162UYF"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR207ZIA",
+      "file_accession": "ENCFF795QMF",
+      "bam_accession": "ENCFF795QMF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF505EAK",
+      "peaks_bigbed_accession": "ENCFF210CSE"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR715KGX",
+      "file_accession": "ENCFF937GOA",
+      "bam_accession": "ENCFF937GOA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF577BED",
+      "peaks_bigbed_accession": "ENCFF554VXE"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS056PYD",
+      "exp_accession": "ENCSR651IVN",
+      "file_accession": "ENCFF856DZW",
+      "bam_accession": "ENCFF856DZW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF483VNV",
+      "peaks_bigbed_accession": "ENCFF849HEI"
+    }
+  },
+  "T_CD4-positive_alpha-beta_memory_T_cell": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR724GUS",
+      "file_accession": "ENCFF184ULC",
+      "bam_accession": "ENCFF184ULC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF884NBE",
+      "peaks_bigbed_accession": "ENCFF826OVR"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR702RZM",
+      "file_accession": "ENCFF340DVV",
+      "bam_accession": "ENCFF340DVV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF597EXJ",
+      "peaks_bigbed_accession": "ENCFF836QIH"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR580WRV",
+      "file_accession": "ENCFF489CFC",
+      "bam_accession": "ENCFF489CFC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF936ALJ",
+      "peaks_bigbed_accession": "ENCFF201AUZ"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR223APP",
+      "file_accession": "ENCFF537JAK",
+      "bam_accession": "ENCFF537JAK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF803SUD",
+      "peaks_bigbed_accession": "ENCFF222SUZ"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR333VFQ",
+      "file_accession": "ENCFF160ATE",
+      "bam_accession": "ENCFF160ATE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF328DFT",
+      "peaks_bigbed_accession": "ENCFF637REM"
+    }
+  },
+  "T_chorion": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS587ZNQ",
+      "exp_accession": "ENCSR499IIR",
+      "file_accession": "ENCFF430YHA",
+      "bam_accession": "ENCFF430YHA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF740CCS",
+      "peaks_bigbed_accession": "ENCFF063NAW"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS587ZNQ",
+      "exp_accession": "ENCSR449FFA",
+      "file_accession": "ENCFF024EUU",
+      "bam_accession": "ENCFF024EUU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF183LBD",
+      "peaks_bigbed_accession": "ENCFF235FAJ"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS587ZNQ",
+      "exp_accession": "ENCSR244MNY",
+      "file_accession": "ENCFF107JYS",
+      "bam_accession": "ENCFF107JYS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF226WOL",
+      "peaks_bigbed_accession": "ENCFF478PSO"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS587ZNQ",
+      "exp_accession": "ENCSR787CAJ",
+      "file_accession": "ENCFF905JGF",
+      "bam_accession": "ENCFF905JGF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF462NKZ",
+      "peaks_bigbed_accession": "ENCFF040OSE"
+    }
+  },
+  "T_endocrine_pancreas": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS721SKH",
+      "exp_accession": "ENCSR324JDC",
+      "file_accession": "ENCFF154DXP",
+      "bam_accession": "ENCFF154DXP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF184AJS",
+      "peaks_bigbed_accession": "ENCFF278VHJ"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS069JPK",
+      "exp_accession": "ENCSR581UGC",
+      "file_accession": "ENCFF037AMF",
+      "bam_accession": "ENCFF037AMF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF170FAU",
+      "peaks_bigbed_accession": "ENCFF621XRO"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS769QYN",
+      "exp_accession": "ENCSR372OTD",
+      "file_accession": "ENCFF378PSF",
+      "bam_accession": "ENCFF378PSF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF279WFR",
+      "peaks_bigbed_accession": "ENCFF642KGB"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS721SKH",
+      "exp_accession": "ENCSR957UQS",
+      "file_accession": "ENCFF943KUL",
+      "bam_accession": "ENCFF943KUL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF619XBH",
+      "peaks_bigbed_accession": "ENCFF038AYW"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS069JPK",
+      "exp_accession": "ENCSR061NWO",
+      "file_accession": "ENCFF925QQJ",
+      "bam_accession": "ENCFF925QQJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF506FGU",
+      "peaks_bigbed_accession": "ENCFF611HNF"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS776NCD",
+      "exp_accession": "ENCSR849NQE",
+      "file_accession": "ENCFF321DYL",
+      "bam_accession": "ENCFF321DYL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF135GFP",
+      "peaks_bigbed_accession": "ENCFF211XNZ"
+    }
+  },
+  "T_peripheral_blood_mononuclear_cell": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR615HXA",
+      "file_accession": "ENCFF564QQO",
+      "bam_accession": "ENCFF564QQO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF391QSF",
+      "peaks_bigbed_accession": "ENCFF213AWV"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR866UQO",
+      "file_accession": "ENCFF883IAD",
+      "bam_accession": "ENCFF883IAD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF093GGJ",
+      "peaks_bigbed_accession": "ENCFF317YKX"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR482QXO",
+      "file_accession": "ENCFF803AQX",
+      "bam_accession": "ENCFF803AQX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF721MJJ",
+      "peaks_bigbed_accession": "ENCFF981FFW"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR368YPC",
+      "file_accession": "ENCFF126SQQ",
+      "bam_accession": "ENCFF126SQQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF158KYG",
+      "peaks_bigbed_accession": "ENCFF023FOB"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS206BHY",
+      "exp_accession": "ENCSR969DAF",
+      "file_accession": "ENCFF974PLJ",
+      "bam_accession": "ENCFF974PLJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF328FUJ",
+      "peaks_bigbed_accession": "ENCFF676LYG"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR980XMX",
+      "file_accession": "ENCFF186JBV",
+      "bam_accession": "ENCFF186JBV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF560BSI",
+      "peaks_bigbed_accession": "ENCFF164CRS"
+    }
+  },
+  "T_prostate": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS633UTQ",
+      "exp_accession": "ENCSR763IDK",
+      "file_accession": "ENCFF416EQK",
+      "bam_accession": "ENCFF416EQK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF769IGG",
+      "peaks_bigbed_accession": "ENCFF249JEM"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS633UTQ",
+      "exp_accession": "ENCSR748RBT",
+      "file_accession": "ENCFF505NKP",
+      "bam_accession": "ENCFF505NKP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF300OWT",
+      "peaks_bigbed_accession": "ENCFF647YNV"
+    }
+  },
+  "T_RWPE2": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS942OEI",
+      "exp_accession": "ENCSR987PNT",
+      "file_accession": "ENCFF132EYY",
+      "bam_accession": "ENCFF132EYY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF376FOP",
+      "peaks_bigbed_accession": "ENCFF692ZXT"
+    }
+  },
+  "T_vagina": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS047TWL",
+      "exp_accession": "ENCSR718BTD",
+      "file_accession": "ENCFF445RUG",
+      "bam_accession": "ENCFF445RUG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF687QEB",
+      "peaks_bigbed_accession": "ENCFF689EGT"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS047TWL",
+      "exp_accession": "ENCSR258UUX",
+      "file_accession": "ENCFF227VQV",
+      "bam_accession": "ENCFF227VQV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF523DCO",
+      "peaks_bigbed_accession": "ENCFF231REB"
+    }
+  },
+  "T_amnion": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR144NDE",
+      "file_accession": "ENCFF096HIU",
+      "bam_accession": "ENCFF096HIU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF091UEE",
+      "peaks_bigbed_accession": "ENCFF432PZS"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR786DQB",
+      "file_accession": "ENCFF307YOL",
+      "bam_accession": "ENCFF307YOL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF242GTB",
+      "peaks_bigbed_accession": "ENCFF139TBH"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR249AWJ",
+      "file_accession": "ENCFF444XCI",
+      "bam_accession": "ENCFF444XCI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF099KAJ",
+      "peaks_bigbed_accession": "ENCFF168JSX"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR420IOA",
+      "file_accession": "ENCFF399JDM",
+      "bam_accession": "ENCFF399JDM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF793PHT",
+      "peaks_bigbed_accession": "ENCFF006DXR"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR495GRN",
+      "file_accession": "ENCFF333AZG",
+      "bam_accession": "ENCFF333AZG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF114KOS",
+      "peaks_bigbed_accession": "ENCFF595LCO"
+    }
+  },
+  "T_myoepithelial_cell_of_mammary_gland": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR517CFV",
+      "file_accession": "ENCFF054CBD",
+      "bam_accession": "ENCFF054CBD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF791QOZ",
+      "peaks_bigbed_accession": "ENCFF872SER"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR160CPS",
+      "file_accession": "ENCFF471JZC",
+      "bam_accession": "ENCFF471JZC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF114ITZ",
+      "peaks_bigbed_accession": "ENCFF101BZS"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR813ULW",
+      "file_accession": "ENCFF466ITQ",
+      "bam_accession": "ENCFF466ITQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF616XRO",
+      "peaks_bigbed_accession": "ENCFF173XUP"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR287YDU",
+      "file_accession": "ENCFF359ANK",
+      "bam_accession": "ENCFF359ANK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF748JUR",
+      "peaks_bigbed_accession": "ENCFF936YSV"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR365DWX",
+      "file_accession": "ENCFF775DRA",
+      "bam_accession": "ENCFF775DRA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF748HUW",
+      "peaks_bigbed_accession": "ENCFF779SZJ"
+    }
+  },
+  "T_ES-I3": {
+    "H3K36me3": {
+      "bios_accession": "ENCBS421TWG",
+      "exp_accession": "ENCSR844DRI",
+      "file_accession": "ENCFF698MJT",
+      "bam_accession": "ENCFF698MJT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF404LEL",
+      "peaks_bigbed_accession": "ENCFF781NKR"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS401QZO",
+      "exp_accession": "ENCSR730FLZ",
+      "file_accession": "ENCFF561NSG",
+      "bam_accession": "ENCFF561NSG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF027RHW",
+      "peaks_bigbed_accession": "ENCFF486JAF"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS593HOC",
+      "exp_accession": "ENCSR097ORD",
+      "file_accession": "ENCFF143HAP",
+      "bam_accession": "ENCFF143HAP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF720YHG",
+      "peaks_bigbed_accession": "ENCFF567XBT"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS268NCC",
+      "exp_accession": "ENCSR895IWH",
+      "file_accession": "ENCFF765HXQ",
+      "bam_accession": "ENCFF765HXQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF445HJN",
+      "peaks_bigbed_accession": "ENCFF393OMZ"
+    }
+  },
+  "T_lower_leg_skin": {
+    "H3K4me3": {
+      "bios_accession": "ENCBS851XJZ",
+      "exp_accession": "ENCSR432GOP",
+      "file_accession": "ENCFF003VRU",
+      "bam_accession": "ENCFF003VRU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF894ILW",
+      "peaks_bigbed_accession": "ENCFF310MNL"
+    }
+  },
+  "V_adrenal_gland_embryonic": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS232ONZ",
+      "exp_accession": "ENCSR080PZL",
+      "file_accession": "ENCFF511DEJ",
+      "bam_accession": "ENCFF511DEJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF967PSY",
+      "peaks_bigbed_accession": "ENCFF787JOF"
+    }
+  },
+  "V_OCI-LY7": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS581USS",
+      "exp_accession": "ENCSR489NAM",
+      "file_accession": "ENCFF210MMO",
+      "bam_accession": "ENCFF210MMO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF739TLM",
+      "peaks_bigbed_accession": "ENCFF094VVT"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS699NWP",
+      "exp_accession": "ENCSR747ZDF",
+      "file_accession": "ENCFF292JZN",
+      "bam_accession": "ENCFF292JZN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF867IFW",
+      "peaks_bigbed_accession": "ENCFF343MMW"
+    }
+  },
+  "V_vagina": {
+    "DNase-seq": {
+      "bios_accession": "ENCBS585SGJ",
+      "exp_accession": "ENCSR437AYW",
+      "file_accession": "ENCFF552WGU",
+      "bam_accession": "ENCFF552WGU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF547JQK",
+      "peaks_bigbed_accession": "ENCFF785UIC"
+    }
+  },
+  "V_IMR-90": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS472JFT",
+      "exp_accession": "ENCSR124DYB",
+      "file_accession": "ENCFF640IYV",
+      "bam_accession": "ENCFF640IYV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF987LAC",
+      "peaks_bigbed_accession": "ENCFF759XRG"
+    },
+    "H2BK12ac": {
+      "bios_accession": "ENCBS192DLO",
+      "exp_accession": "ENCSR523ENE",
+      "file_accession": "ENCFF662NJI",
+      "bam_accession": "ENCFF662NJI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF213VCW",
+      "peaks_bigbed_accession": "ENCFF457YGN"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS754TWW",
+      "exp_accession": "ENCSR219MYH",
+      "file_accession": "ENCFF733ZHB",
+      "bam_accession": "ENCFF733ZHB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF682HNO",
+      "peaks_bigbed_accession": "ENCFF994VIC"
+    },
+    "H4K8ac": {
+      "bios_accession": "ENCBS007TVF",
+      "exp_accession": "ENCSR444TMC",
+      "file_accession": "ENCFF131UOL",
+      "bam_accession": "ENCFF131UOL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF614CMT",
+      "peaks_bigbed_accession": "ENCFF501AJY"
+    }
+  },
+  "V_mesenchymal_stem_cell": {
+    "H2AFZ": {
+      "bios_accession": "ENCBS732PNZ",
+      "exp_accession": "ENCSR526NKM",
+      "file_accession": "ENCFF902FFP",
+      "bam_accession": "ENCFF902FFP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF974WUO",
+      "peaks_bigbed_accession": "ENCFF257TRY"
+    },
+    "H3K18ac": {
+      "bios_accession": "ENCBS732PNZ",
+      "exp_accession": "ENCSR604THF",
+      "file_accession": "ENCFF172HAP",
+      "bam_accession": "ENCFF172HAP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF463PAH",
+      "peaks_bigbed_accession": "ENCFF776UHQ"
+    },
+    "H3K79me1": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR594AQO",
+      "file_accession": "ENCFF125HIJ",
+      "bam_accession": "ENCFF125HIJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF442TXW",
+      "peaks_bigbed_accession": "ENCFF581BWU"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS012DXH",
+      "exp_accession": "ENCSR701KJD",
+      "file_accession": "ENCFF647AMP",
+      "bam_accession": "ENCFF647AMP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF086MBQ",
+      "peaks_bigbed_accession": "ENCFF518VIB"
+    }
+  },
+  "V_H1-hESC": {
+    "H2AK5ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR703KXH",
+      "file_accession": "ENCFF443OZA",
+      "bam_accession": "ENCFF443OZA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF771GJE",
+      "peaks_bigbed_accession": "ENCFF394ZJH"
+    },
+    "H3K4ac": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR130EML",
+      "file_accession": "ENCFF680XYN",
+      "bam_accession": "ENCFF680XYN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF382QFM",
+      "peaks_bigbed_accession": "ENCFF975VKV"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS368BPP",
+      "exp_accession": "ENCSR883AQJ",
+      "file_accession": "ENCFF963LFX",
+      "bam_accession": "ENCFF963LFX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF385ZBQ",
+      "peaks_bigbed_accession": "ENCFF154FFF"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS984IPH",
+      "exp_accession": "ENCSR728SZE",
+      "file_accession": "ENCFF125LCU",
+      "bam_accession": "ENCFF125LCU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF832YWP",
+      "peaks_bigbed_accession": "ENCFF606SNP"
+    }
+  },
+  "V_neural_stem_progenitor_cell": {
+    "H2BK15ac": {
+      "bios_accession": "ENCBS289YMC",
+      "exp_accession": "ENCSR123JZO",
+      "file_accession": "ENCFF359QSN",
+      "bam_accession": "ENCFF359QSN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF835FCQ",
+      "peaks_bigbed_accession": "ENCFF371NNE"
+    },
+    "H3K14ac": {
+      "bios_accession": "ENCBS776ACY",
+      "exp_accession": "ENCSR687EBF",
+      "file_accession": "ENCFF407RHN",
+      "bam_accession": "ENCFF407RHN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF916QOI",
+      "peaks_bigbed_accession": "ENCFF636EGI"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS104PYO",
+      "exp_accession": "ENCSR254NLC",
+      "file_accession": "ENCFF023JGZ",
+      "bam_accession": "ENCFF023JGZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF916QYU",
+      "peaks_bigbed_accession": "ENCFF103SSO"
+    }
+  },
+  "V_trophoblast_cell": {
+    "H2BK5ac": {
+      "bios_accession": "ENCBS749EOK",
+      "exp_accession": "ENCSR213TIR",
+      "file_accession": "ENCFF682AUE",
+      "bam_accession": "ENCFF682AUE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF100UUG",
+      "peaks_bigbed_accession": "ENCFF802MLT"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR038OIN",
+      "file_accession": "ENCFF234RNO",
+      "bam_accession": "ENCFF234RNO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF294NKY",
+      "peaks_bigbed_accession": "ENCFF375JQZ"
+    },
+    "H3K4me2": {
+      "bios_accession": "ENCBS806FFM",
+      "exp_accession": "ENCSR941QJQ",
+      "file_accession": "ENCFF950IZV",
+      "bam_accession": "ENCFF950IZV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF178OJL",
+      "peaks_bigbed_accession": "ENCFF298SAF"
+    },
+    "H4K91ac": {
+      "bios_accession": "ENCBS392DBQ",
+      "exp_accession": "ENCSR371FHD",
+      "file_accession": "ENCFF914ARK",
+      "bam_accession": "ENCFF914ARK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF688ZPD",
+      "peaks_bigbed_accession": "ENCFF628CEW"
+    }
+  },
+  "V_amnion": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS712BZZ",
+      "exp_accession": "ENCSR430RVP",
+      "file_accession": "ENCFF853KPR",
+      "bam_accession": "ENCFF853KPR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF923UXA",
+      "peaks_bigbed_accession": "ENCFF485JLF"
+    }
+  },
+  "V_DND-41": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000AQW",
+      "file_accession": "ENCFF901HOL",
+      "bam_accession": "ENCFF901HOL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF216MMZ",
+      "peaks_bigbed_accession": "ENCFF638RIL"
+    },
+    "H4K20me1": {
+      "bios_accession": "ENCBS282AAA",
+      "exp_accession": "ENCSR000ARC",
+      "file_accession": "ENCFF554ZKZ",
+      "bam_accession": "ENCFF554ZKZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF427ZFR",
+      "peaks_bigbed_accession": "ENCFF939FBU"
+    }
+  },
+  "V_urinary_bladder": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS364KFR",
+      "exp_accession": "ENCSR054BKO",
+      "file_accession": "ENCFF287TAI",
+      "bam_accession": "ENCFF287TAI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF263ZQE",
+      "peaks_bigbed_accession": "ENCFF057UBN"
+    }
+  },
+  "V_chorion": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS587ZNQ",
+      "exp_accession": "ENCSR241JLU",
+      "file_accession": "ENCFF329AIM",
+      "bam_accession": "ENCFF329AIM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF788UUK",
+      "peaks_bigbed_accession": "ENCFF035LCZ"
+    }
+  },
+  "V_GM06990": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS987SKT",
+      "exp_accession": "ENCSR000DQU",
+      "file_accession": "ENCFF900TWR",
+      "bam_accession": "ENCFF900TWR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF610NWE",
+      "peaks_bigbed_accession": "ENCFF368NTA"
+    }
+  },
+  "V_K562": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS667AAA",
+      "exp_accession": "ENCSR000EWB",
+      "file_accession": "ENCFF508LLH",
+      "bam_accession": "ENCFF508LLH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF847BFA",
+      "peaks_bigbed_accession": "ENCFF384FSH"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS674MPN",
+      "exp_accession": "ENCSR000APD",
+      "file_accession": "ENCFF132YSI",
+      "bam_accession": "ENCFF132YSI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF334HSS",
+      "peaks_bigbed_accession": "ENCFF543XSN"
+    }
+  },
+  "V_peripheral_blood_mononuclear_cell": {
+    "H3K36me3": {
+      "bios_accession": "ENCBS558KIK",
+      "exp_accession": "ENCSR162MGR",
+      "file_accession": "ENCFF281WTV",
+      "bam_accession": "ENCFF281WTV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF744MKI",
+      "peaks_bigbed_accession": "ENCFF158YTC"
+    }
+  },
+  "V_upper_lobe_of_left_lung": {
+    "H3K36me3": {
+      "bios_accession": "ENCBS684YJH",
+      "exp_accession": "ENCSR869GBP",
+      "file_accession": "ENCFF790HIV",
+      "bam_accession": "ENCFF790HIV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF084YHY",
+      "peaks_bigbed_accession": "ENCFF874FTD"
+    }
+  },
+  "V_CD4-positive_alpha-beta_memory_T_cell": {
+    "H3K4me1": {
+      "bios_accession": "ENCBS800QLP",
+      "exp_accession": "ENCSR887ESB",
+      "file_accession": "ENCFF084RYS",
+      "bam_accession": "ENCFF084RYS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF695UHG",
+      "peaks_bigbed_accession": "ENCFF268ZUL"
+    }
+  },
+  "V_endocrine_pancreas": {
+    "H3K4me1": {
+      "bios_accession": "ENCBS769QYN",
+      "exp_accession": "ENCSR817QHX",
+      "file_accession": "ENCFF262YCU",
+      "bam_accession": "ENCFF262YCU",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF622NVF",
+      "peaks_bigbed_accession": "ENCFF296WQA"
+    }
+  },
+  "V_H9": {
+    "H3K4me2": {
+      "bios_accession": "ENCBS532LWE",
+      "exp_accession": "ENCSR730POX",
+      "file_accession": "ENCFF160HVH",
+      "bam_accession": "ENCFF160HVH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF822YAQ",
+      "peaks_bigbed_accession": "ENCFF278BIS"
+    },
+    "H3K79me2": {
+      "bios_accession": "ENCBS277KDR",
+      "exp_accession": "ENCSR188GJE",
+      "file_accession": "ENCFF027JDK",
+      "bam_accession": "ENCFF027JDK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF993RJV",
+      "peaks_bigbed_accession": "ENCFF439YWV"
+    }
+  },
+  "V_KMS-11": {
+    "H3K4me2": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR806XIU",
+      "file_accession": "ENCFF875DBI",
+      "bam_accession": "ENCFF875DBI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF733UOW",
+      "peaks_bigbed_accession": "ENCFF273SVR"
+    },
+    "H3K9ac": {
+      "bios_accession": "ENCBS987CHP",
+      "exp_accession": "ENCSR521AIV",
+      "file_accession": "ENCFF159CNY",
+      "bam_accession": "ENCFF159CNY",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF258MHA",
+      "peaks_bigbed_accession": "ENCFF225VTW"
+    }
+  },
+  "V_adrenal_gland": {
+    "H3K4me3": {
+      "bios_accession": "ENCBS549JSH",
+      "exp_accession": "ENCSR234YIU",
+      "file_accession": "ENCFF792QXD",
+      "bam_accession": "ENCFF792QXD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF389SDP",
+      "peaks_bigbed_accession": "ENCFF446TXW"
+    }
+  },
+  "V_heart_left_ventricle": {
+    "H3K4me3": {
+      "bios_accession": "ENCBS861XCF",
+      "exp_accession": "ENCSR901SIL",
+      "file_accession": "ENCFF023HCZ",
+      "bam_accession": "ENCFF023HCZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF096UTA",
+      "peaks_bigbed_accession": "ENCFF521KKL"
+    }
+  },
+  "V_testis": {
+    "H3K4me3": {
+      "bios_accession": "ENCBS631HJF",
+      "exp_accession": "ENCSR611DJQ",
+      "file_accession": "ENCFF495UCL",
+      "bam_accession": "ENCFF495UCL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF230ORC",
+      "peaks_bigbed_accession": "ENCFF003BPG"
+    }
+  },
+  "V_NCI-H929": {
+    "H3K79me2": {
+      "bios_accession": "ENCBS571AQH",
+      "exp_accession": "ENCSR339FOO",
+      "file_accession": "ENCFF397XHP",
+      "bam_accession": "ENCFF397XHP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF387QWN",
+      "peaks_bigbed_accession": "ENCFF324SPG"
+    }
+  },
+  "V_myoepithelial_cell_of_mammary_gland": {
+    "H3K9me3": {
+      "bios_accession": "ENCBS093HNZ",
+      "exp_accession": "ENCSR241PXI",
+      "file_accession": "ENCFF090FEH",
+      "bam_accession": "ENCFF090FEH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF256FOZ",
+      "peaks_bigbed_accession": "ENCFF430WSD"
+    }
+  },
+  "V_prostate": {
+    "H3K9me3": {
+      "bios_accession": "ENCBS619YXY",
+      "exp_accession": "ENCSR133QBG",
+      "file_accession": "ENCFF507VEH",
+      "bam_accession": "ENCFF507VEH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF726YZU",
+      "peaks_bigbed_accession": "ENCFF468LTY"
+    }
+  },
+  "B_DND-41": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS013RPN",
+      "exp_accession": "ENCSR660WSB",
+      "file_accession": "ENCFF080WSN",
+      "bam_accession": "ENCFF080WSN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF631KUG",
+      "peaks_bigbed_accession": "ENCFF029UQY"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS518YBY",
+      "exp_accession": "ENCSR903SKE",
+      "file_accession": "ENCFF836RBO",
+      "bam_accession": "ENCFF836RBO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF301FDB",
+      "peaks_bigbed_accession": "ENCFF780RMD"
+    }
+  },
+  "B_NCI-H929": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS952JSJ",
+      "exp_accession": "ENCSR382LBS",
+      "file_accession": "ENCFF818BRH",
+      "bam_accession": "ENCFF818BRH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF571JLT",
+      "peaks_bigbed_accession": "ENCFF273DIB"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS588WMC",
+      "exp_accession": "ENCSR090SMP",
+      "file_accession": "ENCFF369NRI",
+      "bam_accession": "ENCFF369NRI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF468HER",
+      "peaks_bigbed_accession": "ENCFF244EDE"
+    },
+    "H3K27ac": {
+      "bios_accession": "ENCBS911QZW",
+      "exp_accession": "ENCSR368CYW",
+      "file_accession": "ENCFF230NOF",
+      "bam_accession": "ENCFF230NOF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF612UYR",
+      "peaks_bigbed_accession": "ENCFF093IEJ"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS911QZW",
+      "exp_accession": "ENCSR728YXC",
+      "file_accession": "ENCFF732LKQ",
+      "bam_accession": "ENCFF732LKQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF426TFY",
+      "peaks_bigbed_accession": "ENCFF578NMI"
+    }
+  },
+  "B_RWPE2": {
+    "ATAC-seq": {
+      "bios_accession": "ENCBS123OBK",
+      "exp_accession": "ENCSR080SNF",
+      "file_accession": "ENCFF452BSA",
+      "bam_accession": "ENCFF452BSA",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF881UWW",
+      "peaks_bigbed_accession": "ENCFF727KXQ"
+    },
+    "DNase-seq": {
+      "bios_accession": "ENCBS490DPO",
+      "exp_accession": "ENCSR306BHE",
+      "file_accession": "ENCFF407ORW",
+      "bam_accession": "ENCFF407ORW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF687TRP",
+      "peaks_bigbed_accession": "ENCFF144TAZ"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS314QIO",
+      "exp_accession": "ENCSR784MON",
+      "file_accession": "ENCFF499LZJ",
+      "bam_accession": "ENCFF499LZJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF423IBQ",
+      "peaks_bigbed_accession": "ENCFF053SWT"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS684UIM",
+      "exp_accession": "ENCSR115IRD",
+      "file_accession": "ENCFF172QTD",
+      "bam_accession": "ENCFF172QTD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF761TNP",
+      "peaks_bigbed_accession": "ENCFF670ENM"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS684UIM",
+      "exp_accession": "ENCSR161GUA",
+      "file_accession": "ENCFF679GLB",
+      "bam_accession": "ENCFF679GLB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF344NAT",
+      "peaks_bigbed_accession": "ENCFF961ILD"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS314QIO",
+      "exp_accession": "ENCSR297ONS",
+      "file_accession": "ENCFF944YWP",
+      "bam_accession": "ENCFF944YWP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF184UXF",
+      "peaks_bigbed_accession": "ENCFF222BGB"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS314QIO",
+      "exp_accession": "ENCSR785DEU",
+      "file_accession": "ENCFF403WJG",
+      "bam_accession": "ENCFF403WJG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF883HHA",
+      "peaks_bigbed_accession": "ENCFF802SOQ"
+    }
+  },
+  "B_BMEC": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS938JNW",
+      "exp_accession": "ENCSR111QCU",
+      "file_accession": "ENCFF887PLJ",
+      "bam_accession": "ENCFF887PLJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF990TGH",
+      "peaks_bigbed_accession": "ENCFF231XEV"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS938JNW",
+      "exp_accession": "ENCSR032CAS",
+      "file_accession": "ENCFF220CLZ",
+      "bam_accession": "ENCFF220CLZ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF903FRD",
+      "peaks_bigbed_accession": "ENCFF986HES"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS938JNW",
+      "exp_accession": "ENCSR587VHH",
+      "file_accession": "ENCFF761ZYL",
+      "bam_accession": "ENCFF761ZYL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF715QND",
+      "peaks_bigbed_accession": "ENCFF988JIR"
+    }
+  },
+  "B_HAP-1": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS872LRZ",
+      "exp_accession": "ENCSR131DVD",
+      "file_accession": "ENCFF525ADD",
+      "bam_accession": "ENCFF525ADD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF412ZXR",
+      "peaks_bigbed_accession": "ENCFF331KGO"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS609AIH",
+      "exp_accession": "ENCSR891YFI",
+      "file_accession": "ENCFF465ZHL",
+      "bam_accession": "ENCFF465ZHL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF898ETI",
+      "peaks_bigbed_accession": "ENCFF239GOH"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS609AIH",
+      "exp_accession": "ENCSR121CWP",
+      "file_accession": "ENCFF146XNB",
+      "bam_accession": "ENCFF146XNB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF071EYX",
+      "peaks_bigbed_accession": "ENCFF078JJJ"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS609AIH",
+      "exp_accession": "ENCSR450JTP",
+      "file_accession": "ENCFF651JPK",
+      "bam_accession": "ENCFF651JPK",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF408MBW",
+      "peaks_bigbed_accession": "ENCFF963OJW"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS609AIH",
+      "exp_accession": "ENCSR882CQE",
+      "file_accession": "ENCFF980BDP",
+      "bam_accession": "ENCFF980BDP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF507DOD",
+      "peaks_bigbed_accession": "ENCFF373QKQ"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS872LRZ",
+      "exp_accession": "ENCSR460TQV",
+      "file_accession": "ENCFF302ELQ",
+      "bam_accession": "ENCFF302ELQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF782DHX",
+      "peaks_bigbed_accession": "ENCFF296UWS"
+    }
+  },
+  "B_HL-60": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS976DTB",
+      "exp_accession": "ENCSR919WLM",
+      "file_accession": "ENCFF510IXN",
+      "bam_accession": "ENCFF510IXN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF871KQO",
+      "peaks_bigbed_accession": "ENCFF828ATQ"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS976DTB",
+      "exp_accession": "ENCSR198IHT",
+      "file_accession": "ENCFF691HBE",
+      "bam_accession": "ENCFF691HBE",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF630ZSO",
+      "peaks_bigbed_accession": "ENCFF514EKK"
+    }
+  },
+  "B_SJCRH30": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS696NDF",
+      "exp_accession": "ENCSR769CSE",
+      "file_accession": "ENCFF721URQ",
+      "bam_accession": "ENCFF721URQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF123OSW",
+      "peaks_bigbed_accession": "ENCFF674YIN"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS386GKH",
+      "exp_accession": "ENCSR022MBN",
+      "file_accession": "ENCFF003JSI",
+      "bam_accession": "ENCFF003JSI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF616CFL",
+      "peaks_bigbed_accession": "ENCFF171IJC"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS386GKH",
+      "exp_accession": "ENCSR753TAU",
+      "file_accession": "ENCFF514BRD",
+      "bam_accession": "ENCFF514BRD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF114ZTD",
+      "peaks_bigbed_accession": "ENCFF106HZY"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS386GKH",
+      "exp_accession": "ENCSR414OEF",
+      "file_accession": "ENCFF657XIL",
+      "bam_accession": "ENCFF657XIL",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF342SYD",
+      "peaks_bigbed_accession": "ENCFF248YXQ"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS386GKH",
+      "exp_accession": "ENCSR986FPJ",
+      "file_accession": "ENCFF984RGN",
+      "bam_accession": "ENCFF984RGN",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF530BOQ",
+      "peaks_bigbed_accession": "ENCFF430LZO"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS386GKH",
+      "exp_accession": "ENCSR782BWI",
+      "file_accession": "ENCFF278GKD",
+      "bam_accession": "ENCFF278GKD",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF927GPS",
+      "peaks_bigbed_accession": "ENCFF067UMW"
+    }
+  },
+  "B_SJSA1": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS912CSK",
+      "exp_accession": "ENCSR349VAW",
+      "file_accession": "ENCFF238CFV",
+      "bam_accession": "ENCFF238CFV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF005KFY",
+      "peaks_bigbed_accession": "ENCFF796LGR"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS912CSK",
+      "exp_accession": "ENCSR564OSQ",
+      "file_accession": "ENCFF147KJB",
+      "bam_accession": "ENCFF147KJB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF548QPW",
+      "peaks_bigbed_accession": "ENCFF357NGC"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS382VRX",
+      "exp_accession": "ENCSR643QXU",
+      "file_accession": "ENCFF397TKX",
+      "bam_accession": "ENCFF397TKX",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF532OYN",
+      "peaks_bigbed_accession": "ENCFF097WKF"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS912CSK",
+      "exp_accession": "ENCSR590ZSL",
+      "file_accession": "ENCFF165XGW",
+      "bam_accession": "ENCFF165XGW",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF574PIN",
+      "peaks_bigbed_accession": "ENCFF536ZWM"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS382VRX",
+      "exp_accession": "ENCSR214NMO",
+      "file_accession": "ENCFF656NBV",
+      "bam_accession": "ENCFF656NBV",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF596HJB",
+      "peaks_bigbed_accession": "ENCFF112WEE"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS912CSK",
+      "exp_accession": "ENCSR482XTC",
+      "file_accession": "ENCFF355VXR",
+      "bam_accession": "ENCFF355VXR",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF059AXW",
+      "peaks_bigbed_accession": "ENCFF215OHC"
+    }
+  },
+  "B_WERI-Rb-1": {
+    "H3K27ac": {
+      "bios_accession": "ENCBS176OOK",
+      "exp_accession": "ENCSR764HZU",
+      "file_accession": "ENCFF574GEM",
+      "bam_accession": "ENCFF574GEM",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF877WWU",
+      "peaks_bigbed_accession": "ENCFF237XQH"
+    },
+    "H3K27me3": {
+      "bios_accession": "ENCBS161OJA",
+      "exp_accession": "ENCSR967DBV",
+      "file_accession": "ENCFF584XYI",
+      "bam_accession": "ENCFF584XYI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF538RNC",
+      "peaks_bigbed_accession": "ENCFF353UHZ"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS161OJA",
+      "exp_accession": "ENCSR354XIL",
+      "file_accession": "ENCFF462VDJ",
+      "bam_accession": "ENCFF462VDJ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF769ZAK",
+      "peaks_bigbed_accession": "ENCFF675NOG"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS176OOK",
+      "exp_accession": "ENCSR614NUF",
+      "file_accession": "ENCFF563HLT",
+      "bam_accession": "ENCFF563HLT",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF460VPP",
+      "peaks_bigbed_accession": "ENCFF771ULK"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS176OOK",
+      "exp_accession": "ENCSR371OZG",
+      "file_accession": "ENCFF789QVF",
+      "bam_accession": "ENCFF789QVF",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF704QHU",
+      "peaks_bigbed_accession": "ENCFF697DMW"
+    }
+  },
+  "B_BE2C": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS277GST",
+      "exp_accession": "ENCSR780XZD",
+      "file_accession": "ENCFF520FHH",
+      "bam_accession": "ENCFF520FHH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF655VZB",
+      "peaks_bigbed_accession": "ENCFF876TXT"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS277GST",
+      "exp_accession": "ENCSR114YOX",
+      "file_accession": "ENCFF233OXP",
+      "bam_accession": "ENCFF233OXP",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF255GOP",
+      "peaks_bigbed_accession": "ENCFF149TPJ"
+    },
+    "H3K4me1": {
+      "bios_accession": "ENCBS161OUD",
+      "exp_accession": "ENCSR874NDX",
+      "file_accession": "ENCFF757WMQ",
+      "bam_accession": "ENCFF757WMQ",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF475MYM",
+      "peaks_bigbed_accession": "ENCFF966QAC"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS161OUD",
+      "exp_accession": "ENCSR444YIP",
+      "file_accession": "ENCFF808XLS",
+      "bam_accession": "ENCFF808XLS",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF236EWM",
+      "peaks_bigbed_accession": "ENCFF183XNO"
+    }
+  },
+  "B_MG63": {
+    "H3K27me3": {
+      "bios_accession": "ENCBS760DRY",
+      "exp_accession": "ENCSR804JFU",
+      "file_accession": "ENCFF444CLH",
+      "bam_accession": "ENCFF444CLH",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF153STK",
+      "peaks_bigbed_accession": "ENCFF945SQQ"
+    },
+    "H3K36me3": {
+      "bios_accession": "ENCBS760DRY",
+      "exp_accession": "ENCSR380ORO",
+      "file_accession": "ENCFF876QRO",
+      "bam_accession": "ENCFF876QRO",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF619WTL",
+      "peaks_bigbed_accession": "ENCFF552WIN"
+    },
+    "H3K4me3": {
+      "bios_accession": "ENCBS706ARR",
+      "exp_accession": "ENCSR579SNM",
+      "file_accession": "ENCFF901IPC",
+      "bam_accession": "ENCFF901IPC",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF307ZKD",
+      "peaks_bigbed_accession": "ENCFF772XCE"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS760DRY",
+      "exp_accession": "ENCSR744EKG",
+      "file_accession": "ENCFF201RFI",
+      "bam_accession": "ENCFF201RFI",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF608KYZ",
+      "peaks_bigbed_accession": "ENCFF323SOU"
+    }
+  },
+  "B_Caco-2": {
+    "H3K4me1": {
+      "bios_accession": "ENCBS859QEM",
+      "exp_accession": "ENCSR061UOM",
+      "file_accession": "ENCFF737KSB",
+      "bam_accession": "ENCFF737KSB",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF111ZPB",
+      "peaks_bigbed_accession": "ENCFF735UYI"
+    },
+    "H3K9me3": {
+      "bios_accession": "ENCBS859QEM",
+      "exp_accession": "ENCSR401WUV",
+      "file_accession": "ENCFF445YBG",
+      "bam_accession": "ENCFF445YBG",
+      "tsv_accession": null,
+      "signal_bigwig_accession": "ENCFF206MOP",
+      "peaks_bigbed_accession": "ENCFF183YHG"
+    }
+  }
+}
