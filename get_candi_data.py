@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 """
-CANDI Data Download and Processing Pipeline
+CANDI Data Download and Processing Pipeline - Unified Interface
 
-This module provides functionality to download and process ENCODE data
-for the CANDI dataset, ensuring reproducibility and publication standards.
+This module provides comprehensive functionality to download, process, validate,
+visualize, and retry ENCODE data for the CANDI dataset.
+
+Features:
+- Download and process EIC/MERGED datasets
+- Parallel processing with CPU core limiting
+- Comprehensive validation and visualization
+- Retry failed experiments with enhanced error handling
+- Complete CLI interface for all operations
 
 Usage:
-    python get_candi_data.py --dataset eic --download-directory /path/to/data
-    python get_candi_data.py --dataset merged --download-directory /path/to/data
+    # Download and process datasets
+    python get_candi_data.py process eic /path/to/data
+    python get_candi_data.py process merged /path/to/data
+    
+    # Validation and analysis
+    python get_candi_data.py validate eic /path/to/data
+    python get_candi_data.py analyze-missing merged /path/to/data
+    
+    # Visualization
+    python get_candi_data.py create-plots /path/to/data
+    
+    # Retry failed experiments
+    python get_candi_data.py retry eic /path/to/data
 """
 
 import json
@@ -23,9 +41,13 @@ import multiprocessing as mp
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 from enum import Enum
 import logging
+from collections import defaultdict
+import shutil
+
+
 try:
     from tqdm import tqdm
     HAS_TQDM = True
@@ -186,8 +208,12 @@ class DownloadPlanLoader:
             return "data/download_plan_eic.json"
         elif self.dataset_name == 'merged':
             return "data/download_plan_merged.json"
+        elif self.dataset_name == 'eic_test':
+            return "data/download_plan_eic_test.json"
+        elif self.dataset_name == 'merged_test':
+            return "data/download_plan_merged_test.json"
         else:
-            raise ValueError(f"Unknown dataset name: {self.dataset_name}. Must be 'eic' or 'merged'")
+            raise ValueError(f"Unknown dataset name: {self.dataset_name}. Must be 'eic', 'merged', 'eic_test', or 'merged_test'")
     
     def _load_download_plan(self) -> Dict:
         """Load and parse download plan JSON file."""
@@ -546,7 +572,7 @@ class CANDIDownloadManager:
                 self.logger.warning(f"Attempt {attempt + 1}/{max_retries} to fetch metadata for {file_accession} failed: {e}")
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
-                else:
+        else:
                     self.logger.error(f"Failed to fetch metadata for {file_accession} after {max_retries} attempts")
                     # Return minimal metadata if API fails
                     return {
@@ -689,21 +715,21 @@ class CANDIDownloadManager:
             # Process using existing function from data.py
             self.logger.info(f"Processing BigWig for {task.task_id}")
             binned_bw = get_binned_values(bigwig_file, bin_size=self.resolution)
-            
+                
             # Remove old signal_BW directory if it exists
             if os.path.exists(signal_bw_path):
                 import shutil
                 shutil.rmtree(signal_bw_path)
-            
+                
             # Create signal_BW directory structure
             os.makedirs(signal_bw_path, exist_ok=True)
-            
+                
             for chr_name, data in binned_bw.items():
                 np.savez_compressed(
                     os.path.join(signal_bw_path, f"{chr_name}.npz"),
                     np.array(data)
                 )
-            
+                
             # Clean up downloaded file
             os.remove(bigwig_file)
                 
@@ -745,21 +771,21 @@ class CANDIDownloadManager:
             # Process using existing function from data.py
             self.logger.info(f"Processing BigBed for {task.task_id}")
             binned_peaks = get_binned_bigBed_peaks(bigbed_file, resolution=self.resolution)
-            
+                
             # Remove old peaks directory if it exists
             if os.path.exists(peaks_path):
                 import shutil
                 shutil.rmtree(peaks_path)
-            
+                
             # Create peaks directory structure  
             os.makedirs(peaks_path, exist_ok=True)
-            
+                
             for chr_name, data in binned_peaks.items():
                 np.savez_compressed(
                     os.path.join(peaks_path, f"{chr_name}.npz"),
                     np.array(data)
                 )
-            
+                
             # Clean up downloaded file
             os.remove(bigbed_file)
                 
@@ -796,7 +822,7 @@ class CANDIDownloadManager:
         metadata_file = os.path.join(exp_path, "file_metadata.json")
         if not os.path.exists(metadata_file):
             return False
-        
+            
         # Check required signal directories based on task type
         if task.assay == "RNA-seq":
             # For RNA-seq, only check TSV file exists
@@ -816,7 +842,7 @@ class CANDIDownloadManager:
                     return False
         
         return True
-            
+    
     def _are_dsf_signals_complete(self, exp_path: str) -> bool:
         """Check if all DSF signal directories are complete."""
         for dsf in self.dsf_list:
@@ -1277,13 +1303,13 @@ class CANDIDataPipeline:
         
         for task in tasks:
             validation_report["total_tasks"] += 1
-            
+                
             exp_path = os.path.join(self.base_path, task.celltype, task.assay)
             validation_result = self.validator.validate_experiment_completion(exp_path)
-            
+                
             task_key = task.task_id
             validation_report["validation_details"][task_key] = validation_result
-            
+                
             if validation_result["overall"]:
                 validation_report["valid_tasks"] += 1
             else:
@@ -1303,99 +1329,955 @@ class CANDIDataPipeline:
         return validation_report
 
 
+@dataclass
+class ValidationResult:
+    """Results of dataset validation."""
+    dataset_name: str
+    total_experiments: int
+    total_biosamples: int
+    completed_experiments: int
+    completed_biosamples: int
+    completion_percentage: float
+    biosample_completion: Dict[str, Dict[str, bool]]
+    missing_experiments: List[str]
+    available_experiments: List[str]
+
+
+class CANDIDatasetValidator:
+    """Validate completeness of CANDI datasets."""
+    
+    def __init__(self, base_path: str, resolution: int = 25):
+        """
+        Initialize validator.
+        
+        Args:
+            base_path: Base path where datasets are stored
+            resolution: Resolution for signal files
+        """
+        self.base_path = Path(base_path)
+        self.resolution = resolution
+        self.logger = logging.getLogger(__name__)
+        
+        # Required signal directories for validation
+        self.required_signal_dirs = [
+            f"peaks_res{resolution}",
+            f"signal_BW_res{resolution}",
+            f"signal_DSF1_res{resolution}",
+            f"signal_DSF2_res{resolution}",
+            f"signal_DSF4_res{resolution}",
+            f"signal_DSF8_res{resolution}"
+        ]
+        
+        # Main chromosomes to check
+        self.main_chromosomes = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
+    
+    def validate_experiment(self, biosample: str, assay: str, dataset_path: Path) -> bool:
+        """
+        Validate if a single experiment is complete.
+        
+        Args:
+            biosample: Biosample name
+            assay: Assay name
+            dataset_path: Path to dataset directory
+            
+        Returns:
+            bool: True if experiment is complete
+        """
+        exp_path = dataset_path / biosample / assay
+        
+        if not exp_path.exists():
+            return False
+        
+        # Check file_metadata.json exists
+        metadata_file = exp_path / "file_metadata.json"
+        if not metadata_file.exists():
+            return False
+        
+        # Special handling for RNA-seq experiments
+        if assay == "RNA-seq":
+            # For RNA-seq, only check TSV file exists
+            # We need to get the TSV accession from the download plan
+            # Determine dataset type based on path
+            dataset_type = "merged" if "MERGED" in str(dataset_path).upper() else "eic"
+            loader = DownloadPlanLoader(dataset_type)
+            all_tasks = loader.create_task_list()
+            
+            # Find the matching task
+            matching_task = None
+            for task in all_tasks:
+                if task.celltype == biosample and task.assay == assay:
+                    matching_task = task
+                    break
+            
+            if matching_task and matching_task.tsv_accession:
+                tsv_file = exp_path / f"{matching_task.tsv_accession}.tsv"
+                return tsv_file.exists()
+            else:
+                return False
+        else:
+            # For other assays, check all required signal directories exist
+            for signal_dir in self.required_signal_dirs:
+                signal_path = exp_path / signal_dir
+                if not signal_path.exists():
+                    return False
+                
+                # Check that signal directory has files for main chromosomes
+                expected_files = [f"{chrom}.npz" for chrom in self.main_chromosomes]
+                existing_files = [f.name for f in signal_path.glob("*.npz")]
+                
+                # Require at least 80% of chromosomes to be present
+                required_count = int(0.8 * len(expected_files))
+                if len(existing_files) < required_count:
+                    return False
+        
+        return True
+    
+    def validate_dataset(self, dataset_name: str, data_directory: str = None) -> ValidationResult:
+        """
+        Validate complete dataset.
+        
+        Args:
+            dataset_name: 'eic' or 'merged'
+            data_directory: Optional specific directory to validate. If None, uses default structure.
+            
+        Returns:
+            ValidationResult: Comprehensive validation results
+        """
+        # Load expected experiments from download plan
+        loader = DownloadPlanLoader(dataset_name)
+        all_tasks = loader.create_task_list()
+        
+        # Use provided data directory or default structure
+        if data_directory:
+            dataset_path = Path(data_directory)
+        else:
+            # Default structure (for backward compatibility)
+            if dataset_name.lower() == 'eic':
+                dataset_path = self.base_path / "DATA_CANDI_EIC"
+            elif dataset_name.lower() == 'merged':
+                dataset_path = self.base_path / "DATA_CANDI_MERGED"
+            elif dataset_name.lower() == 'eic_test':
+                dataset_path = self.base_path / "DATA_CANDI_EIC_TEST"
+            elif dataset_name.lower() == 'merged_test':
+                dataset_path = self.base_path / "DATA_CANDI_MERGED_TEST"
+            else:
+                raise ValueError(f"Unknown dataset: {dataset_name}")
+        
+        total_experiments = len(all_tasks)
+        total_biosamples = len(set(task.celltype for task in all_tasks))
+        
+        completed_experiments = 0
+        completed_biosamples = set()
+        missing_experiments = []
+        available_experiments = []
+        biosample_completion = defaultdict(dict)
+        
+        for task in all_tasks:
+            is_complete = self.validate_experiment(task.celltype, task.assay, dataset_path)
+            biosample_completion[task.celltype][task.assay] = is_complete
+            
+            experiment_id = f"{task.celltype}-{task.assay}"
+            if is_complete:
+                completed_experiments += 1
+                completed_biosamples.add(task.celltype)
+                available_experiments.append(experiment_id)
+            else:
+                missing_experiments.append(experiment_id)
+        
+        completion_percentage = (completed_experiments / total_experiments) * 100 if total_experiments > 0 else 0
+        
+        return ValidationResult(
+            dataset_name=dataset_name,
+            total_experiments=total_experiments,
+            total_biosamples=total_biosamples,
+            completed_experiments=completed_experiments,
+            completed_biosamples=len(completed_biosamples),
+            completion_percentage=completion_percentage,
+            biosample_completion=dict(biosample_completion),
+            missing_experiments=missing_experiments,
+            available_experiments=available_experiments
+        )
+    
+    def quick_validate(self, dataset_name: str, data_directory: str = None, verbose: bool = True) -> Dict[str, float]:
+        """
+        Quick validation of CANDI dataset completeness.
+        
+        Args:
+            dataset_name: 'eic' or 'merged'
+            data_directory: Optional specific directory to validate
+            verbose: Print detailed results
+            
+        Returns:
+            Dict with validation results
+        """
+        validation_result = self.validate_dataset(dataset_name, data_directory)
+        
+        results = {
+            'experiment_completion_rate': validation_result.completion_percentage,
+            'biosample_coverage_rate': (validation_result.completed_biosamples / validation_result.total_biosamples) * 100,
+            'total_experiments': validation_result.total_experiments,
+            'completed_experiments': validation_result.completed_experiments,
+            'total_biosamples': validation_result.total_biosamples,
+            'biosamples_with_data': validation_result.completed_biosamples
+        }
+        
+        if verbose:
+            print(f"\n=== {dataset_name.upper()} Dataset Validation Results ===")
+            print(f"Experiments: {results['completed_experiments']}/{results['total_experiments']} "
+                  f"({results['experiment_completion_rate']:.1f}% complete)")
+            print(f"Biosamples: {results['biosamples_with_data']}/{results['total_biosamples']} "
+                  f"({results['biosample_coverage_rate']:.1f}% coverage)")
+            
+            if validation_result.missing_experiments:
+                print(f"\n❌ Missing experiments ({len(validation_result.missing_experiments)}):")
+                for exp in validation_result.missing_experiments[:10]:  # Show first 10
+                    print(f"  - {exp}")
+                if len(validation_result.missing_experiments) > 10:
+                    print(f"  ... and {len(validation_result.missing_experiments) - 10} more")
+        
+        return results
+    
+    def get_missing_experiments(self, dataset_name: str, data_directory: str = None) -> List[Dict]:
+        """
+        Get detailed list of missing experiments.
+        
+        Args:
+            dataset_name: 'eic' or 'merged'
+            data_directory: Optional specific directory to validate
+            
+        Returns:
+            List of missing experiment details
+        """
+        validation_result = self.validate_dataset(dataset_name, data_directory)
+        
+        # Load tasks to get detailed information
+        loader = DownloadPlanLoader(dataset_name)
+        all_tasks = loader.create_task_list()
+        
+        missing_details = []
+        for task in all_tasks:
+            experiment_id = f"{task.celltype}-{task.assay}"
+            if experiment_id in validation_result.missing_experiments:
+                missing_details.append({
+                    'task_id': task.task_id,
+                    'celltype': task.celltype,
+                    'assay': task.assay,
+                    'experiment_id': experiment_id
+                })
+        
+        return missing_details
+    
+    def analyze_patterns(self, missing_experiments: List[Dict]) -> Dict:
+        """
+        Analyze patterns in missing experiments.
+        
+        Args:
+            missing_experiments: List of missing experiment details
+            
+        Returns:
+            Dict with analysis results
+        """
+        if not missing_experiments:
+            return {"total_missing": 0, "patterns": {}}
+        
+        # Count by celltype
+        celltype_counts = defaultdict(int)
+        assay_counts = defaultdict(int)
+        
+        for exp in missing_experiments:
+            celltype_counts[exp['celltype']] += 1
+            assay_counts[exp['assay']] += 1
+        
+        return {
+            "total_missing": len(missing_experiments),
+            "by_celltype": dict(celltype_counts),
+            "by_assay": dict(assay_counts),
+            "top_missing_celltypes": sorted(celltype_counts.items(), key=lambda x: x[1], reverse=True)[:10],
+            "top_missing_assays": sorted(assay_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        }
+
+
+
+
+
+class EnhancedCANDIDownloadManager(CANDIDownloadManager):
+    """Enhanced download manager with improved error handling for retry scenarios."""
+    
+    def __init__(self, base_path: str, resolution: int = 25, dsf_list: List[int] = [1,2,4,8]):
+        super().__init__(base_path, resolution, dsf_list)
+        self.chr_sizes_file = "data/hg38.chrom.sizes"
+    
+    def process_task(self, task: Task) -> Task:
+        """Enhanced task processing with better error handling."""
+        try:
+            return self._process_task_enhanced(task)
+        except Exception as e:
+            self.logger.error(f"Enhanced processing failed for {task.task_id}: {e}")
+            task.status = TaskStatus.FAILED
+            task.error_message = str(e)
+            return task
+    
+    def _process_task_enhanced(self, task: Task) -> Task:
+        """Core enhanced processing logic."""
+        exp_path = os.path.join(self.base_path, task.celltype, task.assay)
+        os.makedirs(exp_path, exist_ok=True)
+        
+        # Enhanced BAM processing with better error handling
+        if task.bam_accession:
+            success = self._enhanced_bam_processing(task, exp_path)
+            if not success:
+                raise Exception("Enhanced BAM processing failed")
+        
+        # Enhanced BigBed processing with invalid interval handling
+        if task.peaks_bigbed_accession:
+            success = self._enhanced_bigbed_processing(task, exp_path)
+            if not success:
+                raise Exception("Enhanced BigBed processing failed")
+        
+        # Standard processing for other file types
+        if task.tsv_accession:
+            success = self._download_and_process_tsv(task, exp_path)
+            if not success:
+                raise Exception("TSV processing failed")
+        
+        if task.signal_bigwig_accession:
+            success = self._download_and_process_bigwig(task, exp_path)
+            if not success:
+                raise Exception("BigWig processing failed")
+        
+        # Create enhanced metadata
+        file_metadata = self._create_file_metadata(task)
+        self._save_file_metadata(file_metadata, exp_path)
+        
+        # Final validation
+        if self._is_task_completed(task, exp_path):
+            task.status = TaskStatus.COMPLETED
+            self.logger.info(f"Enhanced processing completed for {task.task_id}")
+        else:
+            raise Exception("Enhanced validation failed")
+        
+        return task
+    
+    def _enhanced_bam_processing(self, task: Task, exp_path: str) -> bool:
+        """Enhanced BAM processing with better indexing validation."""
+        try:
+            bam_file = os.path.join(exp_path, f"{task.bam_accession}.bam")
+            download_url = f"https://www.encodeproject.org/files/{task.bam_accession}/@@download/{task.bam_accession}.bam"
+            
+            # Check if already processed
+            if self._are_dsf_signals_complete(exp_path):
+                self.logger.info(f"DSF signals already exist for {task.task_id}")
+                return True
+            
+            # Download with retry
+            self.logger.info(f"Downloading BAM file for {task.task_id}")
+            if not download_save(download_url, bam_file):
+                raise Exception("BAM download failed")
+            
+            # Enhanced indexing with validation
+            self.logger.info(f"Indexing BAM file for {task.task_id}")
+            index_result = os.system(f"samtools index {bam_file}")
+            if index_result != 0:
+                # Retry indexing once
+                self.logger.warning(f"First indexing attempt failed for {task.task_id}, retrying...")
+                index_result = os.system(f"samtools index {bam_file}")
+                if index_result != 0:
+                    raise Exception(f"BAM indexing failed after retry: return code {index_result}")
+            
+            # Validate index file exists
+            if not os.path.exists(f"{bam_file}.bai"):
+                raise Exception("BAM index file was not created")
+            
+            # Process BAM to signals
+            self.logger.info(f"Processing BAM to signals for {task.task_id}")
+            bam_processor = BAM_TO_SIGNAL(
+                bam_file=bam_file,
+                chr_sizes_file=self.chr_sizes_file
+            )
+            bam_processor.full_preprocess()
+            
+            # Clean up BAM files
+            os.remove(bam_file)
+            if os.path.exists(f"{bam_file}.bai"):
+                os.remove(f"{bam_file}.bai")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Enhanced BAM processing failed for {task.task_id}: {e}")
+            # Clean up on failure
+            if os.path.exists(bam_file):
+                os.remove(bam_file)
+            if os.path.exists(f"{bam_file}.bai"):
+                os.remove(f"{bam_file}.bai")
+            return False
+    
+    def _enhanced_bigbed_processing(self, task: Task, exp_path: str) -> bool:
+        """Enhanced BigBed processing with invalid interval handling."""
+        try:
+            bigbed_file = os.path.join(exp_path, f"{task.peaks_bigbed_accession}.bigBed")
+            download_url = f"https://www.encodeproject.org/files/{task.peaks_bigbed_accession}/@@download/{task.peaks_bigbed_accession}.bigBed"
+            
+            # Check if peaks already complete
+            peaks_path = os.path.join(exp_path, f"peaks_res{self.resolution}")
+            if self._is_peaks_complete(peaks_path):
+                self.logger.info(f"Peaks already exist for {task.task_id}")
+                return True
+            
+            # Download BigBed file
+            self.logger.info(f"Downloading BigBed file for {task.task_id}")
+            if not download_save(download_url, bigbed_file):
+                raise Exception("BigBed download failed")
+            
+            # Enhanced processing with error handling per chromosome
+            self.logger.info(f"Processing BigBed for {task.task_id}")
+            try:
+                binned_peaks = get_binned_bigBed_peaks(bigbed_file, resolution=self.resolution)
+            except Exception as e:
+                # If standard processing fails, try enhanced processing
+                self.logger.warning(f"Standard BigBed processing failed for {task.task_id}: {e}")
+                binned_peaks = self._enhanced_bigbed_binning(bigbed_file)
+            
+            # Remove old peaks directory if exists
+            if os.path.exists(peaks_path):
+                shutil.rmtree(peaks_path)
+            
+            # Create peaks directory structure
+            os.makedirs(peaks_path, exist_ok=True)
+            
+            for chr_name, data in binned_peaks.items():
+                np.savez_compressed(
+                    os.path.join(peaks_path, f"{chr_name}.npz"),
+                    np.array(data)
+                )
+            
+            # Clean up downloaded file
+            os.remove(bigbed_file)
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Enhanced BigBed processing failed for {task.task_id}: {e}")
+            if os.path.exists(bigbed_file):
+                os.remove(bigbed_file)
+            return False
+    
+    def _enhanced_bigbed_binning(self, bigbed_file: str) -> Dict[str, List]:
+        """Enhanced BigBed binning with per-chromosome error handling."""
+        import pyBigWig
+        
+        binned_peaks = {}
+        main_chrs = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
+        
+        try:
+            bb = pyBigWig.open(bigbed_file)
+            
+            for chr_name in main_chrs:
+                try:
+                    # Get chromosome length
+                    chr_length = bb.chroms().get(chr_name, 0)
+                    if chr_length == 0:
+                        self.logger.warning(f"Chromosome {chr_name} not found in BigBed")
+                        binned_peaks[chr_name] = []
+                        continue
+                    
+                    # Process chromosome with error handling
+                    try:
+                        intervals = bb.entries(chr_name, 0, chr_length)
+                        if intervals is None:
+                            binned_peaks[chr_name] = []
+                            continue
+                        
+                        # Create binned representation
+                        num_bins = (chr_length + self.resolution - 1) // self.resolution
+                        binned_data = [0] * num_bins
+                        
+                        for start, end, value in intervals:
+                            # Validate interval bounds
+                            if start >= end or start < 0 or end > chr_length:
+                                self.logger.debug(f"Skipping invalid interval: {start}-{end} on {chr_name}")
+                                continue
+                            
+                            start_bin = start // self.resolution
+                            end_bin = min((end - 1) // self.resolution, num_bins - 1)
+                            
+                            for bin_idx in range(start_bin, end_bin + 1):
+                                if 0 <= bin_idx < num_bins:
+                                    binned_data[bin_idx] = 1
+                        
+                        binned_peaks[chr_name] = binned_data
+                        
+                    except Exception as e:
+                        self.logger.warning(f"Error processing chromosome {chr_name}: {e}")
+                        binned_peaks[chr_name] = []
+                        
+                except Exception as e:
+                    self.logger.warning(f"Error accessing chromosome {chr_name}: {e}")
+                    binned_peaks[chr_name] = []
+            
+            bb.close()
+            
+        except Exception as e:
+            self.logger.error(f"Error opening BigBed file: {e}")
+            # Return empty data for all chromosomes
+            for chr_name in main_chrs:
+                binned_peaks[chr_name] = []
+        
+        return binned_peaks
+
+
+def setup_detailed_logging(log_file: str = None) -> logging.Logger:
+    """Set up detailed logging for pipeline operations."""
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    
+    # Clear existing handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler if specified
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    
+    return logger
+
+
+def count_experiments_and_biosamples(all_tasks: List[Task]) -> Tuple[int, int]:
+    """Count total experiments and unique biosamples."""
+    biosamples = set()
+    for task in all_tasks:
+        biosamples.add(task.celltype)
+    return len(all_tasks), len(biosamples)
+
+
+def log_progress(logger: logging.Logger, completed_tasks: List[Task], all_tasks: List[Task], current_task: Task = None):
+    """Log detailed progress including remaining experiments and biosamples."""
+    total_experiments, total_biosamples = count_experiments_and_biosamples(all_tasks)
+    
+    # Count completed experiments and biosamples
+    completed_experiments = len(completed_tasks)
+    completed_biosamples = set()
+    for task in completed_tasks:
+        completed_biosamples.add(task.celltype)
+    
+    remaining_experiments = total_experiments - completed_experiments
+    remaining_biosamples = total_biosamples - len(completed_biosamples)
+    
+    if current_task:
+        logger.info(f"✅ COMPLETED: {current_task.celltype} - {current_task.assay}")
+    
+    logger.info(f"📊 PROGRESS SUMMARY:")
+    logger.info(f"   🧬 Experiments: {completed_experiments}/{total_experiments} completed ({remaining_experiments} remaining)")
+    logger.info(f"   🏷️  Biosamples: {len(completed_biosamples)}/{total_biosamples} completed ({remaining_biosamples} remaining)")
+    logger.info(f"   📈 Progress: {(completed_experiments/total_experiments)*100:.1f}%")
+
+
 def main():
-    """Command line interface for CANDI data pipeline."""
+    """Comprehensive command line interface for CANDI data pipeline."""
     parser = argparse.ArgumentParser(
-        description="CANDI Data Download and Processing Pipeline",
+        description="CANDI Data Pipeline - Unified Interface",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
+Commands:
+  process         Download and process datasets
+  validate        Validate dataset completeness  
+  quick-validate  Quick validation check
+  analyze-missing Analyze missing experiments
+  retry           Retry failed experiments
+  run-complete    Run complete dataset processing with detailed logging
+
 Examples:
-  # Download and process EIC dataset
-  python get_candi_data.py eic /path/to/data
+  # Process datasets
+  python get_candi_data.py process eic /path/to/data
+  python get_candi_data.py process merged /path/to/data --max-workers 8
   
-  # Download and process merged dataset  
-  python get_candi_data.py merged /path/to/data
+  # Validation and analysis
+  python get_candi_data.py validate eic /path/to/data
+  python get_candi_data.py quick-validate merged /path/to/data
+  python get_candi_data.py analyze-missing eic /path/to/data
   
-  # Only validate existing data
-  python get_candi_data.py eic /path/to/data --validate-only
+  # Retry failed experiments
+  python get_candi_data.py retry eic /path/to/data
+  python get_candi_data.py retry merged /path/to/data
   
-  # Custom resolution and parallelism
-  python get_candi_data.py merged /path/to/data --resolution 50 --max-workers 8
+  # Complete processing with detailed logging
+  python get_candi_data.py run-complete eic /path/to/data --max-workers 16
         """
     )
     
-    parser.add_argument('dataset', choices=['eic', 'merged'],
-                       help='Dataset type: eic or merged')
-    parser.add_argument('download_directory', 
-                       help='Directory where data will be downloaded and processed')
-    parser.add_argument('--resolution', default=25, type=int,
-                       help='Resolution for binning in base pairs (default: 25)')
-    parser.add_argument('--max-workers', type=int,
-                       help='Maximum number of parallel workers (default: CPU count - 1)')
-    parser.add_argument('--validate-only', action='store_true',
-                       help='Only validate existing data without downloading')
-    parser.add_argument('--no-download', action='store_true',
-                       help='Skip downloading, only check what is missing')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Enable verbose logging')
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # Process command
+    process_parser = subparsers.add_parser('process', help='Download and process datasets')
+    process_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    process_parser.add_argument('directory', help='Data directory')
+    process_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp (default: 25)')
+    process_parser.add_argument('--max-workers', type=int, help='Max parallel workers')
+    process_parser.add_argument('--validate-only', action='store_true', help='Only validate, no download')
+    process_parser.add_argument('--verbose', '-v', action='store_true', help='Verbose logging')
+    
+    # Validate command
+    validate_parser = subparsers.add_parser('validate', help='Comprehensive dataset validation')
+    validate_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    validate_parser.add_argument('directory', help='Data directory')
+    validate_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp')
+    validate_parser.add_argument('--save-csv', help='Save results to CSV file')
+    
+    # Quick validate command
+    quick_validate_parser = subparsers.add_parser('quick-validate', help='Quick validation check')
+    quick_validate_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    quick_validate_parser.add_argument('directory', help='Data directory')
+    quick_validate_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp')
+    
+    # Analyze missing command
+    analyze_parser = subparsers.add_parser('analyze-missing', help='Analyze missing experiments')
+    analyze_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    analyze_parser.add_argument('directory', help='Data directory')
+    analyze_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp')
+    analyze_parser.add_argument('--save-json', help='Save results to JSON file')
+    
+
+    
+    # Retry command
+    retry_parser = subparsers.add_parser('retry', help='Retry failed experiments')
+    retry_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    retry_parser.add_argument('directory', help='Data directory')
+    retry_parser.add_argument('--max-workers', default=6, type=int, help='Max parallel workers')
+    retry_parser.add_argument('--log-file', help='Log file to analyze for failures')
+    
+    # Run complete command
+    complete_parser = subparsers.add_parser('run-complete', help='Complete processing with detailed logging')
+    complete_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    complete_parser.add_argument('directory', help='Data directory')
+    complete_parser.add_argument('--max-workers', default=16, type=int, help='Max parallel workers')
+    complete_parser.add_argument('--log-file', help='Custom log file name')
+    
+    # Global options
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
     
     args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
     
     # Setup logging
     log_level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    # Validate arguments
-    download_dir = os.path.abspath(args.download_directory)
-    
-    # Create download directory if it doesn't exist
-    try:
-        os.makedirs(download_dir, exist_ok=True)
-    except Exception as e:
-        print(f"Error: Could not create download directory {download_dir}: {e}")
-        sys.exit(1)
-    
-    # Check if download plans exist
-    loader = DownloadPlanLoader(args.dataset)
-    if not os.path.exists(loader.download_plan_file):
-        print(f"Error: Download plan file not found: {loader.download_plan_file}")
-        print("Make sure you're running from the correct directory with data/ subdirectory")
-        sys.exit(1)
-    
-    # Initialize and run pipeline
-    pipeline = CANDIDataPipeline(
-        base_path=download_dir,
-        resolution=args.resolution,
-        max_workers=args.max_workers
+        format='%(asctime)s - %(levelname)s - %(message)s'
     )
     
     try:
-        result = pipeline.run_pipeline(
-            dataset_name=args.dataset,
-            download=not args.no_download,
-            validate_only=args.validate_only
-        )
-        
-        print(f"\n✅ Pipeline completed successfully!")
-        
-        # Print summary results
-        if "total_tasks" in result:
-            total = result["total_tasks"]
-            valid = result["valid_tasks"]
-            print(f"📊 Final Results: {valid}/{total} tasks completed successfully")
+        if args.command == 'process':
+            _handle_process_command(args)
+        elif args.command == 'validate':
+            _handle_validate_command(args)
+        elif args.command == 'quick-validate':
+            _handle_quick_validate_command(args)
+        elif args.command == 'analyze-missing':
+            _handle_analyze_missing_command(args)
+
+        elif args.command == 'retry':
+            _handle_retry_command(args)
+        elif args.command == 'run-complete':
+            _handle_run_complete_command(args)
+        else:
+            print(f"Unknown command: {args.command}")
+            sys.exit(1)
             
-            if valid < total:
-                print(f"⚠️  {total - valid} tasks failed or incomplete")
-        
     except Exception as e:
-        print(f"❌ Pipeline failed with error: {e}")
+        print(f"❌ Command failed: {e}")
         if args.verbose:
             import traceback
             traceback.print_exc()
         sys.exit(1)
+
+
+def _handle_process_command(args):
+    """Handle the process command."""
+    directory = os.path.abspath(args.directory)
+    os.makedirs(directory, exist_ok=True)
+    
+    # Check download plans exist
+    loader = DownloadPlanLoader(args.dataset)
+    if not os.path.exists(loader.download_plan_file):
+        raise FileNotFoundError(f"Download plan not found: {loader.download_plan_file}")
+    
+    # Initialize and run pipeline
+    pipeline = CANDIDataPipeline(
+        base_path=directory,
+        resolution=args.resolution,
+        max_workers=args.max_workers
+    )
+    
+    result = pipeline.run_pipeline(
+        dataset_name=args.dataset,
+        download=not args.validate_only,
+        validate_only=args.validate_only
+    )
+    
+    print(f"\n✅ Processing completed!")
+    if "total_tasks" in result:
+        total = result["total_tasks"]
+        valid = result["valid_tasks"]
+        print(f"📊 Results: {valid}/{total} tasks completed successfully")
+
+
+def _handle_validate_command(args):
+    """Handle the validate command."""
+    directory = os.path.abspath(args.directory)
+    
+    validator = CANDIDatasetValidator(directory, args.resolution)
+    result = validator.validate_dataset(args.dataset, directory)
+    
+    print(f"\n=== {args.dataset.upper()} Dataset Validation ===")
+    print(f"Total experiments: {result.total_experiments}")
+    print(f"Completed experiments: {result.completed_experiments} ({result.completion_percentage:.1f}%)")
+    print(f"Total biosamples: {result.total_biosamples}")
+    print(f"Biosamples with data: {result.completed_biosamples}")
+    
+    if result.missing_experiments:
+        print(f"\n❌ Missing experiments ({len(result.missing_experiments)}):")
+        for exp in result.missing_experiments[:20]:  # Show first 20
+            print(f"  - {exp}")
+        if len(result.missing_experiments) > 20:
+            print(f"  ... and {len(result.missing_experiments) - 20} more")
+    
+    if args.save_csv:
+        # Save detailed results to CSV
+        data = []
+        for biosample, assays in result.biosample_completion.items():
+            for assay, is_complete in assays.items():
+                data.append({
+                    'biosample': biosample,
+                    'assay': assay,
+                    'is_complete': is_complete,
+                    'experiment_id': f"{biosample}-{assay}"
+                })
+        
+        df = pd.DataFrame(data)
+        df.to_csv(args.save_csv, index=False)
+        print(f"\n💾 Results saved to {args.save_csv}")
+
+
+def _handle_quick_validate_command(args):
+    """Handle the quick-validate command."""
+    directory = os.path.abspath(args.directory)
+    
+    validator = CANDIDatasetValidator(directory, args.resolution)
+    results = validator.quick_validate(args.dataset, directory, verbose=True)
+    
+    print(f"\n📊 Quick Validation Summary:")
+    print(f"Experiment completion: {results['experiment_completion_rate']:.1f}%")
+    print(f"Biosample coverage: {results['biosample_coverage_rate']:.1f}%")
+
+
+def _handle_analyze_missing_command(args):
+    """Handle the analyze-missing command."""
+    directory = os.path.abspath(args.directory)
+    
+    validator = CANDIDatasetValidator(directory, args.resolution)
+    missing_experiments = validator.get_missing_experiments(args.dataset, directory)
+    patterns = validator.analyze_patterns(missing_experiments)
+    
+    print(f"\n=== Missing Experiments Analysis for {args.dataset.upper()} ===")
+    print(f"Total missing: {patterns['total_missing']}")
+    
+    if patterns['total_missing'] > 0:
+        print(f"\n🔍 Top missing celltypes:")
+        for celltype, count in patterns['top_missing_celltypes']:
+            print(f"  {celltype}: {count} experiments")
+        
+        print(f"\n🔬 Top missing assays:")
+        for assay, count in patterns['top_missing_assays']:
+            print(f"  {assay}: {count} experiments")
+    
+    if args.save_json:
+        with open(args.save_json, 'w') as f:
+            json.dump({
+                'missing_experiments': missing_experiments,
+                'patterns': patterns
+            }, f, indent=2)
+        print(f"\n💾 Analysis saved to {args.save_json}")
+
+
+
+
+
+def _handle_retry_command(args):
+    """Handle the retry command."""
+    directory = os.path.abspath(args.directory)
+    
+    # Setup logging for retry
+    log_file = args.log_file or f"retry_{args.dataset}_processing.log"
+    logger = setup_detailed_logging(log_file)
+    
+    logger.info(f"🔧 Starting {args.dataset.upper()} failed experiments retry")
+    logger.info(f"Dataset: {args.dataset}")
+    logger.info(f"Base path: {directory}")
+    logger.info(f"Max workers: {args.max_workers}")
+    
+    # Get missing tasks (which are essentially "failed" tasks)
+    loader = DownloadPlanLoader(args.dataset)
+    missing_tasks = loader.get_missing_tasks(directory)
+    
+    if not missing_tasks:
+        print(f"✅ No failed {args.dataset.upper()} experiments found to retry")
+        return
+    
+    print(f"Found {len(missing_tasks)} failed {args.dataset.upper()} experiments to retry")
+    logger.info(f"Found {len(missing_tasks)} failed experiments to retry")
+    
+    # Create enhanced download manager
+    download_manager = EnhancedCANDIDownloadManager(base_path=directory)
+    
+    # Process retry tasks
+    successful_retries = 0
+    failed_retries = 0
+    
+    for task in missing_tasks:
+        logger.info(f"Retrying {args.dataset.upper()} task: {task.task_id}")
+        
+        try:
+            result_task = download_manager.process_task(task)
+            if result_task.status == TaskStatus.COMPLETED:
+                successful_retries += 1
+                logger.info(f"✅ Successfully retried {args.dataset.upper()} task: {task.task_id}")
+            else:
+                failed_retries += 1
+                error_msg = result_task.error_message or "Unknown error"
+                logger.error(f"❌ {args.dataset.upper()} retry failed: {task.task_id} - {error_msg}")
+        except Exception as e:
+            failed_retries += 1
+            logger.error(f"❌ Exception during {args.dataset.upper()} retry of {task.task_id}: {e}")
+    
+    # Final summary
+    print(f"\n=== {args.dataset.upper()} RETRY SUMMARY ===")
+    print(f"Total retry attempts: {len(missing_tasks)}")
+    print(f"Successful retries: {successful_retries}")
+    print(f"Failed retries: {failed_retries}")
+    print(f"Success rate: {successful_retries/len(missing_tasks)*100:.1f}%")
+    
+    logger.info(f"\n=== {args.dataset.upper()} RETRY SUMMARY ===")
+    logger.info(f"Total retry attempts: {len(missing_tasks)}")
+    logger.info(f"Successful retries: {successful_retries}")
+    logger.info(f"Failed retries: {failed_retries}")
+    logger.info(f"Success rate: {successful_retries/len(missing_tasks)*100:.1f}%")
+    
+    if failed_retries > 0:
+        print(f"⚠️  {failed_retries} experiments still failed after retry")
+        logger.warning(f"⚠️  {failed_retries} experiments still failed after retry")
+
+
+def _handle_run_complete_command(args):
+    """Handle the run-complete command with detailed logging."""
+    directory = os.path.abspath(args.directory)
+    os.makedirs(directory, exist_ok=True)
+    
+    # Setup detailed logging
+    log_file = args.log_file or f"{args.dataset}_complete_processing.log"
+    logger = setup_detailed_logging(log_file)
+    
+    logger.info("=" * 80)
+    logger.info(f"🎯 {args.dataset.upper()} DATASET COMPLETE PROCESSING STARTED")
+    logger.info("=" * 80)
+    logger.info(f"📁 Dataset: {args.dataset}")
+    logger.info(f"📂 Base path: {directory}")
+    logger.info(f"⚡ Max workers: {args.max_workers}")
+    logger.info(f"📝 Log file: {log_file}")
+    
+    try:
+        # Load tasks
+        loader = DownloadPlanLoader(args.dataset)
+        all_tasks = loader.create_task_list()
+        missing_tasks = loader.get_missing_tasks(directory)
+        
+        total_experiments, total_biosamples = count_experiments_and_biosamples(all_tasks)
+        
+        logger.info(f"📋 DATASET OVERVIEW:")
+        logger.info(f"   🧬 Total experiments: {total_experiments}")
+        logger.info(f"   🏷️  Total biosamples: {total_biosamples}")
+        logger.info(f"   📥 Tasks to process: {len(missing_tasks)}")
+        
+        if len(missing_tasks) == 0:
+            print(f"✅ All {args.dataset.upper()} experiments already completed!")
+            logger.info(f"✅ All experiments already completed!")
+            return
+        
+        # Process with detailed progress logging
+        download_manager = CANDIDownloadManager(directory)
+        
+        print(f"🚀 Starting complete {args.dataset.upper()} processing...")
+        print(f"📊 Processing {len(missing_tasks)}/{total_experiments} experiments")
+        print(f"⚡ Using {args.max_workers} parallel workers")
+        print(f"📝 Logging to: {log_file}")
+        
+        # Use enhanced executor with detailed logging
+        class DetailedParallelTaskExecutor(ParallelTaskExecutor):
+            def __init__(self, download_manager, max_workers=None, logger=None, all_tasks=None):
+                super().__init__(download_manager, max_workers)
+                self.logger = logger or logging.getLogger(__name__)
+                self.all_tasks = all_tasks or []
+                self.completed_tasks = []
+            
+            def execute_tasks(self, tasks, show_progress=True):
+                self.logger.info(f"🚀 Starting parallel execution of {len(tasks)} tasks")
+                self.logger.info(f"⚡ Using {self.max_workers} parallel workers")
+                
+                # Process tasks with detailed logging
+                processed_tasks = super().execute_tasks(tasks, show_progress)
+                
+                # Log progress after each completion
+                self.completed_tasks.extend(processed_tasks)
+                log_progress(self.logger, self.completed_tasks, self.all_tasks)
+                
+                return processed_tasks
+        
+        executor = DetailedParallelTaskExecutor(
+            download_manager, 
+            args.max_workers, 
+            logger, 
+            all_tasks
+        )
+        
+        completed_tasks = executor.execute_tasks(missing_tasks, show_progress=True)
+        
+        # Final summary
+        successful = len([t for t in completed_tasks if t.status == TaskStatus.COMPLETED])
+        failed = len([t for t in completed_tasks if t.status == TaskStatus.FAILED])
+        
+        print(f"\n🎉 {args.dataset.upper()} COMPLETE PROCESSING FINISHED!")
+        print(f"✅ Successful: {successful}/{len(missing_tasks)}")
+        print(f"❌ Failed: {failed}/{len(missing_tasks)}")
+        print(f"📊 Success rate: {successful/len(missing_tasks)*100:.1f}%")
+        
+        logger.info(f"\n🎉 {args.dataset.upper()} COMPLETE PROCESSING FINISHED!")
+        logger.info(f"✅ Successful: {successful}/{len(missing_tasks)}")
+        logger.info(f"❌ Failed: {failed}/{len(missing_tasks)}")
+        logger.info(f"📊 Success rate: {successful/len(missing_tasks)*100:.1f}%")
+        
+        if failed > 0:
+            failed_tasks = [t for t in completed_tasks if t.status == TaskStatus.FAILED]
+            print(f"\n⚠️  Failed experiments:")
+            for task in failed_tasks[:10]:  # Show first 10
+                print(f"  - {task.task_id}: {task.error_message}")
+                logger.error(f"FAILED: {task.task_id} - {task.error_message}")
+            if len(failed_tasks) > 10:
+                print(f"  ... and {len(failed_tasks) - 10} more (see log file)")
+        
+    except Exception as e:
+        logger.error(f"❌ Complete processing failed: {e}")
+        raise
 
 
 if __name__ == "__main__":
