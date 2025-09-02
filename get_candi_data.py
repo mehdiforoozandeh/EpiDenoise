@@ -548,6 +548,20 @@ class CANDIDownloadManager:
             formatted_metadata["read_length"] = {"2": None}
             formatted_metadata["run_type"] = {"2": "single-ended"}  # Default value
         
+        # Add new fields: sequencing platform and lab
+        # Fetch experiment metadata for platform and lab info
+        exp_metadata = self._fetch_encode_experiment_metadata(task.exp_accession)
+        
+        if exp_metadata:
+            sequencing_platform = self._extract_sequencing_platform(exp_metadata)
+            lab = self._extract_lab_information(exp_metadata)
+            
+            if sequencing_platform:
+                formatted_metadata["sequencing_platform"] = {"2": sequencing_platform}
+            
+            if lab:
+                formatted_metadata["lab"] = {"2": lab}
+        
         return formatted_metadata
     
     def _fetch_encode_file_metadata(self, file_accession: str) -> Dict:
@@ -582,6 +596,86 @@ class CANDIDownloadManager:
                         "status": "released",
                         "file_size": 0
                     }
+    
+    def _fetch_encode_experiment_metadata(self, exp_accession: str) -> Dict:
+        """Fetch experiment metadata from ENCODE API."""
+        import requests
+        import time
+        
+        url = f"https://www.encodeproject.org/experiments/{exp_accession}/?format=json"
+        headers = {'accept': 'application/json'}
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, headers=headers, timeout=30)
+                response.raise_for_status()
+                
+                metadata = response.json()
+                self.logger.debug(f"Fetched experiment metadata for {exp_accession}")
+                return metadata
+                
+            except Exception as e:
+                self.logger.warning(f"Attempt {attempt + 1}/{max_retries} to fetch experiment metadata for {exp_accession} failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+        else:
+                    self.logger.error(f"Failed to fetch experiment metadata for {exp_accession} after {max_retries} attempts")
+                    return {}
+    
+    def _extract_sequencing_platform(self, exp_metadata: Dict) -> Optional[str]:
+        """Extract sequencing platform information from experiment metadata."""
+        # Check original files for platform info (for processed files)
+        if 'files' in exp_metadata:
+            for file_info in exp_metadata['files']:
+                if isinstance(file_info, dict) and 'platform' in file_info:
+                    platform = file_info['platform']
+                    if isinstance(platform, dict) and 'term_name' in platform:
+                        return platform['term_name']
+                    elif isinstance(platform, str):
+                        return platform
+        
+        # Check experiment-level platform info
+        if 'platform' in exp_metadata:
+            platform = exp_metadata['platform']
+            if isinstance(platform, dict) and 'term_name' in platform:
+                return platform['term_name']
+            elif isinstance(platform, str):
+                return platform
+        
+        # Check library-level platform info in replicates
+        if 'replicates' in exp_metadata:
+            for replicate in exp_metadata['replicates']:
+                if 'library' in replicate and 'platform' in replicate['library']:
+                    platform = replicate['library']['platform']
+                    if isinstance(platform, dict) and 'term_name' in platform:
+                        return platform['term_name']
+                    elif isinstance(platform, str):
+                        return platform
+        
+        return None
+    
+    def _extract_lab_information(self, exp_metadata: Dict) -> Optional[str]:
+        """Extract lab information from experiment metadata."""
+        # Check experiment-level lab info (original lab)
+        if 'lab' in exp_metadata:
+            lab = exp_metadata['lab']
+            if isinstance(lab, dict) and 'title' in lab:
+                return lab['title']
+            elif isinstance(lab, str):
+                return lab
+        
+        # Check replicate-level lab info (library lab)
+        if 'replicates' in exp_metadata:
+            for replicate in exp_metadata['replicates']:
+                if 'library' in replicate and 'lab' in replicate['library']:
+                    lab = replicate['library']['lab']
+                    if isinstance(lab, dict) and 'title' in lab:
+                        return lab['title']
+                    elif isinstance(lab, str):
+                        return lab
+        
+        return None
     
     def _save_file_metadata(self, metadata: Dict, exp_path: str) -> None:
         """Save file metadata to file_metadata.json."""
@@ -914,29 +1008,50 @@ class ParallelTaskExecutor:
             # Collect results with progress bar
             completed_tasks = []
             if show_progress:
-                with tqdm(total=len(tasks), desc="Processing tasks") as pbar:
+                if HAS_TQDM:
+                    with tqdm(total=len(tasks), desc="Processing tasks") as pbar:
+                        for future in as_completed(future_to_task):
+                            try:
+                                result_task = future.result()
+                                completed_tasks.append(result_task)
+                                
+                                # Update progress bar description
+                                if result_task.status == TaskStatus.COMPLETED:
+                                    pbar.set_postfix({"Status": "✓ Completed"})
+                                elif result_task.status == TaskStatus.FAILED:
+                                    pbar.set_postfix({"Status": "✗ Failed"})
+                                else:
+                                    pbar.set_postfix({"Status": "? Unknown"})
+                                    
+                                pbar.update(1)
+                                
+                            except Exception as e:
+                                original_task = future_to_task[future]
+                                original_task.status = TaskStatus.FAILED
+                                original_task.error_message = f"Execution error: {str(e)}"
+                                completed_tasks.append(original_task)
+                                pbar.set_postfix({"Status": "✗ Error"})
+                                pbar.update(1)
+                else:
+                    # Fallback without tqdm
+                    completed = 0
                     for future in as_completed(future_to_task):
                         try:
                             result_task = future.result()
                             completed_tasks.append(result_task)
+                            completed += 1
                             
-                            # Update progress bar description
-                            if result_task.status == TaskStatus.COMPLETED:
-                                pbar.set_postfix({"Status": "✓ Completed"})
-                            elif result_task.status == TaskStatus.FAILED:
-                                pbar.set_postfix({"Status": "✗ Failed"})
-                            else:
-                                pbar.set_postfix({"Status": "? Unknown"})
-                                
-                            pbar.update(1)
+                            # Progress update every 10 or at end
+                            if completed % 10 == 0 or completed == len(tasks):
+                                progress = (completed / len(tasks)) * 100
+                                print(f"Processing tasks: {completed}/{len(tasks)} ({progress:.1f}%)")
                             
                         except Exception as e:
                             original_task = future_to_task[future]
                             original_task.status = TaskStatus.FAILED
                             original_task.error_message = f"Execution error: {str(e)}"
                             completed_tasks.append(original_task)
-                            pbar.set_postfix({"Status": "✗ Error"})
-                            pbar.update(1)
+                            completed += 1
             else:
                 for future in as_completed(future_to_task):
                     try:
@@ -1185,6 +1300,398 @@ class CANDIValidator:
             return False
             
         return True
+
+
+class MetadataUpdater:
+    """Update existing file_metadata.json files with new fields."""
+    
+    def __init__(self, base_path: str, dataset_name: str, max_workers: int = 6, 
+                 create_backups: bool = True, force_update: bool = False, test_mode: bool = False, test_count: int = 5):
+        self.base_path = base_path
+        self.dataset_name = dataset_name
+        self.max_workers = max_workers
+        self.create_backups = create_backups
+        self.force_update = force_update
+        self.test_mode = test_mode
+        self.test_count = test_count
+        self.logger = logging.getLogger(__name__)
+        
+        # Load download plan to get experiment accessions
+        self.loader = DownloadPlanLoader(dataset_name)
+        self.download_plan = self.loader.download_plan
+        
+        # Setup logging directory
+        self.log_dir = os.path.join(os.path.dirname(self.base_path), "log")
+        os.makedirs(self.log_dir, exist_ok=True)
+        
+        # Setup file logging
+        log_file = os.path.join(self.log_dir, f"metadata_update_{dataset_name}_{int(time.time())}.log")
+        self._setup_logging(log_file)
+        
+    def _setup_logging(self, log_file: str):
+        """Setup file logging for metadata updates."""
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+        self.logger.info(f"Metadata updater initialized. Logging to: {log_file}")
+        
+    def update_all_metadata(self) -> Dict:
+        """Update metadata for all experiments in the dataset."""
+        # Find all experiment directories
+        experiment_dirs = self._find_experiment_directories()
+        
+        self.logger.info(f"Found {len(experiment_dirs)} experiment directories to process")
+        print(f"Found {len(experiment_dirs)} experiment directories to process")
+        
+        # Process in parallel
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = []
+            for exp_dir in experiment_dirs:
+                future = executor.submit(self._update_single_metadata, exp_dir)
+                futures.append(future)
+            
+            # Collect results
+            results = {
+                'total': len(experiment_dirs),
+                'successful': 0,
+                'failed': 0,
+                'up_to_date': 0,
+                'failures': []
+            }
+            
+            # Process futures with progress tracking
+            if HAS_TQDM:
+                for future in tqdm(as_completed(futures), total=len(futures), desc="Updating metadata"):
+                    try:
+                        result = future.result()
+                        if result['status'] == 'success':
+                            results['successful'] += 1
+                            self.logger.info(f"Successfully updated: {result['message']}")
+                        elif result['status'] == 'up_to_date':
+                            results['up_to_date'] += 1
+                            self.logger.info(f"Already up-to-date: {result['message']}")
+                        else:
+                            results['failed'] += 1
+                            results['failures'].append(result['message'])
+                            self.logger.error(f"Failed to update: {result['message']}")
+                    except Exception as e:
+                        results['failed'] += 1
+                        error_msg = f"Exception: {str(e)}"
+                        results['failures'].append(error_msg)
+                        self.logger.error(f"Exception during update: {error_msg}")
+            else:
+                # Fallback without tqdm
+                completed = 0
+                for future in as_completed(futures):
+                    try:
+                        result = future.result()
+                        completed += 1
+                        if completed % 10 == 0 or completed == len(futures):  # Progress every 10 or at end
+                            progress = (completed / len(futures)) * 100
+                            print(f"Updating metadata: {completed}/{len(futures)} ({progress:.1f}%)")
+                        
+                        if result['status'] == 'success':
+                            results['successful'] += 1
+                            self.logger.info(f"Successfully updated: {result['message']}")
+                        elif result['status'] == 'up_to_date':
+                            results['up_to_date'] += 1
+                            self.logger.info(f"Already up-to-date: {result['message']}")
+                        else:
+                            results['failed'] += 1
+                            results['failures'].append(result['message'])
+                            self.logger.error(f"Failed to update: {result['message']}")
+                    except Exception as e:
+                        results['failed'] += 1
+                        error_msg = f"Exception: {str(e)}"
+                        results['failures'].append(error_msg)
+                        self.logger.error(f"Exception during update: {error_msg}")
+        
+        # Calculate success score
+        success_score = results['successful'] / results['total'] if results['total'] > 0 else 0
+        
+        self.logger.info(f"Metadata update completed. Success score: {success_score:.2%}")
+        self.logger.info(f"Results: {results['successful']} successful, {results['failed']} failed, {results['up_to_date']} up-to-date")
+        
+        return results
+    
+    def test_random_experiments(self) -> List[str]:
+        """Test the metadata updater on a random subset of experiments."""
+        self.test_mode = True
+        experiment_dirs = self._find_experiment_directories()
+        
+        print(f"🧪 Test mode: Processing {len(experiment_dirs)} random experiments:")
+        for i, exp_dir in enumerate(experiment_dirs, 1):
+            print(f"  {i}. {exp_dir}")
+        
+        return experiment_dirs
+    
+    def _find_experiment_directories(self) -> List[str]:
+        """Find all experiment directories that contain file_metadata.json."""
+        experiment_dirs = []
+        
+        for celltype in os.listdir(self.base_path):
+            celltype_path = os.path.join(self.base_path, celltype)
+            if os.path.isdir(celltype_path):
+                for assay in os.listdir(celltype_path):
+                    assay_path = os.path.join(celltype_path, assay)
+                    if os.path.isdir(assay_path):
+                        metadata_file = os.path.join(assay_path, "file_metadata.json")
+                        if os.path.exists(metadata_file):
+                            experiment_dirs.append(assay_path)
+        
+        # If in test mode, return only a random subset
+        if self.test_mode:
+            import random
+            if len(experiment_dirs) > self.test_count:
+                experiment_dirs = random.sample(experiment_dirs, self.test_count)
+                self.logger.info(f"Test mode: Selected {len(experiment_dirs)} random experiments for testing")
+                print(f"🧪 Test mode: Selected {len(experiment_dirs)} random experiments for testing")
+        
+        return experiment_dirs
+    
+    def _update_single_metadata(self, exp_dir: str) -> Dict:
+        """Update metadata for a single experiment directory."""
+        try:
+            # Load existing metadata
+            metadata_file = os.path.join(exp_dir, "file_metadata.json")
+            with open(metadata_file, 'r') as f:
+                existing_metadata = json.load(f)
+            
+            # Check if already has new fields
+            if not self.force_update and 'sequencing_platform' in existing_metadata and 'lab' in existing_metadata:
+                return {'status': 'up_to_date', 'message': f"{exp_dir}"}
+            
+            # Get experiment accession from existing metadata
+            experiment_field = existing_metadata.get('experiment', {}).get('2', '')
+            if experiment_field.startswith('/experiments/'):
+                exp_accession = experiment_field.split('/')[-2]
+            else:
+                exp_accession = experiment_field
+            
+            if not exp_accession:
+                return {'status': 'failed', 'message': f"No experiment accession found in {exp_dir}"}
+            
+            # Fetch experiment metadata from ENCODE API
+            exp_metadata = self._fetch_encode_experiment_metadata(exp_accession)
+            if not exp_metadata:
+                return {'status': 'failed', 'message': f"Failed to fetch experiment metadata for {exp_accession}"}
+            
+            # Extract new fields
+            sequencing_platform = self._extract_sequencing_platform(exp_metadata)
+            lab = self._extract_lab_information(exp_metadata)
+            
+            # Create backup if requested
+            if self.create_backups:
+                backup_file = os.path.join(exp_dir, "file_metadata.json.backup")
+                shutil.copy2(metadata_file, backup_file)
+                self.logger.info(f"Created backup: {backup_file}")
+            
+            # Update metadata
+            updated_metadata = existing_metadata.copy()
+            if sequencing_platform:
+                updated_metadata["sequencing_platform"] = {"2": sequencing_platform}
+            if lab:
+                updated_metadata["lab"] = {"2": lab}
+            
+            # Save updated metadata
+            with open(metadata_file, 'w') as f:
+                json.dump(updated_metadata, f, indent=4)
+            
+            return {'status': 'success', 'message': f"{exp_dir} (platform: {sequencing_platform or 'None'}, lab: {lab or 'None'})"}
+            
+        except Exception as e:
+            return {'status': 'failed', 'message': f"Error updating {exp_dir}: {str(e)}"}
+    
+    def _fetch_encode_experiment_metadata(self, exp_accession: str) -> Dict:
+        """Fetch experiment metadata from ENCODE API."""
+        import requests
+        import time
+        
+        url = f"https://www.encodeproject.org/experiments/{exp_accession}/?format=json"
+        headers = {'accept': 'application/json'}
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, headers=headers, timeout=30)
+                response.raise_for_status()
+                
+                metadata = response.json()
+                return metadata
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+        
+        return {}
+    
+    def _extract_sequencing_platform(self, exp_metadata: Dict) -> Optional[str]:
+        """Extract sequencing platform information from experiment metadata."""
+        # Check original files for platform info (for processed files)
+        if 'files' in exp_metadata:
+            for file_info in exp_metadata['files']:
+                if isinstance(file_info, dict) and 'platform' in file_info:
+                    platform = file_info['platform']
+                    if isinstance(platform, dict) and 'term_name' in platform:
+                        return platform['term_name']
+                    elif isinstance(platform, str):
+                        return platform
+        
+        # Check experiment-level platform info
+        if 'platform' in exp_metadata:
+            platform = exp_metadata['platform']
+            if isinstance(platform, dict) and 'term_name' in platform:
+                return platform['term_name']
+            elif isinstance(platform, str):
+                return platform
+        
+        # Check library-level platform info in replicates
+        if 'replicates' in exp_metadata:
+            for replicate in exp_metadata['replicates']:
+                if 'library' in replicate and 'platform' in replicate['library']:
+                    platform = replicate['library']['platform']
+                    if isinstance(platform, dict) and 'term_name' in platform:
+                        return platform['term_name']
+                    elif isinstance(platform, str):
+                        return platform
+        
+        return None
+    
+    def _extract_lab_information(self, exp_metadata: Dict) -> Optional[str]:
+        """Extract lab information from experiment metadata."""
+        # Check experiment-level lab info (original lab)
+        if 'lab' in exp_metadata:
+            lab = exp_metadata['lab']
+            if isinstance(lab, dict) and 'title' in lab:
+                return lab['title']
+            elif isinstance(lab, str):
+                return lab
+        
+        # Check replicate-level lab info (library lab)
+        if 'replicates' in exp_metadata:
+            for replicate in exp_metadata['replicates']:
+                if 'library' in replicate and 'lab' in replicate['library']:
+                    lab = replicate['library']['lab']
+                    if isinstance(lab, dict) and 'title' in lab:
+                        return lab['title']
+                    elif isinstance(lab, str):
+                        return lab
+        
+        return None
+
+
+class MetadataCSVExporter:
+    """Export metadata from file_metadata.json files to CSV format."""
+    
+    def __init__(self, base_path: str, dataset_name: str):
+        self.base_path = base_path
+        self.dataset_name = dataset_name
+        self.logger = logging.getLogger(__name__)
+        
+        # Setup output directory
+        self.output_dir = "data"
+        os.makedirs(self.output_dir, exist_ok=True)
+        
+    def export_to_csv(self) -> str:
+        """Export all metadata to CSV file."""
+        print(f"📊 Exporting {self.dataset_name.upper()} metadata to CSV...")
+        
+        # Find all experiment directories
+        experiment_data = self._collect_experiment_data()
+        
+        if not experiment_data:
+            print(f"❌ No experiments found in {self.base_path}")
+            return ""
+        
+        # Create DataFrame
+        df = pd.DataFrame(experiment_data)
+        
+        # Define column order
+        columns = [
+            'biosample_name', 'assay_name', 'bios_accession', 'exp_accession', 
+            'file_accession', 'assembly', 'read_length', 'run_type', 
+            'sequencing_platform', 'lab'
+        ]
+        
+        # Reorder columns and fill missing values
+        for col in columns:
+            if col not in df.columns:
+                df[col] = None
+        
+        df = df[columns]
+        
+        # Save to CSV
+        output_file = os.path.join(self.output_dir, f"{self.dataset_name}_metadata.csv")
+        df.to_csv(output_file, index=False)
+        
+        print(f"✅ Exported {len(df)} experiments to {output_file}")
+        print(f"📊 Columns: {', '.join(columns)}")
+        
+        # Show sample data
+        print(f"\n🔬 Sample data (first 3 rows):")
+        print(df.head(3).to_string(index=False))
+        
+        return output_file
+    
+    def _collect_experiment_data(self) -> List[Dict]:
+        """Collect metadata from all experiment directories."""
+        experiment_data = []
+        
+        # Iterate through biosample directories
+        for biosample in os.listdir(self.base_path):
+            biosample_path = os.path.join(self.base_path, biosample)
+            if not os.path.isdir(biosample_path):
+                continue
+                
+            # Iterate through assay directories
+            for assay in os.listdir(biosample_path):
+                assay_path = os.path.join(biosample_path, assay)
+                if not os.path.isdir(assay_path):
+                    continue
+                
+                # Check for metadata file
+                metadata_file = os.path.join(assay_path, "file_metadata.json")
+                if not os.path.exists(metadata_file):
+                    continue
+                
+                try:
+                    # Load metadata
+                    with open(metadata_file, 'r') as f:
+                        metadata = json.load(f)
+                    
+                    # Extract data
+                    exp_data = {
+                        'biosample_name': biosample,
+                        'assay_name': assay,
+                        'bios_accession': self._extract_field(metadata, 'biosample'),
+                        'exp_accession': self._extract_field(metadata, 'experiment'),
+                        'file_accession': self._extract_field(metadata, 'accession'),
+                        'assembly': self._extract_field(metadata, 'assembly'),
+                        'read_length': self._extract_field(metadata, 'read_length'),
+                        'run_type': self._extract_field(metadata, 'run_type'),
+                        'sequencing_platform': self._extract_field(metadata, 'sequencing_platform'),
+                        'lab': self._extract_field(metadata, 'lab')
+                    }
+                    
+                    # Clean up experiment accession (remove /experiments/ prefix)
+                    if exp_data['exp_accession'] and exp_data['exp_accession'].startswith('/experiments/'):
+                        exp_data['exp_accession'] = exp_data['exp_accession'].split('/')[-2]
+                    
+                    experiment_data.append(exp_data)
+                    
+                except Exception as e:
+                    self.logger.warning(f"Error processing {biosample}/{assay}: {e}")
+                    continue
+        
+        return experiment_data
+    
+    def _extract_field(self, metadata: Dict, field_name: str) -> Optional[str]:
+        """Extract field value from metadata using the indexed format."""
+        if field_name in metadata and isinstance(metadata[field_name], dict):
+            return metadata[field_name].get('2')
+        return None
 
 
 class CANDIDataPipeline:
@@ -1961,6 +2468,20 @@ Examples:
     complete_parser.add_argument('--max-workers', default=16, type=int, help='Max parallel workers')
     complete_parser.add_argument('--log-file', help='Custom log file name')
     
+    # Update metadata command
+    update_metadata_parser = subparsers.add_parser('update-metadata', help='Update existing file_metadata.json files with new fields')
+    update_metadata_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    update_metadata_parser.add_argument('directory', help='Data directory')
+    update_metadata_parser.add_argument('--max-workers', default=6, type=int, help='Max parallel workers')
+    update_metadata_parser.add_argument('--backup', action='store_true', help='Create backups of existing metadata files')
+    update_metadata_parser.add_argument('--force', action='store_true', help='Force update even if new fields already exist')
+    update_metadata_parser.add_argument('--test', action='store_true', help='Test mode: only process 5 random experiments')
+    
+    # Export metadata command
+    export_metadata_parser = subparsers.add_parser('export-metadata', help='Export metadata to CSV files')
+    export_metadata_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    export_metadata_parser.add_argument('directory', help='Data directory')
+    
     # Global options
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
     
@@ -1991,6 +2512,10 @@ Examples:
             _handle_retry_command(args)
         elif args.command == 'run-complete':
             _handle_run_complete_command(args)
+        elif args.command == 'update-metadata':
+            _handle_update_metadata_command(args)
+        elif args.command == 'export-metadata':
+            _handle_export_metadata_command(args)
         else:
             print(f"Unknown command: {args.command}")
             sys.exit(1)
@@ -2278,6 +2803,81 @@ def _handle_run_complete_command(args):
     except Exception as e:
         logger.error(f"❌ Complete processing failed: {e}")
         raise
+
+
+def _handle_update_metadata_command(args):
+    """Handle the update-metadata command."""
+    directory = os.path.abspath(args.directory)
+    
+    print(f"=== Updating metadata for {args.dataset.upper()} dataset ===")
+    print(f"Directory: {directory}")
+    print(f"Max workers: {args.max_workers}")
+    print(f"Create backups: {args.backup}")
+    print(f"Force update: {args.force}")
+    
+    # Initialize metadata updater
+    updater = MetadataUpdater(
+        base_path=directory,
+        dataset_name=args.dataset,
+        max_workers=args.max_workers,
+        create_backups=args.backup,
+        force_update=args.force,
+        test_mode=args.test,
+        test_count=5
+    )
+    
+    # Run metadata update
+    results = updater.update_all_metadata()
+    
+    # Print results
+    print(f"\n=== Metadata Update Results ===")
+    print(f"Total experiments processed: {results['total']}")
+    print(f"Successfully updated: {results['successful']}")
+    print(f"Failed: {results['failed']}")
+    print(f"Already up-to-date: {results['up_to_date']}")
+    
+    # Calculate and display success score
+    success_score = results['successful'] / results['total'] if results['total'] > 0 else 0
+    print(f"Success score: {success_score:.2%}")
+    
+    if results['failed'] > 0:
+        print(f"\n⚠️  Failed updates:")
+        for failure in results['failures'][:10]:  # Show first 10
+            print(f"  - {failure}")
+        if len(results['failures']) > 10:
+            print(f"  ... and {len(results['failures']) - 10} more")
+    
+    print(f"\n💾 Log file created in: {os.path.join(os.path.dirname(directory), 'log')}")
+
+
+def _handle_export_metadata_command(args):
+    """Handle the export-metadata command."""
+    directory = os.path.abspath(args.directory)
+    
+    print(f"=== Exporting metadata for {args.dataset.upper()} dataset ===")
+    print(f"Directory: {directory}")
+    print(f"Output: ./data/{args.dataset}_metadata.csv")
+    
+    # Initialize metadata exporter
+    exporter = MetadataCSVExporter(
+        base_path=directory,
+        dataset_name=args.dataset
+    )
+    
+    # Export metadata to CSV
+    output_file = exporter.export_to_csv()
+    
+    if output_file:
+        print(f"\n✅ Metadata export completed successfully!")
+        print(f"📁 Output file: {output_file}")
+        
+        # Show file info
+        if os.path.exists(output_file):
+            file_size = os.path.getsize(output_file)
+            print(f"📊 File size: {file_size / 1024:.1f} KB")
+    else:
+        print(f"\n❌ Metadata export failed!")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
