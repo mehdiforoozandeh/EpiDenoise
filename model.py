@@ -853,10 +853,304 @@ class MONITOR_VALIDATION(object):
         
         return buf
 
+##=========================================== Loss Functions =============================================##
+
+class CANDI_LOSS(nn.Module):
+    def __init__(self, reduction='mean'):
+        super(CANDI_LOSS, self).__init__()
+        self.reduction = reduction
+        self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
+        self.nbin_nll = negative_binomial_loss
+
+    def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
+        ups_true_count, ups_true_pval = true_count[obs_map], true_pval[obs_map]
+        ups_n_pred, ups_p_pred = n_pred[obs_map], p_pred[obs_map]
+        ups_mu_pred, ups_var_pred = mu_pred[obs_map], var_pred[obs_map]
+
+        imp_true_count, imp_true_pval = true_count[masked_map], true_pval[masked_map]
+        imp_n_pred, imp_p_pred = n_pred[masked_map], p_pred[masked_map]
+        imp_mu_pred, imp_var_pred = mu_pred[masked_map], var_pred[masked_map]
+
+        observed_count_loss = self.nbin_nll(ups_true_count, ups_n_pred, ups_p_pred) 
+        imputed_count_loss = self.nbin_nll(imp_true_count, imp_n_pred, imp_p_pred)
+
+        if self.reduction == "mean":
+            observed_count_loss = observed_count_loss.mean()
+            imputed_count_loss = imputed_count_loss.mean()
+        elif self.reduction == "sum":
+            observed_count_loss = observed_count_loss.sum()
+            imputed_count_loss = imputed_count_loss.sum()
+
+        observed_pval_loss = self.gaus_nll(ups_mu_pred, ups_true_pval, ups_var_pred)
+        imputed_pval_loss = self.gaus_nll(imp_mu_pred, imp_true_pval, imp_var_pred)
+
+        observed_pval_loss = observed_pval_loss.float()
+        imputed_pval_loss = imputed_pval_loss.float()
+        
+        return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
+
+##=========================================== CANDI Architecture =============================================##
+
+class CANDI_Decoder(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size=2, expansion_factor=3, num_sequencing_platforms=10, num_runtypes=4):
+        super(CANDI_Decoder, self).__init__()
+
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        self.d_model =  self.latent_dim = self.f2
+
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.ymd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, num_sequencing_platforms, num_runtypes, non_linearity=False)
+        self.ymd_fusion = nn.Sequential(
+            nn.Linear(self.f3, self.f2),
+            nn.LayerNorm(self.f2), 
+            )
+
+        self.deconv = nn.ModuleList(
+            [DeconvTower(
+                reverse_conv_channels[i], reverse_conv_channels[i + 1] if i + 1 < n_cnn_layers else int(reverse_conv_channels[i] / expansion_factor),
+                conv_kernel_size[-(i + 1)], S=pool_size, D=1, residuals=True,
+                groups=1, pool_size=pool_size) for i in range(n_cnn_layers)])
+    
+    def forward(self, src, y_metadata):
+        ymd_embedding = self.ymd_emb(y_metadata)
+        src = torch.cat([src, ymd_embedding.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        src = self.ymd_fusion(src)
+        
+        src = src.permute(0, 2, 1) # to N, F2, L'
+        for dconv in self.deconv:
+            src = dconv(src)
+
+        src = src.permute(0, 2, 1) # to N, L, F1
+
+        return src    
+
+class CANDI_DNA_Encoder(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3, num_sequencing_platforms=10, num_runtypes=4):
+        super(CANDI_DNA_Encoder, self).__init__()
+
+        self.pos_enc = pos_enc
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        d_model = self.f2
+        self.latent_dim = self.f2
+
+        DNA_conv_channels = exponential_linspace_int(4, self.f2, n_cnn_layers+3)
+        DNA_kernel_size = [conv_kernel_size for _ in range(n_cnn_layers+2)]
+
+        self.convEncDNA = nn.ModuleList(
+            [ConvTower(
+                DNA_conv_channels[i], DNA_conv_channels[i + 1],
+                DNA_kernel_size[i], S=1, D=1,
+                pool_type="max", residuals=True, SE=False,
+                groups=1, pool_size=5 if i >= n_cnn_layers else pool_size) for i in range(n_cnn_layers + 2)])
+
+        conv_channels = [(self.f1)*(expansion_factor**l) for l in range(n_cnn_layers)]
+        reverse_conv_channels = [expansion_factor * x for x in conv_channels[::-1]]
+        conv_kernel_size_list = [conv_kernel_size for _ in range(n_cnn_layers)]
+
+        self.convEnc = nn.ModuleList(
+            [ConvTower(
+                conv_channels[i], conv_channels[i + 1] if i + 1 < n_cnn_layers else expansion_factor * conv_channels[i],
+                conv_kernel_size_list[i], S=1, D=1,
+                pool_type="avg", residuals=True,
+                groups=self.f1, SE=False,
+                pool_size=pool_size) for i in range(n_cnn_layers)])
+        
+        self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, num_sequencing_platforms, num_runtypes, non_linearity=False)
+
+        self.fusion = nn.Sequential(
+            # nn.Linear((2*self.f2), self.f2), 
+            nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
+            # nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
+            nn.LayerNorm(self.f2), 
+
+            )
+
+        self.transformer_encoder = nn.ModuleList([
+            DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout, 
+                max_distance=self.l2, pos_encoding_type="relative", max_len=self.l2
+                ) for _ in range(n_sab_layers)])
+
+    def forward(self, src, seq, x_metadata):
+        if len(seq.shape) != len(src.shape):
+            seq = seq.unsqueeze(0).expand(src.shape[0], -1, -1)
+
+        seq = seq.permute(0, 2, 1)  # to N, 4, 25*L
+        seq = seq.float()
+
+        ### DNA CONV ENCODER ###
+        for seq_conv in self.convEncDNA:
+            seq = seq_conv(seq)
+        seq = seq.permute(0, 2, 1)  # to N, L', F2
+
+        ### SIGNAL CONV ENCODER ###
+        src = src.permute(0, 2, 1) # to N, F1, L
+        for conv in self.convEnc:
+            src = conv(src)
+        src = src.permute(0, 2, 1)  # to N, L', F2
+
+        ### SIGNAL METADATA EMBEDDING ###
+        xmd_embedding = self.xmd_emb(x_metadata).unsqueeze(1).expand(-1, self.l2, -1)
+
+        ### FUSION ###
+        src = torch.cat([src, xmd_embedding, seq], dim=-1)
+
+        src = self.fusion(src)
+
+        ### TRANSFORMER ENCODER ###
+        for enc in self.transformer_encoder:
+            src = enc(src)
+
+        return src
+
+class CANDI(nn.Module):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+        n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", 
+        expansion_factor=3, separate_decoders=True, num_sequencing_platforms=10, num_runtypes=4):
+        super(CANDI, self).__init__()
+
+        self.pos_enc = pos_enc
+        self.separate_decoders = separate_decoders
+        self.l1 = context_length
+        self.l2 = self.l1 // (pool_size**n_cnn_layers)
+        
+        self.f1 = signal_dim 
+        self.f2 = (self.f1 * (expansion_factor**(n_cnn_layers)))
+        self.f3 = self.f2 + metadata_embedding_dim
+        self.d_model = self.latent_dim = self.f2
+
+        self.encoder = CANDI_DNA_Encoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+            n_sab_layers, pool_size, dropout, context_length, pos_enc, expansion_factor, num_sequencing_platforms, num_runtypes)
+        
+        if self.separate_decoders:
+            self.count_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
+            self.pval_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
+        else:
+            self.decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
+
+        self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
+        self.gaussian_layer = GaussianLayer(self.f1, self.f1)
+    
+    def encode(self, src, seq, x_metadata):
+        """Encode input data into latent representation."""
+        src = torch.where(src == -2, torch.tensor(-1, device=src.device), src)
+        x_metadata = torch.where(x_metadata == -2, torch.tensor(-1, device=x_metadata.device), x_metadata)
+        
+        z = self.encoder(src, seq, x_metadata)
+        return z
+    
+    def decode(self, z, y_metadata):
+        """Decode latent representation into predictions."""
+        y_metadata = torch.where(y_metadata == -2, torch.tensor(-1, device=y_metadata.device), y_metadata)
+        
+        if self.separate_decoders:
+            count_decoded = self.count_decoder(z, y_metadata)
+            pval_decoded = self.pval_decoder(z, y_metadata)
+
+            p, n = self.neg_binom_layer(count_decoded)
+            mu, var = self.gaussian_layer(pval_decoded)
+        else:
+            decoded = self.decoder(z, y_metadata)
+            p, n = self.neg_binom_layer(decoded)
+            mu, var = self.gaussian_layer(decoded)
+            
+        return p, n, mu, var
+
+    def forward(self, src, seq, x_metadata, y_metadata, availability=None, return_z=False):
+        z = self.encode(src, seq, x_metadata)
+        p, n, mu, var = self.decode(z, y_metadata)
+        
+        if return_z:
+            return p, n, mu, var, z
+        else:
+            return p, n, mu, var
+
+class CANDI_UNET(CANDI):
+    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers,
+                 nhead, n_sab_layers, pool_size=2, dropout=0.1, context_length=1600,
+                 pos_enc="relative", expansion_factor=3, separate_decoders=True, num_sequencing_platforms=10, num_runtypes=4):
+        super(CANDI_UNET, self).__init__(signal_dim, metadata_embedding_dim,
+                                          conv_kernel_size, n_cnn_layers,
+                                          nhead, n_sab_layers,
+                                          pool_size, dropout,
+                                          context_length, pos_enc,
+                                          expansion_factor,
+                                          separate_decoders, num_sequencing_platforms, num_runtypes)
+
+    def _compute_skips(self, src):
+        # mask as in encode
+        src = torch.where(src == -2,
+                          torch.tensor(-1, device=src.device), src)
+        x = src.permute(0, 2, 1)  # (N, F1, L)
+        skips = []
+        for conv in self.encoder.convEnc:
+            x = conv(x)
+            skips.append(x)
+        return skips
+
+    def _unet_decode(self, z, y_metadata, skips, decoder):
+        # mask metadata
+        y_metadata = torch.where(y_metadata == -2,
+                                 torch.tensor(-1, device=y_metadata.device),
+                                 y_metadata)
+        # embed and fuse metadata
+        ymd_emb = decoder.ymd_emb(y_metadata)
+        x = torch.cat([z, ymd_emb.unsqueeze(1).expand(-1, self.l2, -1)], dim=-1)
+        x = decoder.ymd_fusion(x)
+        x = x.permute(0, 2, 1)  # (N, C, L)
+
+        # apply deconvs with UNet additions
+        for i, dconv in enumerate(decoder.deconv):
+            skip = skips[-(i + 1)]  # matching resolution
+            x = x + skip
+            x = dconv(x)
+
+        x = x.permute(0, 2, 1)  # (N, L, F1)
+        return x
+
+    def forward(self, src, seq, x_metadata, y_metadata, availability=None, return_z=False):
+        # compute skip features from signal branch
+        skips = self._compute_skips(src)
+        # standard encode (fuses seq + signal + metadata)
+        z = self.encode(src, seq, x_metadata)
+
+        # UNet-style decode for counts
+        if self.separate_decoders:
+            count_decoded = self._unet_decode(z, y_metadata, skips, self.count_decoder)
+        else:
+            count_decoded = self._unet_decode(z, y_metadata, skips, self.decoder)
+        # Negative binomial parameters
+        p, n = self.neg_binom_layer(count_decoded)
+
+        # UNet-style decode for p-values
+        if self.separate_decoders:
+            pval_decoded = self._unet_decode(z, y_metadata, skips, self.pval_decoder)  
+        else:
+            pval_decoded = self._unet_decode(z, y_metadata, skips, self.decoder)  
+        # Gaussian parameters
+        mu, var = self.gaussian_layer(pval_decoded)
+
+        if return_z:
+            return p, n, mu, var, z
+            
+        return p, n, mu, var
+
 #========================================================================================================#
 #===========================================Building Blocks==============================================#
 #========================================================================================================#
-
 
 # ---------------------------
 # Absolute Positional Encoding
@@ -1053,11 +1347,13 @@ class DualAttentionEncoderBlock(nn.Module):
         return out
 
 class EmbedMetadata(nn.Module):
-    def __init__(self, input_dim, embedding_dim, non_linearity=True):
+    def __init__(self, input_dim, embedding_dim, num_sequencing_platforms=10, num_runtypes=4, non_linearity=True):
         """
         Args:
             input_dim (int): Number of metadata features.
             embedding_dim (int): Final embedding dimension.
+            num_sequencing_platforms (int): Number of sequencing platforms in the data.
+            num_runtypes (int): Number of run types in the data.
             non_linearity (bool): Whether to apply ReLU at the end.
         """
         super().__init__()
@@ -1072,16 +1368,18 @@ class EmbedMetadata(nn.Module):
         self.depth_transforms = nn.ModuleList(
             [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
         )
-        self.coverage_transforms = nn.ModuleList(
-            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        # For sequencing platform, create separate embedding layers per feature.
+        # Use dynamic size based on actual data
+        self.sequencing_platform_embeddings = nn.ModuleList(
+            [nn.Embedding(num_sequencing_platforms, self.continuous_size) for _ in range(input_dim)]
         )
         self.read_length_transforms = nn.ModuleList(
             [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
         )
         # For runtype, create separate embedding layers per feature.
-        # Assuming 4 classes for runtype.
+        # Use dynamic size based on actual data
         self.runtype_embeddings = nn.ModuleList(
-            [nn.Embedding(4, self.continuous_size) for _ in range(input_dim)]
+            [nn.Embedding(num_runtypes, self.continuous_size) for _ in range(input_dim)]
         )
 
         # Final projection: the concatenated vector for each feature will be of size 4*continuous_size.
@@ -1094,7 +1392,7 @@ class EmbedMetadata(nn.Module):
         Args:
             metadata: Tensor of shape (B, 4, input_dim)
                       where dimension 1 indexes the four metadata types in the order:
-                      [depth, coverage, read_length, runtype]
+                      [depth, sequencing_platform, read_length, runtype]
         Returns:
             embeddings: Tensor of shape (B, embedding_dim)
         """
@@ -1104,7 +1402,7 @@ class EmbedMetadata(nn.Module):
         for i in range(self.input_dim):
             # Extract each metadata type for feature i.
             depth = metadata[:, 0, i].unsqueeze(-1).float() 
-            coverage = metadata[:, 1, i].unsqueeze(-1).float() 
+            sequencing_platform = metadata[:, 1, i].long() 
             read_length = metadata[:, 2, i].unsqueeze(-1).float() 
             runtype = metadata[:, 3, i].long() 
             
@@ -1112,14 +1410,18 @@ class EmbedMetadata(nn.Module):
             runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
             runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype)
             
+            # For sequencing platform, map -1 -> 2 (missing) and -2 -> 3 (cloze_masked)
+            sequencing_platform = torch.where(sequencing_platform == -1, torch.tensor(2, device=sequencing_platform.device), sequencing_platform)
+            sequencing_platform = torch.where(sequencing_platform == -2, torch.tensor(3, device=sequencing_platform.device), sequencing_platform)
+            
             # Apply the separate transforms/embeddings for feature i.
             depth_embed = self.depth_transforms[i](depth)              # (B, continuous_size)
-            coverage_embed = self.coverage_transforms[i](coverage)        # (B, continuous_size)
+            sequencing_platform_embed = self.sequencing_platform_embeddings[i](sequencing_platform)  # (B, continuous_size)
             read_length_embed = self.read_length_transforms[i](read_length)  # (B, continuous_size)
             runtype_embed = self.runtype_embeddings[i](runtype)           # (B, continuous_size)
             
             # Concatenate the four embeddings along the last dimension.
-            feature_embed = torch.cat([depth_embed, coverage_embed, read_length_embed, runtype_embed], dim=-1)  # (B, 4*continuous_size)
+            feature_embed = torch.cat([depth_embed, sequencing_platform_embed, read_length_embed, runtype_embed], dim=-1)  # (B, 4*continuous_size)
             per_feature_embeds.append(feature_embed)
         
         # Now stack along a new dimension for features -> shape (B, input_dim, 4*continuous_size)

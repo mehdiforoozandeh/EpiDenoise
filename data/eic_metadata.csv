@@ -1,364 +1,364 @@
-biosample_name,assay_name,bios_accession,exp_accession,file_accession,assembly,read_length,run_type,sequencing_platform,lab
-T_brain_microvascular_endothelial_cell,DNase-seq,ENCBS304AAA,ENCSR000ENE,ENCFF788MPI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-T_brain_microvascular_endothelial_cell,H3K4me3,ENCBS304AAA,ENCSR000DTC,ENCFF775JHL,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_H1-hESC,H3K4me1,ENCBS718AAA,ENCSR000ANA,ENCFF767MGL,GRCh38,36,single-ended,Illumina Genome Analyzer IIe,"Bradley Bernstein, Broad"
-T_H1-hESC,H4K91ac,ENCBS984IPH,ENCSR858BOF,ENCFF156KJZ,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H2BK120ac,ENCBS534NMZ,ENCSR848DUN,ENCFF372FSW,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H4K5ac,ENCBS368BPP,ENCSR675FLJ,ENCFF431BVU,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,DNase-seq,ENCBS474GKG,ENCSR794OFW,ENCFF579KRZ,GRCh38,101,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_H1-hESC,H2AFZ,ENCBS534NMZ,ENCSR571IIS,ENCFF897EWW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H3K27ac,ENCBS368BPP,ENCSR880SUY,ENCFF693IFG,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H3K9ac,ENCBS055DBZ,ENCSR952GVX,ENCFF986GZQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_H1-hESC,H3K79me2,ENCBS945MCY,ENCSR301HRV,ENCFF015TSL,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H1-hESC,H4K8ac,ENCBS945MCY,ENCSR891KGZ,ENCFF400BPI,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H3K79me1,ENCBS497CZZ,ENCSR442DGE,ENCFF535GVC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H3K56ac,ENCBS984IPH,ENCSR768FWX,ENCFF782BDE,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H3K4me3,ENCBS253TYD,ENCSR814XPE,ENCFF765FFD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_H1-hESC,H3K4me2,ENCBS945MCY,ENCSR322MEI,ENCFF080SQV,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H3K18ac,ENCBS984IPH,ENCSR038PFD,ENCFF176NNO,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H2BK5ac,ENCBS945MCY,ENCSR161NON,ENCFF285CHR,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H1-hESC,H3K27me3,ENCBS409PYK,ENCSR928HYM,ENCFF781BZF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H1-hESC,H2BK20ac,ENCBS984IPH,ENCSR462XRE,ENCFF712OVK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H2BK12ac,ENCBS945MCY,ENCSR364BKW,ENCFF595KTU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H1-hESC,H2BK15ac,ENCBS984IPH,ENCSR739BZR,ENCFF106UCP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H1-hESC,H3K36me3,ENCBS055DBZ,ENCSR925LJZ,ENCFF828OZC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_H1-hESC,H3K23me2,ENCBS282MUP,ENCSR326NQF,ENCFF567CRD,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-B_DND-41,ATAC-seq,ENCBS013RPN,ENCSR660WSB,ENCFF080WSN,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_DND-41,DNase-seq,ENCBS518YBY,ENCSR903SKE,ENCFF836RBO,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland,H3K9me3,ENCBS078MQQ,ENCSR408ZEW,ENCFF282ZSZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_adrenal_gland,ATAC-seq,ENCBS063ABX,ENCSR113MBR,ENCFF803TLA,GRCh38,101,paired-ended,Illumina HiSeq 2000,"Michael Snyder, Stanford"
-T_adrenal_gland,H3K27ac,ENCBS078MQQ,ENCSR177QFY,ENCFF678NDN,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_adrenal_gland,H3K36me3,ENCBS078MQQ,ENCSR857XRG,ENCFF129TMJ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_adrenal_gland,H3K4me1,ENCBS078MQQ,ENCSR406PCK,ENCFF346NXC,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_adrenal_gland,DNase-seq,ENCBS450CEG,ENCSR191FOV,ENCFF646WNW,GRCh38,76,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW"
-V_heart_left_ventricle,H3K4me3,ENCBS861XCF,ENCSR901SIL,ENCFF023HCZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_WERI-Rb-1,H3K4me3,ENCBS087YAE,ENCSR000DXU,ENCFF749HNO,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_WERI-Rb-1,DNase-seq,ENCBS270AAA,ENCSR000EQL,ENCFF816ZVF,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-V_prostate,H3K9me3,ENCBS619YXY,ENCSR133QBG,ENCFF507VEH,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_CD4-positive_alpha-beta_memory_T_cell,H3K36me3,ENCBS800QLP,ENCSR580WRV,ENCFF489CFC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_CD4-positive_alpha-beta_memory_T_cell,H3K9me3,ENCBS800QLP,ENCSR333VFQ,ENCFF160ATE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_CD4-positive_alpha-beta_memory_T_cell,H3K27ac,ENCBS800QLP,ENCSR724GUS,ENCFF184ULC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_CD4-positive_alpha-beta_memory_T_cell,H3K4me3,ENCBS800QLP,ENCSR223APP,ENCFF537JAK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_CD4-positive_alpha-beta_memory_T_cell,H3K27me3,ENCBS800QLP,ENCSR702RZM,ENCFF340DVV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_uterus,H3K27ac,ENCBS469FLQ,ENCSR249INE,ENCFF142RDG,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_uterus,DNase-seq,ENCBS469EGD,ENCSR237WJY,ENCFF130PVC,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_NCI-H460,DNase-seq,ENCBS514AAA,ENCSR000FJH,ENCFF876IBR,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_T47D,DNase-seq,ENCBS440ENC,ENCSR000EQB,ENCFF563OCJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_heart_left_ventricle,H3K9me3,ENCBS861XCF,ENCSR000XAA,ENCFF177POB,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_heart_left_ventricle,H3K4me1,ENCBS861XCF,ENCSR438QZN,ENCFF660DDB,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_heart_left_ventricle,DNase-seq,ENCBS260UTX,ENCSR070CMW,ENCFF533LLW,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_heart_left_ventricle,H3K27ac,ENCBS861XCF,ENCSR854OXF,ENCFF284LSK,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_heart_left_ventricle,H3K27me3,ENCBS861XCF,ENCSR988JLN,ENCFF940JCQ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_heart_left_ventricle,ATAC-seq,ENCBS106FXL,ENCSR851EBF,ENCFF097EXD,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_heart_left_ventricle,H3K36me3,ENCBS861XCF,ENCSR500ZGF,ENCFF180KPZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_SK-MEL-5,DNase-seq,ENCBS518AAA,ENCSR000FEK,ENCFF207FFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_KMS-11,H3K4me1,ENCBS987CHP,ENCSR976JHS,ENCFF351LDO,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H2AFZ,ENCBS987CHP,ENCSR499RMZ,ENCFF680AEE,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H4K20me1,ENCBS987CHP,ENCSR790QWJ,ENCFF901QZZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H3K27ac,ENCBS987CHP,ENCSR955IXZ,ENCFF028BMC,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H3K79me2,ENCBS682HMC,ENCSR847UJW,ENCFF558TKQ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H3K4me3,ENCBS987CHP,ENCSR539TKY,ENCFF790PIQ,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H3K27me3,ENCBS682HMC,ENCSR474VGQ,ENCFF622TMV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_KMS-11,H3K36me3,ENCBS987CHP,ENCSR835YBD,ENCFF125PEN,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_skin_fibroblast,DNase-seq,ENCBS336CDQ,ENCSR184LMY,ENCFF966XVI,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K9me3,ENCBS056PYD,ENCSR651IVN,ENCFF856DZW,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K4me3,ENCBS056PYD,ENCSR715KGX,ENCFF937GOA,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K27me3,ENCBS056PYD,ENCSR218BPG,ENCFF228HLZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K27ac,ENCBS056PYD,ENCSR847AIA,ENCFF575IKT,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K36me3,ENCBS056PYD,ENCSR760LFY,ENCFF687AFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_adrenal_gland_embryonic,H3K4me1,ENCBS056PYD,ENCSR207ZIA,ENCFF795QMF,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_amnion,H3K27me3,ENCBS712BZZ,ENCSR144NDE,ENCFF096HIU,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_amnion,H3K4me3,ENCBS712BZZ,ENCSR420IOA,ENCFF399JDM,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_amnion,H3K9me3,ENCBS712BZZ,ENCSR495GRN,ENCFF333AZG,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_amnion,H3K4me1,ENCBS712BZZ,ENCSR249AWJ,ENCFF444XCI,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_amnion,H3K36me3,ENCBS712BZZ,ENCSR786DQB,ENCFF307YOL,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-B_RWPE2,ATAC-seq,ENCBS123OBK,ENCSR080SNF,ENCFF452BSA,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,H3K27me3,ENCBS314QIO,ENCSR784MON,ENCFF499LZJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,H3K4me3,ENCBS314QIO,ENCSR297ONS,ENCFF944YWP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,H3K9me3,ENCBS314QIO,ENCSR785DEU,ENCFF403WJG,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,H3K4me1,ENCBS684UIM,ENCSR161GUA,ENCFF679GLB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,H3K36me3,ENCBS684UIM,ENCSR115IRD,ENCFF172QTD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_RWPE2,DNase-seq,ENCBS490DPO,ENCSR306BHE,ENCFF407ORW,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_neural_stem_progenitor_cell,H3K4me2,ENCBS776ACY,ENCSR486GWT,ENCFF575YMO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K27ac,ENCBS104PYO,ENCSR799SRL,ENCFF477FHN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K27me3,ENCBS104PYO,ENCSR694LBI,ENCFF391VPZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H2BK12ac,ENCBS776ACY,ENCSR940RIU,ENCFF253TBD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H2AK5ac,ENCBS289YMC,ENCSR732NFR,ENCFF094UHO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K4me3,ENCBS104PYO,ENCSR956CTX,ENCFF212FUS,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H4K8ac,ENCBS776ACY,ENCSR277JAU,ENCFF277NHI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K9me3,ENCBS104PYO,ENCSR391WDE,ENCFF906APX,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H4K91ac,ENCBS776ACY,ENCSR260CXF,ENCFF453VBG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K79me1,ENCBS776ACY,ENCSR570POG,ENCFF067DUE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K4ac,ENCBS661CUF,ENCSR476FBL,ENCFF793FNE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K18ac,ENCBS289YMC,ENCSR182XTG,ENCFF285VWE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H2BK120ac,ENCBS289YMC,ENCSR811NNT,ENCFF504LNP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K36me3,ENCBS104PYO,ENCSR256ESY,ENCFF870AGH,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K23ac,ENCBS776ACY,ENCSR361LIU,ENCFF199MMG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,DNase-seq,ENCBS805ZNK,ENCSR278FVO,ENCFF224MAE,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_neural_stem_progenitor_cell,H2BK5ac,ENCBS289YMC,ENCSR651SVZ,ENCFF418NKT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_neural_stem_progenitor_cell,H3K9ac,ENCBS776ACY,ENCSR626UPW,ENCFF158DIT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_urinary_bladder,DNase-seq,ENCBS241XYR,ENCSR813CKU,ENCFF351RLC,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_urinary_bladder,H3K4me3,ENCBS364KFR,ENCSR632OWD,ENCFF746QLY,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bing Ren, UCSD"
-T_urinary_bladder,H3K36me3,ENCBS364KFR,ENCSR449TNC,ENCFF761XEA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-B_HAP-1,H3K9me3,ENCBS872LRZ,ENCSR460TQV,ENCFF302ELQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HAP-1,H3K4me3,ENCBS609AIH,ENCSR882CQE,ENCFF980BDP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HAP-1,H3K27me3,ENCBS609AIH,ENCSR891YFI,ENCFF465ZHL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HAP-1,H3K27ac,ENCBS872LRZ,ENCSR131DVD,ENCFF525ADD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HAP-1,H3K36me3,ENCBS609AIH,ENCSR121CWP,ENCFF146XNB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HAP-1,H3K4me1,ENCBS609AIH,ENCSR450JTP,ENCFF651JPK,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BMEC,H3K27ac,ENCBS938JNW,ENCSR111QCU,ENCFF887PLJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BMEC,H3K27me3,ENCBS938JNW,ENCSR032CAS,ENCFF220CLZ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BMEC,H3K36me3,ENCBS938JNW,ENCSR587VHH,ENCFF761ZYL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BE2C,H3K9me3,ENCBS161OUD,ENCSR444YIP,ENCFF808XLS,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BE2C,H3K4me1,ENCBS161OUD,ENCSR874NDX,ENCFF757WMQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BE2C,H3K27me3,ENCBS277GST,ENCSR780XZD,ENCFF520FHH,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_BE2C,H3K36me3,ENCBS277GST,ENCSR114YOX,ENCFF233OXP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_hematopoietic_multipotent_progenitor_cell,DNase-seq,ENCBS374YBC,ENCSR328UMC,ENCFF292XIO,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-V_DND-41,H3K27ac,ENCBS282AAA,ENCSR000AQW,ENCFF901HOL,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-V_DND-41,H4K20me1,ENCBS282AAA,ENCSR000ARC,ENCFF554ZKZ,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad"
-B_WERI-Rb-1,H3K27ac,ENCBS176OOK,ENCSR764HZU,ENCFF574GEM,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_WERI-Rb-1,H3K27me3,ENCBS161OJA,ENCSR967DBV,ENCFF584XYI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_WERI-Rb-1,H3K9me3,ENCBS176OOK,ENCSR371OZG,ENCFF789QVF,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_WERI-Rb-1,H3K4me1,ENCBS176OOK,ENCSR614NUF,ENCFF563HLT,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_WERI-Rb-1,H3K36me3,ENCBS161OJA,ENCSR354XIL,ENCFF462VDJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K9me3,ENCBS386GKH,ENCSR782BWI,ENCFF278GKD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K4me3,ENCBS386GKH,ENCSR986FPJ,ENCFF984RGN,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K27me3,ENCBS386GKH,ENCSR022MBN,ENCFF003JSI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K27ac,ENCBS696NDF,ENCSR769CSE,ENCFF721URQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K36me3,ENCBS386GKH,ENCSR753TAU,ENCFF514BRD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJCRH30,H3K4me1,ENCBS386GKH,ENCSR414OEF,ENCFF657XIL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_adipose_tissue,H3K27ac,ENCBS628VEX,ENCSR082SHT,ENCFF243URL,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_dermis_microvascular_lymphatic_vessel_endothelial_cell,DNase-seq,ENCBS315AAA,ENCSR000EOA,ENCFF750AZP,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-T_K562,H3K36me3,ENCBS349ULG,ENCSR000DWB,ENCFF035SOZ,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_K562,H3K9me3,ENCBS674MPN,ENCSR000APE,ENCFF155UQU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_K562,H3K4me1,ENCBS667AAA,ENCSR000EWC,ENCFF089KHK,GRCh38,28,single-ended,Illumina Genome Analyzer II,"Peggy Farnham, USC"
-T_K562,H3K9me1,ENCBS639AAA,ENCSR000AKW,ENCFF302OEO,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_K562,H3K27ac,ENCBS674MPN,ENCSR000AKP,ENCFF232RQF,GRCh38,36,single-ended,Illumina Genome Analyzer IIe,"Bradley Bernstein, Broad"
-T_K562,DNase-seq,ENCBS775AAA,ENCSR921NMD,ENCFF257HEE,GRCh38,20,single-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_K562,H3K4me2,ENCBS674MPN,ENCSR000AKT,ENCFF583GSH,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_K562,H3K9ac,ENCBS667AAA,ENCSR000EVZ,ENCFF946AXU,GRCh38,28,single-ended,Illumina Genome Analyzer,"Peggy Farnham, USC"
-T_K562,H4K20me1,ENCBS639AAA,ENCSR000AKX,ENCFF923YUN,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_K562,H3K4me3,ENCBS980HYW,ENCSR668LDD,ENCFF752MYF,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_K562,H2AFZ,ENCBS639AAA,ENCSR000APC,ENCFF007YZT,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-V_urinary_bladder,H3K27ac,ENCBS364KFR,ENCSR054BKO,ENCFF287TAI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_prostate,H3K27ac,ENCBS633UTQ,ENCSR763IDK,ENCFF416EQK,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_prostate,H3K4me3,ENCBS633UTQ,ENCSR748RBT,ENCFF505NKP,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-V_K562,H3K79me2,ENCBS674MPN,ENCSR000APD,ENCFF132YSI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-V_K562,H3K27me3,ENCBS667AAA,ENCSR000EWB,ENCFF508LLH,GRCh38,28,single-ended,Illumina Genome Analyzer II,"Peggy Farnham, USC"
-T_G401,DNase-seq,ENCBS062JBT,ENCSR269SIA,ENCFF671CNQ,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_MG63,DNase-seq,ENCBS091SUW,ENCSR083STA,ENCFF785KVP,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-B_SJSA1,H3K9me3,ENCBS912CSK,ENCSR482XTC,ENCFF355VXR,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJSA1,H3K4me3,ENCBS382VRX,ENCSR214NMO,ENCFF656NBV,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJSA1,H3K27me3,ENCBS912CSK,ENCSR564OSQ,ENCFF147KJB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJSA1,H3K27ac,ENCBS912CSK,ENCSR349VAW,ENCFF238CFV,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJSA1,H3K36me3,ENCBS382VRX,ENCSR643QXU,ENCFF397TKX,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_SJSA1,H3K4me1,ENCBS912CSK,ENCSR590ZSL,ENCFF165XGW,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HL-60,H3K27ac,ENCBS976DTB,ENCSR919WLM,ENCFF510IXN,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_HL-60,H3K27me3,ENCBS976DTB,ENCSR198IHT,ENCFF691HBE,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_Caco-2,DNase-seq,ENCBS890JZY,ENCSR000EMI,ENCFF474LBE,GRCh38,36,single-ended,Illumina Genome Analyzer I,"John Stamatoyannopoulos, UW"
-T_Caco-2,H3K4me3,ENCBS700RKG,ENCSR000DQM,ENCFF513PFC,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_Caco-2,H3K27me3,ENCBS390JMI,ENCSR000DQL,ENCFF957OES,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_Caco-2,H3K36me3,ENCBS390JMI,ENCSR000DQK,ENCFF691XDC,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_BE2C,DNase-seq,ENCBS403ENC,ENCSR000EMD,ENCFF334VBI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-T_BE2C,H3K4me3,ENCBS271SFD,ENCSR000DQB,ENCFF881PUF,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-V_trophoblast_cell,H3K4me2,ENCBS806FFM,ENCSR941QJQ,ENCFF950IZV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_trophoblast_cell,H4K91ac,ENCBS392DBQ,ENCSR371FHD,ENCFF914ARK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_trophoblast_cell,H3K36me3,ENCBS806FFM,ENCSR038OIN,ENCFF234RNO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_trophoblast_cell,H2BK5ac,ENCBS749EOK,ENCSR213TIR,ENCFF682AUE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K4me2,ENCBS725VAK,ENCSR786GJM,ENCFF201BXG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K9me3,ENCBS012DXH,ENCSR746CUY,ENCFF112SIY,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K23ac,ENCBS732PNZ,ENCSR734MEM,ENCFF224CMW,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H2BK15ac,ENCBS783XLR,ENCSR491CCY,ENCFF395BTH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H2BK12ac,ENCBS732PNZ,ENCSR895YWA,ENCFF113ORU,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H4K8ac,ENCBS783XLR,ENCSR350YQC,ENCFF563KON,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K4ac,ENCBS783XLR,ENCSR902EEI,ENCFF443FFP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K4me3,ENCBS012DXH,ENCSR501JET,ENCFF655EKU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H2AK5ac,ENCBS725VAK,ENCSR753RYH,ENCFF399FKZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H4K91ac,ENCBS783XLR,ENCSR509MHV,ENCFF377OEI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K27me3,ENCBS725VAK,ENCSR832JVP,ENCFF474ZPR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K27ac,ENCBS012DXH,ENCSR013KEC,ENCFF419HKZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K36me3,ENCBS725VAK,ENCSR824UNY,ENCFF549EIM,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K4me1,ENCBS012DXH,ENCSR065HOR,ENCFF362KVF,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H2BK120ac,ENCBS783XLR,ENCSR502IWF,ENCFF614ZDH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H2BK5ac,ENCBS012DXH,ENCSR809CVZ,ENCFF854UOA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,H3K14ac,ENCBS732PNZ,ENCSR719QMW,ENCFF291GNC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_mesenchymal_stem_cell,DNase-seq,ENCBS725VAK,ENCSR731QLJ,ENCFF474HCY,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-V_H9,H3K4me2,ENCBS532LWE,ENCSR730POX,ENCFF160HVH,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_H9,H3K79me2,ENCBS277KDR,ENCSR188GJE,ENCFF027JDK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_endocrine_pancreas,H3K27ac,ENCBS721SKH,ENCSR324JDC,ENCFF154DXP,GRCh38,76,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_endocrine_pancreas,H3K27me3,ENCBS069JPK,ENCSR581UGC,ENCFF037AMF,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_endocrine_pancreas,H3K4me3,ENCBS721SKH,ENCSR957UQS,ENCFF943KUL,GRCh38,76,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_endocrine_pancreas,H3K9me3,ENCBS776NCD,ENCSR849NQE,ENCFF321DYL,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_endocrine_pancreas,H3K36me3,ENCBS769QYN,ENCSR372OTD,ENCFF378PSF,GRCh38,83,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_endocrine_pancreas,H3K9ac,ENCBS069JPK,ENCSR061NWO,ENCFF925QQJ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-V_OCI-LY7,DNase-seq,ENCBS581USS,ENCSR489NAM,ENCFF210MMO,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW"
-V_OCI-LY7,H4K20me1,ENCBS699NWP,ENCSR747ZDF,ENCFF292JZN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_upper_lobe_of_left_lung,H3K27ac,ENCBS684YJH,ENCSR738SXD,ENCFF460ZAV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_upper_lobe_of_left_lung,H3K4me3,ENCBS684YJH,ENCSR208WDY,ENCFF892ULT,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_upper_lobe_of_left_lung,DNase-seq,ENCBS956JIK,ENCSR490JVQ,ENCFF824KSF,GRCh38,76,paired-ended,Illumina NextSeq 500,"John Stamatoyannopoulos, UW"
-V_upper_lobe_of_left_lung,H3K36me3,ENCBS684YJH,ENCSR869GBP,ENCFF790HIV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-V_adrenal_gland_embryonic,DNase-seq,ENCBS232ONZ,ENCSR080PZL,ENCFF511DEJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_trophoblast_cell,H2AFZ,ENCBS749EOK,ENCSR485OSV,ENCFF161EDO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K9me3,ENCBS806FFM,ENCSR044WCY,ENCFF897ZLC,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K18ac,ENCBS749EOK,ENCSR081JRM,ENCFF705VZD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K79me2,ENCBS392DBQ,ENCSR486PWP,ENCFF807MVR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H2BK12ac,ENCBS749EOK,ENCSR634IIF,ENCFF686AAH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K9ac,ENCBS806FFM,ENCSR815DXY,ENCFF438FEC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H4K8ac,ENCBS392DBQ,ENCSR888MKB,ENCFF117TSF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K4ac,ENCBS749EOK,ENCSR354UVU,ENCFF195QKA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K4me3,ENCBS806FFM,ENCSR874WOB,ENCFF718PRG,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_trophoblast_cell,H2AK5ac,ENCBS749EOK,ENCSR427RFW,ENCFF356CJH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H4K12ac,ENCBS392DBQ,ENCSR960JPH,ENCFF829KYP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K27me3,ENCBS392DBQ,ENCSR960CWQ,ENCFF617FEU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K27ac,ENCBS392DBQ,ENCSR425PQI,ENCFF230PTY,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K4me1,ENCBS806FFM,ENCSR035DUS,ENCFF396FVA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H2BK120ac,ENCBS392DBQ,ENCSR355ZYK,ENCFF407OFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K79me1,ENCBS749EOK,ENCSR213JMO,ENCFF329TCC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,H3K14ac,ENCBS749EOK,ENCSR499CAZ,ENCFF381CWR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_trophoblast_cell,DNase-seq,ENCBS376RZJ,ENCSR179CDH,ENCFF218OXS,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_HAP-1,DNase-seq,ENCBS217AEF,ENCSR620QNS,ENCFF303JZI,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW"
-T_IMR-90,H4K5ac,ENCBS754TWW,ENCSR706RRA,ENCFF113XYR,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2BK20ac,ENCBS981IKS,ENCSR054IRX,ENCFF237RIX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K4me2,ENCBS371NWL,ENCSR672XZZ,ENCFF681OHX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K9me3,ENCBS754TWW,ENCSR055ZZY,ENCFF942QOQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K18ac,ENCBS371NWL,ENCSR383CBN,ENCFF564USN,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K79me2,ENCBS982GUC,ENCSR713QLX,ENCFF571ZDL,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K23ac,ENCBS007TVF,ENCSR942NME,ENCFF773OTU,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2BK15ac,ENCBS007TVF,ENCSR274TJB,ENCFF510XXG,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K4ac,ENCBS981IKS,ENCSR039ZLS,ENCFF250YWX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K4me3,ENCBS371NWL,ENCSR087PFU,ENCFF355WLE,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2AK5ac,ENCBS992YMT,ENCSR424ZJH,ENCFF809EID,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H4K91ac,ENCBS007TVF,ENCSR164RFI,ENCFF291HMI,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K27me3,ENCBS754TWW,ENCSR431UUY,ENCFF084CZB,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K56ac,ENCBS007TVF,ENCSR066VKQ,ENCFF492AKV,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K9me1,ENCBS007TVF,ENCSR580LZO,ENCFF936ASR,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K27ac,ENCBS754TWW,ENCSR002YRE,ENCFF827KCG,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K36me3,ENCBS754TWW,ENCSR437ORF,ENCFF197BAZ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H3K4me1,ENCBS754TWW,ENCSR831JSP,ENCFF927WHP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2BK120ac,ENCBS007TVF,ENCSR210RXE,ENCFF475ABK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2AK9ac,ENCBS357USI,ENCSR038MKB,ENCFF312WUR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_IMR-90,H3K79me1,ENCBS982GUC,ENCSR579TJT,ENCFF848ADK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H2BK5ac,ENCBS780OTZ,ENCSR248KRU,ENCFF711DZO,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_IMR-90,H3K14ac,ENCBS981IKS,ENCSR283STF,ENCFF738MHY,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,H4K20me1,ENCBS992YMT,ENCSR804SRO,ENCFF951EYC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_IMR-90,DNase-seq,ENCBS048TNH,ENCSR477RTP,ENCFF264LKY,GRCh38,76,single-ended,Illumina Genome Analyzer II,"John Stamatoyannopoulos, UW"
-T_ES-I3,H3K9me3,ENCBS268NCC,ENCSR895IWH,ENCFF765HXQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_ES-I3,H3K4me1,ENCBS401QZO,ENCSR730FLZ,ENCFF561NSG,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_ES-I3,H3K9ac,ENCBS593HOC,ENCSR097ORD,ENCFF143HAP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_ES-I3,H3K36me3,ENCBS421TWG,ENCSR844DRI,ENCFF698MJT,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad"
-T_GM06990,H3K36me3,ENCBS875KTK,ENCSR000DQT,ENCFF810IOI,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_GM06990,DNase-seq,ENCBS414HDG,ENCSR000EMQ,ENCFF311YYM,GRCh38,36,single-ended,Illumina Genome Analyzer II,"John Stamatoyannopoulos, UW"
-T_GM06990,H3K4me3,ENCBS146QHV,ENCSR000DQV,ENCFF684SGK,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_cardiac_fibroblast,H3K4me3,ENCBS501ROB,ENCSR000DTH,ENCFF612XOE,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_cardiac_fibroblast,DNase-seq,ENCBS032BLA,ENCSR000ENI,ENCFF852XZM,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-T_omental_fat_pad,DNase-seq,ENCBS148MNC,ENCSR244ZEJ,ENCFF225NCO,GRCh38,76,paired-ended,Illumina NextSeq 500,"John Stamatoyannopoulos, UW"
-T_omental_fat_pad,ATAC-seq,ENCBS971HUW,ENCSR788TRR,ENCFF550OUL,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_lower_leg_skin,H3K4me3,ENCBS851XJZ,ENCSR432GOP,ENCFF003VRU,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_skin_of_body,DNase-seq,ENCBS948BKE,ENCSR092OFK,ENCFF198CSA,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW"
-B_NCI-H929,H3K9me3,ENCBS911QZW,ENCSR728YXC,ENCFF732LKQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_NCI-H929,ATAC-seq,ENCBS952JSJ,ENCSR382LBS,ENCFF818BRH,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_NCI-H929,H3K27ac,ENCBS911QZW,ENCSR368CYW,ENCFF230NOF,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_NCI-H929,DNase-seq,ENCBS588WMC,ENCSR090SMP,ENCFF369NRI,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-V_H1-hESC,H3K9me3,ENCBS368BPP,ENCSR883AQJ,ENCFF963LFX,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-V_H1-hESC,H3K4ac,ENCBS984IPH,ENCSR130EML,ENCFF680XYN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_H1-hESC,H2AK5ac,ENCBS984IPH,ENCSR703KXH,ENCFF443OZA,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-V_H1-hESC,H4K20me1,ENCBS984IPH,ENCSR728SZE,ENCFF125LCU,GRCh38,30,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_RWPE2,H3K27ac,ENCBS942OEI,ENCSR987PNT,ENCFF132EYY,GRCh38,100,paired-ended,Illumina HiSeq 2000,"Michael Snyder, Stanford"
-V_peripheral_blood_mononuclear_cell,H3K36me3,ENCBS558KIK,ENCSR162MGR,ENCFF281WTV,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-V_KMS-11,H3K4me2,ENCBS987CHP,ENCSR806XIU,ENCFF875DBI,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-V_KMS-11,H3K9ac,ENCBS987CHP,ENCSR521AIV,ENCFF159CNY,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_DND-41,H3K36me3,ENCBS688JZQ,ENCSR000AQX,ENCFF973TDF,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad"
-T_DND-41,H3K9me3,ENCBS282AAA,ENCSR000ARZ,ENCFF030PGK,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_DND-41,H3K4me1,ENCBS282AAA,ENCSR000AQY,ENCFF192WKN,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad"
-T_DND-41,H3K4me2,ENCBS688JZQ,ENCSR000AQZ,ENCFF585ZDW,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_DND-41,H3K9ac,ENCBS282AAA,ENCSR000ARY,ENCFF703ZGI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_DND-41,H3K79me2,ENCBS282AAA,ENCSR000ARB,ENCFF015TDF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_DND-41,H3K4me3,ENCBS688JZQ,ENCSR564VIX,ENCFF764MJJ,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_DND-41,H3K27me3,ENCBS688JZQ,ENCSR000ASX,ENCFF200ECC,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad"
-T_DND-41,H2AFZ,ENCBS282AAA,ENCSR000AQV,ENCFF255SZS,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad"
-V_NCI-H929,H3K79me2,ENCBS571AQH,ENCSR339FOO,ENCFF397XHP,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-V_endocrine_pancreas,H3K4me1,ENCBS769QYN,ENCSR817QHX,ENCFF262YCU,GRCh38,83,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-V_IMR-90,H2AFZ,ENCBS472JFT,ENCSR124DYB,ENCFF640IYV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_IMR-90,H3K9ac,ENCBS754TWW,ENCSR219MYH,ENCFF733ZHB,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-V_IMR-90,H4K8ac,ENCBS007TVF,ENCSR444TMC,ENCFF131UOL,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-V_IMR-90,H2BK12ac,ENCBS192DLO,ENCSR523ENE,ENCFF662NJI,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H9,H3K56ac,ENCBS532LWE,ENCSR047TJL,ENCFF345SVV,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K36me3,ENCBS532LWE,ENCSR324UNL,ENCFF513JUN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K9me3,ENCBS532LWE,ENCSR972SMV,ENCFF763MGD,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD"
-T_H9,H3K18ac,ENCBS399JWQ,ENCSR294WUR,ENCFF813CLW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K4me1,ENCBS532LWE,ENCSR276HBK,ENCFF675UDV,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H9,H3T11ph,ENCBS399JWQ,ENCSR957GYL,ENCFF076YTT,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H9,H3K27ac,ENCBS532LWE,ENCSR876RGF,ENCFF940QDV,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,DNase-seq,ENCBS113LZP,ENCSR275ICP,ENCFF291ZMA,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-T_H9,H3K9ac,ENCBS532LWE,ENCSR879TAS,ENCFF649KCM,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H4K8ac,ENCBS532LWE,ENCSR367JIO,ENCFF101CCN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K4ac,ENCBS656LSW,ENCSR230WNU,ENCFF692SFW,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H9,H3K23me2,ENCBS399JWQ,ENCSR063WYJ,ENCFF355UMO,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K14ac,ENCBS399JWQ,ENCSR440BZV,ENCFF997SKW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K4me3,ENCBS532LWE,ENCSR043VGU,ENCFF900TYA,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H3K27me3,ENCBS532LWE,ENCSR792GCH,ENCFF841RXD,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H9,H3K79me1,ENCBS656LSW,ENCSR280IFJ,ENCFF434DLZ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-T_H9,H4K5ac,ENCBS532LWE,ENCSR554TZE,ENCFF400OVH,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_H9,H2AFZ,ENCBS399JWQ,ENCSR265EDV,ENCFF068DKA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_OCI-LY7,H3K9me3,ENCBS699NWP,ENCSR389WWC,ENCFF073BOG,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K4me1,ENCBS006VZG,ENCSR060WGK,ENCFF100UUK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K9me2,ENCBS304FAI,ENCSR199KHR,ENCFF660GHF,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_OCI-LY7,H2AFZ,ENCBS699NWP,ENCSR331RGM,ENCFF866WKV,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K27ac,ENCBS006VZG,ENCSR447ZGY,ENCFF322PGT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K79me2,ENCBS699NWP,ENCSR347DAG,ENCFF630AHI,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K4me3,ENCBS886BJZ,ENCSR005SXO,ENCFF058QUN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K4me2,ENCBS886BJZ,ENCSR850QKN,ENCFF958HVP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_OCI-LY7,H3K36me3,ENCBS886BJZ,ENCSR243AIS,ENCFF426KLJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-V_vagina,DNase-seq,ENCBS585SGJ,ENCSR437AYW,ENCFF552WGU,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-V_myoepithelial_cell_of_mammary_gland,H3K9me3,ENCBS093HNZ,ENCSR241PXI,ENCFF090FEH,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_chorion,H3K36me3,ENCBS587ZNQ,ENCSR449FFA,ENCFF024EUU,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_chorion,H3K4me1,ENCBS587ZNQ,ENCSR244MNY,ENCFF107JYS,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_chorion,H3K27ac,ENCBS587ZNQ,ENCSR499IIR,ENCFF430YHA,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_chorion,H3K4me3,ENCBS587ZNQ,ENCSR787CAJ,ENCFF905JGF,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_testis,H3K9me3,ENCBS631HJF,ENCSR376JOC,ENCFF572UCO,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_testis,ATAC-seq,ENCBS133MOQ,ENCSR210NKB,ENCFF423JSR,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-T_testis,DNase-seq,ENCBS141OYJ,ENCSR978QUT,ENCFF867KYD,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW"
-V_amnion,H3K27ac,ENCBS712BZZ,ENCSR430RVP,ENCFF853KPR,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_vagina,H3K27ac,ENCBS047TWL,ENCSR718BTD,ENCFF445RUG,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_vagina,H3K4me3,ENCBS047TWL,ENCSR258UUX,ENCFF227VQV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_HL-60,H3K4me3,ENCBS215JQI,ENCSR000DUO,ENCFF646NNF,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
-T_HL-60,DNase-seq,ENCBS069ENC,ENCSR000ENU,ENCFF508CUD,GRCh38,36,single-ended,Illumina Genome Analyzer I,"John Stamatoyannopoulos, UW"
-V_adrenal_gland,H3K4me3,ENCBS549JSH,ENCSR234YIU,ENCFF792QXD,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bing Ren, UCSD"
-T_NCI-H929,H2AFZ,ENCBS197CBA,ENCSR559IFS,ENCFF378SCW,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3K4me2,ENCBS571AQH,ENCSR692HIO,ENCFF311PFB,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3K9ac,ENCBS571AQH,ENCSR327OGS,ENCFF255NUV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3K4me3,ENCBS197CBA,ENCSR082NQB,ENCFF818DII,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3K36me3,ENCBS197CBA,ENCSR562JTY,ENCFF479IOR,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3K4me1,ENCBS197CBA,ENCSR011CSR,ENCFF617CAT,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_NCI-H929,H3F3A,ENCBS197CBA,ENCSR536SZD,ENCFF678EEL,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-T_SJCRH30,DNase-seq,ENCBS598ERL,ENCSR700ILE,ENCFF477YUQ,GRCh38,76,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-T_peripheral_blood_mononuclear_cell,H3K9me3,ENCBS558KIK,ENCSR980XMX,ENCFF186JBV,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_peripheral_blood_mononuclear_cell,H3K9ac,ENCBS206BHY,ENCSR969DAF,ENCFF974PLJ,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_peripheral_blood_mononuclear_cell,H3K4me3,ENCBS558KIK,ENCSR368YPC,ENCFF126SQQ,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_peripheral_blood_mononuclear_cell,H3K27me3,ENCBS558KIK,ENCSR866UQO,ENCFF883IAD,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_peripheral_blood_mononuclear_cell,H3K27ac,ENCBS558KIK,ENCSR615HXA,ENCFF564QQO,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_peripheral_blood_mononuclear_cell,H3K4me1,ENCBS558KIK,ENCSR482QXO,ENCFF803AQX,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-B_MG63,H3K36me3,ENCBS760DRY,ENCSR380ORO,ENCFF876QRO,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_MG63,H3K9me3,ENCBS760DRY,ENCSR744EKG,ENCFF201RFI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_MG63,H3K4me3,ENCBS706ARR,ENCSR579SNM,ENCFF901IPC,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_MG63,H3K27me3,ENCBS760DRY,ENCSR804JFU,ENCFF444CLH,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-V_CD4-positive_alpha-beta_memory_T_cell,H3K4me1,ENCBS800QLP,ENCSR887ESB,ENCFF084RYS,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad"
-T_myoepithelial_cell_of_mammary_gland,H3K4me1,ENCBS093HNZ,ENCSR813ULW,ENCFF466ITQ,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_myoepithelial_cell_of_mammary_gland,H3K9ac,ENCBS093HNZ,ENCSR365DWX,ENCFF775DRA,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_myoepithelial_cell_of_mammary_gland,H3K4me3,ENCBS093HNZ,ENCSR287YDU,ENCFF359ANK,GRCh38,75,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_myoepithelial_cell_of_mammary_gland,H3K27me3,ENCBS093HNZ,ENCSR517CFV,ENCFF054CBD,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-T_myoepithelial_cell_of_mammary_gland,H3K36me3,ENCBS093HNZ,ENCSR160CPS,ENCFF471JZC,GRCh38,75,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF"
-V_mesenchymal_stem_cell,H2AFZ,ENCBS732PNZ,ENCSR526NKM,ENCFF902FFP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_mesenchymal_stem_cell,H3K79me1,ENCBS012DXH,ENCSR594AQO,ENCFF125HIJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_mesenchymal_stem_cell,H3K18ac,ENCBS732PNZ,ENCSR604THF,ENCFF172HAP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_mesenchymal_stem_cell,H3K9ac,ENCBS012DXH,ENCSR701KJD,ENCFF647AMP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-T_SJSA1,DNase-seq,ENCBS489PLT,ENCSR620WAR,ENCFF204JPE,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW"
-B_Caco-2,H3K9me3,ENCBS859QEM,ENCSR401WUV,ENCFF445YBG,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-B_Caco-2,H3K4me1,ENCBS859QEM,ENCSR061UOM,ENCFF737KSB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford"
-V_testis,H3K4me3,ENCBS631HJF,ENCSR611DJQ,ENCFF495UCL,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad"
-V_chorion,H3K27me3,ENCBS587ZNQ,ENCSR241JLU,ENCFF329AIM,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF"
-T_occipital_lobe,DNase-seq,ENCBS312LJS,ENCSR859CZM,ENCFF436JHH,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW"
-V_neural_stem_progenitor_cell,H3K4me1,ENCBS104PYO,ENCSR254NLC,ENCFF023JGZ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD"
-V_neural_stem_progenitor_cell,H2BK15ac,ENCBS289YMC,ENCSR123JZO,ENCFF359QSN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_neural_stem_progenitor_cell,H3K14ac,ENCBS776ACY,ENCSR687EBF,ENCFF407RHN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD"
-V_GM06990,H3K27me3,ENCBS987SKT,ENCSR000DQU,ENCFF900TWR,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW"
+biosample_name,assay_name,bios_accession,exp_accession,file_accession,assembly,read_length,run_type,sequencing_platform,lab,depth
+T_brain_microvascular_endothelial_cell,DNase-seq,ENCBS304AAA,ENCSR000ENE,ENCFF788MPI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",32279824.0
+T_brain_microvascular_endothelial_cell,H3K4me3,ENCBS304AAA,ENCSR000DTC,ENCFF775JHL,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",15418716.0
+T_H1-hESC,H3K4me1,ENCBS718AAA,ENCSR000ANA,ENCFF767MGL,GRCh38,36,single-ended,Illumina Genome Analyzer IIe,"Bradley Bernstein, Broad",15400331.0
+T_H1-hESC,H4K91ac,ENCBS984IPH,ENCSR858BOF,ENCFF156KJZ,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25160665.0
+T_H1-hESC,H2BK120ac,ENCBS534NMZ,ENCSR848DUN,ENCFF372FSW,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",17764043.0
+T_H1-hESC,H4K5ac,ENCBS368BPP,ENCSR675FLJ,ENCFF431BVU,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",29785911.0
+T_H1-hESC,DNase-seq,ENCBS474GKG,ENCSR794OFW,ENCFF579KRZ,GRCh38,101,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",219347316.0
+T_H1-hESC,H2AFZ,ENCBS534NMZ,ENCSR571IIS,ENCFF897EWW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",7532039.0
+T_H1-hESC,H3K27ac,ENCBS368BPP,ENCSR880SUY,ENCFF693IFG,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",9343351.0
+T_H1-hESC,H3K9ac,ENCBS055DBZ,ENCSR952GVX,ENCFF986GZQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",10572827.0
+T_H1-hESC,H3K79me2,ENCBS945MCY,ENCSR301HRV,ENCFF015TSL,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",25662543.0
+T_H1-hESC,H4K8ac,ENCBS945MCY,ENCSR891KGZ,ENCFF400BPI,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",1451356.0
+T_H1-hESC,H3K79me1,ENCBS497CZZ,ENCSR442DGE,ENCFF535GVC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",15954258.0
+T_H1-hESC,H3K56ac,ENCBS984IPH,ENCSR768FWX,ENCFF782BDE,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",19744705.0
+T_H1-hESC,H3K4me3,ENCBS253TYD,ENCSR814XPE,ENCFF765FFD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",50667055.0
+T_H1-hESC,H3K4me2,ENCBS945MCY,ENCSR322MEI,ENCFF080SQV,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",9791512.0
+T_H1-hESC,H3K18ac,ENCBS984IPH,ENCSR038PFD,ENCFF176NNO,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",4362354.0
+T_H1-hESC,H2BK5ac,ENCBS945MCY,ENCSR161NON,ENCFF285CHR,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",25620370.0
+T_H1-hESC,H3K27me3,ENCBS409PYK,ENCSR928HYM,ENCFF781BZF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",9830171.0
+T_H1-hESC,H2BK20ac,ENCBS984IPH,ENCSR462XRE,ENCFF712OVK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",23380666.0
+T_H1-hESC,H2BK12ac,ENCBS945MCY,ENCSR364BKW,ENCFF595KTU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",25778081.0
+T_H1-hESC,H2BK15ac,ENCBS984IPH,ENCSR739BZR,ENCFF106UCP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",24566880.0
+T_H1-hESC,H3K36me3,ENCBS055DBZ,ENCSR925LJZ,ENCFF828OZC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",11061814.0
+T_H1-hESC,H3K23me2,ENCBS282MUP,ENCSR326NQF,ENCFF567CRD,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",11611730.0
+B_DND-41,ATAC-seq,ENCBS013RPN,ENCSR660WSB,ENCFF080WSN,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",37959608.0
+B_DND-41,DNase-seq,ENCBS518YBY,ENCSR903SKE,ENCFF836RBO,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",251070356.0
+T_adrenal_gland,H3K9me3,ENCBS078MQQ,ENCSR408ZEW,ENCFF282ZSZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",51649886.0
+T_adrenal_gland,ATAC-seq,ENCBS063ABX,ENCSR113MBR,ENCFF803TLA,GRCh38,101,paired-ended,Illumina HiSeq 2000,"Michael Snyder, Stanford",133158974.0
+T_adrenal_gland,H3K27ac,ENCBS078MQQ,ENCSR177QFY,ENCFF678NDN,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",26767666.0
+T_adrenal_gland,H3K36me3,ENCBS078MQQ,ENCSR857XRG,ENCFF129TMJ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",27411886.0
+T_adrenal_gland,H3K4me1,ENCBS078MQQ,ENCSR406PCK,ENCFF346NXC,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",33733425.0
+T_adrenal_gland,DNase-seq,ENCBS450CEG,ENCSR191FOV,ENCFF646WNW,GRCh38,76,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW",236409022.0
+V_heart_left_ventricle,H3K4me3,ENCBS861XCF,ENCSR901SIL,ENCFF023HCZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",98345556.0
+T_WERI-Rb-1,H3K4me3,ENCBS087YAE,ENCSR000DXU,ENCFF749HNO,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",15119592.0
+T_WERI-Rb-1,DNase-seq,ENCBS270AAA,ENCSR000EQL,ENCFF816ZVF,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",43370377.0
+V_prostate,H3K9me3,ENCBS619YXY,ENCSR133QBG,ENCFF507VEH,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",47018228.0
+T_CD4-positive_alpha-beta_memory_T_cell,H3K36me3,ENCBS800QLP,ENCSR580WRV,ENCFF489CFC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",30121530.0
+T_CD4-positive_alpha-beta_memory_T_cell,H3K9me3,ENCBS800QLP,ENCSR333VFQ,ENCFF160ATE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",20528921.0
+T_CD4-positive_alpha-beta_memory_T_cell,H3K27ac,ENCBS800QLP,ENCSR724GUS,ENCFF184ULC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",14482471.0
+T_CD4-positive_alpha-beta_memory_T_cell,H3K4me3,ENCBS800QLP,ENCSR223APP,ENCFF537JAK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",20365338.0
+T_CD4-positive_alpha-beta_memory_T_cell,H3K27me3,ENCBS800QLP,ENCSR702RZM,ENCFF340DVV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",17714397.0
+T_uterus,H3K27ac,ENCBS469FLQ,ENCSR249INE,ENCFF142RDG,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",49199281.0
+T_uterus,DNase-seq,ENCBS469EGD,ENCSR237WJY,ENCFF130PVC,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",186503192.0
+T_NCI-H460,DNase-seq,ENCBS514AAA,ENCSR000FJH,ENCFF876IBR,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",19020436.0
+T_T47D,DNase-seq,ENCBS440ENC,ENCSR000EQB,ENCFF563OCJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",35095792.0
+T_heart_left_ventricle,H3K9me3,ENCBS861XCF,ENCSR000XAA,ENCFF177POB,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",45742193.0
+T_heart_left_ventricle,H3K4me1,ENCBS861XCF,ENCSR438QZN,ENCFF660DDB,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",61612718.0
+T_heart_left_ventricle,DNase-seq,ENCBS260UTX,ENCSR070CMW,ENCFF533LLW,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",293850584.0
+T_heart_left_ventricle,H3K27ac,ENCBS861XCF,ENCSR854OXF,ENCFF284LSK,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",26717174.0
+T_heart_left_ventricle,H3K27me3,ENCBS861XCF,ENCSR988JLN,ENCFF940JCQ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",49505968.0
+T_heart_left_ventricle,ATAC-seq,ENCBS106FXL,ENCSR851EBF,ENCFF097EXD,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",36897552.0
+T_heart_left_ventricle,H3K36me3,ENCBS861XCF,ENCSR500ZGF,ENCFF180KPZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",32153944.0
+T_SK-MEL-5,DNase-seq,ENCBS518AAA,ENCSR000FEK,ENCFF207FFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",37558549.0
+T_KMS-11,H3K4me1,ENCBS987CHP,ENCSR976JHS,ENCFF351LDO,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",40373031.0
+T_KMS-11,H2AFZ,ENCBS987CHP,ENCSR499RMZ,ENCFF680AEE,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",19107175.0
+T_KMS-11,H4K20me1,ENCBS987CHP,ENCSR790QWJ,ENCFF901QZZ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",14209316.0
+T_KMS-11,H3K27ac,ENCBS987CHP,ENCSR955IXZ,ENCFF028BMC,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",51052264.0
+T_KMS-11,H3K79me2,ENCBS682HMC,ENCSR847UJW,ENCFF558TKQ,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",35693811.0
+T_KMS-11,H3K4me3,ENCBS987CHP,ENCSR539TKY,ENCFF790PIQ,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",18081989.0
+T_KMS-11,H3K27me3,ENCBS682HMC,ENCSR474VGQ,ENCFF622TMV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",40153954.0
+T_KMS-11,H3K36me3,ENCBS987CHP,ENCSR835YBD,ENCFF125PEN,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",19062422.0
+T_skin_fibroblast,DNase-seq,ENCBS336CDQ,ENCSR184LMY,ENCFF966XVI,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",267819070.0
+T_adrenal_gland_embryonic,H3K9me3,ENCBS056PYD,ENCSR651IVN,ENCFF856DZW,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",16105973.0
+T_adrenal_gland_embryonic,H3K4me3,ENCBS056PYD,ENCSR715KGX,ENCFF937GOA,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",41865741.0
+T_adrenal_gland_embryonic,H3K27me3,ENCBS056PYD,ENCSR218BPG,ENCFF228HLZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",32508066.0
+T_adrenal_gland_embryonic,H3K27ac,ENCBS056PYD,ENCSR847AIA,ENCFF575IKT,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",19135407.0
+T_adrenal_gland_embryonic,H3K36me3,ENCBS056PYD,ENCSR760LFY,ENCFF687AFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",23859120.0
+T_adrenal_gland_embryonic,H3K4me1,ENCBS056PYD,ENCSR207ZIA,ENCFF795QMF,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",27049565.0
+T_amnion,H3K27me3,ENCBS712BZZ,ENCSR144NDE,ENCFF096HIU,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",26262955.0
+T_amnion,H3K4me3,ENCBS712BZZ,ENCSR420IOA,ENCFF399JDM,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",22122377.0
+T_amnion,H3K9me3,ENCBS712BZZ,ENCSR495GRN,ENCFF333AZG,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",21205678.0
+T_amnion,H3K4me1,ENCBS712BZZ,ENCSR249AWJ,ENCFF444XCI,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",22934981.0
+T_amnion,H3K36me3,ENCBS712BZZ,ENCSR786DQB,ENCFF307YOL,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",21589505.0
+B_RWPE2,ATAC-seq,ENCBS123OBK,ENCSR080SNF,ENCFF452BSA,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",42670202.0
+B_RWPE2,H3K27me3,ENCBS314QIO,ENCSR784MON,ENCFF499LZJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",64059290.0
+B_RWPE2,H3K4me3,ENCBS314QIO,ENCSR297ONS,ENCFF944YWP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",61943754.0
+B_RWPE2,H3K9me3,ENCBS314QIO,ENCSR785DEU,ENCFF403WJG,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",75695248.0
+B_RWPE2,H3K4me1,ENCBS684UIM,ENCSR161GUA,ENCFF679GLB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",50591914.0
+B_RWPE2,H3K36me3,ENCBS684UIM,ENCSR115IRD,ENCFF172QTD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",86933948.0
+B_RWPE2,DNase-seq,ENCBS490DPO,ENCSR306BHE,ENCFF407ORW,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",191822722.0
+T_neural_stem_progenitor_cell,H3K4me2,ENCBS776ACY,ENCSR486GWT,ENCFF575YMO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",5569005.0
+T_neural_stem_progenitor_cell,H3K27ac,ENCBS104PYO,ENCSR799SRL,ENCFF477FHN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",36742071.0
+T_neural_stem_progenitor_cell,H3K27me3,ENCBS104PYO,ENCSR694LBI,ENCFF391VPZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",16573828.0
+T_neural_stem_progenitor_cell,H2BK12ac,ENCBS776ACY,ENCSR940RIU,ENCFF253TBD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",33918699.0
+T_neural_stem_progenitor_cell,H2AK5ac,ENCBS289YMC,ENCSR732NFR,ENCFF094UHO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",18451558.0
+T_neural_stem_progenitor_cell,H3K4me3,ENCBS104PYO,ENCSR956CTX,ENCFF212FUS,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",57487823.0
+T_neural_stem_progenitor_cell,H4K8ac,ENCBS776ACY,ENCSR277JAU,ENCFF277NHI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15483393.0
+T_neural_stem_progenitor_cell,H3K9me3,ENCBS104PYO,ENCSR391WDE,ENCFF906APX,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",24773527.0
+T_neural_stem_progenitor_cell,H4K91ac,ENCBS776ACY,ENCSR260CXF,ENCFF453VBG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",19591700.0
+T_neural_stem_progenitor_cell,H3K79me1,ENCBS776ACY,ENCSR570POG,ENCFF067DUE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",17457028.0
+T_neural_stem_progenitor_cell,H3K4ac,ENCBS661CUF,ENCSR476FBL,ENCFF793FNE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25565332.0
+T_neural_stem_progenitor_cell,H3K18ac,ENCBS289YMC,ENCSR182XTG,ENCFF285VWE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",32539930.0
+T_neural_stem_progenitor_cell,H2BK120ac,ENCBS289YMC,ENCSR811NNT,ENCFF504LNP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",13530755.0
+T_neural_stem_progenitor_cell,H3K36me3,ENCBS104PYO,ENCSR256ESY,ENCFF870AGH,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",31987147.0
+T_neural_stem_progenitor_cell,H3K23ac,ENCBS776ACY,ENCSR361LIU,ENCFF199MMG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",12614953.0
+T_neural_stem_progenitor_cell,DNase-seq,ENCBS805ZNK,ENCSR278FVO,ENCFF224MAE,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",72093044.0
+T_neural_stem_progenitor_cell,H2BK5ac,ENCBS289YMC,ENCSR651SVZ,ENCFF418NKT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",23538852.0
+T_neural_stem_progenitor_cell,H3K9ac,ENCBS776ACY,ENCSR626UPW,ENCFF158DIT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",11816117.0
+T_urinary_bladder,DNase-seq,ENCBS241XYR,ENCSR813CKU,ENCFF351RLC,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",64436086.0
+T_urinary_bladder,H3K4me3,ENCBS364KFR,ENCSR632OWD,ENCFF746QLY,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bing Ren, UCSD",18923135.0
+T_urinary_bladder,H3K36me3,ENCBS364KFR,ENCSR449TNC,ENCFF761XEA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15427925.0
+B_HAP-1,H3K9me3,ENCBS872LRZ,ENCSR460TQV,ENCFF302ELQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",107625396.0
+B_HAP-1,H3K4me3,ENCBS609AIH,ENCSR882CQE,ENCFF980BDP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",114086334.0
+B_HAP-1,H3K27me3,ENCBS609AIH,ENCSR891YFI,ENCFF465ZHL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",82542540.0
+B_HAP-1,H3K27ac,ENCBS872LRZ,ENCSR131DVD,ENCFF525ADD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",83144706.0
+B_HAP-1,H3K36me3,ENCBS609AIH,ENCSR121CWP,ENCFF146XNB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",119152068.0
+B_HAP-1,H3K4me1,ENCBS609AIH,ENCSR450JTP,ENCFF651JPK,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",119093772.0
+B_BMEC,H3K27ac,ENCBS938JNW,ENCSR111QCU,ENCFF887PLJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",112889020.0
+B_BMEC,H3K27me3,ENCBS938JNW,ENCSR032CAS,ENCFF220CLZ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",130557074.0
+B_BMEC,H3K36me3,ENCBS938JNW,ENCSR587VHH,ENCFF761ZYL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",128378738.0
+B_BE2C,H3K9me3,ENCBS161OUD,ENCSR444YIP,ENCFF808XLS,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",111973798.0
+B_BE2C,H3K4me1,ENCBS161OUD,ENCSR874NDX,ENCFF757WMQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",125710846.0
+B_BE2C,H3K27me3,ENCBS277GST,ENCSR780XZD,ENCFF520FHH,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",92848652.0
+B_BE2C,H3K36me3,ENCBS277GST,ENCSR114YOX,ENCFF233OXP,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",109425786.0
+T_hematopoietic_multipotent_progenitor_cell,DNase-seq,ENCBS374YBC,ENCSR328UMC,ENCFF292XIO,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",30268067.0
+V_DND-41,H3K27ac,ENCBS282AAA,ENCSR000AQW,ENCFF901HOL,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",35296722.0
+V_DND-41,H4K20me1,ENCBS282AAA,ENCSR000ARC,ENCFF554ZKZ,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad",15697325.0
+B_WERI-Rb-1,H3K27ac,ENCBS176OOK,ENCSR764HZU,ENCFF574GEM,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",80485758.0
+B_WERI-Rb-1,H3K27me3,ENCBS161OJA,ENCSR967DBV,ENCFF584XYI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",81727270.0
+B_WERI-Rb-1,H3K9me3,ENCBS176OOK,ENCSR371OZG,ENCFF789QVF,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",62440510.0
+B_WERI-Rb-1,H3K4me1,ENCBS176OOK,ENCSR614NUF,ENCFF563HLT,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",72825008.0
+B_WERI-Rb-1,H3K36me3,ENCBS161OJA,ENCSR354XIL,ENCFF462VDJ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",103501034.0
+B_SJCRH30,H3K9me3,ENCBS386GKH,ENCSR782BWI,ENCFF278GKD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",139224808.0
+B_SJCRH30,H3K4me3,ENCBS386GKH,ENCSR986FPJ,ENCFF984RGN,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",113789090.0
+B_SJCRH30,H3K27me3,ENCBS386GKH,ENCSR022MBN,ENCFF003JSI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",117618246.0
+B_SJCRH30,H3K27ac,ENCBS696NDF,ENCSR769CSE,ENCFF721URQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",108392626.0
+B_SJCRH30,H3K36me3,ENCBS386GKH,ENCSR753TAU,ENCFF514BRD,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",103893072.0
+B_SJCRH30,H3K4me1,ENCBS386GKH,ENCSR414OEF,ENCFF657XIL,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",142191222.0
+T_adipose_tissue,H3K27ac,ENCBS628VEX,ENCSR082SHT,ENCFF243URL,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15878948.0
+T_dermis_microvascular_lymphatic_vessel_endothelial_cell,DNase-seq,ENCBS315AAA,ENCSR000EOA,ENCFF750AZP,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",34301308.0
+T_K562,H3K36me3,ENCBS349ULG,ENCSR000DWB,ENCFF035SOZ,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",13733703.0
+T_K562,H3K9me3,ENCBS674MPN,ENCSR000APE,ENCFF155UQU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",30445387.0
+T_K562,H3K4me1,ENCBS667AAA,ENCSR000EWC,ENCFF089KHK,GRCh38,28,single-ended,Illumina Genome Analyzer II,"Peggy Farnham, USC",17426851.0
+T_K562,H3K9me1,ENCBS639AAA,ENCSR000AKW,ENCFF302OEO,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",21052280.0
+T_K562,H3K27ac,ENCBS674MPN,ENCSR000AKP,ENCFF232RQF,GRCh38,36,single-ended,Illumina Genome Analyzer IIe,"Bradley Bernstein, Broad",70602788.0
+T_K562,DNase-seq,ENCBS775AAA,ENCSR921NMD,ENCFF257HEE,GRCh38,20,single-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",328139849.0
+T_K562,H3K4me2,ENCBS674MPN,ENCSR000AKT,ENCFF583GSH,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",6873643.0
+T_K562,H3K9ac,ENCBS667AAA,ENCSR000EVZ,ENCFF946AXU,GRCh38,28,single-ended,Illumina Genome Analyzer,"Peggy Farnham, USC",23541673.0
+T_K562,H4K20me1,ENCBS639AAA,ENCSR000AKX,ENCFF923YUN,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",13448672.0
+T_K562,H3K4me3,ENCBS980HYW,ENCSR668LDD,ENCFF752MYF,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",26665324.0
+T_K562,H2AFZ,ENCBS639AAA,ENCSR000APC,ENCFF007YZT,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",15747286.0
+V_urinary_bladder,H3K27ac,ENCBS364KFR,ENCSR054BKO,ENCFF287TAI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",16583557.0
+T_prostate,H3K27ac,ENCBS633UTQ,ENCSR763IDK,ENCFF416EQK,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",31354271.0
+T_prostate,H3K4me3,ENCBS633UTQ,ENCSR748RBT,ENCFF505NKP,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",38654841.0
+V_K562,H3K79me2,ENCBS674MPN,ENCSR000APD,ENCFF132YSI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",19957988.0
+V_K562,H3K27me3,ENCBS667AAA,ENCSR000EWB,ENCFF508LLH,GRCh38,28,single-ended,Illumina Genome Analyzer II,"Peggy Farnham, USC",21034788.0
+T_G401,DNase-seq,ENCBS062JBT,ENCSR269SIA,ENCFF671CNQ,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",204082208.0
+T_MG63,DNase-seq,ENCBS091SUW,ENCSR083STA,ENCFF785KVP,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",45434136.0
+B_SJSA1,H3K9me3,ENCBS912CSK,ENCSR482XTC,ENCFF355VXR,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",120627596.0
+B_SJSA1,H3K4me3,ENCBS382VRX,ENCSR214NMO,ENCFF656NBV,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",117494148.0
+B_SJSA1,H3K27me3,ENCBS912CSK,ENCSR564OSQ,ENCFF147KJB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",109638360.0
+B_SJSA1,H3K27ac,ENCBS912CSK,ENCSR349VAW,ENCFF238CFV,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",70586126.0
+B_SJSA1,H3K36me3,ENCBS382VRX,ENCSR643QXU,ENCFF397TKX,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",119764860.0
+B_SJSA1,H3K4me1,ENCBS912CSK,ENCSR590ZSL,ENCFF165XGW,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",152721146.0
+B_HL-60,H3K27ac,ENCBS976DTB,ENCSR919WLM,ENCFF510IXN,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",85932264.0
+B_HL-60,H3K27me3,ENCBS976DTB,ENCSR198IHT,ENCFF691HBE,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",96663872.0
+T_Caco-2,DNase-seq,ENCBS890JZY,ENCSR000EMI,ENCFF474LBE,GRCh38,36,single-ended,Illumina Genome Analyzer I,"John Stamatoyannopoulos, UW",20491263.0
+T_Caco-2,H3K4me3,ENCBS700RKG,ENCSR000DQM,ENCFF513PFC,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",11853469.0
+T_Caco-2,H3K27me3,ENCBS390JMI,ENCSR000DQL,ENCFF957OES,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",12737552.0
+T_Caco-2,H3K36me3,ENCBS390JMI,ENCSR000DQK,ENCFF691XDC,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",11554645.0
+T_BE2C,DNase-seq,ENCBS403ENC,ENCSR000EMD,ENCFF334VBI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",51375668.0
+T_BE2C,H3K4me3,ENCBS271SFD,ENCSR000DQB,ENCFF881PUF,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",18867053.0
+V_trophoblast_cell,H3K4me2,ENCBS806FFM,ENCSR941QJQ,ENCFF950IZV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",29972123.0
+V_trophoblast_cell,H4K91ac,ENCBS392DBQ,ENCSR371FHD,ENCFF914ARK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15634917.0
+V_trophoblast_cell,H3K36me3,ENCBS806FFM,ENCSR038OIN,ENCFF234RNO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",21785489.0
+V_trophoblast_cell,H2BK5ac,ENCBS749EOK,ENCSR213TIR,ENCFF682AUE,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",10708934.0
+T_mesenchymal_stem_cell,H3K4me2,ENCBS725VAK,ENCSR786GJM,ENCFF201BXG,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25238195.0
+T_mesenchymal_stem_cell,H3K9me3,ENCBS012DXH,ENCSR746CUY,ENCFF112SIY,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",26054094.0
+T_mesenchymal_stem_cell,H3K23ac,ENCBS732PNZ,ENCSR734MEM,ENCFF224CMW,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",23210794.0
+T_mesenchymal_stem_cell,H2BK15ac,ENCBS783XLR,ENCSR491CCY,ENCFF395BTH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",10456409.0
+T_mesenchymal_stem_cell,H2BK12ac,ENCBS732PNZ,ENCSR895YWA,ENCFF113ORU,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25966842.0
+T_mesenchymal_stem_cell,H4K8ac,ENCBS783XLR,ENCSR350YQC,ENCFF563KON,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",28558776.0
+T_mesenchymal_stem_cell,H3K4ac,ENCBS783XLR,ENCSR902EEI,ENCFF443FFP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",18482742.0
+T_mesenchymal_stem_cell,H3K4me3,ENCBS012DXH,ENCSR501JET,ENCFF655EKU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",13440658.0
+T_mesenchymal_stem_cell,H2AK5ac,ENCBS725VAK,ENCSR753RYH,ENCFF399FKZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",66044370.0
+T_mesenchymal_stem_cell,H4K91ac,ENCBS783XLR,ENCSR509MHV,ENCFF377OEI,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",31789799.0
+T_mesenchymal_stem_cell,H3K27me3,ENCBS725VAK,ENCSR832JVP,ENCFF474ZPR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",74224854.0
+T_mesenchymal_stem_cell,H3K27ac,ENCBS012DXH,ENCSR013KEC,ENCFF419HKZ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",37511970.0
+T_mesenchymal_stem_cell,H3K36me3,ENCBS725VAK,ENCSR824UNY,ENCFF549EIM,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",40550344.0
+T_mesenchymal_stem_cell,H3K4me1,ENCBS012DXH,ENCSR065HOR,ENCFF362KVF,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",7973814.0
+T_mesenchymal_stem_cell,H2BK120ac,ENCBS783XLR,ENCSR502IWF,ENCFF614ZDH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15942512.0
+T_mesenchymal_stem_cell,H2BK5ac,ENCBS012DXH,ENCSR809CVZ,ENCFF854UOA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",12145775.0
+T_mesenchymal_stem_cell,H3K14ac,ENCBS732PNZ,ENCSR719QMW,ENCFF291GNC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",30053067.0
+T_mesenchymal_stem_cell,DNase-seq,ENCBS725VAK,ENCSR731QLJ,ENCFF474HCY,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",366388336.0
+V_H9,H3K4me2,ENCBS532LWE,ENCSR730POX,ENCFF160HVH,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",5325579.0
+V_H9,H3K79me2,ENCBS277KDR,ENCSR188GJE,ENCFF027JDK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",20703581.0
+T_endocrine_pancreas,H3K27ac,ENCBS721SKH,ENCSR324JDC,ENCFF154DXP,GRCh38,76,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",19182686.0
+T_endocrine_pancreas,H3K27me3,ENCBS069JPK,ENCSR581UGC,ENCFF037AMF,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",11508199.0
+T_endocrine_pancreas,H3K4me3,ENCBS721SKH,ENCSR957UQS,ENCFF943KUL,GRCh38,76,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",22838699.0
+T_endocrine_pancreas,H3K9me3,ENCBS776NCD,ENCSR849NQE,ENCFF321DYL,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",21007089.0
+T_endocrine_pancreas,H3K36me3,ENCBS769QYN,ENCSR372OTD,ENCFF378PSF,GRCh38,83,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",2404954.0
+T_endocrine_pancreas,H3K9ac,ENCBS069JPK,ENCSR061NWO,ENCFF925QQJ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",9232955.0
+V_OCI-LY7,DNase-seq,ENCBS581USS,ENCSR489NAM,ENCFF210MMO,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW",245009144.0
+V_OCI-LY7,H4K20me1,ENCBS699NWP,ENCSR747ZDF,ENCFF292JZN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",19212097.0
+T_upper_lobe_of_left_lung,H3K27ac,ENCBS684YJH,ENCSR738SXD,ENCFF460ZAV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",25576864.0
+T_upper_lobe_of_left_lung,H3K4me3,ENCBS684YJH,ENCSR208WDY,ENCFF892ULT,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",53564877.0
+T_upper_lobe_of_left_lung,DNase-seq,ENCBS956JIK,ENCSR490JVQ,ENCFF824KSF,GRCh38,76,paired-ended,Illumina NextSeq 500,"John Stamatoyannopoulos, UW",195356394.0
+V_upper_lobe_of_left_lung,H3K36me3,ENCBS684YJH,ENCSR869GBP,ENCFF790HIV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",62414907.0
+V_adrenal_gland_embryonic,DNase-seq,ENCBS232ONZ,ENCSR080PZL,ENCFF511DEJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",47199136.0
+T_trophoblast_cell,H2AFZ,ENCBS749EOK,ENCSR485OSV,ENCFF161EDO,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",8983244.0
+T_trophoblast_cell,H3K9me3,ENCBS806FFM,ENCSR044WCY,ENCFF897ZLC,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",20761237.0
+T_trophoblast_cell,H3K18ac,ENCBS749EOK,ENCSR081JRM,ENCFF705VZD,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",24145282.0
+T_trophoblast_cell,H3K79me2,ENCBS392DBQ,ENCSR486PWP,ENCFF807MVR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",28259888.0
+T_trophoblast_cell,H2BK12ac,ENCBS749EOK,ENCSR634IIF,ENCFF686AAH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",19970228.0
+T_trophoblast_cell,H3K9ac,ENCBS806FFM,ENCSR815DXY,ENCFF438FEC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",94280030.0
+T_trophoblast_cell,H4K8ac,ENCBS392DBQ,ENCSR888MKB,ENCFF117TSF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",20117010.0
+T_trophoblast_cell,H3K4ac,ENCBS749EOK,ENCSR354UVU,ENCFF195QKA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",14850355.0
+T_trophoblast_cell,H3K4me3,ENCBS806FFM,ENCSR874WOB,ENCFF718PRG,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",19614343.0
+T_trophoblast_cell,H2AK5ac,ENCBS749EOK,ENCSR427RFW,ENCFF356CJH,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",26516249.0
+T_trophoblast_cell,H4K12ac,ENCBS392DBQ,ENCSR960JPH,ENCFF829KYP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15864437.0
+T_trophoblast_cell,H3K27me3,ENCBS392DBQ,ENCSR960CWQ,ENCFF617FEU,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",21097628.0
+T_trophoblast_cell,H3K27ac,ENCBS392DBQ,ENCSR425PQI,ENCFF230PTY,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",18103964.0
+T_trophoblast_cell,H3K4me1,ENCBS806FFM,ENCSR035DUS,ENCFF396FVA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25166747.0
+T_trophoblast_cell,H2BK120ac,ENCBS392DBQ,ENCSR355ZYK,ENCFF407OFJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",21675840.0
+T_trophoblast_cell,H3K79me1,ENCBS749EOK,ENCSR213JMO,ENCFF329TCC,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",24593834.0
+T_trophoblast_cell,H3K14ac,ENCBS749EOK,ENCSR499CAZ,ENCFF381CWR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",24316969.0
+T_trophoblast_cell,DNase-seq,ENCBS376RZJ,ENCSR179CDH,ENCFF218OXS,GRCh38,36,single-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",183410434.0
+T_HAP-1,DNase-seq,ENCBS217AEF,ENCSR620QNS,ENCFF303JZI,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW",243185054.0
+T_IMR-90,H4K5ac,ENCBS754TWW,ENCSR706RRA,ENCFF113XYR,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",27892393.0
+T_IMR-90,H2BK20ac,ENCBS981IKS,ENCSR054IRX,ENCFF237RIX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",12079906.0
+T_IMR-90,H3K4me2,ENCBS371NWL,ENCSR672XZZ,ENCFF681OHX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",13084347.0
+T_IMR-90,H3K9me3,ENCBS754TWW,ENCSR055ZZY,ENCFF942QOQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",18950098.0
+T_IMR-90,H3K18ac,ENCBS371NWL,ENCSR383CBN,ENCFF564USN,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",12922122.0
+T_IMR-90,H3K79me2,ENCBS982GUC,ENCSR713QLX,ENCFF571ZDL,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",22941958.0
+T_IMR-90,H3K23ac,ENCBS007TVF,ENCSR942NME,ENCFF773OTU,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",28818093.0
+T_IMR-90,H2BK15ac,ENCBS007TVF,ENCSR274TJB,ENCFF510XXG,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",11501804.0
+T_IMR-90,H3K4ac,ENCBS981IKS,ENCSR039ZLS,ENCFF250YWX,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",12235113.0
+T_IMR-90,H3K4me3,ENCBS371NWL,ENCSR087PFU,ENCFF355WLE,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",7403932.0
+T_IMR-90,H2AK5ac,ENCBS992YMT,ENCSR424ZJH,ENCFF809EID,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",19561434.0
+T_IMR-90,H4K91ac,ENCBS007TVF,ENCSR164RFI,ENCFF291HMI,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",8820523.0
+T_IMR-90,H3K27me3,ENCBS754TWW,ENCSR431UUY,ENCFF084CZB,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",24509526.0
+T_IMR-90,H3K56ac,ENCBS007TVF,ENCSR066VKQ,ENCFF492AKV,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",4594104.0
+T_IMR-90,H3K9me1,ENCBS007TVF,ENCSR580LZO,ENCFF936ASR,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",24068957.0
+T_IMR-90,H3K27ac,ENCBS754TWW,ENCSR002YRE,ENCFF827KCG,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",9419897.0
+T_IMR-90,H3K36me3,ENCBS754TWW,ENCSR437ORF,ENCFF197BAZ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",11394022.0
+T_IMR-90,H3K4me1,ENCBS754TWW,ENCSR831JSP,ENCFF927WHP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",21238813.0
+T_IMR-90,H2BK120ac,ENCBS007TVF,ENCSR210RXE,ENCFF475ABK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",23786609.0
+T_IMR-90,H2AK9ac,ENCBS357USI,ENCSR038MKB,ENCFF312WUR,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15084299.0
+T_IMR-90,H3K79me1,ENCBS982GUC,ENCSR579TJT,ENCFF848ADK,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",13981017.0
+T_IMR-90,H2BK5ac,ENCBS780OTZ,ENCSR248KRU,ENCFF711DZO,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",32143687.0
+T_IMR-90,H3K14ac,ENCBS981IKS,ENCSR283STF,ENCFF738MHY,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",18490643.0
+T_IMR-90,H4K20me1,ENCBS992YMT,ENCSR804SRO,ENCFF951EYC,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",29438430.0
+T_IMR-90,DNase-seq,ENCBS048TNH,ENCSR477RTP,ENCFF264LKY,GRCh38,76,single-ended,Illumina Genome Analyzer II,"John Stamatoyannopoulos, UW",313909217.0
+T_ES-I3,H3K9me3,ENCBS268NCC,ENCSR895IWH,ENCFF765HXQ,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",10539946.0
+T_ES-I3,H3K4me1,ENCBS401QZO,ENCSR730FLZ,ENCFF561NSG,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",14255546.0
+T_ES-I3,H3K9ac,ENCBS593HOC,ENCSR097ORD,ENCFF143HAP,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",10822075.0
+T_ES-I3,H3K36me3,ENCBS421TWG,ENCSR844DRI,ENCFF698MJT,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bradley Bernstein, Broad",10494836.0
+T_GM06990,H3K36me3,ENCBS875KTK,ENCSR000DQT,ENCFF810IOI,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",13863367.0
+T_GM06990,DNase-seq,ENCBS414HDG,ENCSR000EMQ,ENCFF311YYM,GRCh38,36,single-ended,Illumina Genome Analyzer II,"John Stamatoyannopoulos, UW",16228846.0
+T_GM06990,H3K4me3,ENCBS146QHV,ENCSR000DQV,ENCFF684SGK,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",14778981.0
+T_cardiac_fibroblast,H3K4me3,ENCBS501ROB,ENCSR000DTH,ENCFF612XOE,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",19123610.0
+T_cardiac_fibroblast,DNase-seq,ENCBS032BLA,ENCSR000ENI,ENCFF852XZM,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",31285840.0
+T_omental_fat_pad,DNase-seq,ENCBS148MNC,ENCSR244ZEJ,ENCFF225NCO,GRCh38,76,paired-ended,Illumina NextSeq 500,"John Stamatoyannopoulos, UW",108441768.0
+T_omental_fat_pad,ATAC-seq,ENCBS971HUW,ENCSR788TRR,ENCFF550OUL,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",106012618.0
+T_lower_leg_skin,H3K4me3,ENCBS851XJZ,ENCSR432GOP,ENCFF003VRU,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",11182317.0
+T_skin_of_body,DNase-seq,ENCBS948BKE,ENCSR092OFK,ENCFF198CSA,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"John Stamatoyannopoulos, UW",32557203.0
+B_NCI-H929,H3K9me3,ENCBS911QZW,ENCSR728YXC,ENCFF732LKQ,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",83174614.0
+B_NCI-H929,ATAC-seq,ENCBS952JSJ,ENCSR382LBS,ENCFF818BRH,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",42724742.0
+B_NCI-H929,H3K27ac,ENCBS911QZW,ENCSR368CYW,ENCFF230NOF,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",84894790.0
+B_NCI-H929,DNase-seq,ENCBS588WMC,ENCSR090SMP,ENCFF369NRI,GRCh38,76,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",189165530.0
+V_H1-hESC,H3K9me3,ENCBS368BPP,ENCSR883AQJ,ENCFF963LFX,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",16829952.0
+V_H1-hESC,H3K4ac,ENCBS984IPH,ENCSR130EML,ENCFF680XYN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",34107319.0
+V_H1-hESC,H2AK5ac,ENCBS984IPH,ENCSR703KXH,ENCFF443OZA,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",12348282.0
+V_H1-hESC,H4K20me1,ENCBS984IPH,ENCSR728SZE,ENCFF125LCU,GRCh38,30,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",25632696.0
+T_RWPE2,H3K27ac,ENCBS942OEI,ENCSR987PNT,ENCFF132EYY,GRCh38,100,paired-ended,Illumina HiSeq 2000,"Michael Snyder, Stanford",55063546.0
+V_peripheral_blood_mononuclear_cell,H3K36me3,ENCBS558KIK,ENCSR162MGR,ENCFF281WTV,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",18074786.0
+V_KMS-11,H3K4me2,ENCBS987CHP,ENCSR806XIU,ENCFF875DBI,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",32746053.0
+V_KMS-11,H3K9ac,ENCBS987CHP,ENCSR521AIV,ENCFF159CNY,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",23109278.0
+T_DND-41,H3K36me3,ENCBS688JZQ,ENCSR000AQX,ENCFF973TDF,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad",17377843.0
+T_DND-41,H3K9me3,ENCBS282AAA,ENCSR000ARZ,ENCFF030PGK,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",10570682.0
+T_DND-41,H3K4me1,ENCBS282AAA,ENCSR000AQY,ENCFF192WKN,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad",17894720.0
+T_DND-41,H3K4me2,ENCBS688JZQ,ENCSR000AQZ,ENCFF585ZDW,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",4994626.0
+T_DND-41,H3K9ac,ENCBS282AAA,ENCSR000ARY,ENCFF703ZGI,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",18788820.0
+T_DND-41,H3K79me2,ENCBS282AAA,ENCSR000ARB,ENCFF015TDF,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",18089816.0
+T_DND-41,H3K4me3,ENCBS688JZQ,ENCSR564VIX,ENCFF764MJJ,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",24684534.0
+T_DND-41,H3K27me3,ENCBS688JZQ,ENCSR000ASX,ENCFF200ECC,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bradley Bernstein, Broad",16151948.0
+T_DND-41,H2AFZ,ENCBS282AAA,ENCSR000AQV,ENCFF255SZS,GRCh38,36,single-ended,Illumina Genome Analyzer,"Bradley Bernstein, Broad",14416128.0
+V_NCI-H929,H3K79me2,ENCBS571AQH,ENCSR339FOO,ENCFF397XHP,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",75972879.0
+V_endocrine_pancreas,H3K4me1,ENCBS769QYN,ENCSR817QHX,ENCFF262YCU,GRCh38,83,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",1938039.0
+V_IMR-90,H2AFZ,ENCBS472JFT,ENCSR124DYB,ENCFF640IYV,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",29868048.0
+V_IMR-90,H3K9ac,ENCBS754TWW,ENCSR219MYH,ENCFF733ZHB,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",10672420.0
+V_IMR-90,H4K8ac,ENCBS007TVF,ENCSR444TMC,ENCFF131UOL,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",14415267.0
+V_IMR-90,H2BK12ac,ENCBS192DLO,ENCSR523ENE,ENCFF662NJI,GRCh38,36,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",17433412.0
+T_H9,H3K56ac,ENCBS532LWE,ENCSR047TJL,ENCFF345SVV,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",14908486.0
+T_H9,H3K36me3,ENCBS532LWE,ENCSR324UNL,ENCFF513JUN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",10553356.0
+T_H9,H3K9me3,ENCBS532LWE,ENCSR972SMV,ENCFF763MGD,GRCh38,30,single-ended,Illumina Genome Analyzer II,"Bing Ren, UCSD",16093736.0
+T_H9,H3K18ac,ENCBS399JWQ,ENCSR294WUR,ENCFF813CLW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",16084526.0
+T_H9,H3K4me1,ENCBS532LWE,ENCSR276HBK,ENCFF675UDV,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",20330040.0
+T_H9,H3T11ph,ENCBS399JWQ,ENCSR957GYL,ENCFF076YTT,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",28264717.0
+T_H9,H3K27ac,ENCBS532LWE,ENCSR876RGF,ENCFF940QDV,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",18398160.0
+T_H9,DNase-seq,ENCBS113LZP,ENCSR275ICP,ENCFF291ZMA,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",263293552.0
+T_H9,H3K9ac,ENCBS532LWE,ENCSR879TAS,ENCFF649KCM,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",4195891.0
+T_H9,H4K8ac,ENCBS532LWE,ENCSR367JIO,ENCFF101CCN,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",19179365.0
+T_H9,H3K4ac,ENCBS656LSW,ENCSR230WNU,ENCFF692SFW,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",17455222.0
+T_H9,H3K23me2,ENCBS399JWQ,ENCSR063WYJ,ENCFF355UMO,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",15662982.0
+T_H9,H3K14ac,ENCBS399JWQ,ENCSR440BZV,ENCFF997SKW,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",8462954.0
+T_H9,H3K4me3,ENCBS532LWE,ENCSR043VGU,ENCFF900TYA,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",4817442.0
+T_H9,H3K27me3,ENCBS532LWE,ENCSR792GCH,ENCFF841RXD,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",26134528.0
+T_H9,H3K79me1,ENCBS656LSW,ENCSR280IFJ,ENCFF434DLZ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",9912692.0
+T_H9,H4K5ac,ENCBS532LWE,ENCSR554TZE,ENCFF400OVH,GRCh38,30,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",26520559.0
+T_H9,H2AFZ,ENCBS399JWQ,ENCSR265EDV,ENCFF068DKA,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",48163360.0
+T_OCI-LY7,H3K9me3,ENCBS699NWP,ENCSR389WWC,ENCFF073BOG,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",47438363.0
+T_OCI-LY7,H3K4me1,ENCBS006VZG,ENCSR060WGK,ENCFF100UUK,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",22202720.0
+T_OCI-LY7,H3K9me2,ENCBS304FAI,ENCSR199KHR,ENCFF660GHF,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",19508244.0
+T_OCI-LY7,H2AFZ,ENCBS699NWP,ENCSR331RGM,ENCFF866WKV,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",21973372.0
+T_OCI-LY7,H3K27ac,ENCBS006VZG,ENCSR447ZGY,ENCFF322PGT,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",18202042.0
+T_OCI-LY7,H3K79me2,ENCBS699NWP,ENCSR347DAG,ENCFF630AHI,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",17243166.0
+T_OCI-LY7,H3K4me3,ENCBS886BJZ,ENCSR005SXO,ENCFF058QUN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",17859524.0
+T_OCI-LY7,H3K4me2,ENCBS886BJZ,ENCSR850QKN,ENCFF958HVP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",20413945.0
+T_OCI-LY7,H3K36me3,ENCBS886BJZ,ENCSR243AIS,ENCFF426KLJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",11735112.0
+V_vagina,DNase-seq,ENCBS585SGJ,ENCSR437AYW,ENCFF552WGU,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",240094482.0
+V_myoepithelial_cell_of_mammary_gland,H3K9me3,ENCBS093HNZ,ENCSR241PXI,ENCFF090FEH,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",10852362.0
+T_chorion,H3K36me3,ENCBS587ZNQ,ENCSR449FFA,ENCFF024EUU,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",21347010.0
+T_chorion,H3K4me1,ENCBS587ZNQ,ENCSR244MNY,ENCFF107JYS,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",42514655.0
+T_chorion,H3K27ac,ENCBS587ZNQ,ENCSR499IIR,ENCFF430YHA,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",31633644.0
+T_chorion,H3K4me3,ENCBS587ZNQ,ENCSR787CAJ,ENCFF905JGF,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",19200079.0
+T_testis,H3K9me3,ENCBS631HJF,ENCSR376JOC,ENCFF572UCO,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",87837713.0
+T_testis,ATAC-seq,ENCBS133MOQ,ENCSR210NKB,ENCFF423JSR,GRCh38,101,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",71381232.0
+T_testis,DNase-seq,ENCBS141OYJ,ENCSR978QUT,ENCFF867KYD,GRCh38,36,paired-ended,Illumina HiSeq 4000,"John Stamatoyannopoulos, UW",220033538.0
+V_amnion,H3K27ac,ENCBS712BZZ,ENCSR430RVP,ENCFF853KPR,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",26837272.0
+T_vagina,H3K27ac,ENCBS047TWL,ENCSR718BTD,ENCFF445RUG,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",8718580.0
+T_vagina,H3K4me3,ENCBS047TWL,ENCSR258UUX,ENCFF227VQV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",25630052.0
+T_HL-60,H3K4me3,ENCBS215JQI,ENCSR000DUO,ENCFF646NNF,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",9469921.0
+T_HL-60,DNase-seq,ENCBS069ENC,ENCSR000ENU,ENCFF508CUD,GRCh38,36,single-ended,Illumina Genome Analyzer I,"John Stamatoyannopoulos, UW",30133334.0
+V_adrenal_gland,H3K4me3,ENCBS549JSH,ENCSR234YIU,ENCFF792QXD,GRCh38,36,single-ended,Illumina HiSeq 2500,"Bing Ren, UCSD",22178737.0
+T_NCI-H929,H2AFZ,ENCBS197CBA,ENCSR559IFS,ENCFF378SCW,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",58657242.0
+T_NCI-H929,H3K4me2,ENCBS571AQH,ENCSR692HIO,ENCFF311PFB,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",51526632.0
+T_NCI-H929,H3K9ac,ENCBS571AQH,ENCSR327OGS,ENCFF255NUV,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",30694467.0
+T_NCI-H929,H3K4me3,ENCBS197CBA,ENCSR082NQB,ENCFF818DII,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",29461987.0
+T_NCI-H929,H3K36me3,ENCBS197CBA,ENCSR562JTY,ENCFF479IOR,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",45689052.0
+T_NCI-H929,H3K4me1,ENCBS197CBA,ENCSR011CSR,ENCFF617CAT,GRCh38,76,paired-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",29616974.0
+T_NCI-H929,H3F3A,ENCBS197CBA,ENCSR536SZD,ENCFF678EEL,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",27840870.0
+T_SJCRH30,DNase-seq,ENCBS598ERL,ENCSR700ILE,ENCFF477YUQ,GRCh38,76,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",169717196.0
+T_peripheral_blood_mononuclear_cell,H3K9me3,ENCBS558KIK,ENCSR980XMX,ENCFF186JBV,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",17248810.0
+T_peripheral_blood_mononuclear_cell,H3K9ac,ENCBS206BHY,ENCSR969DAF,ENCFF974PLJ,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",28880154.0
+T_peripheral_blood_mononuclear_cell,H3K4me3,ENCBS558KIK,ENCSR368YPC,ENCFF126SQQ,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",18004607.0
+T_peripheral_blood_mononuclear_cell,H3K27me3,ENCBS558KIK,ENCSR866UQO,ENCFF883IAD,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",22775029.0
+T_peripheral_blood_mononuclear_cell,H3K27ac,ENCBS558KIK,ENCSR615HXA,ENCFF564QQO,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",21238612.0
+T_peripheral_blood_mononuclear_cell,H3K4me1,ENCBS558KIK,ENCSR482QXO,ENCFF803AQX,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",20182423.0
+B_MG63,H3K36me3,ENCBS760DRY,ENCSR380ORO,ENCFF876QRO,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",115777400.0
+B_MG63,H3K9me3,ENCBS760DRY,ENCSR744EKG,ENCFF201RFI,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",115390342.0
+B_MG63,H3K4me3,ENCBS706ARR,ENCSR579SNM,ENCFF901IPC,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",102183764.0
+B_MG63,H3K27me3,ENCBS760DRY,ENCSR804JFU,ENCFF444CLH,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",100877594.0
+V_CD4-positive_alpha-beta_memory_T_cell,H3K4me1,ENCBS800QLP,ENCSR887ESB,ENCFF084RYS,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bradley Bernstein, Broad",20372714.0
+T_myoepithelial_cell_of_mammary_gland,H3K4me1,ENCBS093HNZ,ENCSR813ULW,ENCFF466ITQ,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",19157439.0
+T_myoepithelial_cell_of_mammary_gland,H3K9ac,ENCBS093HNZ,ENCSR365DWX,ENCFF775DRA,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",9209029.0
+T_myoepithelial_cell_of_mammary_gland,H3K4me3,ENCBS093HNZ,ENCSR287YDU,ENCFF359ANK,GRCh38,75,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",11428000.0
+T_myoepithelial_cell_of_mammary_gland,H3K27me3,ENCBS093HNZ,ENCSR517CFV,ENCFF054CBD,GRCh38,76,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",17036820.0
+T_myoepithelial_cell_of_mammary_gland,H3K36me3,ENCBS093HNZ,ENCSR160CPS,ENCFF471JZC,GRCh38,75,single-ended,Illumina Genome Analyzer IIx,"Joseph Costello, UCSF",19954096.0
+V_mesenchymal_stem_cell,H2AFZ,ENCBS732PNZ,ENCSR526NKM,ENCFF902FFP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",18275060.0
+V_mesenchymal_stem_cell,H3K79me1,ENCBS012DXH,ENCSR594AQO,ENCFF125HIJ,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",39528040.0
+V_mesenchymal_stem_cell,H3K18ac,ENCBS732PNZ,ENCSR604THF,ENCFF172HAP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",16814220.0
+V_mesenchymal_stem_cell,H3K9ac,ENCBS012DXH,ENCSR701KJD,ENCFF647AMP,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",9406175.0
+T_SJSA1,DNase-seq,ENCBS489PLT,ENCSR620WAR,ENCFF204JPE,GRCh38,36,paired-ended,Illumina HiSeq 2000,"John Stamatoyannopoulos, UW",297446652.0
+B_Caco-2,H3K9me3,ENCBS859QEM,ENCSR401WUV,ENCFF445YBG,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",100691362.0
+B_Caco-2,H3K4me1,ENCBS859QEM,ENCSR061UOM,ENCFF737KSB,GRCh38,100,paired-ended,Illumina HiSeq 4000,"Michael Snyder, Stanford",101366246.0
+V_testis,H3K4me3,ENCBS631HJF,ENCSR611DJQ,ENCFF495UCL,GRCh38,76,single-ended,Illumina HiSeq 2500,"Bradley Bernstein, Broad",46255073.0
+V_chorion,H3K27me3,ENCBS587ZNQ,ENCSR241JLU,ENCFF329AIM,GRCh38,75,single-ended,Illumina HiSeq 2000,"Joseph Costello, UCSF",32795152.0
+T_occipital_lobe,DNase-seq,ENCBS312LJS,ENCSR859CZM,ENCFF436JHH,GRCh38,36,paired-ended,Illumina HiSeq 2500,"John Stamatoyannopoulos, UW",456064702.0
+V_neural_stem_progenitor_cell,H3K4me1,ENCBS104PYO,ENCSR254NLC,ENCFF023JGZ,GRCh38,36,single-ended,Illumina Genome Analyzer IIx,"Bing Ren, UCSD",38237482.0
+V_neural_stem_progenitor_cell,H2BK15ac,ENCBS289YMC,ENCSR123JZO,ENCFF359QSN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",25088367.0
+V_neural_stem_progenitor_cell,H3K14ac,ENCBS776ACY,ENCSR687EBF,ENCFF407RHN,GRCh38,36,single-ended,Illumina HiSeq 2000,"Bing Ren, UCSD",32903878.0
+V_GM06990,H3K27me3,ENCBS987SKT,ENCSR000DQU,ENCFF900TWR,GRCh38,36,single-ended,Illumina Genome Analyzer,"John Stamatoyannopoulos, UW",9703746.0

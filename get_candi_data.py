@@ -1612,7 +1612,7 @@ class MetadataCSVExporter:
         columns = [
             'biosample_name', 'assay_name', 'bios_accession', 'exp_accession', 
             'file_accession', 'assembly', 'read_length', 'run_type', 
-            'sequencing_platform', 'lab'
+            'sequencing_platform', 'lab', 'depth'
         ]
         
         # Reorder columns and fill missing values
@@ -1672,7 +1672,8 @@ class MetadataCSVExporter:
                         'read_length': self._extract_field(metadata, 'read_length'),
                         'run_type': self._extract_field(metadata, 'run_type'),
                         'sequencing_platform': self._extract_field(metadata, 'sequencing_platform'),
-                        'lab': self._extract_field(metadata, 'lab')
+                        'lab': self._extract_field(metadata, 'lab'),
+                        'depth': self._extract_depth(assay_path)
                     }
                     
                     # Clean up experiment accession (remove /experiments/ prefix)
@@ -1692,6 +1693,31 @@ class MetadataCSVExporter:
         if field_name in metadata and isinstance(metadata[field_name], dict):
             return metadata[field_name].get('2')
         return None
+    
+    def _extract_depth(self, assay_path: str) -> Optional[float]:
+        """Extract sequencing depth from signal_DSF1_res25/metadata.json."""
+        try:
+            # Path to the DSF1 metadata file
+            dsf_metadata_path = os.path.join(assay_path, "signal_DSF1_res25", "metadata.json")
+            
+            if not os.path.exists(dsf_metadata_path):
+                self.logger.warning(f"DSF1 metadata not found: {dsf_metadata_path}")
+                return None
+            
+            # Load the DSF metadata
+            with open(dsf_metadata_path, 'r') as f:
+                dsf_metadata = json.load(f)
+            
+            # Extract depth value
+            depth = dsf_metadata.get('depth')
+            if depth is not None:
+                return float(depth)
+            
+            return None
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting depth from {assay_path}: {e}")
+            return None
 
 
 class CANDIDataPipeline:

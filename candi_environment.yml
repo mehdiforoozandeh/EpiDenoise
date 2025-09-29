@@ -1,0 +1,30 @@
+name: candi
+channels:
+  - conda-forge
+  - bioconda
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  # Core scientific packages (will use system modules)
+  # - numpy
+  # - scipy  
+  # - pandas
+  # - matplotlib
+  - pip:
+      # PyTorch ecosystem
+      - torch --index-url https://download.pytorch.org/whl/cu121
+      - torchvision --index-url https://download.pytorch.org/whl/cu121
+      - torchaudio --index-url https://download.pytorch.org/whl/cu121
+      - torchinfo
+      # ML packages
+      - scikit-learn
+      - seaborn
+      - imageio
+      # Bioinformatics
+      - pyBigWig
+      - pybedtools
+      - intervaltree
+      - psutil

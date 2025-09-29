@@ -1053,7 +1053,9 @@ class PRETRAIN(object):
         else:
             return self.model
 
-def Train_CANDI(hyper_parameters, eic=False, checkpoint_path=None, DNA=False, suffix="", prog_mask=False, device=None, HPO=False, save_root_dir: str | None = None):
+def Train_CANDI(
+    hyper_parameters, eic=False, checkpoint_path=None, DNA=False, 
+    suffix="", prog_mask=False, device=None, HPO=False, save_root_dir=None):
     if eic:
         arch="eic"
     else:
@@ -1246,7 +1248,7 @@ def main():
     parser = argparse.ArgumentParser(description="Train the model with specified hyperparameters")
 
     # Hyperparameters
-    parser.add_argument('--data_path', type=str, default="/project/compbio-lab/encode_data/", help='Path to the data')
+    parser.add_argument('--data_path', type=str, default="/home/mforooz/projects/def-maxwl/mforooz/", help='Path to the data')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--n_cnn_layers', type=int, default=3, help='Number of CNN layers')
     parser.add_argument('--conv_kernel_size', type=int, default=3, help='Convolution kernel size')
@@ -1268,7 +1270,6 @@ def main():
     parser.add_argument('--hpo', action='store_true', help='Flag to enable hyperparameter optimization')
     parser.add_argument('--shared_decoders', action='store_true', help='Flag to enable shared decoders for pval and count')
     parser.add_argument('--suffix', type=str, default='', help='Optional suffix for model name')
-    parser.add_argument('--merge_ct', action='store_true', help='Flag to enable merging celltypes')
     parser.add_argument('--loci_gen', type=str, default="ccre", help='Loci generation method')
 
     parser.add_argument('--optim', type=str, default="sgd", help='optimizer')
@@ -1288,12 +1289,18 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     separate_decoders = not args.shared_decoders
+
+    if args.eic:
+        data_path = args.data_path + "DATA_CANDI_EIC/"
+    else:
+        data_path = args.data_path + "DATA_CANDI_MERGED/"
+
     merge_ct = True
     must_have_chr_access = True
 
     # Convert parsed arguments into a dictionary for hyperparameters
     hyper_parameters = {
-        "data_path": args.data_path,
+        "data_path": data_path,
         "dropout": args.dropout,
         "n_cnn_layers": args.n_cnn_layers,
         "conv_kernel_size": args.conv_kernel_size,

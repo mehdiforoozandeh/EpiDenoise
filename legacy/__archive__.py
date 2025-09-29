@@ -10243,3 +10243,298 @@ class CANDI_DNA_Encoder(nn.Module):
 
 #========================================================================================================#
 
+class ENCODE_IMPUTATION_DATASET(object):
+    def __init__(self, path):
+        """
+        each pkl.gz file is for one biosample and is a dictionary:
+        d = {
+            "assay1":[list of several pairs of ([chr, start, end], [signal_array]) ],
+            "assay2":[list of several pairs of ([chr, start, end], [signal_array]) ],
+            "assay3":[list of several pairs of ([chr, start, end], [signal_array]) ],
+        }
+
+        let's say we have A assays, and M sample ( len(d["assay1"])=M ).
+        signal_arrays are of the same length and for all assays, signal_array[i] corresponds to the same genomic position. 
+        if we have M pairs of ([chr, start, end], [signal_array]) for each assay, we will have M samples of size: (len(signal_array), number_of_assays)
+        """
+
+        self.path = path
+        self.all_assays = ['M{:02d}'.format(i) for i in range(1, 36)]
+        self.all_ct = ['C{:02d}'.format(i) for i in range(1, 52)]
+
+        availability = {}
+        for f in os.listdir(self.path):
+            if ".bigwig" in f: 
+                if f[:3] not in availability.keys():
+                    availability[f[:3]] = 0
+                availability[f[:3]] += 1
+                
+
+        self.biosamples = {}
+        for f in os.listdir(self.path):
+            if ".pkl.gz" in f: 
+                self.biosamples[f[:3]] = f"{self.path}/{f}"
+        
+        # Sort the keys in availability in descending order
+        sorted_keys = sorted(availability, key=availability.get, reverse=True)
+
+        # Create a new dictionary with sorted keys
+        self.biosamples = {key: self.biosamples[key] for key in sorted_keys if key in self.biosamples}
+
+        self.preprocessed_datasets = []
+        for f in os.listdir(self.path):
+            if ".pt" in f and "mixed_dataset" in f: 
+                self.preprocessed_datasets.append(f"{self.path}/{f}")
+        
+    def get_biosample_pkl(self, pkl_path):
+        with gzip.open(pkl_path, 'rb') as f:
+            loaded_file = pickle.load(f)
+
+        bios_assays = loaded_file.keys()
+        assay_availability = {ass: (True if ass in bios_assays else False) for ass in self.all_assays}
+
+        M = len(loaded_file[list(loaded_file.keys())[0]])
+        L = len(loaded_file[list(loaded_file.keys())[0]][0][1])
+        D = len(self.all_assays)
+
+        missing_f_i = []
+        # Initialize an empty list to hold all samples
+        all_samples = []
+        
+        # Iterate over all assays
+        for i, assay in enumerate(self.all_assays):
+            if assay_availability[assay]:
+                # If assay is available, append its signal arrays to all_samples
+                assay_samples = []
+                for j in range(len(loaded_file[assay])):
+                    assay_samples.append(loaded_file[assay][j][1])
+
+            else:
+                missing_f_i.append(i)
+                # If assay is not available, append -1 of appropriate shape
+                assay_samples = []
+                for j in range(M):
+                    assay_samples.append([-1 for _ in range(L)])
+            
+            all_samples.append(assay_samples)
+
+        # Convert all_samples to a numpy array and transpose to get shape (M, L, D)
+        all_samples_tensor = np.array(all_samples, dtype=np.float32).transpose(1, 2, 0)
+
+        # Convert numpy array to PyTorch tensor
+        all_samples_tensor = torch.from_numpy(all_samples_tensor)
+        all_samples_tensor = all_samples_tensor.float() 
+
+        # Create a mask tensor
+        mask = (all_samples_tensor == -1)
+
+        return all_samples_tensor, mask, missing_f_i
+    
+    def get_dataset_pt(self, pt_path):
+        ds = torch.load(pt_path)
+        mask = (ds == -1)
+        mask_2 = (ds.sum(dim=1) < 0) # missing assay pattern per sample
+
+        indices = [torch.nonzero(mask_2[i, :], as_tuple=True)[0].tolist() for i in range(mask_2.shape[0])]
+
+        unique_indices = [list(x) for x in set(tuple(x) for x in indices)]
+        pattern_dict = {tuple(pattern): [] for pattern in unique_indices}
+
+        for i, pattern in enumerate(indices):
+            pattern_dict[tuple(pattern)].append(i)
+
+        return ds, mask, pattern_dict
+       
+
+       
+class DataMasker:
+    def __init__(self, mask_value, mask_percentage, chunk_size=5, prog=False):
+        self.mask_value = mask_value
+        self.mask_percentage = mask_percentage
+        self.chunk_size = chunk_size
+
+    def mask_chunks(self, data):
+        data = data.clone()
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        num_masks = int((L * self.mask_percentage) / self.chunk_size)
+        for _ in range(num_masks):
+            start = random.randint(0, L - self.chunk_size)
+            mask_indicator[:, start:start+self.chunk_size, :] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mask_features(self, data, available_features):
+        self.available_features = available_features
+
+        data = data.clone()
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+
+        if len(available_features) == 1:
+            return data, mask_indicator
+        else:
+            num_features_to_mask = int(len(self.available_features) * self.mask_percentage) + 1
+
+        features_to_mask = random.sample(self.available_features, num_features_to_mask)
+
+        for feature in features_to_mask:
+            mask_indicator[:, :, feature] = True
+
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mask_feature30(self, data, metadata, availability):
+        B, L, F = data.shape
+
+        # Number of features to mask per sample in the batch
+        num_to_mask = []
+        num_available = availability.sum(dim=1)
+        for b in range(B):
+            if num_available[b] == 1:
+                num_to_mask.append(0)
+            else:
+                num_to_mask.append(max(1, int(num_available[b] * self.mask_percentage)))
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+        new_md = metadata.clone().float()
+        data = data.clone().float()
+
+        # Mask indices generation and masking operation
+        for b in range(B):
+            if num_to_mask[b] > 0:
+                available_indices = torch.where(availability[b] == 1)[0]  # Find indices where features are available
+                mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
+                actual_indices_to_mask = available_indices[mask_indices]  # Actual indices in the feature dimension
+
+                data[b, :, actual_indices_to_mask] = self.mask_value  # Mask the features in X
+                new_md[b, :, actual_indices_to_mask] = self.mask_value
+                new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
+
+        return data, new_md, new_A
+
+    def progressive(self, data, metadata, availability, num_mask):
+        B, L, F = data.shape
+
+        # Number of features to mask per sample in the batch
+        num_to_mask = []
+        num_available = availability.sum(dim=1)
+        for b in range(B):
+
+            if num_available[b] > num_mask:
+                num_to_mask.append(num_mask)
+
+            else:
+                num_to_mask.append(num_available[b] - 1)
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+        new_md = metadata.clone().float()
+        data = data.clone().float()
+
+        # Mask indices generation and masking operation
+        for b in range(B):
+            if num_to_mask[b] > 0:
+                available_indices = torch.where(availability[b] == 1)[0]  # Find indices where features are available
+                mask_indices = torch.randperm(available_indices.size(0))[:num_to_mask[b]]  # Randomly select indices to mask
+                actual_indices_to_mask = available_indices[mask_indices]  # Actual indices in the feature dimension
+
+                data[b, :, actual_indices_to_mask] = self.mask_value  # Mask the features in X
+                new_md[b, :, actual_indices_to_mask] = self.mask_value
+                new_A[b, actual_indices_to_mask] = self.mask_value  # Update the availability tensor to indicate masked features
+
+        return data, new_md, new_A
+    
+    def mask_chunk_features_30(self, data, metadata, availability):
+        B, L, F = data.shape
+
+        # Prepare the new availability tensor
+        new_A = availability.clone().float()
+        new_md = metadata.clone().float()
+        data = data.clone().float()
+
+        # Calculate the total number of signals and chunks to mask per batch sample
+        num_all_signals = L * availability.sum(dim=1)
+        num_masks = (num_all_signals * self.mask_percentage / self.chunk_size).int()
+
+        # Masking operation for each sample in the batch
+        for b in range(B):
+            for _ in range(num_masks[b]):
+                # Select a random chunk start and feature index
+                length_start = random.randint(0, L - self.chunk_size)
+                available_indices = torch.where(availability[b] == 1)[0]
+                if len(available_indices) == 0:
+                    continue
+                feature_start = random.choice(available_indices)
+                
+                # Apply the mask to the data, metadata, and update availability
+                data[b, length_start:length_start+self.chunk_size, feature_start] = self.mask_value
+                # new_md[b, length_start:length_start+self.chunk_size, feature_start] = self.mask_value
+                # new_A[b, feature_start] = 0  # Update the availability to indicate masked feature
+
+        return data, new_md, new_A
+
+    def mask_chunk_features(self, data, available_features):
+        self.available_features = available_features
+
+        data = data.clone()
+        N, L, F = data.size()
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        num_all_signals = L * len(self.available_features)
+        num_masks = int((num_all_signals * self.mask_percentage) / self.chunk_size)
+        for _ in range(num_masks):
+            length_start = random.randint(0, L - self.chunk_size)
+            feature_start = random.choice(self.available_features)
+            mask_indicator[:, length_start:length_start+self.chunk_size, feature_start] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_mask(self, data, available_features):
+        data = data.clone()
+        N, L, F = data.size()
+        slice_length = int(L * self.mask_percentage)
+        start = L // 2 - slice_length // 2
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        mask_indicator[:, start:start+slice_length, available_features] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_mask_features(self, data, available_features):
+        self.available_features = available_features
+
+        data = data.clone()
+        N, L, F = data.size()
+        slice_length = int(L * self.mask_percentage)
+        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        start = L // 2 - slice_length // 2
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+        for feature in features_to_mask:
+            mask_indicator[:, start:start+slice_length, feature] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
+
+    def mid_slice_focused_full_feature_mask(self, data, missing_mask_value, available_features):
+        self.available_features = available_features
+
+        data = data.clone()
+        N, L, F = data.size()
+
+        num_features_to_mask = int(len(self.available_features) * self.mask_percentage)
+        if num_features_to_mask == 0:
+            features_to_mask = available_features
+        else:
+            features_to_mask = random.sample(self.available_features, num_features_to_mask)
+        mask_indicator = torch.zeros_like(data, dtype=torch.bool)
+
+        # Mask features completely
+        for feature in features_to_mask:
+            data[:, :, feature] = missing_mask_value
+
+        # Mark only the middle part of those masked features
+        slice_length = int(L * self.mask_percentage)
+        start = L // 2 - slice_length // 2
+        mask_indicator[:, start:start+slice_length, features_to_mask] = True
+        data[mask_indicator] = self.mask_value
+        return data, mask_indicator
