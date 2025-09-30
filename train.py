@@ -23,6 +23,7 @@ from pathlib import Path
 import time
 from tqdm import tqdm
 import warnings
+import pandas as pd
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -84,11 +85,11 @@ class CANDI_TRAINER(object):
             'optimizer': 'adamax',
             'learning_rate': 1e-3,
             'context_length': 1200,
-            'scheduler': 'cosine',
             'epochs': 10,
             'batch_size': 25,
             'enable_validation': False,
             'DNA': True,
+            "specific_ema_alpha": 0.005,
             'inner_epochs': 1,
             **training_params  # Override defaults with provided params
         }
@@ -113,6 +114,20 @@ class CANDI_TRAINER(object):
         # Flags
         self.enable_validation = self.training_params.get('enable_validation', False)
         
+        # Initialize progress tracking
+        self.progress_data = []
+        self.batch_counter = 0
+        self.progress_dir = training_params.get('progress_dir', './progress')
+        self.progress_file = None  # Will be set when first batch is processed
+        
+        # Create progress directory if it doesn't exist
+        if self.is_main_process:
+            Path(self.progress_dir).mkdir(parents=True, exist_ok=True)
+        
+        # Initialize checkpoint tracking
+        self.checkpoint_dir = None
+        self.current_checkpoint_path = None
+        
     def _setup_optimizer_scheduler(self):
         """Setup optimizer and scheduler based on training parameters."""
         lr = self.training_params['learning_rate']
@@ -127,31 +142,8 @@ class CANDI_TRAINER(object):
         else:
             self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=0.9)
         
-        # Setup scheduler
-        if self.training_params['scheduler'].lower() == 'cosine':
-            #TODO update this
-            # Implement cosine annealing with warmup like in original code
-            epochs = self.training_params['epochs']
-            inner_epochs = self.training_params['inner_epochs']
-            # Estimate total steps - will be refined when dataset is available
-            # For now, use reasonable defaults
-            estimated_batches_per_epoch = 1000  # Will be updated in train()
-            num_total_steps = epochs * inner_epochs * estimated_batches_per_epoch
-            warmup_steps = inner_epochs * estimated_batches_per_epoch
-            
-            self.scheduler = SequentialLR(
-                self.optimizer,
-                schedulers=[
-                    LinearLR(self.optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_steps),
-                    CosineAnnealingLR(self.optimizer, T_max=(num_total_steps - warmup_steps), eta_min=0.0)
-                ],
-                milestones=[warmup_steps]
-            )
-            self.cosine_sched = True
-        else:
-            self.scheduler = torch.optim.lr_scheduler.StepLR(
-                self.optimizer, step_size=1, gamma=0.75)
-            self.cosine_sched = False
+        # Scheduler will be created in train() with actual batch counts
+        self.scheduler = None
     
     def _setup(self):
         """
@@ -232,6 +224,10 @@ class CANDI_TRAINER(object):
         # Calculate estimated batches per epoch for progress tracking
         estimated_batches_per_epoch = self._estimate_batches_per_epoch()
         
+        # Setup cosine scheduler with actual batch counts
+        if self.scheduler is None:
+            self._setup_cosine_scheduler(estimated_batches_per_epoch)
+        
         # Create DataLoader with dynamic num_workers based on CPU count
         # Reduce workers per process in DDP to avoid resource contention
         cpu_count = multiprocessing.cpu_count()
@@ -257,7 +253,6 @@ class CANDI_TRAINER(object):
             
             # Process batches from CANDIIterableDataset
             batch_count = 0
-            # try:
             for batch_idx, batch in enumerate(dataloader):
                 # Validate batch structure
                 if not self._validate_batch(batch):
@@ -294,25 +289,23 @@ class CANDI_TRAINER(object):
                 if self.is_main_process:
                     self._print_batch_log(metrics, loss_dict, batch_idx, epoch, batch_processing_time)
                     
-                # except Exception as e:
-                #     if self.is_main_process:
-                #         print(f"Warning: Error processing batch {batch_idx}: {e}")
-                #     continue
                 
                 # Learning rate scheduling - cosine scheduler steps per batch
-                if self.cosine_sched:
-                    self.scheduler.step()
+                if self.scheduler is not None:
+                    # Check if we've exceeded the total steps
+                    if hasattr(self, 'total_scheduler_steps') and self.current_scheduler_step >= self.total_scheduler_steps:
+                        if self.is_main_process and batch_idx % 1000 == 0:  # Only print occasionally
+                            print(f"Warning: Scheduler has completed all {self.total_scheduler_steps} steps. Continuing with final learning rate.")
+                    else:
+                        try:
+                            self.scheduler.step()
+                            if hasattr(self, 'current_scheduler_step'):
+                                self.current_scheduler_step += 1
+                        except (ZeroDivisionError, ValueError) as e:
+                            if self.is_main_process:
+                                print(f"Warning: Scheduler step failed: {e}. Continuing with current learning rate.")
+                            # Continue training without stepping the scheduler
                     
-            # except Exception as e:
-            #     error_msg = f"Error during data loading in epoch {epoch + 1}: {e}"
-            #     if self.is_main_process:
-            #         print(f"Error: {error_msg}")
-            #         # Log more details for debugging
-            #         if "division by zero" in str(e).lower():
-            #             print("Error: Division by zero error detected. This may be due to zero variance in target data.")
-            #     # Don't crash completely, try to continue with next epoch
-            #     continue
-                
             # Run validation at epoch end if enabled
             validation_summary = None
             if self.enable_validation and self.is_main_process:
@@ -322,13 +315,27 @@ class CANDI_TRAINER(object):
             if self.is_main_process:
                 print(f"Epoch {epoch+1} complete - Processed {batch_count} batches")
                 
-            # Step scheduler per epoch for non-cosine schedulers
-            if not self.cosine_sched:
-                self.scheduler.step()
+            # Save progress at end of each epoch
+            if self.is_main_process and self.progress_data:
+                self._save_progress_to_csv(epoch, batch_count)
+            
+            # Save checkpoint after each epoch (only if saving is enabled)
+            if hasattr(self, 'model_name') and self.model_name and not self.training_params.get('no_save', False):
+                self._save_checkpoint(epoch, self.model_name)
                 
             # Synchronize processes at epoch end if using DDP
             if self.is_ddp:
                 dist.barrier()
+        
+        # Save final progress data
+        if self.is_main_process and self.progress_data:
+            self._save_progress_to_csv(epoch, batch_count)
+            print(f"Final training progress saved with {len(self.progress_data)} total records")
+        
+        # Clean up final checkpoint since we'll save the final model
+        if self.is_main_process and self.current_checkpoint_path and self.current_checkpoint_path.exists():
+            self.current_checkpoint_path.unlink()
+            print(f"🗑️  Removed final checkpoint: {self.current_checkpoint_path.name}")
         
         return self.model
     
@@ -565,8 +572,7 @@ class CANDI_TRAINER(object):
         }
         
         # Update progress monitoring and check for LR adjustment
-        self._update_progress_monitoring(metrics, loss_dict)
-        self._adjust_lr_if_needed()
+        self._update_progress_monitoring(metrics, loss_dict, self.training_params.get('specific_ema_alpha', 0.005))
         
         # Add metrics to return dictionary
         return_dict = {**loss_dict, **metrics}
@@ -641,6 +647,34 @@ class CANDI_TRAINER(object):
             if self.is_main_process:
                 print(f"Warning: Could not estimate batches per epoch: {e}")
             return None
+    
+    def _setup_cosine_scheduler(self, batches_per_epoch):
+        """Setup cosine scheduler with actual batch counts."""
+        epochs = self.training_params['epochs']
+        inner_epochs = self.training_params['inner_epochs']
+        
+        # Calculate actual total steps
+        num_total_steps = epochs * inner_epochs * batches_per_epoch
+        warmup_steps = inner_epochs * batches_per_epoch
+        
+        # Ensure we have at least 1 step for the cosine annealing phase
+        cosine_steps = max(1, num_total_steps - warmup_steps)
+        
+        if self.is_main_process:
+            print(f"Setting up cosine scheduler: {num_total_steps} total steps, {warmup_steps} warmup steps, {cosine_steps} cosine steps")
+        
+        self.scheduler = SequentialLR(
+            self.optimizer,
+            schedulers=[
+                LinearLR(self.optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_steps),
+                CosineAnnealingLR(self.optimizer, T_max=cosine_steps, eta_min=0.0)
+            ],
+            milestones=[warmup_steps]
+        )
+        
+        # Store the total steps for tracking
+        self.total_scheduler_steps = num_total_steps
+        self.current_scheduler_step = 0
     
     def _validate(self):
         """
@@ -1095,8 +1129,13 @@ class CANDI_TRAINER(object):
         
         # Format batch processing time
         batch_time_str = "N/A"
+        batch_time = 0.0
         if batch_processing_time is not None:
             batch_time_str = f"{batch_processing_time:.2f}s"
+            batch_time = batch_processing_time
+        
+        # Record progress for CSV logging
+        self._record_progress(epoch, batch_idx, metrics, loss_dict, grad_norm, num_mask, batch_time, current_lr)
         
         # Format metrics similar to old_train_candi.py
         logstr = [
@@ -1125,16 +1164,129 @@ class CANDI_TRAINER(object):
             f"Imp_Count_MSE {metrics.get('imp_count_mse_median', 0.0):.2f}",
             f"Ups_Count_MSE {metrics.get('obs_count_mse_median', 0.0):.2f}",
             f"Imp_Pval_MSE {metrics.get('imp_pval_mse_median', 0.0):.2f}",
-            f"Ups_Pval_MSE {metrics.get('obs_pval_mse_median', 0.0):.2f}","\n",
-            f"Gradient_Norm {grad_norm:.2f}",
-            f"num_mask {num_mask}",
-            f"batch_time {batch_time_str}",
-            lr_printstatement, "\n"
+            f"Ups_Pval_MSE {metrics.get('obs_pval_mse_median', 0.0):.2f}",
         ]
         
+        # Add EMA values at the end if available
+        if hasattr(self, 'specific_ema') and self.specific_ema:
+            ema_str = " | ".join([
+                f"EMA_Imp_Pval_R2 {self.specific_ema.get('imp_pval_r2_median', 0.0):.2f}",
+                f"EMA_Imp_Pval_SRCC {self.specific_ema.get('imp_pval_spearman_median', 0.0):.2f}",
+                f"EMA_Imp_Pval_PCC {self.specific_ema.get('imp_pval_pearson_median', 0.0):.2f}", "\n",
+                f"EMA_Imp_Count_R2 {self.specific_ema.get('imp_count_r2_median', 0.0):.2f}",
+                f"EMA_Imp_Count_SRCC {self.specific_ema.get('imp_count_spearman_median', 0.0):.2f}",
+                f"EMA_Imp_Count_PCC {self.specific_ema.get('imp_count_pearson_median', 0.0):.2f}", "\n",
+                f"EMA_Imp_Count_Loss {self.specific_ema.get('imp_count_loss', 0.0):.2f}",
+                f"EMA_Obs_Count_Loss {self.specific_ema.get('obs_count_loss', 0.0):.2f}", "\n",
+                f"EMA_Imp_Pval_Loss {self.specific_ema.get('imp_pval_loss', 0.0):.2f}",
+                f"EMA_Obs_Pval_Loss {self.specific_ema.get('obs_pval_loss', 0.0):.2f}", "\n"
+            ])
+            logstr.extend(["\n", ema_str])
+        
+        logstr.extend([
+            f"Gradient_Norm {grad_norm:.2f}",
+            f"num_mask {num_mask}",
+            lr_printstatement,
+            f"batch_time {batch_time_str}"
+        ])
+        
+        logstr.append("\n")
         print(" | ".join(logstr))
     
-    def _update_progress_monitoring(self, metrics, loss_dict):
+    def _save_progress_to_csv(self, epoch, batch_idx):
+        """Save progress data to CSV file every 100 batches."""
+        if not self.progress_data:
+            return
+        
+        # Create filename if not already set (only once)
+        if self.progress_file is None:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.progress_file = Path(self.progress_dir) / f"training_progress_{timestamp}.csv"
+            if self.is_main_process:
+                print(f"Progress will be saved to: {self.progress_file}")
+            
+        # Create DataFrame from progress data
+        df = pd.DataFrame(self.progress_data)
+        
+        # Save to CSV (overwrite existing file)
+        df.to_csv(self.progress_file, index=False)
+        
+        if self.is_main_process:
+            print(f"Progress updated in {self.progress_file} ({len(df)} records)")
+    
+    def _record_progress(self, epoch, batch_idx, metrics, loss_dict, grad_norm, num_mask, batch_time, lr):
+        """Record all progress metrics for CSV logging."""
+        # Get EMA values if available
+        ema_values = {}
+        if hasattr(self, 'specific_ema') and self.specific_ema:
+            ema_values = {
+                'EMA_Imp_Pval_R2': self.specific_ema.get('imp_pval_r2_median', 0.0),
+                'EMA_Imp_Pval_SRCC': self.specific_ema.get('imp_pval_spearman_median', 0.0),
+                'EMA_Imp_Pval_PCC': self.specific_ema.get('imp_pval_pearson_median', 0.0),
+                'EMA_Imp_Count_R2': self.specific_ema.get('imp_count_r2_median', 0.0),
+                'EMA_Imp_Count_SRCC': self.specific_ema.get('imp_count_spearman_median', 0.0),
+                'EMA_Imp_Count_PCC': self.specific_ema.get('imp_count_pearson_median', 0.0),
+                'EMA_Imp_Count_Loss': self.specific_ema.get('imp_count_loss', 0.0),
+                'EMA_Obs_Count_Loss': self.specific_ema.get('obs_count_loss', 0.0),
+                'EMA_Imp_Pval_Loss': self.specific_ema.get('imp_pval_loss', 0.0),
+                'EMA_Obs_Pval_Loss': self.specific_ema.get('obs_pval_loss', 0.0)
+            }
+        
+        # Create record with all metrics
+        record = {
+            'epoch': epoch + 1,
+            'batch_idx': batch_idx,
+            'timestamp': datetime.now().isoformat(),
+            'learning_rate': lr,
+            'gradient_norm': grad_norm,
+            'num_mask': num_mask,
+            'batch_time': batch_time,
+            
+            # Loss values
+            'imp_count_loss': loss_dict.get('imp_count_loss', 0.0),
+            'obs_count_loss': loss_dict.get('obs_count_loss', 0.0),
+            'imp_pval_loss': loss_dict.get('imp_pval_loss', 0.0),
+            'obs_pval_loss': loss_dict.get('obs_pval_loss', 0.0),
+            'total_loss': loss_dict.get('total_loss', 0.0),
+            
+            # Imputation metrics
+            'imp_count_r2_median': metrics.get('imp_count_r2_median', 0.0),
+            'imp_count_spearman_median': metrics.get('imp_count_spearman_median', 0.0),
+            'imp_count_pearson_median': metrics.get('imp_count_pearson_median', 0.0),
+            'imp_count_mse_median': metrics.get('imp_count_mse_median', 0.0),
+            'imp_count_perplexity_median': metrics.get('imp_count_perplexity_median', 0.0),
+            
+            'imp_pval_r2_median': metrics.get('imp_pval_r2_median', 0.0),
+            'imp_pval_spearman_median': metrics.get('imp_pval_spearman_median', 0.0),
+            'imp_pval_pearson_median': metrics.get('imp_pval_pearson_median', 0.0),
+            'imp_pval_mse_median': metrics.get('imp_pval_mse_median', 0.0),
+            'imp_pval_perplexity_median': metrics.get('imp_pval_perplexity_median', 0.0),
+            
+            # Upsampling metrics
+            'obs_count_r2_median': metrics.get('obs_count_r2_median', 0.0),
+            'obs_count_spearman_median': metrics.get('obs_count_spearman_median', 0.0),
+            'obs_count_pearson_median': metrics.get('obs_count_pearson_median', 0.0),
+            'obs_count_mse_median': metrics.get('obs_count_mse_median', 0.0),
+            'obs_count_perplexity_median': metrics.get('obs_count_perplexity_median', 0.0),
+            
+            'obs_pval_r2_median': metrics.get('obs_pval_r2_median', 0.0),
+            'obs_pval_spearman_median': metrics.get('obs_pval_spearman_median', 0.0),
+            'obs_pval_pearson_median': metrics.get('obs_pval_pearson_median', 0.0),
+            'obs_pval_mse_median': metrics.get('obs_pval_mse_median', 0.0),
+            'obs_pval_perplexity_median': metrics.get('obs_pval_perplexity_median', 0.0),
+            
+            # EMA values
+            **ema_values
+        }
+        
+        # Add to progress data
+        self.progress_data.append(record)
+        
+        # Save to CSV every 100 batches or every batch if it's the first few batches
+        if batch_idx % 100 == 0 or batch_idx < 10:
+            self._save_progress_to_csv(epoch, batch_idx)
+    
+    def _update_progress_monitoring(self, metrics, loss_dict, specific_ema_alpha = 0.005):
         """
         Update progress monitoring with EMA tracking and check for learning rate adjustment.
         
@@ -1142,108 +1294,40 @@ class CANDI_TRAINER(object):
             metrics: Dictionary of computed metrics
             loss_dict: Dictionary of loss values
         """
-        if not hasattr(self, 'progress_monitor'):
-            self.progress_monitor = {}
-            self.prog_mon_ema = {}
-            self.prog_mon_best_so_far = {}
-            self.no_prog_mon_improvement = 0
-            self.prog_monitor_patience = self.training_params.get('prog_monitor_patience', 150)
-            self.prog_monitor_delta = self.training_params.get('prog_monitor_delta', 1e-5)
+            
+        # Initialize specific EMA tracking for requested metrics (alpha=0.005)
+        if not hasattr(self, 'specific_ema'):
+            self.specific_ema = {}
+            self.specific_ema_alpha = specific_ema_alpha
         
-        # Metrics to monitor (using median values from per-feature computation)
-        monitor_keys = [
-            "imp_pval_r2_median", "imp_pval_pearson_median", "imp_pval_spearman_median", 
-            "imp_count_r2_median", "imp_count_pearson_median", "imp_count_spearman_median",
-            "obs_pval_r2_median", "obs_pval_pearson_median", "obs_pval_spearman_median",
-            "obs_count_r2_median", "obs_count_pearson_median", "obs_count_spearman_median"
-        ]
         
         # Add loss values (negated for monitoring increasing trends)
         loss_keys = ["imp_count_loss", "obs_count_loss", "imp_pval_loss", "obs_pval_loss"]
         
-        # Update progress monitoring
-        for key in monitor_keys:
-            if key in metrics:
-                value = metrics[key]
-                if isinstance(value, (int, float)) and not np.isnan(value) and not np.isinf(value):
-                    # Initialize lists if needed
-                    if key not in self.progress_monitor:
-                        self.progress_monitor[key] = []
-                    self.progress_monitor[key].append(value)
-                    
-                    # Update EMA
-                    if key not in self.prog_mon_ema:
-                        self.prog_mon_ema[key] = value
-                    else:
-                        alpha = 0.01  # EMA smoothing factor from original
-                        self.prog_mon_ema[key] = alpha * value + (1 - alpha) * self.prog_mon_ema[key]
-                    
-                    # Update best so far
-                    if key not in self.prog_mon_best_so_far:
-                        self.prog_mon_best_so_far[key] = value
-        
-        # Update loss monitoring (negated values)
-        for key in loss_keys:
-            if key in loss_dict:
-                value = -1 * loss_dict[key]  # Negate for increasing trend monitoring
-                if isinstance(value, (int, float)) and not np.isnan(value) and not np.isinf(value):
-                    if key not in self.progress_monitor:
-                        self.progress_monitor[key] = []
-                    self.progress_monitor[key].append(value)
-                    
-                    if key not in self.prog_mon_ema:
-                        self.prog_mon_ema[key] = value
-                    else:
-                        alpha = 0.005
-                        self.prog_mon_ema[key] = alpha * value + (1 - alpha) * self.prog_mon_ema[key]
-                    
-                    if key not in self.prog_mon_best_so_far:
-                        self.prog_mon_best_so_far[key] = value
-    
-    def _adjust_lr_if_needed(self):
-        """
-        Check for improvement in EMA metrics and adjust learning rate if needed.
-        Only applies to non-cosine schedulers (cosine schedulers step per batch).
-        """
-        if self.cosine_sched:
-            return  # Cosine scheduler handles its own stepping
-            
-        if not hasattr(self, 'prog_mon_ema') or len(self.prog_mon_ema) == 0:
-            return
-        
-        # Check improvement in key metrics (using median values from per-feature computation)
-        improvement_keys = [
-            "imp_pval_r2_median", "imp_pval_pearson_median", "imp_pval_spearman_median",
-            "imp_count_r2_median", "imp_count_pearson_median", "imp_count_spearman_median"
+        # Update specific EMA tracking for requested metrics
+        specific_metrics = [
+            "imp_pval_r2_median", "imp_count_r2_median",
+            "imp_pval_spearman_median", "imp_count_spearman_median", 
+            "imp_pval_pearson_median", "imp_count_pearson_median"
         ]
         
-        improved = False
-        for key in improvement_keys:
-            if key in self.prog_mon_ema and key in self.prog_mon_best_so_far:
-                current_ema = self.prog_mon_ema[key]
-                best_so_far = self.prog_mon_best_so_far[key]
-                
-                if current_ema > best_so_far + self.prog_monitor_delta:
-                    improved = True
-                    self.prog_mon_best_so_far[key] = max(best_so_far, current_ema)
-        
-        if not improved:
-            self.no_prog_mon_improvement += 1
-        else:
-            self.no_prog_mon_improvement = 0
-        
-        # Adjust learning rate if no improvement for too long
-        if self.no_prog_mon_improvement >= self.prog_monitor_patience:
-            if self.is_main_process:
-                print(f"No improvement in EMA for {self.no_prog_mon_improvement} steps. Adjusting learning rate...")
-                current_lr = self.optimizer.param_groups[0]['lr']
-                self.scheduler.step()
-                new_lr = self.optimizer.param_groups[0]['lr']
-                print(f"Learning rate adjusted from {current_lr:.2e} to {new_lr:.2e}")
-            
-            # Increase patience and reset counter (from original implementation)
-            self.prog_monitor_patience *= 1.05
-            self.no_prog_mon_improvement = 0
+        for key in specific_metrics + loss_keys:
+            if key in metrics:
+                if key not in metrics:
+                    continue
+                value = metrics[key]
+                if key not in self.specific_ema:
+                    self.specific_ema[key] = value
+                else:
+                    self.specific_ema[key] = self.specific_ema_alpha * value + (1 - self.specific_ema_alpha) * self.specific_ema[key]
+            else:
+                if key not in loss_dict:
+                    continue
+                value = loss_dict[key]
+                if key not in self.specific_ema:
+                    self.specific_ema[key] = value
+                else:
+                    self.specific_ema[key] = self.specific_ema_alpha * value + (1 - self.specific_ema_alpha) * self.specific_ema[key]
     
     def _log_metrics(self, metrics, loss_dict, batch_idx):
         """
@@ -1365,6 +1449,39 @@ class CANDI_TRAINER(object):
                 print(f"    {loss_name}: {loss_value:.4f}")
         
         print(f"  Memory allocated: {torch.cuda.memory_allocated() / 1024**2:.1f} MB" if torch.cuda.is_available() else "  CPU mode")
+    
+    def _save_checkpoint(self, epoch, model_name):
+        """
+        Save model checkpoint after each epoch.
+        
+        Args:
+            epoch: Current epoch number (0-indexed)
+            model_name: Name of the model for checkpoint naming
+        """
+        if not self.is_main_process:
+            return
+            
+        # Set up checkpoint directory if not already done
+        if self.checkpoint_dir is None:
+            self.checkpoint_dir = Path(self.progress_dir) / "checkpoints"
+            self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Remove previous checkpoint if it exists
+        if self.current_checkpoint_path and self.current_checkpoint_path.exists():
+            self.current_checkpoint_path.unlink()
+            if self.is_main_process:
+                print(f"🗑️  Removed previous checkpoint: {self.current_checkpoint_path.name}")
+        
+        # Create new checkpoint path
+        checkpoint_name = f"{model_name}_epoch_{epoch+1}.pt"
+        self.current_checkpoint_path = self.checkpoint_dir / checkpoint_name
+        
+        # Save model state dict
+        model_to_save = self.model.module if hasattr(self.model, 'module') else self.model
+        torch.save(model_to_save.state_dict(), self.current_checkpoint_path)
+        
+        if self.is_main_process:
+            print(f"💾 Epoch {epoch+1} checkpoint saved: {self.current_checkpoint_path.name}")
 
 ##=========================================== Loader =====================================================##
 
@@ -1470,11 +1587,14 @@ def create_argument_parser():
             # Multi-GPU training with mixed precision
             python train.py --eic --ddp --mixed-precision --epochs 20 --batch-size 32
             
-            # Custom model architecture
-            python train.py --merged --nhead 12 --n-sab-layers 6 --expansion-factor 4
+            # Custom model architecture with suffix
+            python train.py --merged --nhead 12 --n-sab-layers 6 --expansion-factor 4 --name-suffix "experiment1"
             
             # Training with validation and checkpointing
             python train.py --eic --enable-validation --save-dir ./models --checkpoint-freq 5
+            
+            # U-Net model with custom loci strategy
+            python train.py --eic --unet --loci-gen full_chr --num-loci 1000 --name-suffix "unet_test"
                     """)
     
     # === DATA CONFIGURATION ===
@@ -1535,9 +1655,7 @@ def create_argument_parser():
     training_group.add_argument('--optimizer', type=str, default='adamax',
                                choices=['adamax', 'adam', 'adamw', 'sgd'],
                                help='Optimizer type')
-    training_group.add_argument('--scheduler', type=str, default='cosine',
-                               choices=['cosine', 'step', 'none'],
-                               help='Learning rate scheduler')
+    # Scheduler is always cosine (linear warmup + cosine annealing)
     training_group.add_argument('--inner-epochs', type=int, default=1,
                                help='Number of inner epochs per batch')
     training_group.add_argument('--enable-validation', action='store_true',
@@ -1566,12 +1684,16 @@ def create_argument_parser():
     io_group = parser.add_argument_group('Model I/O')
     io_group.add_argument('--save-dir', type=str, default='./models',
                          help='Directory to save trained models')
+    io_group.add_argument('--progress-dir', type=str, default='./progress',
+                         help='Directory to save training progress CSV files')
     io_group.add_argument('--checkpoint', type=str, default=None,
                          help='Path to checkpoint to resume training from')
     io_group.add_argument('--checkpoint-freq', type=int, default=5,
                          help='Save checkpoint every N epochs')
     io_group.add_argument('--model-name', type=str, default=None,
                          help='Custom model name (auto-generated if not specified)')
+    io_group.add_argument('--name-suffix', type=str, default=None,
+                         help='Suffix to append to auto-generated model name (format: YYYYMMDD_HHMMSS_CANDI[UNET]_dataset_lociStrategy_numLoci_suffix)')
     io_group.add_argument('--no-save', action='store_true',
                          help='Do not save the trained model')
     
@@ -1586,10 +1708,8 @@ def create_argument_parser():
     advanced_group = parser.add_argument_group('Advanced Options')
     advanced_group.add_argument('--dsf-list', type=int, nargs='+', default=[1, 2],
                                help='Downsampling factors to use')
-    advanced_group.add_argument('--prog-monitor-patience', type=int, default=150,
-                               help='Patience for progress monitoring')
-    advanced_group.add_argument('--prog-monitor-delta', type=float, default=1e-5,
-                               help='Minimum improvement threshold for progress monitoring')
+    advanced_group.add_argument('--specific_ema_alpha', type=float, default=0.005,
+                               help='Alpha for specific EMA tracking')
     advanced_group.add_argument('--debug', action='store_true',
                                help='Enable debug mode with extra logging')
     
@@ -1738,23 +1858,30 @@ def setup_device(args):
     
     return device
 
-def generate_model_name(args):
+def generate_model_name(args, timestamp=None):
     """Generate a descriptive model name based on configuration."""
     if args.model_name:
         return args.model_name
     
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    # Use provided timestamp or generate new one
+    if timestamp is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
     dataset_type = "eic" if args.eic else "merged"
-    arch_type = "unet" if args.unet else "standard"
-    decoder_type = "shared" if not args.separate_decoders else "separate"
+    arch_type = "CANDI_UNET" if args.unet else "CANDI"
+    loci_strategy = args.loci_gen
+    num_loci = args.num_loci
     
     name_parts = [
-        f"CANDI_{dataset_type}_{arch_type}_{decoder_type}",
-        f"h{args.nhead}_l{args.n_sab_layers}",
-        f"{args.optimizer}_{args.scheduler}",
-        f"lr{args.learning_rate}",
-        timestamp
+        timestamp,
+        arch_type,
+        dataset_type,
+        f"{loci_strategy}_{num_loci}loci"
     ]
+    
+    # Add suffix if provided
+    if args.name_suffix:
+        name_parts.append(args.name_suffix)
     
     return "_".join(name_parts)
 
@@ -1794,7 +1921,7 @@ def print_training_summary(args, model, device):
 
     # Training info
     print(f"🎯 Training: {args.epochs} epochs, batch size {args.batch_size}")
-    print(f"   Optimizer: {args.optimizer.upper()}, LR: {args.learning_rate}, Scheduler: {args.scheduler}")
+    print(f"   Optimizer: {args.optimizer.upper()}, LR: {args.learning_rate}, Scheduler: Cosine (Linear Warmup + Cosine Annealing)")
     print(f"   Masking: Random masking")
 
     # System info
@@ -1910,16 +2037,16 @@ def main():
     training_params = {
         'optimizer': args.optimizer,
         'learning_rate': args.learning_rate,
-        'scheduler': args.scheduler,
         'epochs': args.epochs,
         'batch_size': args.batch_size,
         'inner_epochs': args.inner_epochs,
         'enable_validation': args.enable_validation,
         'use_mixed_precision': args.mixed_precision,
-        'prog_monitor_patience': args.prog_monitor_patience,
-        'prog_monitor_delta': args.prog_monitor_delta,
+        'specific_ema_alpha': args.specific_ema_alpha,
+        'progress_dir': args.progress_dir,
         'debug': args.debug,
-        'DNA': True
+        'DNA': True,
+        'no_save': args.no_save
     }
     
     # Create temporary dataset to get signal_dim and metadata information
@@ -1956,6 +2083,33 @@ def main():
         world_size=args.world_size if args.ddp else None
     )
     
+    # Generate timestamp once and use it consistently for model naming
+    # This ensures all files (progress CSV, checkpoints, final model) go to the same directory
+    training_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    model_name = generate_model_name(args, training_timestamp)
+    print(f"🏷️  Model name: {model_name}")
+    
+    # Create model directory and save config at start of training
+    if not args.no_save and (not args.ddp or args.rank == 0):
+        model_dir = Path(args.save_dir) / model_name
+        model_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save config at start of training
+        config_dict = {k.replace('_', '-'): v for k, v in vars(args).items() if v is not None}
+        config_dict['model_parameters'] = sum(p.numel() for p in model.parameters())
+        config_dict['signal_dim'] = signal_dim
+        config_dict['num_sequencing_platforms'] = num_sequencing_platforms
+        config_dict['num_runtypes'] = num_runtypes
+        
+        config_path = model_dir / f"{model_name}_config.json"
+        save_config_file(config_dict, config_path)
+        print(f"📝 Configuration saved to: {config_path}")
+        
+        # Update trainer's progress_dir to use the model directory
+        trainer.progress_dir = str(model_dir)
+        trainer.progress_file = None  # Reset progress file to use new directory
+        trainer.model_name = model_name  # Set model name for checkpoint saving
+    
     # Start training
     start_time = time.time()
     
@@ -1974,23 +2128,82 @@ def main():
     print(f"Duration: {int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}")
     print("=" * 80)
     
-    # Save model if requested
-    if not args.no_save and (not args.ddp or args.rank == 0):
-        save_dir = Path(args.save_dir)
-        save_dir.mkdir(parents=True, exist_ok=True)
+    # Debug information for model saving
+    print(f"🔍 Model saving debug info:")
+    print(f"   args.no_save: {args.no_save}")
+    print(f"   args.ddp: {args.ddp}")
+    print(f"   args.rank: {args.rank}")
+    print(f"   Condition result: {not args.no_save and (not args.ddp or args.rank == 0)}")
+    
+    # Save model if requested (with fallback for safety)
+    should_save = not args.no_save and (not args.ddp or args.rank == 0)
+    print(f"💾 Model saving decision: {should_save}")
+    
+    if should_save:
+        model_dir = Path(args.save_dir) / model_name
+        model_dir.mkdir(parents=True, exist_ok=True)
         
-        model_name = generate_model_name(args)
-        model_path = save_dir / f"{model_name}.pt"
+        model_path = model_dir / f"{model_name}.pt"
         
         print(f"💾 Saving trained model to: {model_path}")
-        torch.save(trained_model.state_dict(), model_path)
+        try:
+            # Handle DDP model unwrapping
+            model_to_save = trained_model.module if hasattr(trained_model, 'module') else trained_model
+            torch.save(model_to_save.state_dict(), model_path)
+            print(f"✅ Model successfully saved to: {model_path}")
+            
+            # Verify the file was actually created
+            if model_path.exists():
+                file_size = model_path.stat().st_size
+                print(f"✅ Model file verified: {file_size:,} bytes")
+            else:
+                print(f"❌ Model file was not created!")
+                return 1
+                
+        except Exception as e:
+            print(f"❌ Error saving model: {e}")
+            # Try to save to a fallback location
+            fallback_path = Path(args.save_dir) / f"fallback_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pt"
+            try:
+                model_to_save = trained_model.module if hasattr(trained_model, 'module') else trained_model
+                torch.save(model_to_save.state_dict(), fallback_path)
+                print(f"🆘 Fallback model saved to: {fallback_path}")
+            except Exception as e2:
+                print(f"❌ Fallback save also failed: {e2}")
+                return 1
         
-        # Save training configuration
-        config_path = save_dir / f"{model_name}_config.yaml"
-        config_dict = {k.replace('_', '-'): v for k, v in vars(args).items() if v is not None}
-        config_dict['training_duration'] = training_duration
-        config_dict['model_parameters'] = sum(p.numel() for p in trained_model.parameters())
-        save_config_file(config_dict, config_path)
+        # Update config with training duration
+        config_path = model_dir / f"{model_name}_config.json"
+        try:
+            if config_path.exists():
+                # Load existing config and update it
+                with open(config_path, 'r') as f:
+                    config_dict = json.load(f)
+                config_dict['training_duration'] = training_duration
+                config_dict['model_parameters'] = sum(p.numel() for p in model_to_save.parameters())
+                save_config_file(config_dict, config_path)
+                print(f"✅ Config updated with training duration: {config_path}")
+            else:
+                # Create new config if it doesn't exist
+                config_dict = {k.replace('_', '-'): v for k, v in vars(args).items() if v is not None}
+                config_dict['training_duration'] = training_duration
+                config_dict['model_parameters'] = sum(p.numel() for p in model_to_save.parameters())
+                save_config_file(config_dict, config_path)
+                print(f"✅ Config created: {config_path}")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not update config file: {e}")
+    else:
+        if args.no_save:
+            print("📝 Model saving disabled (--no-save flag)")
+        elif args.ddp and args.rank != 0:
+            print(f"📝 Skipping model save on non-main process (rank {args.rank})")
+        else:
+            print("📝 Model saving skipped for unknown reason")
+    
+    # Final summary
+    print("\n" + "=" * 80)
+    print("🎯 Training Session Complete")
+    print("=" * 80)
     
     return 0
         
