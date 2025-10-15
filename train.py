@@ -1,7 +1,7 @@
 from model import EmbedMetadata, ConvTower, DeconvTower, DualAttentionEncoderBlock, NegativeBinomialLayer, GaussianLayer, MONITOR_VALIDATION
-from model import CANDI, CANDI_LOSS, CANDI, CANDI_UNET, CANDI_Decoder, CANDI_DNA_Encoder
+from model import CANDI, CANDI_LOSS, CANDI, CANDI_UNET, CANDI_Decoder, CANDI_DNA_Encoder, PeakLayer
 from _utils import exponential_linspace_int, negative_binomial_loss, Gaussian, NegativeBinomial, compute_perplexity, DataMasker
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, roc_auc_score
 from scipy.stats import pearsonr, spearmanr
 import numpy as np
 from data import CANDIDataHandler, CANDIIterableDataset
@@ -127,7 +127,8 @@ class CANDI_TRAINER(object):
         # Initialize checkpoint tracking
         self.checkpoint_dir = None
         self.current_checkpoint_path = None
-        
+        self.last_table_lines = 0
+
     def _setup_optimizer_scheduler(self):
         """Setup optimizer and scheduler based on training parameters."""
         lr = self.training_params['learning_rate']
@@ -274,7 +275,7 @@ class CANDI_TRAINER(object):
                     continue
                 
                 # Extract loss and metrics
-                loss_keys = ['total_loss', 'obs_count_loss', 'imp_count_loss', 'obs_pval_loss', 'imp_pval_loss']
+                loss_keys = ['total_loss', 'obs_count_loss', 'imp_count_loss', 'obs_pval_loss', 'imp_pval_loss', 'obs_peak_loss', 'imp_peak_loss']
                 loss_dict = {k: result_dict[k] for k in loss_keys if k in result_dict}
                 metrics = {k: v for k, v in result_dict.items() if k not in loss_keys}
                 
@@ -287,9 +288,15 @@ class CANDI_TRAINER(object):
                 
                 # Print batch progress
                 if self.is_main_process:
-                    self._print_batch_log(metrics, loss_dict, batch_idx, epoch, batch_processing_time)
+                    try:
+                        self._print_batch_log(metrics, loss_dict, batch_idx, epoch, batch_processing_time)
+                    except Exception as e:
+                        if self.is_main_process:
+                            print(f"Warning: Failed to print batch log: {e}")
+                            print(f"Batch info: {batch_idx}, {epoch}, {batch_processing_time}")
+                            print(f"Metrics: {metrics}")
+                            print(f"Loss dict: {loss_dict}")
                     
-                
                 # Learning rate scheduling - cosine scheduler steps per batch
                 if self.scheduler is not None:
                     # Check if we've exceeded the total steps
@@ -359,7 +366,12 @@ class CANDI_TRAINER(object):
         y_meta = batch['y_meta'].float()      # [B, 4, F] - target metadata (convert to float)
         y_avail = batch['y_avail']            # [B, F] - target availability  
         y_pval = batch['y_pval'].float()      # [B, L, F] - target p-values (convert to float)
+        y_peaks = batch['y_peaks'].float()    # [B, L, F] - target peak data (convert to float)
         y_dna = batch['y_dna'].float()        # [B, L*25, 4] - target DNA sequence (convert to float)
+
+        control_data = batch['control_data'].float()   # [B, L, 1] - control signal data (convert to float)
+        control_meta = batch['control_meta'].float()   # [B, 4, 1] - control metadata (convert to float)
+        control_avail = batch['control_avail']         # [B, 1] - control availability
         
         # Apply masking to create imputation targets
         # Use the masker to create masked inputs
@@ -379,7 +391,7 @@ class CANDI_TRAINER(object):
         
         # Get signal_dim from dataset_params or calculate from aliases
         if hasattr(self.dataset, 'signal_dim'):
-            signal_dim = self.dataset.signal_dim
+            signal_dim = self.dataset.signal_dim 
         elif hasattr(self.dataset, 'aliases'):
             signal_dim = len(self.dataset.aliases['experiment_aliases'])
         else:
@@ -394,14 +406,21 @@ class CANDI_TRAINER(object):
         # It will mask 0 features if there's only 1 available, which is fine
         num_mask = min(random.randint(1, max(1, signal_dim - 1)), signal_dim - 1)
         x_data_masked, x_meta_masked, x_avail_masked = self.masker.mask_assays(x_data_masked, x_meta_masked, x_avail_masked, num_mask)
-        
-        # Store num_mask for logging
-        self.last_num_mask = num_mask
 
         # Create masks for loss computation
         token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}
         masked_map = (x_data_masked == token_dict["cloze_mask"])  # Imputation targets
         observed_map = (x_data_masked != token_dict["missing_mask"]) & (x_data_masked != token_dict["cloze_mask"])  # Upsampling targets
+
+        observed_map = observed_map.clone()
+        masked_map = masked_map.clone()
+
+        # Store num_mask for logging
+        self.last_num_mask = num_mask
+
+        x_data_masked = torch.cat([x_data_masked, control_data], dim=2)      # (B, L, F+1)
+        x_meta_masked = torch.cat([x_meta_masked, control_meta], dim=2)      # (B, 4, F+1)
+        x_avail_masked = torch.cat([x_avail_masked, control_avail], dim=1)   # (B, F+1)
         
         # Validate that we have observed regions (we need at least some data to train on)
         if not observed_map.any():
@@ -426,7 +445,7 @@ class CANDI_TRAINER(object):
                 with autocast('cuda'):
                     if self.training_params.get('DNA', False):
                         # Model expects DNA sequence
-                        output_p, output_n, output_mu, output_var = self.model(
+                        output_p, output_n, output_mu, output_var, output_peak = self.model(
                             x_data_masked, x_dna, x_meta_masked, y_meta
                         )
                     else:
@@ -434,7 +453,7 @@ class CANDI_TRAINER(object):
             else:
                 if self.training_params.get('DNA', False):
                     # Model expects DNA sequence
-                    output_p, output_n, output_mu, output_var = self.model(
+                    output_p, output_n, output_mu, output_var, output_peak = self.model(
                         x_data_masked, x_dna, x_meta_masked, y_meta
                     )
                 else:
@@ -451,23 +470,10 @@ class CANDI_TRAINER(object):
         
         # Validate model outputs before loss computation
         if torch.isnan(output_p).any() or torch.isnan(output_n).any() or \
-           torch.isnan(output_mu).any() or torch.isnan(output_var).any():
+           torch.isnan(output_mu).any() or torch.isnan(output_var).any() or \
+           torch.isnan(output_peak).any():
             if self.is_main_process:
                 print("Warning: NaN in model outputs! Skipping batch...")
-            return None
-        
-        # Validate target data before loss computation
-        masked_y_data = y_data[masked_map]
-        masked_y_pval = y_pval[masked_map]
-        
-        if torch.isnan(masked_y_data).any() or torch.isinf(masked_y_data).any():
-            if self.is_main_process:
-                print("Warning: NaN/Inf in masked target count data! Skipping batch...")
-            return None
-            
-        if torch.isnan(masked_y_pval).any() or torch.isinf(masked_y_pval).any():
-            if self.is_main_process:
-                print("Warning: NaN/Inf in masked target p-value data! Skipping batch...")
             return None
         
         try:
@@ -476,37 +482,39 @@ class CANDI_TRAINER(object):
                 with autocast('cuda'):
                     if has_masked_regions:
                         # Normal case: compute all losses
-                        obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
-                            output_p, output_n, output_mu, output_var, 
-                            y_data, y_pval, observed_map, masked_map
+                        obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss, obs_peak_loss, imp_peak_loss = self.criterion(
+                            output_p, output_n, output_mu, output_var, output_peak,
+                            y_data, y_pval, y_peaks, observed_map, masked_map
                         )
-                        total_loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                        total_loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss + obs_peak_loss + imp_peak_loss
                     else:
                         # No masked regions: only compute observed losses
-                        obs_count_loss, _, obs_pval_loss, _ = self.criterion(
-                            output_p, output_n, output_mu, output_var, 
-                            y_data, y_pval, observed_map, observed_map  # Use observed_map for both
+                        obs_count_loss, _, obs_pval_loss, _, obs_peak_loss, _ = self.criterion(
+                            output_p, output_n, output_mu, output_var, output_peak,
+                            y_data, y_pval, y_peaks, observed_map, observed_map  # Use observed_map for both
                         )
                         imp_count_loss = torch.tensor(0.0, device=self.device)
                         imp_pval_loss = torch.tensor(0.0, device=self.device)
-                        total_loss = obs_count_loss + obs_pval_loss
+                        imp_peak_loss = torch.tensor(0.0, device=self.device)
+                        total_loss = obs_count_loss + obs_pval_loss + obs_peak_loss
             else:
                 if has_masked_regions:
                     # Normal case: compute all losses
-                    obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss = self.criterion(
-                        output_p, output_n, output_mu, output_var, 
-                        y_data, y_pval, observed_map, masked_map
+                    obs_count_loss, imp_count_loss, obs_pval_loss, imp_pval_loss, obs_peak_loss, imp_peak_loss = self.criterion(
+                        output_p, output_n, output_mu, output_var, output_peak,
+                        y_data, y_pval, y_peaks, observed_map, masked_map
                     )
-                    total_loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss
+                    total_loss = obs_count_loss + obs_pval_loss + imp_pval_loss + imp_count_loss + obs_peak_loss + imp_peak_loss
                 else:
                     # No masked regions: only compute observed losses
-                    obs_count_loss, _, obs_pval_loss, _ = self.criterion(
-                        output_p, output_n, output_mu, output_var, 
-                        y_data, y_pval, observed_map, observed_map  # Use observed_map for both
+                    obs_count_loss, _, obs_pval_loss, _, obs_peak_loss, _ = self.criterion(
+                        output_p, output_n, output_mu, output_var, output_peak,
+                        y_data, y_pval, y_peaks, observed_map, observed_map  # Use observed_map for both
                     )
                     imp_count_loss = torch.tensor(0.0, device=self.device)
                     imp_pval_loss = torch.tensor(0.0, device=self.device)
-                    total_loss = obs_count_loss + obs_pval_loss
+                    imp_peak_loss = torch.tensor(0.0, device=self.device)
+                    total_loss = obs_count_loss + obs_pval_loss + obs_peak_loss
             
             # Check for NaN losses with detailed debugging
             if torch.isnan(total_loss).sum() > 0:
@@ -552,14 +560,14 @@ class CANDI_TRAINER(object):
         # Compute metrics for monitoring
         if has_masked_regions:
             metrics = self._compute_metrics(
-                output_p, output_n, output_mu, output_var,
-                y_data, y_pval, observed_map, masked_map
+                output_p, output_n, output_mu, output_var, output_peak,
+                y_data, y_pval, y_peaks, observed_map, masked_map
             )
         else:
             # Only compute observed metrics when no masking occurred
             metrics = self._compute_metrics(
-                output_p, output_n, output_mu, output_var,
-                y_data, y_pval, observed_map, torch.zeros_like(observed_map)  # Empty mask for imputation metrics
+                output_p, output_n, output_mu, output_var, output_peak,
+                y_data, y_pval, y_peaks, observed_map, torch.zeros_like(observed_map)  # Empty mask for imputation metrics
             )
         
         # Return loss dictionary for logging
@@ -568,7 +576,9 @@ class CANDI_TRAINER(object):
             'obs_count_loss': obs_count_loss.item(),
             'imp_count_loss': imp_count_loss.item(), 
             'obs_pval_loss': obs_pval_loss.item(),
-            'imp_pval_loss': imp_pval_loss.item()
+            'imp_pval_loss': imp_pval_loss.item(),
+            'obs_peak_loss': obs_peak_loss.item(),
+            'imp_peak_loss': imp_peak_loss.item()
         }
         
         # Update progress monitoring and check for LR adjustment
@@ -607,7 +617,8 @@ class CANDI_TRAINER(object):
                 dsf_list=self.dataset_params.get('dsf_list', [1, 2]),
                 includes=self.dataset_params.get('includes'),
                 excludes=self.dataset_params.get('excludes', []),
-                must_have_chr_access=self.dataset_params.get('must_have_chr_access', False)
+                must_have_chr_access=self.dataset_params.get('must_have_chr_access', False), 
+                bios_min_exp_avail_threshold=self.dataset_params.get('bios_min_exp_avail_threshold', 0)
             )
             
             # Get the actual counts after setup
@@ -720,15 +731,17 @@ class CANDI_TRAINER(object):
             self.model.train()
             return None, None
     
-    def _compute_metrics(self, output_p, output_n, output_mu, output_var, y_data, y_pval, observed_map, masked_map):
+    def _compute_metrics(self, output_p, output_n, output_mu, output_var, output_peak, y_data, y_pval, y_peaks, observed_map, masked_map):
         """
         Compute metrics per feature for both observed and imputed predictions.
         
         Args:
             output_p, output_n: Model outputs for negative binomial parameters [B, L, F]
             output_mu, output_var: Model outputs for Gaussian parameters [B, L, F]
+            output_peak: Model outputs for peak predictions [B, L, F]
             y_data: Target count data [B, L, F]
             y_pval: Target p-value data [B, L, F]
+            y_peaks: Target peak data [B, L, F]
             observed_map: Boolean mask for observed (upsampling) targets [B, L, F]
             masked_map: Boolean mask for masked (imputation) targets [B, L, F]
             
@@ -752,6 +765,8 @@ class CANDI_TRAINER(object):
             imp_count_perplexity_per_feature = []
             imp_pval_perplexity_per_feature = []
             
+            imp_peak_auc_per_feature = []
+            
             # Compute metrics per feature (F dimension) and per sample (B dimension)
             for f in range(F):
                 # Collect all masked data points for this feature across all samples
@@ -763,6 +778,9 @@ class CANDI_TRAINER(object):
 
                 all_imp_count_var = []
                 all_imp_pval_var = []
+                
+                all_imp_peak_pred = []
+                all_imp_peak_true = []
                 
                 # Iterate over each sample in the batch
                 for b in range(B):
@@ -782,12 +800,18 @@ class CANDI_TRAINER(object):
                         sample_pval_true = y_pval[b, :, f][sample_masked_map].cpu().detach().numpy()
                         sample_pval_var = output_var[b, :, f][sample_masked_map].cpu().detach().numpy()
                         
+                        # Peak predictions for this sample and feature
+                        sample_peak_pred = output_peak[b, :, f][sample_masked_map].cpu().detach().numpy()
+                        sample_peak_true = y_peaks[b, :, f][sample_masked_map].cpu().detach().numpy()
+                        
                         # Collect data points
                         all_imp_count_pred.extend(sample_count_pred)
                         all_imp_count_true.extend(sample_count_true)
                         all_imp_pval_pred.extend(sample_pval_pred)
                         all_imp_pval_true.extend(sample_pval_true)
                         all_imp_pval_var.extend(sample_pval_var)
+                        all_imp_peak_pred.extend(sample_peak_pred)
+                        all_imp_peak_true.extend(sample_peak_true)
                 
                 # Compute metrics if we have enough data points across all samples
                 if len(all_imp_count_true) > 1:
@@ -861,6 +885,20 @@ class CANDI_TRAINER(object):
                     gaussian_probs = gaussian_imp.pdf(all_imp_pval_true)
                     perplexity = compute_perplexity(gaussian_probs)
                     imp_pval_perplexity_per_feature.append(perplexity.item())
+                
+                # Compute AUC-ROC for peak predictions
+                if len(all_imp_peak_true) > 1:
+                    all_imp_peak_pred = np.array(all_imp_peak_pred)
+                    all_imp_peak_true = np.array(all_imp_peak_true)
+                    
+                    # Check if we have both positive and negative samples
+                    if len(np.unique(all_imp_peak_true)) > 1:
+                        try:
+                            auc_score = roc_auc_score(all_imp_peak_true, all_imp_peak_pred)
+                            imp_peak_auc_per_feature.append(auc_score)
+                        except ValueError:
+                            # Handle edge cases where AUC cannot be computed
+                            pass
             
             # Aggregate imputed metrics: median only
             if imp_count_r2_per_feature:
@@ -925,6 +963,13 @@ class CANDI_TRAINER(object):
                     'imp_pval_mse_median': np.median(imp_pval_mse_arr)
                 })
             
+            # Aggregate AUC metrics for imputation
+            if imp_peak_auc_per_feature:
+                imp_peak_auc_arr = np.array(imp_peak_auc_per_feature)
+                metrics.update({
+                    'imp_peak_auc_median': np.median(imp_peak_auc_arr)
+                })
+            
         # === OBSERVED (UPSAMPLING) METRICS PER FEATURE ===
         if observed_map.any():
             obs_count_r2_per_feature = []
@@ -939,6 +984,8 @@ class CANDI_TRAINER(object):
             obs_count_perplexity_per_feature = []
             obs_pval_perplexity_per_feature = []
             
+            obs_peak_auc_per_feature = []
+            
             # Compute metrics per feature (F dimension) and per sample (B dimension)
             for f in range(F):
                 # Collect all observed data points for this feature across all samples
@@ -947,6 +994,9 @@ class CANDI_TRAINER(object):
                 all_obs_pval_pred = []
                 all_obs_pval_true = []
                 all_obs_pval_var = []
+                
+                all_obs_peak_pred = []
+                all_obs_peak_true = []
                 
                 # Iterate over each sample in the batch
                 for b in range(B):
@@ -966,12 +1016,18 @@ class CANDI_TRAINER(object):
                         sample_pval_true = y_pval[b, :, f][sample_observed_map].cpu().detach().numpy()
                         sample_pval_var = output_var[b, :, f][sample_observed_map].cpu().detach().numpy()
                         
+                        # Peak predictions for this sample and feature
+                        sample_peak_pred = output_peak[b, :, f][sample_observed_map].cpu().detach().numpy()
+                        sample_peak_true = y_peaks[b, :, f][sample_observed_map].cpu().detach().numpy()
+                        
                         # Collect data points
                         all_obs_count_pred.extend(sample_count_pred)
                         all_obs_count_true.extend(sample_count_true)
                         all_obs_pval_pred.extend(sample_pval_pred)
                         all_obs_pval_true.extend(sample_pval_true)
                         all_obs_pval_var.extend(sample_pval_var)
+                        all_obs_peak_pred.extend(sample_peak_pred)
+                        all_obs_peak_true.extend(sample_peak_true)
                 
                 # Compute metrics if we have enough data points across all samples
                 if len(all_obs_count_true) > 1:
@@ -1042,6 +1098,20 @@ class CANDI_TRAINER(object):
                     gaussian_probs = gaussian_obs.pdf(all_obs_pval_true)
                     perplexity = compute_perplexity(gaussian_probs)
                     obs_pval_perplexity_per_feature.append(perplexity.item())
+                
+                # Compute AUC-ROC for observed peak predictions
+                if len(all_obs_peak_true) > 1:
+                    all_obs_peak_pred = np.array(all_obs_peak_pred)
+                    all_obs_peak_true = np.array(all_obs_peak_true)
+                    
+                    # Check if we have both positive and negative samples
+                    if len(np.unique(all_obs_peak_true)) > 1:
+                        try:
+                            auc_score = roc_auc_score(all_obs_peak_true, all_obs_peak_pred)
+                            obs_peak_auc_per_feature.append(auc_score)
+                        except ValueError:
+                            # Handle edge cases where AUC cannot be computed
+                            pass
             
             # Aggregate observed metrics: median only
             if obs_count_r2_per_feature:
@@ -1105,6 +1175,13 @@ class CANDI_TRAINER(object):
                 metrics.update({
                     'obs_pval_mse_median': np.median(obs_pval_mse_arr)
                 })
+            
+            # Aggregate AUC metrics for observed (upsampling)
+            if obs_peak_auc_per_feature:
+                obs_peak_auc_arr = np.array(obs_peak_auc_per_feature)
+                metrics.update({
+                    'obs_peak_auc_median': np.median(obs_peak_auc_arr)
+                })
            
         return metrics
     
@@ -1137,61 +1214,116 @@ class CANDI_TRAINER(object):
         # Record progress for CSV logging
         self._record_progress(epoch, batch_idx, metrics, loss_dict, grad_norm, num_mask, batch_time, current_lr)
         
-        # Format metrics similar to old_train_candi.py
-        logstr = [
-            f"Ep. {epoch+1}",
-            f"Batch {batch_idx}/{self.estimated_batches_per_epoch} ({100.0 * batch_idx / self.estimated_batches_per_epoch:.1f}%)", "\n",
-            f"Imp_nbNLL {loss_dict.get('imp_count_loss', 0.0):.2f}",
-            f"Ups_nbNLL {loss_dict.get('obs_count_loss', 0.0):.2f}",
-            f"Imp_gNLL {loss_dict.get('imp_pval_loss', 0.0):.2f}",
-            f"Ups_gNLL {loss_dict.get('obs_pval_loss', 0.0):.2f}",  "\n",
-            f"Imp_Count_R2 {metrics.get('imp_count_r2_median', 0.0):.2f}",
-            f"Ups_Count_R2 {metrics.get('obs_count_r2_median', 0.0):.2f}",
-            f"Imp_Pval_R2 {metrics.get('imp_pval_r2_median', 0.0):.2f}",
-            f"Ups_Pval_R2 {metrics.get('obs_pval_r2_median', 0.0):.2f}","\n",
-            f"Imp_Count_SRCC {metrics.get('imp_count_spearman_median', 0.0):.2f}",
-            f"Ups_Count_SRCC {metrics.get('obs_count_spearman_median', 0.0):.2f}",
-            f"Imp_Pval_SRCC {metrics.get('imp_pval_spearman_median', 0.0):.2f}",
-            f"Ups_Pval_SRCC {metrics.get('obs_pval_spearman_median', 0.0):.2f}","\n",
-            f"Imp_Count_PCC {metrics.get('imp_count_pearson_median', 0.0):.2f}",
-            f"Ups_Count_PCC {metrics.get('obs_count_pearson_median', 0.0):.2f}",
-            f"Imp_Pval_PCC {metrics.get('imp_pval_pearson_median', 0.0):.2f}",
-            f"Ups_Pval_PCC {metrics.get('obs_pval_pearson_median', 0.0):.2f}","\n",
-            f"Imp_Count_PL {metrics.get('imp_count_perplexity_median', 0.0):.2f}",
-            f"Ups_Count_PL {metrics.get('obs_count_perplexity_median', 0.0):.2f}",
-            f"Imp_Pval_PL {metrics.get('imp_pval_perplexity_median', 0.0):.2f}",
-            f"Ups_Pval_PL {metrics.get('obs_pval_perplexity_median', 0.0):.2f}","\n",
-            f"Imp_Count_MSE {metrics.get('imp_count_mse_median', 0.0):.2f}",
-            f"Ups_Count_MSE {metrics.get('obs_count_mse_median', 0.0):.2f}",
-            f"Imp_Pval_MSE {metrics.get('imp_pval_mse_median', 0.0):.2f}",
-            f"Ups_Pval_MSE {metrics.get('obs_pval_mse_median', 0.0):.2f}",
+        # Improved and aesthetic print statement with aligned columns and section headers
+        sep = " | "
+        metrics_table = [
+            # Header
+            f"{'='*84}",
+            f" Epoch: {epoch+1:<4}   Batch: {batch_idx:<4}/{self.estimated_batches_per_epoch}  ({100.0 * batch_idx / self.estimated_batches_per_epoch:.1f}%)".ljust(82),
+            f"{'-'*84}",
+            # Section: Losses
+            f"{'Type':<8} {'nbNLL':>10} {'gNLL':>10} {'peakLoss':>12}",
+            f"{'-'*84}",
+            f"{'Imp':<8} "
+            f"{loss_dict.get('imp_count_loss', 0.0):>10.2f} "
+            f"{loss_dict.get('imp_pval_loss', 0.0):>10.2f} "
+            f"{loss_dict.get('imp_peak_loss', 0.0):>12.2f}",
+            f"{'Obs':<8}"
+            f"{loss_dict.get('obs_count_loss', 0.0):>10.2f} "
+            f"{loss_dict.get('obs_pval_loss', 0.0):>10.2f} "
+            f"{loss_dict.get('obs_peak_loss', 0.0):>12.2f}",
+            f"{'-'*84}",
+            # Section: R2
+            f"{'':<8} {'Count R2':>10} {'Pval R2':>10}",
+            f"{'Imp':<8} "
+            f"{metrics.get('imp_count_r2_median', 0.0):>10.2f} "
+            f"{metrics.get('imp_pval_r2_median', 0.0):>10.2f}",
+            f"{'Obs':<8} "
+            f"{metrics.get('obs_count_r2_median', 0.0):>10.2f} "
+            f"{metrics.get('obs_pval_r2_median', 0.0):>10.2f}",
+            f"{'-'*84}",
+            # Section: Spearman
+            f"{'':<8} {'Count SRCC':>10} {'Pval SRCC':>10}",
+            f"{'Imp':<8} "
+            f"{metrics.get('imp_count_spearman_median', 0.0):>10.2f} "
+            f"{metrics.get('imp_pval_spearman_median', 0.0):>10.2f}",
+            f"{'Obs':<8} "
+            f"{metrics.get('obs_count_spearman_median', 0.0):>10.2f} "
+            f"{metrics.get('obs_pval_spearman_median', 0.0):>10.2f}",
+            f"{'-'*84}",
+            # Section: Pearson
+            f"{'':<8} {'Count PCC':>10} {'Pval PCC':>10}",
+            f"{'Imp':<8} "
+            f"{metrics.get('imp_count_pearson_median', 0.0):>10.2f} "
+            f"{metrics.get('imp_pval_pearson_median', 0.0):>10.2f}",
+            f"{'Obs':<8} "
+            f"{metrics.get('obs_count_pearson_median', 0.0):>10.2f} "
+            f"{metrics.get('obs_pval_pearson_median', 0.0):>10.2f}",
+            f"{'-'*84}",
+            # Section: MSE
+            f"{'':<8} {'Count MSE':>10} {'Pval MSE':>10}",
+            f"{'Imp':<8} "
+            f"{metrics.get('imp_count_mse_median', 0.0):>10.2f} "
+            f"{metrics.get('imp_pval_mse_median', 0.0):>10.2f}",
+            f"{'Obs':<8} "
+            f"{metrics.get('obs_count_mse_median', 0.0):>10.2f} "
+            f"{metrics.get('obs_pval_mse_median', 0.0):>10.2f}",
+            f"{'-'*84}",
+            # Section: Peak AUC
+            f"{'':<8} {'Peak AUC':>10}",
+            f"{'Imp':<8} {metrics.get('imp_peak_auc_median', 0.0):>10.2f}",
+            f"{'Obs':<8} {metrics.get('obs_peak_auc_median', 0.0):>10.2f}",
+            f"{'-'*84}",
         ]
         
-        # Add EMA values at the end if available
+        # Add EMA values (as additional nicely formatted section)
         if hasattr(self, 'specific_ema') and self.specific_ema:
-            ema_str = " | ".join([
-                f"EMA_Imp_Pval_R2 {self.specific_ema.get('imp_pval_r2_median', 0.0):.2f}",
-                f"EMA_Imp_Pval_SRCC {self.specific_ema.get('imp_pval_spearman_median', 0.0):.2f}",
-                f"EMA_Imp_Pval_PCC {self.specific_ema.get('imp_pval_pearson_median', 0.0):.2f}", "\n",
-                f"EMA_Imp_Count_R2 {self.specific_ema.get('imp_count_r2_median', 0.0):.2f}",
-                f"EMA_Imp_Count_SRCC {self.specific_ema.get('imp_count_spearman_median', 0.0):.2f}",
-                f"EMA_Imp_Count_PCC {self.specific_ema.get('imp_count_pearson_median', 0.0):.2f}", "\n",
-                f"EMA_Imp_Count_Loss {self.specific_ema.get('imp_count_loss', 0.0):.2f}",
-                f"EMA_Obs_Count_Loss {self.specific_ema.get('obs_count_loss', 0.0):.2f}", "\n",
-                f"EMA_Imp_Pval_Loss {self.specific_ema.get('imp_pval_loss', 0.0):.2f}",
-                f"EMA_Obs_Pval_Loss {self.specific_ema.get('obs_pval_loss', 0.0):.2f}", "\n"
-            ])
-            logstr.extend(["\n", ema_str])
+            metrics_table.append("EMA (Exponential Moving Average):")
+            metrics_table.append(f"{'':<8} {'Count_Loss':>10} {'Obs_Count_Loss':>15} {'Pval_Loss':>15} {'Obs_Pval_Loss':>15}")
+            metrics_table.append(
+                f"{'EMA':<8} "
+                f"{self.specific_ema.get('imp_count_loss', 0.0):>10.2f} "
+                f"{self.specific_ema.get('obs_count_loss', 0.0):>15.2f} "
+                f"{self.specific_ema.get('imp_pval_loss', 0.0):>15.2f} "
+                f"{self.specific_ema.get('obs_pval_loss', 0.0):>15.2f}"
+            )
+            metrics_table.append(f"{'':<8} {'Pval_R2':>10} {'Pval_SRCC':>12} {'Pval_PCC':>12} {'Obs_Peak_AUC':>14}")
+            metrics_table.append(
+                f"{'EMA':<8} "
+                f"{self.specific_ema.get('imp_pval_r2_median', 0.0):>10.2f} "
+                f"{self.specific_ema.get('imp_pval_spearman_median', 0.0):>12.2f} "
+                f"{self.specific_ema.get('imp_pval_pearson_median', 0.0):>12.2f} "
+                f"{self.specific_ema.get('obs_peak_auc_median', 0.0):>14.2f}"
+            )
+            metrics_table.append(f"{'':<8} {'Count_R2':>10} {'Count_SRCC':>12} {'Count_PCC':>12} {'Peak_AUC':>14}")
+            metrics_table.append(
+                f"{'EMA':<8} "
+                f"{self.specific_ema.get('imp_count_r2_median', 0.0):>10.2f} "
+                f"{self.specific_ema.get('imp_count_spearman_median', 0.0):>12.2f} "
+                f"{self.specific_ema.get('imp_count_pearson_median', 0.0):>12.2f} "
+                f"{self.specific_ema.get('imp_peak_auc_median', 0.0):>14.2f}"
+            )
+            metrics_table.append(f"{'-'*84}")
+
+        # Add training dynamics and environment
+        metrics_table.append(
+            f"Gradient Norm: {grad_norm:.2f}   Num Masked: {num_mask}   {lr_printstatement}   Batch time: {batch_time_str}"
+        )
+        metrics_table.append(f"{'='*84}")
+
+        # Then, before printing the metrics table (around line 1301), add this:
+        # Clear previous table by moving cursor up and clearing lines
+        # if hasattr(self, 'last_table_lines') and self.last_table_lines > 0:
+        #     # Move cursor up and clear each line
+        #     print('\033[F\033[K' * self.last_table_lines, end='')
         
-        logstr.extend([
-            f"Gradient_Norm {grad_norm:.2f}",
-            f"num_mask {num_mask}",
-            lr_printstatement,
-            f"batch_time {batch_time_str}"
-        ])
-        
-        logstr.append("\n")
-        print(" | ".join(logstr))
+        # Print organized metrics
+        table_output = "\n".join(metrics_table)
+        print(table_output)
+        print("\n")
+
+        # Store the number of lines for next time
+        self.last_table_lines = len(metrics_table)
     
     def _save_progress_to_csv(self, epoch, batch_idx):
         """Save progress data to CSV file every 100 batches."""
@@ -1229,7 +1361,9 @@ class CANDI_TRAINER(object):
                 'EMA_Imp_Count_Loss': self.specific_ema.get('imp_count_loss', 0.0),
                 'EMA_Obs_Count_Loss': self.specific_ema.get('obs_count_loss', 0.0),
                 'EMA_Imp_Pval_Loss': self.specific_ema.get('imp_pval_loss', 0.0),
-                'EMA_Obs_Pval_Loss': self.specific_ema.get('obs_pval_loss', 0.0)
+                'EMA_Obs_Pval_Loss': self.specific_ema.get('obs_pval_loss', 0.0),
+                'EMA_Imp_Peak_AUC': self.specific_ema.get('imp_peak_auc_median', 0.0),
+                'EMA_Obs_Peak_AUC': self.specific_ema.get('obs_peak_auc_median', 0.0)
             }
         
         # Create record with all metrics
@@ -1247,6 +1381,8 @@ class CANDI_TRAINER(object):
             'obs_count_loss': loss_dict.get('obs_count_loss', 0.0),
             'imp_pval_loss': loss_dict.get('imp_pval_loss', 0.0),
             'obs_pval_loss': loss_dict.get('obs_pval_loss', 0.0),
+            'imp_peak_loss': loss_dict.get('imp_peak_loss', 0.0),
+            'obs_peak_loss': loss_dict.get('obs_peak_loss', 0.0),
             'total_loss': loss_dict.get('total_loss', 0.0),
             
             # Imputation metrics
@@ -1262,6 +1398,8 @@ class CANDI_TRAINER(object):
             'imp_pval_mse_median': metrics.get('imp_pval_mse_median', 0.0),
             'imp_pval_perplexity_median': metrics.get('imp_pval_perplexity_median', 0.0),
             
+            'imp_peak_auc_median': metrics.get('imp_peak_auc_median', 0.0),
+            
             # Upsampling metrics
             'obs_count_r2_median': metrics.get('obs_count_r2_median', 0.0),
             'obs_count_spearman_median': metrics.get('obs_count_spearman_median', 0.0),
@@ -1274,6 +1412,8 @@ class CANDI_TRAINER(object):
             'obs_pval_pearson_median': metrics.get('obs_pval_pearson_median', 0.0),
             'obs_pval_mse_median': metrics.get('obs_pval_mse_median', 0.0),
             'obs_pval_perplexity_median': metrics.get('obs_pval_perplexity_median', 0.0),
+            
+            'obs_peak_auc_median': metrics.get('obs_peak_auc_median', 0.0),
             
             # EMA values
             **ema_values
@@ -1302,13 +1442,14 @@ class CANDI_TRAINER(object):
         
         
         # Add loss values (negated for monitoring increasing trends)
-        loss_keys = ["imp_count_loss", "obs_count_loss", "imp_pval_loss", "obs_pval_loss"]
+        loss_keys = ["imp_count_loss", "obs_count_loss", "imp_pval_loss", "obs_pval_loss", "imp_peak_loss", "obs_peak_loss"]
         
         # Update specific EMA tracking for requested metrics
         specific_metrics = [
             "imp_pval_r2_median", "imp_count_r2_median",
             "imp_pval_spearman_median", "imp_count_spearman_median", 
-            "imp_pval_pearson_median", "imp_count_pearson_median"
+            "imp_pval_pearson_median", "imp_count_pearson_median",
+            "imp_peak_auc_median", "obs_peak_auc_median"
         ]
         
         for key in specific_metrics + loss_keys:
@@ -1572,7 +1713,6 @@ def check_gpu_availability():
     return gpu_count > 0
 
 ##=========================================== CLI Interface ===============================================##
-
 
 def create_argument_parser():
     """Create and configure the argument parser with organized argument groups."""
@@ -2048,7 +2188,7 @@ def main():
         'DNA': True,
         'no_save': args.no_save
     }
-    
+
     # Create temporary dataset to get signal_dim and metadata information
     temp_dataset = CANDIIterableDataset(**dataset_params)
     signal_dim = len(temp_dataset.aliases['experiment_aliases'])

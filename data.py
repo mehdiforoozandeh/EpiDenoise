@@ -32,7 +32,6 @@ def set_global_seed(seed):
         pass
 
 # ========= CANDI Data Handler =========
-
 class CANDIDataHandler:
     def __init__(self, base_path, resolution=25, dataset_type="merged", DNA=True, 
                  bios_batchsize=8, loci_batchsize=16, dsf_list=[1, 2, 4]):
@@ -74,23 +73,25 @@ class CANDIDataHandler:
             self.merge_ct = True
             self.eic = False
             self.metadata_path = os.path.join("data/", "merged_metadata.csv")
+            self.split_path = os.path.join('data/', f"train_va_test_split_merged.json")
         elif dataset_type == "eic":
             self.merge_ct = False
             self.eic = True
             self.metadata_path = os.path.join("data/", "eic_metadata.csv")
+            self.split_path = os.path.join('data/', f"train_va_test_split_eic.json")
         
         self.chr_sizes_file = os.path.join("data/", "hg38.chrom.sizes")
         self.blacklist_file = os.path.join("data/", "hg38_blacklist_v2.bed") 
         
         self.alias_path = os.path.join(self.base_path, f"aliases.json")
         self.navigation_path = os.path.join(self.base_path, f"navigation.json")
-        self.split_path = os.path.join(self.base_path, f"train_va_test_split.json")
         
         self.fasta_file = os.path.join("data/", "hg38.fa")
         self.ccre_filename = os.path.join("data/", "GRCh38-cCREs.bed")
 
         # DNA sequence cache: locus tuple -> one-hot tensor
         self.dna_cache = {}
+        self.stat_lookup = None
 
         # self._load_fasta()
         self._load_blacklist()
@@ -104,16 +105,12 @@ class CANDIDataHandler:
         if not os.path.exists(self.navigation_path):
             self._make_navigation()
             
-        # if not os.path.exists(self.split_path):
-        #     self._make_split()
-            
         self._load_alias()
         self._load_navigation()
         self._load_metadata()
-        # self._load_split()
+        self._load_split()
     
     # ========= Dataset Info Loading =========
-    
     def _load_alias(self):
         with open(self.alias_path, 'r') as aliasfile:
             self.aliases = json.load(aliasfile)
@@ -171,6 +168,9 @@ class CANDIDataHandler:
         self.blacklist = blacklist
     
     def _load_split(self):
+        if not os.path.exists(self.split_path):
+            self._make_split()
+
         with open(self.split_path, 'r') as splitfile:
             self.split_dict = json.load(splitfile)
     
@@ -190,7 +190,6 @@ class CANDIDataHandler:
         self.main_chrs = main_chrs
 
     # ========= Making Files =========
-
     def _make_alias(self):
         data_matrix = {}
         for bios in os.listdir(self.base_path):
@@ -243,14 +242,254 @@ class CANDIDataHandler:
             json.dump(self.navigation, navigationfile, indent=4)
         
     def _make_split(self):
-        """
-        TODO: generate split for the dataset
-        """
+        self.split_dict = {}
+        
+        if self.merge_ct:
+            """
+            Generate stratified train-test split for merged dataset
+            - 70-30 split ratio
+            - Biosample_names with RNA-seq go to test
+            - No leakage: entire biosample_term groups stay together
+            - Stratified by sequencing_platform, lab, and number of assays
+            """
+            import re
+            from collections import defaultdict
+            
+            # Load metadata
+            df = pd.read_csv(self.metadata_path)
+            
+            # Extract biosample term from biosample_name
+            def extract_biosample_term(name):
+                match = re.match(r'^(.+?)(?:_grp\d+_rep\d+|_nonrep)$', name)
+                return match.group(1) if match else name
+            
+            # Compute features for each biosample_name
+            biosample_info = {}
+            for name in df['biosample_name'].unique():
+                name_df = df[df['biosample_name'] == name]
+                
+                # Get mode (most common) sequencing_platform
+                platform_mode = name_df['sequencing_platform'].mode()
+                platform = platform_mode.iloc[0] if len(platform_mode) > 0 else name_df['sequencing_platform'].iloc[0]
+                
+                # Get mode lab
+                lab_mode = name_df['lab'].mode()
+                lab = lab_mode.iloc[0] if len(lab_mode) > 0 else name_df['lab'].iloc[0]
+                
+                # Get biosample term
+                term = extract_biosample_term(name)
+                
+                # Count assays
+                num_assays = len(name_df)
+                
+                # Check if has RNA-seq
+                has_rna_seq = 'RNA-seq' in name_df['assay_name'].values
+                
+                biosample_info[name] = {
+                    'biosample_term': term,
+                    'sequencing_platform': platform,
+                    'lab': lab,
+                    'num_assays': num_assays,
+                    'has_rna_seq': has_rna_seq
+                }
+            
+            # Group biosample_names by biosample_term
+            term_to_names = defaultdict(list)
+            term_has_rna_seq = {}
+            for name, info in biosample_info.items():
+                term = info['biosample_term']
+                term_to_names[term].append(name)
+                if term not in term_has_rna_seq:
+                    term_has_rna_seq[term] = False
+                if info['has_rna_seq']:
+                    term_has_rna_seq[term] = True
+            
+            # Separate RNA-seq terms (must go to test) from other terms
+            rna_seq_terms = [term for term, has_rna in term_has_rna_seq.items() if has_rna]
+            non_rna_seq_terms = [term for term, has_rna in term_has_rna_seq.items() if not has_rna]
+            
+            print(f"Total biosample_terms: {len(term_to_names)}")
+            print(f"Terms with RNA-seq (going to test): {len(rna_seq_terms)}")
+            print(f"Terms without RNA-seq (for stratified split): {len(non_rna_seq_terms)}")
+            
+            # Count how many biosample_names from RNA-seq terms
+            rna_seq_biosample_count = sum(len(term_to_names[term]) for term in rna_seq_terms)
+            total_biosample_count = sum(len(names) for names in term_to_names.values())
+            
+            print(f"Biosample_names with RNA-seq: {rna_seq_biosample_count} / {total_biosample_count}")
+            
+            # For non-RNA-seq terms, prepare stratification features
+            term_features = []
+            for term in non_rna_seq_terms:
+                names = term_to_names[term]
+                
+                # Aggregate features across all biosample_names in this term
+                platforms = [biosample_info[name]['sequencing_platform'] for name in names]
+                labs = [biosample_info[name]['lab'] for name in names]
+                assay_counts = [biosample_info[name]['num_assays'] for name in names]
+                
+                # Use mode (most common) values
+                from collections import Counter
+                platform_mode = Counter(platforms).most_common(1)[0][0]
+                lab_mode = Counter(labs).most_common(1)[0][0]
+                avg_assay_count = np.mean(assay_counts)
+                
+                term_features.append({
+                    'term': term,
+                    'platform': platform_mode,
+                    'lab': lab_mode,
+                    'avg_assay_count': avg_assay_count,
+                    'num_biosample_names': len(names)
+                })
+            
+            term_features_df = pd.DataFrame(term_features)
+            
+            # Create stratification key
+            # Bin assay counts
+            term_features_df['assay_bin'] = pd.cut(
+                term_features_df['avg_assay_count'],
+                bins=[0, 6, 9, 12, 100],
+                labels=['4-6', '7-9', '10-12', '13+']
+            )
+            
+            # Group less common platforms/labs as "Other"
+            top_platforms = term_features_df['platform'].value_counts().head(6).index
+            term_features_df['platform_grouped'] = term_features_df['platform'].apply(
+                lambda x: x if x in top_platforms else 'Other'
+            )
+            
+            top_labs = term_features_df['lab'].value_counts().head(6).index
+            term_features_df['lab_grouped'] = term_features_df['lab'].apply(
+                lambda x: x if x in top_labs else 'Other'
+            )
+            
+            # Create combined stratification key
+            term_features_df['strat_key'] = (
+                term_features_df['assay_bin'].astype(str) + '_' +
+                term_features_df['platform_grouped'].astype(str) + '_' +
+                term_features_df['lab_grouped'].astype(str)
+            )
+            
+            # Calculate target test size (30% of total, minus RNA-seq biosamples already in test)
+            target_test_biosample_count = int(0.3 * total_biosample_count)
+            remaining_test_count = target_test_biosample_count - rna_seq_biosample_count
+            
+            if remaining_test_count < 0:
+                print(f"Warning: RNA-seq biosamples ({rna_seq_biosample_count}) exceed 30% target. Using all RNA-seq in test.")
+                remaining_test_count = 0
+            
+            print(f"Target test set size: {target_test_biosample_count} biosample_names")
+            print(f"RNA-seq already in test: {rna_seq_biosample_count}")
+            print(f"Need to select {remaining_test_count} more biosample_names for test from non-RNA-seq terms")
+            
+            # Stratified split on non-RNA-seq terms
+            from sklearn.model_selection import train_test_split
+            
+            # We need to split terms (not biosample_names) to avoid leakage
+            # But we want approximately the right number of biosample_names
+            # Use iterative stratified sampling
+            
+            test_terms = []
+            train_terms = []
+            
+            # Sort by stratification key for reproducibility
+            term_features_df = term_features_df.sort_values(['strat_key', 'term'])
+            
+            # Group by stratification key
+            current_test_count = 0
+            for strat_key, group in term_features_df.groupby('strat_key'):
+                group_terms = group['term'].tolist()
+                group_biosample_counts = group['num_biosample_names'].tolist()
+                
+                # Calculate how many from this group should go to test
+                group_total = sum(group_biosample_counts)
+                non_rna_total = total_biosample_count - rna_seq_biosample_count
+                group_target_test = int(remaining_test_count * group_total / non_rna_total)
+                
+                # Select terms for test until we reach target
+                group_test_count = 0
+                for i, (term, count) in enumerate(zip(group_terms, group_biosample_counts)):
+                    if group_test_count < group_target_test and current_test_count < remaining_test_count:
+                        test_terms.append(term)
+                        group_test_count += count
+                        current_test_count += count
+                    else:
+                        train_terms.append(term)
+            
+            print(f"Selected {len(test_terms)} non-RNA-seq terms for test ({current_test_count} biosample_names)")
+            print(f"Selected {len(train_terms)} non-RNA-seq terms for train")
+            
+            # Build split dictionary
+            # RNA-seq terms -> test
+            for term in rna_seq_terms:
+                for name in term_to_names[term]:
+                    self.split_dict[name] = "test"
+            
+            # Stratified test terms -> test
+            for term in test_terms:
+                for name in term_to_names[term]:
+                    self.split_dict[name] = "test"
+            
+            # Remaining terms -> train
+            for term in train_terms:
+                for name in term_to_names[term]:
+                    self.split_dict[name] = "train"
+            
+            # Validation
+            train_count = sum(1 for v in self.split_dict.values() if v == "train")
+            test_count = sum(1 for v in self.split_dict.values() if v == "test")
+            
+            print("\n" + "="*60)
+            print("Train-Test Split Summary:")
+            print("="*60)
+            print(f"Total biosample_names: {len(self.split_dict)}")
+            print(f"Train: {train_count} ({train_count/len(self.split_dict)*100:.1f}%)")
+            print(f"Test: {test_count} ({test_count/len(self.split_dict)*100:.1f}%)")
+            
+            # Check for leakage
+            train_terms_set = set()
+            test_terms_set = set()
+            for name, split in self.split_dict.items():
+                term = biosample_info[name]['biosample_term']
+                if split == "train":
+                    train_terms_set.add(term)
+                else:
+                    test_terms_set.add(term)
+            
+            overlap = train_terms_set & test_terms_set
+            if overlap:
+                print(f"WARNING: Found leakage! {len(overlap)} terms appear in both train and test: {overlap}")
+            else:
+                print("✓ No leakage: All biosample_terms are exclusively in train or test")
+            
+            # RNA-seq validation
+            rna_seq_in_test = sum(1 for name, split in self.split_dict.items() 
+                                  if split == "test" and biosample_info[name]['has_rna_seq'])
+            print(f"✓ RNA-seq biosample_names in test: {rna_seq_in_test} / {rna_seq_biosample_count}")
+            
+            # Assay count distribution
+            train_assays = [biosample_info[name]['num_assays'] for name, split in self.split_dict.items() if split == "train"]
+            test_assays = [biosample_info[name]['num_assays'] for name, split in self.split_dict.items() if split == "test"]
+            
+            print(f"\nAssay count distribution:")
+            print(f"  Train: min={min(train_assays)}, max={max(train_assays)}, mean={np.mean(train_assays):.1f}")
+            print(f"  Test:  min={min(test_assays)}, max={max(test_assays)}, mean={np.mean(test_assays):.1f}")
+            print("="*60)
+
+        elif self.eic:
+            for bios in os.listdir(self.base_path):
+                if os.path.isdir(os.path.join(self.base_path, bios)) and bios[0] in ["V", "T", "B"]:
+                    if bios[0] == "V":
+                        self.split_dict[bios] = "valid"
+                    elif bios[0] == "T":
+                        self.split_dict[bios] = "train"
+                    elif bios[0] == "B":
+                        self.split_dict[bios] = "test"
+
         with open(self.split_path, 'w') as splitfile:
             json.dump(self.split_dict, splitfile)
 
     # ========= Generating Genomic Loci =========
-
     def _generate_genomic_loci(self, m, context_length, strategy="random"):
         
         """
@@ -277,6 +516,8 @@ class CANDIDataHandler:
         - self.resolution: int, grid to snap window starts to (e.g., 128, 256, 512 bp)
         - self.is_region_allowed(chr, start, end): callable returning True if window is valid
         """
+
+        self.context_length = context_length
         # Initialize the container for resulting regions (each is [chrom, start, end]).
         self.m_regions = []
 
@@ -418,7 +659,6 @@ class CANDIDataHandler:
         raise ValueError(f"Unknown strategy '{strategy}'. Expected one of: 'random', 'ccre', 'full_chr', 'gw'.")
 
     # ========= Helper Functions =========
-
     def _get_DNA_sequence(self, chrom, start, end):
         """
         Retrieve the sequence for a given chromosome and coordinate range from a fasta file.
@@ -553,7 +793,6 @@ class CANDIDataHandler:
         return region
 
     # ========= Data Loading =========
-
     def load_bios_Counts(self, bios_name, locus, DSF=1, f_format="npz"): # count data 
         exps = list(self.navigation[bios_name].keys())
 
@@ -678,8 +917,54 @@ class CANDIDataHandler:
                     loaded_data[exp] = data[start_bin:end_bin]
             return loaded_data
     
-    # ========= Making BiosampleTensors =========
+    def load_bios_Control(self, bios_name, locus, DSF=1, f_format="npz"):
+        """Load chipseq-control signal for a biosample."""
+        control_path = os.path.join(self.base_path, bios_name, "chipseq-control")
+        if not os.path.exists(control_path):
+            return {}, {}
+        
+        loaded_data = {}
+        loaded_metadata = {}
+        
+        signal_path = os.path.join(control_path, f"signal_DSF{DSF}_res{self.resolution}", f"{locus[0]}.{f_format}")
+        metadata_path_1 = os.path.join(control_path, f"signal_DSF{DSF}_res{self.resolution}", "metadata.json")
+        metadata_path_2 = os.path.join(control_path, "file_metadata.json")
+        
+        if not os.path.exists(signal_path):
+            return {}, {}
+        
+        try:
+            result = self._load_npz(signal_path)
+            if result is None:
+                return {}, {}
+            
+            for key, data in result.items():
+                if len(locus) == 1:
+                    loaded_data["chipseq-control"] = data.astype(np.int16)
+                else:
+                    start_bin = int(locus[1]) // self.resolution
+                    end_bin = int(locus[2]) // self.resolution
+                    loaded_data["chipseq-control"] = data[start_bin:end_bin]
+            
+            with open(metadata_path_1, 'r') as f:
+                md1 = json.load(f)
+            with open(metadata_path_2, 'r') as f:
+                md2 = json.load(f)
+            
+            loaded_metadata["chipseq-control"] = {
+                "depth": md1["depth"],
+                "sequencing_platform": md2.get("sequencing_platform", {"2": "unknown"}).get("2", "unknown"),
+                "read_length": md2.get("read_length", {"2": None}).get("2", None),
+                "run_type": md2.get("run_type", {"2": "single-ended"}).get("2", "single-ended")
+            }
+            
+            return loaded_data, loaded_metadata
+        
+        except Exception as e:
+            print(f"Error loading control for {bios_name}: {e}")
+            return {}, {}
 
+    # ========= Making BiosampleTensors =========
     def make_bios_tensor_Counts(self, loaded_data, loaded_metadata, missing_value=-1): # count data 
         dtensor = []
         mdtensor = []
@@ -758,8 +1043,35 @@ class CANDIDataHandler:
         availability = torch.tensor(np.array(availability))
         return dtensor, availability
 
-    # ========= Making RegionTensors =========
+    def make_bios_tensor_Control(self, loaded_data, loaded_metadata, missing_value=-1):
+        """Format control data for ONE biosample into tensors."""
+        if loaded_data and "chipseq-control" in loaded_data:
+            L = len(loaded_data["chipseq-control"])
+            
+            dtensor = loaded_data["chipseq-control"].reshape(-1, 1)  # (L, 1)
+            
+            meta = loaded_metadata["chipseq-control"]
+            run_type_str = str(meta['run_type']).lower()
+            runt = 0 if "single" in run_type_str else (1 if "pair" in run_type_str else 0)
+            readl = meta['read_length'] if meta['read_length'] is not None else 50
+            platform_id = self.sequencing_platform_to_id.get(str(meta['sequencing_platform']), 0)
+            
+            mdtensor = np.array([[np.log2(meta['depth'])], [platform_id], [readl], [runt]])  # (4, 1)
+            availability = np.array([1])  # (1,)
+            
+        else:
+            L = self.context_length // self.resolution 
+            dtensor = np.full((L, 1), missing_value)
+            mdtensor = np.full((4, 1), missing_value)
+            availability = np.array([0])
+        
+        dtensor = torch.tensor(dtensor).float()
+        mdtensor = torch.tensor(mdtensor).float()
+        availability = torch.tensor(availability).float()
+        
+        return dtensor, mdtensor, availability
 
+    # ========= Making RegionTensors =========
     def make_region_tensor_Counts(self, loaded_data, loaded_metadata): 
         data, metadata, availability = [], [], []
         for i in range(len(loaded_data)):
@@ -791,21 +1103,29 @@ class CANDIDataHandler:
         data, availability = torch.stack(data), torch.stack(availability)
         return data, availability
 
-    # ========= Filling in Prompt =========
+    def make_region_tensor_Control(self, loaded_data_list, loaded_metadata_list):
+        """Stack control tensors from MULTIPLE biosamples into a batch."""
+        data, metadata, availability = [], [], []
+        
+        for i in range(len(loaded_data_list)):
+            d, md, avl = self.make_bios_tensor_Control(loaded_data_list[i], loaded_metadata_list[i])
+            data.append(d)
+            metadata.append(md)
+            availability.append(avl)
+        
+        data = torch.stack(data)          # (B, L, 1)
+        metadata = torch.stack(metadata)  # (B, 4, 1)
+        availability = torch.stack(availability)  # (B, 1)
+        
+        return data, metadata, availability
 
-    def fill_in_prompt(self, md, missing_value=-1, sample=True):
-        """
-        Fill missing assay metadata columns (marked by missing_value) either by sampling from
-        dataset metadata per assay (sample=True) or by using median/mode statistics (sample=False).
-
-        Expected md shape: [4, E] where rows are [depth_log2, platform_id, read_length, run_type_id].
-        """
+    def init_stat_lookup(self):
         # Build per-assay lookup only once per call
-        stat_lookup = {}
+        self.stat_lookup = {}
         for assay in self.aliases["experiment_aliases"].keys():
             assay_df = self.metadata[self.metadata['assay_name'] == assay]
             if assay_df.empty:
-                stat_lookup[assay] = None
+                self.stat_lookup[assay] = None
                 continue
             # Platform id mode (most frequent) mapped through sequencing_platform_to_id
             platforms = [self.sequencing_platform_to_id.get(str(x), 0) for x in assay_df['sequencing_platform'].dropna().values]
@@ -814,15 +1134,29 @@ class CANDIDataHandler:
             run_types = assay_df['run_type'].dropna().astype(str).values
             run_ids = [1 if ('pair' in r.lower()) else 0 for r in run_types]
             run_mode = int(pd.Series(run_ids).mode().iloc[0]) if len(run_ids) else 1
-            stat_lookup[assay] = {
+            self.stat_lookup[assay] = {
                 "depth_log2_median": float(np.nanmedian(np.log2(assay_df['depth'].astype(float)))) if 'depth' in assay_df else 0.0,
                 "platform_mode": platform_mode,
                 "read_length_median": float(np.nanmedian(assay_df['read_length'].astype(float))) if 'read_length' in assay_df else 50.0,
                 "run_type_mode": run_mode,
             }
 
+        return self.stat_lookup
+
+    # ========= Filling in Prompt =========
+    def fill_in_prompt(self, md, missing_value=-1, sample=True):
+        """
+        Fill missing assay metadata columns (marked by missing_value) either by sampling from
+        dataset metadata per assay (sample=True) or by using median/mode statistics (sample=False).
+
+        Expected md shape: [4, E] where rows are [depth_log2, platform_id, read_length, run_type_id].
+        """
+        
+        if self.stat_lookup is None:
+            self.init_stat_lookup()
+
         # md is [4, E]
-        filled = md.clone()
+        filled = md.clone().squeeze(0)
         num_assays = filled.shape[1]
         for i, (assay, alias) in enumerate(self.aliases["experiment_aliases"].items()):
             if i >= num_assays:
@@ -841,14 +1175,15 @@ class CANDIDataHandler:
                         filled[1, i] = float(random.choice(platform_vals))
                         filled[2, i] = float(random.choice(readlen_vals))
                         filled[3, i] = float(random.choice(runt_vals))
-                        # print(f"{i}, depth: {filled[0, i]}, platform: {filled[1, i]}, read_length: {filled[2, i]}, run_type: {filled[3, i]}")
                 else:
-                    stats = stat_lookup.get(assay)
+                    stats = self.stat_lookup.get(assay)
                     if stats is not None:
                         filled[0, i] = stats["depth_log2_median"]
                         filled[1, i] = stats["platform_mode"]
                         filled[2, i] = stats["read_length_median"]
                         filled[3, i] = stats["run_type_mode"]
+
+        filled = filled.unsqueeze(0)
         return filled
  
     def fill_in_prompt_manual(self, md, manual_spec, missing_value=-1, overwrite=True):
@@ -922,11 +1257,11 @@ class CANDIDataHandler:
             else:
                 return False
 
+    def has_chr_access(self, bios_name):
+        if "ATAC-seq" in self.navigation[bios_name].keys() or "DNase-seq" in self.navigation[bios_name].keys():
+            return True
         else:
-            if os.path.exists(os.path.join(self.base_path, bios_name, "RNA-seq")):
-                return True
-            else:
-                return False
+            return False
 
     def load_rna_seq_data(self, bios_name, gene_coord):
         if self.merge_ct:
@@ -990,7 +1325,18 @@ class CANDIDataHandler:
         
         # Reload and filter navigation for the specific split and criteria
         self._load_navigation()
-        self._filter_navigation(includes, excludes)  
+        self._filter_navigation(includes, excludes)
+
+        print(f"Filtering navigation for split: {split}...")
+        for bios in list(self.navigation.keys()):
+            if self.split_dict[bios] != split:
+                del self.navigation[bios]
+
+            elif len(self.navigation[bios]) < bios_min_exp_avail_threshold:
+                del self.navigation[bios]
+
+            elif must_have_chr_access and self.has_chr_access(bios) == False:
+                del self.navigation[bios]
         
         if shuffle_bios:
             keys = list(self.navigation.keys())
@@ -1028,13 +1374,16 @@ class CANDIDataHandler:
         batch_bios_list = list(self.navigation.keys())[self.bios_pointer: self.bios_pointer + self.bios_batchsize]
         current_chr = list(self.loci.keys())[self.chr_pointer]
 
-        self.loaded_data, self.loaded_metadata = [], []
+        self.loaded_data, self.loaded_metadata, self.loaded_control, self.loaded_control_metadata = [], [], [], []
         # Pre-loading data for biosamples
-        
         for bios in batch_bios_list:
             d, md = self.load_bios_Counts(bios, [current_chr], self.dsf_list[self.dsf_pointer])
             self.loaded_data.append(d)
             self.loaded_metadata.append(md)
+
+            c, cm = self.load_bios_Control(bios, [current_chr], self.dsf_list[self.dsf_pointer])
+            self.loaded_control.append(c)
+            self.loaded_control_metadata.append(cm)
         
         self.Y_loaded_data, self.Y_loaded_metadata = [], []
         self.Y_loaded_data = self.loaded_data.copy()
@@ -1075,11 +1424,15 @@ class CANDIDataHandler:
             current_dsf = self.dsf_list[self.dsf_pointer]
             
             # Updating pointers and pre-loading data
-            self.loaded_data, self.loaded_metadata = [], []
+            self.loaded_data, self.loaded_metadata, self.loaded_control, self.loaded_control_metadata = [], [], [], []
             for bios in batch_bios_list:
                 d, md = self.load_bios_Counts(bios, [current_chr], current_dsf)
                 self.loaded_data.append(d)
                 self.loaded_metadata.append(md)
+
+                c, cm = self.load_bios_Control(bios, [current_chr], current_dsf)
+                self.loaded_control.append(c)
+                self.loaded_control_metadata.append(cm)
             
             if self.dsf_pointer == 0:
                 self.Y_loaded_data, self.Y_loaded_metadata = [], []
@@ -1152,10 +1505,21 @@ class CANDIDataHandler:
             return batch_data, batch_metadata, batch_availability, batch_pval_data, batch_peaks_data, one_hot_sequences
             
         else: # side == 'x'
-            return batch_data, batch_metadata, batch_availability, one_hot_sequences
+            control_source = self.loaded_control
+            control_metadata_source = self.loaded_control_metadata
+
+            control_locus_tensors = []
+            for locus in batch_loci_list:
+                loc_data_list = [self._select_region_from_loaded_data(d, locus) for d in control_source]
+                control_locus_tensors.append(self.make_region_tensor_Control(loc_data_list, control_metadata_source))
+
+            batch_control_data = torch.cat([t[0] for t in control_locus_tensors], dim=0)
+            batch_control_metadata = torch.cat([t[1] for t in control_locus_tensors], dim=0)
+            batch_control_availability = torch.cat([t[2] for t in control_locus_tensors], dim=0)
+
+            return batch_data, batch_metadata, batch_availability, one_hot_sequences, batch_control_data, batch_control_metadata, batch_control_availability
 
 # ========= CANDIIterableDataset =========
-
 class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
     """
     A PyTorch IterableDataset wrapper for the CANDIDataHandler.
@@ -1202,7 +1566,8 @@ class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
             dsf_list=self.kwargs.get("dsf_list", [1, 2, 4]),
             includes=self.kwargs.get("includes"),
             excludes=self.kwargs.get("excludes", []),
-            must_have_chr_access=self.kwargs.get("must_have_chr_access", True)
+            must_have_chr_access=self.kwargs.get("must_have_chr_access", False),
+            bios_min_exp_avail_threshold=self.kwargs.get("bios_min_exp_avail_threshold", 0)
         )
 
         # --- 2. Shard the Data for Parallel Loading ---
@@ -1224,7 +1589,6 @@ class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
         global_rank = rank * num_workers + worker_id
 
         my_biosample_keys = list(islice(biosample_keys, global_rank, None, total_consumers))
-
         self.navigation = {key: self.navigation[key] for key in my_biosample_keys}
         self.num_bios = len(self.navigation)
 
@@ -1246,7 +1610,7 @@ class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
             
             x_batch = self.get_batch(side="x")
             if x_batch is None: break
-            x_data, x_meta, x_avail, x_dna = x_batch
+            x_data, x_meta, x_avail, x_dna, control_data, control_meta, control_avail = x_batch
 
             y_batch = self.get_batch(side="y", y_prompt=True)
             if y_batch is None: break
@@ -1256,6 +1620,9 @@ class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
                 "sample_id": sample_id, # For validation
                 "x_data": x_data.squeeze(0), "x_meta": x_meta.squeeze(0),
                 "x_avail": x_avail.squeeze(0), "x_dna": x_dna.squeeze(0),
+                "control_data": control_data.squeeze(0),
+                "control_meta": control_meta.squeeze(0),
+                "control_avail": control_avail.squeeze(0),
                 "y_data": y_data.squeeze(0), "y_meta": y_meta.squeeze(0),
                 "y_avail": y_avail.squeeze(0), "y_pval": y_pval.squeeze(0),
                 "y_peaks": y_peaks.squeeze(0), "y_dna": y_dna.squeeze(0),
@@ -1482,4 +1849,16 @@ def test_parallelization_and_uniqueness():
 if __name__ == "__main__":
     # test_CANDIDataHandler()
     # test_parallelization()
-    test_parallelization_and_uniqueness()
+    # test_parallelization_and_uniqueness()
+
+    ds = CANDIDataHandler(
+        base_path="/home/mforooz/projects/def-maxwl/mforooz/DATA_CANDI_MERGED", 
+        resolution=25, dataset_type="merged", DNA=True,
+        bios_batchsize=1, loci_batchsize=1, dsf_list=[1, 2, 4])
+
+    ds.setup_datalooper(
+        m=10, context_length=1200 * 25, bios_batchsize=1, loci_batchsize=1,
+        loci_gen_strategy="random", split="train", bios_min_exp_avail_threshold=5,
+        shuffle_bios=True, dsf_list=[1, 2, 4], must_have_chr_access=False)
+    
+    print(len(ds.navigation))

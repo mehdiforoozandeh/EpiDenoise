@@ -861,15 +861,18 @@ class CANDI_LOSS(nn.Module):
         self.reduction = reduction
         self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
         self.nbin_nll = negative_binomial_loss
+        self.bce_loss = nn.BCELoss(reduction=self.reduction)
 
-    def forward(self, p_pred, n_pred, mu_pred, var_pred, true_count, true_pval, obs_map, masked_map):
-        ups_true_count, ups_true_pval = true_count[obs_map], true_pval[obs_map]
+    def forward(self, p_pred, n_pred, mu_pred, var_pred, peak_pred, true_count, true_pval, true_peak, obs_map, masked_map):
+        ups_true_count, ups_true_pval, ups_true_peak = true_count[obs_map], true_pval[obs_map], true_peak[obs_map]
         ups_n_pred, ups_p_pred = n_pred[obs_map], p_pred[obs_map]
         ups_mu_pred, ups_var_pred = mu_pred[obs_map], var_pred[obs_map]
+        ups_peak_pred = peak_pred[obs_map]
 
-        imp_true_count, imp_true_pval = true_count[masked_map], true_pval[masked_map]
+        imp_true_count, imp_true_pval, imp_true_peak = true_count[masked_map], true_pval[masked_map], true_peak[masked_map]
         imp_n_pred, imp_p_pred = n_pred[masked_map], p_pred[masked_map]
         imp_mu_pred, imp_var_pred = mu_pred[masked_map], var_pred[masked_map]
+        imp_peak_pred = peak_pred[masked_map]
 
         observed_count_loss = self.nbin_nll(ups_true_count, ups_n_pred, ups_p_pred) 
         imputed_count_loss = self.nbin_nll(imp_true_count, imp_n_pred, imp_p_pred)
@@ -887,7 +890,12 @@ class CANDI_LOSS(nn.Module):
         observed_pval_loss = observed_pval_loss.float()
         imputed_pval_loss = imputed_pval_loss.float()
         
-        return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss
+        # Peak losses using Binary Cross Entropy (disable autocast for BCE)
+        with torch.amp.autocast("cuda", enabled=False):
+            observed_peak_loss = self.bce_loss(ups_peak_pred.float(), ups_true_peak.float())
+            imputed_peak_loss = self.bce_loss(imp_peak_pred.float(), imp_true_peak.float())
+        
+        return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss, observed_peak_loss, imputed_peak_loss
 
 ##=========================================== CANDI Architecture =============================================##
 
@@ -933,8 +941,11 @@ class CANDI_Decoder(nn.Module):
         return src    
 
 class CANDI_DNA_Encoder(nn.Module):
-    def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
-            n_sab_layers, pool_size=2, dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3, num_sequencing_platforms=10, num_runtypes=4):
+    def __init__(self, 
+        signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead, n_sab_layers, pool_size=2, 
+        dropout=0.1, context_length=1600, pos_enc="relative", expansion_factor=3, num_sequencing_platforms=10, 
+        num_runtypes=4):
+
         super(CANDI_DNA_Encoder, self).__init__()
 
         self.pos_enc = pos_enc
@@ -972,12 +983,8 @@ class CANDI_DNA_Encoder(nn.Module):
         self.xmd_emb = EmbedMetadata(self.f1, metadata_embedding_dim, num_sequencing_platforms, num_runtypes, non_linearity=False)
 
         self.fusion = nn.Sequential(
-            # nn.Linear((2*self.f2), self.f2), 
             nn.Linear((2*self.f2)+metadata_embedding_dim, self.f2), 
-            # nn.Linear((self.f2)+metadata_embedding_dim, self.f2), 
-            nn.LayerNorm(self.f2), 
-
-            )
+            nn.LayerNorm(self.f2))
 
         self.transformer_encoder = nn.ModuleList([
             DualAttentionEncoderBlock(self.f2, nhead, self.l2, dropout=dropout, 
@@ -1032,17 +1039,25 @@ class CANDI(nn.Module):
         self.f3 = self.f2 + metadata_embedding_dim
         self.d_model = self.latent_dim = self.f2
 
-        self.encoder = CANDI_DNA_Encoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
+        self.encoder = CANDI_DNA_Encoder(signal_dim+1, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
             n_sab_layers, pool_size, dropout, context_length, pos_enc, expansion_factor, num_sequencing_platforms, num_runtypes)
+
+        self.latent_projection = nn.Linear(
+            ((signal_dim+1) * (expansion_factor**(n_cnn_layers))), 
+            signal_dim * (expansion_factor**(n_cnn_layers)) 
+            )
+
         
         if self.separate_decoders:
             self.count_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
             self.pval_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
+            self.peak_decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
         else:
             self.decoder = CANDI_Decoder(signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, context_length, pool_size, expansion_factor, num_sequencing_platforms, num_runtypes)
 
         self.neg_binom_layer = NegativeBinomialLayer(self.f1, self.f1)
         self.gaussian_layer = GaussianLayer(self.f1, self.f1)
+        self.peak_layer = PeakLayer(self.f1, self.f1)
     
     def encode(self, src, seq, x_metadata):
         """Encode input data into latent representation."""
@@ -1059,24 +1074,32 @@ class CANDI(nn.Module):
         if self.separate_decoders:
             count_decoded = self.count_decoder(z, y_metadata)
             pval_decoded = self.pval_decoder(z, y_metadata)
+            peak_decoded = self.peak_decoder(z, y_metadata)
 
             p, n = self.neg_binom_layer(count_decoded)
             mu, var = self.gaussian_layer(pval_decoded)
+            peak = self.peak_layer(peak_decoded)  # Use count decoder for peak prediction
         else:
             decoded = self.decoder(z, y_metadata)
+
             p, n = self.neg_binom_layer(decoded)
             mu, var = self.gaussian_layer(decoded)
+            peak = self.peak_layer(decoded)
             
-        return p, n, mu, var
+        return p, n, mu, var, peak
 
     def forward(self, src, seq, x_metadata, y_metadata, availability=None, return_z=False):
         z = self.encode(src, seq, x_metadata)
-        p, n, mu, var = self.decode(z, y_metadata)
+
+        if self.latent_projection is not None:
+            z = self.latent_projection(z)      
+
+        p, n, mu, var, peak = self.decode(z, y_metadata)
         
         if return_z:
-            return p, n, mu, var, z
+            return p, n, mu, var, peak, z
         else:
-            return p, n, mu, var
+            return p, n, mu, var, peak
 
 class CANDI_UNET(CANDI):
     def __init__(self, signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers,
@@ -1143,10 +1166,13 @@ class CANDI_UNET(CANDI):
         # Gaussian parameters
         mu, var = self.gaussian_layer(pval_decoded)
 
+        # Peak prediction using count decoder output
+        peak = self.peak_layer(count_decoded)
+
         if return_z:
-            return p, n, mu, var, z
+            return p, n, mu, var, peak, z
             
-        return p, n, mu, var
+        return p, n, mu, var, peak
 
 #========================================================================================================#
 #===========================================Building Blocks==============================================#
@@ -1926,6 +1952,30 @@ class GaussianLayer(nn.Module):
         var = self.fc_var(x)
 
         return mu, var
+
+class PeakLayer(nn.Module):
+    def __init__(self, input_dim, output_dim, FF=False):
+        super(PeakLayer, self).__init__()
+
+        self.FF = FF
+        if self.FF:
+            self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
+
+        # Define the layers for calculating peak parameter
+        self.fc_peak = nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.LayerNorm(output_dim),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        if self.FF:
+            x = self.feed_forward(x)
+
+        peak = self.fc_peak(x)
+
+        return peak
+
 #========================================================================================================#
 #=============================================== Main ===================================================#
 #========================================================================================================#

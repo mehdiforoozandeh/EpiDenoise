@@ -9,7 +9,6 @@ data/*.fa
 data/*.gz
 playground/*
 candi_venv/
-.kiro/
 .cursor/
 logs/
 jobs/

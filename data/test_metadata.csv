@@ -1,2 +1,0 @@
-biosample_name,assay_name,bios_accession,exp_accession,file_accession,assembly,read_length,run_type,sequencing_platform,lab,depth
-test_cell_line,ATAC-seq,ENCSR456DEF,ENCSR789GHI,ENCFF123ABC,GRCh38,50,single-ended,Illumina HiSeq 2000,ENCODE Processing Pipeline,25000000.0

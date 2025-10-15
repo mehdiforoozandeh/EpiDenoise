@@ -222,6 +222,42 @@ states = hmm.fit_predict(dataset.get_chromosome_data("chr1"))
 write_bed(states, "chr1", 0, 25, "output/chr1_states.bed")
 ```
 
+### Control Experiments for ChIP-seq
+
+CANDI supports automatic discovery and processing of control experiments for ChIP-seq data:
+
+```bash
+# Add controls to existing EIC dataset
+python get_candi_data.py add-controls eic /path/to/DATA_CANDI_EIC
+
+# Add controls to existing MERGED dataset
+python get_candi_data.py add-controls merged /path/to/DATA_CANDI_MERGED
+
+# Process new data with controls included
+python get_candi_data.py process eic /path/to/data --with-controls
+```
+
+**Features**:
+- Smart control selection: matches assembly (GRCh38), selects newest control
+- Checks experiment-level and replicate-level controls
+- Resume capability: skips experiments that already have controls
+- Fail-safe: control failures don't affect experimental data
+- Creates control signal directories: `signal_DSF{X}_res25_control/`
+
+**Directory Structure with Controls**:
+```
+{biosample}/{assay}/
+├── file_metadata.json
+├── signal_DSF1_res25/          # Experimental signals
+├── signal_DSF2_res25/
+├── signal_DSF4_res25/
+├── signal_DSF8_res25/
+├── signal_DSF1_res25_control/  # Control signals
+├── signal_DSF2_res25_control/
+├── signal_DSF4_res25_control/
+└── signal_DSF8_res25_control/
+```
+
 ## Benchmarking Results
 
 CANDI has been extensively evaluated on multiple datasets:

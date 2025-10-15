@@ -39,14 +39,13 @@ import datetime
 import time
 import multiprocessing as mp
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Set
 from enum import Enum
 import logging
 from collections import defaultdict
 import shutil
-
 
 try:
     from tqdm import tqdm
@@ -80,72 +79,12 @@ except ImportError:
             pass
 
 # Import from existing data.py (with fallbacks for missing dependencies)
-try:
-    from data import (
-        BAM_TO_SIGNAL, download_save, get_binned_values, get_binned_bigBed_peaks,
-        extract_donor_information
-    )
-    HAS_DATA_MODULE = True
-except ImportError as e:
-    print(f"Warning: Could not import from data.py ({e}). Some functionality will be limited.")
-    HAS_DATA_MODULE = False
-    
-    # Provide fallback functions
-    def download_save(url, save_path, max_retries=10):
-        """Fallback download function with retry logic."""
-        import requests
-        import time
-        import os
-        
-        for attempt in range(max_retries):
-            try:
-                # Remove partial file if it exists
-                if os.path.exists(save_path):
-                    os.remove(save_path)
-                
-                response = requests.get(url, stream=True, timeout=300)
-                response.raise_for_status()
-                
-                # Memory-efficient download with progress
-                total_size = int(response.headers.get('content-length', 0))
-                downloaded = 0
-                
-                with open(save_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=1024*1024):  # 1MB chunks
-                        if chunk:
-                            f.write(chunk)
-                            downloaded += len(chunk)
-                            if total_size > 0 and downloaded % (50*1024*1024) == 0:  # Log every 50MB
-                                progress = (downloaded / total_size) * 100
-                                print(f"  Download progress: {progress:.1f}% ({downloaded//1024//1024}MB/{total_size//1024//1024}MB)")
-                
-                return True
-                
-            except Exception as e:
-                print(f"Download attempt {attempt + 1}/{max_retries} failed: {e}")
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
-                else:
-                    # Log final failure
-                    with open("failed_downloads.log", "a") as log_file:
-                        log_file.write(f"{url}\t{save_path}\t{str(e)}\n")
-                    return False
-    
-    def BAM_TO_SIGNAL(*args, **kwargs):
-        """Fallback BAM processing - requires actual implementation."""
-        raise NotImplementedError("BAM processing requires pysam and other dependencies")
-    
-    def get_binned_values(*args, **kwargs):
-        """Fallback BigWig processing - requires actual implementation."""
-        raise NotImplementedError("BigWig processing requires pyBigWig")
-    
-    def get_binned_bigBed_peaks(*args, **kwargs):
-        """Fallback BigBed processing - requires actual implementation."""
-        raise NotImplementedError("BigBed processing requires pyBigWig")
-    
-    def extract_donor_information(data):
-        """Fallback donor info extraction."""
-        return {"status": "unknown"}
+from data_utils import (
+    BAM_TO_SIGNAL, 
+    download_save, 
+    get_binned_values, 
+    get_binned_bigBed_peaks,
+    extract_donor_information)
 
 
 class TaskStatus(Enum):
@@ -178,6 +117,11 @@ class Task:
         return f"{self.celltype}-{self.assay}"
     
     @property
+    def biosample_name(self) -> str:
+        """Biosample name (same as celltype for compatibility)."""
+        return self.celltype
+    
+    @property
     def has_files_to_download(self) -> bool:
         """Check if task has any files to download."""
         return any([
@@ -187,6 +131,1467 @@ class Task:
             self.peaks_bigbed_accession
         ])
 
+
+@dataclass
+class BiosampleControlTask:
+    """Represents a biosample-level control processing task."""
+    biosample_name: str
+    primary_bios_accession: str        # Selected bios_accession with most ChIP-seq
+    control_exp_accession: str
+    control_bam_accession: str
+    chipseq_experiments: List[str]     # All ChIP-seq assays that will use this control
+    status: TaskStatus = TaskStatus.PENDING
+    control_date: str = "unknown"      # Date of the control experiment
+    fallback_options: List[Dict[str, str]] = None  # Alternative control options if primary fails
+
+
+def group_chipseq_by_biosample(all_tasks: List[Task]) -> Dict[str, Dict[str, List[Task]]]:
+    """
+    Group ChIP-seq experiments by biosample_name and select primary bios_accession.
+    
+    Args:
+        all_tasks: List of all tasks
+        
+    Returns:
+        Dict mapping biosample_name to Dict mapping bios_accession to list of ChIP-seq tasks
+    """
+    logger = logging.getLogger(__name__)
+    
+    # Filter to ChIP-seq experiments only
+    def is_chipseq_experiment(assay):
+        return (assay == "ChIP-seq" or 
+                assay.startswith('H2') or 
+                assay.startswith('H3') or 
+                assay.startswith('H4') or
+                assay.startswith('CTCF'))
+    
+    chipseq_tasks = [task for task in all_tasks if is_chipseq_experiment(task.assay)]
+    
+    # Group by biosample_name
+    biosample_groups = {}
+    for task in chipseq_tasks:
+        biosample_name = task.biosample_name
+        if biosample_name not in biosample_groups:
+            biosample_groups[biosample_name] = {}
+        
+        bios_accession = task.bios_accession
+        if bios_accession not in biosample_groups[biosample_name]:
+            biosample_groups[biosample_name][bios_accession] = []
+        
+        biosample_groups[biosample_name][bios_accession].append(task)
+    
+    # Select primary bios_accession for each biosample
+    for biosample_name, bios_accessions in biosample_groups.items():
+        if len(bios_accessions) == 1:
+            # Only one bios_accession, use it
+            primary_bios_accession = list(bios_accessions.keys())[0]
+            logger.info(f"Biosample {biosample_name}: single bios_accession {primary_bios_accession}")
+        else:
+            # Multiple bios_accessions, select one with most ChIP-seq experiments
+            bios_accession_counts = {
+                bios_accession: len(tasks) 
+                for bios_accession, tasks in bios_accessions.items()
+            }
+            
+            # Sort by count (descending), then by bios_accession (for consistency)
+            sorted_bios_accessions = sorted(
+                bios_accession_counts.items(),
+                key=lambda x: (-x[1], x[0])
+            )
+            
+            primary_bios_accession = sorted_bios_accessions[0][0]
+            primary_count = sorted_bios_accessions[0][1]
+            
+            logger.info(f"Biosample {biosample_name}: selected {primary_bios_accession} "
+                       f"({primary_count} ChIP-seq experiments) from {len(bios_accessions)} bios_accessions")
+            
+            # Log all bios_accessions for transparency
+            for bios_accession, count in sorted_bios_accessions:
+                logger.info(f"  - {bios_accession}: {count} ChIP-seq experiments")
+    
+    return biosample_groups
+
+
+def select_primary_bios_accession(biosample_name: str, bios_accessions: Dict[str, List[Task]]) -> str:
+    """
+    Select bios_accession with most ChIP-seq experiments.
+    If tied, select most recent by date_released.
+    
+    Args:
+        biosample_name: Name of the biosample
+        bios_accessions: Dict mapping bios_accession to list of tasks
+        
+    Returns:
+        Selected bios_accession
+    """
+    if len(bios_accessions) == 1:
+        return list(bios_accessions.keys())[0]
+    
+    # Count ChIP-seq experiments per bios_accession
+    bios_accession_counts = {
+        bios_accession: len(tasks) 
+        for bios_accession, tasks in bios_accessions.items()
+    }
+    
+    # Sort by count (descending), then by bios_accession (for consistency)
+    sorted_bios_accessions = sorted(
+        bios_accession_counts.items(),
+        key=lambda x: (-x[1], x[0])
+    )
+    
+    return sorted_bios_accessions[0][0]
+
+
+def find_control_for_biosample(biosample_name: str, primary_bios_accession: str, chipseq_tasks: List[Task], target_assembly: str = 'GRCh38', max_controls: int = 3) -> Optional[List[Dict[str, str]]]:
+    """
+    Find multiple control experiment options for a biosample using the first ChIP-seq experiment from the tasks.
+    
+    Args:
+        biosample_name: Name of the biosample
+        primary_bios_accession: Primary bios_accession for this biosample
+        chipseq_tasks: List of ChIP-seq tasks for this biosample
+        target_assembly: Target assembly (default: "GRCh38")
+        max_controls: Maximum number of control options to return (default: 3)
+        
+    Returns:
+        List of Dicts with control_exp_accession and control_bam_accession, or None if not found
+        Each dict contains: {'control_exp_accession': str, 'control_bam_accession': str}
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"🔍 [DISCOVERY] Finding control for biosample {biosample_name} using bios_accession {primary_bios_accession}")
+        
+        # Use the first ChIP-seq task from the primary bios_accession
+        primary_tasks = [task for task in chipseq_tasks if task.bios_accession == primary_bios_accession]
+        if not primary_tasks:
+            logger.warning(f"❌ [DISCOVERY] No ChIP-seq tasks found for primary bios_accession {primary_bios_accession}")
+            return None
+        
+        # Use the first ChIP-seq experiment for control discovery
+        first_task = primary_tasks[0]
+        exp_accession = first_task.exp_accession
+        
+        # Detailed logging as requested
+        logger.info(f"🔍 [INFO] Biosample: {biosample_name}")
+        logger.info(f"🔍 [INFO] Biosample Accession: {primary_bios_accession}")
+        logger.info(f"🔍 [INFO] Using ChIP-seq Experiment: {exp_accession}")
+        logger.info(f"🔍 [INFO] Experiment Assay: {first_task.assay}")
+        logger.info(f"🔍 [INFO] All ChIP-seq Tasks: {[t.assay for t in chipseq_tasks]}")
+        
+        logger.info(f"🔍 [DISCOVERY] Using first ChIP-seq experiment: {exp_accession} for biosample control discovery")
+        
+        # Step 1: Query the ChIP-seq experiment to discover controls
+        logger.info(f"🌐 [API] Querying ENCODE API for experiment: {exp_accession}")
+        exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/?format=json"
+        exp_response = requests.get(exp_url, headers={'accept': 'application/json'}, timeout=30)
+        exp_response.raise_for_status()
+        exp_data = exp_response.json()
+        
+        # Get possible controls
+        possible_controls = exp_data.get('possible_controls', [])
+        logger.info(f"🌐 [API] Found {len(possible_controls)} experiment-level controls")
+        
+        # If no experiment-level controls, check replicates
+        if not possible_controls:
+            logger.info(f"🔍 [API] No experiment-level controls found for {exp_accession}, checking replicates...")
+            replicates = exp_data.get('replicates', [])
+            logger.info(f"🔍 [API] Found {len(replicates)} replicates to check")
+            
+            for i, replicate_ref in enumerate(replicates):
+                if isinstance(replicate_ref, str):
+                    replicate_id = replicate_ref.split('/')[-2]
+                    replicate_url = f"https://www.encodeproject.org{replicate_ref}?format=json"
+                    logger.info(f"🔍 [API] Checking replicate {i+1}/{len(replicates)}: {replicate_id}")
+                    
+                    try:
+                        rep_response = requests.get(replicate_url, headers={'accept': 'application/json'}, timeout=30)
+                        rep_response.raise_for_status()
+                        rep_data = rep_response.json()
+                        
+                        rep_controls = rep_data.get('possible_controls', [])
+                        if rep_controls:
+                            possible_controls.extend(rep_controls)
+                            logger.info(f"✓ [API] Found {len(rep_controls)} controls in replicate {replicate_id}")
+                        else:
+                            logger.info(f"ℹ️ [API] No controls in replicate {replicate_id}")
+                    except Exception as e:
+                        logger.warning(f"❌ [API] Failed to query replicate {replicate_id}: {e}")
+                        continue
+        
+        # If still no controls, return None
+        if not possible_controls:
+            logger.warning(f"❌ [DISCOVERY] No controls found for biosample {biosample_name}")
+            return None
+        
+        logger.info(f"✓ [DISCOVERY] Found {len(possible_controls)} possible controls for biosample {biosample_name}")
+        
+        # Step 2: Filter controls by assembly
+        logger.info(f"🔍 [FILTER] Filtering controls by assembly {target_assembly}")
+        matching_controls = []
+        for i, control in enumerate(possible_controls):
+            control_assemblies = control.get('assembly', [])
+            control_accession = control.get('accession', f'control_{i}')
+            logger.info(f"🔍 [FILTER] Control {control_accession}: assemblies {control_assemblies}")
+            if target_assembly in control_assemblies:
+                matching_controls.append(control)
+                logger.info(f"✓ [FILTER] Control {control_accession} matches assembly {target_assembly}")
+            else:
+                logger.info(f"❌ [FILTER] Control {control_accession} does not match assembly {target_assembly}")
+        
+        if not matching_controls:
+            logger.warning(f"❌ [FILTER] No controls match assembly {target_assembly} for biosample {biosample_name}")
+            return None
+        
+        logger.info(f"✓ [FILTER] {len(matching_controls)} controls match assembly {target_assembly}")
+        
+        # Step 3: Select newest control by date_released
+        logger.info(f"📅 [SELECTION] Selecting newest control by date_released")
+        def parse_date(date_str):
+            """Parse ENCODE date format."""
+            if not date_str:
+                return datetime.datetime.min
+            try:
+                date_part = date_str.split('T')[0]
+                return datetime.datetime.strptime(date_part, '%Y-%m-%d')
+            except:
+                return datetime.datetime.min
+        
+        # Log all controls with dates
+        for i, control in enumerate(matching_controls):
+            control_accession = control.get('accession', f'control_{i}')
+            control_date = control.get('date_released', 'unknown')
+            logger.info(f"📅 [SELECTION] Control {control_accession}: released {control_date}")
+        
+        matching_controls.sort(
+            key=lambda c: parse_date(c.get('date_released', '')),
+            reverse=True
+        )
+        
+        selected_control = matching_controls[0]
+        control_accession = selected_control.get('accession')
+        control_date = selected_control.get('date_released', 'unknown')
+        
+        # Detailed logging as requested
+        logger.info(f"🔍 [INFO] Selected Control Experiment: {control_accession}")
+        logger.info(f"🔍 [INFO] Control Release Date: {control_date}")
+        
+        logger.info(f"✓ [SELECTION] Selected control: {control_accession} (released: {control_date})")
+        
+        # Step 4: Find BAM file in control experiment
+        logger.info(f"🌐 [API] Querying control experiment for files: {control_accession}")
+        control_url = f"https://www.encodeproject.org/experiments/{control_accession}/?format=json"
+        control_response = requests.get(control_url, headers={'accept': 'application/json'}, timeout=30)
+        control_response.raise_for_status()
+        control_data = control_response.json()
+        
+        # Try both 'files' and 'original_files'
+        file_refs = control_data.get('files', [])
+        if not file_refs:
+            file_refs = control_data.get('original_files', [])
+        
+        logger.info(f"📁 [BAM] Control experiment has {len(file_refs)} file references")
+        
+        # Collect all file accessions
+        file_accessions = []
+        for i, file_ref in enumerate(file_refs):
+            if isinstance(file_ref, str):
+                # Extract accession from path like "/files/ENCFF123ABC/"
+                file_acc = file_ref.strip('/').split('/')[-1]
+                file_accessions.append(file_acc)
+                logger.info(f"📁 [BAM] File {i+1}/{len(file_refs)}: {file_acc}")
+            elif isinstance(file_ref, dict):
+                # File might be embedded as dict with '@id' or 'accession'
+                file_acc = file_ref.get('accession') or file_ref.get('@id', '').strip('/').split('/')[-1]
+                if file_acc:
+                    file_accessions.append(file_acc)
+                    logger.info(f"📁 [BAM] File {i+1}/{len(file_refs)}: {file_acc}")
+        
+        logger.info(f"📁 [BAM] Extracted {len(file_accessions)} file accessions to query")
+        
+        # Query each file to find matching BAM
+        logger.info(f"🔍 [BAM] Searching for matching BAM files...")
+        for i, file_accession in enumerate(file_accessions):
+            if not file_accession or not file_accession.startswith('ENCFF'):
+                logger.info(f"🔍 [BAM] Skipping non-ENCFF file: {file_accession}")
+                continue
+            
+            logger.info(f"🔍 [BAM] Checking file {i+1}/{len(file_accessions)}: {file_accession}")
+            
+            # Query file metadata
+            file_url = f"https://www.encodeproject.org/files/{file_accession}/?format=json"
+            try:
+                file_response = requests.get(file_url, headers={'accept': 'application/json'}, timeout=30)
+                file_response.raise_for_status()
+                file_data = file_response.json()
+                
+                # Check if file matches our criteria
+                file_format = file_data.get('file_format', '')
+                assembly = file_data.get('assembly', '')
+                output_type = file_data.get('output_type', '')
+                status = file_data.get('status', '')
+                
+                logger.info(f"🔍 [BAM] File {file_accession}: format={file_format}, assembly={assembly}, type={output_type}, status={status}")
+                
+                if (file_format == 'bam' and
+                    assembly == target_assembly and
+                    ('alignment' in output_type.lower() or output_type == 'reads') and
+                    status in ['released', 'in progress']):
+                    
+                    # Detailed logging as requested
+                    logger.info(f"🔍 [INFO] Found Control BAM: {file_accession}")
+                    logger.info(f"🔍 [INFO] BAM Assembly: {assembly}")
+                    logger.info(f"🔍 [INFO] BAM Output Type: {output_type}")
+                    logger.info(f"🔍 [INFO] BAM Status: {status}")
+                    
+                    logger.info(f"✓ [BAM] Found matching BAM: {file_accession} (assembly: {assembly}, type: {output_type}, status: {status})")
+                    
+                    return {
+                        'control_exp_accession': control_accession,
+                        'control_bam_accession': file_accession
+                    }
+                else:
+                    logger.info(f"❌ [BAM] File {file_accession} does not match criteria")
+            
+            except Exception as e:
+                logger.warning(f"❌ [BAM] Failed to query file {file_accession}: {e}")
+                continue
+        
+        logger.warning(f"❌ [BAM] No suitable BAM file found in control {control_accession}")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error finding control for biosample {biosample_name}: {e}")
+        return None
+
+
+def find_multiple_controls_for_biosample(biosample_name: str, primary_bios_accession: str, chipseq_tasks: List[Task], target_assembly: str = 'GRCh38', max_controls: int = 3) -> Optional[List[Dict[str, str]]]:
+    """
+    Find multiple control experiment options for a biosample for fallback purposes.
+    
+    Args:
+        biosample_name: Name of the biosample
+        primary_bios_accession: Primary bios_accession for this biosample
+        chipseq_tasks: List of ChIP-seq tasks for this biosample
+        target_assembly: Target assembly (default: "GRCh38")
+        max_controls: Maximum number of control options to return (default: 3)
+        
+    Returns:
+        List of Dicts with control_exp_accession and control_bam_accession, or None if not found
+        Each dict contains: {'control_exp_accession': str, 'control_bam_accession': str, 'control_date': str}
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"🔍 [DISCOVERY] Finding multiple control options for biosample {biosample_name}")
+        
+        # Use the first ChIP-seq task from the primary bios_accession
+        primary_tasks = [task for task in chipseq_tasks if task.bios_accession == primary_bios_accession]
+        if not primary_tasks:
+            logger.warning(f"❌ [DISCOVERY] No ChIP-seq tasks found for primary bios_accession {primary_bios_accession}")
+            return None
+        
+        # Use the first ChIP-seq experiment for control discovery
+        first_task = primary_tasks[0]
+        exp_accession = first_task.exp_accession
+        
+        logger.info(f"🔍 [DISCOVERY] Using ChIP-seq experiment: {exp_accession} for multiple control discovery")
+        
+        # Query the ChIP-seq experiment to discover controls
+        exp_url = f"https://www.encodeproject.org/experiments/{exp_accession}/?format=json"
+        exp_response = requests.get(exp_url, headers={'accept': 'application/json'}, timeout=30)
+        exp_response.raise_for_status()
+        exp_data = exp_response.json()
+        
+        # Get possible controls
+        possible_controls = exp_data.get('possible_controls', [])
+        logger.info(f"🌐 [API] Found {len(possible_controls)} experiment-level controls")
+        
+        # If no experiment-level controls, check replicates
+        if not possible_controls:
+            logger.info(f"🔍 [API] No experiment-level controls found, checking replicates...")
+            replicates = exp_data.get('replicates', [])
+            for i, replicate_ref in enumerate(replicates):
+                if isinstance(replicate_ref, str):
+                    replicate_url = f"https://www.encodeproject.org{replicate_ref}?format=json"
+                    try:
+                        rep_response = requests.get(replicate_url, headers={'accept': 'application/json'}, timeout=30)
+                        rep_response.raise_for_status()
+                        rep_data = rep_response.json()
+                        rep_controls = rep_data.get('possible_controls', [])
+                        if rep_controls:
+                            possible_controls.extend(rep_controls)
+                    except Exception as e:
+                        logger.warning(f"❌ [API] Failed to query replicate: {e}")
+                        continue
+        
+        if not possible_controls:
+            logger.warning(f"❌ [DISCOVERY] No controls found for biosample {biosample_name}")
+            return None
+        
+        # Filter controls by assembly
+        matching_controls = []
+        for control in possible_controls:
+            control_assemblies = control.get('assembly', [])
+            if target_assembly in control_assemblies:
+                matching_controls.append(control)
+        
+        if not matching_controls:
+            logger.warning(f"❌ [FILTER] No controls match assembly {target_assembly}")
+            return None
+        
+        logger.info(f"✓ [FILTER] {len(matching_controls)} controls match assembly {target_assembly}")
+        
+        # Sort by date_released (newest first)
+        def parse_date(date_str):
+            if not date_str:
+                return datetime.datetime.min
+            try:
+                date_part = date_str.split('T')[0]
+                return datetime.datetime.strptime(date_part, '%Y-%m-%d')
+            except:
+                return datetime.datetime.min
+        
+        matching_controls.sort(key=lambda c: parse_date(c.get('date_released', '')), reverse=True)
+        
+        # Collect multiple control options
+        control_options = []
+        
+        for control_idx in range(min(len(matching_controls), max_controls)):
+            current_control = matching_controls[control_idx]
+            current_control_accession = current_control.get('accession')
+            current_control_date = current_control.get('date_released', 'unknown')
+            
+            logger.info(f"🔍 [CONTROL {control_idx+1}] Processing: {current_control_accession} ({current_control_date})")
+            
+            # Query control experiment for files
+            control_url = f"https://www.encodeproject.org/experiments/{current_control_accession}/?format=json"
+            control_response = requests.get(control_url, headers={'accept': 'application/json'}, timeout=30)
+            control_response.raise_for_status()
+            control_data = control_response.json()
+            
+            # Get file references
+            file_refs = control_data.get('files', [])
+            if not file_refs:
+                file_refs = control_data.get('original_files', [])
+            
+            # Extract file accessions
+            file_accessions = []
+            for file_ref in file_refs:
+                if isinstance(file_ref, str):
+                    file_acc = file_ref.strip('/').split('/')[-1]
+                    if file_acc.startswith('ENCFF'):
+                        file_accessions.append(file_acc)
+                elif isinstance(file_ref, dict):
+                    file_acc = file_ref.get('accession') or file_ref.get('@id', '').strip('/').split('/')[-1]
+                    if file_acc and file_acc.startswith('ENCFF'):
+                        file_accessions.append(file_acc)
+            
+            # Find ALL suitable BAM files for this control experiment
+            suitable_bams = []
+            for file_accession in file_accessions:
+                try:
+                    file_url = f"https://www.encodeproject.org/files/{file_accession}/?format=json"
+                    file_response = requests.get(file_url, headers={'accept': 'application/json'}, timeout=30)
+                    file_response.raise_for_status()
+                    file_data = file_response.json()
+                    
+                    file_format = file_data.get('file_format', '')
+                    assembly = file_data.get('assembly', '')
+                    output_type = file_data.get('output_type', '')
+                    status = file_data.get('status', '')
+                    file_size = file_data.get('file_size', 0)
+                    date_added = file_data.get('date_added', '')
+                    
+                    if (file_format == 'bam' and
+                        assembly == target_assembly and
+                        ('alignment' in output_type.lower() or output_type == 'reads') and
+                        status in ['released', 'in progress']):
+                        
+                        suitable_bams.append({
+                            'file_accession': file_accession,
+                            'output_type': output_type,
+                            'file_size': file_size,
+                            'date_added': date_added,
+                            'status': status
+                        })
+                        logger.info(f"✓ [BAM] Found BAM {file_accession} ({output_type}, {file_size} bytes, {date_added})")
+                        
+                except Exception as e:
+                    logger.warning(f"❌ [BAM] Failed to query file {file_accession}: {e}")
+                    continue
+            
+            if suitable_bams:
+                # Sort BAM files by date_added (newest first) and then by file size (largest first)
+                def parse_date_added(date_str):
+                    if not date_str:
+                        return datetime.datetime.min
+                    try:
+                        date_part = date_str.split('T')[0]
+                        return datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                    except:
+                        return datetime.datetime.min
+                
+                suitable_bams.sort(key=lambda x: (parse_date_added(x['date_added']), x['file_size']), reverse=True)
+                
+                logger.info(f"📋 [BAM] Found {len(suitable_bams)} BAM files for control {current_control_accession}, sorted by date and size")
+                for i, bam in enumerate(suitable_bams):
+                    logger.info(f"  {i+1}. {bam['file_accession']} ({bam['output_type']}, {bam['file_size']} bytes, {bam['date_added']})")
+                
+                # Add all BAM options for this control experiment
+                for bam in suitable_bams:
+                    control_options.append({
+                        'control_exp_accession': current_control_accession,
+                        'control_bam_accession': bam['file_accession'],
+                        'control_date': current_control_date,
+                        'bam_output_type': bam['output_type'],
+                        'bam_file_size': bam['file_size'],
+                        'bam_date_added': bam['date_added']
+                    })
+            else:
+                logger.warning(f"❌ [BAM] No suitable BAM found for control {current_control_accession}")
+        
+        if control_options:
+            logger.info(f"✓ [SUCCESS] Found {len(control_options)} control options for biosample {biosample_name}")
+            return control_options
+        else:
+            logger.warning(f"❌ [FAILURE] No suitable control options found for biosample {biosample_name}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error finding multiple controls for biosample {biosample_name}: {e}")
+        return None
+
+
+def robust_download_save(url: str, file_path: str, max_retries: int = 3) -> bool:
+    """
+    Robust download function with retry logic and validation.
+    
+    Args:
+        url: URL to download from
+        file_path: Local file path to save to
+        max_retries: Maximum number of retry attempts
+        
+    Returns:
+        bool: True if download successful, False otherwise
+    """
+    logger = logging.getLogger(__name__)
+    
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"📥 [DOWNLOAD] Attempt {attempt + 1}/{max_retries}: {url}")
+            
+            # Use requests with timeout and streaming
+            response = requests.get(url, stream=True, timeout=120)  # Increased timeout
+            response.raise_for_status()
+            
+            # Get file size from headers if available
+            total_size = int(response.headers.get('content-length', 0))
+            if total_size > 0:
+                logger.info(f"📥 [DOWNLOAD] Expected size: {total_size / (1024*1024):.1f} MB")
+            
+            # Download with progress tracking and atomic write
+            downloaded = 0
+            temp_file = file_path + '.tmp'
+            
+            try:
+                with open(temp_file, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            
+                            # Log progress every 100MB
+                            if downloaded % (100 * 1024 * 1024) == 0:
+                                logger.info(f"📥 [DOWNLOAD] Downloaded {downloaded / (1024*1024):.1f} MB")
+                
+                # Atomic move - only if download completed successfully
+                if os.path.exists(temp_file):
+                    os.rename(temp_file, file_path)
+                else:
+                    logger.error(f"❌ [DOWNLOAD] Temp file not created: {temp_file}")
+                    continue
+                    
+            except Exception as e:
+                # Clean up temp file on error
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                raise e
+            
+            # Validate download
+            if os.path.exists(file_path):
+                actual_size = os.path.getsize(file_path)
+                logger.info(f"📥 [DOWNLOAD] Actual size: {actual_size / (1024*1024):.1f} MB")
+                
+                # Check if download is complete - stricter validation
+                if total_size > 0:
+                    size_diff = abs(actual_size - total_size)
+                    size_diff_pct = (size_diff / total_size) * 100
+                    
+                    if size_diff > 1024 * 1024:  # Allow 1MB tolerance for large files
+                        logger.warning(f"⚠️ [DOWNLOAD] Size mismatch: expected {total_size}, got {actual_size} (diff: {size_diff_pct:.2f}%)")
+                        if attempt < max_retries - 1:
+                            logger.info(f"📥 [DOWNLOAD] Removing incomplete file for retry...")
+                            os.remove(file_path)
+                            continue
+                
+                # Basic validation - file should be reasonable size
+                min_size = 100 * 1024 if file_path.endswith('.bam') else 1024
+                if actual_size < min_size:
+                    logger.warning(f"⚠️ [DOWNLOAD] File too small: {actual_size} bytes (min expected: {min_size} bytes)")
+                    if attempt < max_retries - 1:
+                        os.remove(file_path)
+                        continue
+                
+                # Additional validation - try to open file
+                try:
+                    with open(file_path, 'rb') as f:
+                        # Read first few bytes to ensure file is accessible
+                        f.read(1024)
+                except Exception as e:
+                    logger.warning(f"⚠️ [DOWNLOAD] File access test failed: {e}")
+                    if attempt < max_retries - 1:
+                        os.remove(file_path)
+                        continue
+                
+                logger.info(f"✓ [DOWNLOAD] Successfully downloaded {actual_size / (1024*1024):.1f} MB")
+                return True
+            else:
+                logger.error(f"❌ [DOWNLOAD] File not created: {file_path}")
+                
+        except Exception as e:
+            logger.error(f"❌ [DOWNLOAD] Attempt {attempt + 1} failed: {e}")
+            # Clean up any partial files
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            if os.path.exists(file_path + '.tmp'):
+                os.remove(file_path + '.tmp')
+            
+            if attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 10  # Wait 10, 20, 30 seconds
+                logger.info(f"📥 [DOWNLOAD] Waiting {wait_time} seconds before retry...")
+                time.sleep(wait_time)
+    
+    logger.error(f"❌ [DOWNLOAD] All {max_retries} attempts failed")
+    return False
+
+
+def process_biosample_control(task: BiosampleControlTask, base_path: str, resolution: int = 25, dsf_list: List[int] = [1,2,4,8], fallback_options: List[Dict[str, str]] = None) -> Tuple[str, str]:
+    """
+    Process control as separate experiment in biosample/chipseq-control/.
+    
+    Args:
+        task: BiosampleControlTask containing control information
+        base_path: Base path to dataset directory
+        resolution: Resolution in bp (default: 25)
+        dsf_list: Downsampling factors (default: [1,2,4,8])
+        fallback_options: List of alternative control options if primary fails
+        
+    Returns:
+        Tuple of (result, message) where result is 'success' or 'failed'
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        control_path = os.path.join(base_path, task.biosample_name, "chipseq-control")
+        
+        # Create control directory if it doesn't exist
+        os.makedirs(control_path, exist_ok=True)
+        
+        # Check if control signals already exist
+        if all(os.path.exists(os.path.join(control_path, f"signal_DSF{dsf}_res{resolution}")) for dsf in dsf_list):
+            logger.info(f"✓ Control signals already exist for biosample {task.biosample_name}")
+            return 'success', 'already_processed'
+        
+        # Prepare control options to try (primary + fallbacks)
+        control_options = []
+        
+        # Add primary control
+        control_options.append({
+            'control_exp_accession': task.control_exp_accession,
+            'control_bam_accession': task.control_bam_accession,
+            'control_date': getattr(task, 'control_date', 'unknown')
+        })
+        
+        # Add fallback options if provided
+        if fallback_options:
+            control_options.extend(fallback_options)
+        
+        logger.info(f"🔄 [FALLBACK] Will try {len(control_options)} control options for biosample {task.biosample_name}")
+        
+        # Try each control option until one succeeds
+        for option_idx, control_option in enumerate(control_options):
+            control_exp_accession = control_option['control_exp_accession']
+            control_bam_accession = control_option['control_bam_accession']
+            control_date = control_option.get('control_date', 'unknown')
+            
+            is_primary = (option_idx == 0)
+            logger.info(f"🔄 [CONTROL {option_idx+1}/{len(control_options)}] {'Primary' if is_primary else 'Fallback'} control: {control_exp_accession} -> {control_bam_accession} ({control_date})")
+            
+            try:
+                result, message = _process_single_control_option(
+                    task, control_path, control_exp_accession, control_bam_accession, 
+                    resolution, dsf_list
+                )
+                
+                if result == 'success':
+                    logger.info(f"✓ [SUCCESS] Control option {option_idx+1} succeeded for biosample {task.biosample_name}")
+                    return 'success', f'processed_with_option_{option_idx+1}'
+                else:
+                    logger.warning(f"⚠️ [FAILED] Control option {option_idx+1} failed for biosample {task.biosample_name}: {message}")
+                    if option_idx < len(control_options) - 1:
+                        logger.info(f"🔄 [FALLBACK] Trying next control option...")
+                        continue
+                    else:
+                        logger.error(f"❌ [EXHAUSTED] All control options failed for biosample {task.biosample_name}")
+                        return 'failed', f'all_options_failed: {message}'
+                        
+            except Exception as e:
+                logger.error(f"❌ [ERROR] Control option {option_idx+1} failed with exception for biosample {task.biosample_name}: {e}")
+                if option_idx < len(control_options) - 1:
+                    logger.info(f"🔄 [FALLBACK] Trying next control option...")
+                    continue
+                else:
+                    return 'failed', f'all_options_failed: {str(e)}'
+        
+        # This should not be reached, but just in case
+        return 'failed', 'no_control_options_available'
+        
+    except Exception as e:
+        logger.error(f"❌ [ERROR] Failed to process control for biosample {task.biosample_name}: {e}")
+        return 'failed', str(e)
+
+
+def _create_comprehensive_control_metadata(task: BiosampleControlTask, control_exp_accession: str, control_bam_accession: str, resolution: int, dsf_list: List[int]) -> Dict:
+    """Create comprehensive control metadata by fetching from ENCODE API."""
+    import requests
+    import time
+    
+    logger = logging.getLogger(__name__)
+    
+    # Start with basic metadata
+    control_metadata = {
+        'biosample_name': task.biosample_name,
+        'control_exp_accession': task.control_exp_accession,
+        'control_bam_accession': task.control_bam_accession,
+        'primary_bios_accession': task.primary_bios_accession,
+        'chipseq_experiments': task.chipseq_experiments,
+        'processed_date': datetime.datetime.now().isoformat(),
+        'resolution': resolution,
+        'dsf_list': dsf_list
+    }
+    
+    try:
+        # Fetch control experiment metadata
+        logger.info(f"🌐 [API] Fetching control experiment metadata for {control_exp_accession}")
+        exp_url = f"https://www.encodeproject.org/experiments/{control_exp_accession}/?format=json"
+        exp_response = requests.get(exp_url, headers={'accept': 'application/json'}, timeout=30)
+        exp_response.raise_for_status()
+        exp_data = exp_response.json()
+        
+        # Fetch control BAM file metadata
+        logger.info(f"🌐 [API] Fetching control BAM metadata for {control_bam_accession}")
+        file_url = f"https://www.encodeproject.org/files/{control_bam_accession}/?format=json"
+        file_response = requests.get(file_url, headers={'accept': 'application/json'}, timeout=30)
+        file_response.raise_for_status()
+        file_data = file_response.json()
+        
+        # Extract comprehensive metadata
+        control_metadata.update({
+            'assembly': {"2": file_data.get('assembly', 'GRCh38')},
+            'file_size': {"2": file_data.get('file_size', 0)},
+            'date_created': {"2": file_data.get('date_created', '')},
+            'status': {"2": file_data.get('status', 'released')},
+            'download_url': {"2": f"https://www.encodeproject.org/files/{control_bam_accession}/@@download/{control_bam_accession}.bam"}
+        })
+        
+        # Add read_length and run_type
+        if "read_length" in file_data:
+            control_metadata["read_length"] = {"2": file_data["read_length"]}
+            control_metadata["run_type"] = {"2": file_data.get("run_type", "single-ended")}
+        elif "mapped_read_length" in file_data:
+            control_metadata["read_length"] = {"2": file_data["mapped_read_length"]}
+            control_metadata["run_type"] = {"2": file_data.get("mapped_run_type", "single-ended")}
+        else:
+            control_metadata["read_length"] = {"2": None}
+            control_metadata["run_type"] = {"2": "single-ended"}
+        
+        # Extract sequencing platform and lab from experiment metadata
+        if 'lab' in exp_data and 'title' in exp_data['lab']:
+            control_metadata["lab"] = {"2": exp_data['lab']['title']}
+        
+        # Extract sequencing platform from raw files (FASTQ files have platform info)
+        if 'files' in exp_data and exp_data['files']:
+            for file_info in exp_data['files']:
+                # Look for FASTQ files which contain platform information
+                if (file_info.get('file_format') == 'fastq' and 
+                    'platform' in file_info and 'term_name' in file_info['platform']):
+                    control_metadata["sequencing_platform"] = {"2": file_info['platform']['term_name']}
+                    break
+        
+        logger.info(f"✅ [METADATA] Successfully enhanced control metadata with comprehensive fields")
+        
+    except Exception as e:
+        logger.warning(f"⚠️ [METADATA] Failed to fetch comprehensive metadata: {e}")
+        logger.info(f"📝 [METADATA] Using basic metadata only")
+    
+    return control_metadata
+
+
+def _process_single_control_option(task: BiosampleControlTask, control_path: str, control_exp_accession: str, control_bam_accession: str, resolution: int, dsf_list: List[int]) -> Tuple[str, str]:
+    """
+    Process a single control option (helper function for fallback mechanism).
+    
+    Args:
+        task: BiosampleControlTask containing biosample information
+        control_path: Path to control directory
+        control_exp_accession: Control experiment accession
+        control_bam_accession: Control BAM file accession
+        resolution: Resolution in bp
+        dsf_list: Downsampling factors
+        
+    Returns:
+        Tuple of (result, message) where result is 'success' or 'failed'
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        
+        # Step 1: Download control BAM file
+        control_bam_file = os.path.join(control_path, f"{control_bam_accession}.bam")
+        download_url = f"https://www.encodeproject.org/files/{control_bam_accession}/@@download/{control_bam_accession}.bam"
+        
+        # Detailed logging as requested
+        logger.info(f"🔍 [INFO] Biosample: {task.biosample_name}")
+        logger.info(f"🔍 [INFO] Biosample Accession: {task.primary_bios_accession}")
+        logger.info(f"🔍 [INFO] Control Experiment: {control_exp_accession}")
+        logger.info(f"🔍 [INFO] Control BAM: {control_bam_accession}")
+        logger.info(f"🔍 [INFO] ChIP-seq Experiments: {', '.join(task.chipseq_experiments)}")
+        
+        logger.info(f"📥 [DOWNLOAD] Starting download of control BAM for biosample {task.biosample_name}")
+        logger.info(f"📥 [DOWNLOAD] URL: {download_url}")
+        logger.info(f"📥 [DOWNLOAD] Target: {control_bam_file}")
+        
+        # Check if file already exists and is valid
+        if os.path.exists(control_bam_file):
+            existing_size = os.path.getsize(control_bam_file)
+            logger.info(f"✓ [DOWNLOAD] File already exists: {control_bam_file} ({existing_size / (1024*1024):.1f} MB)")
+
+            # Validate existing file - must be reasonable size for BAM files
+            min_bam_size = 100 * 1024  # At least 100KB
+            if existing_size > min_bam_size:
+                # Quick validation - check if file can be indexed
+                logger.info(f"🔍 [DOWNLOAD] Quick validation of existing file...")
+                quick_validation = os.system(f"samtools quickcheck {control_bam_file} > /dev/null 2>&1")
+                if quick_validation == 0:
+                    logger.info(f"✓ [DOWNLOAD] Using existing file for biosample {task.biosample_name}")
+                    # Skip download, go directly to indexing
+                    skip_download = True
+                else:
+                    logger.warning(f"⚠️ [DOWNLOAD] Existing file failed quick validation, will re-download")
+                    os.remove(control_bam_file)
+                    skip_download = False
+            else:
+                logger.warning(f"⚠️ [DOWNLOAD] Existing file too small ({existing_size} bytes), will re-download")
+                os.remove(control_bam_file)
+                skip_download = False
+        else:
+            logger.info(f"📥 [DOWNLOAD] File does not exist, will download")
+            skip_download = False
+
+        # Only download if file doesn't exist or was removed
+        if not skip_download:
+            if not robust_download_save(download_url, control_bam_file, max_retries=3):
+                logger.error(f"❌ [DOWNLOAD] Failed to download control BAM for biosample {task.biosample_name}")
+                return 'failed', 'download_failed'
+        
+        logger.info(f"✓ [DOWNLOAD] Successfully downloaded control BAM for biosample {task.biosample_name}")
+        
+        # Step 2: Index and validate BAM file
+        logger.info(f"🔍 [INDEXING] Starting BAM indexing for biosample {task.biosample_name}")
+        logger.info(f"🔍 [INDEXING] Command: samtools index {control_bam_file}")
+        
+        index_result = os.system(f"samtools index {control_bam_file}")
+        if index_result != 0:
+            logger.error(f"❌ [INDEXING] Failed to index control BAM for biosample {task.biosample_name} (exit code: {index_result})")
+            return 'failed', 'indexing_failed'
+        
+        logger.info(f"✓ [INDEXING] Successfully indexed control BAM for biosample {task.biosample_name}")
+        
+        # Step 2.5: Validate BAM file integrity
+        logger.info(f"🔍 [VALIDATION] Validating BAM file integrity for biosample {task.biosample_name}")
+        
+        # First, try quickcheck
+        validation_result = os.system(f"samtools quickcheck {control_bam_file}")
+        if validation_result != 0:
+            logger.error(f"❌ [VALIDATION] BAM file quickcheck failed for biosample {task.biosample_name} (exit code: {validation_result})")
+            return 'failed', 'bam_corrupted'
+        
+        # Then, try to read the entire file to detect truncation
+        logger.info(f"🔍 [VALIDATION] Running comprehensive BAM validation (reading all reads)...")
+        view_result = os.system(f"samtools view -c {control_bam_file} > /dev/null 2>&1")
+        if view_result != 0:
+            logger.error(f"❌ [VALIDATION] BAM file is corrupted/truncated for biosample {task.biosample_name}")
+            logger.error(f"❌ [VALIDATION] This indicates the file is incomplete or corrupted")
+            return 'failed', 'bam_corrupted'
+        
+        # Get read count for logging
+        import subprocess
+        try:
+            result = subprocess.run(['samtools', 'view', '-c', control_bam_file], 
+                                  capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                read_count = result.stdout.strip()
+                logger.info(f"✓ [VALIDATION] BAM file validation passed for biosample {task.biosample_name}")
+                logger.info(f"✓ [VALIDATION] BAM file contains {read_count} reads")
+            else:
+                logger.error(f"❌ [VALIDATION] Failed to count reads in BAM file for biosample {task.biosample_name}")
+                return 'failed', 'bam_corrupted'
+        except Exception as e:
+            logger.error(f"❌ [VALIDATION] Error during BAM validation for biosample {task.biosample_name}: {e}")
+            return 'failed', 'bam_corrupted'
+        
+        # Step 3: Process BAM to signals (no suffix since it's a separate experiment)
+        logger.info(f"⚙️ [PROCESSING] Starting signal processing for biosample {task.biosample_name}")
+        logger.info(f"⚙️ [PROCESSING] DSF values: {dsf_list}, Resolution: {resolution}bp")
+        logger.info(f"⚙️ [PROCESSING] BAM file: {control_bam_file}")
+        logger.info(f"⚙️ [PROCESSING] Output directory: {control_path}")
+        
+        # Ensure output directory exists
+        os.makedirs(control_path, exist_ok=True)
+        
+        # Process with detailed logging for each DSF
+        total_dsf = len(dsf_list)
+        for i, dsf in enumerate(dsf_list):
+            logger.info(f"⚙️ [PROCESSING] Processing DSF{dsf} ({i+1}/{total_dsf}) for biosample {task.biosample_name}")
+            
+            # Create a custom processor for this DSF
+            dsf_processor = BAM_TO_SIGNAL(
+                bam_file=control_bam_file,
+                chr_sizes_file="data/hg38.chrom.sizes"
+            )
+            
+            try:
+                # Process only this DSF - let BAM_TO_SIGNAL create its own directories
+                logger.info(f"⚙️ [PROCESSING] Running BAM_TO_SIGNAL.full_preprocess for DSF{dsf}")
+                logger.info(f"⚙️ [PROCESSING] Output will be in: {control_path}")
+                dsf_processor.full_preprocess(dsf_list=[dsf])
+                logger.info(f"✓ [PROCESSING] Completed DSF{dsf} ({i+1}/{total_dsf}) for biosample {task.biosample_name}")
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'truncated' in error_msg or 'corrupted' in error_msg or 'eof marker' in error_msg:
+                    logger.error(f"❌ [PROCESSING] BAM file corruption detected for biosample {task.biosample_name}")
+                    logger.error(f"❌ [PROCESSING] This indicates the BAM file is corrupted/truncated")
+                    logger.error(f"❌ [PROCESSING] Error details: {type(e).__name__}: {str(e)}")
+                    return 'failed', 'bam_corrupted'
+                else:
+                    logger.error(f"❌ [PROCESSING] Failed DSF{dsf} ({i+1}/{total_dsf}) for biosample {task.biosample_name}: {e}")
+                    logger.error(f"❌ [PROCESSING] Error details: {type(e).__name__}: {str(e)}")
+                    raise e
+        
+        logger.info(f"✓ [PROCESSING] Successfully completed all DSF processing for biosample {task.biosample_name}")
+        
+        # Step 4: Clean up BAM files (only if processing succeeded)
+        logger.info(f"🧹 [CLEANUP] Removing temporary BAM files for biosample {task.biosample_name}")
+        try:
+            if os.path.exists(control_bam_file):
+                os.remove(control_bam_file)
+                logger.info(f"🧹 [CLEANUP] Removed BAM file: {control_bam_file}")
+            if os.path.exists(f"{control_bam_file}.bai"):
+                os.remove(f"{control_bam_file}.bai")
+                logger.info(f"🧹 [CLEANUP] Removed index file: {control_bam_file}.bai")
+        except Exception as e:
+            logger.warning(f"⚠️ [CLEANUP] Error removing files: {e}")
+        logger.info(f"✓ [CLEANUP] Cleaned up temporary files for biosample {task.biosample_name}")
+        
+        # Step 5: Save control metadata with comprehensive information
+        logger.info(f"💾 [METADATA] Saving comprehensive metadata for biosample {task.biosample_name}")
+        control_metadata = _create_comprehensive_control_metadata(
+            task, control_exp_accession, control_bam_accession, resolution, dsf_list
+        )
+        
+        metadata_file = os.path.join(control_path, "file_metadata.json")
+        with open(metadata_file, 'w') as f:
+            json.dump(control_metadata, f, indent=2)
+        
+        logger.info(f"✓ [METADATA] Saved metadata for biosample {task.biosample_name}")
+        logger.info(f"🎉 [SUCCESS] Fully processed control for biosample {task.biosample_name}")
+        return 'success', 'processed'
+        
+    except Exception as e:
+        logger.error(f"❌ [ERROR] Failed to process control for biosample {task.biosample_name}: {e}")
+        # Clean up on failure
+        if 'control_bam_file' in locals() and os.path.exists(control_bam_file):
+            logger.info(f"🧹 [CLEANUP] Removing failed download: {control_bam_file}")
+            os.remove(control_bam_file)
+        if 'control_bam_file' in locals() and os.path.exists(f"{control_bam_file}.bai"):
+            logger.info(f"🧹 [CLEANUP] Removing failed index: {control_bam_file}.bai")
+            os.remove(f"{control_bam_file}.bai")
+        return 'failed', str(e)
+
+
+def identify_missing_controls(base_path: str, dataset_name: str, resolution: int = 25, dsf_list: List[int] = [1,2,4,8]) -> Dict:
+    """
+    Identify biosamples that need ChIP-seq controls but don't have them.
+    
+    Args:
+        base_path: Path to dataset directory (e.g., /path/to/DATA_CANDI_EIC)
+        dataset_name: Dataset name ('eic' or 'merged') for loading download plan
+        resolution: Resolution in bp (default: 25)
+        dsf_list: Downsampling factors (default: [1,2,4,8])
+        
+    Returns:
+        Dict with detailed information about missing controls
+    """
+    logger = logging.getLogger(__name__)
+    
+    print(f"\n{'='*70}")
+    print(f"Identifying Missing Controls in {dataset_name.upper()} Dataset")
+    print(f"{'='*70}")
+    print(f"Base path: {base_path}")
+    print(f"Resolution: {resolution}bp")
+    
+    # Load download plan to get experiment accessions
+    loader = DownloadPlanLoader(dataset_name)
+    all_tasks = loader.create_task_list()
+    
+    # Statistics
+    stats = {
+        'total_biosamples': 0,
+        'biosamples_with_chipseq': 0,
+        'biosamples_with_controls': 0,
+        'biosamples_missing_controls': [],
+        'biosamples_empty_controls': [],
+        'biosamples_no_control_available': [],
+        'biosamples_with_errors': []
+    }
+    
+    # Step 1: Group ChIP-seq experiments by biosample
+    print("\nStep 1: Analyzing biosamples and their control status")
+    biosample_groups = group_chipseq_by_biosample(all_tasks)
+    stats['total_biosamples'] = len(biosample_groups)
+    
+    # ChIP-seq experiment types that typically need controls
+    CHIPSEQ_EXPERIMENT_TYPES = {
+        'H3K27ac', 'H3K27me3', 'H3K36me3', 'H3K4me1', 'H3K4me2', 'H3K4me3', 
+        'H3K9ac', 'H3K9me3', 'H3K79me2', 'H2AFZ', 'CTCF', 'ATAC-seq'
+    }
+    
+    def check_control_status(biosample_name, bios_accessions):
+        """Check control status for a single biosample."""
+        try:
+            # Get all ChIP-seq experiment names for this biosample
+            chipseq_experiments = set()
+            for bios_accession, tasks in bios_accessions.items():
+                for task in tasks:
+                    if task.assay in CHIPSEQ_EXPERIMENT_TYPES:
+                        chipseq_experiments.add(task.assay)
+            
+            if not chipseq_experiments:
+                return 'no_chipseq', []
+            
+            # Check if control directory exists
+            control_path = os.path.join(base_path, biosample_name, "chipseq-control")
+            has_control_dir = os.path.exists(control_path)
+            
+            if not has_control_dir:
+                return 'missing_control', list(chipseq_experiments)
+            
+            # Check if control has actual data files
+            has_control_data = False
+            if has_control_dir:
+                # Check for signal files (most important indicator of actual data)
+                signal_dirs = [d for d in os.listdir(control_path) 
+                              if os.path.isdir(os.path.join(control_path, d)) and d.startswith('signal_')]
+                if signal_dirs:
+                    # Check if signal directories have chromosome files
+                    for signal_dir in signal_dirs:
+                        signal_path = os.path.join(control_path, signal_dir)
+                        chr_files = [f for f in os.listdir(signal_path) if f.endswith('.npz')]
+                        if chr_files:
+                            has_control_data = True
+                            break
+            
+            if not has_control_data:
+                return 'empty_control', list(chipseq_experiments)
+            
+            return 'has_control', list(chipseq_experiments)
+            
+        except Exception as e:
+            logger.error(f"Error checking control status for biosample {biosample_name}: {e}")
+            return 'error', []
+    
+    # Analyze each biosample
+    for biosample_name, bios_accessions in biosample_groups.items():
+        status, experiments = check_control_status(biosample_name, bios_accessions)
+        
+        if status == 'no_chipseq':
+            continue  # Skip biosamples without ChIP-seq experiments
+        
+        stats['biosamples_with_chipseq'] += 1
+        
+        if status == 'has_control':
+            stats['biosamples_with_controls'] += 1
+        elif status == 'missing_control':
+            stats['biosamples_missing_controls'].append({
+                'biosample': biosample_name,
+                'experiments': experiments
+            })
+        elif status == 'empty_control':
+            stats['biosamples_empty_controls'].append({
+                'biosample': biosample_name,
+                'experiments': experiments
+            })
+        elif status == 'error':
+            stats['biosamples_with_errors'].append({
+                'biosample': biosample_name,
+                'experiments': experiments
+            })
+    
+    # Step 2: For biosamples missing controls, check if controls are available
+    print(f"\nStep 2: Checking control availability for missing controls")
+    missing_controls = stats['biosamples_missing_controls'] + stats['biosamples_empty_controls']
+    
+    if missing_controls:
+        print(f"Checking control availability for {len(missing_controls)} biosamples...")
+        
+        for item in missing_controls:
+            biosample_name = item['biosample']
+            try:
+                # Select primary bios_accession
+                primary_bios_accession = select_primary_bios_accession(biosample_name, biosample_groups[biosample_name])
+                
+                # Get all ChIP-seq tasks for this biosample
+                all_chipseq_tasks = []
+                for bios_accession, tasks in biosample_groups[biosample_name].items():
+                    for task in tasks:
+                        if task.assay in CHIPSEQ_EXPERIMENT_TYPES:
+                            all_chipseq_tasks.append(task)
+                
+                # Check if controls are available
+                control_options = find_multiple_controls_for_biosample(
+                    biosample_name, primary_bios_accession, all_chipseq_tasks, max_controls=1
+                )
+                
+                if control_options:
+                    item['control_available'] = True
+                    item['control_exp_accession'] = control_options[0]['control_exp_accession']
+                    item['control_bam_accession'] = control_options[0]['control_bam_accession']
+                    item['control_date'] = control_options[0].get('control_date', 'unknown')
+                else:
+                    item['control_available'] = False
+                    stats['biosamples_no_control_available'].append(item)
+                    
+            except Exception as e:
+                logger.error(f"Error checking control availability for {biosample_name}: {e}")
+                item['control_available'] = False
+                item['error'] = str(e)
+                stats['biosamples_with_errors'].append(item)
+    
+    # Print results
+    print(f"\n{'='*70}")
+    print(f"CONTROL STATUS ANALYSIS COMPLETE")
+    print(f"{'='*70}")
+    print(f"Total biosamples: {stats['total_biosamples']}")
+    print(f"Biosamples with ChIP-seq experiments: {stats['biosamples_with_chipseq']}")
+    print(f"Biosamples with proper controls: {stats['biosamples_with_controls']}")
+    print(f"Biosamples missing controls: {len(stats['biosamples_missing_controls'])}")
+    print(f"Biosamples with empty controls: {len(stats['biosamples_empty_controls'])}")
+    print(f"Biosamples with errors: {len(stats['biosamples_with_errors'])}")
+    
+    if stats['biosamples_missing_controls']:
+        print(f"\nBiosamples missing controls:")
+        for item in stats['biosamples_missing_controls']:
+            control_status = "✓ Control available" if item.get('control_available', False) else "✗ No control available"
+            print(f"  - {item['biosample']} (experiments: {', '.join(item['experiments'])}) [{control_status}]")
+    
+    if stats['biosamples_empty_controls']:
+        print(f"\nBiosamples with empty control directories:")
+        for item in stats['biosamples_empty_controls']:
+            control_status = "✓ Control available" if item.get('control_available', False) else "✗ No control available"
+            print(f"  - {item['biosample']} (experiments: {', '.join(item['experiments'])}) [{control_status}]")
+    
+    if stats['biosamples_with_errors']:
+        print(f"\nBiosamples with errors:")
+        for item in stats['biosamples_with_errors']:
+            print(f"  - {item['biosample']} (error: {item.get('error', 'Unknown error')})")
+    
+    # Summary
+    total_needing_attention = len(stats['biosamples_missing_controls']) + len(stats['biosamples_empty_controls'])
+    total_with_available_controls = sum(1 for item in stats['biosamples_missing_controls'] + stats['biosamples_empty_controls'] 
+                                       if item.get('control_available', False))
+    
+    print(f"\n{'='*70}")
+    print(f"SUMMARY")
+    print(f"{'='*70}")
+    print(f"Total biosamples needing attention: {total_needing_attention}")
+    print(f"Biosamples with available controls: {total_with_available_controls}")
+    print(f"Biosamples without available controls: {total_needing_attention - total_with_available_controls}")
+    
+    return stats
+
+
+def add_controls_to_existing_dataset(base_path: str, dataset_name: str, resolution: int = 25, dsf_list: List[int] = [1,2,4,8], max_workers: int = None, identify_only: bool = False) -> Dict:
+    """
+    Add control experiments to an already-downloaded and processed dataset.
+    
+    Uses biosample-level control processing. Controls are treated as separate "chipseq-control" experiments.
+    
+    Args:
+        base_path: Path to dataset directory (e.g., /path/to/DATA_CANDI_EIC)
+        dataset_name: Dataset name ('eic' or 'merged') for loading download plan
+        resolution: Resolution in bp (default: 25)
+        dsf_list: Downsampling factors (default: [1,2,4,8])
+        max_workers: Max parallel workers for processing
+        identify_only: If True, only identify missing controls without processing them
+        
+    Returns:
+        Dict with statistics about control processing
+    """
+    logger = logging.getLogger(__name__)
+    
+    print(f"\n{'='*70}")
+    if identify_only:
+        print(f"Identifying Missing Controls in {dataset_name.upper()} Dataset")
+    else:
+        print(f"Adding Controls to Existing {dataset_name.upper()} Dataset")
+    print(f"{'='*70}")
+    print(f"Base path: {base_path}")
+    print(f"Resolution: {resolution}bp")
+    print(f"DSF list: {dsf_list}")
+    
+    # If identify_only mode, use the dedicated function
+    if identify_only:
+        return identify_missing_controls(base_path, dataset_name, resolution, dsf_list)
+    
+    # Load download plan to get experiment accessions
+    loader = DownloadPlanLoader(dataset_name)
+    all_tasks = loader.create_task_list()
+    
+    # Statistics
+    stats = {
+        'total_biosamples': 0,
+        'total_chipseq': 0,
+        'controls_to_add': 0,
+        'controls_added': 0,
+        'controls_failed': 0,
+        'already_had_controls': 0,
+        'no_control_available': 0,
+        'failed_biosamples': []
+    }
+    
+    # Set default max_workers if not specified
+    if max_workers is None:
+        max_workers = 8
+    
+    print(f"Using {max_workers} parallel workers")
+    
+    # Step 1: Group ChIP-seq experiments by biosample
+    print("\nStep 1: Grouping ChIP-seq experiments by biosample")
+    biosample_groups = group_chipseq_by_biosample(all_tasks)
+    stats['total_biosamples'] = len(biosample_groups)
+    
+    # Count total ChIP-seq experiments
+    for biosample_name, bios_accessions in biosample_groups.items():
+        for bios_accession, tasks in bios_accessions.items():
+            stats['total_chipseq'] += len(tasks)
+    
+    print(f"Found {stats['total_biosamples']} biosamples with {stats['total_chipseq']} ChIP-seq experiments")
+    
+    if stats['total_biosamples'] == 0:
+        print("No ChIP-seq experiments found in dataset!")
+        return stats
+    
+    # Step 2: Discover controls for each biosample
+    print("\nStep 2: Discovering controls for biosamples")
+    biosample_control_tasks = []
+    
+    def discover_control_for_biosample(biosample_name, bios_accessions):
+        """Discover control for a single biosample (for parallel execution)."""
+        try:
+            # Select primary bios_accession
+            primary_bios_accession = select_primary_bios_accession(biosample_name, bios_accessions)
+            
+            # Get all ChIP-seq experiment names and tasks for this biosample
+            chipseq_experiments = []
+            all_chipseq_tasks = []
+            for bios_accession, tasks in bios_accessions.items():
+                for task in tasks:
+                    chipseq_experiments.append(task.assay)
+                    all_chipseq_tasks.append(task)
+            
+            # Discover multiple control options
+            control_options = find_multiple_controls_for_biosample(biosample_name, primary_bios_accession, all_chipseq_tasks)
+            
+            if control_options:
+                # Use the first (primary) control option
+                primary_control = control_options[0]
+                fallback_options = control_options[1:] if len(control_options) > 1 else []
+                
+                task = BiosampleControlTask(
+                    biosample_name=biosample_name,
+                    primary_bios_accession=primary_bios_accession,
+                    control_exp_accession=primary_control['control_exp_accession'],
+                    control_bam_accession=primary_control['control_bam_accession'],
+                    chipseq_experiments=chipseq_experiments,
+                    control_date=primary_control.get('control_date', 'unknown'),
+                    fallback_options=fallback_options
+                )
+                return task, 'control_found'
+            else:
+                return None, 'no_control'
+        except Exception as e:
+            logger.error(f"Error discovering control for biosample {biosample_name}: {e}")
+            return None, 'error'
+    
+    # Parallel control discovery
+    discovery_results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(discover_control_for_biosample, biosample_name, bios_accessions): biosample_name 
+                  for biosample_name, bios_accessions in biosample_groups.items()}
+        
+        if HAS_TQDM:
+            with tqdm(total=len(biosample_groups), desc="Discovering controls") as pbar:
+                for future in as_completed(futures):
+                    biosample_name = futures[future]
+                    task, result = future.result()
+                    discovery_results.append((biosample_name, task, result))
+                    
+                    if result == 'control_found':
+                        stats['controls_to_add'] += 1
+                        biosample_control_tasks.append(task)
+                        pbar.set_postfix({"Status": "Control found"})
+                    elif result == 'no_control':
+                        stats['no_control_available'] += 1
+                        pbar.set_postfix({"Status": "No control"})
+                    else:
+                        stats['no_control_available'] += 1
+                        stats['failed_biosamples'].append(biosample_name)
+                        pbar.set_postfix({"Status": "Error"})
+                    
+                    pbar.update(1)
+        else:
+            # Fallback without tqdm
+            completed = 0
+            for future in as_completed(futures):
+                biosample_name = futures[future]
+                task, result = future.result()
+                discovery_results.append((biosample_name, task, result))
+                completed += 1
+                
+                if result == 'control_found':
+                    stats['controls_to_add'] += 1
+                    biosample_control_tasks.append(task)
+                elif result == 'no_control':
+                    stats['no_control_available'] += 1
+                else:
+                    stats['no_control_available'] += 1
+                    stats['failed_biosamples'].append(biosample_name)
+                
+                if completed % 5 == 0 or completed == len(biosample_groups):
+                    print(f"Discovery progress: {completed}/{len(biosample_groups)} ({completed/len(biosample_groups)*100:.1f}%)")
+    
+    print(f"\nDiscovery Results:")
+    print(f"  Controls to add: {stats['controls_to_add']}")
+    print(f"  No control available: {stats['no_control_available']}")
+    
+    if stats['controls_to_add'] == 0:
+        print(f"\n✅ All biosamples already have controls or no controls available!")
+        return stats
+    
+    # Step 3: Process controls
+    print(f"\nStep 3: Processing control experiments")
+    print(f"Processing {len(biosample_control_tasks)} control experiments...")
+    
+    def process_control_parallel(task):
+        """Process control for a single biosample (for parallel execution)."""
+        # Check if control already exists
+        control_path = os.path.join(base_path, task.biosample_name, "chipseq-control")
+        if os.path.exists(control_path) and all(
+            os.path.exists(os.path.join(control_path, f"signal_DSF{dsf}_res{resolution}")) 
+            for dsf in dsf_list
+        ):
+            return task, 'success', 'already_processed'
+        
+        # Process control with fallback options
+        result, message = process_biosample_control(task, base_path, resolution, dsf_list, task.fallback_options)
+        return task, result, message
+    
+    # Parallel control processing
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(process_control_parallel, task): task for task in biosample_control_tasks}
+        
+        if HAS_TQDM:
+            with tqdm(total=len(biosample_control_tasks), desc="Processing controls") as pbar:
+                for future in as_completed(futures):
+                    task, result, message = future.result()
+                    
+                    if result == 'success':
+                        stats['controls_added'] += 1
+                        if message == 'already_processed':
+                            stats['already_had_controls'] += 1
+                            pbar.set_postfix({"Status": "Already processed"})
+                        else:
+                            pbar.set_postfix({"Status": "Success"})
+                        logger.info(f"✓ Successfully processed control for biosample {task.biosample_name}")
+                    else:
+                        stats['controls_failed'] += 1
+                        stats['failed_biosamples'].append(task.biosample_name)
+                        pbar.set_postfix({"Status": "Failed"})
+                        logger.error(f"✗ Failed to process control for biosample {task.biosample_name}: {message}")
+                    
+                    pbar.update(1)
+        else:
+            # Fallback without tqdm
+            completed = 0
+            for future in as_completed(futures):
+                task, result, message = future.result()
+                completed += 1
+                
+                if result == 'success':
+                    stats['controls_added'] += 1
+                    if message == 'already_processed':
+                        stats['already_had_controls'] += 1
+                    logger.info(f"✓ Successfully processed control for biosample {task.biosample_name}")
+                else:
+                    stats['controls_failed'] += 1
+                    stats['failed_biosamples'].append(task.biosample_name)
+                    logger.error(f"✗ Failed to process control for biosample {task.biosample_name}: {message}")
+                
+                if completed % 5 == 0 or completed == len(biosample_control_tasks):
+                    print(f"Processing progress: {completed}/{len(biosample_control_tasks)} ({completed/len(biosample_control_tasks)*100:.1f}%)")
+    
+    # Final summary
+    print(f"\n{'='*70}")
+    print(f"CONTROL PROCESSING COMPLETE")
+    print(f"{'='*70}")
+    print(f"Total biosamples: {stats['total_biosamples']}")
+    print(f"Total ChIP-seq experiments: {stats['total_chipseq']}")
+    print(f"Already had controls: {stats['already_had_controls']}")
+    print(f"No control available: {stats['no_control_available']}")
+    print(f"Controls to add: {stats['controls_to_add']}")
+    print(f"✅ Successfully added: {stats['controls_added']}")
+    print(f"❌ Failed: {stats['controls_failed']}")
+    
+    if stats['controls_to_add'] > 0:
+        success_rate = stats['controls_added'] / stats['controls_to_add'] * 100
+        print(f"Success rate: {success_rate:.1f}%")
+        
+        if stats['failed_biosamples']:
+            print(f"\nFailed biosamples:")
+            for biosample_name in stats['failed_biosamples'][:10]:
+                print(f"  - {biosample_name}")
+            if len(stats['failed_biosamples']) > 10:
+                print(f"  ... and {len(stats['failed_biosamples']) - 10} more")
+    
+    print(f"\n{'='*70}")
+    
+    logger.info(f"\n=== FINAL SUMMARY ===")
+    logger.info(f"Total biosamples: {stats['total_biosamples']}")
+    logger.info(f"Controls added: {stats['controls_added']}")
+    logger.info(f"Controls failed: {stats['controls_failed']}")
+    
+    return stats
 
 class DownloadPlanLoader:
     """Load and parse download plan JSON files."""
@@ -252,7 +1657,12 @@ class DownloadPlanLoader:
         return True
     
     def create_task_list(self) -> List[Task]:
-        """Convert download plan to list of Task objects."""
+        """
+        Convert download plan to list of Task objects.
+        
+        Returns:
+            List of Task objects
+        """
         tasks = []
         
         for celltype, assays in self.download_plan.items():
@@ -268,6 +1678,7 @@ class DownloadPlanLoader:
                     signal_bigwig_accession=files['signal_bigwig_accession'],
                     peaks_bigbed_accession=files['peaks_bigbed_accession']
                 )
+                
                 tasks.append(task)
         
         return tasks
@@ -359,7 +1770,6 @@ class DownloadPlanLoader:
                     
         return 'complete'
 
-
 class TaskManager:
     """Manage tasks and their execution."""
     
@@ -416,8 +1826,6 @@ class TaskManager:
             if count > 0:
                 percentage = (count / total) * 100 if total > 0 else 0
                 print(f"{status.capitalize()}: {count} ({percentage:.1f}%)")
-
-
 
 class CANDIDownloadManager:
     """Manage downloading and processing of ENCODE files."""
@@ -481,6 +1889,8 @@ class CANDIDownloadManager:
                 success = self._download_and_process_bigbed(task, exp_path)
                 if not success:
                     raise Exception("Failed to process BigBed file")
+            
+            # Control processing removed - will be handled separately at biosample level
             
             # Final validation
             if self._is_task_completed(task, exp_path):
@@ -749,6 +2159,7 @@ class CANDIDownloadManager:
                 os.remove(f"{bam_file}.bai")
             return False
     
+    
     def _download_and_process_tsv(self, task: Task, exp_path: str) -> bool:
         """
         Download and process TSV file (for RNA-seq).
@@ -965,7 +2376,6 @@ class CANDIDownloadManager:
                 return False
         return True
 
-
 class ParallelTaskExecutor:
     """Execute tasks in parallel using multiprocessing."""
     
@@ -1065,7 +2475,6 @@ class ParallelTaskExecutor:
         
         return completed_tasks
 
-
 def process_single_task(task: Task, base_path: str, resolution: int, dsf_list: List[int]) -> Task:
     """
     Process a single task (used for multiprocessing).
@@ -1086,7 +2495,6 @@ def process_single_task(task: Task, base_path: str, resolution: int, dsf_list: L
     
     # Process the task
     return download_manager.process_task(task)
-
 
 class CANDIValidator:
     """Validate completion and integrity of processed data."""
@@ -1111,10 +2519,12 @@ class CANDIValidator:
             "bw_signals": self.validate_bw_signals(exp_path), 
             "peaks": self.validate_peaks(exp_path),
             "metadata": self.validate_metadata(exp_path),
+            "control_signals": self.validate_control_signals(exp_path),
             "overall": False
         }
         
         # Overall validation requires DSF signals and metadata at minimum
+        # Control signals are optional
         validation_results["overall"] = (
             validation_results["dsf_signals"] and 
             validation_results["metadata"]
@@ -1300,7 +2710,52 @@ class CANDIValidator:
             return False
             
         return True
-
+    
+    def validate_control_signals(self, exp_path):
+        """
+        Check control DSF signal directories and files.
+        
+        Args:
+            exp_path (str): Path to experiment directory
+            
+        Returns:
+            bool: True if control signals are complete or not expected
+        """
+        # Check if control signals are expected (look for any control directory)
+        control_expected = False
+        for dsf in self.required_dsf:
+            control_dsf_path = os.path.join(exp_path, f"signal_DSF{dsf}_res{self.resolution}_control")
+            if os.path.exists(control_dsf_path):
+                control_expected = True
+                break
+        
+        # If no control directories found, controls not expected - that's OK
+        if not control_expected:
+            return True
+        
+        # If control directories exist, validate all of them
+        for dsf in self.required_dsf:
+            dsf_path = os.path.join(exp_path, f"signal_DSF{dsf}_res{self.resolution}_control")
+            
+            # Check if directory exists
+            if not os.path.exists(dsf_path):
+                print(f"Missing control DSF directory: {dsf_path}")
+                return False
+            
+            # Check metadata.json exists
+            metadata_file = os.path.join(dsf_path, "metadata.json")
+            if not os.path.exists(metadata_file):
+                print(f"Missing control metadata file: {metadata_file}")
+                return False
+            
+            # Check all chromosome files exist
+            for chr_name in self.main_chrs:
+                chr_file = os.path.join(dsf_path, f"{chr_name}.npz")
+                if not os.path.exists(chr_file):
+                    print(f"Missing control chromosome file: {chr_file}")
+                    return False
+        
+        return True
 
 class MetadataUpdater:
     """Update existing file_metadata.json files with new fields."""
@@ -1581,7 +3036,6 @@ class MetadataUpdater:
         
         return None
 
-
 class MetadataCSVExporter:
     """Export metadata from file_metadata.json files to CSV format."""
     
@@ -1718,7 +3172,6 @@ class MetadataCSVExporter:
         except Exception as e:
             self.logger.warning(f"Error extracting depth from {assay_path}: {e}")
             return None
-
 
 class CANDIDataPipeline:
     """Main pipeline for CANDI data download and processing."""
@@ -1861,7 +3314,6 @@ class CANDIDataPipeline:
         
         return validation_report
 
-
 @dataclass
 class ValidationResult:
     """Results of dataset validation."""
@@ -1874,7 +3326,6 @@ class ValidationResult:
     biosample_completion: Dict[str, Dict[str, bool]]
     missing_experiments: List[str]
     available_experiments: List[str]
-
 
 class CANDIDatasetValidator:
     """Validate completeness of CANDI datasets."""
@@ -1947,6 +3398,27 @@ class CANDIDatasetValidator:
                 return tsv_file.exists()
             else:
                 return False
+        
+        # Special handling for chipseq-control experiments
+        elif assay == "chipseq-control":
+            # For chipseq-control, check that all required signal directories exist
+            # (same as other assays, but these are control experiments)
+            for signal_dir in self.required_signal_dirs:
+                signal_path = exp_path / signal_dir
+                if not signal_path.exists():
+                    return False
+                
+                # Check that signal directory has files for main chromosomes
+                expected_files = [f"{chrom}.npz" for chrom in self.main_chromosomes]
+                existing_files = [f.name for f in signal_path.glob("*.npz")]
+                
+                # Require at least 80% of chromosomes to be present
+                required_count = int(0.8 * len(expected_files))
+                if len(existing_files) < required_count:
+                    return False
+            
+            return True
+        
         else:
             # For other assays, check all required signal directories exist
             for signal_dir in self.required_signal_dirs:
@@ -2128,10 +3600,6 @@ class CANDIDatasetValidator:
             "top_missing_celltypes": sorted(celltype_counts.items(), key=lambda x: x[1], reverse=True)[:10],
             "top_missing_assays": sorted(assay_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         }
-
-
-
-
 
 class EnhancedCANDIDownloadManager(CANDIDownloadManager):
     """Enhanced download manager with improved error handling for retry scenarios."""
@@ -2358,7 +3826,6 @@ class EnhancedCANDIDownloadManager(CANDIDownloadManager):
         
         return binned_peaks
 
-
 def setup_detailed_logging(log_file: str = None) -> logging.Logger:
     """Set up detailed logging for pipeline operations."""
     logger = logging.getLogger(__name__)
@@ -2383,14 +3850,12 @@ def setup_detailed_logging(log_file: str = None) -> logging.Logger:
     
     return logger
 
-
 def count_experiments_and_biosamples(all_tasks: List[Task]) -> Tuple[int, int]:
     """Count total experiments and unique biosamples."""
     biosamples = set()
     for task in all_tasks:
         biosamples.add(task.celltype)
     return len(all_tasks), len(biosamples)
-
 
 def log_progress(logger: logging.Logger, completed_tasks: List[Task], all_tasks: List[Task], current_task: Task = None):
     """Log detailed progress including remaining experiments and biosamples."""
@@ -2413,7 +3878,6 @@ def log_progress(logger: logging.Logger, completed_tasks: List[Task], all_tasks:
     logger.info(f"   🏷️  Biosamples: {len(completed_biosamples)}/{total_biosamples} completed ({remaining_biosamples} remaining)")
     logger.info(f"   📈 Progress: {(completed_experiments/total_experiments)*100:.1f}%")
 
-
 def main():
     """Comprehensive command line interface for CANDI data pipeline."""
     parser = argparse.ArgumentParser(
@@ -2427,6 +3891,7 @@ Commands:
   analyze-missing Analyze missing experiments
   retry           Retry failed experiments
   run-complete    Run complete dataset processing with detailed logging
+  add-controls    Add control experiments to existing dataset
 
 Examples:
   # Process datasets
@@ -2444,6 +3909,14 @@ Examples:
   
   # Complete processing with detailed logging
   python get_candi_data.py run-complete eic /path/to/data --max-workers 16
+  
+  # Add controls to existing dataset
+  python get_candi_data.py add-controls eic /path/to/DATA_CANDI_EIC
+  python get_candi_data.py add-controls merged /path/to/DATA_CANDI_MERGED --max-workers 12
+  
+  # Identify missing controls without processing
+  python get_candi_data.py add-controls eic /path/to/DATA_CANDI_EIC --identify-only
+  python get_candi_data.py add-controls merged /path/to/DATA_CANDI_MERGED --identify-only
         """
     )
     
@@ -2456,6 +3929,7 @@ Examples:
     process_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp (default: 25)')
     process_parser.add_argument('--max-workers', type=int, help='Max parallel workers')
     process_parser.add_argument('--validate-only', action='store_true', help='Only validate, no download')
+    process_parser.add_argument('--with-controls', action='store_true', help='Discover and process control experiments for ChIP-seq')
     process_parser.add_argument('--verbose', '-v', action='store_true', help='Verbose logging')
     
     # Validate command
@@ -2508,6 +3982,14 @@ Examples:
     export_metadata_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
     export_metadata_parser.add_argument('directory', help='Data directory')
     
+    # Add controls command
+    add_controls_parser = subparsers.add_parser('add-controls', help='Add control experiments to existing dataset')
+    add_controls_parser.add_argument('dataset', choices=['eic', 'merged', 'eic_test', 'merged_test'], help='Dataset type')
+    add_controls_parser.add_argument('directory', help='Data directory (path to existing dataset)')
+    add_controls_parser.add_argument('--resolution', default=25, type=int, help='Resolution in bp (default: 25)')
+    add_controls_parser.add_argument('--max-workers', default=8, type=int, help='Max parallel workers (default: 8)')
+    add_controls_parser.add_argument('--identify-only', action='store_true', help='Only identify missing controls without processing them')
+    
     # Global options
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
     
@@ -2542,6 +4024,8 @@ Examples:
             _handle_update_metadata_command(args)
         elif args.command == 'export-metadata':
             _handle_export_metadata_command(args)
+        elif args.command == 'add-controls':
+            _handle_add_controls_command(args)
         else:
             print(f"Unknown command: {args.command}")
             sys.exit(1)
@@ -2577,11 +4061,43 @@ def _handle_process_command(args):
         validate_only=args.validate_only
     )
     
-    print(f"\n✅ Processing completed!")
+    print(f"\n✅ Regular processing completed!")
     if "total_tasks" in result:
         total = result["total_tasks"]
         valid = result["valid_tasks"]
         print(f"📊 Results: {valid}/{total} tasks completed successfully")
+    
+    # Add ChIP-seq controls as separate experiments
+    if not args.validate_only:
+        print(f"\n{'='*70}")
+        print(f"Adding ChIP-seq Controls as Separate Experiments")
+        print(f"{'='*70}")
+        
+        try:
+            control_stats = add_controls_to_existing_dataset(
+                base_path=directory,
+                dataset_name=args.dataset,
+                resolution=args.resolution,
+                dsf_list=[1,2,4,8],
+                max_workers=args.max_workers
+            )
+            
+            print(f"\n✅ Control processing completed!")
+            print(f"📊 Control Results:")
+            print(f"  - Total biosamples: {control_stats['total_biosamples']}")
+            print(f"  - Total ChIP-seq experiments: {control_stats['total_chipseq']}")
+            print(f"  - Controls added: {control_stats['controls_added']}")
+            print(f"  - Already had controls: {control_stats['already_had_controls']}")
+            print(f"  - No control available: {control_stats['no_control_available']}")
+            print(f"  - Failed: {control_stats['controls_failed']}")
+            
+        except Exception as e:
+            print(f"\n❌ Error adding controls: {e}")
+            print("Regular processing completed successfully, but control addition failed.")
+    
+    print(f"\n{'='*70}")
+    print(f"🎉 ALL PROCESSING COMPLETED!")
+    print(f"{'='*70}")
 
 
 def _handle_validate_command(args):
@@ -2904,6 +4420,41 @@ def _handle_export_metadata_command(args):
     else:
         print(f"\n❌ Metadata export failed!")
         sys.exit(1)
+
+
+def _handle_add_controls_command(args):
+    """Handle the add-controls command."""
+    directory = os.path.abspath(args.directory)
+    
+    if args.identify_only:
+        print(f"\n=== Identifying Missing Controls in {args.dataset.upper()} Dataset ===")
+    else:
+        print(f"\n=== Adding Controls to Existing {args.dataset.upper()} Dataset ===")
+    print(f"Directory: {directory}")
+    print(f"Resolution: {args.resolution}bp")
+    
+    # Setup verbose logging if requested
+    if hasattr(args, 'verbose') and args.verbose:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    # Call the retrospective processing function
+    stats = add_controls_to_existing_dataset(
+        base_path=directory,
+        dataset_name=args.dataset,
+        resolution=args.resolution,
+        max_workers=args.max_workers,
+        identify_only=args.identify_only
+    )
+    
+    # For identify-only mode, exit with success
+    if args.identify_only:
+        sys.exit(0)
+    
+    # Exit with appropriate code for processing mode
+    if 'controls_failed' in stats and stats['controls_failed'] > 0:
+        sys.exit(1)  # Indicate partial failure
+    else:
+        sys.exit(0)  # Success
 
 
 if __name__ == "__main__":

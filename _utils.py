@@ -70,8 +70,6 @@ class DataMasker:
 
         return data, new_md, new_A
 
-    
-
 class METRICS(object):
     def __init__(self, chrom='chr21', bin_size=25):
         self.prom_df = self.get_prom_positions(chrom, bin_size)
