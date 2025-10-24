@@ -848,6 +848,9 @@ class CANDIDataHandler:
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
 
+        if "chipseq-control" in exps:
+            exps.remove("chipseq-control")
+
         loaded_data = {}
         npz_files = []
         for e in exps:
@@ -890,6 +893,7 @@ class CANDIDataHandler:
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
+            exps.remove("chipseq-control")
 
         loaded_data = {}
         npz_files = []
@@ -1295,8 +1299,8 @@ class CANDIDataHandler:
 
     # ========= Integrated Data Looping and Batching =========
     def setup_datalooper(self, m, context_length, bios_batchsize, loci_batchsize,
-                          loci_gen_strategy="random", split="train", bios_min_exp_avail_threshold=3,
-                          shuffle_bios=True, dsf_list=[1, 2, 4], includes=None, excludes=[], must_have_chr_access=False):
+                        loci_gen_strategy="random", split="train", bios_min_exp_avail_threshold=3,
+                        shuffle_bios=True, dsf_list=[1, 2, 4], includes=None, excludes=[], must_have_chr_access=False):
         """
         Configures the data handler for iterating through epochs of data.
 

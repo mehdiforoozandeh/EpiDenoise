@@ -83,10 +83,6 @@ class CANDI_TRAINER(object):
         # Training configuration with defaults
         self.training_params = {
             'optimizer': 'adamax',
-            'learning_rate': 1e-3,
-            'context_length': 1200,
-            'epochs': 10,
-            'batch_size': 25,
             'enable_validation': False,
             'DNA': True,
             "specific_ema_alpha": 0.005,
@@ -1749,7 +1745,7 @@ def create_argument_parser():
     data_group.add_argument('--num-loci', '-m', type=int, default=5000,
                            help='Number of genomic loci to generate for training')
     data_group.add_argument('--context-length', type=int, default=1200,
-                           help='Context length for genomic wSkipping batch...indows (in bins)')
+                           help='Context length for genomic windows (in bins)')
     data_group.add_argument('--loci-gen', type=str, default='full_chr', 
                            choices=['random', 'ccre', 'full_chr', 'gw'],
                            help='Strategy for generating genomic loci')
@@ -2163,7 +2159,7 @@ def main():
         'base_path': data_path,
         'dataset_type': dataset_type,
         'm': args.num_loci,
-        'context_length': args.context_length * 25,  # Convert bins to base pairs
+        'context_length': args.context_length * 25, 
         'split': 'train',
         'loci_gen_strategy': args.loci_gen,
         'dsf_list': args.dsf_list,
