@@ -799,6 +799,9 @@ class CANDIDataHandler:
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
 
+        if "chipseq-control" in exps:
+            exps.remove("chipseq-control")
+
         loaded_data = {}
         loaded_metadata = {}
 
@@ -893,6 +896,8 @@ class CANDIDataHandler:
 
         if "RNA-seq" in exps:
             exps.remove("RNA-seq")
+
+        if "chipseq-control" in exps:
             exps.remove("chipseq-control")
 
         loaded_data = {}
@@ -1138,20 +1143,41 @@ class CANDIDataHandler:
             run_types = assay_df['run_type'].dropna().astype(str).values
             run_ids = [1 if ('pair' in r.lower()) else 0 for r in run_types]
             run_mode = int(pd.Series(run_ids).mode().iloc[0]) if len(run_ids) else 1
+            
+            # Compute depth statistics (median and mode)
+            depth_log2_median = float(np.nanmedian(np.log2(assay_df['depth'].astype(float)))) if 'depth' in assay_df else 0.0
+            depth_log2_vals = np.log2(assay_df['depth'].dropna().astype(float).values) if 'depth' in assay_df else np.array([0.0])
+            # For mode, round to nearest integer (or use most frequent rounded value)
+            depth_log2_mode = float(pd.Series(np.round(depth_log2_vals)).mode().iloc[0]) if len(depth_log2_vals) > 0 else depth_log2_median
+            
+            # Compute read_length statistics (median and mode)
+            read_length_median = float(np.nanmedian(assay_df['read_length'].astype(float))) if 'read_length' in assay_df else 50.0
+            read_length_vals = assay_df['read_length'].dropna().astype(float).values if 'read_length' in assay_df else np.array([50.0])
+            # For mode, round to nearest integer (or use most frequent rounded value)
+            read_length_mode = float(pd.Series(np.round(read_length_vals)).mode().iloc[0]) if len(read_length_vals) > 0 else read_length_median
+            
             self.stat_lookup[assay] = {
-                "depth_log2_median": float(np.nanmedian(np.log2(assay_df['depth'].astype(float)))) if 'depth' in assay_df else 0.0,
+                "depth_log2_median": depth_log2_median,
+                "depth_log2_mode": depth_log2_mode,
                 "platform_mode": platform_mode,
-                "read_length_median": float(np.nanmedian(assay_df['read_length'].astype(float))) if 'read_length' in assay_df else 50.0,
+                "read_length_median": read_length_median,
+                "read_length_mode": read_length_mode,
                 "run_type_mode": run_mode,
             }
 
         return self.stat_lookup
 
     # ========= Filling in Prompt =========
-    def fill_in_prompt(self, md, missing_value=-1, sample=True):
+    def fill_in_prompt(self, md, missing_value=-1, sample=True, use_mode=False):
         """
         Fill missing assay metadata columns (marked by missing_value) either by sampling from
         dataset metadata per assay (sample=True) or by using median/mode statistics (sample=False).
+
+        Args:
+            md: Metadata tensor [4, E] where rows are [depth_log2, platform_id, read_length, run_type_id]
+            missing_value: Value that indicates missing metadata (default: -1)
+            sample: If True, randomly sample from dataset distribution; if False, use statistics
+            use_mode: If True and sample=False, use mode for all fields; if False, use median for numeric fields and mode for categorical
 
         Expected md shape: [4, E] where rows are [depth_log2, platform_id, read_length, run_type_id].
         """
@@ -1182,10 +1208,18 @@ class CANDIDataHandler:
                 else:
                     stats = self.stat_lookup.get(assay)
                     if stats is not None:
-                        filled[0, i] = stats["depth_log2_median"]
-                        filled[1, i] = stats["platform_mode"]
-                        filled[2, i] = stats["read_length_median"]
-                        filled[3, i] = stats["run_type_mode"]
+                        if use_mode:
+                            # Use mode for all fields
+                            filled[0, i] = stats["depth_log2_mode"]
+                            filled[1, i] = stats["platform_mode"]
+                            filled[2, i] = stats["read_length_mode"]
+                            filled[3, i] = stats["run_type_mode"]
+                        else:
+                            # Use median for numeric fields, mode for categorical
+                            filled[0, i] = stats["depth_log2_median"]
+                            filled[1, i] = stats["platform_mode"]
+                            filled[2, i] = stats["read_length_median"]
+                            filled[3, i] = stats["run_type_mode"]
 
         filled = filled.unsqueeze(0)
         return filled

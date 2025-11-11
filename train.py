@@ -93,8 +93,13 @@ class CANDI_TRAINER(object):
         # Initialize optimizer and scheduler
         self._setup_optimizer_scheduler()
         
-        # Initialize criterion
-        self.criterion = CANDI_LOSS()
+        # Initialize criterion with loss weights
+        count_weight = self.training_params.get('count_weight', 1.0)
+        pval_weight = self.training_params.get('pval_weight', 1.0)
+        peak_weight = self.training_params.get('peak_weight', 1.0)
+        self.criterion = CANDI_LOSS(count_weight=count_weight, pval_weight=pval_weight, peak_weight=peak_weight)
+        if self.is_main_process:
+            print(f"Loss weights - Count: {count_weight}, P-value: {pval_weight}, Peak: {peak_weight}")
         
         # Mixed precision support
         self.use_mixed_precision = self.training_params.get('use_mixed_precision', True) and self.device.type == 'cuda'
@@ -265,7 +270,12 @@ class CANDI_TRAINER(object):
                 batch = self._move_batch_to_device(batch)
                 
                 # Process batch with masking, forward pass, and loss computation
-                result_dict = self._process_batch(batch)
+                try:
+                    result_dict = self._process_batch(batch)
+                except Exception as e:
+                    if self.is_main_process:
+                        print(f"Warning: Failed to process batch {batch_idx}: {e}")
+                    continue
                 
                 if result_dict is None:  # Batch was skipped due to errors
                     continue
@@ -439,7 +449,7 @@ class CANDI_TRAINER(object):
             # Forward pass through model with mixed precision
             if self.use_mixed_precision:
                 with autocast('cuda'):
-                    if self.training_params.get('DNA', False):
+                    if self.training_params.get('DNA', True):
                         # Model expects DNA sequence
                         output_p, output_n, output_mu, output_var, output_peak = self.model(
                             x_data_masked, x_dna, x_meta_masked, y_meta
@@ -447,7 +457,7 @@ class CANDI_TRAINER(object):
                     else:
                         raise ValueError("DNA must be True for CANDI_TRAINER")
             else:
-                if self.training_params.get('DNA', False):
+                if self.training_params.get('DNA', True):
                     # Model expects DNA sequence
                     output_p, output_n, output_mu, output_var, output_peak = self.model(
                         x_data_masked, x_dna, x_meta_masked, y_meta
@@ -525,7 +535,7 @@ class CANDI_TRAINER(object):
                 
                 # Gradient clipping with scaler
                 self.scaler.unscale_(self.optimizer)
-                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5)
+                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
                 
                 # Optimizer step with scaler
                 self.scaler.step(self.optimizer)
@@ -536,7 +546,7 @@ class CANDI_TRAINER(object):
                 total_loss.backward()
                 
                 # Gradient clipping
-                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=5)
+                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
                 
                 # Optimizer step
                 self.optimizer.step()
@@ -662,7 +672,8 @@ class CANDI_TRAINER(object):
         
         # Calculate actual total steps
         num_total_steps = epochs * inner_epochs * batches_per_epoch
-        warmup_steps = inner_epochs * batches_per_epoch
+        # Use 20% of total steps for warmup (more conservative)
+        warmup_steps = max(1, int(0.2 * num_total_steps))
         
         # Ensure we have at least 1 step for the cosine annealing phase
         cosine_steps = max(1, num_total_steps - warmup_steps)
@@ -673,8 +684,8 @@ class CANDI_TRAINER(object):
         self.scheduler = SequentialLR(
             self.optimizer,
             schedulers=[
-                LinearLR(self.optimizer, start_factor=0.01, end_factor=1.0, total_iters=warmup_steps),
-                CosineAnnealingLR(self.optimizer, T_max=cosine_steps, eta_min=0.0)
+                LinearLR(self.optimizer, start_factor=0.5, end_factor=1.0, total_iters=warmup_steps),
+                CosineAnnealingLR(self.optimizer, T_max=cosine_steps, eta_min=0.1 * self.training_params['learning_rate'])
             ],
             milestones=[warmup_steps]
         )
@@ -1740,7 +1751,7 @@ def create_argument_parser():
     data_group.add_argument('--merged', action='store_true',
                            help='Use merged dataset (default if neither --eic nor --merged specified)')
     data_group.add_argument('--data-path', type=str, 
-                           default="/home/mforooz/projects/def-maxwl/mforooz/",
+                           default="/project/6014832/mforooz/",
                            help='Base path to the datasets')
     data_group.add_argument('--num-loci', '-m', type=int, default=5000,
                            help='Number of genomic loci to generate for training')
@@ -1786,7 +1797,7 @@ def create_argument_parser():
                                help='Number of training epochs')
     training_group.add_argument('--batch-size', type=int, default=25,
                                help='Training batch size')
-    training_group.add_argument('--learning-rate', '--lr', type=float, default=1e-3,
+    training_group.add_argument('--learning-rate', '--lr', type=float, default=2e-4,
                                help='Initial learning rate')
     training_group.add_argument('--optimizer', type=str, default='adamax',
                                choices=['adamax', 'adam', 'adamw', 'sgd'],
@@ -1796,6 +1807,12 @@ def create_argument_parser():
                                help='Number of inner epochs per batch')
     training_group.add_argument('--enable-validation', action='store_true',
                                help='Enable validation during training')
+    training_group.add_argument('--count-weight', type=float, default=1.0,
+                               help='Weight for count loss in multi-task learning (default: 1.0)')
+    training_group.add_argument('--pval-weight', type=float, default=1.0,
+                               help='Weight for p-value loss in multi-task learning (default: 1.0)')
+    training_group.add_argument('--peak-weight', type=float, default=1.0,
+                               help='Weight for peak loss in multi-task learning (default: 1.0)')
     
     # === SYSTEM CONFIGURATION ===
     system_group = parser.add_argument_group('System Configuration')
@@ -1824,7 +1841,7 @@ def create_argument_parser():
                          help='Directory to save training progress CSV files')
     io_group.add_argument('--checkpoint', type=str, default=None,
                          help='Path to checkpoint to resume training from')
-    io_group.add_argument('--checkpoint-freq', type=int, default=5,
+    io_group.add_argument('--checkpoint-freq', type=int, default=1,
                          help='Save checkpoint every N epochs')
     io_group.add_argument('--model-name', type=str, default=None,
                          help='Custom model name (auto-generated if not specified)')
@@ -2182,7 +2199,10 @@ def main():
         'progress_dir': args.progress_dir,
         'debug': args.debug,
         'DNA': True,
-        'no_save': args.no_save
+        'no_save': args.no_save,
+        'count_weight': args.count_weight,
+        'pval_weight': args.pval_weight,
+        'peak_weight': args.peak_weight
     }
 
     # Create temporary dataset to get signal_dim and metadata information

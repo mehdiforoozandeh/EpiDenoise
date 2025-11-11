@@ -67,7 +67,7 @@ def load_and_prepare_data(csv_path):
     estimated_batches_per_epoch = int(max_batch_per_epoch.max()) + 1
     
     # Calculate iteration number: epoch * estimated_batches_per_epoch + batch_idx
-    df['iteration'] = df['epoch'] * estimated_batches_per_epoch + df['batch_idx']
+    df['iteration'] = (df['epoch']-1) * estimated_batches_per_epoch + df['batch_idx']
     
     print(f"Estimated batches per epoch: {estimated_batches_per_epoch}")
     print(f"Iteration range: {df['iteration'].min()} to {df['iteration'].max()}")

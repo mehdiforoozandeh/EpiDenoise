@@ -856,12 +856,16 @@ class MONITOR_VALIDATION(object):
 ##=========================================== Loss Functions =============================================##
 
 class CANDI_LOSS(nn.Module):
-    def __init__(self, reduction='mean'):
+    def __init__(self, reduction='mean', count_weight=2.0, pval_weight=1.0, peak_weight=1.0):
         super(CANDI_LOSS, self).__init__()
         self.reduction = reduction
         self.gaus_nll = nn.GaussianNLLLoss(reduction=self.reduction, full=True)
         self.nbin_nll = negative_binomial_loss
         self.bce_loss = nn.BCELoss(reduction=self.reduction)
+        # Loss weights for multi-task learning
+        self.count_weight = count_weight
+        self.pval_weight = pval_weight
+        self.peak_weight = peak_weight
 
     def forward(self, p_pred, n_pred, mu_pred, var_pred, peak_pred, true_count, true_pval, true_peak, obs_map, masked_map):
         ups_true_count, ups_true_pval, ups_true_peak = true_count[obs_map], true_pval[obs_map], true_peak[obs_map]
@@ -894,6 +898,14 @@ class CANDI_LOSS(nn.Module):
         with torch.amp.autocast("cuda", enabled=False):
             observed_peak_loss = self.bce_loss(ups_peak_pred.float(), ups_true_peak.float())
             imputed_peak_loss = self.bce_loss(imp_peak_pred.float(), imp_true_peak.float())
+        
+        # Apply weights to losses for multi-task learning
+        observed_count_loss = self.count_weight * observed_count_loss
+        imputed_count_loss = self.count_weight * imputed_count_loss
+        observed_pval_loss = self.pval_weight * observed_pval_loss
+        imputed_pval_loss = self.pval_weight * imputed_pval_loss
+        observed_peak_loss = self.peak_weight * observed_peak_loss
+        imputed_peak_loss = self.peak_weight * imputed_peak_loss
         
         return observed_count_loss, imputed_count_loss, observed_pval_loss, imputed_pval_loss, observed_peak_loss, imputed_peak_loss
 
@@ -1863,64 +1875,35 @@ class NegativeBinomialLayer(nn.Module):
         if self.FF:
             self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
 
-        self.fc_p = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.Sigmoid()
-        )
-
-        self.fc_n = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.Softplus()
-        )
+        # Pre-normalization for stability
+        self.pre_norm = nn.LayerNorm(input_dim)
+        
+        # Linear layers with controlled initialization
+        self.linear_p = nn.Linear(input_dim, output_dim)
+        self.linear_n = nn.Linear(input_dim, output_dim)
+        
+        # Better initialization for ChIP-seq data (target mean ~5-10)
+        nn.init.xavier_normal_(self.linear_p.weight, gain=0.1)
+        nn.init.constant_(self.linear_p.bias, -1.5)  # sigmoid(-1.5) ≈ 0.18
+        
+        nn.init.xavier_normal_(self.linear_n.weight, gain=0.1)
+        nn.init.constant_(self.linear_n.bias, 2.3)  # softplus(2.3) ≈ 10
 
     def forward(self, x):
         if self.FF:
             x = self.feed_forward(x)
 
-        # using sigmoid to ensure it's between 0 and 1
-        p = self.fc_p(x)
-
-        # using softplus to ensure it's positive
-        n = self.fc_n(x)
+        # Normalize input before projection
+        x = self.pre_norm(x)
+        
+        # Remove clamping - let gradients flow
+        p_logits = self.linear_p(x)
+        p = torch.sigmoid(p_logits)
+        
+        n_logits = self.linear_n(x)
+        n = F.softplus(n_logits)
 
         return p, n
-
-def negative_binomial_loss(y_true, n_pred, p_pred):
-    """
-        Negative binomial loss function for PyTorch.
-        
-        Parameters
-        ----------
-        y_true : torch.Tensor
-            Ground truth values of the predicted variable.
-        n_pred : torch.Tensor
-            Tensor containing n values of the predicted distribution.
-        p_pred : torch.Tensor
-            Tensor containing p values of the predicted distribution.
-            
-        Returns
-        -------
-        nll : torch.Tensor
-            Negative log likelihood.
-    """
-    eps = 1e-6
-
-    # Clamp predictions for numerical stability
-    p_pred = torch.clamp(p_pred, min=eps, max=1 - eps)
-    n_pred = torch.clamp(n_pred, min=1e-2, max=1e3)
-
-    # Compute NB NLL
-    nll = (
-        torch.lgamma(n_pred + eps)
-        + torch.lgamma(y_true + 1 + eps)
-        - torch.lgamma(n_pred + y_true + eps)
-        - n_pred * torch.log(p_pred + eps)
-        - y_true * torch.log(1 - p_pred + eps)
-    )
-    
-    return nll
 
 class GaussianLayer(nn.Module):
     def __init__(self, input_dim, output_dim, FF=False):
@@ -1930,26 +1913,33 @@ class GaussianLayer(nn.Module):
         if self.FF:
             self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
 
-        # Define the layers for calculating mu (mean) parameter
-        self.fc_mu = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.Softplus()
-        )
-
-        # Define the layers for calculating var parameter
-        self.fc_var = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.Softplus() # Ensure var is positive
-        )
+        # Pre-normalization for stability
+        self.pre_norm = nn.LayerNorm(input_dim)
+        
+        # Linear layers with controlled initialization
+        self.linear_mu = nn.Linear(input_dim, output_dim)
+        self.linear_var = nn.Linear(input_dim, output_dim)
+        
+        # Better initialization
+        nn.init.xavier_normal_(self.linear_mu.weight, gain=0.1)
+        nn.init.constant_(self.linear_mu.bias, 1.5)  # softplus(1.5) ≈ 1.7
+        
+        nn.init.xavier_normal_(self.linear_var.weight, gain=0.1)
+        nn.init.constant_(self.linear_var.bias, 0.5)  # softplus(0.5) ≈ 0.97
 
     def forward(self, x):
         if self.FF:
             x = self.feed_forward(x)
 
-        mu = self.fc_mu(x)
-        var = self.fc_var(x)
+        # Normalize input before projection
+        x = self.pre_norm(x)
+        
+        # Remove clamping - let gradients flow
+        mu_logits = self.linear_mu(x)
+        mu = F.softplus(mu_logits)
+        
+        var_logits = self.linear_var(x)
+        var = F.softplus(var_logits)
 
         return mu, var
 
@@ -1961,18 +1951,26 @@ class PeakLayer(nn.Module):
         if self.FF:
             self.feed_forward = FeedForwardNN(input_dim, input_dim, input_dim, n_hidden_layers=2)
 
-        # Define the layers for calculating peak parameter
-        self.fc_peak = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.Sigmoid()
-        )
+        # Pre-normalization for stability
+        self.pre_norm = nn.LayerNorm(input_dim)
+        
+        # Linear layer with controlled initialization
+        self.linear_peak = nn.Linear(input_dim, output_dim)
+        
+        # Initialize with smaller weights for stability
+        nn.init.xavier_normal_(self.linear_peak.weight, gain=0.5)
+        nn.init.zeros_(self.linear_peak.bias)
 
     def forward(self, x):
         if self.FF:
             x = self.feed_forward(x)
 
-        peak = self.fc_peak(x)
+        # Normalize input before projection
+        x = self.pre_norm(x)
+        
+        # Remove clamping - let gradients flow
+        peak_logits = self.linear_peak(x)
+        peak = torch.sigmoid(peak_logits)
 
         return peak
 

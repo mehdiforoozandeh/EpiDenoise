@@ -318,7 +318,7 @@ class EVAL_CANDI:
         """
         self.model_dir = model_dir
         self.data_path = data_path
-        self.context_length = context_length
+        
         self.batch_size = batch_size
         self.dataset_type = dataset_type
         self.resolution = resolution
@@ -331,10 +331,11 @@ class EVAL_CANDI:
         os.makedirs(savedir, exist_ok=True)
         
         # Initialize predictor
-        self.predictor = CANDIPredictor(model_dir, DNA=DNA)
+        self.predictor = CANDIPredictor(self.model_dir, DNA=DNA)
+        self.context_length = self.predictor.context_length
         
         # Setup data handler for predictor
-        self.predictor.setup_data_handler(data_path, dataset_type, context_length, resolution)
+        self.predictor.setup_data_handler(self.data_path, self.dataset_type, self.context_length, self.resolution)
         
         # Setup data handler for evaluation
         self.data_handler = CANDIDataHandler(
@@ -344,6 +345,7 @@ class EVAL_CANDI:
             DNA=DNA
         )
         self.data_handler._load_files()
+
         
         # Initialize metrics and visualization
         self.metrics = METRICS()
@@ -376,7 +378,7 @@ class EVAL_CANDI:
                    quick: bool = False, num_assays: int = None) -> List[Dict[str, Any]]:
         """
         Compute comprehensive metrics for predictions.
-        
+
         Args:
             prediction_dict: Dictionary from CANDIPredictor.predict_biosample()
             bios_name: Name of biosample
@@ -384,50 +386,57 @@ class EVAL_CANDI:
             locus: Genomic locus (default: chr21)
             arcsinh: Whether to apply arcsinh transform to p-values
             quick: Whether to compute quick metrics only
-            
+
         Returns:
             List of metric dictionaries for imputed and denoised predictions
         """
+
         if locus is None:
             locus = ["chr21", 0, self.chr_sizes["chr21"]]
-        
+
         # Get prediction data
         pred_imputed = self._get_prediction_data(prediction_dict, bios_name, experiment, "imputed")
         pred_denoised = self._get_prediction_data(prediction_dict, bios_name, experiment, "denoised")
-        
+
         # Get ground truth data
         obs_data = self._get_ground_truth_data(bios_name, experiment, locus)
-        
+
         # Get experiment index
         exp_idx = self.expnames.index(experiment)
-        
+
         # Extract target data
         C_target = obs_data['obs_count']
         P_target = obs_data['obs_pval']
         Peak_target = obs_data['obs_peak']
-        
+
         if arcsinh:
             P_target = np.sinh(P_target)
-        
+
         results = []
-        
+
         # Compute metrics for imputed predictions
         imp_count_dist = NegativeBinomial(
-            torch.tensor(pred_imputed['pred_count_p']), 
+            torch.tensor(pred_imputed['pred_count_p']),
             torch.tensor(pred_imputed['pred_count_n'])
         )
         imp_pval_dist = Gaussian(
-            torch.tensor(pred_imputed['pred_pval_mu']), 
+            torch.tensor(pred_imputed['pred_pval_mu']),
             torch.tensor(pred_imputed['pred_pval_var'])
         )
-        
+
         imp_count_mean = imp_count_dist.mean().numpy()
         imp_pval_mean = imp_pval_dist.mean().numpy()
-        
+
         if arcsinh:
             imp_pval_mean = np.sinh(imp_pval_mean)
-        
-        # Compute metrics
+
+        def safe_metric(fn, *args):
+            try:
+                return fn(*args)
+            except Exception as e:
+                print(f"Error calculating metric {fn.__name__}: {e}")
+                return np.nan
+
         metrics_imp = {
             'bios': bios_name,
             'feature': experiment,
@@ -435,136 +444,169 @@ class EVAL_CANDI:
             'available_assays': num_assays,
             
             # Count metrics
-            'C_MSE-GW': self.metrics.mse(C_target, imp_count_mean),
-            'C_Pearson-GW': self.metrics.pearson(C_target, imp_count_mean),
-            'C_Spearman-GW': self.metrics.spearman(C_target, imp_count_mean),
-            'C_MSE-gene': self.metrics.mse_gene(C_target, imp_count_mean),
-            'C_Pearson_gene': self.metrics.pearson_gene(C_target, imp_count_mean),
-            'C_Spearman_gene': self.metrics.spearman_gene(C_target, imp_count_mean),
-            'C_MSE-prom': self.metrics.mse_prom(C_target, imp_count_mean),
-            'C_Pearson_prom': self.metrics.pearson_prom(C_target, imp_count_mean),
-            'C_Spearman_prom': self.metrics.spearman_prom(C_target, imp_count_mean),
-            'C_MSE-1obs': self.metrics.mse1obs(C_target, imp_count_mean),
-            'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, imp_count_mean),
-            'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, imp_count_mean),
-            'C_MSE-1imp': self.metrics.mse1imp(C_target, imp_count_mean),
-            'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, imp_count_mean),
-            'C_Spearman_1imp': self.metrics.spearman1_imp(C_target, imp_count_mean),
-            
+            'C_MSE-GW': safe_metric(self.metrics.mse, C_target, imp_count_mean),
+            'C_Pearson-GW': safe_metric(self.metrics.pearson, C_target, imp_count_mean),
+            'C_Spearman-GW': safe_metric(self.metrics.spearman, C_target, imp_count_mean),
+            'C_MSE-gene': safe_metric(self.metrics.mse_gene, C_target, imp_count_mean),
+            'C_Pearson_gene': safe_metric(self.metrics.pearson_gene, C_target, imp_count_mean),
+            'C_Spearman_gene': safe_metric(self.metrics.spearman_gene, C_target, imp_count_mean),
+            'C_MSE-prom': safe_metric(self.metrics.mse_prom, C_target, imp_count_mean),
+            'C_Pearson_prom': safe_metric(self.metrics.pearson_prom, C_target, imp_count_mean),
+            'C_Spearman_prom': safe_metric(self.metrics.spearman_prom, C_target, imp_count_mean),
+            'C_MSE-1obs': safe_metric(self.metrics.mse1obs, C_target, imp_count_mean),
+            'C_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, C_target, imp_count_mean),
+            'C_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, C_target, imp_count_mean),
+            'C_MSE-1imp': safe_metric(self.metrics.mse1imp, C_target, imp_count_mean),
+            'C_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, C_target, imp_count_mean),
+            'C_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, C_target, imp_count_mean),
+
             # P-value metrics
-            'P_MSE-GW': self.metrics.mse(P_target, imp_pval_mean),
-            'P_Pearson-GW': self.metrics.pearson(P_target, imp_pval_mean),
-            'P_Spearman-GW': self.metrics.spearman(P_target, imp_pval_mean),
-            'P_MSE-gene': self.metrics.mse_gene(P_target, imp_pval_mean),
-            'P_Pearson_gene': self.metrics.pearson_gene(P_target, imp_pval_mean),
-            'P_Spearman_gene': self.metrics.spearman_gene(P_target, imp_pval_mean),
-            'P_MSE-prom': self.metrics.mse_prom(P_target, imp_pval_mean),
-            'P_Pearson_prom': self.metrics.pearson_prom(P_target, imp_pval_mean),
-            'P_Spearman_prom': self.metrics.spearman_prom(P_target, imp_pval_mean),
-            'P_MSE-1obs': self.metrics.mse1obs(P_target, imp_pval_mean),
-            'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, imp_pval_mean),
-            'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, imp_pval_mean),
-            'P_MSE-1imp': self.metrics.mse1imp(P_target, imp_pval_mean),
-            'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, imp_pval_mean),
-            'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, imp_pval_mean),
+            'P_MSE-GW': safe_metric(self.metrics.mse, P_target, imp_pval_mean),
+            'P_Pearson-GW': safe_metric(self.metrics.pearson, P_target, imp_pval_mean),
+            'P_Spearman-GW': safe_metric(self.metrics.spearman, P_target, imp_pval_mean),
+            'P_MSE-gene': safe_metric(self.metrics.mse_gene, P_target, imp_pval_mean),
+            'P_Pearson_gene': safe_metric(self.metrics.pearson_gene, P_target, imp_pval_mean),
+            'P_Spearman_gene': safe_metric(self.metrics.spearman_gene, P_target, imp_pval_mean),
+            'P_MSE-prom': safe_metric(self.metrics.mse_prom, P_target, imp_pval_mean),
+            'P_Pearson_prom': safe_metric(self.metrics.pearson_prom, P_target, imp_pval_mean),
+            'P_Spearman_prom': safe_metric(self.metrics.spearman_prom, P_target, imp_pval_mean),
+            'P_MSE-1obs': safe_metric(self.metrics.mse1obs, P_target, imp_pval_mean),
+            'P_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, P_target, imp_pval_mean),
+            'P_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, P_target, imp_pval_mean),
+            'P_MSE-1imp': safe_metric(self.metrics.mse1imp, P_target, imp_pval_mean),
+            'P_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, P_target, imp_pval_mean),
+            'P_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, P_target, imp_pval_mean),
+
+            # Peak AUCROC metrics
+            'Peak_AUCROC-GW': safe_metric(self.metrics.aucroc, Peak_target, pred_imputed['pred_peak']),
+            'Peak_AUCROC-gene': safe_metric(self.metrics.aucroc_gene, Peak_target, pred_imputed['pred_peak']),
+            'Peak_AUCROC-prom': safe_metric(self.metrics.aucroc_prom, Peak_target, pred_imputed['pred_peak']),
         }
-        
+
         if not quick:
-            # Add confidence interval metrics
-            imp_count_ci = imp_count_dist.interval(confidence=0.95)
-            imp_pval_ci = imp_pval_dist.interval(confidence=0.95)
-            
-            if arcsinh:
-                imp_pval_ci = (np.sinh(imp_pval_ci[0].numpy()), np.sinh(imp_pval_ci[1].numpy()))
-            else:
-                imp_pval_ci = (imp_pval_ci[0].numpy(), imp_pval_ci[1].numpy())
-            
+            try:
+                imp_count_ci = imp_count_dist.interval(confidence=0.95)
+                imp_count_lower = imp_count_ci[0].numpy()
+                imp_count_upper = imp_count_ci[1].numpy()
+            except Exception:
+                imp_count_lower = np.nan
+                imp_count_upper = np.nan
+            try:
+                imp_pval_ci = imp_pval_dist.interval(confidence=0.95)
+                if arcsinh:
+                    pval_lower, pval_upper = (np.sinh(imp_pval_ci[0].numpy()), np.sinh(imp_pval_ci[1].numpy()))
+                else:
+                    pval_lower, pval_upper = (imp_pval_ci[0].numpy(), imp_pval_ci[1].numpy())
+            except Exception:
+                pval_lower = np.nan
+                pval_upper = np.nan
+
             metrics_imp.update({
-                'C_lower_95': imp_count_ci[0].numpy(),
-                'C_upper_95': imp_count_ci[1].numpy(),
-                'P_lower_95': imp_pval_ci[0],
-                'P_upper_95': imp_pval_ci[1],
+                'C_lower_95': imp_count_lower,
+                'C_upper_95': imp_count_upper,
+                'P_lower_95': pval_lower,
+                'P_upper_95': pval_upper,
             })
-        
+
         results.append(metrics_imp)
-        
+
         # Compute metrics for denoised predictions
         ups_count_dist = NegativeBinomial(
-            torch.tensor(pred_denoised['pred_count_p']), 
+            torch.tensor(pred_denoised['pred_count_p']),
             torch.tensor(pred_denoised['pred_count_n'])
         )
         ups_pval_dist = Gaussian(
-            torch.tensor(pred_denoised['pred_pval_mu']), 
+            torch.tensor(pred_denoised['pred_pval_mu']),
             torch.tensor(pred_denoised['pred_pval_var'])
         )
-        
+
         ups_count_mean = ups_count_dist.mean().numpy()
         ups_pval_mean = ups_pval_dist.mean().numpy()
-        
+
         if arcsinh:
             ups_pval_mean = np.sinh(ups_pval_mean)
-        
-        # Compute metrics
+
         metrics_ups = {
             'bios': bios_name,
             'feature': experiment,
-            'comparison': 'upsampled',
-            'available_assays': len(self.expnames),
-            
+            'comparison': 'denoised',
+            'available_assays': num_assays,
+
             # Count metrics
-            'C_MSE-GW': self.metrics.mse(C_target, ups_count_mean),
-            'C_Pearson-GW': self.metrics.pearson(C_target, ups_count_mean),
-            'C_Spearman-GW': self.metrics.spearman(C_target, ups_count_mean),
-            'C_MSE-gene': self.metrics.mse_gene(C_target, ups_count_mean),
-            'C_Pearson_gene': self.metrics.pearson_gene(C_target, ups_count_mean),
-            'C_Spearman_gene': self.metrics.spearman_gene(C_target, ups_count_mean),
-            'C_MSE-prom': self.metrics.mse_prom(C_target, ups_count_mean),
-            'C_Pearson_prom': self.metrics.pearson_prom(C_target, ups_count_mean),
-            'C_Spearman_prom': self.metrics.spearman_prom(C_target, ups_count_mean),
-            'C_MSE-1obs': self.metrics.mse1obs(C_target, ups_count_mean),
-            'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, ups_count_mean),
-            'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, ups_count_mean),
-            'C_MSE-1imp': self.metrics.mse1imp(C_target, ups_count_mean),
-            'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, ups_count_mean),
-            'C_Spearman_1imp': self.metrics.spearman1_imp(C_target, ups_count_mean),
+            'C_MSE-GW': safe_metric(self.metrics.mse, C_target, ups_count_mean),
+            'C_Pearson-GW': safe_metric(self.metrics.pearson, C_target, ups_count_mean),
+            'C_Spearman-GW': safe_metric(self.metrics.spearman, C_target, ups_count_mean),
+
+            'C_MSE-gene': safe_metric(self.metrics.mse_gene, C_target, ups_count_mean),
+            'C_Pearson_gene': safe_metric(self.metrics.pearson_gene, C_target, ups_count_mean),
+            'C_Spearman_gene': safe_metric(self.metrics.spearman_gene, C_target, ups_count_mean),
             
+            'C_MSE-prom': safe_metric(self.metrics.mse_prom, C_target, ups_count_mean),
+            'C_Pearson_prom': safe_metric(self.metrics.pearson_prom, C_target, ups_count_mean),
+            'C_Spearman_prom': safe_metric(self.metrics.spearman_prom, C_target, ups_count_mean),
+
+            'C_MSE-1obs': safe_metric(self.metrics.mse1obs, C_target, ups_count_mean),
+            'C_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, C_target, ups_count_mean),
+            'C_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, C_target, ups_count_mean),
+            
+            'C_MSE-1imp': safe_metric(self.metrics.mse1imp, C_target, ups_count_mean),
+            'C_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, C_target, ups_count_mean),
+            'C_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, C_target, ups_count_mean),
+
             # P-value metrics
-            'P_MSE-GW': self.metrics.mse(P_target, ups_pval_mean),
-            'P_Pearson-GW': self.metrics.pearson(P_target, ups_pval_mean),
-            'P_Spearman-GW': self.metrics.spearman(P_target, ups_pval_mean),
-            'P_MSE-gene': self.metrics.mse_gene(P_target, ups_pval_mean),
-            'P_Pearson_gene': self.metrics.pearson_gene(P_target, ups_pval_mean),
-            'P_Spearman_gene': self.metrics.spearman_gene(P_target, ups_pval_mean),
-            'P_MSE-prom': self.metrics.mse_prom(P_target, ups_pval_mean),
-            'P_Pearson_prom': self.metrics.pearson_prom(P_target, ups_pval_mean),
-            'P_Spearman_prom': self.metrics.spearman_prom(P_target, ups_pval_mean),
-            'P_MSE-1obs': self.metrics.mse1obs(P_target, ups_pval_mean),
-            'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, ups_pval_mean),
-            'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, ups_pval_mean),
-            'P_MSE-1imp': self.metrics.mse1imp(P_target, ups_pval_mean),
-            'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, ups_pval_mean),
-            'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, ups_pval_mean),
+            'P_MSE-GW': safe_metric(self.metrics.mse, P_target, ups_pval_mean),
+            'P_Pearson-GW': safe_metric(self.metrics.pearson, P_target, ups_pval_mean),
+            'P_Spearman-GW': safe_metric(self.metrics.spearman, P_target, ups_pval_mean),
+
+            'P_MSE-gene': safe_metric(self.metrics.mse_gene, P_target, ups_pval_mean),
+            'P_Pearson_gene': safe_metric(self.metrics.pearson_gene, P_target, ups_pval_mean),
+            'P_Spearman_gene': safe_metric(self.metrics.spearman_gene, P_target, ups_pval_mean),
+
+            'P_MSE-prom': safe_metric(self.metrics.mse_prom, P_target, ups_pval_mean),
+            'P_Pearson_prom': safe_metric(self.metrics.pearson_prom, P_target, ups_pval_mean),
+            'P_Spearman_prom': safe_metric(self.metrics.spearman_prom, P_target, ups_pval_mean),
+
+            'P_MSE-1obs': safe_metric(self.metrics.mse1obs, P_target, ups_pval_mean),
+            'P_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, P_target, ups_pval_mean),
+            'P_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, P_target, ups_pval_mean),
+
+            'P_MSE-1imp': safe_metric(self.metrics.mse1imp, P_target, ups_pval_mean),
+            'P_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, P_target, ups_pval_mean),
+            'P_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, P_target, ups_pval_mean),
+
+            # Peak AUCROC metrics
+            'Peak_AUCROC-GW': safe_metric(self.metrics.aucroc, Peak_target, pred_denoised['pred_peak']),
+            'Peak_AUCROC-gene': safe_metric(self.metrics.aucroc_gene, Peak_target, pred_denoised['pred_peak']),
+            'Peak_AUCROC-prom': safe_metric(self.metrics.aucroc_prom, Peak_target, pred_denoised['pred_peak']),
         }
-        
+
         if not quick:
-            # Add confidence interval metrics
-            ups_count_ci = ups_count_dist.interval(confidence=0.95)
-            ups_pval_ci = ups_pval_dist.interval(confidence=0.95)
-            
-            if arcsinh:
-                ups_pval_ci = (np.sinh(ups_pval_ci[0].numpy()), np.sinh(ups_pval_ci[1].numpy()))
-            else:
-                ups_pval_ci = (ups_pval_ci[0].numpy(), ups_pval_ci[1].numpy())
-            
+            try:
+                ups_count_ci = ups_count_dist.interval(confidence=0.95)
+                ups_count_lower = ups_count_ci[0].numpy()
+                ups_count_upper = ups_count_ci[1].numpy()
+            except Exception:
+                ups_count_lower = np.nan
+                ups_count_upper = np.nan
+            try:
+                ups_pval_ci = ups_pval_dist.interval(confidence=0.95)
+                if arcsinh:
+                    ups_pval_lower, ups_pval_upper = (np.sinh(ups_pval_ci[0].numpy()), np.sinh(ups_pval_ci[1].numpy()))
+                else:
+                    ups_pval_lower, ups_pval_upper = (ups_pval_ci[0].numpy(), ups_pval_ci[1].numpy())
+            except Exception:
+                ups_pval_lower = np.nan
+                ups_pval_upper = np.nan
+
             metrics_ups.update({
-                'C_lower_95': ups_count_ci[0].numpy(),
-                'C_upper_95': ups_count_ci[1].numpy(),
-                'P_lower_95': ups_pval_ci[0],
-                'P_upper_95': ups_pval_ci[1],
+                'C_lower_95': ups_count_lower,
+                'C_upper_95': ups_count_upper,
+                'P_lower_95': ups_pval_lower,
+                'P_upper_95': ups_pval_upper,
             })
-        
+
         results.append(metrics_ups)
-        
+
         return results
     
     def _get_prediction_data(self, prediction_dict: Dict[str, Any], 
@@ -597,20 +639,26 @@ class EVAL_CANDI:
         
         return result
     
-    def get_metric_eic(self, prediction_dict: Dict[str, Any], bios_name: str, 
-                      X: torch.Tensor, Y: torch.Tensor, P_X: torch.Tensor, P_Y: torch.Tensor,
-                      available_X_indices: torch.Tensor, available_Y_indices: torch.Tensor,
+    def get_metric_eic(self, ups_count_dist, ups_pval_dist, ups_peak_scores: torch.Tensor,
+                      Y: torch.Tensor, X: torch.Tensor, P: torch.Tensor,
+                      Peak: torch.Tensor,
+                      bios_name: str, available_X_indices: torch.Tensor, 
+                      available_Y_indices: torch.Tensor,
                       arcsinh: bool = True, quick: bool = False) -> List[Dict[str, Any]]:
         """
         Compute EIC-specific metrics for predictions.
         
+        This matches old_eval.py get_metric_eic signature and logic exactly.
+        
         Args:
-            prediction_dict: Dictionary containing predictions
-            bios_name: Name of biosample
-            X: Input data from T_ biosample (for upsampled comparison)
+            ups_count_dist: NegativeBinomial distribution for count predictions
+            ups_pval_dist: Gaussian distribution for p-value predictions
+            ups_peak_scores: Peak prediction scores tensor
             Y: Target data from B_ biosample (for imputed comparison)
-            P_X: P-value data from T_ biosample
-            P_Y: P-value data from B_ biosample
+            X: Input data from T_ biosample (for upsampled comparison)
+            P: Merged P-value data from both T_ and B_ biosamples
+            Peak: Merged Peak data from both T_ and B_ biosamples
+            bios_name: Name of biosample
             available_X_indices: Indices of available experiments in X (T_)
             available_Y_indices: Indices of available experiments in Y (B_)
             arcsinh: Whether to apply arcsinh transformation
@@ -619,60 +667,70 @@ class EVAL_CANDI:
         Returns:
             List of evaluation results for all experiments
         """
+        # Extract means and stds from distributions (matching old_eval.py line 3357-3361)
+        ups_count_mean = ups_count_dist.expect()
+        ups_count_std = ups_count_dist.std()
+        ups_pval_mean = ups_pval_dist.mean()
+        ups_pval_std = ups_pval_dist.std()
+        
+        if not quick:
+            print("getting 0.95 interval conf")
+            ups_count_lower_95, ups_count_upper_95 = ups_count_dist.interval(confidence=0.95)
+            ups_pval_lower_95, ups_pval_upper_95 = ups_pval_dist.interval(confidence=0.95)
+        
+        def safe_metric(fn, *args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                print(f"Error calculating metric {fn.__name__}: {e}")
+                return np.nan
+        
         results = []
         
         for j in range(Y.shape[1]):
-            # Get experiment name
-            exp_name = self.expnames[j]
+            # Extract prediction arrays (matching old_eval.py line 3374-3381)
+            pred_count = ups_count_mean[:, j].numpy()
+            pred_count_std = ups_count_std[:, j].numpy()
+            pred_count_n = ups_count_dist.n[:, j].numpy()
+            pred_count_p = ups_count_dist.p[:, j].numpy()
             
-            # Determine comparison type and target data
+            pred_pval = ups_pval_mean[:, j].numpy()
+            pred_pval_std = ups_pval_std[:, j].numpy()
+            
+            pred_peak = ups_peak_scores[:, j].numpy()
+            
+            if not quick:
+                count_lower_95 = ups_count_lower_95[:, j].numpy()
+                count_upper_95 = ups_count_upper_95[:, j].numpy()
+                pval_lower_95 = ups_pval_lower_95[:, j].numpy()
+                pval_upper_95 = ups_pval_upper_95[:, j].numpy()
+            
+            # Determine comparison type and target data (matching old_eval.py line 3390-3399)
             if j in list(available_X_indices):
                 comparison = "upsampled"
                 C_target = X[:, j].numpy()
-                P_target = P_X[:, j].numpy()
             elif j in list(available_Y_indices):
                 comparison = "imputed"
-                C_target = Y[:, j].numpy()
-                P_target = P_Y[:, j].numpy()
+                C_target = Y[:, j].numpy()                
             else:
                 continue  # Skip experiments not in either
             
-            # Get predictions from prediction_dict
-            if bios_name not in prediction_dict or exp_name not in prediction_dict[bios_name]:
-                continue
-                
-            pred_data = prediction_dict[bios_name][exp_name]
+            # P_target comes from merged P (matching old_eval.py line 3401)
+            P_target = P[:, j].numpy()
+            Peak_target = Peak[:, j].numpy()
             
-            # Extract prediction arrays
-            pred_count = pred_data['count_dist'].mean().numpy()
-            pred_count_std = pred_data['count_dist'].std().numpy()
-            pred_count_n = pred_data['count_params']['n'].numpy()
-            pred_count_p = pred_data['count_params']['p'].numpy()
-            
-            pred_pval = pred_data['pval_dist'].mean().numpy()
-            pred_pval_std = pred_data['pval_dist'].std().numpy()
-            
-            # Apply arcsinh transformation if needed
+            # Apply arcsinh transformation if needed (matching old_eval.py line 3402-3407)
             if arcsinh:
                 P_target = np.sinh(P_target)
                 pred_pval = np.sinh(pred_pval)
+                if not quick:
+                    pval_lower_95 = np.sinh(pval_lower_95)
+                    pval_upper_95 = np.sinh(pval_upper_95)
             
-            # Compute confidence intervals if not quick
-            if not quick:
-                count_lower_95, count_upper_95 = pred_data['count_dist'].interval(confidence=0.95)
-                pval_lower_95, pval_upper_95 = pred_data['pval_dist'].interval(confidence=0.95)
-                
-                if arcsinh:
-                    pval_lower_95 = np.sinh(pval_lower_95.numpy())
-                    pval_upper_95 = np.sinh(pval_upper_95.numpy())
-                else:
-                    pval_lower_95 = pval_lower_95.numpy()
-                    pval_upper_95 = pval_upper_95.numpy()
-                
-                count_lower_95 = count_lower_95.numpy()
-                count_upper_95 = count_upper_95.numpy()
+            # Get experiment name
+            exp_name = self.expnames[j]
             
-            # Compute metrics
+            # Compute metrics (matching old_eval.py line 3409-3482)
             metrics = {
                 'bios': bios_name,
                 'feature': exp_name,
@@ -680,75 +738,80 @@ class EVAL_CANDI:
                 'available_assays': len(available_X_indices),
                 
                 # Count metrics
-                'C_MSE-GW': self.metrics.mse(C_target, pred_count),
-                'C_Pearson-GW': self.metrics.pearson(C_target, pred_count),
-                'C_Spearman-GW': self.metrics.spearman(C_target, pred_count),
-                'C_r2_GW': self.metrics.r2(C_target, pred_count),
-                'C_Cidx_GW': self.metrics.c_index_nbinom(pred_count_n, pred_count_p, C_target),
+                'C_MSE-GW': safe_metric(self.metrics.mse, C_target, pred_count),
+                'C_Pearson-GW': safe_metric(self.metrics.pearson, C_target, pred_count),
+                'C_Spearman-GW': safe_metric(self.metrics.spearman, C_target, pred_count),
+                'C_r2_GW': safe_metric(self.metrics.r2, C_target, pred_count),
+                'C_Cidx_GW': safe_metric(self.metrics.c_index_nbinom, pred_count_n, pred_count_p, C_target),
                 
-                'C_Pearson_1obs': self.metrics.pearson1_obs(C_target, pred_count),
-                'C_MSE-1obs': self.metrics.mse1obs(C_target, pred_count),
-                'C_Spearman_1obs': self.metrics.spearman1_obs(C_target, pred_count),
-                'C_r2_1obs': self.metrics.r2_1obs(C_target, pred_count),
+                'C_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, C_target, pred_count),
+                'C_MSE-1obs': safe_metric(self.metrics.mse1obs, C_target, pred_count),
+                'C_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, C_target, pred_count),
+                'C_r2_1obs': safe_metric(self.metrics.r2_1obs, C_target, pred_count),
                 
-                'C_MSE-1imp': self.metrics.mse1imp(C_target, pred_count),
-                'C_Pearson_1imp': self.metrics.pearson1_imp(C_target, pred_count),
-                'C_Spearman_1imp': self.metrics.spearman1_imp(C_target, pred_count),
-                'C_r2_1imp': self.metrics.r2_1imp(C_target, pred_count),
+                'C_MSE-1imp': safe_metric(self.metrics.mse1imp, C_target, pred_count),
+                'C_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, C_target, pred_count),
+                'C_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, C_target, pred_count),
+                'C_r2_1imp': safe_metric(self.metrics.r2_1imp, C_target, pred_count),
                 
-                'C_MSE-gene': self.metrics.mse_gene(C_target, pred_count),
-                'C_Pearson_gene': self.metrics.pearson_gene(C_target, pred_count),
-                'C_Spearman_gene': self.metrics.spearman_gene(C_target, pred_count),
-                'C_r2_gene': self.metrics.r2_gene(C_target, pred_count),
+                'C_MSE-gene': safe_metric(self.metrics.mse_gene, C_target, pred_count),
+                'C_Pearson_gene': safe_metric(self.metrics.pearson_gene, C_target, pred_count),
+                'C_Spearman_gene': safe_metric(self.metrics.spearman_gene, C_target, pred_count),
+                'C_r2_gene': safe_metric(self.metrics.r2_gene, C_target, pred_count),
                 
-                'C_MSE-prom': self.metrics.mse_prom(C_target, pred_count),
-                'C_Pearson_prom': self.metrics.pearson_prom(C_target, pred_count),
-                'C_Spearman_prom': self.metrics.spearman_prom(C_target, pred_count),
-                'C_r2_prom': self.metrics.r2_prom(C_target, pred_count),
+                'C_MSE-prom': safe_metric(self.metrics.mse_prom, C_target, pred_count),
+                'C_Pearson_prom': safe_metric(self.metrics.pearson_prom, C_target, pred_count),
+                'C_Spearman_prom': safe_metric(self.metrics.spearman_prom, C_target, pred_count),
+                'C_r2_prom': safe_metric(self.metrics.r2_prom, C_target, pred_count),
                 
-                "C_peak_overlap_01thr": self.metrics.peak_overlap(C_target, pred_count, p=0.01),
-                "C_peak_overlap_05thr": self.metrics.peak_overlap(C_target, pred_count, p=0.05),
-                "C_peak_overlap_10thr": self.metrics.peak_overlap(C_target, pred_count, p=0.10),
+                "C_peak_overlap_01thr": safe_metric(self.metrics.peak_overlap, C_target, pred_count, p=0.01),
+                "C_peak_overlap_05thr": safe_metric(self.metrics.peak_overlap, C_target, pred_count, p=0.05),
+                "C_peak_overlap_10thr": safe_metric(self.metrics.peak_overlap, C_target, pred_count, p=0.10),
                 
                 # P-value metrics
-                'P_MSE-GW': self.metrics.mse(P_target, pred_pval),
-                'P_Pearson-GW': self.metrics.pearson(P_target, pred_pval),
-                'P_Spearman-GW': self.metrics.spearman(P_target, pred_pval),
-                'P_r2_GW': self.metrics.r2(P_target, pred_pval),
-                'P_Cidx_GW': self.metrics.c_index_gauss(pred_pval, pred_pval_std, P_target),
+                'P_MSE-GW': safe_metric(self.metrics.mse, P_target, pred_pval),
+                'P_Pearson-GW': safe_metric(self.metrics.pearson, P_target, pred_pval),
+                'P_Spearman-GW': safe_metric(self.metrics.spearman, P_target, pred_pval),
+                'P_r2_GW': safe_metric(self.metrics.r2, P_target, pred_pval),
+                'P_Cidx_GW': safe_metric(self.metrics.c_index_gauss, pred_pval, pred_pval_std, P_target),
                 
-                'P_MSE-1obs': self.metrics.mse1obs(P_target, pred_pval),
-                'P_Pearson_1obs': self.metrics.pearson1_obs(P_target, pred_pval),
-                'P_Spearman_1obs': self.metrics.spearman1_obs(P_target, pred_pval),
-                'P_r2_1obs': self.metrics.r2_1obs(P_target, pred_pval),
-                'P_Cidx_1obs': self.metrics.c_index_gauss_1obs(pred_pval, pred_pval_std, P_target, num_pairs=5000),
+                'P_MSE-1obs': safe_metric(self.metrics.mse1obs, P_target, pred_pval),
+                'P_Pearson_1obs': safe_metric(self.metrics.pearson1_obs, P_target, pred_pval),
+                'P_Spearman_1obs': safe_metric(self.metrics.spearman1_obs, P_target, pred_pval),
+                'P_r2_1obs': safe_metric(self.metrics.r2_1obs, P_target, pred_pval),
+                'P_Cidx_1obs': safe_metric(self.metrics.c_index_gauss_1obs, pred_pval, pred_pval_std, P_target, num_pairs=5000),
                 
-                'P_MSE-1imp': self.metrics.mse1imp(P_target, pred_pval),
-                'P_Pearson_1imp': self.metrics.pearson1_imp(P_target, pred_pval),
-                'P_Spearman_1imp': self.metrics.spearman1_imp(P_target, pred_pval),
-                'P_r2_1imp': self.metrics.r2_1imp(P_target, pred_pval),
+                'P_MSE-1imp': safe_metric(self.metrics.mse1imp, P_target, pred_pval),
+                'P_Pearson_1imp': safe_metric(self.metrics.pearson1_imp, P_target, pred_pval),
+                'P_Spearman_1imp': safe_metric(self.metrics.spearman1_imp, P_target, pred_pval),
+                'P_r2_1imp': safe_metric(self.metrics.r2_1imp, P_target, pred_pval),
                 
-                'P_MSE-gene': self.metrics.mse_gene(P_target, pred_pval),
-                'P_Pearson_gene': self.metrics.pearson_gene(P_target, pred_pval),
-                'P_Spearman_gene': self.metrics.spearman_gene(P_target, pred_pval),
-                'P_r2_gene': self.metrics.r2_gene(P_target, pred_pval),
-                'P_Cidx_gene': self.metrics.c_index_gauss_gene(pred_pval, pred_pval_std, P_target, num_pairs=5000),
+                'P_MSE-gene': safe_metric(self.metrics.mse_gene, P_target, pred_pval),
+                'P_Pearson_gene': safe_metric(self.metrics.pearson_gene, P_target, pred_pval),
+                'P_Spearman_gene': safe_metric(self.metrics.spearman_gene, P_target, pred_pval),
+                'P_r2_gene': safe_metric(self.metrics.r2_gene, P_target, pred_pval),
+                'P_Cidx_gene': safe_metric(self.metrics.c_index_gauss_gene, pred_pval, pred_pval_std, P_target, num_pairs=5000),
                 
-                'P_MSE-prom': self.metrics.mse_prom(P_target, pred_pval),
-                'P_Pearson_prom': self.metrics.pearson_prom(P_target, pred_pval),
-                'P_Spearman_prom': self.metrics.spearman_prom(P_target, pred_pval),
-                'P_r2_prom': self.metrics.r2_prom(P_target, pred_pval),
-                'P_Cidx_prom': self.metrics.c_index_gauss_prom(pred_pval, pred_pval_std, P_target, num_pairs=5000),
+                'P_MSE-prom': safe_metric(self.metrics.mse_prom, P_target, pred_pval),
+                'P_Pearson_prom': safe_metric(self.metrics.pearson_prom, P_target, pred_pval),
+                'P_Spearman_prom': safe_metric(self.metrics.spearman_prom, P_target, pred_pval),
+                'P_r2_prom': safe_metric(self.metrics.r2_prom, P_target, pred_pval),
+                'P_Cidx_prom': safe_metric(self.metrics.c_index_gauss_prom, pred_pval, pred_pval_std, P_target, num_pairs=5000),
                 
-                "P_peak_overlap_01thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.01),
-                "P_peak_overlap_05thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.05),
-                "P_peak_overlap_10thr": self.metrics.peak_overlap(P_target, pred_pval, p=0.10)
+                "P_peak_overlap_01thr": safe_metric(self.metrics.peak_overlap, P_target, pred_pval, p=0.01),
+                "P_peak_overlap_05thr": safe_metric(self.metrics.peak_overlap, P_target, pred_pval, p=0.05),
+                "P_peak_overlap_10thr": safe_metric(self.metrics.peak_overlap, P_target, pred_pval, p=0.10),
+                
+                # Peak AUCROC metrics
+                'Peak_AUCROC-GW': safe_metric(self.metrics.aucroc, Peak_target, pred_peak),
+                'Peak_AUCROC-gene': safe_metric(self.metrics.aucroc_gene, Peak_target, pred_peak),
+                'Peak_AUCROC-prom': safe_metric(self.metrics.aucroc_prom, Peak_target, pred_peak),
             }
             
             # Add additional metrics if not quick
             if not quick:
-                metrics['C_Cidx_gene'] = self.metrics.c_index_nbinom_gene(pred_count_n, pred_count_p, C_target, num_pairs=2000)
-                metrics['C_Cidx_prom'] = self.metrics.c_index_nbinom_prom(pred_count_n, pred_count_p, C_target, num_pairs=2000)
+                metrics['C_Cidx_gene'] = safe_metric(self.metrics.c_index_nbinom_gene, pred_count_n, pred_count_p, C_target, num_pairs=2000)
+                metrics['C_Cidx_prom'] = safe_metric(self.metrics.c_index_nbinom_prom, pred_count_n, pred_count_p, C_target, num_pairs=2000)
                 
                 metrics["obs_count"] = C_target
                 metrics["obs_pval"] = P_target
@@ -800,6 +863,7 @@ class EVAL_CANDI:
     
     def bios_pipeline(self, bios_name: str, x_dsf: int = 1, 
                      quick: bool = False, fill_y_prompt_spec: Optional[Dict] = None,
+                     fill_prompt_mode: str = "median",
                      locus: List = None) -> List[Dict[str, Any]]:
         """
         Run complete evaluation pipeline for a biosample (merged dataset).
@@ -809,6 +873,7 @@ class EVAL_CANDI:
             x_dsf: Downsampling factor
             quick: Whether to compute quick metrics only
             fill_y_prompt_spec: Optional custom metadata specification
+            fill_prompt_mode: Mode for filling missing metadata ("none", "median", "mode", "sample", "custom")
             locus: Genomic locus (default: chr21)
             
         Returns:
@@ -824,6 +889,7 @@ class EVAL_CANDI:
             bios_name=bios_name,
             x_dsf=x_dsf,
             fill_y_prompt_spec=fill_y_prompt_spec,
+            fill_prompt_mode=fill_prompt_mode,
             locus=locus,
             get_latent_z=False,
             return_raw_predictions=False
@@ -855,6 +921,7 @@ class EVAL_CANDI:
     
     def bios_pipeline_eic(self, bios_name: str, x_dsf: int = 1, 
                          quick: bool = False, fill_y_prompt_spec: Optional[Dict] = None,
+                         fill_prompt_mode: str = "median",
                          locus: List = None) -> List[Dict[str, Any]]:
         """
         Run complete evaluation pipeline for a biosample (EIC dataset).
@@ -862,11 +929,15 @@ class EVAL_CANDI:
         For EIC, we load data from both T_{biosname} (input/upsampling ground truth) 
         and B_{biosname} (imputation ground truth), then evaluate predictions accordingly.
         
+        Key difference from non-EIC: Single forward pass with imp_target=[] (no leave-one-out).
+        The T_ assays are denoised, and B_ assays are imputed.
+        
         Args:
             bios_name: Name of biosample (should be B_{biosname})
             x_dsf: Downsampling factor
             quick: Whether to compute quick metrics only
             fill_y_prompt_spec: Optional custom metadata specification
+            fill_prompt_mode: Mode for filling missing metadata ("none", "median", "mode", "sample", "custom")
             locus: Genomic locus (default: chr21)
             
         Returns:
@@ -877,9 +948,35 @@ class EVAL_CANDI:
         
         print(f"Running EIC evaluation pipeline for {bios_name}")
         
-        # Determine T_ and B_ biosample names
-        T_biosname = bios_name.replace("B_", "T_")
-        B_biosname = bios_name  # Already B_
+        # Determine T_ and B_ biosample names (handle both test and val splits)
+        if self.split == "test":
+            if bios_name.startswith("B_"):
+                T_biosname = bios_name.replace("B_", "T_")
+                B_biosname = bios_name  # Already B_
+            elif bios_name.startswith("T_"):
+                T_biosname = bios_name  # Already T_
+                B_biosname = bios_name.replace("T_", "B_")
+            else:
+                raise ValueError(f"Unexpected biosample name format: {bios_name}")
+        elif self.split == "val":
+            if bios_name.startswith("V_"):
+                T_biosname = bios_name.replace("V_", "T_")
+                B_biosname = bios_name  # Already V_
+            elif bios_name.startswith("T_"):
+                T_biosname = bios_name  # Already T_
+                B_biosname = bios_name.replace("T_", "V_")
+            else:
+                raise ValueError(f"Unexpected biosample name format: {bios_name}")
+        else:
+            # Default: assume B_ prefix
+            if bios_name.startswith("B_"):
+                T_biosname = bios_name.replace("B_", "T_")
+                B_biosname = bios_name
+            elif bios_name.startswith("T_"):
+                T_biosname = bios_name
+                B_biosname = bios_name.replace("T_", "B_")
+            else:
+                raise ValueError(f"Unexpected biosample name format: {bios_name}")
         
         print(f"Loading T_ data from {T_biosname} and B_ data from {B_biosname}")
         
@@ -888,65 +985,174 @@ class EVAL_CANDI:
             print(f"Warning: T_ biosample {T_biosname} not found in navigation. Skipping {bios_name}")
             return []
         
-        # Load T_ data (input side) using predictor's data loading
+        # Load T_ data (input side) - matching old_eval.py load_bios logic
         try:
-            X, _, _, seq, mX, _, avX, _ = self.predictor.load_data(T_biosname, locus, x_dsf)
-            available_X_indices = torch.where(avX[0, :] == 1)[0]
+            temp_x, temp_mx = self.data_handler.load_bios_Counts(T_biosname, locus, DSF=x_dsf)
+            X, mX, avX = self.data_handler.make_bios_tensor_Counts(temp_x, temp_mx)
+            del temp_x, temp_mx
+            available_X_indices = torch.where(avX[0, :] == 1)[0] if avX.ndim > 1 else torch.where(avX == 1)[0]
         except Exception as e:
             print(f"Warning: Failed to load T_ data for {T_biosname}: {e}. Skipping {bios_name}")
             return []
         
-        # Load B_ data (ground truth side) directly using data_handler
+        # Load B_ data (target side) - matching old_eval.py load_bios logic
         try:
             temp_y, temp_my = self.data_handler.load_bios_Counts(B_biosname, locus, DSF=1)
             Y, mY, avY = self.data_handler.make_bios_tensor_Counts(temp_y, temp_my)
-            # avY is 1D tensor, not 2D
-            available_Y_indices = torch.where(avY == 1)[0]
+            # Apply fill-in-prompt based on mode
+            if fill_prompt_mode == "none":
+                # Don't fill - leave missing values as -1
+                pass
+            elif fill_prompt_mode == "custom" and fill_y_prompt_spec is not None:
+                # Use custom metadata specification
+                mY = self.data_handler.fill_in_prompt_manual(mY, fill_y_prompt_spec, overwrite=True)
+            elif fill_prompt_mode == "sample":
+                # Use random sampling (sample=True)
+                mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=True)
+            elif fill_prompt_mode == "mode":
+                # Use mode for all fields
+                mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=False, use_mode=True)
+            else:
+                # Default: Use median for numeric fields, mode for categorical (sample=False, use_mode=False)
+                mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=False, use_mode=False)
+            del temp_y, temp_my
+            available_Y_indices = torch.where(avY[0, :] == 1)[0] if avY.ndim > 1 else torch.where(avY == 1)[0]
         except Exception as e:
             print(f"Warning: Failed to load B_ data for {B_biosname}: {e}. Skipping {bios_name}")
             return []
         
-        # Load P-value data from both T_ and B_
+        # Load P-value data from both T_ and B_, then merge (matching old_eval.py line 3527-3534)
         try:
-            temp_p_t = self.data_handler.load_bios_BW(T_biosname, locus)
-            P_X, avlP_X = self.data_handler.make_bios_tensor_BW(temp_p_t)
+            temp_py = self.data_handler.load_bios_BW(B_biosname, locus)
+            temp_px = self.data_handler.load_bios_BW(T_biosname, locus)
+            temp_p = {**temp_py, **temp_px}  # Merge dictionaries
+            P, avlP = self.data_handler.make_bios_tensor_BW(temp_p)
+            del temp_py, temp_px, temp_p
         except Exception as e:
-            print(f"Warning: Failed to load T_ P-value data for {T_biosname}: {e}. Skipping {bios_name}")
+            print(f"Warning: Failed to load P-value data: {e}. Skipping {bios_name}")
             return []
         
+        # Load Peak data from both T_ and B_, then merge (similar to P-value merging)
         try:
-            temp_p_b = self.data_handler.load_bios_BW(B_biosname, locus)
-            P_Y, avlP_Y = self.data_handler.make_bios_tensor_BW(temp_p_b)
+            temp_peak_t = self.data_handler.load_bios_Peaks(T_biosname, locus)
+            temp_peak_b = self.data_handler.load_bios_Peaks(B_biosname, locus)
+            temp_peak = {**temp_peak_b, **temp_peak_t}  # Merge dictionaries (B_ takes precedence, then T_)
+            Peak, avlPeak = self.data_handler.make_bios_tensor_Peaks(temp_peak)
+            del temp_peak_t, temp_peak_b, temp_peak
         except Exception as e:
-            print(f"Warning: Failed to load B_ P-value data for {B_biosname}: {e}. Skipping {bios_name}")
+            print(f"Warning: Failed to load Peak data: {e}. Skipping {bios_name}")
             return []
+        
+        # Load control data: try T_ first, fallback to B_ if T_ doesn't have it
+        # Control is only used as input, not as target, so it doesn't matter which biosample we load it from
+        control_data = None
+        control_meta = None
+        control_avail = None
+        
+        try:
+            temp_control_data, temp_control_metadata = self.data_handler.load_bios_Control(T_biosname, locus, DSF=x_dsf)
+            if temp_control_data and "chipseq-control" in temp_control_data:
+                control_data, control_meta, control_avail = self.data_handler.make_bios_tensor_Control(temp_control_data, temp_control_metadata)
+                print(f"Loaded control data from {T_biosname}")
+            else:
+                # Try B_ as fallback
+                temp_control_data, temp_control_metadata = self.data_handler.load_bios_Control(B_biosname, locus, DSF=x_dsf)
+                if temp_control_data and "chipseq-control" in temp_control_data:
+                    control_data, control_meta, control_avail = self.data_handler.make_bios_tensor_Control(temp_control_data, temp_control_metadata)
+                    print(f"Loaded control data from {B_biosname} (fallback)")
+        except Exception as e:
+            print(f"Warning: Failed to load control data: {e}. Using missing values for control.")
+        
+        # If control data not loaded, create missing values (matching predictor.load_data behavior)
+        if control_data is None:
+            L = X.shape[0]
+            control_data = torch.full((L, 1), -1.0)  # missing_value
+            control_meta = torch.full((4, 1), -1.0)  # missing_value
+            control_avail = torch.zeros(1)  # not available
+            print("Using missing values for control data")
+        
+        # Concatenate control data to input data (same as in predictor.load_data and training)
+        X = torch.cat([X, control_data], dim=1)      # (L, F+1)
+        mX = torch.cat([mX, control_meta], dim=1)    # (4, F+1)
+        avX = torch.cat([avX, control_avail], dim=0) # (F+1,)
         
         print(f"Available X indices (T_): {len(available_X_indices)}")
         print(f"Available Y indices (B_): {len(available_Y_indices)}")
         
-        # Run prediction using T_ data (single pass, no masking)
-        prediction_dict = self.predictor.predict_biosample(
-            bios_name=T_biosname,
-            x_dsf=x_dsf,
-            fill_y_prompt_spec=fill_y_prompt_spec,
-            locus=locus,
-            get_latent_z=False,
-            return_raw_predictions=False
-        )
+        # Prepare data for model (reshape to context_length batches)
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
+        X = X[:num_rows, :]
+        Y = Y[:num_rows, :]
+        P = P[:num_rows, :]
+        Peak = Peak[:num_rows, :]
         
-        # Flatten tensors to match old_eval.py format
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+        P = P.view(-1, self.context_length, P.shape[-1])
+        Peak = Peak.view(-1, self.context_length, Peak.shape[-1])
+        
+        # Expand masks and availability
+        mX = mX.expand(X.shape[0], -1, -1) if mX.ndim == 2 else mX
+        mY = mY.expand(Y.shape[0], -1, -1) if mY.ndim == 2 else mY
+        avX = avX.expand(X.shape[0], -1) if avX.ndim == 1 else avX
+        
+        # Metadata filling is already handled above when loading B_ data
+        
+        # Load DNA sequence if needed
+        seq = None
+        if self.DNA:
+            seq = self.data_handler._dna_to_onehot(
+                self.data_handler._get_DNA_sequence(locus[0], locus[1], locus[2])
+            )
+            seq = seq[:num_rows*self.resolution, :]
+            seq = seq.view(-1, self.context_length*self.resolution, seq.shape[-1])
+        
+        print(f"Running single forward pass (no leave-one-out for EIC)...")
+        
+        # CRITICAL: Single forward pass with imp_target=[] (no masking)
+        # This denoises T_ assays - matching old_eval.py line 3653-3655
+        if self.DNA:
+            n_ups, p_ups, mu_ups, var_ups, peak_ups = self.predictor.predict(
+                X, mX, mY, avX, seq=seq, imp_target=[]
+            )
+        else:
+            n_ups, p_ups, mu_ups, var_ups, peak_ups = self.predictor.predict(
+                X, mX, mY, avX, seq=None, imp_target=[]
+            )
+        
+        # Flatten predictions to match old_eval.py format
+        p_ups = p_ups.view((p_ups.shape[0] * p_ups.shape[1]), p_ups.shape[-1])
+        n_ups = n_ups.view((n_ups.shape[0] * n_ups.shape[1]), n_ups.shape[-1])
+        mu_ups = mu_ups.view((mu_ups.shape[0] * mu_ups.shape[1]), mu_ups.shape[-1])
+        var_ups = var_ups.view((var_ups.shape[0] * var_ups.shape[1]), var_ups.shape[-1])
+        peak_ups = peak_ups.view((peak_ups.shape[0] * peak_ups.shape[1]), peak_ups.shape[-1])
+        
+        # Flatten ground truth data
         X = X.view((X.shape[0] * X.shape[1]), X.shape[-1])
         Y = Y.view((Y.shape[0] * Y.shape[1]), Y.shape[-1])
-        P_X = P_X.view((P_X.shape[0] * P_X.shape[1]), P_X.shape[-1])
-        P_Y = P_Y.view((P_Y.shape[0] * P_Y.shape[1]), P_Y.shape[-1])
+        P = P.view((P.shape[0] * P.shape[1]), P.shape[-1])
+        Peak = Peak.view((Peak.shape[0] * Peak.shape[1]), Peak.shape[-1])
         
-        print(f"Data shapes - X: {X.shape}, Y: {Y.shape}, P_X: {P_X.shape}, P_Y: {P_Y.shape}")
+        print(f"Data shapes - X: {X.shape}, Y: {Y.shape}, P: {P.shape}")
+        print(f"Prediction shapes - p_ups: {p_ups.shape}, n_ups: {n_ups.shape}, mu_ups: {mu_ups.shape}, var_ups: {var_ups.shape}")
         
-        # Use get_metric_eic for evaluation
+        # Create distributions from predictions (matching old_eval.py line 3665-3666)
+        from _utils import NegativeBinomial, Gaussian
+        ups_count_dist = NegativeBinomial(p_ups, n_ups)
+        ups_pval_dist = Gaussian(mu_ups, var_ups)
+        
+        print("Computing metrics...")
+        
+        # Use get_metric_eic for evaluation - pass distributions directly
         results = self.get_metric_eic(
-            prediction_dict=prediction_dict,
-            bios_name=bios_name,  # Use original B_ biosample name for results
-            X=X, Y=Y, P_X=P_X, P_Y=P_Y,
+            ups_count_dist=ups_count_dist,
+            ups_pval_dist=ups_pval_dist,
+            ups_peak_scores=peak_ups,
+            Y=Y,
+            X=X,
+            P=P,
+            Peak=Peak,
+            bios_name=bios_name,
             available_X_indices=available_X_indices,
             available_Y_indices=available_Y_indices,
             arcsinh=True,
@@ -1185,11 +1391,39 @@ Examples:
                  --metrics extended
 
   # EIC dataset evaluation
+  python eval.py --model-dir models/20251031_143320_CANDI_merged_ccre_5000loci_oct31 --data-path /project/6014832/mforooz/DATA_CANDI_EIC --bios-name B_GM12878 --dataset eic --split test
+
+  # Evaluation with name suffix
+  python eval.py --model-dir models/20251103_135249_CANDI_merged_ccre_3000loci_Nov03/ --data-path ../DATA_CANDI_MERGED --bios-name H9_grp2_rep1 --name-suffix v1_test --dataset merged
+
+  # Evaluation without fill-in-prompt (leave missing metadata as -1)
   python eval.py --model-dir models/20251015_013231_CANDI_merged_ccre_5000loci_oct15 \\
-                 --data-path /path/to/DATA_CANDI_EIC \\
-                 --bios-name B_GM12878 \\
-                 --dataset eic \\
-                 --split test
+                 --data-path /path/to/DATA_CANDI_MERGED \\
+                 --bios-name GM12878 \\
+                 --fill-prompt-mode none \\
+                 --dataset merged
+
+  # Evaluation with random sampling fill-in-prompt (matches training)
+  python eval.py --model-dir models/20251015_013231_CANDI_merged_ccre_5000loci_oct15 \\
+                 --data-path /path/to/DATA_CANDI_MERGED \\
+                 --bios-name GM12878 \\
+                 --fill-prompt-mode sample \\
+                 --dataset merged
+
+  # Evaluation with mode statistics for all fields
+  python eval.py --model-dir models/20251015_013231_CANDI_merged_ccre_5000loci_oct15 \\
+                 --data-path /path/to/DATA_CANDI_MERGED \\
+                 --bios-name GM12878 \\
+                 --fill-prompt-mode mode \\
+                 --dataset merged
+
+  # Evaluation with custom metadata specification
+  python eval.py --model-dir models/20251015_013231_CANDI_merged_ccre_5000loci_oct15 \\
+                 --data-path /path/to/DATA_CANDI_MERGED \\
+                 --bios-name GM12878 \\
+                 --fill-prompt-mode custom \\
+                 --y-prompt-spec custom_metadata.json \\
+                 --dataset merged
         """
     )
     
@@ -1226,12 +1460,21 @@ Examples:
                        help='Run SAGA evaluation')
     parser.add_argument('--generate-plots', action='store_true',
                        help='Generate visualization plots')
+    parser.add_argument('--fill-prompt-mode', type=str, default='median',
+                       choices=['none', 'median', 'mode', 'sample', 'custom'],
+                       help='Mode for filling missing metadata in target (y) prompt. '
+                            'Options: "none" (leave as -1), "median" (median for numeric, mode for categorical, default), '
+                            '"mode" (mode for all fields), "sample" (random sampling), "custom" (use --y-prompt-spec file)')
+    parser.add_argument('--y-prompt-spec', type=str, default=None,
+                       help='JSON file with custom metadata specification (required if --fill-prompt-mode is "custom")')
     
     # Output options
     parser.add_argument('--output-dir', type=str, default='models/evals/',
                        help='Output directory for results (default: models/evals/)')
     parser.add_argument('--output-file', type=str, default=None,
                        help='Output file for results (default: auto-generated)')
+    parser.add_argument('--name-suffix', type=str, default=None,
+                       help='Suffix to append to output file names (default: None)')
     
     args = parser.parse_args()
     
@@ -1257,10 +1500,11 @@ Examples:
             
             # Get biosamples from the specified split
             if args.split:
+                biosample_names = []
                 for bios in list(temp_handler.navigation.keys()):
-                    if temp_handler.split_dict[bios] != args.split:
-                        del temp_handler.navigation[bios]
-                biosample_names = list(temp_handler.navigation.keys())
+                    
+                    if temp_handler.split_dict[bios] == args.split:
+                        biosample_names.append(bios)
             else:
                 print(f"Error: Split '{args.split}' not found in dataset")
                 sys.exit(1)
@@ -1302,12 +1546,29 @@ Examples:
             print(f"{'='*60}")
             
             try:
+                # Determine fill_prompt_mode and fill_y_prompt_spec
+                fill_prompt_mode = args.fill_prompt_mode
+                fill_y_prompt_spec = None
+                
+                # If mode is "custom", require y-prompt-spec file
+                if fill_prompt_mode == "custom":
+                    if not hasattr(args, 'y_prompt_spec') or args.y_prompt_spec is None:
+                        print(f"Warning: --fill-prompt-mode is 'custom' but --y-prompt-spec not provided. Using 'median' instead.")
+                        fill_prompt_mode = "median"
+                    else:
+                        # Load custom metadata spec from file
+                        with open(args.y_prompt_spec, 'r') as f:
+                            fill_y_prompt_spec = json.load(f)
+                        print(f"Loaded custom metadata specification from {args.y_prompt_spec}")
+                
                 # Run evaluation pipeline
                 if args.dataset == "eic":
                     results = evaluator.bios_pipeline_eic(
                         bios_name=bios_name,
                         x_dsf=args.dsf,
                         quick=(args.metrics == 'default'),
+                        fill_y_prompt_spec=fill_y_prompt_spec,
+                        fill_prompt_mode=fill_prompt_mode,
                         locus=locus
                     )
                 else:
@@ -1315,6 +1576,8 @@ Examples:
                         bios_name=bios_name,
                         x_dsf=args.dsf,
                         quick=(args.metrics == 'default'),
+                        fill_y_prompt_spec=fill_y_prompt_spec,
+                        fill_prompt_mode=fill_prompt_mode,
                         locus=locus
                     )
                 
@@ -1377,12 +1640,18 @@ Examples:
         if all_results:
             # Save main results as both pickle and csv
             if args.output_file is None:
+                # Build base filename
                 if len(biosample_names) == 1:
-                    output_file = f"{args.output_dir}/{biosample_names[0]}_evaluation_results.pkl"
-                    csv_output_file = f"{args.output_dir}/{biosample_names[0]}_evaluation_results.csv"
+                    base_name = f"{biosample_names[0]}_evaluation_results"
                 else:
-                    output_file = f"{args.output_dir}/multi_biosample_evaluation_results.pkl"
-                    csv_output_file = f"{args.output_dir}/multi_biosample_evaluation_results.csv"
+                    base_name = "multi_biosample_evaluation_results"
+                
+                # Add suffix if provided
+                if args.name_suffix:
+                    base_name = f"{base_name}_{args.name_suffix}"
+                
+                output_file = f"{args.output_dir}/{base_name}.pkl"
+                csv_output_file = f"{args.output_dir}/{base_name}.csv"
             else:
                 output_file = args.output_file
                 # try to create matching csv name
@@ -1426,7 +1695,10 @@ Examples:
             try:
                 import pandas as pd
                 rnaseq_df = pd.concat(all_rnaseq_results, ignore_index=True)
-                rnaseq_file = f"{args.output_dir}/multi_biosample_rnaseq_results.csv"
+                rnaseq_base_name = "multi_biosample_rnaseq_results"
+                if args.name_suffix:
+                    rnaseq_base_name = f"{rnaseq_base_name}_{args.name_suffix}"
+                rnaseq_file = f"{args.output_dir}/{rnaseq_base_name}.csv"
                 rnaseq_df.to_csv(rnaseq_file, index=False)
                 print(f"RNA-seq results saved to {rnaseq_file}")
             except Exception as e:
@@ -1435,7 +1707,10 @@ Examples:
         # Save SAGA results if any
         if all_saga_results:
             try:
-                saga_file = f"{args.output_dir}/multi_biosample_saga_results.pkl"
+                saga_base_name = "multi_biosample_saga_results"
+                if args.name_suffix:
+                    saga_base_name = f"{saga_base_name}_{args.name_suffix}"
+                saga_file = f"{args.output_dir}/{saga_base_name}.pkl"
                 with open(saga_file, 'wb') as f:
                     pickle.dump(all_saga_results, f)
                 print(f"SAGA results saved to {saga_file}")

@@ -1,0 +1,212 @@
+{
+  "DNase-seq": {
+    "depth": 184956813.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "paired-ended"
+  },
+  "H3K4me3": {
+    "depth": 21243857.5,
+    "sequencing_platform": "Illumina HiSeq 2500",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K4me1": {
+    "depth": 26108156.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 75.0,
+    "run_type": "single-ended"
+  },
+  "H4K91ac": {
+    "depth": 19591700.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2BK120ac": {
+    "depth": 17764043.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H4K5ac": {
+    "depth": 27892393.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 30.0,
+    "run_type": "single-ended"
+  },
+  "H2AFZ": {
+    "depth": 18691117.5,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K27ac": {
+    "depth": 29095771.5,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 75.5,
+    "run_type": "single-ended"
+  },
+  "H3K9ac": {
+    "depth": 11319096.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K79me2": {
+    "depth": 22941958.0,
+    "sequencing_platform": "Illumina HiSeq 2500",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H4K8ac": {
+    "depth": 17331379.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K79me1": {
+    "depth": 16705643.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K56ac": {
+    "depth": 14908486.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 30.0,
+    "run_type": "single-ended"
+  },
+  "H3K4me2": {
+    "depth": 13084347.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K18ac": {
+    "depth": 16449373.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2BK5ac": {
+    "depth": 23538852.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K27me3": {
+    "depth": 29385510.5,
+    "sequencing_platform": "Illumina HiSeq 4000",
+    "read_length": 75.0,
+    "run_type": "single-ended"
+  },
+  "H2BK20ac": {
+    "depth": 17730286.0,
+    "sequencing_platform": "Illumina Genome Analyzer II",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2BK12ac": {
+    "depth": 25778081.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2BK15ac": {
+    "depth": 18034342.0,
+    "sequencing_platform": "Illumina Genome Analyzer II",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K36me3": {
+    "depth": 21785489.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 75.0,
+    "run_type": "single-ended"
+  },
+  "H3K23me2": {
+    "depth": 13637356.0,
+    "sequencing_platform": "Illumina Genome Analyzer II",
+    "read_length": 33.0,
+    "run_type": "single-ended"
+  },
+  "ATAC-seq": {
+    "depth": 42724742.0,
+    "sequencing_platform": "Illumina HiSeq 4000",
+    "read_length": 101.0,
+    "run_type": "paired-ended"
+  },
+  "H3K9me3": {
+    "depth": 30445387.0,
+    "sequencing_platform": "Illumina HiSeq 4000",
+    "read_length": 75.0,
+    "run_type": "single-ended"
+  },
+  "H4K20me1": {
+    "depth": 17454711.0,
+    "sequencing_platform": "Illumina Genome Analyzer IIx",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2AK5ac": {
+    "depth": 19561434.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K4ac": {
+    "depth": 17968982.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K23ac": {
+    "depth": 23210794.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K9me1": {
+    "depth": 22560618.5,
+    "sequencing_platform": "Illumina Genome Analyzer II",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K14ac": {
+    "depth": 24316969.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H4K12ac": {
+    "depth": 15864437.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H2AK9ac": {
+    "depth": 15084299.0,
+    "sequencing_platform": "Illumina HiSeq 2000",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3T11ph": {
+    "depth": 28264717.0,
+    "sequencing_platform": "Illumina Genome Analyzer IIx",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3K9me2": {
+    "depth": 19508244.0,
+    "sequencing_platform": "Illumina HiSeq 2500",
+    "read_length": 36.0,
+    "run_type": "single-ended"
+  },
+  "H3F3A": {
+    "depth": 27840870.0,
+    "sequencing_platform": "Illumina HiSeq 2500",
+    "read_length": 76.0,
+    "run_type": "single-ended"
+  }
+}

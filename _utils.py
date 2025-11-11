@@ -286,6 +286,25 @@ class METRICS(object):
 
         return self.spearman(y_true[perc_99_pos], y_pred[perc_99_pos])
 
+    def aucroc(self, y_true, y_pred):
+        """
+        Calculate genome-wide AUCROC for peak classification.
+        Uses obs_peak as binary ground truth and pred_peak as probabilities.
+        """
+        return roc_auc_score(y_true, y_pred)
+
+    def aucroc_gene(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        """Calculate AUCROC for peak classification within gene bodies."""
+        gt_vals = self.get_signals(array=y_true, df=self.gene_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.gene_df)
+        return self.aucroc(y_true=gt_vals, y_pred=pred_vals)
+
+    def aucroc_prom(self, y_true, y_pred, chrom='chr21', bin_size=25):
+        """Calculate AUCROC for peak classification within promoter regions."""
+        gt_vals = self.get_signals(array=y_true, df=self.prom_df)
+        pred_vals = self.get_signals(array=y_pred, df=self.prom_df)
+        return self.aucroc(y_true=gt_vals, y_pred=pred_vals)
+
     def peak_overlap(self, y_true, y_pred, p=0.01):
         if p == 0:
             return 0
@@ -453,89 +472,7 @@ class METRICS(object):
         c_idx = self.c_index_gauss(mus[perc_99_pos], sigmas[perc_99_pos], y_true[perc_99_pos], num_pairs)
         return c_idx
 
-    # def c_index_nbinom(self,
-    #                    rs, ps, y_true,
-    #                    epsilon: float = 1e-6,
-    #                    num_pairs: int = 10000):
-    #     """
-    #     Concordance index for Negative‐Binomial predictive marginals,
-    #     estimating over `num_pairs` randomly sampled pairs.
-
-    #     Inputs:
-    #       - rs:        (N,) array of NB 'r' parameters (must be >0)
-    #       - ps:        (N,) array of NB 'p' parameters (0<p<1)
-    #       - y_true:    (N,) array of true values y_i
-    #       - epsilon:   tail‐mass cutoff for truncation (default 1e-6)
-    #       - num_pairs: number of random (i<j) pairs to sample;
-    #                    if -1, use all valid pairs (i<j, y_i≠y_j)
-    #     Returns:
-    #       - c_index: float in [0,1]
-    #     """
-    #     N = len(y_true)
-    #     labels = []
-    #     scores = []
-
-    #     def compute_score(i, j):
-    #         # clamp p_j into (ε,1−ε)
-    #         p_j = np.clip(ps[j], epsilon, 1 - epsilon)
-    #         r_j = rs[j]
-    #         if r_j <= 0:
-    #             return None
-    #         # find cutoff K
-    #         K = nbinom.ppf(1 - epsilon, r_j, p_j)
-    #         if not np.isfinite(K):
-    #             K = 0
-    #         else:
-    #             K = int(K)
-              
-    #         # PMF/CDF arrays
-    #         k = np.arange(K + 1)
-    #         pmf_j = nbinom.pmf(k, r_j, p_j)
-    #         cdf_i = nbinom.cdf(k, rs[i], ps[i])
-    #         # if anything is nan, bail
-    #         if not (np.isfinite(pmf_j).all() and np.isfinite(cdf_i).all()):
-    #             return None
-    #         return np.sum(pmf_j * (1.0 - cdf_i))
-
-    #     if num_pairs == -1:
-    #         # exact mode
-    #         for i in range(N):
-    #             for j in range(i+1, N):
-    #                 if y_true[i] == y_true[j]:
-    #                     continue
-    #                 sc = compute_score(i, j)
-    #                 if sc is None:
-    #                     continue
-    #                 labels.append(int(y_true[i] > y_true[j]))
-    #                 scores.append(sc)
-    #     else:
-    #         # sampling mode
-    #         rng = np.random.default_rng()
-    #         count = 0
-    #         while count < num_pairs:
-    #             i, j = rng.integers(0, N, size=2)
-    #             if i == j or y_true[i] == y_true[j]:
-    #                 continue
-    #             if i > j:
-    #                 i, j = j, i
-    #             sc = compute_score(i, j)
-    #             if sc is None:
-    #                 continue
-    #             labels.append(int(y_true[i] > y_true[j]))
-    #             scores.append(sc)
-    #             count += 1
-
-    #     if len(labels) == 0:
-    #         # no valid pairs
-    #         return np.nan
-
-    #     return roc_auc_score(labels, scores)
-
-    def c_index_nbinom(self,
-                    rs, ps, y_true,
-                    M: int = 500,
-                    num_pairs: int = 10000,
-                    random_state: int = None):
+    def c_index_nbinom(self,rs, ps, y_true, M: int = 500, num_pairs: int = 10000, random_state: int = None):
         """
         Monte Carlo Concordance index for Negative‐Binomial predictive marginals.
 
@@ -752,36 +689,50 @@ class NegativeBinomial:
 
 def negative_binomial_loss(y_true, n_pred, p_pred):
     """
-        Negative binomial loss function for PyTorch.
+        Negative binomial loss using PyTorch distributions.
         
         Parameters
         ----------
         y_true : torch.Tensor
-            Ground truth values of the predicted variable.
+            Ground truth counts.
         n_pred : torch.Tensor
-            Tensor containing n values of the predicted distribution.
+            total_count parameter (dispersion).
         p_pred : torch.Tensor
-            Tensor containing p values of the predicted distribution.
+            probs parameter in YOUR convention where mean = n*(1-p)/p.
             
         Returns
         -------
         nll : torch.Tensor
-            Negative log likelihood.
+            Negative log likelihood per sample.
+            
+        Note
+        ----
+        PyTorch uses opposite convention: mean = n*p/(1-p)
+        So we pass (1-p) as probs to match your parameterization.
     """
-    eps = 1e-6
+    eps = 1e-8
 
-    # Clamp predictions for numerical stability
+    # Clamp for numerical stability (soft bounds)
     p_pred = torch.clamp(p_pred, min=eps, max=1 - eps)
-    n_pred = torch.clamp(n_pred, min=1e-2, max=1e3)
+    n_pred = torch.clamp(n_pred, min=eps)
 
-    # Compute NB NLL
-    nll = (
-        torch.lgamma(n_pred + eps)
-        + torch.lgamma(y_true + 1 + eps)
-        - torch.lgamma(n_pred + y_true + eps)
-        - n_pred * torch.log(p_pred + eps)
-        - y_true * torch.log(1 - p_pred + eps)
+    # IMPORTANT: PyTorch uses opposite convention!
+    # our code: mean = n * (1-p) / p
+    # PyTorch: mean = n * probs / (1-probs)
+    # So we pass (1-p) to match our code's convention
+    pytorch_probs = 1 - p_pred
+
+    # Create distribution and compute log prob
+    nb_dist = torch.distributions.NegativeBinomial(
+        total_count=n_pred, 
+        probs=pytorch_probs
     )
+    
+    # Negative log likelihood
+    nll = -nb_dist.log_prob(y_true)
+    
+    # Handle any NaN/Inf
+    nll = torch.where(torch.isfinite(nll), nll, torch.zeros_like(nll))
     
     return nll
 

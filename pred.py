@@ -64,6 +64,9 @@ class CANDIPredictor:
         # Token dictionary for masking
         self.token_dict = {"missing_mask": -1, "cloze_mask": -2, "pad": -3}
         
+        # Cached max batch size (auto-detected)
+        self._max_batch_size = None
+        
         # Load model and config
         self._load_config()
         self._load_model()
@@ -113,10 +116,12 @@ class CANDIPredictor:
         unet = self.config.get('unet', False)
         pos_enc = self.config.get('pos-enc', 'relative')
         expansion_factor = self.config.get('expansion-factor', 3)
+
+        self.context_length = context_length
         
         # Get metadata dimensions
         num_sequencing_platforms = self.config.get('num_sequencing_platforms', 10)
-        num_runtypes = self.config.get('num_runtypes', 4)
+        num_runtypes = self.config.get('num_runtypes', 4) # Based on the mapping in EmbedMetadata: 0, 1, 2 (missing), 3 (cloze_masked)
         
         # Create model
         if unet:
@@ -193,8 +198,160 @@ class CANDIPredictor:
         print(f"Data handler setup for {dataset_type} dataset at {data_path}")
         print(f"Available experiments: {len(self.data_handler.aliases['experiment_aliases'])}")
     
+    def _find_max_batch_size(self, X: torch.Tensor, mX: torch.Tensor, mY: torch.Tensor,
+                             avail: torch.Tensor, seq: Optional[torch.Tensor] = None,
+                             start_size: int = 1, max_size: int = 256) -> int:
+        """
+        Automatically find the maximum batch size that fits in GPU memory.
+        
+        Uses exponential search followed by binary search to efficiently find optimal batch size.
+        
+        Args:
+            X: Sample input count data [B, L, F]
+            mX: Sample input metadata [B, 4, F]
+            mY: Sample target metadata [B, 4, F]
+            avail: Sample availability mask [B, F]
+            seq: Sample DNA sequence [B, L*25, 4] (required if DNA=True)
+            start_size: Starting batch size to test
+            max_size: Maximum batch size to test
+            
+        Returns:
+            Maximum batch size that fits in GPU memory
+        """
+        if not torch.cuda.is_available() or self.device.type != 'cuda':
+            # For CPU, use a conservative default
+            return 50
+        
+        # Clear GPU cache before starting
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+        
+        # Get sample dimensions from first sample
+        sample_X = X[0:1]
+        sample_mX = mX[0:1]
+        sample_mY = mY[0:1]
+        sample_avail = avail[0:1]
+        sample_seq = seq[0:1] if seq is not None else None
+        
+        print(f"Finding optimal batch size for GPU {self.device}...")
+        
+        # First, do exponential search to find upper bound
+        current_size = start_size
+        best_size = start_size
+        
+        # Exponential search: double until we hit OOM
+        while current_size <= max_size:
+            try:
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                
+                # Create batch of size current_size
+                test_X = sample_X.repeat(current_size, 1, 1).to(self.device)
+                test_mX = sample_mX.repeat(current_size, 1, 1).to(self.device)
+                test_mY = sample_mY.repeat(current_size, 1, 1).to(self.device)
+                test_avail = sample_avail.repeat(current_size, 1).to(self.device)
+                
+                if self.DNA and sample_seq is not None:
+                    test_seq = sample_seq.repeat(current_size, 1, 1).to(self.device)
+                    # Test forward pass
+                    with torch.no_grad():
+                        _ = self.model(
+                            test_X.float(), test_seq, test_mX.float(), test_mY
+                        )
+                else:
+                    # Test forward pass
+                    with torch.no_grad():
+                        _ = self.model(
+                            test_X.float(), test_mX.float(), test_mY, test_avail
+                        )
+                
+                # If successful, record and try larger
+                best_size = current_size
+                current_size *= 2
+                
+                # Clean up
+                del test_X, test_mX, test_mY, test_avail
+                if self.DNA and sample_seq is not None:
+                    del test_seq
+                torch.cuda.empty_cache()
+                
+            except RuntimeError as e:
+                error_str = str(e).lower()
+                if "out of memory" in error_str or "cublas" in error_str or "alloc" in error_str:
+                    # Hit memory limit
+                    if current_size == start_size:
+                        # Even batch size 1 failed, return 1 as fallback
+                        print(f"Warning: Even batch size {start_size} failed. Using {start_size} as fallback.")
+                        torch.cuda.empty_cache()
+                        return start_size
+                    # Now binary search between best_size and current_size
+                    break
+                else:
+                    # Other error, re-raise
+                    raise
+        
+        # Binary search between best_size and current_size (or max_size if we didn't hit OOM)
+        if current_size > max_size:
+            current_size = max_size
+        
+        low, high = best_size, current_size
+        
+        while low < high:
+            mid = (low + high + 1) // 2  # Round up to avoid infinite loop
+            try:
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                
+                # Create batch of size mid
+                test_X = sample_X.repeat(mid, 1, 1).to(self.device)
+                test_mX = sample_mX.repeat(mid, 1, 1).to(self.device)
+                test_mY = sample_mY.repeat(mid, 1, 1).to(self.device)
+                test_avail = sample_avail.repeat(mid, 1).to(self.device)
+                
+                if self.DNA and sample_seq is not None:
+                    test_seq = sample_seq.repeat(mid, 1, 1).to(self.device)
+                    # Test forward pass
+                    with torch.no_grad():
+                        _ = self.model(
+                            test_X.float(), test_seq, test_mX.float(), test_mY
+                        )
+                else:
+                    # Test forward pass
+                    with torch.no_grad():
+                        _ = self.model(
+                            test_X.float(), test_mX.float(), test_mY, test_avail
+                        )
+                
+                # If successful, try larger batch size
+                best_size = mid
+                low = mid
+                
+                # Clean up
+                del test_X, test_mX, test_mY, test_avail
+                if self.DNA and sample_seq is not None:
+                    del test_seq
+                torch.cuda.empty_cache()
+                
+            except RuntimeError as e:
+                error_str = str(e).lower()
+                if "out of memory" in error_str or "cublas" in error_str or "alloc" in error_str:
+                    # Batch size too large, try smaller
+                    high = mid - 1
+                    torch.cuda.empty_cache()
+                else:
+                    # Other error, re-raise
+                    raise
+        
+        # Final cleanup
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+        
+        print(f"Found optimal batch size: {best_size}")
+        return best_size
+    
     def load_data(self, bios_name: str, locus: List, dsf: int = 1, 
-                  fill_y_prompt_spec: Optional[Dict] = None) -> Tuple:
+                  fill_y_prompt_spec: Optional[Dict] = None,
+                  fill_prompt_mode: str = "median") -> Tuple:
         """
         Load data for a specific biosample and genomic locus.
         
@@ -203,6 +360,12 @@ class CANDIPredictor:
             locus: Genomic locus as [chrom, start, end]
             dsf: Downsampling factor
             fill_y_prompt_spec: Optional dictionary specifying custom metadata values
+            fill_prompt_mode: Mode for filling missing metadata. Options:
+                - "none": Don't fill missing metadata (leave as -1)
+                - "median": Use median for numeric fields (depth, read_length), mode for categorical (platform, run_type) (default)
+                - "mode": Use mode for all fields
+                - "sample": Use random sampling from dataset distribution
+                - "custom": Use custom metadata from fill_y_prompt_spec
             
         Returns:
             Tuple of (X, Y, P, seq, mX, mY, avX, avY) for DNA models
@@ -223,13 +386,26 @@ class CANDIPredictor:
         Y, mY, avY = self.data_handler.make_bios_tensor_Counts(temp_y, temp_my)
         del temp_y, temp_my
         
-        # Fill in Y prompt metadata
-        if fill_y_prompt_spec is not None:
+        # Fill in Y prompt metadata based on mode
+        if fill_prompt_mode == "none":
+            # Don't fill - leave missing values as -1
+            print("Fill-in-prompt disabled: leaving missing metadata as -1")
+        elif fill_prompt_mode == "custom" and fill_y_prompt_spec is not None:
             # Use custom metadata specification
             mY = self.data_handler.fill_in_prompt_manual(mY, fill_y_prompt_spec, overwrite=True)
+            print("Using custom metadata specification for fill-in-prompt")
+        elif fill_prompt_mode == "sample":
+            # Use random sampling (sample=True)
+            mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=True)
+            print("Using random sampling for fill-in-prompt")
+        elif fill_prompt_mode == "mode":
+            # Use mode for all fields
+            mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=False, use_mode=True)
+            print("Using mode statistics for fill-in-prompt")
         else:
-            # Use median values (sample=False)
-            mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=False)
+            # Default: Use median for numeric fields, mode for categorical (sample=False, use_mode=False)
+            mY = self.data_handler.fill_in_prompt(mY, missing_value=-1, sample=False, use_mode=False)
+            print("Using median/mode statistics for fill-in-prompt (median for numeric, mode for categorical)")
         
         # Load p-value data
         temp_p = self.data_handler.load_bios_BW(bios_name, locus)
@@ -266,20 +442,20 @@ class CANDIPredictor:
             )
         
         # Reshape data to context windows
-        context_length = self.config.get('context-length', 1200)
-        num_rows = (X.shape[0] // context_length) * context_length
+        context_length = self.context_length
+        num_rows = (X.shape[0] // self.context_length) * self.context_length
         X, Y, P = X[:num_rows, :], Y[:num_rows, :], P[:num_rows, :]
         
         if self.DNA:
             seq = seq[:num_rows * self.data_handler.resolution, :]
         
         # Reshape to context windows
-        X = X.view(-1, context_length, X.shape[-1])
-        Y = Y.view(-1, context_length, Y.shape[-1])
-        P = P.view(-1, context_length, P.shape[-1])
+        X = X.view(-1, self.context_length, X.shape[-1])
+        Y = Y.view(-1, self.context_length, Y.shape[-1])
+        P = P.view(-1, self.context_length, P.shape[-1])
         
         if self.DNA:
-            seq = seq.view(-1, context_length * self.data_handler.resolution, seq.shape[-1])
+            seq = seq.view(-1, self.context_length * self.data_handler.resolution, seq.shape[-1])
         
         # Expand metadata and availability to match batch dimension
         mX, mY = mX.expand(X.shape[0], -1, -1), mY.expand(Y.shape[0], -1, -1)
@@ -307,7 +483,27 @@ class CANDIPredictor:
         Returns:
             Tuple of (output_n, output_p, output_mu, output_var, output_peak)
         """
-        batch_size = self.config.get('batch_size', 25)
+        # Auto-detect batch size if not set or explicitly set to None
+        batch_size = None # self.config.get('batch_size', None)
+
+        if batch_size is None:
+            # Check if we've already computed max batch size
+            if self._max_batch_size is None:
+                # Use first sample to determine optimal batch size
+                sample_X = X[:1]
+                sample_mX = mX[:1]
+                sample_mY = mY[:1]
+                sample_avail = avail[:1]
+                sample_seq = seq[:1] if seq is not None else None
+                
+                self._max_batch_size = self._find_max_batch_size(
+                    sample_X, sample_mX, sample_mY, sample_avail, sample_seq
+                )
+            batch_size = self._max_batch_size
+            # print(f"Using auto-detected batch size: {batch_size}")
+        else:
+            # Use configured batch size
+            batch_size = int(batch_size)
         
         # Initialize output tensors - model outputs only for original features (without control)
         # Control is only used as input, not predicted as output
@@ -397,7 +593,25 @@ class CANDIPredictor:
         Returns:
             Latent representations Z [B, L, D]
         """
-        batch_size = self.config.get('batch_size', 25)
+        # Auto-detect batch size if not set or explicitly set to None
+        batch_size = self.config.get('batch_size', None)
+        if batch_size is None:
+            # Check if we've already computed max batch size
+            if self._max_batch_size is None:
+                # Use first sample to determine optimal batch size
+                sample_X = X[:1]
+                sample_mX = mX[:1]
+                sample_mY = mY[:1]
+                sample_avail = avail[:1]
+                sample_seq = seq[:1] if seq is not None else None
+                
+                self._max_batch_size = self._find_max_batch_size(
+                    sample_X, sample_mX, sample_mY, sample_avail, sample_seq
+                )
+            batch_size = self._max_batch_size
+        else:
+            # Use configured batch size
+            batch_size = int(batch_size)
         Z_all = []
         
         for i in range(0, len(X), batch_size):
@@ -448,6 +662,7 @@ class CANDIPredictor:
     
     def predict_biosample(self, bios_name: str, x_dsf: int = 1, 
                          fill_y_prompt_spec: Optional[Dict] = None,
+                         fill_prompt_mode: str = "median",
                          locus: Optional[List] = None,
                          get_latent_z: bool = False,
                          return_raw_predictions: bool = False) -> Dict[str, Any]:
@@ -458,6 +673,7 @@ class CANDIPredictor:
             bios_name: Name of the biosample
             x_dsf: Downsampling factor
             fill_y_prompt_spec: Optional custom metadata specification
+            fill_prompt_mode: Mode for filling missing metadata ("none", "median", "sample", "custom")
             locus: Genomic locus (default: chr21)
             get_latent_z: Whether to extract latent representations
             return_raw_predictions: Whether to return raw prediction tensors
@@ -472,11 +688,11 @@ class CANDIPredictor:
         # Load data
         if self.DNA:
             X, Y, P, seq, mX, mY, avX, avY = self.load_data(
-                bios_name, locus, x_dsf, fill_y_prompt_spec
+                bios_name, locus, x_dsf, fill_y_prompt_spec, fill_prompt_mode
             )
         else:
             X, Y, P, mX, mY, avX, avY = self.load_data(
-                bios_name, locus, x_dsf, fill_y_prompt_spec
+                bios_name, locus, x_dsf, fill_y_prompt_spec, fill_prompt_mode
             )
             seq = None
         
