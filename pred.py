@@ -483,6 +483,10 @@ class CANDIPredictor:
         Returns:
             Tuple of (output_n, output_p, output_mu, output_var, output_peak)
         """
+        # Set model to training mode to use batch statistics in BatchNorm
+        # (avoids corrupted running statistics while keeping no_grad for efficiency)
+        self.model.train()
+        
         # Auto-detect batch size if not set or explicitly set to None
         batch_size = None # self.config.get('batch_size', None)
 
@@ -593,6 +597,10 @@ class CANDIPredictor:
         Returns:
             Latent representations Z [B, L, D]
         """
+        # Set model to training mode to use batch statistics in BatchNorm
+        # (avoids corrupted running statistics while keeping no_grad for efficiency)
+        self.model.train()
+        
         # Auto-detect batch size if not set or explicitly set to None
         batch_size = self.config.get('batch_size', None)
         if batch_size is None:

@@ -10538,3 +10538,95 @@ class DataMasker:
         mask_indicator[:, start:start+slice_length, features_to_mask] = True
         data[mask_indicator] = self.mask_value
         return data, mask_indicator
+
+
+class EmbedMetadata(nn.Module):
+    def __init__(self, input_dim, embedding_dim, num_sequencing_platforms=10, num_runtypes=4, non_linearity=True):
+        """
+        Args:
+            input_dim (int): Number of metadata features.
+            embedding_dim (int): Final embedding dimension.
+            num_sequencing_platforms (int): Number of sequencing platforms in the data.
+            num_runtypes (int): Number of run types in the data.
+            non_linearity (bool): Whether to apply ReLU at the end.
+        """
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.input_dim = input_dim 
+        self.non_linearity = non_linearity
+        # We divide the embedding_dim into 4 parts for continuous types.
+        # (You can adjust the splitting scheme as needed.)
+        self.continuous_size = embedding_dim // 4
+
+        # For each feature (total input_dim features), create a separate linear transform.
+        self.depth_transforms = nn.ModuleList(
+            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        )
+        # For sequencing platform, create separate embedding layers per feature.
+        # Use dynamic size based on actual data
+        self.sequencing_platform_embeddings = nn.ModuleList(
+            [nn.Embedding(num_sequencing_platforms, self.continuous_size) for _ in range(input_dim)]
+        )
+        self.read_length_transforms = nn.ModuleList(
+            [nn.Linear(1, self.continuous_size) for _ in range(input_dim)]
+        )
+        # For runtype, create separate embedding layers per feature.
+        # Use dynamic size based on actual data
+        self.runtype_embeddings = nn.ModuleList(
+            [nn.Embedding(num_runtypes, self.continuous_size) for _ in range(input_dim)]
+        )
+
+        # Final projection: the concatenated vector for each feature will be of size 4*continuous_size.
+        # For all features, that becomes input_dim * 4 * continuous_size.
+        self.final_embedding = nn.Linear(input_dim * 4 * self.continuous_size, embedding_dim)
+        self.final_emb_layer_norm = nn.LayerNorm(embedding_dim)
+
+    def forward(self, metadata):
+        """
+        Args:
+            metadata: Tensor of shape (B, 4, input_dim)
+                      where dimension 1 indexes the four metadata types in the order:
+                      [depth, sequencing_platform, read_length, runtype]
+        Returns:
+            embeddings: Tensor of shape (B, embedding_dim)
+        """
+        B = metadata.size(0)
+        # Lists to collect per-feature embeddings.
+        per_feature_embeds = []
+        for i in range(self.input_dim):
+            # Extract each metadata type for feature i.
+            depth = metadata[:, 0, i].unsqueeze(-1).float() 
+            sequencing_platform = metadata[:, 1, i].long() 
+            read_length = metadata[:, 2, i].unsqueeze(-1).float() 
+            runtype = metadata[:, 3, i].long() 
+            
+            # For runtype, map -1 -> 2 (missing) and -2 -> 3 (cloze_masked)
+            runtype = torch.where(runtype == -1, torch.tensor(2, device=runtype.device), runtype)
+            runtype = torch.where(runtype == -2, torch.tensor(3, device=runtype.device), runtype)
+            
+            # For sequencing platform, map -1 -> 2 (missing) and -2 -> 3 (cloze_masked)
+            sequencing_platform = torch.where(sequencing_platform == -1, torch.tensor(2, device=sequencing_platform.device), sequencing_platform)
+            sequencing_platform = torch.where(sequencing_platform == -2, torch.tensor(3, device=sequencing_platform.device), sequencing_platform)
+            
+            # Apply the separate transforms/embeddings for feature i.
+            depth_embed = self.depth_transforms[i](depth)              # (B, continuous_size)
+            sequencing_platform_embed = self.sequencing_platform_embeddings[i](sequencing_platform)  # (B, continuous_size)
+            read_length_embed = self.read_length_transforms[i](read_length)  # (B, continuous_size)
+            runtype_embed = self.runtype_embeddings[i](runtype)           # (B, continuous_size)
+            
+            # Concatenate the four embeddings along the last dimension.
+            feature_embed = torch.cat([depth_embed, sequencing_platform_embed, read_length_embed, runtype_embed], dim=-1)  # (B, 4*continuous_size)
+            per_feature_embeds.append(feature_embed)
+        
+        # Now stack along a new dimension for features -> shape (B, input_dim, 4*continuous_size)
+        embeddings = torch.stack(per_feature_embeds, dim=1)
+        # Flatten feature dimension: (B, input_dim * 4*continuous_size)
+        embeddings = embeddings.view(B, -1)
+        # Project to final embedding dimension.
+        embeddings = self.final_embedding(embeddings)
+        embeddings = self.final_emb_layer_norm(embeddings)
+        
+        if self.non_linearity:
+            embeddings = F.relu(embeddings)
+        
+        return embeddings

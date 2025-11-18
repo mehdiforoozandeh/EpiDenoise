@@ -1,4 +1,4 @@
-from model import EmbedMetadata, ConvTower, DeconvTower, DualAttentionEncoderBlock, NegativeBinomialLayer, GaussianLayer, MONITOR_VALIDATION
+# from model import ConvTower, DeconvTower, DualAttentionEncoderBlock, NegativeBinomialLayer, GaussianLayer, MONITOR_VALIDATION, MetadataCrossAttention
 from model import CANDI, CANDI_LOSS, CANDI, CANDI_UNET, CANDI_Decoder, CANDI_DNA_Encoder, PeakLayer
 from _utils import exponential_linspace_int, negative_binomial_loss, Gaussian, NegativeBinomial, compute_perplexity, DataMasker
 from sklearn.metrics import r2_score, roc_auc_score
@@ -551,6 +551,38 @@ class CANDI_TRAINER(object):
                 # Optimizer step
                 self.optimizer.step()
             
+            # # After backward pass - monitor gradients
+            # early_grads = {}  # Before transformer: conv, x_metadata
+            # late_grads = {}   # After transformer: deconv, y_metadata
+            
+            # for name, param in self.model.named_parameters():
+            #     if param.grad is not None:
+            #         grad_norm_i = param.grad.norm().item()
+                    
+            #         # Early layers: conv towers and x_metadata embeddings
+            #         if 'conv' in name.lower() and 'deconv' not in name.lower():
+            #             early_grads[name] = grad_norm_i
+            #         elif 'x_metadata' in name.lower() or 'x_embed' in name.lower():
+            #             early_grads[name] = grad_norm_i
+                    
+            #         # Late layers: deconv towers and y_metadata embeddings
+            #         elif 'deconv' in name.lower():
+            #             late_grads[name] = grad_norm_i
+            #         elif 'y_metadata' in name.lower() or 'y_embed' in name.lower():
+            #             late_grads[name] = grad_norm_i
+            
+            # # Print min/max for early layers
+            # if early_grads:
+            #     min_layer = min(early_grads, key=early_grads.get)
+            #     max_layer = max(early_grads, key=early_grads.get)
+            #     print(f"Early layers - Min: {min_layer}: {early_grads[min_layer]:.2e}, Max: {max_layer}: {early_grads[max_layer]:.2e}")
+            
+            # # Print min/max for late layers
+            # if late_grads:
+            #     min_layer = min(late_grads, key=late_grads.get)
+            #     max_layer = max(late_grads, key=late_grads.get)
+            #     print(f"Late layers - Min: {min_layer}: {late_grads[min_layer]:.2e}, Max: {max_layer}: {late_grads[max_layer]:.2e}")
+                    
             # Store gradient norm for logging
             self.grad_norm = grad_norm.item() if isinstance(grad_norm, torch.Tensor) else grad_norm
                 
@@ -1652,23 +1684,24 @@ class CANDI_LOADER(object):
         conv_kernel_size = self.hyper_parameters["conv_kernel_size"]
         pool_size = self.hyper_parameters["pool_size"]
         separate_decoders = self.hyper_parameters["separate_decoders"]
+        norm = self.hyper_parameters.get("norm", "batch")  # Default to "batch" for backward compatibility
         
         if self.DNA:
             if self.hyper_parameters["unet"]:
                 model = CANDI_UNET(
                     signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
                     n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
-                    separate_decoders=separate_decoders)
+                    separate_decoders=separate_decoders, norm=norm)
             else:
                 model = CANDI(
                     signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
                     n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length, 
-                    separate_decoders=separate_decoders)
+                    separate_decoders=separate_decoders, norm=norm)
         else:
             model = CANDI(
                 signal_dim, metadata_embedding_dim, conv_kernel_size, n_cnn_layers, nhead,
                 n_sab_layers, pool_size=pool_size, dropout=dropout, context_length=context_length,
-                separate_decoders=separate_decoders)
+                separate_decoders=separate_decoders, norm=norm)
 
         model.load_state_dict(torch.load(self.model_path, map_location=self.device)) 
 
@@ -1728,8 +1761,14 @@ def create_argument_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
             Examples:
-            # Basic EIC training with default settings
+            # Basic EIC training with default settings (random sampling for missing metadata)
             python train.py --eic --epochs 10 --batch-size 16
+            
+            # Training with median/mode statistics for missing metadata
+            python train.py --eic --epochs 10 --batch-size 16 --fill-prompt-mode median
+            
+            # Training with mode statistics for all missing metadata fields
+            python train.py --eic --epochs 10 --batch-size 16 --fill-prompt-mode mode
             
             # Multi-GPU training with mixed precision
             python train.py --eic --ddp --mixed-precision --epochs 20 --batch-size 32
@@ -1789,7 +1828,10 @@ def create_argument_parser():
     model_group.add_argument('--shared-decoders', action='store_true',
                             help='Use shared decoder (overrides --separate-decoders)')
     model_group.add_argument('--unet', action='store_true',
-                            help='Use U-Net skip connections')
+                           help='Use U-Net skip connections')
+    model_group.add_argument('--norm-type', type=str, default='batch',
+                           choices=['batch', 'layer', 'group', 'instance', 'weight', 'rms'],
+                           help='Normalization type for convolutional layers')
     
     # === TRAINING CONFIGURATION ===
     training_group = parser.add_argument_group('Training Configuration')
@@ -1859,12 +1901,40 @@ def create_argument_parser():
     
     # === ADVANCED OPTIONS ===
     advanced_group = parser.add_argument_group('Advanced Options')
-    advanced_group.add_argument('--dsf-list', type=int, nargs='+', default=[1, 2],
-                               help='Downsampling factors to use')
+    # Example usage in CLI: --dsf-list 1,2,4
+    def parse_dsf_list(s):
+        if isinstance(s, list):
+            return s
+        try:
+            items = [x.strip() for x in s.split(',')]
+            dsf_values = []
+            for x in items:
+                if not x.isdigit():
+                    raise ValueError
+                v = int(x)
+                if v < 1:
+                    raise ValueError
+                dsf_values.append(v)
+            if len(dsf_values) == 0:
+                raise ValueError
+            return dsf_values
+        except Exception:
+            raise argparse.ArgumentTypeError("dsf-list must be a comma-separated list of positive integers (e.g., 1,2,4)")
+    advanced_group.add_argument(
+        '--dsf-list', type=parse_dsf_list, default=[1, 2],
+        help='Downsampling factors to use as a comma-separated list of positive integers (e.g., --dsf-list 1,2,4)'
+    )
+    
     advanced_group.add_argument('--specific_ema_alpha', type=float, default=0.005,
                                help='Alpha for specific EMA tracking')
     advanced_group.add_argument('--debug', action='store_true',
                                help='Enable debug mode with extra logging')
+    advanced_group.add_argument('--fill-prompt-mode', type=str, default='median',
+                               choices=['sample', 'median', 'mode'],
+                               help='Method for filling missing metadata in prompts: '
+                                    'sample (random sampling from dataset distribution), '
+                                    'median (median for numeric, mode for categorical), '
+                                    'mode (mode for all fields)')
     
     return parser
 
@@ -1977,7 +2047,8 @@ def create_model_from_args(args, signal_dim, num_sequencing_platforms=10, num_ru
             expansion_factor=args.expansion_factor,
             separate_decoders=args.separate_decoders,
             num_sequencing_platforms=num_sequencing_platforms,
-            num_runtypes=num_runtypes
+            num_runtypes=num_runtypes,
+            norm=args.norm_type
         )
     else:
         model = CANDI(
@@ -1994,7 +2065,8 @@ def create_model_from_args(args, signal_dim, num_sequencing_platforms=10, num_ru
             expansion_factor=args.expansion_factor,
             separate_decoders=args.separate_decoders,
             num_sequencing_platforms=num_sequencing_platforms,
-            num_runtypes=num_runtypes
+            num_runtypes=num_runtypes,
+            norm=args.norm_type
         )
     
     return model
@@ -2183,7 +2255,8 @@ def main():
         'DNA': True,
         'must_have_chr_access': args.must_have_chr_access,
         'bios_min_exp_avail_threshold': args.min_avail,
-        'shuffle_bios': True
+        'shuffle_bios': True,
+        'fill_prompt_mode': args.fill_prompt_mode
     }
     
     # Create training parameters

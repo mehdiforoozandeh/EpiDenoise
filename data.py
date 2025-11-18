@@ -18,6 +18,30 @@ import torch.multiprocessing as mp
 from itertools import islice
 from collections import defaultdict
 
+def retry_on_io_error(func, max_retries=5, initial_delay=0.1, backoff=2):
+    """
+    Retry a function if it raises an OSError (common with NFS issues).
+    
+    Args:
+        func: Function to retry
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds
+        backoff: Backoff multiplier for exponential backoff
+    
+    Returns:
+        The return value of func
+    """
+    delay = initial_delay
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except OSError as e:
+            if attempt == max_retries - 1:
+                raise  # Re-raise on last attempt
+            print(f"OSError on attempt {attempt + 1}/{max_retries}: {e}. Retrying in {delay:.2f}s...")
+            time.sleep(delay)
+            delay *= backoff
+    
 def set_global_seed(seed):
     """
     Set the random seed for reproducibility across random, numpy, and torch.
@@ -734,9 +758,12 @@ class CANDIDataHandler:
         return self.dna_cache[locus_key]
   
     def _load_npz(self, file_name):
-        with np.load(file_name, allow_pickle=True) as data:
-        # with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
-            return {file_name.split("/")[-3]: data[data.files[0]]}
+        # Use retry logic for file reads to handle transient NFS issues
+        def load_npz():
+            with np.load(file_name, allow_pickle=True) as data:
+            # with np.load(file_name, allow_pickle=True, mmap_mode='r') as data:
+                return {file_name.split("/")[-3]: data[data.files[0]]}
+        return retry_on_io_error(load_npz)
     
     def _filter_navigation(self, include=[], exclude=[]):
         """
@@ -818,12 +845,18 @@ class CANDIDataHandler:
                 jsn2 = os.path.join(self.base_path, bios_name, e, "file_metadata.json")
 
             npz_files.append(l)
-            with open(jsn1, 'r') as jsnfile:
-                md1 = json.load(jsnfile)
-
-            with open(jsn2, 'r') as jsnfile:
-                md2 = json.load(jsnfile)
-
+            
+            # Use retry logic for file reads to handle transient NFS issues
+            def read_json1():
+                with open(jsn1, 'r') as jsnfile:
+                    return json.load(jsnfile)
+            
+            def read_json2():
+                with open(jsn2, 'r') as jsnfile:
+                    return json.load(jsnfile)
+            
+            md1 = retry_on_io_error(read_json1)
+            md2 = retry_on_io_error(read_json2)
 
             md = {
                 "depth":md1["depth"], "sequencing_platform": md2["sequencing_platform"], 
@@ -955,10 +988,17 @@ class CANDIDataHandler:
                     end_bin = int(locus[2]) // self.resolution
                     loaded_data["chipseq-control"] = data[start_bin:end_bin]
             
-            with open(metadata_path_1, 'r') as f:
-                md1 = json.load(f)
-            with open(metadata_path_2, 'r') as f:
-                md2 = json.load(f)
+            # Use retry logic for file reads to handle transient NFS issues
+            def read_meta1():
+                with open(metadata_path_1, 'r') as f:
+                    return json.load(f)
+            
+            def read_meta2():
+                with open(metadata_path_2, 'r') as f:
+                    return json.load(f)
+            
+            md1 = retry_on_io_error(read_meta1)
+            md2 = retry_on_io_error(read_meta2)
             
             loaded_metadata["chipseq-control"] = {
                 "depth": md1["depth"],
@@ -1518,7 +1558,21 @@ class CANDIDataHandler:
 
         if side == 'y':
             if y_prompt:
-                batch_metadata = self.fill_in_prompt(batch_metadata, sample=True)
+                # Apply fill_in_prompt based on mode
+                if hasattr(self, 'fill_prompt_mode'):
+                    mode = self.fill_prompt_mode
+                else:
+                    mode = 'sample'  # Default
+                
+                if mode == 'sample':
+                    batch_metadata = self.fill_in_prompt(batch_metadata, sample=True)
+                elif mode == 'mode':
+                    batch_metadata = self.fill_in_prompt(batch_metadata, sample=False, use_mode=True)
+                elif mode == 'median':
+                    batch_metadata = self.fill_in_prompt(batch_metadata, sample=False, use_mode=False)
+                else:
+                    # Fallback to default
+                    batch_metadata = self.fill_in_prompt(batch_metadata, sample=True)
             
             # Process p-value data for the y-side
             pval_tensors = []
@@ -1587,6 +1641,8 @@ class CANDIIterableDataset(CANDIDataHandler, torch.utils.data.IterableDataset):
 
         print(f"CANDIIterableDataset initialized with bios_batchsize={self.bios_batchsize}, loci_batchsize={self.loci_batchsize}, dsf_list={self.dsf_list}")
         self.kwargs = kwargs
+        self.fill_prompt_mode = kwargs.get("fill_prompt_mode", "sample")
+        print(f"Fill-in-prompt mode: {self.fill_prompt_mode}")
 
     def __iter__(self):
         """

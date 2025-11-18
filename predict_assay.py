@@ -586,7 +586,11 @@ class SingleAssayPredictor:
         pval_pred = result["predictions"]["pval"]
         peak_pred = result["predictions"]["peak_scores"]
         
-        # Apply arcsinh transformation to p-values
+        # Apply sinh transformation to p-values (inverse of arcsinh used during training)
+        # Clip to prevent overflow in sinh (sinh overflows around 710)
+        # Conservative clipping: sinh(20) ≈ 2.4e8, which is reasonable for p-values
+        # P_target = np.clip(P_target, -20, 20)
+        # pval_pred = np.clip(pval_pred, -20, 20)
         P_target = np.sinh(P_target)
         pval_pred = np.sinh(pval_pred)
         
@@ -793,9 +797,9 @@ Examples:
                           --print-metrics
 
   # Use JSON file for other assays, but override target assay with explicit values
-  python predict_assay.py --model-dir models/20251015_013231_CANDI_merged_ccre_5000loci_oct15 \\
-                          --data-path /path/to/DATA_CANDI_MERGED \\
-                          --bios-name GM12878 \\
+  python predict_assay.py --model-dir models/20251110_232800_CANDI_merged_ccre_3000loci_Nov10_CrossAttn_BatchNorm \\
+                          --data-path ../DATA_CANDI_MERGED \\
+                          --bios-name motor_neuron_grp1_rep1 \\
                           --assay-name H3K27ac \\
                           --task impute \\
                           --dataset merged \\
